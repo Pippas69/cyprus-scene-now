@@ -84,8 +84,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
           {/* Logo */}
           <button
             onClick={() => navigate("/")}
-            className={`font-urbanist text-3xl font-black tracking-tight transition-colors ${
-              scrolled ? "gradient-brand bg-clip-text text-transparent" : "text-white"
+            className={`font-cinzel text-3xl font-black tracking-tight transition-colors ${
+              scrolled ? "text-primary" : "text-white"
             }`}
           >
             ΦΟΜΟ
