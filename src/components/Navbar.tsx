@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, ChevronDown } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -13,6 +13,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+interface NavbarProps {
+  language: "el" | "en";
+  onLanguageToggle: (lang: "el" | "en") => void;
+}
+
+const NavLink = ({ text, onClick, scrolled }: { text: string; onClick: () => void; scrolled: boolean }) => (
+  <button
+    onClick={onClick}
+    className={`font-inter font-medium transition-colors ${
+      scrolled ? "text-foreground hover:text-secondary" : "text-white hover:text-accent"
+    }`}
+  >
+    {text}
+  </button>
+);
 
 interface NavbarProps {
   language: "el" | "en";
@@ -38,7 +54,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
       map: "Χάρτης",
       discounts: "Εκπτώσεις",
       login: "Σύνδεση",
-      join: "Εγγραφή",
+      signup: "Εγγραφή",
+      joinFomo: "Εγγραφή στο ΦΟΜΟ",
       forBusinesses: "Για Επιχειρήσεις",
     },
     en: {
@@ -46,7 +63,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
       map: "Map",
       discounts: "Discounts",
       login: "Login",
-      join: "Join ΦΟΜΟ",
+      signup: "Sign Up",
+      joinFomo: "Join ΦΟΜΟ",
       forBusinesses: "For Businesses",
     },
   };
@@ -57,8 +75,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white shadow-card"
-          : "bg-transparent"
+          ? "bg-background text-foreground shadow-card"
+          : "bg-transparent text-white"
       }`}
     >
       <div className="container mx-auto px-4 py-4">
@@ -66,55 +84,28 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
           {/* Logo */}
           <button
             onClick={() => navigate("/")}
-            className="font-urbanist text-3xl font-black tracking-tight"
-            style={{
-              color: scrolled ? "hsl(var(--midnight))" : "white",
-              transition: "color 0.3s",
-            }}
+            className={`font-urbanist text-3xl font-black tracking-tight transition-colors ${
+              scrolled ? "gradient-brand bg-clip-text text-transparent" : "text-white"
+            }`}
           >
             ΦΟΜΟ
           </button>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
-            <button
-              onClick={() => navigate("/feed")}
-              className={`font-inter font-medium transition-colors ${
-                scrolled ? "text-midnight hover:text-coral" : "text-white hover:text-amber"
-              }`}
-            >
-              {t.events}
-            </button>
-            <button
-              className={`font-inter font-medium transition-colors ${
-                scrolled ? "text-midnight hover:text-coral" : "text-white hover:text-amber"
-              }`}
-            >
-              {t.map}
-            </button>
-            <button
-              className={`font-inter font-medium transition-colors ${
-                scrolled ? "text-midnight hover:text-coral" : "text-white hover:text-amber"
-              }`}
-            >
-              {t.discounts}
-            </button>
-            <button
-              className={`font-inter font-medium transition-colors ${
-                scrolled ? "text-midnight hover:text-coral" : "text-white hover:text-amber"
-              }`}
-            >
-              {t.login}
-            </button>
+          <div className="hidden md:flex items-center gap-8">
+            <NavLink text={t.events} onClick={() => navigate("/feed")} scrolled={scrolled} />
+            <NavLink text={t.map} onClick={() => {}} scrolled={scrolled} />
+            <NavLink text={t.discounts} onClick={() => {}} scrolled={scrolled} />
+            <NavLink text={t.login} onClick={() => {}} scrolled={scrolled} />
 
             {/* Language Toggle */}
-            <div className="flex gap-1 bg-white/10 backdrop-blur-sm rounded-lg p-1">
+            <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`}>
               <button
                 onClick={() => onLanguageToggle("el")}
                 className={`px-3 py-1 rounded text-sm font-medium transition-all ${
                   language === "el"
-                    ? "bg-white text-midnight"
-                    : "text-white hover:bg-white/20"
+                    ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary"
+                    : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"
                 }`}
               >
                 🇬🇷 ΕΛ
@@ -123,8 +114,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                 onClick={() => onLanguageToggle("en")}
                 className={`px-3 py-1 rounded text-sm font-medium transition-all ${
                   language === "en"
-                    ? "bg-white text-midnight"
-                    : "text-white hover:bg-white/20"
+                    ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary"
+                    : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"
                 }`}
               >
                 🇬🇧 EN
@@ -134,15 +125,15 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
             {/* Join Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant={scrolled ? "gradient" : "premium"} size="default">
-                  {t.join} ▾
+                <Button variant="gradient" className="gap-1">
+                  {t.signup} <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem className="font-medium cursor-pointer">
-                  {t.join}
+                  {t.joinFomo}
                 </DropdownMenuItem>
-                <DropdownMenuItem className="font-medium cursor-pointer text-coral">
+                <DropdownMenuItem className="font-medium cursor-pointer text-secondary">
                   {t.forBusinesses}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -152,13 +143,13 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
           {/* Mobile Menu */}
           <div className="md:hidden flex items-center gap-4">
             {/* Language Toggle Mobile */}
-            <div className="flex gap-1 bg-white/10 backdrop-blur-sm rounded-lg p-1">
+            <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`}>
               <button
                 onClick={() => onLanguageToggle("el")}
                 className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                   language === "el"
-                    ? "bg-white text-midnight"
-                    : "text-white hover:bg-white/20"
+                    ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary"
+                    : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"
                 }`}
               >
                 🇬🇷
@@ -167,8 +158,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                 onClick={() => onLanguageToggle("en")}
                 className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                   language === "en"
-                    ? "bg-white text-midnight"
-                    : "text-white hover:bg-white/20"
+                    ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary"
+                    : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"
                 }`}
               >
                 🇬🇧
@@ -177,33 +168,33 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className={scrolled ? "text-midnight" : "text-white"}>
-                  {mobileOpen ? <X /> : <Menu />}
+                <Button variant="ghost" size="icon" className={scrolled ? "text-foreground" : "text-white"}>
+                  <Menu />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] bg-white">
+              <SheetContent side="right" className="w-[300px] bg-background">
                 <div className="flex flex-col gap-6 mt-8">
                   <button
                     onClick={() => {
                       navigate("/feed");
                       setMobileOpen(false);
                     }}
-                    className="text-midnight font-inter font-medium text-lg hover:text-coral transition-colors"
+                    className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
                   >
                     {t.events}
                   </button>
-                  <button className="text-midnight font-inter font-medium text-lg hover:text-coral transition-colors">
+                  <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                     {t.map}
                   </button>
-                  <button className="text-midnight font-inter font-medium text-lg hover:text-coral transition-colors">
+                  <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                     {t.discounts}
                   </button>
-                  <button className="text-midnight font-inter font-medium text-lg hover:text-coral transition-colors">
+                  <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                     {t.login}
                   </button>
                   <div className="pt-4 border-t space-y-3">
                     <Button variant="gradient" className="w-full" size="lg">
-                      {t.join}
+                      {t.joinFomo}
                     </Button>
                     <Button variant="premium" className="w-full" size="lg">
                       {t.forBusinesses}
