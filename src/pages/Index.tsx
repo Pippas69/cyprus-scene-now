@@ -1,104 +1,102 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MapPin, Sparkles, TrendingUp } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [language, setLanguage] = useState<"el" | "en">("el");
+
+  const text = {
+    el: {
+      tagline: "Fear Of Missing Out",
+      heroMain: "Ανακαλύψτε τι συμβαίνει",
+      heroAccent: "τώρα στην Κύπρο",
+      description:
+        "Πλατφόρμα ζωντανής κοινωνικής ανακάλυψης — δείτε πού πηγαίνουν οι άνθρωποι, συμμετάσχετε σε trending εκδηλώσεις και αποκτήστε αποκλειστικές εκπτώσεις QR από συνεργαζόμενες επιχειρήσεις σε όλη την Κύπρο.",
+      exploreBtn: "Εξερευνήστε Εκδηλώσεις",
+      joinBtn: "Εγγραφή στο ΦΟΜΟ",
+    },
+    en: {
+      tagline: "Fear Of Missing Out",
+      heroMain: "Discover what's happening",
+      heroAccent: "right now in Cyprus",
+      description:
+        "Live social discovery platform — see where people are going, join trending events, and get exclusive QR discounts from partner businesses across Cyprus.",
+      exploreBtn: "Explore Events",
+      joinBtn: "Join ΦΟΜΟ",
+    },
+  };
+
+  const t = text[language];
 
   return (
-    <div className="min-h-screen bg-gradient-warm">
+    <div className="min-h-screen">
+      {/* Navbar */}
+      <Navbar language={language} onLanguageToggle={setLanguage} />
+
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-12 md:py-20">
-        <div className="text-center space-y-6 max-w-3xl mx-auto">
-          {/* Logo */}
-          <div className="animate-float">
-            <h1 className="text-6xl md:text-8xl font-bold gradient-ocean bg-clip-text text-transparent mb-4">
-              ΦΟΜΟ
-            </h1>
-            <div className="text-xl md:text-2xl text-muted-foreground font-medium">
-              Fear Of Missing Out
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden gradient-hero">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 animate-gradient bg-gradient-to-br from-midnight via-primary to-deep-navy opacity-90" />
+        
+        {/* Content */}
+        <div className="relative z-10 container mx-auto px-4 py-32 text-center">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Logo */}
+            <div className="animate-fade-up">
+              <h1 className="font-urbanist text-7xl md:text-9xl font-black text-white mb-3 tracking-tight">
+                ΦΟΜΟ
+              </h1>
+              <p className="font-poppins text-xl md:text-2xl text-white/70 font-medium tracking-wide">
+                {t.tagline}
+              </p>
             </div>
-          </div>
 
-          {/* Tagline */}
-          <p className="text-2xl md:text-3xl font-bold text-foreground mt-8">
-            Discover what's happening<br />
-            <span className="gradient-sunset bg-clip-text text-transparent">
-              right now in Cyprus
-            </span>
-          </p>
-
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Live social discovery platform — see where people are going, join trending events,
-            and get exclusive QR discounts from partner businesses across Cyprus.
-          </p>
-
-          {/* CTA Button */}
-          <div className="pt-6">
-            <Button
-              size="lg"
-              onClick={() => navigate("/feed")}
-              className="bg-ocean hover:bg-ocean/90 text-lg px-8 py-6 shadow-glow gap-3"
-            >
-              Explore Events
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-6 mt-20 max-w-5xl mx-auto">
-          {/* Feature 1 */}
-          <div className="bg-card rounded-xl p-6 shadow-card hover:shadow-hover transition-all">
-            <div className="w-12 h-12 rounded-full bg-ocean/10 flex items-center justify-center mb-4">
-              <TrendingUp className="h-6 w-6 text-ocean" />
+            {/* Main Heading with Gradient Underline */}
+            <div className="animate-fade-up-delay-1 space-y-3">
+              <h2 className="font-poppins text-4xl md:text-6xl font-bold text-white leading-tight">
+                {t.heroMain}
+                <br />
+                <span className="relative inline-block">
+                  <span className="gradient-brand bg-clip-text text-transparent">
+                    {t.heroAccent}
+                  </span>
+                  <div className="absolute -bottom-2 left-0 right-0 h-1 gradient-brand rounded-full" />
+                </span>
+              </h2>
             </div>
-            <h3 className="font-bold text-xl mb-2">Live Discovery</h3>
-            <p className="text-muted-foreground">
-              See real-time crowd counts and age mix for events happening right now
+
+            {/* Description */}
+            <p className="animate-fade-up-delay-2 font-inter text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
+              {t.description}
             </p>
-          </div>
 
-          {/* Feature 2 */}
-          <div className="bg-card rounded-xl p-6 shadow-card hover:shadow-hover transition-all">
-            <div className="w-12 h-12 rounded-full bg-coral/10 flex items-center justify-center mb-4">
-              <MapPin className="h-6 w-6 text-coral" />
-            </div>
-            <h3 className="font-bold text-xl mb-2">Explore Cyprus</h3>
-            <p className="text-muted-foreground">
-              From Nicosia cafés to Ayia Napa nightlife — discover every corner of the island
-            </p>
-          </div>
-
-          {/* Feature 3 */}
-          <div className="bg-card rounded-xl p-6 shadow-card hover:shadow-hover transition-all">
-            <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center mb-4">
-              <Sparkles className="h-6 w-6 text-gold" />
-            </div>
-            <h3 className="font-bold text-xl mb-2">QR Discounts</h3>
-            <p className="text-muted-foreground">
-              Exclusive offers from partner businesses — redeem instantly with QR codes
-            </p>
-          </div>
-        </div>
-
-        {/* Cities */}
-        <div className="mt-20 text-center">
-          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-            Featured Cities
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            {["Nicosia", "Limassol", "Larnaca", "Paphos", "Ayia Napa", "Protaras"].map((city) => (
-              <div
-                key={city}
-                className="px-4 py-2 bg-card rounded-full text-sm font-medium shadow-sm"
+            {/* CTA Buttons */}
+            <div className="animate-fade-up-delay-3 flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+              <Button
+                variant="gradient"
+                size="lg"
+                onClick={() => navigate("/feed")}
+                className="text-lg px-10 py-7 min-w-[240px]"
               >
-                {city}
-              </div>
-            ))}
+                {t.exploreBtn}
+              </Button>
+              <Button
+                variant="premium"
+                size="lg"
+                className="text-lg px-10 py-7 min-w-[240px]"
+              >
+                {t.joinBtn}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* Decorative gradient orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-coral/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+      </section>
     </div>
   );
 };

@@ -8,92 +8,96 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Mediterranean Blue - Ocean & Sky */
-    --background: 38 100% 98%;
-    --foreground: 220 45% 15%;
+    /* Premium Mediterranean Design System */
+    --background: 42 20% 97%; /* Off-White #F9F6F3 */
+    --foreground: 216 52% 9%; /* Deep Navy #08121F */
 
-    /* Card surfaces - Warm white with soft shadows */
-    --card: 0 0% 100%;
-    --card-foreground: 220 45% 15%;
+    /* Card surfaces - Sand White */
+    --card: 40 33% 99%; /* Sand White #FCFAF8 */
+    --card-foreground: 216 52% 9%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 45% 15%;
+    --popover: 40 33% 99%;
+    --popover-foreground: 216 52% 9%;
 
-    /* Primary - Cyprus Blue (Mediterranean Ocean) */
-    --primary: 200 100% 37%;
+    /* Primary - Midnight Blue */
+    --primary: 210 56% 11%; /* Midnight Blue #0A1A2F */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Sunset Coral */
-    --secondary: 0 85% 65%;
+    /* Secondary - Coral Flame */
+    --secondary: 4 100% 68%; /* Coral Flame #FF5E57 */
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted - Soft sand tones */
-    --muted: 40 40% 94%;
-    --muted-foreground: 220 20% 45%;
+    /* Muted - Slate tones */
+    --muted: 225 11% 89%;
+    --muted-foreground: 221 11% 46%; /* Slate Gray #6E7687 */
 
-    /* Accent - Sunny Yellow/Gold */
-    --accent: 43 95% 55%;
-    --accent-foreground: 220 45% 15%;
+    /* Accent - Amber Glow */
+    --accent: 34 100% 64%; /* Amber Glow #FFB347 */
+    --accent-foreground: 216 52% 9%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 30% 88%;
-    --input: 40 30% 88%;
-    --ring: 200 100% 37%;
+    --border: 225 11% 89%;
+    --input: 225 11% 89%;
+    --ring: 4 100% 68%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Custom ΦΟΜΟ colors */
-    --ocean: 200 100% 37%;
-    --coral: 0 85% 65%;
-    --sunset: 15 90% 60%;
-    --sand: 40 40% 94%;
-    --gold: 43 95% 55%;
+    /* Premium ΦΟΜΟ Brand Colors */
+    --midnight: 210 56% 11%; /* Midnight Blue */
+    --coral: 4 100% 68%; /* Coral Flame */
+    --amber: 34 100% 64%; /* Amber Glow */
+    --off-white: 42 20% 97%;
+    --sand: 40 33% 99%;
+    --deep-navy: 216 52% 9%;
+    --slate: 221 11% 46%;
     
-    /* Gradients */
-    --gradient-ocean: linear-gradient(135deg, hsl(200 100% 37%), hsl(210 90% 45%));
-    --gradient-sunset: linear-gradient(135deg, hsl(0 85% 65%), hsl(15 90% 60%));
-    --gradient-warm: linear-gradient(180deg, hsl(38 100% 98%), hsl(40 40% 96%));
+    /* Premium Gradients */
+    --gradient-brand: linear-gradient(90deg, hsl(4 100% 68%) 0%, hsl(34 100% 64%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(210 56% 11%) 0%, hsl(216 52% 9%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(42 20% 97%), hsl(40 33% 99%));
     
-    /* Shadows */
-    --shadow-card: 0 4px 16px -4px hsl(200 100% 37% / 0.1);
-    --shadow-hover: 0 8px 24px -8px hsl(200 100% 37% / 0.2);
-    --shadow-glow: 0 0 32px hsl(200 100% 37% / 0.15);
+    /* Premium Shadows */
+    --shadow-card: 0 4px 20px -4px hsl(4 100% 68% / 0.08);
+    --shadow-hover: 0 8px 32px -8px hsl(4 100% 68% / 0.15);
+    --shadow-glow: 0 0 40px hsl(4 100% 68% / 0.25);
+    --shadow-premium: 0 20px 60px -15px hsl(210 56% 11% / 0.3);
   }
 
   .dark {
-    --background: 220 45% 8%;
-    --foreground: 40 40% 94%;
+    --background: 216 52% 9%;
+    --foreground: 42 20% 97%;
 
-    --card: 220 40% 12%;
-    --card-foreground: 40 40% 94%;
+    --card: 210 56% 11%;
+    --card-foreground: 42 20% 97%;
 
-    --popover: 220 40% 12%;
-    --popover-foreground: 40 40% 94%;
+    --popover: 210 56% 11%;
+    --popover-foreground: 42 20% 97%;
 
-    --primary: 200 100% 45%;
+    --primary: 210 56% 11%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 85% 60%;
+    --secondary: 4 100% 68%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 35% 18%;
-    --muted-foreground: 40 20% 65%;
+    --muted: 216 40% 15%;
+    --muted-foreground: 221 11% 65%;
 
-    --accent: 43 90% 50%;
-    --accent-foreground: 220 45% 8%;
+    --accent: 34 100% 64%;
+    --accent-foreground: 216 52% 9%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 35% 22%;
-    --input: 220 35% 22%;
-    --ring: 200 100% 45%;
+    --border: 216 40% 15%;
+    --input: 216 40% 15%;
+    --ring: 4 100% 68%;
 
-    --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.3);
-    --shadow-hover: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
-    --shadow-glow: 0 0 32px hsl(200 100% 45% / 0.2);
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
+    --shadow-hover: 0 8px 32px -8px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 40px hsl(4 100% 68% / 0.3);
+    --shadow-premium: 0 20px 60px -15px hsl(0 0% 0% / 0.5);
   }
 }
 
@@ -103,25 +107,27 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
     @apply font-bold;
   }
 }
 
 @layer utilities {
-  .gradient-ocean {
-    background: var(--gradient-ocean);
+  .gradient-brand {
+    background: var(--gradient-brand);
   }
   
-  .gradient-sunset {
-    background: var(--gradient-sunset);
+  .gradient-hero {
+    background: var(--gradient-hero);
   }
   
-  .gradient-warm {
-    background: var(--gradient-warm);
+  .gradient-subtle {
+    background: var(--gradient-subtle);
   }
   
   .shadow-card {
@@ -136,29 +142,64 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-glow);
   }
 
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
+  .shadow-premium {
+    box-shadow: var(--shadow-premium);
   }
 
-  @keyframes float {
+  .font-urbanist {
+    font-family: 'Urbanist', sans-serif;
+  }
+
+  .font-poppins {
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.8s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-up-delay-1 {
+    animation: fade-up 0.8s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-up-delay-2 {
+    animation: fade-up 0.8s ease-out 0.4s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-up-delay-3 {
+    animation: fade-up 0.8s ease-out 0.6s forwards;
+    opacity: 0;
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  @keyframes gradient-shift {
     0%, 100% {
-      transform: translateY(0px);
+      background-position: 0% 50%;
     }
     50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 20px hsl(var(--ocean) / 0.3);
-    }
-    50% {
-      box-shadow: 0 0 30px hsl(var(--ocean) / 0.5);
+      background-position: 100% 50%;
     }
   }
 }
