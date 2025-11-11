@@ -10,7 +10,7 @@ const Index = () => {
 
   const text = {
     el: {
-      tagline: "Fear Of Missing Out",
+      tagline: "Φόβος of Missing Out",
       heroMain: "Ανακαλύψτε τι συμβαίνει",
       heroSubtitle: "Τώρα, σε όλη την Κύπρο.",
       description:
@@ -19,7 +19,7 @@ const Index = () => {
       joinBtn: "Εγγραφή στο ΦΟΜΟ",
     },
     en: {
-      tagline: "Fear Of Missing Out",
+      tagline: "Φόβος of Missing Out",
       heroMain: "Discover what's happening",
       heroSubtitle: "Right now, across Cyprus.",
       description:
@@ -67,10 +67,10 @@ const Index = () => {
           <div className="max-w-4xl mx-auto space-y-8">
             {/* Logo */}
             <div className="animate-fade-up">
-              <h1 className="font-urbanist text-7xl md:text-9xl font-black text-white mb-3 tracking-tight drop-shadow-[0_0_30px_rgba(255,107,107,0.3)]">
+              <h1 className="font-cinzel text-5xl md:text-7xl font-black text-white mb-3 tracking-tight drop-shadow-[0_0_30px_rgba(13,59,102,0.5)]">
                 ΦΟΜΟ
               </h1>
-              <p className="font-poppins text-xl md:text-2xl text-white/70 font-medium tracking-wide">
+              <p className="font-poppins text-xl md:text-2xl text-white/90 font-medium tracking-wide">
                 {t.tagline}
               </p>
             </div>
@@ -81,15 +81,15 @@ const Index = () => {
                 {t.heroMain}
               </h2>
               <div className="relative inline-block">
-                <h3 className="font-poppins text-3xl md:text-5xl font-semibold gradient-brand bg-clip-text text-transparent">
+                <h3 className="font-poppins text-3xl md:text-5xl font-semibold text-seafoam">
                   {t.heroSubtitle}
                 </h3>
-                <div className="absolute -bottom-2 left-0 right-0 h-1 gradient-brand rounded-full shadow-glow" />
+                <div className="absolute -bottom-2 left-0 right-0 h-1 bg-seafoam rounded-full shadow-glow" />
               </div>
             </div>
 
             {/* Description */}
-            <p className="animate-fade-up-delay-2 font-inter text-lg md:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+            <p className="animate-fade-up-delay-2 font-inter text-lg md:text-xl text-white max-w-3xl mx-auto leading-relaxed">
               {t.description}
             </p>
 

@@ -57,6 +57,7 @@ export default {
         urbanist: ['Urbanist', 'sans-serif'],
         poppins: ['Poppins', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
+        cinzel: ['Cinzel Decorative', 'serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
