@@ -3,36 +3,29 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
 const Index = () => {
   const navigate = useNavigate();
   const [language, setLanguage] = useState<"el" | "en">("el");
-
   const text = {
     el: {
       tagline: "Φόβος of Missing Out",
       heroMain: "Επιλογές υπάρχουν, Απλά εν τες Ξέρεις",
       heroSubtitle: "Τώρα, σε όλη την Κύπρο.",
-      description:
-        "Πλατφόρμα ζωντανής κοινωνικής ανακάλυψης — δείτε πού πηγαίνουν οι άνθρωποι, συμμετάσχετε σε trending εκδηλώσεις και αποκτήστε αποκλειστικές εκπτώσεις QR από συνεργαζόμενες επιχειρήσεις σε όλη την Κύπρο.",
+      description: "Πλατφόρμα ζωντανής κοινωνικής ανακάλυψης — δείτε πού πηγαίνουν οι άνθρωποι, συμμετάσχετε σε trending εκδηλώσεις και αποκτήστε αποκλειστικές εκπτώσεις QR από συνεργαζόμενες επιχειρήσεις σε όλη την Κύπρο.",
       exploreBtn: "Εξερευνήστε Εκδηλώσεις",
-      joinBtn: "Εγγραφή στο ΦΟΜΟ",
+      joinBtn: "Εγγραφή στο ΦΟΜΟ"
     },
     en: {
       tagline: "Φόβος of Missing Out",
       heroMain: "Discover what's happening",
       heroSubtitle: "Right now, across Cyprus.",
-      description:
-        "Live social discovery platform — see where people are going, join trending events, and get exclusive QR discounts from partner businesses across Cyprus.",
+      description: "Live social discovery platform — see where people are going, join trending events, and get exclusive QR discounts from partner businesses across Cyprus.",
       exploreBtn: "Explore Events",
-      joinBtn: "Join ΦΟΜΟ",
-    },
+      joinBtn: "Join ΦΟΜΟ"
+    }
   };
-
   const t = text[language];
-
-  return (
-    <div className="min-h-screen">
+  return <div className="min-h-screen">
       {/* Navbar */}
       <Navbar language={language} onLanguageToggle={setLanguage} />
 
@@ -43,22 +36,15 @@ const Index = () => {
         
         {/* Sun glow effect */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl pointer-events-none">
-          <div className="w-full h-full rounded-full" style={{ background: 'var(--gradient-glow)' }} />
+          <div className="w-full h-full rounded-full" style={{
+          background: 'var(--gradient-glow)'
+        }} />
         </div>
 
         {/* Wave decoration at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-32 opacity-20">
-          <svg
-            className="absolute bottom-0 w-full h-full animate-wave"
-            viewBox="0 0 1440 120"
-            preserveAspectRatio="none"
-            fill="none"
-          >
-            <path
-              d="M0,64 C240,32 480,96 720,64 C960,32 1200,96 1440,64 L1440,120 L0,120 Z"
-              fill="white"
-              opacity="0.3"
-            />
+          <svg className="absolute bottom-0 w-full h-full animate-wave" viewBox="0 0 1440 120" preserveAspectRatio="none" fill="none">
+            <path d="M0,64 C240,32 480,96 720,64 C960,32 1200,96 1440,64 L1440,120 L0,120 Z" fill="white" opacity="0.3" />
           </svg>
         </div>
         
@@ -77,7 +63,7 @@ const Index = () => {
 
             {/* Main Heading with Gradient Underline */}
             <div className="animate-fade-up-delay-1 space-y-4">
-              <h2 className="font-poppins text-4xl md:text-6xl font-bold text-white leading-tight">
+              <h2 className="font-poppins text-4xl font-bold text-white leading-tight md:text-5xl">
                 {t.heroMain}
               </h2>
               <div className="relative inline-block">
@@ -95,11 +81,7 @@ const Index = () => {
 
             {/* CTA Buttons */}
             <div className="animate-fade-up-delay-3 flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-              <Button
-                variant="gradient"
-                size="lg"
-                className="text-lg px-10 py-7 min-w-[240px] shadow-glow hover:shadow-sun transition-all duration-300 hover:scale-105"
-              >
+              <Button variant="gradient" size="lg" className="text-lg px-10 py-7 min-w-[240px] shadow-glow hover:shadow-sun transition-all duration-300 hover:scale-105">
                 {t.joinBtn}
               </Button>
             </div>
@@ -108,13 +90,13 @@ const Index = () => {
 
         {/* Decorative gradient orbs */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-seafoam/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-seafoam/20 rounded-full blur-3xl animate-pulse" style={{
+        animationDelay: "1s"
+      }} />
       </section>
 
       {/* Footer */}
       <Footer language={language} onLanguageToggle={setLanguage} />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
