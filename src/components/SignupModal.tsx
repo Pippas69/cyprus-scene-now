@@ -25,6 +25,7 @@ const signupSchema = z.object({
   email: z.string().trim().email("Μη έγκυρη διεύθυνση email").max(255, "Το email πρέπει να είναι λιγότερο από 255 χαρακτήρες"),
   password: z.string().min(6, "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες").max(100, "Ο κωδικός πρέπει να είναι λιγότερο από 100 χαρακτήρες"),
   location: z.string().min(1, "Η τοποθεσία είναι υποχρεωτική"),
+  preferences: z.array(z.string()).min(1, "Επέλεξε τουλάχιστον ένα ενδιαφέρον"),
 });
 
 const SignupModal = ({ onClose, language }: SignupModalProps) => {
@@ -34,6 +35,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     email: "",
     password: "",
     location: "",
+    preferences: [] as string[],
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -46,6 +48,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
       email: "Email",
       password: "Κωδικός",
       location: "Περιοχή",
+      interests: "Τι σε ενδιαφέρει;",
       submit: "Δημιουργία Λογαριασμού",
       success: "Επιτυχής εγγραφή! Καλώς ήρθατε στο ΦΟΜΟ!",
       error: "Σφάλμα εγγραφής. Παρακαλώ δοκιμάστε ξανά.",
@@ -57,6 +60,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
       email: "Email",
       password: "Password",
       location: "Location",
+      interests: "What are you interested in?",
       submit: "Create Account",
       success: "Signup successful! Welcome to ΦΟΜΟ!",
       error: "Signup error. Please try again.",
@@ -72,6 +76,17 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     "Πάφος",
     "Παραλίμνι",
     "Αγία Νάπα",
+  ];
+
+  const interestOptions = [
+    { value: "cafe", label: "Καφέ & Εστιατόρια ☕" },
+    { value: "nightlife", label: "Νυχτερινή Ζωή 🌃" },
+    { value: "art", label: "Τέχνη & Πολιτισμός 🎨" },
+    { value: "fitness", label: "Γυμναστική 💪" },
+    { value: "family", label: "Οικογένεια 👨‍👩‍👧‍👦" },
+    { value: "business", label: "Business 💼" },
+    { value: "lifestyle", label: "Lifestyle 🌴" },
+    { value: "travel", label: "Ταξίδια ✈️" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,25 +117,19 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
         password: formData.password,
         options: {
           emailRedirectTo: redirectUrl,
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            town: formData.location,
+            preferences: formData.preferences,
+          },
         },
       });
 
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: authData.user.id,
-            user_id: authData.user.id,
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            city: formData.location,
-            email: formData.email,
-          });
-
-        if (profileError) throw profileError;
+        // Profile is created automatically by the trigger
 
         toast({
           title: t.success,
@@ -224,6 +233,32 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="interests">{t.interests}</Label>
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-input rounded-lg p-3">
+              {interestOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-accent/10 p-2 rounded transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.preferences.includes(option.value)}
+                    onChange={(e) => {
+                      const newPreferences = e.target.checked
+                        ? [...formData.preferences, option.value]
+                        : formData.preferences.filter((p) => p !== option.value);
+                      setFormData({ ...formData, preferences: newPreferences });
+                    }}
+                    disabled={loading}
+                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm">{option.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <Button
