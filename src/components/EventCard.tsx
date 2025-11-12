@@ -54,7 +54,7 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
   const t = translations[language];
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !event.id) return;
 
     // Subscribe to realtime updates for this event's RSVPs
     const channel = supabase
