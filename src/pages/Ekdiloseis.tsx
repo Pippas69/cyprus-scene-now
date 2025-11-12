@@ -170,7 +170,7 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
 
           <motion.button
             onClick={onSignupClick}
-            className="bg-gradient-brand text-primary-foreground px-6 md:px-8 py-3 md:py-4 rounded-2xl shadow-card hover:shadow-hover font-semibold text-base md:text-lg transition-all"
+            className="gradient-brand text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl shadow-glow hover:shadow-hover font-semibold text-base md:text-lg transition-all hover:scale-105"
             whileHover={{ scale: 1.05 }}
             animate={{ 
               opacity: [0.85, 1, 0.85]
@@ -180,6 +180,9 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
                 repeat: Infinity,
                 duration: 2.5,
                 ease: "easeInOut"
+              },
+              scale: {
+                duration: 0.3
               }
             }}
           >
