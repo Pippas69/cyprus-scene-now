@@ -13,23 +13,28 @@ const Ekdiloseis = () => {
   const [language, setLanguage] = useState<"el" | "en">("el");
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [fadeUnlock, setFadeUnlock] = useState(false);
 
   useEffect(() => {
-    const checkUser = async () => {
+    const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setFadeUnlock(true);
-        setTimeout(() => {
-          setUser(user);
-          setLoading(false);
-        }, 800);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
+      setUser(user);
+      setLoading(false);
     };
-    checkUser();
+
+    getUser();
+
+    // Listen for real-time auth changes (signup, login, logout)
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        // Instantly unlock full view after signup/login
+        setUser(session.user);
+      } else {
+        // Show limited view if user logs out
+        setUser(null);
+      }
+    });
+
+    return () => subscription.subscription.unsubscribe();
   }, []);
 
   const text = {
