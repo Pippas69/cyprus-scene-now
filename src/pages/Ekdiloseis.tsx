@@ -138,15 +138,17 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
       transition={{ duration: 1, ease: "easeOut" }}
       className="relative"
     >
-      {/* Preview Events with Blur */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 blur-sm opacity-70 pointer-events-none">
-        {[1, 2, 3, 4, 5].map((i) => (
+      {/* Preview Events - First 3 visible, rest blurred */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, duration: 0.6 }}
-            className="rounded-2xl overflow-hidden shadow-card bg-card"
+            className={`rounded-2xl overflow-hidden shadow-card bg-card ${
+              i > 3 ? 'blur-sm opacity-70 pointer-events-none' : ''
+            }`}
           >
             <EventCard language={language} />
           </motion.div>
