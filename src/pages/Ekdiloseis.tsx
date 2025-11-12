@@ -150,7 +150,22 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
               i > 3 ? 'blur-sm opacity-70 pointer-events-none' : ''
             }`}
           >
-            <EventCard language={language} />
+            <EventCard 
+              language={language} 
+              event={{
+                id: `mock-${i}`,
+                title: "Sunday Brunch at Lost + Found",
+                location: "Nicosia • 2.3 km away",
+                start_at: new Date().toISOString(),
+                end_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+                category: ["Café"],
+                price_tier: "free",
+                interested_count: 42,
+                going_count: 18,
+                user_status: null,
+              }}
+              user={null}
+            />
           </motion.div>
         ))}
       </div>
@@ -199,6 +214,9 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
 // Full View for Logged-in Users
 const FullExploreView = ({ language }: { language: "el" | "en" }) => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
   
   const text = {
     el: {
@@ -211,8 +229,64 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
 
   const t = text[language];
 
-  // Mock events data - replace with actual Supabase query
-  const mockEvents = Array(9).fill(null);
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [selectedCategories]);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('events')
+        .select('*')
+        .order('start_at', { ascending: true });
+
+      if (selectedCategories.length > 0) {
+        query = query.overlaps('category', selectedCategories);
+      }
+
+      const { data: eventsData, error } = await query;
+
+      if (error) throw error;
+
+      if (eventsData) {
+        // Fetch RSVP counts and user status for each event
+        const eventsWithStats = await Promise.all(
+          eventsData.map(async (event) => {
+            const { data: rsvps } = await supabase
+              .from('rsvps')
+              .select('status, user_id')
+              .eq('event_id', event.id);
+
+            const interested_count = rsvps?.filter(r => r.status === 'interested').length || 0;
+            const going_count = rsvps?.filter(r => r.status === 'going').length || 0;
+            const user_status = rsvps?.find(r => r.user_id === user?.id)?.status || null;
+
+            return {
+              ...event,
+              interested_count,
+              going_count,
+              user_status,
+            };
+          })
+        );
+
+        setEvents(eventsWithStats);
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -241,20 +315,26 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
         </h2>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockEvents.map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08, duration: 0.6 }}
-            whileHover={{ scale: 1.03, y: -4 }}
-            className="rounded-2xl shadow-card hover:shadow-hover transition-all bg-card"
-          >
-            <EventCard language={language} />
-          </motion.div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((event, i) => (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08, duration: 0.6 }}
+              whileHover={{ scale: 1.03, y: -4 }}
+              className="rounded-2xl shadow-card hover:shadow-hover transition-all bg-card"
+            >
+              <EventCard language={language} event={event} user={user} />
+            </motion.div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };

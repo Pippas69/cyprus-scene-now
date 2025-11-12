@@ -82,9 +82,51 @@ const Feed = () => {
           </TabsList>
 
           <TabsContent value="trending" className="space-y-4">
-            <EventCard language={language} />
-            <EventCard language={language} />
-            <EventCard language={language} />
+            <EventCard 
+              language={language} 
+              event={{
+                id: "mock-1",
+                title: "Sunday Brunch at Lost + Found",
+                location: "Nicosia",
+                start_at: new Date().toISOString(),
+                end_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+                category: ["Café"],
+                price_tier: "free",
+                interested_count: 42,
+                going_count: 18,
+              }}
+              user={null}
+            />
+            <EventCard 
+              language={language} 
+              event={{
+                id: "mock-2",
+                title: "Beach Volleyball Tournament",
+                location: "Limassol",
+                start_at: new Date().toISOString(),
+                end_at: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+                category: ["Sports"],
+                price_tier: "free",
+                interested_count: 28,
+                going_count: 12,
+              }}
+              user={null}
+            />
+            <EventCard 
+              language={language} 
+              event={{
+                id: "mock-3",
+                title: "Live Music Night",
+                location: "Larnaca",
+                start_at: new Date().toISOString(),
+                end_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
+                category: ["Music"],
+                price_tier: "paid",
+                interested_count: 64,
+                going_count: 35,
+              }}
+              user={null}
+            />
           </TabsContent>
 
           <TabsContent value="upcoming" className="space-y-4">
