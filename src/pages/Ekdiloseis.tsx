@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EventCard from "@/components/EventCard";
 import CategoryFilter from "@/components/CategoryFilter";
+import SignupModal from "@/components/SignupModal";
 import { Loader2 } from "lucide-react";
 
 const Ekdiloseis = () => {
@@ -13,6 +14,7 @@ const Ekdiloseis = () => {
   const [language, setLanguage] = useState<"el" | "en">("el");
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showSignupModal, setShowSignupModal] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -96,7 +98,12 @@ const Ekdiloseis = () => {
       <div className="container mx-auto px-4 py-12">
         {!user ? (
           /* Visitors see blurred limited view */
-          <LimitedExploreView language={language} navigate={navigate} t={t} />
+          <LimitedExploreView 
+            language={language} 
+            navigate={navigate} 
+            t={t}
+            onSignupClick={() => setShowSignupModal(true)}
+          />
         ) : (
           /* Logged-in users see full view with fade-in animation */
           <motion.div
@@ -110,12 +117,20 @@ const Ekdiloseis = () => {
       </div>
 
       <Footer language={language} onLanguageToggle={setLanguage} />
+      
+      {/* Signup Modal */}
+      {showSignupModal && (
+        <SignupModal 
+          onClose={() => setShowSignupModal(false)} 
+          language={language}
+        />
+      )}
     </div>
   );
 };
 
 // Limited View for Visitors
-const LimitedExploreView = ({ language, navigate, t }: any) => {
+const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -124,20 +139,16 @@ const LimitedExploreView = ({ language, navigate, t }: any) => {
       className="relative"
     >
       {/* Preview Events with Blur */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {[1, 2, 3].map((i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 blur-sm opacity-70 pointer-events-none">
+        {[1, 2, 3, 4, 5].map((i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, duration: 0.6 }}
-            whileHover={{ scale: 1.02 }}
-            className="relative rounded-2xl overflow-hidden shadow-card"
+            className="rounded-2xl overflow-hidden shadow-card bg-card"
           >
-            <div className="absolute inset-0 bg-card/60 backdrop-blur-md z-10" />
-            <div className="pointer-events-none">
-              <EventCard language={language} />
-            </div>
+            <EventCard language={language} />
           </motion.div>
         ))}
       </div>
@@ -158,8 +169,8 @@ const LimitedExploreView = ({ language, navigate, t }: any) => {
           </p>
 
           <motion.button
-            onClick={() => navigate("/signup?redirect=/ekdiloseis")}
-            className="bg-gradient-brand text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl shadow-card hover:shadow-hover font-semibold text-base md:text-lg transition-all"
+            onClick={onSignupClick}
+            className="bg-gradient-brand text-primary-foreground px-6 md:px-8 py-3 md:py-4 rounded-2xl shadow-card hover:shadow-hover font-semibold text-base md:text-lg transition-all"
             whileHover={{ scale: 1.05 }}
             animate={{ 
               opacity: [0.85, 1, 0.85]
