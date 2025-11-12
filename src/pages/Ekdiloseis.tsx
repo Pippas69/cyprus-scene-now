@@ -13,12 +13,21 @@ const Ekdiloseis = () => {
   const [language, setLanguage] = useState<"el" | "en">("el");
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [fadeUnlock, setFadeUnlock] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
+      if (user) {
+        setFadeUnlock(true);
+        setTimeout(() => {
+          setUser(user);
+          setLoading(false);
+        }, 800);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     };
     checkUser();
   }, []);
@@ -63,15 +72,15 @@ const Ekdiloseis = () => {
         
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 1, ease: "easeOut" }}
             className="text-center text-white"
           >
-            <h1 className="font-cinzel text-5xl md:text-6xl font-bold mb-4">
+            <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
               {t.title}
             </h1>
-            <p className="font-inter text-xl md:text-2xl text-white/90">
+            <p className="font-inter text-lg md:text-xl lg:text-2xl text-white/90">
               {t.subtitle}
             </p>
           </motion.div>
@@ -80,7 +89,24 @@ const Ekdiloseis = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
-        {user ? <FullExploreView language={language} /> : <LimitedExploreView language={language} navigate={navigate} t={t} />}
+        {/* Fade out limited view */}
+        <motion.div
+          initial={{ opacity: 1 }}
+          animate={{ opacity: fadeUnlock ? 0 : 1 }}
+          transition={{ duration: 1.2 }}
+          className={fadeUnlock ? "pointer-events-none" : ""}
+        >
+          {!user && <LimitedExploreView language={language} navigate={navigate} t={t} />}
+        </motion.div>
+
+        {/* Fade in full view */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: fadeUnlock && user ? 1 : 0 }}
+          transition={{ duration: 1.2 }}
+        >
+          {user && <FullExploreView language={language} />}
+        </motion.div>
       </div>
 
       <Footer language={language} onLanguageToggle={setLanguage} />
@@ -94,7 +120,7 @@ const LimitedExploreView = ({ language, navigate, t }: any) => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 1.2, ease: "easeOut" }}
+      transition={{ duration: 1, ease: "easeOut" }}
       className="relative"
     >
       {/* Preview Events with Blur */}
@@ -105,49 +131,41 @@ const LimitedExploreView = ({ language, navigate, t }: any) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, duration: 0.6 }}
-            className="relative"
+            whileHover={{ scale: 1.02 }}
+            className="relative rounded-2xl overflow-hidden shadow-card"
           >
-            <div className="blur-sm pointer-events-none">
+            <div className="absolute inset-0 bg-card/60 backdrop-blur-md z-10" />
+            <div className="pointer-events-none">
               <EventCard language={language} />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/60 to-transparent" />
           </motion.div>
         ))}
       </div>
 
       {/* Signup CTA Overlay */}
       <motion.div
-        initial={{ backdropFilter: "blur(0px)" }}
-        animate={{ backdropFilter: "blur(6px)" }}
-        transition={{ duration: 1.5 }}
-        className="relative backdrop-blur-md bg-white/80 rounded-3xl shadow-elegant p-12 border border-primary/10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.8 }}
+        className="relative backdrop-blur-sm bg-card/90 rounded-3xl shadow-premium p-8 md:p-12 border border-primary/10"
       >
-        <motion.div
-          className="flex flex-col items-center justify-center"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-        >
-          <h2 className="text-2xl md:text-3xl font-bold text-primary text-center font-cinzel mb-4">
+        <div className="flex flex-col items-center justify-center text-center">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary font-cinzel mb-3">
             {t.loginRequired}
           </h2>
-          <p className="text-base md:text-lg text-muted-foreground text-center max-w-md mb-8">
+          <p className="text-sm md:text-base lg:text-lg text-muted-foreground max-w-md mb-8">
             {t.loginSubtitle}
           </p>
 
           <motion.button
             onClick={() => navigate("/signup?redirect=/ekdiloseis")}
-            className="bg-gradient-brand text-white px-8 py-4 rounded-2xl shadow-elegant hover:shadow-hover font-semibold text-lg transition-all"
+            className="bg-gradient-brand text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl shadow-card hover:shadow-hover font-semibold text-base md:text-lg transition-all"
             whileHover={{ scale: 1.05 }}
             animate={{ 
-              boxShadow: [
-                "0 10px 30px -10px rgba(255, 122, 89, 0.3)",
-                "0 10px 40px -10px rgba(255, 122, 89, 0.5)",
-                "0 10px 30px -10px rgba(255, 122, 89, 0.3)"
-              ]
+              opacity: [0.85, 1, 0.85]
             }}
             transition={{
-              boxShadow: {
+              opacity: {
                 repeat: Infinity,
                 duration: 2.5,
                 ease: "easeInOut"
@@ -156,7 +174,7 @@ const LimitedExploreView = ({ language, navigate, t }: any) => {
           >
             {t.joinButton}
           </motion.button>
-        </motion.div>
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -196,11 +214,16 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
       </div>
 
       {/* Events Grid */}
-      <div className="mb-6">
+      <motion.div 
+        className="mb-6"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <h2 className="text-2xl font-bold text-foreground font-cinzel">
           {t.allEvents}
         </h2>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {mockEvents.map((_, i) => (
@@ -208,9 +231,9 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1, duration: 0.6 }}
+            transition={{ delay: i * 0.08, duration: 0.6 }}
             whileHover={{ scale: 1.03, y: -4 }}
-            className="transition-all"
+            className="rounded-2xl shadow-card hover:shadow-hover transition-all bg-card"
           >
             <EventCard language={language} />
           </motion.div>
