@@ -29,7 +29,9 @@ export type Database = {
           phone: string | null
           updated_at: string
           user_id: string
+          verification_notes: string | null
           verified: boolean | null
+          verified_at: string | null
           website: string | null
         }
         Insert: {
@@ -46,7 +48,9 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
+          verification_notes?: string | null
           verified?: boolean | null
+          verified_at?: string | null
           website?: string | null
         }
         Update: {
@@ -63,7 +67,9 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+          verification_notes?: string | null
           verified?: boolean | null
+          verified_at?: string | null
           website?: string | null
         }
         Relationships: [
@@ -298,8 +304,9 @@ export type Database = {
           first_name: string | null
           id: string
           interests: string[] | null
+          is_admin: boolean | null
           last_name: string | null
-          name: string
+          name: string | null
           preferences: string[] | null
           role: Database["public"]["Enums"]["app_role"]
           town: string | null
@@ -317,8 +324,9 @@ export type Database = {
           first_name?: string | null
           id: string
           interests?: string[] | null
+          is_admin?: boolean | null
           last_name?: string | null
-          name: string
+          name?: string | null
           preferences?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
           town?: string | null
@@ -336,8 +344,9 @@ export type Database = {
           first_name?: string | null
           id?: string
           interests?: string[] | null
+          is_admin?: boolean | null
           last_name?: string | null
-          name?: string
+          name?: string | null
           preferences?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
           town?: string | null
