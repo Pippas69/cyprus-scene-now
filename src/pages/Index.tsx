@@ -81,7 +81,12 @@ const Index = () => {
 
             {/* CTA Buttons */}
             <div className="animate-fade-up-delay-3 flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-              <Button variant="gradient" size="lg" className="text-lg px-10 py-7 min-w-[240px] shadow-glow hover:shadow-sun transition-all duration-300 hover:scale-105">
+              <Button 
+                variant="gradient" 
+                size="lg" 
+                className="text-lg px-10 py-7 min-w-[240px] shadow-glow hover:shadow-sun transition-all duration-300 hover:scale-105"
+                onClick={() => navigate("/signup")}
+              >
                 {t.joinBtn}
               </Button>
             </div>

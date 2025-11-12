@@ -288,40 +288,61 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
           city: string | null
           created_at: string
           dob_month: number | null
           dob_year: number | null
+          email: string | null
+          first_name: string | null
           id: string
           interests: string[] | null
+          last_name: string | null
           name: string
+          preferences: string[] | null
           role: Database["public"]["Enums"]["app_role"]
+          town: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           city?: string | null
           created_at?: string
           dob_month?: number | null
           dob_year?: number | null
+          email?: string | null
+          first_name?: string | null
           id: string
           interests?: string[] | null
+          last_name?: string | null
           name: string
+          preferences?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
+          town?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           city?: string | null
           created_at?: string
           dob_month?: number | null
           dob_year?: number | null
+          email?: string | null
+          first_name?: string | null
           id?: string
           interests?: string[] | null
+          last_name?: string | null
           name?: string
+          preferences?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
+          town?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
