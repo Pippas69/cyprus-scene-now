@@ -89,24 +89,19 @@ const Ekdiloseis = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
-        {/* Fade out limited view */}
-        <motion.div
-          initial={{ opacity: 1 }}
-          animate={{ opacity: fadeUnlock ? 0 : 1 }}
-          transition={{ duration: 1.2 }}
-          className={fadeUnlock ? "pointer-events-none" : ""}
-        >
-          {!user && <LimitedExploreView language={language} navigate={navigate} t={t} />}
-        </motion.div>
-
-        {/* Fade in full view */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: fadeUnlock && user ? 1 : 0 }}
-          transition={{ duration: 1.2 }}
-        >
-          {user && <FullExploreView language={language} />}
-        </motion.div>
+        {!user ? (
+          /* Visitors see blurred limited view */
+          <LimitedExploreView language={language} navigate={navigate} t={t} />
+        ) : (
+          /* Logged-in users see full view with fade-in animation */
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.2 }}
+          >
+            <FullExploreView language={language} />
+          </motion.div>
+        )}
       </div>
 
       <Footer language={language} onLanguageToggle={setLanguage} />
