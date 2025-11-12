@@ -64,10 +64,10 @@ const Ekdiloseis = () => {
       <Navbar language={language} onLanguageToggle={setLanguage} />
       
       {/* Hero Section */}
-      <div className="relative pt-24 pb-16 overflow-hidden">
-        <div className="absolute inset-0 gradient-hero opacity-90" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-20 blur-3xl">
-          <div className="w-full h-full rounded-full bg-gradient-glow" />
+      <div className="relative pt-24 pb-16 overflow-hidden bg-gradient-to-br from-primary via-primary to-accent">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/50 to-primary opacity-90" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-10 blur-3xl">
+          <div className="w-full h-full rounded-full bg-accent" />
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
@@ -75,12 +75,12 @@ const Ekdiloseis = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
-            className="text-center text-white"
+            className="text-center text-primary-foreground"
           >
             <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
               {t.title}
             </h1>
-            <p className="font-inter text-lg md:text-xl lg:text-2xl text-white/90">
+            <p className="font-inter text-lg md:text-xl lg:text-2xl opacity-90">
               {t.subtitle}
             </p>
           </motion.div>
