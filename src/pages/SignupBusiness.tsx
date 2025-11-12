@@ -11,27 +11,8 @@ import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-
-const categories = [
-  "Καφετέριες & Εστιατόρια",
-  "Νυχτερινή Διασκέδαση",
-  "Τέχνη & Πολιτισμός",
-  "Fitness & Wellness",
-  "Οικογένεια & Κοινότητα",
-  "Επιχειρηματικότητα & Networking",
-  "Εξωτερικές Δραστηριότητες",
-  "Αγορές & Lifestyle",
-];
-
-const cities = [
-  "Λευκωσία",
-  "Λεμεσός",
-  "Λάρνακα",
-  "Πάφος",
-  "Παραλίμνι",
-  "Αγία Νάπα",
-];
-
+const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
+const cities = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 const formSchema = z.object({
   businessName: z.string().min(2, "Το όνομα πρέπει να έχει τουλάχιστον 2 χαρακτήρες"),
   category: z.array(z.string()).min(1, "Επιλέξτε τουλάχιστον μία κατηγορία"),
@@ -43,54 +24,60 @@ const formSchema = z.object({
   password: z.string().min(6, "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες"),
   confirmPassword: z.string(),
   description: z.string().max(300, "Η περιγραφή δεν μπορεί να υπερβαίνει τους 300 χαρακτήρες").optional(),
-  termsAccepted: z.boolean().refine((val) => val === true, "Πρέπει να αποδεχτείτε τους όρους"),
-}).refine((data) => data.password === data.confirmPassword, {
+  termsAccepted: z.boolean().refine(val => val === true, "Πρέπει να αποδεχτείτε τους όρους")
+}).refine(data => data.password === data.confirmPassword, {
   message: "Οι κωδικοί δεν ταιριάζουν",
-  path: ["confirmPassword"],
+  path: ["confirmPassword"]
 });
-
 type FormData = z.infer<typeof formSchema>;
-
 const SignupBusiness = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
-
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: {
+      errors
+    },
+    setValue,
+    watch
+  } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       category: [],
-      termsAccepted: false,
-    },
+      termsAccepted: false
+    }
   });
-
   const selectedCategories = watch("category") || [];
-
   const handleCategoryChange = (category: string, checked: boolean) => {
     const current = selectedCategories;
     if (checked) {
       setValue("category", [...current, category]);
     } else {
-      setValue("category", current.filter((c) => c !== category));
+      setValue("category", current.filter(c => c !== category));
     }
   };
-
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
       // Create user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const {
+        data: authData,
+        error: authError
+      } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: {
             first_name: data.businessName,
-            role: 'business',
+            role: 'business'
           }
         }
       });
-
       if (authError) throw authError;
       if (!authData.user) throw new Error("Αποτυχία δημιουργίας λογαριασμού");
 
@@ -99,55 +86,52 @@ const SignupBusiness = () => {
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${authData.user.id}-${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('business-logos')
-          .upload(fileName, logoFile);
-
+        const {
+          data: uploadData,
+          error: uploadError
+        } = await supabase.storage.from('business-logos').upload(fileName, logoFile);
         if (!uploadError && uploadData) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('business-logos')
-            .getPublicUrl(fileName);
+          const {
+            data: {
+              publicUrl
+            }
+          } = supabase.storage.from('business-logos').getPublicUrl(fileName);
           logoUrl = publicUrl;
         }
       }
 
       // Create business record
-      const { error: businessError } = await supabase
-        .from('businesses')
-        .insert({
-          user_id: authData.user.id,
-          name: data.businessName,
-          category: data.category,
-          city: data.city,
-          address: data.address,
-          phone: data.phone,
-          website: data.website || null,
-          description: data.description || null,
-          logo_url: logoUrl,
-          verified: false,
-        });
-
+      const {
+        error: businessError
+      } = await supabase.from('businesses').insert({
+        user_id: authData.user.id,
+        name: data.businessName,
+        category: data.category,
+        city: data.city,
+        address: data.address,
+        phone: data.phone,
+        website: data.website || null,
+        description: data.description || null,
+        logo_url: logoUrl,
+        verified: false
+      });
       if (businessError) throw businessError;
-
       toast({
         title: "Επιτυχής Εγγραφή!",
-        description: "Η επιχείρησή σας καταχωρήθηκε και εκκρεμεί επαλήθευση.",
+        description: "Η επιχείρησή σας καταχωρήθηκε και εκκρεμεί επαλήθευση."
       });
-
       navigate("/dashboard-business");
     } catch (error: any) {
       toast({
         title: "Σφάλμα",
         description: error.message || "Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  return (
-    <div className="min-h-screen gradient-hero py-12 px-4 sm:px-6 lg:px-8">
+  return <div className="min-h-screen gradient-hero py-12 px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
           <div className="w-full h-full rounded-full bg-gradient-glow" />
@@ -156,23 +140,19 @@ const SignupBusiness = () => {
       </div>
 
       <div className="max-w-4xl mx-auto relative z-10">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/signup")}
-          className="text-white hover:text-seafoam mb-6"
-        >
+        <Button variant="ghost" onClick={() => navigate("/signup")} className="text-white hover:text-seafoam mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Πίσω στην Εγγραφή Χρήστη
         </Button>
 
         {/* Why Join ΦΟΜΟ Section */}
         <div className="bg-white/95 backdrop-blur rounded-3xl shadow-elegant p-8 mb-8">
-          <h2 className="font-cinzel text-2xl font-bold text-midnight mb-6 text-center">
+          <h2 className="font-cinzel text-2xl text-midnight mb-6 text-center font-bold text-[#235674]">
             Τι προσφέρει το ΦΟΜΟ στις επιχειρήσεις:
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4 bg-[#235674]">
                 <Target className="h-6 w-6 text-white" />
               </div>
               <p className="font-inter text-sm text-muted-foreground">
@@ -180,7 +160,7 @@ const SignupBusiness = () => {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4 bg-[#235674]">
                 <MessageCircle className="h-6 w-6 text-white" />
               </div>
               <p className="font-inter text-sm text-muted-foreground">
@@ -188,7 +168,7 @@ const SignupBusiness = () => {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4 bg-[#225573]">
                 <Ticket className="h-6 w-6 text-white" />
               </div>
               <p className="font-inter text-sm text-sm text-muted-foreground">
@@ -201,7 +181,7 @@ const SignupBusiness = () => {
         {/* Main Form */}
         <div className="bg-white rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
-            <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2">
+            <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2 text-[#235674]">
               Εγγραφή Επιχείρησης στο ΦΟΜΟ
             </h1>
             <p className="font-inter text-lg text-muted-foreground">
@@ -213,152 +193,80 @@ const SignupBusiness = () => {
             {/* Business Name */}
             <div>
               <Label htmlFor="businessName">Όνομα Επιχείρησης *</Label>
-              <Input
-                id="businessName"
-                {...register("businessName")}
-                className="mt-1"
-                placeholder="π.χ. Καφέ Παραλία"
-              />
-              {errors.businessName && (
-                <p className="text-sm text-destructive mt-1">{errors.businessName.message}</p>
-              )}
+              <Input id="businessName" {...register("businessName")} className="mt-1" placeholder="π.χ. Καφέ Παραλία" />
+              {errors.businessName && <p className="text-sm text-destructive mt-1">{errors.businessName.message}</p>}
             </div>
 
             {/* Category */}
             <div>
               <Label>Κατηγορία *</Label>
               <div className="grid grid-cols-2 gap-3 mt-2">
-                {categories.map((cat) => (
-                  <div key={cat} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={cat}
-                      checked={selectedCategories.includes(cat)}
-                      onCheckedChange={(checked) => handleCategoryChange(cat, checked as boolean)}
-                    />
+                {categories.map(cat => <div key={cat} className="flex items-center space-x-2">
+                    <Checkbox id={cat} checked={selectedCategories.includes(cat)} onCheckedChange={checked => handleCategoryChange(cat, checked as boolean)} />
                     <label htmlFor={cat} className="text-sm cursor-pointer">
                       {cat}
                     </label>
-                  </div>
-                ))}
+                  </div>)}
               </div>
-              {errors.category && (
-                <p className="text-sm text-destructive mt-1">{errors.category.message}</p>
-              )}
+              {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
             </div>
 
             {/* City */}
             <div>
               <Label htmlFor="city">Τοποθεσία / Πόλη *</Label>
-              <select
-                id="city"
-                {...register("city")}
-                className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
+              <select id="city" {...register("city")} className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm">
                 <option value="">Επιλέξτε πόλη</option>
-                {cities.map((city) => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
+                {cities.map(city => <option key={city} value={city}>{city}</option>)}
               </select>
-              {errors.city && (
-                <p className="text-sm text-destructive mt-1">{errors.city.message}</p>
-              )}
+              {errors.city && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
             </div>
 
             {/* Address */}
             <div>
               <Label htmlFor="address">Διεύθυνση *</Label>
-              <Input
-                id="address"
-                {...register("address")}
-                className="mt-1"
-                placeholder="π.χ. Λεωφόρος Μακαρίου 25"
-              />
-              {errors.address && (
-                <p className="text-sm text-destructive mt-1">{errors.address.message}</p>
-              )}
+              <Input id="address" {...register("address")} className="mt-1" placeholder="π.χ. Λεωφόρος Μακαρίου 25" />
+              {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
             </div>
 
             {/* Email & Phone */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="email">Email Επιχείρησης *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  {...register("email")}
-                  className="mt-1"
-                  placeholder="info@business.com"
-                />
-                {errors.email && (
-                  <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
-                )}
+                <Input id="email" type="email" {...register("email")} className="mt-1" placeholder="info@business.com" />
+                {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
               </div>
               <div>
                 <Label htmlFor="phone">Τηλέφωνο *</Label>
-                <Input
-                  id="phone"
-                  {...register("phone")}
-                  className="mt-1"
-                  placeholder="99123456"
-                />
-                {errors.phone && (
-                  <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>
-                )}
+                <Input id="phone" {...register("phone")} className="mt-1" placeholder="99123456" />
+                {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
               </div>
             </div>
 
             {/* Website */}
             <div>
               <Label htmlFor="website">Ιστοσελίδα</Label>
-              <Input
-                id="website"
-                {...register("website")}
-                className="mt-1"
-                placeholder="https://www.business.com"
-              />
+              <Input id="website" {...register("website")} className="mt-1" placeholder="https://www.business.com" />
             </div>
 
             {/* Password */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="password">Κωδικός Πρόσβασης *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                  className="mt-1"
-                />
-                {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
-                )}
+                <Input id="password" type="password" {...register("password")} className="mt-1" />
+                {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
               </div>
               <div>
                 <Label htmlFor="confirmPassword">Επιβεβαίωση Κωδικού *</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  {...register("confirmPassword")}
-                  className="mt-1"
-                />
-                {errors.confirmPassword && (
-                  <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
-                )}
+                <Input id="confirmPassword" type="password" {...register("confirmPassword")} className="mt-1" />
+                {errors.confirmPassword && <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>}
               </div>
             </div>
 
             {/* Description */}
             <div>
               <Label htmlFor="description">Περιγραφή (μέχρι 300 χαρακτήρες)</Label>
-              <Textarea
-                id="description"
-                {...register("description")}
-                className="mt-1"
-                rows={4}
-                placeholder="Μια σύντομη περιγραφή της επιχείρησής σας..."
-              />
-              {errors.description && (
-                <p className="text-sm text-destructive mt-1">{errors.description.message}</p>
-              )}
+              <Textarea id="description" {...register("description")} className="mt-1" rows={4} placeholder="Μια σύντομη περιγραφή της επιχείρησής σας..." />
+              {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
             </div>
 
             {/* Logo Upload */}
@@ -370,50 +278,33 @@ const SignupBusiness = () => {
                     <Upload className="h-4 w-4" />
                     <span className="text-sm">{logoFile ? logoFile.name : "Επιλέξτε αρχείο"}</span>
                   </div>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file && file.size <= 2 * 1024 * 1024) {
-                        setLogoFile(file);
-                      } else if (file) {
-                        toast({
-                          title: "Σφάλμα",
-                          description: "Το αρχείο δεν μπορεί να υπερβαίνει τα 2 MB",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  />
+                  <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file && file.size <= 2 * 1024 * 1024) {
+                    setLogoFile(file);
+                  } else if (file) {
+                    toast({
+                      title: "Σφάλμα",
+                      description: "Το αρχείο δεν μπορεί να υπερβαίνει τα 2 MB",
+                      variant: "destructive"
+                    });
+                  }
+                }} />
                 </label>
               </div>
             </div>
 
             {/* Terms */}
             <div className="flex items-start space-x-2">
-              <Checkbox
-                id="terms"
-                checked={watch("termsAccepted")}
-                onCheckedChange={(checked) => setValue("termsAccepted", checked as boolean)}
-              />
+              <Checkbox id="terms" checked={watch("termsAccepted")} onCheckedChange={checked => setValue("termsAccepted", checked as boolean)} />
               <label htmlFor="terms" className="text-sm cursor-pointer">
                 Συμφωνώ με τους όρους χρήσης και την πολιτική απορρήτου *
               </label>
             </div>
-            {errors.termsAccepted && (
-              <p className="text-sm text-destructive">{errors.termsAccepted.message}</p>
-            )}
+            {errors.termsAccepted && <p className="text-sm text-destructive">{errors.termsAccepted.message}</p>}
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="gradient"
-              size="lg"
-              className="w-full"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Υποβολή..." : "Αποστολή για Επαλήθευση"}
             </Button>
           </form>
@@ -435,8 +326,6 @@ const SignupBusiness = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default SignupBusiness;
