@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,6 +37,7 @@ const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφο
 const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
 const Signup = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const form = useForm<SignupFormValues>({
@@ -54,6 +55,8 @@ const Signup = () => {
   const onSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     try {
+      const redirectUrl = searchParams.get('redirect') || '/feed';
+      
       const {
         data,
         error
@@ -61,7 +64,7 @@ const Signup = () => {
         email: values.email,
         password: values.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/feed`,
+          emailRedirectTo: `${window.location.origin}${redirectUrl}`,
           data: {
             first_name: values.firstName,
             last_name: values.lastName,
@@ -81,7 +84,7 @@ const Signup = () => {
       }
       if (data.user) {
         toast.success("Επιτυχής εγγραφή! Καλώς ήρθες στο ΦΟΜΟ!");
-        navigate("/feed");
+        navigate(redirectUrl);
       }
     } catch (error) {
       toast.error("Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.");

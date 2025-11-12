@@ -93,10 +93,10 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <NavLink text={t.events} onClick={() => navigate("/feed")} scrolled={scrolled} />
+            <NavLink text={t.events} onClick={() => navigate("/ekdiloseis")} scrolled={scrolled} />
             <NavLink text={t.map} onClick={() => {}} scrolled={scrolled} />
             <NavLink text={t.discounts} onClick={() => {}} scrolled={scrolled} />
-            <NavLink text={t.login} onClick={() => {}} scrolled={scrolled} />
+            <NavLink text={t.login} onClick={() => navigate("/login")} scrolled={scrolled} />
 
             {/* Language Toggle */}
             <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`}>
@@ -130,10 +130,16 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="font-medium cursor-pointer">
+                <DropdownMenuItem 
+                  className="font-medium cursor-pointer"
+                  onClick={() => navigate("/signup")}
+                >
                   {t.joinFomo}
                 </DropdownMenuItem>
-                <DropdownMenuItem className="font-medium cursor-pointer text-secondary">
+                <DropdownMenuItem 
+                  className="font-medium cursor-pointer text-secondary"
+                  onClick={() => navigate("/signup-business")}
+                >
                   {t.forBusinesses}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -176,7 +182,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                 <div className="flex flex-col gap-6 mt-8">
                   <button
                     onClick={() => {
-                      navigate("/feed");
+                      navigate("/ekdiloseis");
                       setMobileOpen(false);
                     }}
                     className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
@@ -189,14 +195,36 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                   <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                     {t.discounts}
                   </button>
-                  <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
+                  <button 
+                    onClick={() => {
+                      navigate("/login");
+                      setMobileOpen(false);
+                    }}
+                    className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
+                  >
                     {t.login}
                   </button>
                   <div className="pt-4 border-t space-y-3">
-                    <Button variant="gradient" className="w-full" size="lg">
+                    <Button 
+                      variant="gradient" 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => {
+                        navigate("/signup");
+                        setMobileOpen(false);
+                      }}
+                    >
                       {t.joinFomo}
                     </Button>
-                    <Button variant="premium" className="w-full" size="lg">
+                    <Button 
+                      variant="premium" 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => {
+                        navigate("/signup-business");
+                        setMobileOpen(false);
+                      }}
+                    >
                       {t.forBusinesses}
                     </Button>
                   </div>
