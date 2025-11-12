@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EventCard from "@/components/EventCard";
+import EventCardSkeleton from "@/components/EventCardSkeleton";
 import CategoryFilter from "@/components/CategoryFilter";
 import SignupModal from "@/components/SignupModal";
 import { Loader2 } from "lucide-react";
@@ -138,36 +139,46 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
       transition={{ duration: 1, ease: "easeOut" }}
       className="relative"
     >
-      {/* Preview Events - First 3 visible, rest blurred */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      {/* Preview Events - First 4 visible, rest blurred */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, duration: 0.6 }}
-            className={`rounded-2xl overflow-hidden shadow-card bg-card ${
-              i > 3 ? 'blur-sm opacity-70 pointer-events-none' : ''
+            className={`rounded-2xl overflow-hidden shadow-card bg-card transition-all duration-300 ${
+              i > 4 ? 'blur-md opacity-60 pointer-events-none scale-95' : ''
             }`}
+            style={{
+              filter: i > 4 ? 'blur(4px)' : 'none',
+            }}
           >
             <EventCard 
               language={language} 
               event={{
                 id: `mock-${i}`,
-                title: "Sunday Brunch at Lost + Found",
+                title: i === 1 ? "Sunday Brunch at Lost + Found" : 
+                       i === 2 ? "Live Jazz Night" :
+                       i === 3 ? "Beach Yoga Session" :
+                       i === 4 ? "Art Exhibition Opening" :
+                       "Exclusive Event",
                 location: "Nicosia • 2.3 km away",
                 start_at: new Date().toISOString(),
                 end_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
                 category: ["Café"],
-                price_tier: "free",
-                interested_count: 42,
-                going_count: 18,
+                price_tier: i % 2 === 0 ? "free" : "€€",
+                interested_count: 42 + i * 5,
+                going_count: 18 + i * 3,
                 user_status: null,
               }}
               user={null}
             />
           </motion.div>
         ))}
+        
+        {/* Gradient overlay on blurred cards */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-background/80" />
       </div>
 
       {/* Signup CTA Overlay */}
@@ -215,15 +226,21 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
 const FullExploreView = ({ language }: { language: "el" | "en" }) => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const [personalizedEvents, setPersonalizedEvents] = useState<any[]>([]);
+  const [otherEvents, setOtherEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   
   const text = {
     el: {
       allEvents: "Όλες οι Εκδηλώσεις",
+      forYou: "Προτεινόμενα για Εσένα",
+      moreEvents: "Περισσότερες Εκδηλώσεις",
     },
     en: {
       allEvents: "All Events",
+      forYou: "Recommended for You",
+      moreEvents: "More Events",
     },
   };
 
@@ -239,7 +256,7 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
 
   useEffect(() => {
     fetchEvents();
-  }, [selectedCategories]);
+  }, [selectedCategories, user]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -279,6 +296,26 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
           })
         );
 
+        // Get user preferences and personalize
+        const userPreferences = user?.user_metadata?.preferences || [];
+        
+        if (userPreferences.length > 0) {
+          // Split events into personalized and others
+          const personalized = eventsWithStats.filter(event =>
+            event.category?.some((cat: string) => userPreferences.includes(cat.toLowerCase()))
+          );
+          const others = eventsWithStats.filter(event =>
+            !event.category?.some((cat: string) => userPreferences.includes(cat.toLowerCase()))
+          );
+          
+          setPersonalizedEvents(personalized);
+          setOtherEvents(others);
+        } else {
+          // No preferences, show all as regular events
+          setPersonalizedEvents([]);
+          setOtherEvents(eventsWithStats);
+        }
+
         setEvents(eventsWithStats);
       }
     } catch (error) {
@@ -316,24 +353,85 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
       </motion.div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event, i) => (
-            <motion.div
-              key={event.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08, duration: 0.6 }}
-              whileHover={{ scale: 1.03, y: -4 }}
-              className="rounded-2xl shadow-card hover:shadow-hover transition-all bg-card"
-            >
-              <EventCard language={language} event={event} user={user} />
-            </motion.div>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <EventCardSkeleton key={i} />
           ))}
         </div>
+      ) : (
+        <>
+          {/* Personalized Events Section */}
+          {personalizedEvents.length > 0 && (
+            <div className="mb-12">
+              <motion.div 
+                className="mb-6 flex items-center gap-3"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="h-8 w-1 bg-gradient-brand rounded-full" />
+                <h2 className="text-2xl font-bold text-foreground font-cinzel">
+                  {t.forYou}
+                </h2>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {personalizedEvents.map((event, i) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08, duration: 0.6 }}
+                    whileHover={{ scale: 1.03, y: -4 }}
+                    className="rounded-2xl shadow-card hover:shadow-hover transition-all bg-card"
+                  >
+                    <EventCard language={language} event={event} user={user} />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Other Events Section */}
+          {otherEvents.length > 0 && (
+            <div>
+              <motion.div 
+                className="mb-6"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <h2 className="text-2xl font-bold text-foreground font-cinzel">
+                  {personalizedEvents.length > 0 ? t.moreEvents : t.allEvents}
+                </h2>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {otherEvents.map((event, i) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08, duration: 0.6 }}
+                    whileHover={{ scale: 1.03, y: -4 }}
+                    className="rounded-2xl shadow-card hover:shadow-hover transition-all bg-card"
+                  >
+                    <EventCard language={language} event={event} user={user} />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No events message */}
+          {events.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground text-lg">
+                {language === "el" ? "Δεν βρέθηκαν εκδηλώσεις" : "No events found"}
+              </p>
+            </div>
+          )}
+        </>
       )}
     </motion.div>
   );
