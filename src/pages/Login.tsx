@@ -47,17 +47,17 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Check if user is admin
+        // Check user role
         const { data: profile } = await supabase
           .from("profiles")
-          .select("is_admin")
+          .select("role")
           .eq("id", data.user.id)
           .single();
 
-        toast.success(profile?.is_admin ? "Καλωσόρισες, Διαχειριστή του ΦΟΜΟ!" : "Επιτυχής σύνδεση!");
+        toast.success(profile?.role === 'admin' ? "Καλωσόρισες, Διαχειριστή του ΦΟΜΟ!" : "Επιτυχής σύνδεση!");
         
         // Redirect based on role
-        if (profile?.is_admin) {
+        if (profile?.role === 'admin') {
           navigate("/admin/verification");
         } else {
           navigate("/feed");
