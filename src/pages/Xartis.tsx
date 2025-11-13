@@ -427,75 +427,7 @@ const Xartis = () => {
                 position={event.position}
                 icon={createCategoryIcon(event.category)}
               >
-                <Popup>
-                  <div className="w-64 p-2">
-                    {event.image && (
-                      <img 
-                        src={event.image} 
-                        alt={event.title}
-                        className="w-full h-32 object-cover rounded-lg mb-3"
-                      />
-                    )}
-                    <h3 className="font-poppins font-bold text-lg text-foreground mb-1">
-                      {event.title}
-                    </h3>
-                    <Badge variant="secondary" className="mb-2">
-                      {event.category[0] && categories.find(c => c.id === event.category[0])?.label}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      📍 {event.location}, {event.city}
-                    </p>
-                    
-                    <div className="flex gap-2 mb-3 text-sm text-muted-foreground">
-                      <span>👥 {event.interested} {language === "el" ? "ενδιαφέρονται" : "interested"}</span>
-                      <span>✓ {event.going} {language === "el" ? "πάνε" : "going"}</span>
-                    </div>
-
-                    <div className="flex gap-2">
-                      {user ? (
-                        <>
-                          <Button 
-                            variant={userRsvps[event.id] === "interested" ? "default" : "outline"}
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => handleRsvp(event.id, "interested")}
-                          >
-                            {t.interested}
-                          </Button>
-                          <Button 
-                            variant={userRsvps[event.id] === "going" ? "default" : "outline"}
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => handleRsvp(event.id, "going")}
-                          >
-                            {t.going}
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 cursor-not-allowed opacity-50"
-                            disabled
-                          >
-                            <Lock className="w-3 h-3 mr-1" />
-                            {t.interested}
-                          </Button>
-                          <Button 
-                            variant="outline"
-                            size="sm" 
-                            className="flex-1 cursor-not-allowed opacity-50"
-                            disabled
-                          >
-                            <Lock className="w-3 h-3 mr-1" />
-                            {t.going}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </Popup>
+                <Popup><div className="w-64 p-2">{event.image && <img src={event.image} alt={event.title} className="w-full h-32 object-cover rounded-lg mb-3" />}<h3 className="font-poppins font-bold text-lg text-foreground mb-1">{event.title}</h3><Badge variant="secondary" className="mb-2">{event.category[0] && categories.find(c => c.id === event.category[0])?.label}</Badge><p className="text-sm text-muted-foreground mb-3">📍 {event.location}, {event.city}</p><div className="flex gap-2 mb-3 text-sm text-muted-foreground"><span>👥 {event.interested} {language === "el" ? "ενδιαφέρονται" : "interested"}</span><span>✓ {event.going} {language === "el" ? "πάνε" : "going"}</span></div><div className="flex gap-2">{user ? <><Button variant={userRsvps[event.id] === "interested" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => handleRsvp(event.id, "interested")}>{t.interested}</Button><Button variant={userRsvps[event.id] === "going" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => handleRsvp(event.id, "going")}>{t.going}</Button></> : <><Button variant="outline" size="sm" className="flex-1 cursor-not-allowed opacity-50" disabled><Lock className="w-3 h-3 mr-1" />{t.interested}</Button><Button variant="outline" size="sm" className="flex-1 cursor-not-allowed opacity-50" disabled><Lock className="w-3 h-3 mr-1" />{t.going}</Button></>}</div></div></Popup>
               </Marker>
             ))}
           </MapContainer>
