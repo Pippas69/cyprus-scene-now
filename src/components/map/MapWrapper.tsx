@@ -1,5 +1,3 @@
-"use client";
-
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
