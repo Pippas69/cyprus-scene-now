@@ -1,17 +1,19 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-// Correct path — same folder
-const RealMap = lazy(() => import("./RealMap"));
-
 export default function MapWrapper() {
-  const [isClient, setIsClient] = useState(false);
+  const [Map, setMap] = useState<any>(null);
 
   useEffect(() => {
-    setIsClient(true);
+    // Only import on client side
+    if (typeof window !== 'undefined') {
+      import('./RealMap').then((module) => {
+        setMap(() => module.default);
+      });
+    }
   }, []);
 
-  if (!isClient) {
+  if (!Map) {
     return (
       <div className="h-[70vh] w-full flex items-center justify-center">
         <Loader2 className="animate-spin h-8 w-8 text-primary" />
@@ -19,15 +21,5 @@ export default function MapWrapper() {
     );
   }
 
-  return (
-    <Suspense
-      fallback={
-        <div className="h-[70vh] w-full flex items-center justify-center">
-          <Loader2 className="animate-spin h-8 w-8 text-primary" />
-        </div>
-      }
-    >
-      <RealMap />
-    </Suspense>
-  );
+  return <Map />;
 }
