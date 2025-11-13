@@ -281,8 +281,6 @@ const Xartis = () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          
-          {/* Heatmap placeholder circles */}
           {placeholderEvents.map((event) => (
             <Circle
               key={`heat-${event.id}`}
@@ -297,15 +295,13 @@ const Xartis = () => {
               }}
             />
           ))}
-
-          {/* Event markers */}
           {placeholderEvents.map((event) => (
             <Marker
               key={event.id}
               position={event.position}
               icon={createCategoryIcon(event.category)}
             >
-              <Popup className="custom-popup">
+              <Popup>
                 <div className="w-64 p-2">
                   <img 
                     src={event.image} 
@@ -321,12 +317,10 @@ const Xartis = () => {
                   <p className="text-sm text-muted-foreground mb-3">
                     📍 {event.location}, {event.city}
                   </p>
-                  
                   <div className="flex gap-2 mb-3 text-sm text-muted-foreground">
                     <span>👥 {event.interested} ενδιαφέρονται</span>
                     <span>✓ {event.going} πάνε</span>
                   </div>
-
                   <div className="flex gap-2">
                     <Button 
                       variant="outline" 
