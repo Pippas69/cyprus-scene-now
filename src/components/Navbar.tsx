@@ -94,7 +94,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <NavLink text={t.events} onClick={() => navigate("/ekdiloseis")} scrolled={scrolled} />
-            <NavLink text={t.map} onClick={() => {}} scrolled={scrolled} />
+            <NavLink text={t.map} onClick={() => navigate("/xartis")} scrolled={scrolled} />
             <NavLink text={t.discounts} onClick={() => {}} scrolled={scrolled} />
             <NavLink text={t.login} onClick={() => navigate("/login")} scrolled={scrolled} />
 

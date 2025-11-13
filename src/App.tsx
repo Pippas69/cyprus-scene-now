@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
 import Ekdiloseis from "./pages/Ekdiloseis";
+import Xartis from "./pages/Xartis";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import SignupBusiness from "./pages/SignupBusiness";
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/ekdiloseis" element={<Ekdiloseis />} />
+          <Route path="/xartis" element={<Xartis />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup-business" element={<SignupBusiness />} />
