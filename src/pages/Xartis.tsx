@@ -1,10 +1,9 @@
-import { useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Coffee, Moon, Palette, Dumbbell, Users, Briefcase, Sparkles, Plane } from "lucide-react";
-
-const MapComponent = lazy(() => import("@/components/MapComponent"));
+import MapWrapper from "@/components/map/MapWrapper";
 
 const categories = [
   { id: "cafe", label: "Καφέ & Εστιατόρια", icon: Coffee },
@@ -136,15 +135,7 @@ const Xartis = () => {
       {/* Interactive Map */}
       <main className="flex-1">
         <div className="container mx-auto px-4 py-6">
-          <Suspense
-            fallback={
-              <div className="w-full h-[70vh] rounded-2xl bg-muted flex items-center justify-center">
-                <p className="text-muted-foreground">Loading map...</p>
-              </div>
-            }
-          >
-            <MapComponent />
-          </Suspense>
+          <MapWrapper />
         </div>
       </main>
 
