@@ -3,8 +3,14 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Loader2 } from 'lucide-react';
 import { MAPBOX_CONFIG } from '@/config/mapbox';
+import { locations } from '@/data/locations';
 
-export default function RealMap() {
+interface RealMapProps {
+  city: string;
+  neighborhood: string;
+}
+
+export default function RealMap({ city, neighborhood }: RealMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -67,6 +73,33 @@ export default function RealMap() {
       map.current?.remove();
     };
   }, [isClient]);
+
+  // Auto-zoom to selected city/neighborhood
+  useEffect(() => {
+    if (!map.current || !city) return;
+
+    const cityData = locations[city];
+    if (!cityData) return;
+
+    // If neighborhood is selected
+    if (neighborhood && cityData.neighborhoods?.[neighborhood]) {
+      map.current.flyTo({
+        center: cityData.neighborhoods[neighborhood],
+        zoom: 15,
+        essential: true,
+        duration: 1500
+      });
+      return;
+    }
+
+    // If only city selected
+    map.current.flyTo({
+      center: cityData.center,
+      zoom: cityData.zoom,
+      essential: true,
+      duration: 1500
+    });
+  }, [city, neighborhood]);
 
   if (!isClient) {
     return (
