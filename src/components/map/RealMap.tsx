@@ -107,8 +107,7 @@ export default function RealMap({ city, neighborhood }: RealMapProps) {
   useEffect(() => {
     if (!map.current) return;
 
-    // Wait for map to load
-    map.current.on('load', () => {
+    const addMarkers = () => {
       if (!map.current) return;
 
       // Add markers for each event
@@ -199,7 +198,20 @@ export default function RealMap({ city, neighborhood }: RealMapProps) {
           .setPopup(popup)
           .addTo(map.current);
       });
-    });
+    };
+
+    // Check if map is already loaded
+    if (map.current.isStyleLoaded()) {
+      addMarkers();
+    } else {
+      // Wait for map to load
+      map.current.on('load', addMarkers);
+    }
+
+    return () => {
+      // Cleanup: remove event listener
+      map.current?.off('load', addMarkers);
+    };
   }, []);
 
   if (!isClient) {
