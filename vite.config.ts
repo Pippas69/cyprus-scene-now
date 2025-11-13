@@ -14,10 +14,8 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    dedupe: ['react', 'react-dom', 'react-leaflet', '@react-leaflet/core'],
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', '@tanstack/react-query', 'leaflet'],
-    exclude: ['react-leaflet'],
+    include: ['react', 'react-dom', '@tanstack/react-query'],
   },
 }));

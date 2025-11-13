@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Coffee, Moon, Palette, Dumbbell, Users, Briefcase, Sparkles, Plane } from "lucide-react";
-import MapWrapper from "@/components/map/MapWrapper";
+import RealMap from "@/components/map/RealMap";
 
 const categories = [
   { id: "cafe", label: "Καφέ & Εστιατόρια", icon: Coffee },
@@ -135,7 +135,7 @@ const Xartis = () => {
       {/* Interactive Map */}
       <main className="flex-1">
         <div className="container mx-auto px-4 py-6">
-          <MapWrapper />
+          <RealMap />
         </div>
       </main>
 
