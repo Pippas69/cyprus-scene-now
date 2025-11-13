@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Coffee, Moon, Palette, Dumbbell, Users, Briefcase, Sparkles, Plane } from "lucide-react";
+
+const MapComponent = lazy(() => import("@/components/MapComponent"));
 
 const categories = [
   { id: "cafe", label: "Καφέ & Εστιατόρια", icon: Coffee },
@@ -131,17 +133,18 @@ const Xartis = () => {
         </div>
       </div>
 
-      {/* Map placeholder */}
+      {/* Interactive Map */}
       <main className="flex-1">
         <div className="container mx-auto px-4 py-6">
-          <div className="w-full h-[70vh] rounded-2xl bg-gradient-to-br from-cyan-600 via-sky-500 to-emerald-500 flex items-center justify-center text-center text-white shadow-lg">
-            <div>
-              <p className="text-2xl font-semibold mb-2">Χάρτης εκδηλώσεων – Έρχεται σύντομα</p>
-              <p className="text-sm opacity-90">
-                Θα βλέπεις σε πραγματικό χρόνο τα hotspots της Κύπρου, ανά πόλη, περιοχή και κατηγορία.
-              </p>
-            </div>
-          </div>
+          <Suspense
+            fallback={
+              <div className="w-full h-[70vh] rounded-2xl bg-muted flex items-center justify-center">
+                <p className="text-muted-foreground">Loading map...</p>
+              </div>
+            }
+          >
+            <MapComponent />
+          </Suspense>
         </div>
       </main>
 
