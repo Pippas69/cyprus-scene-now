@@ -1,4 +1,6 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+"use client";
+
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 const RealMap = lazy(() => import("./RealMap"));
@@ -6,14 +8,14 @@ const RealMap = lazy(() => import("./RealMap"));
 export default function MapWrapper() {
   const [isClient, setIsClient] = useState(false);
 
-  // Prevent SSR errors: only render map on the client
+  // Prevent SSR crash
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   if (!isClient) {
     return (
-      <div className="h-[60vh] w-full flex items-center justify-center">
+      <div className="h-[70vh] w-full flex items-center justify-center">
         <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
@@ -22,7 +24,7 @@ export default function MapWrapper() {
   return (
     <Suspense
       fallback={
-        <div className="h-[60vh] w-full flex items-center justify-center">
+        <div className="h-[70vh] w-full flex items-center justify-center">
           <Loader2 className="animate-spin h-8 w-8 text-primary" />
         </div>
       }
@@ -31,3 +33,5 @@ export default function MapWrapper() {
     </Suspense>
   );
 }
+
+
