@@ -111,6 +111,32 @@ All colors MUST be HSL.
     font-family: 'Inter', sans-serif;
   }
 
+  /* Mapbox popup styling */
+  .mapboxgl-popup-content {
+    background-color: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .mapboxgl-popup-close-button {
+    color: hsl(var(--foreground));
+    font-size: 20px;
+    padding: 4px 8px;
+    right: 8px;
+    top: 8px;
+  }
+
+  .mapboxgl-popup-close-button:hover {
+    background-color: hsl(var(--muted));
+    border-radius: 4px;
+  }
+
+  .mapboxgl-popup-tip {
+    border-top-color: hsl(var(--background));
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
     @apply font-bold;
