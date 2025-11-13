@@ -3,8 +3,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-// FIXED PATH
-const RealMap = lazy(() => import("../RealMap"));
+// Correct path — same folder
+const RealMap = lazy(() => import("./RealMap"));
 
 export default function MapWrapper() {
   const [isClient, setIsClient] = useState(false);
@@ -33,6 +33,3 @@ export default function MapWrapper() {
     </Suspense>
   );
 }
-
-
-
