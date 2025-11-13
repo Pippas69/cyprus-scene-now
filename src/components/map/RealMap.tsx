@@ -1,13 +1,19 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { Loader2 } from 'lucide-react';
 
 export default function RealMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient || !mapContainer.current) return;
 
     // Initialize map centered on Cyprus
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
@@ -47,7 +53,15 @@ export default function RealMap() {
     return () => {
       map.current?.remove();
     };
-  }, []);
+  }, [isClient]);
+
+  if (!isClient) {
+    return (
+      <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-[70vh]">
