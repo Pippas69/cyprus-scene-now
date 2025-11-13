@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Loader2 } from 'lucide-react';
-
-// Mapbox public token - this is safe to expose in frontend code
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN || '';
+import { MAPBOX_CONFIG } from '@/config/mapbox';
 
 export default function RealMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -19,47 +17,50 @@ export default function RealMap() {
   useEffect(() => {
     if (!isClient || !mapContainer.current) return;
 
-    // Initialize map centered on Cyprus
-    const token = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
-    console.log('Mapbox token available:', !!token);
-    
-    if (!token) {
-      console.error('VITE_MAPBOX_PUBLIC_TOKEN is not defined');
+    // Check if token is configured
+    if (!MAPBOX_CONFIG.publicToken || MAPBOX_CONFIG.publicToken === 'PASTE_YOUR_MAPBOX_PUBLIC_TOKEN_HERE') {
+      setError('Please add your Mapbox token to src/config/mapbox.ts');
       return;
     }
+
+    try {
+      // Initialize map centered on Cyprus
+      mapboxgl.accessToken = MAPBOX_CONFIG.publicToken;
     
-    mapboxgl.accessToken = token;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [33.4299, 35.1264], // Cyprus coordinates
-      zoom: 9,
-      pitch: 45,
-    });
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: MAPBOX_CONFIG.mapStyle,
+        center: MAPBOX_CONFIG.defaultCenter,
+        zoom: MAPBOX_CONFIG.defaultZoom,
+        pitch: MAPBOX_CONFIG.defaultPitch,
+      });
 
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
+      // Add navigation controls
+      map.current.addControl(
+        new mapboxgl.NavigationControl({
+          visualizePitch: true,
+        }),
+        'top-right'
+      );
 
-    // Add fullscreen control
-    map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+      // Add fullscreen control
+      map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
-    // Add geolocate control
-    map.current.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true
-        },
-        trackUserLocation: true,
-        showUserHeading: true
-      }),
-      'top-right'
-    );
+      // Add geolocate control
+      map.current.addControl(
+        new mapboxgl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true
+          },
+          trackUserLocation: true,
+          showUserHeading: true
+        }),
+        'top-right'
+      );
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setError('Failed to initialize map. Please check your token.');
+    }
 
     // Cleanup
     return () => {
@@ -75,12 +76,16 @@ export default function RealMap() {
     );
   }
 
-  // Check if token is available
-  if (!import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN) {
+  // Show error if token is not configured
+  if (error) {
     return (
       <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
-        <div className="text-center">
-          <p className="text-foreground/60">Map token not configured. Please refresh the page.</p>
+        <div className="text-center p-6 max-w-md">
+          <p className="text-foreground/80 font-medium mb-2">Map Configuration Required</p>
+          <p className="text-sm text-foreground/60 mb-4">{error}</p>
+          <p className="text-xs text-foreground/40">
+            Get your free token at: <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">mapbox.com</a>
+          </p>
         </div>
       </div>
     );
