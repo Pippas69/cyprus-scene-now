@@ -16,7 +16,15 @@ export default function RealMap() {
     if (!isClient || !mapContainer.current) return;
 
     // Initialize map centered on Cyprus
-    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
+    const token = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
+    console.log('Mapbox token available:', !!token);
+    
+    if (!token) {
+      console.error('VITE_MAPBOX_PUBLIC_TOKEN is not defined');
+      return;
+    }
+    
+    mapboxgl.accessToken = token;
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -59,6 +67,17 @@ export default function RealMap() {
     return (
       <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
         <Loader2 className="animate-spin h-8 w-8 text-primary" />
+      </div>
+    );
+  }
+
+  // Check if token is available
+  if (!import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN) {
+    return (
+      <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
+        <div className="text-center">
+          <p className="text-foreground/60">Map token not configured. Please refresh the page.</p>
+        </div>
       </div>
     );
   }
