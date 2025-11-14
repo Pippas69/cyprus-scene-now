@@ -144,37 +144,22 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
         'top-right'
       );
 
-      // Filter out specific POI types
+      // Hide ALL default Mapbox POIs - only show business event markers
       map.current.on('load', () => {
         if (!map.current) return;
 
-        const classesToHide = [
-          "church",
-          "cemetery",
-          "grave_yard",
-          "bank",
-          "school",
-          "college",
-          "kindergarten",
-          "university",
-          "store",
-          "grocery",
-          "supermarket",
-          "gift_shop",
-          "department_store",
-          "police",
-          "hospital"
+        // Hide all POI label layers completely
+        const poiLayers = [
+          "poi-label",
+          "poi-label-s", 
+          "poi-label-md", 
+          "poi-label-lg",
+          "transit-label"
         ];
-
-        const poiLayers = ["poi-label", "poi-label-s", "poi-label-md", "poi-label-lg"];
 
         poiLayers.forEach(layerId => {
           if (map.current?.getLayer(layerId)) {
-            map.current.setFilter(layerId,
-              ["all",
-                ["!in", "class", ...classesToHide]
-              ]
-            );
+            map.current.setLayoutProperty(layerId, 'visibility', 'none');
           }
         });
       });
