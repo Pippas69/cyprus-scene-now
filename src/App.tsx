@@ -9,6 +9,8 @@ import Ekdiloseis from "./pages/Ekdiloseis";
 import Xartis from "./pages/Xartis";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import SignupBusiness from "./pages/SignupBusiness";
 import DashboardBusiness from "./pages/DashboardBusiness";
 import AdminVerification from "./pages/AdminVerification";
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/xartis" element={<Xartis />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/signup-business" element={<SignupBusiness />} />
           <Route path="/dashboard-business" element={<DashboardBusiness />} />
           <Route path="/admin/verification" element={<AdminVerification />} />

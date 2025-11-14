@@ -139,6 +139,16 @@ const Login = () => {
                 {isLoading ? "Σύνδεση..." : "Σύνδεση"}
               </Button>
 
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-sm text-primary hover:underline mb-4"
+                >
+                  Ξέχασες τον κωδικό σου;
+                </button>
+              </div>
+
               <div className="text-center text-sm text-muted-foreground">
                 Δεν έχεις λογαριασμό;{" "}
                 <Link to="/signup" className="text-primary hover:underline font-semibold">
