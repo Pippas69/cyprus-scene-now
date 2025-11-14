@@ -84,7 +84,8 @@ export default function RealMap({ city, neighborhood }: RealMapProps) {
           "supermarket",
           "gift_shop",
           "department_store",
-          "police"
+          "police",
+          "hospital"
         ];
 
         const poiLayers = ["poi-label", "poi-label-s", "poi-label-md", "poi-label-lg"];
