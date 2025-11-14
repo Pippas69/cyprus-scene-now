@@ -14,24 +14,24 @@ const CategoryFilter = ({
 }: CategoryFilterProps) => {
   const categories = {
     el: [
-      { id: "cafes", label: "☕ Καφέ & Εστιατόρια", icon: "☕" },
+      { id: "cafe", label: "☕ Καφέ & Εστιατόρια", icon: "☕" },
       { id: "nightlife", label: "🌃 Νυχτερινή Ζωή", icon: "🌃" },
       { id: "art", label: "🎭 Τέχνη & Πολιτισμός", icon: "🎭" },
       { id: "fitness", label: "💪 Γυμναστική", icon: "💪" },
       { id: "family", label: "🧒 Οικογένεια", icon: "🧒" },
       { id: "business", label: "💼 Business", icon: "💼" },
-      { id: "outdoors", label: "🏖️ Ταξίδια", icon: "🏖️" },
-      { id: "retail", label: "🛍️ Lifestyle", icon: "🛍️" },
+      { id: "travel", label: "🏖️ Ταξίδια", icon: "🏖️" },
+      { id: "lifestyle", label: "🛍️ Lifestyle", icon: "🛍️" },
     ],
     en: [
-      { id: "cafes", label: "☕ Cafés & Restaurants", icon: "☕" },
+      { id: "cafe", label: "☕ Cafés & Restaurants", icon: "☕" },
       { id: "nightlife", label: "🌃 Nightlife", icon: "🌃" },
       { id: "art", label: "🎭 Art & Culture", icon: "🎭" },
       { id: "fitness", label: "💪 Fitness", icon: "💪" },
       { id: "family", label: "🧒 Family", icon: "🧒" },
       { id: "business", label: "💼 Business", icon: "💼" },
-      { id: "outdoors", label: "🏖️ Outdoors", icon: "🏖️" },
-      { id: "retail", label: "🛍️ Retail", icon: "🛍️" },
+      { id: "travel", label: "🏖️ Travel", icon: "🏖️" },
+      { id: "lifestyle", label: "🛍️ Lifestyle", icon: "🛍️" },
     ],
   };
 
