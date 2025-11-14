@@ -5,9 +5,10 @@ import RealMap from './RealMap';
 interface MapWrapperProps {
   city: string;
   neighborhood: string;
+  selectedCategories: string[];
 }
 
-export default function MapWrapper({ city, neighborhood }: MapWrapperProps) {
+export default function MapWrapper({ city, neighborhood, selectedCategories }: MapWrapperProps) {
   return (
     <Suspense
       fallback={
@@ -16,7 +17,7 @@ export default function MapWrapper({ city, neighborhood }: MapWrapperProps) {
         </div>
       }
     >
-      <RealMap city={city} neighborhood={neighborhood} />
+      <RealMap city={city} neighborhood={neighborhood} selectedCategories={selectedCategories} />
     </Suspense>
   );
 }

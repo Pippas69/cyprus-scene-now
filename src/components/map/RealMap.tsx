@@ -10,9 +10,10 @@ import { format } from 'date-fns';
 interface RealMapProps {
   city: string;
   neighborhood: string;
+  selectedCategories: string[];
 }
 
-export default function RealMap({ city, neighborhood }: RealMapProps) {
+export default function RealMap({ city, neighborhood, selectedCategories }: RealMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -66,7 +67,7 @@ export default function RealMap({ city, neighborhood }: RealMapProps) {
         'top-right'
       );
 
-      // Filter out specific POI types
+      // Filter out specific POI types and add GeoJSON source for events
       map.current.on('load', () => {
         if (!map.current) return;
 
@@ -98,6 +99,74 @@ export default function RealMap({ city, neighborhood }: RealMapProps) {
               ]
             );
           }
+        });
+
+        // Add GeoJSON source for events
+        map.current.addSource('events', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [33.364, 35.167] },
+                properties: { 
+                  title: "Sample Cafe",
+                  category: "cafe" 
+                }
+              },
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [33.370, 35.170] },
+                properties: { 
+                  title: "Nightclub Alpha",
+                  category: "nightlife" 
+                }
+              },
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [33.375, 35.165] },
+                properties: { 
+                  title: "Art Gallery",
+                  category: "art" 
+                }
+              },
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [33.368, 35.172] },
+                properties: { 
+                  title: "Gym Center",
+                  category: "fitness" 
+                }
+              },
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [33.372, 35.168] },
+                properties: { 
+                  title: "Family Park",
+                  category: "family" 
+                }
+              }
+            ]
+          }
+        });
+
+        // Create one layer per category
+        const categories = ['cafe', 'nightlife', 'art', 'fitness', 'family', 'business', 'lifestyle', 'travel'];
+        
+        categories.forEach(category => {
+          map.current?.addLayer({
+            id: `events-${category}`,
+            type: 'circle',
+            source: 'events',
+            filter: ['==', ['get', 'category'], category],
+            paint: {
+              'circle-radius': 8,
+              'circle-color': 'hsl(var(--primary))',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff'
+            }
+          });
         });
       });
     } catch (err) {
@@ -137,6 +206,39 @@ export default function RealMap({ city, neighborhood }: RealMapProps) {
       duration: 1500
     });
   }, [city, neighborhood]);
+
+  // Update layer visibility based on selected categories
+  useEffect(() => {
+    if (!map.current) return;
+
+    const categories = ['cafe', 'nightlife', 'art', 'fitness', 'family', 'business', 'lifestyle', 'travel'];
+    
+    const updateVisibility = () => {
+      if (!map.current) return;
+      
+      categories.forEach(category => {
+        const layerId = `events-${category}`;
+        if (map.current?.getLayer(layerId)) {
+          map.current.setLayoutProperty(
+            layerId,
+            'visibility',
+            selectedCategories.length === 0 || selectedCategories.includes(category) ? 'visible' : 'none'
+          );
+        }
+      });
+    };
+
+    // Check if map is already loaded
+    if (map.current.isStyleLoaded()) {
+      updateVisibility();
+    } else {
+      map.current.on('load', updateVisibility);
+    }
+
+    return () => {
+      map.current?.off('load', updateVisibility);
+    };
+  }, [selectedCategories]);
 
   // Add event markers
   useEffect(() => {

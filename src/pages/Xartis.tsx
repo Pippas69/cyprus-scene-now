@@ -135,7 +135,7 @@ const Xartis = () => {
       {/* Interactive Map */}
       <main className="flex-1">
         <div className="container mx-auto px-4 py-6">
-          <MapWrapper city={city} neighborhood={neighborhood} />
+          <MapWrapper city={city} neighborhood={neighborhood} selectedCategories={selectedCategories} />
         </div>
       </main>
 
