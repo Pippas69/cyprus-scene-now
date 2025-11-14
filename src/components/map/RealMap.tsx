@@ -209,35 +209,21 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
 
   // Update layer visibility based on selected categories
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !map.current.isStyleLoaded()) return;
 
     const categories = ['cafe', 'nightlife', 'art', 'fitness', 'family', 'business', 'lifestyle', 'travel'];
     
-    const updateVisibility = () => {
-      if (!map.current) return;
-      
-      categories.forEach(category => {
-        const layerId = `events-${category}`;
-        if (map.current?.getLayer(layerId)) {
-          map.current.setLayoutProperty(
-            layerId,
-            'visibility',
-            selectedCategories.length === 0 || selectedCategories.includes(category) ? 'visible' : 'none'
-          );
-        }
-      });
-    };
-
-    // Check if map is already loaded
-    if (map.current.isStyleLoaded()) {
-      updateVisibility();
-    } else {
-      map.current.on('load', updateVisibility);
-    }
-
-    return () => {
-      map.current?.off('load', updateVisibility);
-    };
+    categories.forEach(category => {
+      const layerId = `events-${category}`;
+      if (map.current?.getLayer(layerId)) {
+        const shouldBeVisible = selectedCategories.length === 0 || selectedCategories.includes(category);
+        map.current.setLayoutProperty(
+          layerId,
+          'visibility',
+          shouldBeVisible ? 'visible' : 'none'
+        );
+      }
+    });
   }, [selectedCategories]);
 
   // Add event markers
