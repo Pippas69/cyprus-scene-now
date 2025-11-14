@@ -4,8 +4,20 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Loader2 } from 'lucide-react';
 import { MAPBOX_CONFIG } from '@/config/mapbox';
 import { locations } from '@/data/locations';
-import { sampleEvents } from '@/components/map/EventMarker';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+
+interface EventLocation {
+  id: string;
+  title: string;
+  description: string;
+  start_at: string;
+  end_at: string;
+  location: string;
+  category: string[];
+  cover_image_url: string | null;
+  coordinates: [number, number];
+}
 
 interface RealMapProps {
   city: string;
@@ -19,9 +31,73 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [events, setEvents] = useState<EventLocation[]>([]);
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  // Fetch events from Supabase
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          id,
+          title,
+          description,
+          start_at,
+          end_at,
+          location,
+          category,
+          cover_image_url,
+          businesses (
+            geo
+          )
+        `)
+        .gte('end_at', new Date().toISOString());
+
+      if (error) {
+        console.error('Error fetching events:', error);
+        return;
+      }
+
+      if (data) {
+        const mappedEvents: EventLocation[] = data
+          .filter(event => event.businesses?.geo)
+          .map(event => {
+            // Parse PostGIS geography point format: "POINT(lng lat)"
+            const geoString = event.businesses.geo as any;
+            const match = geoString?.match(/POINT\(([^ ]+) ([^ ]+)\)/);
+            
+            if (!match) {
+              console.warn(`Could not parse coordinates for event ${event.id}`);
+              return null;
+            }
+
+            const lng = parseFloat(match[1]);
+            const lat = parseFloat(match[2]);
+
+            return {
+              id: event.id,
+              title: event.title,
+              description: event.description || '',
+              start_at: event.start_at,
+              end_at: event.end_at,
+              location: event.location,
+              category: event.category || [],
+              cover_image_url: event.cover_image_url,
+              coordinates: [lng, lat] as [number, number],
+            };
+          })
+          .filter((event): event is EventLocation => event !== null);
+
+        setEvents(mappedEvents);
+        console.log('📍 Loaded events from database:', mappedEvents.length);
+      }
+    };
+
+    fetchEvents();
   }, []);
 
   useEffect(() => {
@@ -143,12 +219,13 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
 
   // Add event markers with category filtering
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || events.length === 0) return;
 
     const addMarkers = () => {
       if (!map.current) return;
 
       console.log('🔵 Adding markers with filters:', selectedCategories);
+      console.log('🔵 Total events available:', events.length);
 
       // Clear existing markers
       markers.current.forEach(marker => marker.remove());
@@ -158,7 +235,7 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
       let hiddenCount = 0;
 
       // Add markers for each event
-      sampleEvents.forEach((event) => {
+      events.forEach((event) => {
         if (!map.current) return;
 
         // Filter by selected categories
@@ -277,7 +354,7 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
       // Cleanup: remove event listener
       map.current?.off('load', addMarkers);
     };
-  }, [selectedCategories]);
+  }, [selectedCategories, events]);
 
   if (!isClient) {
     return (
