@@ -85,17 +85,23 @@ const SignupBusiness = () => {
       let logoUrl = null;
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
-        const fileName = `${authData.user.id}-${Date.now()}.${fileExt}`;
-        const {
-          data: uploadData,
-          error: uploadError
-        } = await supabase.storage.from('business-logos').upload(fileName, logoFile);
-        if (!uploadError && uploadData) {
-          const {
-            data: {
-              publicUrl
-            }
-          } = supabase.storage.from('business-logos').getPublicUrl(fileName);
+        const fileName = `${authData.user.id}/${authData.user.id}-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('business-logos')
+          .upload(fileName, logoFile);
+        
+        if (uploadError) {
+          console.error('Logo upload error:', uploadError);
+          toast({
+            title: "Προειδοποίηση",
+            description: "Δεν ήταν δυνατή η αποθήκευση του λογότυπου. Μπορείτε να το προσθέσετε αργότερα.",
+            variant: "default"
+          });
+        } else if (uploadData) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('business-logos')
+            .getPublicUrl(fileName);
           logoUrl = publicUrl;
         }
       }
