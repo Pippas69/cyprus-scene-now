@@ -16,6 +16,7 @@ interface RealMapProps {
 export default function RealMap({ city, neighborhood, selectedCategories }: RealMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -144,14 +145,12 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
   useEffect(() => {
     if (!map.current) return;
 
-    const markers: mapboxgl.Marker[] = [];
-
     const addMarkers = () => {
       if (!map.current) return;
 
       // Clear existing markers
-      markers.forEach(marker => marker.remove());
-      markers.length = 0;
+      markers.current.forEach(marker => marker.remove());
+      markers.current = [];
 
       // Add markers for each event
       sampleEvents.forEach((event) => {
@@ -248,7 +247,7 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
           .setPopup(popup)
           .addTo(map.current);
 
-        markers.push(marker);
+        markers.current.push(marker);
       });
     };
 
@@ -261,8 +260,7 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
     }
 
     return () => {
-      // Cleanup: remove markers and event listener
-      markers.forEach(marker => marker.remove());
+      // Cleanup: remove event listener
       map.current?.off('load', addMarkers);
     };
   }, [selectedCategories]);
