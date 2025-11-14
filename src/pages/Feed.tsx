@@ -1,15 +1,22 @@
-import { useState } from "react";
-import { MapPin, Calendar, Users, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { MapPin, Calendar, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventCard from "@/components/EventCard";
+import EventCardSkeleton from "@/components/EventCardSkeleton";
+import OfferCard from "@/components/OfferCard";
 import CategoryFilter from "@/components/CategoryFilter";
 import LanguageToggle from "@/components/LanguageToggle";
+import MapWrapper from "@/components/map/MapWrapper";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { User } from "@supabase/supabase-js";
 
 const Feed = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("trending");
   const [language, setLanguage] = useState<"el" | "en">("el");
+  const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
 
   const translations = {
     el: {
@@ -19,6 +26,9 @@ const Feed = () => {
       upcoming: "Επερχόμενα",
       offers: "Προσφορές",
       map: "Χάρτης",
+      noEvents: "Δεν υπάρχουν events αυτή τη στιγμή",
+      noUpcoming: "Δεν υπάρχουν επερχόμενα events",
+      noOffers: "Δεν υπάρχουν ενεργές προσφορές",
     },
     en: {
       title: "Discover ΦΟΜΟ",
@@ -27,10 +37,145 @@ const Feed = () => {
       upcoming: "Upcoming",
       offers: "Offers",
       map: "Map",
+      noEvents: "No events right now",
+      noUpcoming: "No upcoming events",
+      noOffers: "No active offers",
     },
   };
 
   const t = translations[language];
+
+  // Fetch user authentication
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fetch events based on active tab and filters
+  const { data: events, isLoading: eventsLoading } = useQuery({
+    queryKey: ['events', selectedCategories, activeTab],
+    queryFn: async () => {
+      let query = supabase
+        .from('events')
+        .select(`
+          *,
+          businesses!inner (
+            name,
+            logo_url,
+            verified,
+            city
+          ),
+          realtime_stats (
+            interested_count,
+            going_count
+          )
+        `)
+        .eq('businesses.verified', true);
+
+      // Apply category filter
+      if (selectedCategories.length > 0) {
+        query = query.overlaps('category', selectedCategories);
+      }
+
+      // Apply tab-specific filters
+      if (activeTab === 'trending') {
+        query = query.order('created_at', { ascending: false }).limit(20);
+      } else if (activeTab === 'upcoming') {
+        query = query
+          .gte('start_at', new Date().toISOString())
+          .order('start_at', { ascending: true })
+          .limit(20);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Sort trending by engagement
+      if (activeTab === 'trending' && data) {
+        return data.sort((a, b) => {
+          const aScore = (a.realtime_stats?.[0]?.interested_count || 0) + 
+                        (a.realtime_stats?.[0]?.going_count || 0) * 2;
+          const bScore = (b.realtime_stats?.[0]?.interested_count || 0) + 
+                        (b.realtime_stats?.[0]?.going_count || 0) * 2;
+          return bScore - aScore;
+        });
+      }
+
+      return data || [];
+    },
+    enabled: activeTab !== 'offers' && activeTab !== 'map',
+  });
+
+  // Fetch offers
+  const { data: offers, isLoading: offersLoading } = useQuery({
+    queryKey: ['offers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('discounts')
+        .select(`
+          *,
+          businesses!inner (
+            name,
+            logo_url,
+            city,
+            verified
+          )
+        `)
+        .eq('active', true)
+        .eq('businesses.verified', true)
+        .gte('end_at', new Date().toISOString())
+        .order('percent_off', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: activeTab === 'offers',
+  });
+
+  // Real-time subscriptions
+  useEffect(() => {
+    const eventsChannel = supabase
+      .channel('events-feed')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'events'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['events'] });
+        }
+      )
+      .subscribe();
+
+    const offersChannel = supabase
+      .channel('offers-feed')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'discounts'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['offers'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(eventsChannel);
+      supabase.removeChannel(offersChannel);
+    };
+  }, [queryClient]);
 
   return (
     <div className="min-h-screen bg-gradient-warm">
@@ -52,13 +197,15 @@ const Feed = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         {/* Filters */}
-        <div className="mb-6">
-          <CategoryFilter
-            selectedCategories={selectedCategories}
-            onCategoryChange={setSelectedCategories}
-            language={language}
-          />
-        </div>
+        {activeTab !== 'map' && (
+          <div className="mb-6">
+            <CategoryFilter
+              selectedCategories={selectedCategories}
+              onCategoryChange={setSelectedCategories}
+              language={language}
+            />
+          </div>
+        )}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -82,70 +229,77 @@ const Feed = () => {
           </TabsList>
 
           <TabsContent value="trending" className="space-y-4">
-            <EventCard 
-              language={language} 
-              event={{
-                id: "mock-1",
-                title: "Sunday Brunch at Lost + Found",
-                location: "Nicosia",
-                start_at: new Date().toISOString(),
-                end_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-                category: ["Café"],
-                price_tier: "free",
-                interested_count: 42,
-                going_count: 18,
-              }}
-              user={null}
-            />
-            <EventCard 
-              language={language} 
-              event={{
-                id: "mock-2",
-                title: "Beach Volleyball Tournament",
-                location: "Limassol",
-                start_at: new Date().toISOString(),
-                end_at: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
-                category: ["Sports"],
-                price_tier: "free",
-                interested_count: 28,
-                going_count: 12,
-              }}
-              user={null}
-            />
-            <EventCard 
-              language={language} 
-              event={{
-                id: "mock-3",
-                title: "Live Music Night",
-                location: "Larnaca",
-                start_at: new Date().toISOString(),
-                end_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
-                category: ["Music"],
-                price_tier: "paid",
-                interested_count: 64,
-                going_count: 35,
-              }}
-              user={null}
-            />
+            {eventsLoading ? (
+              <>
+                <EventCardSkeleton />
+                <EventCardSkeleton />
+                <EventCardSkeleton />
+              </>
+            ) : events && events.length > 0 ? (
+              events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  language={language}
+                  event={{
+                    ...event,
+                    interested_count: event.realtime_stats?.[0]?.interested_count || 0,
+                    going_count: event.realtime_stats?.[0]?.going_count || 0,
+                  }}
+                  user={user}
+                />
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">{t.noEvents}</p>
+            )}
           </TabsContent>
 
           <TabsContent value="upcoming" className="space-y-4">
-            <p className="text-center text-muted-foreground py-8">
-              {language === "el" ? "Επερχόμενα events..." : "Upcoming events..."}
-            </p>
+            {eventsLoading ? (
+              <>
+                <EventCardSkeleton />
+                <EventCardSkeleton />
+                <EventCardSkeleton />
+              </>
+            ) : events && events.length > 0 ? (
+              events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  language={language}
+                  event={{
+                    ...event,
+                    interested_count: event.realtime_stats?.[0]?.interested_count || 0,
+                    going_count: event.realtime_stats?.[0]?.going_count || 0,
+                  }}
+                  user={user}
+                />
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">{t.noUpcoming}</p>
+            )}
           </TabsContent>
 
           <TabsContent value="offers" className="space-y-4">
-            <p className="text-center text-muted-foreground py-8">
-              {language === "el" ? "Προσφορές με QR..." : "QR Offers..."}
-            </p>
+            {offersLoading ? (
+              <>
+                <EventCardSkeleton />
+                <EventCardSkeleton />
+              </>
+            ) : offers && offers.length > 0 ? (
+              offers.map((offer) => (
+                <OfferCard key={offer.id} offer={offer} language={language} />
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">{t.noOffers}</p>
+            )}
           </TabsContent>
 
           <TabsContent value="map" className="space-y-4">
-            <div className="bg-muted rounded-lg h-[500px] flex items-center justify-center">
-              <p className="text-muted-foreground">
-                {language === "el" ? "Χάρτης σύντομα..." : "Map coming soon..."}
-              </p>
+            <div className="h-[70vh]">
+              <MapWrapper
+                city=""
+                neighborhood=""
+                selectedCategories={selectedCategories}
+              />
             </div>
           </TabsContent>
         </Tabs>
