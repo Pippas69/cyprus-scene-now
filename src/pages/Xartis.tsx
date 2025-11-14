@@ -119,7 +119,9 @@ const Xartis = () => {
                   key={category.id}
                   variant={isSelected ? "default" : "outline"}
                   className={`cursor-pointer px-4 py-2 transition-all ${
-                    isSelected ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                    isSelected 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "bg-background text-foreground hover:bg-muted border-2"
                   }`}
                   onClick={() => toggleCategory(category.id)}
                 >
