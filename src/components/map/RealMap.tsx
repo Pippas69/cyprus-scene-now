@@ -94,8 +94,8 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
         poiLayers.forEach(layerId => {
           if (map.current?.getLayer(layerId)) {
             map.current.setFilter(layerId,
-              ["none",
-                ...classesToHide.map(cls => ["==", ["get", "class"], cls])
+              ["all",
+                ["!in", "class", ...classesToHide]
               ]
             );
           }
