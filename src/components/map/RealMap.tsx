@@ -148,9 +148,14 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
     const addMarkers = () => {
       if (!map.current) return;
 
+      console.log('🔵 Adding markers with filters:', selectedCategories);
+
       // Clear existing markers
       markers.current.forEach(marker => marker.remove());
       markers.current = [];
+
+      let visibleCount = 0;
+      let hiddenCount = 0;
 
       // Add markers for each event
       sampleEvents.forEach((event) => {
@@ -161,7 +166,14 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
           selectedCategories.length === 0 || selectedCategories.includes(cat)
         );
 
-        if (!hasMatchingCategory) return;
+        if (!hasMatchingCategory) {
+          hiddenCount++;
+          console.log(`❌ Hiding ${event.title} - categories:`, event.category, 'selected:', selectedCategories);
+          return;
+        }
+
+        visibleCount++;
+        console.log(`✅ Showing ${event.title} - categories:`, event.category);
 
         // Create custom marker element
         const markerEl = document.createElement('div');
@@ -249,6 +261,8 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
 
         markers.current.push(marker);
       });
+
+      console.log(`📊 Visible: ${visibleCount}, Hidden: ${hiddenCount}`);
     };
 
     // Check if map is already loaded
