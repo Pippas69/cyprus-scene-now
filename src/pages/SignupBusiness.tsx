@@ -131,11 +131,21 @@ const SignupBusiness = () => {
         // Don't fail the signup if email fails
       }
 
+      // Show detailed success message
       toast({
-        title: "Επιτυχής Εγγραφή!",
-        description: "Η επιχείρησή σας καταχωρήθηκε και εκκρεμεί επαλήθευση. Θα λάβετε email επιβεβαίωσης."
+        title: "Η εγγραφή σας ολοκληρώθηκε επιτυχώς!",
+        description: "Θα λάβετε email επιβεβαίωσης. Μετά την επαλήθευση από τον διαχειριστή, μπορείτε να συνδεθείτε.",
+        duration: 6000,
       });
-      navigate("/dashboard-business");
+
+      // Wait a moment, then redirect to login with message
+      setTimeout(() => {
+        navigate("/login", { 
+          state: { 
+            message: "Η εγγραφή σας ολοκληρώθηκε! Συνδεθείτε μετά την επαλήθευση από τον διαχειριστή." 
+          } 
+        });
+      }, 3000);
     } catch (error: any) {
       toast({
         title: "Σφάλμα",
