@@ -116,9 +116,24 @@ const SignupBusiness = () => {
         verified: false
       });
       if (businessError) throw businessError;
+
+      // Send confirmation email
+      try {
+        await supabase.functions.invoke('send-business-notification', {
+          body: {
+            businessEmail: data.email,
+            businessName: data.businessName,
+            type: 'approval'
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+        // Don't fail the signup if email fails
+      }
+
       toast({
         title: "Επιτυχής Εγγραφή!",
-        description: "Η επιχείρησή σας καταχωρήθηκε και εκκρεμεί επαλήθευση."
+        description: "Η επιχείρησή σας καταχωρήθηκε και εκκρεμεί επαλήθευση. Θα λάβετε email επιβεβαίωσης."
       });
       navigate("/dashboard-business");
     } catch (error: any) {
