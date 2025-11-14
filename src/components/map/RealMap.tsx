@@ -37,7 +37,7 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
     setIsClient(true);
   }, []);
 
-  // Fetch events from Supabase
+  // Fetch events from Supabase and subscribe to realtime updates
   useEffect(() => {
     const fetchEvents = async () => {
       const { data, error } = await supabase
@@ -98,6 +98,57 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
     };
 
     fetchEvents();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('events-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'events'
+        },
+        async (payload) => {
+          console.log('🆕 New event detected:', payload.new);
+          
+          // Fetch the business geo data for the new event
+          const { data: businessData } = await supabase
+            .from('businesses')
+            .select('geo')
+            .eq('id', (payload.new as any).business_id)
+            .single();
+
+          if (businessData?.geo) {
+            const geoString = businessData.geo as any;
+            const match = geoString?.match(/POINT\(([^ ]+) ([^ ]+)\)/);
+            
+            if (match) {
+              const lng = parseFloat(match[1]);
+              const lat = parseFloat(match[2]);
+              
+              const newEvent: EventLocation = {
+                id: (payload.new as any).id,
+                title: (payload.new as any).title,
+                description: (payload.new as any).description || '',
+                start_at: (payload.new as any).start_at,
+                end_at: (payload.new as any).end_at,
+                location: (payload.new as any).location,
+                category: (payload.new as any).category || [],
+                cover_image_url: (payload.new as any).cover_image_url,
+                coordinates: [lng, lat] as [number, number],
+              };
+              
+              setEvents(prev => [...prev, newEvent]);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -237,13 +288,13 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
         visibleCount++;
         console.log(`✅ Showing ${event.title} - categories:`, event.category);
 
-        // Create custom marker element
+        // Create custom marker element with Mediterranean blue color
         const markerEl = document.createElement('div');
         markerEl.className = 'custom-marker';
         markerEl.style.width = '32px';
         markerEl.style.height = '32px';
         markerEl.style.borderRadius = '50%';
-        markerEl.style.backgroundColor = 'hsl(var(--primary))';
+        markerEl.style.backgroundColor = '#0077BE'; // Mediterranean blue
         markerEl.style.border = '3px solid white';
         markerEl.style.cursor = 'pointer';
         markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
@@ -322,6 +373,13 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
           .addTo(map.current);
 
         markers.current.push(marker);
+        
+        // Auto-open popup for newly added events (last event in array is newest from realtime)
+        if (events.indexOf(event) === events.length - 1 && events.length > 0) {
+          setTimeout(() => {
+            marker.togglePopup();
+          }, 500);
+        }
       });
 
       console.log(`📊 Visible: ${visibleCount}, Hidden: ${hiddenCount}`);
