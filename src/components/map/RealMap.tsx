@@ -65,6 +65,40 @@ export default function RealMap({ city, neighborhood }: RealMapProps) {
         }),
         'top-right'
       );
+
+      // Filter out specific POI types
+      map.current.on('load', () => {
+        if (!map.current) return;
+
+        const classesToHide = [
+          "church",
+          "cemetery",
+          "grave_yard",
+          "bank",
+          "school",
+          "college",
+          "kindergarten",
+          "university",
+          "store",
+          "grocery",
+          "supermarket",
+          "gift_shop",
+          "department_store",
+          "police"
+        ];
+
+        const poiLayers = ["poi-label", "poi-label-s", "poi-label-md", "poi-label-lg"];
+
+        poiLayers.forEach(layerId => {
+          if (map.current?.getLayer(layerId)) {
+            map.current.setFilter(layerId,
+              ["none",
+                ...classesToHide.map(cls => ["==", ["get", "class"], cls])
+              ]
+            );
+          }
+        });
+      });
     } catch (err) {
       console.error('Error initializing map:', err);
       setError('Failed to initialize map. Please check your token.');
