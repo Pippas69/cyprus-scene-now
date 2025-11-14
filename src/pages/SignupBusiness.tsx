@@ -117,13 +117,13 @@ const SignupBusiness = () => {
       });
       if (businessError) throw businessError;
 
-      // Send confirmation email
+      // Send registration confirmation email
       try {
         await supabase.functions.invoke('send-business-notification', {
           body: {
             businessEmail: data.email,
             businessName: data.businessName,
-            type: 'approval'
+            type: 'registration'
           }
         });
       } catch (emailError) {

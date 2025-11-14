@@ -135,10 +135,25 @@ const AdminVerification = () => {
 
       if (error) throw error;
 
+      // Send approval email
+      const business = businesses.find(b => b.id === businessId);
+      if (business?.profiles?.email) {
+        try {
+          await supabase.functions.invoke('send-business-notification', {
+            body: {
+              businessEmail: business.profiles.email,
+              businessName: business.name,
+              type: 'approval'
+            }
+          });
+        } catch (emailError) {
+          console.error('Failed to send approval email:', emailError);
+          // Don't fail the approval if email fails
+        }
+      }
+
       toast.success("Η επιχείρηση εγκρίθηκε!");
       fetchBusinesses();
-      
-      // TODO: Send approval email via edge function
     } catch (error) {
       console.error("Error approving business:", error);
       toast.error("Σφάλμα έγκρισης επιχείρησης");
@@ -157,11 +172,27 @@ const AdminVerification = () => {
 
       if (error) throw error;
 
+      // Send rejection email
+      const business = businesses.find(b => b.id === businessId);
+      if (business?.profiles?.email) {
+        try {
+          await supabase.functions.invoke('send-business-notification', {
+            body: {
+              businessEmail: business.profiles.email,
+              businessName: business.name,
+              type: 'rejection',
+              notes: rejectionNotes
+            }
+          });
+        } catch (emailError) {
+          console.error('Failed to send rejection email:', emailError);
+          // Don't fail the rejection if email fails
+        }
+      }
+
       toast.success("Η επιχείρηση απορρίφθηκε");
       fetchBusinesses();
       setSelectedBusiness(null);
-      
-      // TODO: Send rejection email via edge function
     } catch (error) {
       console.error("Error rejecting business:", error);
       toast.error("Σφάλμα απόρριψης επιχείρησης");

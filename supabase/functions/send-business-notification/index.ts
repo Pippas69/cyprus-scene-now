@@ -12,7 +12,7 @@ const corsHeaders = {
 interface NotificationRequest {
   businessEmail: string;
   businessName: string;
-  type: "approval" | "rejection";
+  type: "registration" | "approval" | "rejection";
   notes?: string;
 }
 
@@ -27,7 +27,18 @@ const handler = async (req: Request): Promise<Response> => {
     let subject = "";
     let html = "";
 
-    if (type === "approval") {
+    if (type === "registration") {
+      subject = "Επιβεβαίωση Εγγραφής στο ΦΟΜΟ";
+      html = `
+        <h1>Καλώς ήρθατε, ${businessName}!</h1>
+        <p>Η επιχείρησή σας καταχωρήθηκε επιτυχώς στο ΦΟΜΟ και εκκρεμεί προς επαλήθευση.</p>
+        <p>Η ομάδα μας θα εξετάσει την αίτησή σας και θα σας ενημερώσει σύντομα.</p>
+        <p>Μόλις εγκριθεί η επιχείρησή σας, θα μπορείτε να δημοσιεύετε εκδηλώσεις και προσφορές.</p>
+        <br>
+        <p>Ευχαριστούμε για το ενδιαφέρον σας!</p>
+        <p>— Η Ομάδα του ΦΟΜΟ</p>
+      `;
+    } else if (type === "approval") {
       subject = "Η Επιχείρησή σας εγκρίθηκε στο ΦΟΜΟ!";
       html = `
         <h1>Συγχαρητήρια, ${businessName}!</h1>
