@@ -209,21 +209,37 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
 
   // Update layer visibility based on selected categories
   useEffect(() => {
-    if (!map.current || !map.current.isStyleLoaded()) return;
+    if (!map.current) return;
 
-    const categories = ['cafe', 'nightlife', 'art', 'fitness', 'family', 'business', 'lifestyle', 'travel'];
-    
-    categories.forEach(category => {
-      const layerId = `events-${category}`;
-      if (map.current?.getLayer(layerId)) {
-        const shouldBeVisible = selectedCategories.length === 0 || selectedCategories.includes(category);
-        map.current.setLayoutProperty(
-          layerId,
-          'visibility',
-          shouldBeVisible ? 'visible' : 'none'
-        );
-      }
-    });
+    const updateLayerVisibility = () => {
+      if (!map.current) return;
+
+      const categories = ['cafe', 'nightlife', 'art', 'fitness', 'family', 'business', 'lifestyle', 'travel'];
+      
+      console.log('Selected categories:', selectedCategories);
+      
+      categories.forEach(category => {
+        const layerId = `events-${category}`;
+        if (map.current?.getLayer(layerId)) {
+          const shouldBeVisible = selectedCategories.length === 0 || selectedCategories.includes(category);
+          console.log(`Setting ${layerId} to ${shouldBeVisible ? 'visible' : 'none'}`);
+          map.current.setLayoutProperty(
+            layerId,
+            'visibility',
+            shouldBeVisible ? 'visible' : 'none'
+          );
+        } else {
+          console.log(`Layer ${layerId} not found`);
+        }
+      });
+    };
+
+    // Wait for map to be fully loaded before updating visibility
+    if (map.current.loaded()) {
+      updateLayerVisibility();
+    } else {
+      map.current.once('load', updateLayerVisibility);
+    }
   }, [selectedCategories]);
 
   // Add event markers
