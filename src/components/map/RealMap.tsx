@@ -67,7 +67,7 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
         'top-right'
       );
 
-      // Filter out specific POI types and add GeoJSON source for events
+      // Filter out specific POI types
       map.current.on('load', () => {
         if (!map.current) return;
 
@@ -99,74 +99,6 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
               ]
             );
           }
-        });
-
-        // Add GeoJSON source for events
-        map.current.addSource('events', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: [
-              {
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [33.364, 35.167] },
-                properties: { 
-                  title: "Sample Cafe",
-                  category: "cafe" 
-                }
-              },
-              {
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [33.370, 35.170] },
-                properties: { 
-                  title: "Nightclub Alpha",
-                  category: "nightlife" 
-                }
-              },
-              {
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [33.375, 35.165] },
-                properties: { 
-                  title: "Art Gallery",
-                  category: "art" 
-                }
-              },
-              {
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [33.368, 35.172] },
-                properties: { 
-                  title: "Gym Center",
-                  category: "fitness" 
-                }
-              },
-              {
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [33.372, 35.168] },
-                properties: { 
-                  title: "Family Park",
-                  category: "family" 
-                }
-              }
-            ]
-          }
-        });
-
-        // Create one layer per category
-        const categories = ['cafe', 'nightlife', 'art', 'fitness', 'family', 'business', 'lifestyle', 'travel'];
-        
-        categories.forEach(category => {
-          map.current?.addLayer({
-            id: `events-${category}`,
-            type: 'circle',
-            source: 'events',
-            filter: ['==', ['get', 'category'], category],
-            paint: {
-              'circle-radius': 8,
-              'circle-color': 'hsl(var(--primary))',
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#ffffff'
-            }
-          });
         });
       });
     } catch (err) {
@@ -207,51 +139,30 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
     });
   }, [city, neighborhood]);
 
-  // Update layer visibility based on selected categories
+
+  // Add event markers with category filtering
   useEffect(() => {
     if (!map.current) return;
 
-    const updateLayerVisibility = () => {
-      if (!map.current) return;
-
-      const categories = ['cafe', 'nightlife', 'art', 'fitness', 'family', 'business', 'lifestyle', 'travel'];
-      
-      console.log('Selected categories:', selectedCategories);
-      
-      categories.forEach(category => {
-        const layerId = `events-${category}`;
-        if (map.current?.getLayer(layerId)) {
-          const shouldBeVisible = selectedCategories.length === 0 || selectedCategories.includes(category);
-          console.log(`Setting ${layerId} to ${shouldBeVisible ? 'visible' : 'none'}`);
-          map.current.setLayoutProperty(
-            layerId,
-            'visibility',
-            shouldBeVisible ? 'visible' : 'none'
-          );
-        } else {
-          console.log(`Layer ${layerId} not found`);
-        }
-      });
-    };
-
-    // Wait for map to be fully loaded before updating visibility
-    if (map.current.loaded()) {
-      updateLayerVisibility();
-    } else {
-      map.current.once('load', updateLayerVisibility);
-    }
-  }, [selectedCategories]);
-
-  // Add event markers
-  useEffect(() => {
-    if (!map.current) return;
+    const markers: mapboxgl.Marker[] = [];
 
     const addMarkers = () => {
       if (!map.current) return;
 
+      // Clear existing markers
+      markers.forEach(marker => marker.remove());
+      markers.length = 0;
+
       // Add markers for each event
       sampleEvents.forEach((event) => {
         if (!map.current) return;
+
+        // Filter by selected categories
+        const hasMatchingCategory = event.category.some(cat => 
+          selectedCategories.length === 0 || selectedCategories.includes(cat)
+        );
+
+        if (!hasMatchingCategory) return;
 
         // Create custom marker element
         const markerEl = document.createElement('div');
@@ -332,10 +243,12 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
         }).setHTML(popupContent);
 
         // Create and add marker
-        new mapboxgl.Marker(markerEl)
+        const marker = new mapboxgl.Marker(markerEl)
           .setLngLat(event.coordinates)
           .setPopup(popup)
           .addTo(map.current);
+
+        markers.push(marker);
       });
     };
 
@@ -348,10 +261,11 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
     }
 
     return () => {
-      // Cleanup: remove event listener
+      // Cleanup: remove markers and event listener
+      markers.forEach(marker => marker.remove());
       map.current?.off('load', addMarkers);
     };
-  }, []);
+  }, [selectedCategories]);
 
   if (!isClient) {
     return (
