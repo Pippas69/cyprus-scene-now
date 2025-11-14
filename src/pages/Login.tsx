@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,7 +19,17 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const stateMessage = location.state?.message;
+
+  useEffect(() => {
+    if (stateMessage) {
+      toast.success(stateMessage, { duration: 5000 });
+      // Clear the state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [stateMessage, navigate, location.pathname]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -54,14 +64,29 @@ const Login = () => {
           .eq("id", data.user.id)
           .single();
 
-        toast.success(profile?.role === 'admin' ? "Καλωσόρισες, Διαχειριστή του ΦΟΜΟ!" : "Επιτυχής σύνδεση!");
-        
-        // Redirect based on role
+        // Check if user owns a business
+        const { data: business } = await supabase
+          .from("businesses")
+          .select("id, verified")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
+
+        // Determine redirect based on role and business ownership
+        let redirectPath = "/feed";
+        let successMessage = "Επιτυχής σύνδεση!";
+
         if (profile?.role === 'admin') {
-          navigate("/admin/verification");
-        } else {
-          navigate("/feed");
+          redirectPath = "/admin/verification";
+          successMessage = "Καλωσόρισες, Διαχειριστή του ΦΟΜΟ!";
+        } else if (business) {
+          redirectPath = "/dashboard-business";
+          successMessage = business.verified 
+            ? "Καλωσόρισες στο dashboard σου!" 
+            : "Καλωσόρισες! Η επαλήθευση σου εκκρεμεί.";
         }
+
+        toast.success(successMessage);
+        navigate(redirectPath);
       }
     } catch (error) {
       toast.error("Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.");
@@ -147,6 +172,15 @@ const Login = () => {
                 >
                   Ξέχασες τον κωδικό σου;
                 </button>
+              </div>
+
+              <div className="text-center text-sm text-muted-foreground mb-4 p-3 bg-muted/50 rounded-lg">
+                <p className="font-medium">
+                  💼 Επιχείρηση;
+                </p>
+                <p className="mt-1">
+                  Χρησιμοποιήστε αυτή τη φόρμα για να συνδεθείτε στο dashboard σας.
+                </p>
               </div>
 
               <div className="text-center text-sm text-muted-foreground">

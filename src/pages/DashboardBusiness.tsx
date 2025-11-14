@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle, Home, Clock, Plus, Calendar, Ticket } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventCreationForm from "@/components/business/EventCreationForm";
 import OfferCreationForm from "@/components/business/OfferCreationForm";
@@ -24,21 +25,31 @@ const DashboardBusiness = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        toast.error("Πρέπει να συνδεθείτε πρώτα");
         navigate("/login");
         return;
       }
 
-      const { data: business } = await supabase
+      const { data: business, error } = await supabase
         .from("businesses")
         .select("id, verified, name")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      setVerified(business?.verified ?? false);
-      setBusinessId(business?.id ?? null);
-      setBusinessName(business?.name ?? "");
+      // If user doesn't own a business, redirect to feed
+      if (!business || error) {
+        toast.error("Δεν έχετε δικαίωμα πρόσβασης στο business dashboard");
+        navigate("/feed");
+        return;
+      }
+
+      setVerified(business.verified ?? false);
+      setBusinessId(business.id);
+      setBusinessName(business.name ?? "");
     } catch (error) {
       console.error("Error checking verification:", error);
+      toast.error("Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.");
+      navigate("/login");
     } finally {
       setLoading(false);
     }
