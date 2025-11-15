@@ -46,9 +46,9 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
       const totalInterested = rsvps?.filter(r => r.status === 'interested').length || 0;
       const totalGoing = rsvps?.filter(r => r.status === 'going').length || 0;
 
-      // Event breakdown
+      // Event breakdown - with null safety
       const eventBreakdown = events.map(event => ({
-        name: event.title,
+        name: event?.title || 'Unknown Event',
         interested: rsvps?.filter(r => r.event_id === event.id && r.status === 'interested').length || 0,
         going: rsvps?.filter(r => r.event_id === event.id && r.status === 'going').length || 0,
       }));
@@ -66,7 +66,7 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
   };
 
   const text = {
-    gr: {
+    el: {
       title: 'Αναλυτικά Στοιχεία',
       totalRsvps: 'Σύνολο Κρατήσεων',
       interested: 'Ενδιαφερόμενοι',

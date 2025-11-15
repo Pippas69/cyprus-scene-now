@@ -84,7 +84,7 @@ export const ReservationsList = ({ businessId, language }: ReservationsListProps
   };
 
   const text = {
-    gr: {
+    el: {
       title: 'Κρατήσεις',
       allEvents: 'Όλες οι Εκδηλώσεις',
       allStatuses: 'Όλες οι Καταστάσεις',
