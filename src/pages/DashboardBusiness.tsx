@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, Home, Clock, Plus, Calendar, Ticket } from "lucide-react";
+import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import EventCreationForm from "@/components/business/EventCreationForm";
 import OfferCreationForm from "@/components/business/OfferCreationForm";
 import EventsList from "@/components/business/EventsList";
 import OffersList from "@/components/business/OffersList";
+import BusinessProfileForm from "@/components/business/BusinessProfileForm";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
@@ -138,7 +139,7 @@ const DashboardBusiness = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="events" className="gap-2">
               <Calendar className="h-4 w-4" />
               Εκδηλώσεις
@@ -154,6 +155,10 @@ const DashboardBusiness = () => {
             <TabsTrigger value="create-offer" className="gap-2">
               <Plus className="h-4 w-4" />
               Νέα Προσφορά
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="gap-2">
+              <User className="h-4 w-4" />
+              Προφίλ
             </TabsTrigger>
           </TabsList>
 
@@ -171,6 +176,10 @@ const DashboardBusiness = () => {
 
           <TabsContent value="create-offer">
             <OfferCreationForm businessId={businessId!} />
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <BusinessProfileForm businessId={businessId!} />
           </TabsContent>
         </Tabs>
       </main>
