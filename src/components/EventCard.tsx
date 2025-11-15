@@ -1,8 +1,10 @@
 import { Heart, Users, Clock, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -15,9 +17,15 @@ interface Event {
   end_at: string;
   category: string[];
   price_tier: string;
+  business_id?: string;
   interested_count?: number;
   going_count?: number;
   user_status?: string | null;
+  businesses?: {
+    name: string;
+    logo_url: string | null;
+    city?: string;
+  };
 }
 
 interface EventCardProps {
@@ -183,6 +191,24 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
 
       {/* Content */}
       <div className="p-4 space-y-3">
+        {/* Business Info - Clickable */}
+        {event.businesses && (
+          <Link 
+            to={`/business/${event.business_id}`}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={event.businesses.logo_url || undefined} alt={event.businesses.name} />
+              <AvatarFallback className="text-xs bg-muted">
+                {event.businesses.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+              {event.businesses.name}
+            </span>
+          </Link>
+        )}
+
         {/* Title & Location */}
         <div>
           <h3 className="font-bold text-lg group-hover:text-ocean transition-colors">
