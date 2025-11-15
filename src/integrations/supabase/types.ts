@@ -191,6 +191,42 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       featured: {
         Row: {
           created_at: string
@@ -478,6 +514,7 @@ export type Database = {
           created_at: string
           event_id: string
           id: string
+          notes: string | null
           status: Database["public"]["Enums"]["rsvp_status"]
           user_id: string
         }
@@ -485,6 +522,7 @@ export type Database = {
           created_at?: string
           event_id: string
           id?: string
+          notes?: string | null
           status: Database["public"]["Enums"]["rsvp_status"]
           user_id: string
         }
@@ -492,6 +530,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           id?: string
+          notes?: string | null
           status?: Database["public"]["Enums"]["rsvp_status"]
           user_id?: string
         }

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User } from "lucide-react";
+import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User, Users as UsersIcon, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,6 +10,8 @@ import OfferCreationForm from "@/components/business/OfferCreationForm";
 import EventsList from "@/components/business/EventsList";
 import OffersList from "@/components/business/OffersList";
 import BusinessProfileForm from "@/components/business/BusinessProfileForm";
+import { ReservationsList } from "@/components/business/ReservationsList";
+import { EventAnalytics } from "@/components/business/EventAnalytics";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
@@ -186,6 +188,14 @@ const DashboardBusiness = () => {
               <User className="h-4 w-4" />
               <span>Προφίλ</span>
             </TabsTrigger>
+            <TabsTrigger value="reservations" className="gap-2 data-[state=active]:bg-background">
+              <UsersIcon className="h-4 w-4" />
+              <span>Κρατήσεις</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2 data-[state=active]:bg-background">
+              <TrendingUp className="h-4 w-4" />
+              <span>Αναλυτικά</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="events" className="mt-0">
@@ -206,6 +216,14 @@ const DashboardBusiness = () => {
 
           <TabsContent value="profile" className="mt-0">
             <BusinessProfileForm businessId={businessId!} />
+          </TabsContent>
+
+          <TabsContent value="reservations" className="mt-0">
+            <ReservationsList businessId={businessId!} language="el" />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-0">
+            <EventAnalytics businessId={businessId!} language="el" />
           </TabsContent>
         </Tabs>
       </main>

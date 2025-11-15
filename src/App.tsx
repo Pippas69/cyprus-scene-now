@@ -13,6 +13,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import SignupBusiness from "./pages/SignupBusiness";
 import DashboardBusiness from "./pages/DashboardBusiness";
+import DashboardUser from "./pages/DashboardUser";
 import AdminVerification from "./pages/AdminVerification";
 import AdminGeocoding from "./pages/AdminGeocoding";
 import BusinessProfile from "./pages/BusinessProfile";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/signup-business" element={<SignupBusiness />} />
+          <Route path="/dashboard" element={<DashboardUser />} />
           <Route path="/dashboard-business" element={<DashboardBusiness />} />
           <Route path="/admin/verification" element={<AdminVerification />} />
           <Route path="/admin/geocoding" element={<AdminGeocoding />} />
