@@ -152,113 +152,96 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold">{t.title}</h2>
-        <p className="text-muted-foreground">{t.description}</p>
+        <p className="text-muted-foreground mt-2">{t.description}</p>
       </div>
 
       {reservations.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">{t.noReservations}</p>
-          </CardContent>
+        <Card className="p-12 text-center">
+          <p className="text-muted-foreground">{t.noReservations}</p>
         </Card>
       ) : (
         <div className="grid gap-4">
           {reservations.map((reservation) => (
-            <Card key={reservation.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
+            <Card key={reservation.id} className="overflow-hidden">
+              <CardHeader className="pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div className="flex-1">
-                    <CardTitle className="flex items-center gap-3">
+                    <CardTitle className="text-xl">{reservation.events?.title}</CardTitle>
+                    <CardDescription className="mt-2 flex items-center gap-2">
                       {reservation.events?.businesses?.logo_url && (
                         <img
                           src={reservation.events.businesses.logo_url}
-                          alt=""
-                          className="h-8 w-8 rounded-full object-cover"
+                          alt={reservation.events.businesses.name}
+                          className="h-5 w-5 rounded-full object-cover"
                         />
                       )}
-                      {reservation.events?.title || 'Unknown Event'}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
                       {reservation.events?.businesses?.name}
                     </CardDescription>
                   </div>
                   {getStatusBadge(reservation.status)}
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {reservation.preferred_time
-                          ? format(new Date(reservation.preferred_time), 'PPP p')
-                          : format(new Date(reservation.events?.start_at), 'PPP')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {reservation.party_size} {t.people}
-                      </span>
-                    </div>
-                    {reservation.events?.location && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{reservation.events.location}</span>
-                      </div>
-                    )}
-                    {reservation.seating_preference && reservation.seating_preference !== 'no_preference' && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{t[reservation.seating_preference]}</span>
-                      </div>
-                    )}
-                    {reservation.phone_number && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>{reservation.phone_number}</span>
-                      </div>
-                    )}
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span>{format(new Date(reservation.events.start_at), 'PPP')}</span>
                   </div>
-
-                  {reservation.special_requests && (
-                    <div className="pt-2 border-t">
-                      <p className="text-sm font-medium mb-1">{t.specialRequests}:</p>
-                      <p className="text-sm text-muted-foreground">{reservation.special_requests}</p>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span>{reservation.party_size} {t.people}</span>
+                  </div>
+                  {reservation.events?.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="truncate">{reservation.events.location}</span>
                     </div>
                   )}
-
-                  {reservation.business_notes && (
-                    <div className="pt-2 border-t">
-                      <p className="text-sm font-medium mb-1">{t.businessNotes}:</p>
-                      <p className="text-sm text-muted-foreground">{reservation.business_notes}</p>
+                  {reservation.seating_preference && reservation.seating_preference !== 'no_preference' && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span>{t[reservation.seating_preference]}</span>
                     </div>
                   )}
-
-                  {reservation.status === 'pending' && (
-                    <div className="pt-3 border-t">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        {t.cancelReservation}
-                      </Button>
+                  {reservation.phone_number && (
+                    <div className="flex items-center gap-2 sm:col-span-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span>{reservation.phone_number}</span>
                     </div>
                   )}
                 </div>
+
+                {reservation.special_requests && (
+                  <div className="bg-muted p-3 rounded-lg">
+                    <p className="text-sm font-medium mb-1">{t.specialRequests}</p>
+                    <p className="text-sm text-muted-foreground">{reservation.special_requests}</p>
+                  </div>
+                )}
+
+                {reservation.business_notes && (
+                  <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+                    <p className="text-sm font-medium mb-1">{t.businessNotes}</p>
+                    <p className="text-sm">{reservation.business_notes}</p>
+                  </div>
+                )}
+
+                {reservation.status === 'pending' && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-11"
+                    onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    {t.cancelReservation}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      <AlertDialog
-        open={cancelDialog.open}
-        onOpenChange={(open) => setCancelDialog({ open, reservationId: null })}
-      >
+      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmCancel}</AlertDialogTitle>

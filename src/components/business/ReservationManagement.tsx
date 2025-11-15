@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ReservationManagementProps {
   businessId: string;
@@ -18,6 +19,7 @@ interface ReservationManagementProps {
 }
 
 export const ReservationManagement = ({ businessId, language }: ReservationManagementProps) => {
+  const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string>('all');
@@ -130,39 +132,22 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
   };
 
   const exportToCSV = () => {
-    const headers = [
-      'Event',
-      'Name',
-      'Email',
-      'Phone',
-      'Party Size',
-      'Seating',
-      'Preferred Time',
-      'Status',
-      'Special Requests',
-      'Business Notes',
-      'Date',
-    ];
+    const headers = [t.event, t.name, 'Email', t.contact, t.details, t.status];
     const rows = filteredReservations.map((r) => [
       r.events?.title || 'Unknown',
       r.reservation_name,
       r.profiles?.email || '',
       r.phone_number || '',
-      r.party_size,
-      r.seating_preference || 'no_preference',
-      r.preferred_time ? format(new Date(r.preferred_time), 'yyyy-MM-dd HH:mm') : '',
+      `${r.party_size} ${t.people}, ${r.seating_preference || ''}`,
       r.status,
-      r.special_requests || '',
-      r.business_notes || '',
-      format(new Date(r.created_at), 'yyyy-MM-dd HH:mm'),
     ]);
 
     const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `reservations-${Date.now()}.csv`;
+    a.download = `reservations-${new Date().toISOString()}.csv`;
     a.click();
   };
 
@@ -186,10 +171,10 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       accept: 'Αποδοχή',
       decline: 'Απόρριψη',
       addNotes: 'Σημειώσεις',
-      noReservations: 'Δεν υπάρχουν κρατήσεις',
+      noReservations: 'Δεν υπάρχουν κρατήσεις ακόμα',
       people: 'άτομα',
-      indoor: 'Εσωτερικός',
-      outdoor: 'Εξωτερικός',
+      indoor: 'Εσωτερικός χώρος',
+      outdoor: 'Εξωτερικός χώρος',
       noPreference: 'Χωρίς προτίμηση',
       cancelled: 'Ακυρώθηκε',
       statusUpdated: 'Η κατάσταση ενημερώθηκε',
@@ -199,6 +184,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       save: 'Αποθήκευση',
       cancel: 'Ακύρωση',
       notesSaved: 'Οι σημειώσεις αποθηκεύτηκαν',
+      specialRequests: 'Ειδικές Απαιτήσεις',
     },
     en: {
       title: 'Reservation Management',
@@ -232,6 +218,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       save: 'Save',
       cancel: 'Cancel',
       notesSaved: 'Notes saved',
+      specialRequests: 'Special Requests',
     },
   };
 
@@ -288,9 +275,9 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
         <h2 className="text-3xl font-bold">
           {t.title} ({filteredReservations.length})
         </h2>
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-3 flex-wrap w-full sm:w-auto">
           <Select value={selectedEvent} onValueChange={setSelectedEvent}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -303,7 +290,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
             </SelectContent>
           </Select>
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -314,8 +301,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
               <SelectItem value="cancelled">{t.cancelled}</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={exportToCSV} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
+          <Button onClick={exportToCSV} variant="outline" className="gap-2 w-full sm:w-auto">
+            <Download className="w-4 h-4" />
             {t.export}
           </Button>
         </div>
@@ -323,6 +310,91 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
 
       {filteredReservations.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">{t.noReservations}</p>
+      ) : isMobile ? (
+        <div className="space-y-4">
+          {filteredReservations.map((reservation) => (
+            <Card key={reservation.id} className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base truncate">{reservation.events?.title || 'Unknown Event'}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.reservation_name}</p>
+                  </div>
+                  {getStatusBadge(reservation.status)}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2 text-sm">
+                  {reservation.profiles?.name && (
+                    <div className="text-muted-foreground">{reservation.profiles.name}</div>
+                  )}
+                  {reservation.profiles?.email && (
+                    <div className="text-muted-foreground break-all">{reservation.profiles.email}</div>
+                  )}
+                  {reservation.phone_number && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span>{reservation.phone_number}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span>{reservation.party_size} {t.people}</span>
+                  </div>
+                  {reservation.seating_preference && reservation.seating_preference !== 'no_preference' && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span>{t[reservation.seating_preference]}</span>
+                    </div>
+                  )}
+                  {reservation.preferred_time && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span>{format(new Date(reservation.preferred_time), 'MMM dd, HH:mm')}</span>
+                    </div>
+                  )}
+                  {reservation.special_requests && (
+                    <div className="p-2 bg-muted rounded text-xs">
+                      <strong>{t.specialRequests}:</strong> {reservation.special_requests}
+                    </div>
+                  )}
+                </div>
+                
+                {reservation.status === 'pending' && (
+                  <div className="flex gap-2 pt-3">
+                    <Button
+                      className="flex-1 h-11"
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(reservation.id, 'accepted')}
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      {t.accept}
+                    </Button>
+                    <Button
+                      className="flex-1 h-11"
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(reservation.id, 'declined')}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      {t.decline}
+                    </Button>
+                  </div>
+                )}
+                <Button
+                  className="w-full h-11"
+                  variant="outline"
+                  onClick={() => {
+                    setNotesDialog({ open: true, reservation });
+                    setBusinessNotes(reservation.business_notes || '');
+                  }}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  {t.addNotes}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -422,29 +494,29 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
         </div>
       )}
 
-      <Dialog open={notesDialog.open} onOpenChange={(open) => setNotesDialog({ open, reservation: null })}>
+      <Dialog open={notesDialog.open} onOpenChange={(open) => setNotesDialog({ ...notesDialog, open })}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t.businessNotesTitle}</DialogTitle>
             <DialogDescription>{t.businessNotesDescription}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="business_notes">{t.businessNotesTitle}</Label>
+            <div>
+              <Label htmlFor="notes">{t.addNotes}</Label>
               <Textarea
-                id="business_notes"
+                id="notes"
                 value={businessNotes}
                 onChange={(e) => setBusinessNotes(e.target.value)}
+                placeholder={t.businessNotesDescription}
+                className="mt-2"
                 rows={4}
               />
             </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setNotesDialog({ open: false, reservation: null })} className="flex-1">
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setNotesDialog({ open: false, reservation: null })}>
                 {t.cancel}
               </Button>
-              <Button onClick={handleAddNotes} className="flex-1">
-                {t.save}
-              </Button>
+              <Button onClick={handleAddNotes}>{t.save}</Button>
             </div>
           </div>
         </DialogContent>
