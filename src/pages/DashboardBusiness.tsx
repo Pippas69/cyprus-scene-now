@@ -113,72 +113,72 @@ const DashboardBusiness = () => {
 
   // If verified, show dashboard
   return (
-    <div className="min-h-screen bg-gradient-warm">
-      <header className="bg-card/80 backdrop-blur-lg border-b shadow-card">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold gradient-ocean bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-foreground">
                 {businessName}
               </h1>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-2">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <p className="text-sm text-muted-foreground">Επαληθευμένη Επιχείρηση</p>
               </div>
             </div>
             <button
               onClick={() => navigate("/")}
-              className="gap-2 cursor-pointer flex items-center text-sm border border-border rounded-md px-4 py-2 hover:bg-accent"
+              className="gap-2 cursor-pointer flex items-center text-sm bg-secondary text-secondary-foreground rounded-lg px-4 py-2 hover:bg-secondary/80 transition-colors"
             >
               <Home className="h-4 w-4" />
-              Αρχική
+              <span className="hidden sm:inline">Αρχική</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
-            <TabsTrigger value="events" className="gap-2">
+          <TabsList className="w-full justify-start mb-8 h-auto flex-wrap gap-2 bg-muted/50 p-2">
+            <TabsTrigger value="events" className="gap-2 data-[state=active]:bg-background">
               <Calendar className="h-4 w-4" />
-              Εκδηλώσεις
+              <span>Εκδηλώσεις</span>
             </TabsTrigger>
-            <TabsTrigger value="create-event" className="gap-2">
+            <TabsTrigger value="create-event" className="gap-2 data-[state=active]:bg-background">
               <Plus className="h-4 w-4" />
-              Νέα Εκδήλωση
+              <span>Νέα Εκδήλωση</span>
             </TabsTrigger>
-            <TabsTrigger value="offers" className="gap-2">
+            <TabsTrigger value="offers" className="gap-2 data-[state=active]:bg-background">
               <Ticket className="h-4 w-4" />
-              Προσφορές
+              <span>Προσφορές</span>
             </TabsTrigger>
-            <TabsTrigger value="create-offer" className="gap-2">
+            <TabsTrigger value="create-offer" className="gap-2 data-[state=active]:bg-background">
               <Plus className="h-4 w-4" />
-              Νέα Προσφορά
+              <span>Νέα Προσφορά</span>
             </TabsTrigger>
-            <TabsTrigger value="profile" className="gap-2">
+            <TabsTrigger value="profile" className="gap-2 data-[state=active]:bg-background">
               <User className="h-4 w-4" />
-              Προφίλ
+              <span>Προφίλ</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="events">
+          <TabsContent value="events" className="mt-0">
             <EventsList businessId={businessId!} />
           </TabsContent>
 
-          <TabsContent value="create-event">
+          <TabsContent value="create-event" className="mt-0">
             <EventCreationForm businessId={businessId!} />
           </TabsContent>
 
-          <TabsContent value="offers">
+          <TabsContent value="offers" className="mt-0">
             <OffersList businessId={businessId!} />
           </TabsContent>
 
-          <TabsContent value="create-offer">
+          <TabsContent value="create-offer" className="mt-0">
             <OfferCreationForm businessId={businessId!} />
           </TabsContent>
 
-          <TabsContent value="profile">
+          <TabsContent value="profile" className="mt-0">
             <BusinessProfileForm businessId={businessId!} />
           </TabsContent>
         </Tabs>
