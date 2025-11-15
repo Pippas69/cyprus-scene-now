@@ -1,4 +1,5 @@
 import { MapPin, Percent, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,6 +10,7 @@ interface Offer {
   percent_off: number | null;
   start_at: string;
   end_at: string;
+  business_id: string;
   businesses: {
     name: string;
     logo_url: string | null;
@@ -33,8 +35,11 @@ const OfferCard = ({ offer, language }: OfferCardProps) => {
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
         <div className="flex gap-4">
-          {/* Business Logo */}
-          <div className="flex-shrink-0">
+          {/* Business Logo - Clickable */}
+          <Link 
+            to={`/business/${offer.business_id}`}
+            className="flex-shrink-0 hover:opacity-80 transition-opacity"
+          >
             {offer.businesses.logo_url ? (
               <img
                 src={offer.businesses.logo_url}
@@ -46,14 +51,19 @@ const OfferCard = ({ offer, language }: OfferCardProps) => {
                 <Percent className="h-8 w-8 text-muted-foreground" />
               </div>
             )}
-          </div>
+          </Link>
 
           {/* Offer Details */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1">
                 <h3 className="font-semibold text-lg line-clamp-1">{offer.title}</h3>
-                <p className="text-sm text-muted-foreground">{offer.businesses.name}</p>
+                <Link 
+                  to={`/business/${offer.business_id}`}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {offer.businesses.name}
+                </Link>
               </div>
               {offer.percent_off && (
                 <Badge variant="default" className="flex-shrink-0">
