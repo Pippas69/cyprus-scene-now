@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SavedEvents } from '@/components/user/SavedEvents';
 import { MyRSVPs } from '@/components/user/MyRSVPs';
+import { MyReservations } from '@/components/user/MyReservations';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Calendar, User } from 'lucide-react';
+import { Heart, Calendar, User, CalendarCheck } from 'lucide-react';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -47,6 +48,7 @@ const DashboardUser = () => {
       welcome: 'Καλώς ήρθατε',
       dashboard: 'Πίνακας Ελέγχου',
       rsvps: 'Οι Κρατήσεις Μου',
+      reservations: 'Κρατήσεις',
       saved: 'Αποθηκευμένα',
       profile: 'Προφίλ',
     },
@@ -54,6 +56,7 @@ const DashboardUser = () => {
       welcome: 'Welcome',
       dashboard: 'Dashboard',
       rsvps: 'My RSVPs',
+      reservations: 'Reservations',
       saved: 'Saved Events',
       profile: 'Profile',
     },
@@ -80,24 +83,32 @@ const DashboardUser = () => {
           </CardHeader>
         </Card>
 
-        <Tabs defaultValue="rsvps" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="rsvps" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              {t.rsvps}
-            </TabsTrigger>
-            <TabsTrigger value="saved" className="flex items-center gap-2">
-              <Heart className="h-4 w-4" />
-              {t.saved}
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              {t.profile}
-            </TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="rsvps" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="rsvps" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {t.rsvps}
+              </TabsTrigger>
+              <TabsTrigger value="reservations" className="flex items-center gap-2">
+                <CalendarCheck className="h-4 w-4" />
+                {t.reservations}
+              </TabsTrigger>
+              <TabsTrigger value="saved" className="flex items-center gap-2">
+                <Heart className="h-4 w-4" />
+                {t.saved}
+              </TabsTrigger>
+              <TabsTrigger value="profile" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                {t.profile}
+              </TabsTrigger>
+            </TabsList>
 
           <TabsContent value="rsvps" className="mt-6">
             <MyRSVPs userId={user.id} language={language} />
+          </TabsContent>
+
+          <TabsContent value="reservations" className="mt-6">
+            <MyReservations userId={user.id} language={language} />
           </TabsContent>
 
           <TabsContent value="saved" className="mt-6">

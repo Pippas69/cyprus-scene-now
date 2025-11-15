@@ -22,6 +22,10 @@ const eventSchema = z.object({
   category: z.array(z.string()).min(1, "Επιλέξτε τουλάχιστον μία κατηγορία"),
   price_tier: z.enum(["free", "low", "medium", "high"]),
   min_age_hint: z.number().min(0).max(100).optional(),
+  accepts_reservations: z.boolean().default(false),
+  max_reservations: z.number().min(1).optional(),
+  requires_approval: z.boolean().default(true),
+  seating_options: z.array(z.string()).optional(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -57,6 +61,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       category: [],
       price_tier: "free",
       min_age_hint: 0,
+      accepts_reservations: false,
+      max_reservations: undefined,
+      requires_approval: true,
+      seating_options: [],
     },
   });
 
@@ -95,6 +103,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         price_tier: data.price_tier,
         min_age_hint: data.min_age_hint || null,
         cover_image_url: coverImageUrl,
+        accepts_reservations: data.accepts_reservations,
+        max_reservations: data.max_reservations || null,
+        requires_approval: data.requires_approval,
+        seating_options: data.seating_options || [],
       });
 
       if (error) throw error;
@@ -294,6 +306,23 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 accept="image/*"
                 onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
                 className="mt-2"
+              />
+            </div>
+
+            <div className="space-y-4 p-4 border rounded-lg">
+              <h3 className="font-semibold">Ρυθμίσεις Κράτησης</h3>
+              
+              <FormField
+                control={form.control}
+                name="accepts_reservations"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between">
+                    <FormLabel>Αποδοχή Κρατήσεων</FormLabel>
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
 
