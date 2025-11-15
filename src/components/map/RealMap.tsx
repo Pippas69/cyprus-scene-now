@@ -1,446 +1,121 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Loader2 } from 'lucide-react';
+import ReactDOM from 'react-dom/client';
+import Supercluster from 'supercluster';
 import { MAPBOX_CONFIG } from '@/config/mapbox';
-import { locations } from '@/data/locations';
-import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
-
-interface EventLocation {
-  id: string;
-  title: string;
-  description: string;
-  start_at: string;
-  end_at: string;
-  location: string;
-  category: string[];
-  cover_image_url: string | null;
-  coordinates: [number, number];
-}
+import { useMapEvents, type EventLocation } from '@/hooks/useMapEvents';
+import { isEventHappeningNow } from '@/lib/mapUtils';
+import { CustomMarker } from './CustomMarker';
+import { ClusterMarker } from './ClusterMarker';
+import { EventPopup } from './EventPopup';
+import { MapSearch } from './MapSearch';
+import { MapControls } from './MapControls';
+import { TimeFilter, type TimeFilterValue } from './TimeFilter';
+import { Loader2 } from 'lucide-react';
 
 interface RealMapProps {
   city: string;
   neighborhood: string;
   selectedCategories: string[];
+  eventCounts: Record<string, number>;
 }
 
-export default function RealMap({ city, neighborhood, selectedCategories }: RealMapProps) {
+const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
-  const [isClient, setIsClient] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [events, setEvents] = useState<EventLocation[]>([]);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const [timeFilter, setTimeFilter] = useState<TimeFilterValue>("all");
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const { events, loading } = useMapEvents(selectedCategories, timeFilter);
 
-  // Fetch events from Supabase and subscribe to realtime updates
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select(`
-          id,
-          title,
-          description,
-          start_at,
-          end_at,
-          location,
-          category,
-          cover_image_url,
-          business_id,
-          businesses (
-            id,
-            name,
-            logo_url,
-            city
-          )
-        `)
-        .gte('end_at', new Date().toISOString());
+  const MAPBOX_TOKEN = MAPBOX_CONFIG.publicToken;
 
-      if (error) {
-        console.error('Error fetching events:', error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        // Get unique business IDs
-        const businessIds = [...new Set(data.map(event => event.business_id))];
-
-        // Fetch coordinates using the RPC function
-        const { data: coordsData, error: coordsError } = await supabase
-          .rpc('get_business_coordinates', { business_ids: businessIds });
-
-        if (coordsError) {
-          console.error('Error fetching coordinates:', coordsError);
-          return;
-        }
-
-        // Create a map of business_id to coordinates
-        const coordsMap = new Map(
-          coordsData?.map((item: any) => [
-            item.business_id,
-            { lng: item.longitude, lat: item.latitude }
-          ]) || []
-        );
-
-        const mappedEvents: EventLocation[] = data
-          .filter(event => coordsMap.has(event.business_id))
-          .map(event => {
-            const coords = coordsMap.get(event.business_id)!;
-            
-            return {
-              id: event.id,
-              title: event.title,
-              description: event.description || '',
-              start_at: event.start_at,
-              end_at: event.end_at,
-              location: event.location,
-              category: event.category || [],
-              cover_image_url: event.cover_image_url,
-              coordinates: [coords.lng, coords.lat] as [number, number],
-            };
-          });
-
-        setEvents(mappedEvents);
-        console.log('📍 Loaded events from database:', mappedEvents.length);
-      } else {
-        setEvents([]);
-        console.log('📍 No events found');
-      }
-    };
-
-    fetchEvents();
-
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('events-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'events'
-        },
-        async (payload) => {
-          console.log('🆕 New event detected:', payload.new);
-          
-          // Fetch the business geo data for the new event
-          const { data: businessData } = await supabase
-            .from('businesses')
-            .select('geo')
-            .eq('id', (payload.new as any).business_id)
-            .single();
-
-          if (businessData?.geo) {
-            const geoString = businessData.geo as any;
-            const match = geoString?.match(/POINT\(([^ ]+) ([^ ]+)\)/);
-            
-            if (match) {
-              const lng = parseFloat(match[1]);
-              const lat = parseFloat(match[2]);
-              
-              const newEvent: EventLocation = {
-                id: (payload.new as any).id,
-                title: (payload.new as any).title,
-                description: (payload.new as any).description || '',
-                start_at: (payload.new as any).start_at,
-                end_at: (payload.new as any).end_at,
-                location: (payload.new as any).location,
-                category: (payload.new as any).category || [],
-                cover_image_url: (payload.new as any).cover_image_url,
-                coordinates: [lng, lat] as [number, number],
-              };
-              
-              setEvents(prev => [...prev, newEvent]);
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isClient || !mapContainer.current) return;
-
-    // Check if token is configured
-    if (!MAPBOX_CONFIG.publicToken || MAPBOX_CONFIG.publicToken === 'PASTE_YOUR_MAPBOX_PUBLIC_TOKEN_HERE') {
-      setError('Please add your Mapbox token to src/config/mapbox.ts');
-      return;
-    }
-
-    try {
-      // Initialize map centered on Cyprus
-      mapboxgl.accessToken = MAPBOX_CONFIG.publicToken;
-    
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: MAPBOX_CONFIG.mapStyle,
-        center: MAPBOX_CONFIG.defaultCenter,
-        zoom: MAPBOX_CONFIG.defaultZoom,
-        pitch: MAPBOX_CONFIG.defaultPitch,
-      });
-
-      // Add navigation controls
-      map.current.addControl(
-        new mapboxgl.NavigationControl({
-          visualizePitch: true,
-        }),
-        'top-right'
-      );
-
-      // Add fullscreen control
-      map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
-
-      // Add geolocate control
-      map.current.addControl(
-        new mapboxgl.GeolocateControl({
-          positionOptions: {
-            enableHighAccuracy: true
-          },
-          trackUserLocation: true,
-          showUserHeading: true
-        }),
-        'top-right'
-      );
-
-      // Hide ALL default Mapbox POIs - only show business event markers
-      map.current.on('load', () => {
-        if (!map.current) return;
-
-        // Hide all POI label layers completely
-        const poiLayers = [
-          "poi-label",
-          "poi-label-s", 
-          "poi-label-md", 
-          "poi-label-lg",
-          "transit-label"
-        ];
-
-        poiLayers.forEach(layerId => {
-          if (map.current?.getLayer(layerId)) {
-            map.current.setLayoutProperty(layerId, 'visibility', 'none');
-          }
-        });
-      });
-    } catch (err) {
-      console.error('Error initializing map:', err);
-      setError('Failed to initialize map. Please check your token.');
-    }
-
-    // Cleanup
-    return () => {
-      map.current?.remove();
-    };
-  }, [isClient]);
-
-  // Auto-zoom to selected city/neighborhood
-  useEffect(() => {
-    if (!map.current || !city) return;
-
-    const cityData = locations[city];
-    if (!cityData) return;
-
-    // If neighborhood is selected
-    if (neighborhood && cityData.neighborhoods?.[neighborhood]) {
-      map.current.flyTo({
-        center: cityData.neighborhoods[neighborhood],
-        zoom: 15,
-        essential: true,
-        duration: 1500
-      });
-      return;
-    }
-
-    // If only city selected
-    map.current.flyTo({
-      center: cityData.center,
-      zoom: cityData.zoom,
-      essential: true,
-      duration: 1500
-    });
-  }, [city, neighborhood]);
-
-
-  // Add event markers with category filtering
-  useEffect(() => {
-    if (!map.current || events.length === 0) return;
-
-    const addMarkers = () => {
-      if (!map.current) return;
-
-      console.log('🔵 Adding markers with filters:', selectedCategories);
-      console.log('🔵 Total events available:', events.length);
-
-      // Clear existing markers
-      markers.current.forEach(marker => marker.remove());
-      markers.current = [];
-
-      let visibleCount = 0;
-      let hiddenCount = 0;
-
-      // Add markers for each event
-      events.forEach((event) => {
-        if (!map.current) return;
-
-        // Filter by selected categories
-        const hasMatchingCategory = event.category.some(cat => 
-          selectedCategories.length === 0 || selectedCategories.includes(cat)
-        );
-
-        if (!hasMatchingCategory) {
-          hiddenCount++;
-          console.log(`❌ Hiding ${event.title} - categories:`, event.category, 'selected:', selectedCategories);
-          return;
-        }
-
-        visibleCount++;
-        console.log(`✅ Showing ${event.title} - categories:`, event.category);
-
-        // Create custom marker element with Mediterranean blue color
-        const markerEl = document.createElement('div');
-        markerEl.className = 'custom-marker';
-        markerEl.style.width = '32px';
-        markerEl.style.height = '32px';
-        markerEl.style.borderRadius = '50%';
-        markerEl.style.backgroundColor = '#0077BE'; // Mediterranean blue
-        markerEl.style.border = '3px solid white';
-        markerEl.style.cursor = 'pointer';
-        markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-        markerEl.style.transition = 'transform 0.2s';
-        
-        markerEl.addEventListener('mouseenter', () => {
-          markerEl.style.transform = 'scale(1.2)';
-        });
-        
-        markerEl.addEventListener('mouseleave', () => {
-          markerEl.style.transform = 'scale(1)';
-        });
-
-        // Format date and time
-        const eventDate = new Date(event.start_at);
-        const formattedDate = format(eventDate, 'MMM dd, yyyy');
-        const formattedTime = format(eventDate, 'HH:mm');
-
-        // Create popup content
-        const popupContent = `
-          <div class="event-popup" style="min-width: 280px;">
-            ${event.cover_image_url ? `
-              <img 
-                src="${event.cover_image_url}" 
-                alt="${event.title}"
-                style="width: 100%; height: 140px; object-fit: cover; border-radius: 8px 8px 0 0; margin: -12px -12px 12px -12px;"
-              />
-            ` : ''}
-            <h3 style="font-weight: 600; font-size: 16px; margin: 0 0 8px 0; color: hsl(var(--foreground));">
-              ${event.title}
-            </h3>
-            <p style="font-size: 13px; color: hsl(var(--foreground) / 0.7); margin: 0 0 12px 0; line-height: 1.4;">
-              ${event.description}
-            </p>
-            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: hsl(var(--foreground) / 0.6);">
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                <span>${formattedDate} at ${formattedTime}</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-                <span>${event.location}</span>
-              </div>
-              <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
-                ${event.category.map(cat => `
-                  <span style="background: hsl(var(--primary) / 0.1); color: hsl(var(--primary)); padding: 2px 8px; border-radius: 12px; font-size: 11px;">
-                    ${cat}
-                  </span>
-                `).join('')}
-              </div>
-            </div>
-          </div>
-        `;
-
-        // Create popup
-        const popup = new mapboxgl.Popup({
-          offset: 25,
-          closeButton: true,
-          closeOnClick: false,
-          maxWidth: '320px',
-          className: 'event-popup-container'
-        }).setHTML(popupContent);
-
-        // Create and add marker
-        const marker = new mapboxgl.Marker(markerEl)
-          .setLngLat(event.coordinates)
-          .setPopup(popup)
-          .addTo(map.current);
-
-        markers.current.push(marker);
-        
-        // Auto-open popup for newly added events (last event in array is newest from realtime)
-        if (events.indexOf(event) === events.length - 1 && events.length > 0) {
-          setTimeout(() => {
-            marker.togglePopup();
-          }, 500);
-        }
-      });
-
-      console.log(`📊 Visible: ${visibleCount}, Hidden: ${hiddenCount}`);
-    };
-
-    // Check if map is already loaded
-    if (map.current.isStyleLoaded()) {
-      addMarkers();
-    } else {
-      // Wait for map to load
-      map.current.on('load', addMarkers);
-    }
-
-    return () => {
-      // Cleanup: remove event listener
-      map.current?.off('load', addMarkers);
-    };
-  }, [selectedCategories, events]);
-
-  if (!isClient) {
+  if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes('your-mapbox-token')) {
     return (
       <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
-        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-      </div>
-    );
-  }
-
-  // Show error if token is not configured
-  if (error) {
-    return (
-      <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
-        <div className="text-center p-6 max-w-md">
-          <p className="text-foreground/80 font-medium mb-2">Map Configuration Required</p>
-          <p className="text-sm text-foreground/60 mb-4">{error}</p>
-          <p className="text-xs text-foreground/40">
-            Get your free token at: <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">mapbox.com</a>
-          </p>
+        <div className="text-center space-y-2">
+          <p className="text-muted-foreground">Mapbox token not configured</p>
         </div>
       </div>
     );
   }
 
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: MAPBOX_CONFIG.mapStyle,
+      center: MAPBOX_CONFIG.defaultCenter,
+      zoom: MAPBOX_CONFIG.defaultZoom,
+      pitch: MAPBOX_CONFIG.defaultPitch,
+    });
+    map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
+    map.current.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+    map.current.addControl(new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true }), 'top-left');
+    return () => { map.current?.remove(); };
+  }, [MAPBOX_TOKEN]);
+
+  useEffect(() => {
+    if (!map.current || !events.length) return;
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+    const cluster = new Supercluster({ radius: MAPBOX_CONFIG.clusterRadius, maxZoom: MAPBOX_CONFIG.clusterMaxZoom });
+    cluster.load(events.map(e => ({ type: 'Feature' as const, properties: { event: e }, geometry: { type: 'Point' as const, coordinates: e.coordinates } })));
+    
+    const updateMarkers = () => {
+      if (!map.current) return;
+      const zoom = map.current.getZoom();
+      const bounds = map.current.getBounds();
+      const clusters = cluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom));
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      
+      clusters.forEach(c => {
+        const [lng, lat] = c.geometry.coordinates;
+        const div = document.createElement('div');
+        const root = ReactDOM.createRoot(div);
+        
+        if (c.properties.cluster) {
+          root.render(<ClusterMarker count={c.properties.point_count} onClick={() => map.current?.easeTo({ center: [lng, lat], zoom: zoom + 2, duration: 500 })} />);
+        } else {
+          const event = c.properties.event as EventLocation;
+          root.render(<CustomMarker category={event.category} isHappeningNow={isEventHappeningNow(event.start_at)} onClick={() => {
+            if (popupRef.current) popupRef.current.remove();
+            const popupDiv = document.createElement('div');
+            const popupRoot = ReactDOM.createRoot(popupDiv);
+            popupRoot.render(<EventPopup event={event} onClose={() => popupRef.current?.remove()} />);
+            popupRef.current = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: 'none', offset: 25 }).setLngLat([lng, lat]).setDOMContent(popupDiv).addTo(map.current!);
+          }} />);
+        }
+        markersRef.current.push(new mapboxgl.Marker({ element: div }).setLngLat([lng, lat]).addTo(map.current!));
+      });
+    };
+    
+    map.current.on('moveend', updateMarkers);
+    map.current.on('zoomend', updateMarkers);
+    updateMarkers();
+    return () => { map.current?.off('moveend', updateMarkers); map.current?.off('zoomend', updateMarkers); };
+  }, [events]);
+
+  useEffect(() => {
+    if (!map.current || !city) return;
+    const coords: Record<string, [number, number]> = { 'Λευκωσία': [33.3823, 35.1856], 'Λεμεσός': [33.0333, 34.6667], 'Λάρνακα': [33.6333, 34.9167], 'Πάφος': [32.4250, 34.7667], 'Παραλίμνι': [35.0381, 33.9833], 'Αγία Νάπα': [34.9833, 34.0] };
+    if (coords[city]) map.current.flyTo({ center: coords[city], zoom: neighborhood ? 13 : 11, duration: 1000 });
+  }, [city, neighborhood]);
+
   return (
-    <div className="relative w-full h-[70vh]">
-      <div ref={mapContainer} className="absolute inset-0 rounded-2xl shadow-lg" />
+    <div className="relative w-full h-[70vh] rounded-2xl overflow-hidden shadow-xl">
+      <div className="absolute top-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)]"><MapSearch onResultClick={(coords, id) => { map.current?.flyTo({ center: coords, zoom: 15, duration: 1000 }); }} /></div>
+      <div className="absolute top-20 left-4 z-10 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg max-w-[calc(100%-2rem)]"><TimeFilter value={timeFilter} onChange={setTimeFilter} /></div>
+      <MapControls onResetView={() => map.current?.flyTo({ center: MAPBOX_CONFIG.defaultCenter, zoom: MAPBOX_CONFIG.defaultZoom, duration: 1000 })} onToggleView={() => {}} onLocate={() => navigator.geolocation?.getCurrentPosition(p => map.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 13, duration: 1000 }))} isListView={false} />
+      {loading && <div className="absolute inset-0 z-20 bg-background/50 backdrop-blur-sm flex items-center justify-center"><div className="flex items-center gap-2 bg-background px-4 py-3 rounded-lg shadow-lg"><Loader2 className="animate-spin h-5 w-5 text-primary" /><span className="text-sm font-medium">Φόρτωση εκδηλώσεων...</span></div></div>}
+      <div ref={mapContainer} className="absolute inset-0" />
+      {!loading && events.length > 0 && <div className="absolute bottom-4 left-4 z-10 bg-background/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg"><p className="text-sm font-medium">{events.length} {events.length === 1 ? 'εκδήλωση' : 'εκδηλώσεις'}</p></div>}
     </div>
   );
-}
+};
+
+export default RealMap;
