@@ -22,6 +22,7 @@ interface Business {
   website: string;
   description: string;
   logo_url: string;
+  cover_url: string;
   verified: boolean;
   verified_at: string;
   verification_notes: string;
@@ -289,7 +290,25 @@ const AdminVerification = () => {
                           </DialogHeader>
                           
                           <div className="space-y-4">
-                            {business.logo_url && <img src={business.logo_url} alt={business.name} className="w-32 h-32 object-contain rounded-lg" />}
+                            {business.cover_url && (
+                              <div>
+                                <p className="font-semibold mb-2">Εικόνα Εξωφύλλου:</p>
+                                <div className="relative h-48 rounded-lg overflow-hidden border">
+                                  <img 
+                                    src={business.cover_url} 
+                                    alt={`${business.name} cover`} 
+                                    className="w-full h-full object-cover" 
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            
+                            {business.logo_url && (
+                              <div>
+                                <p className="font-semibold mb-2">Λογότυπο:</p>
+                                <img src={business.logo_url} alt={business.name} className="w-32 h-32 object-contain rounded-lg border p-2" />
+                              </div>
+                            )}
                             
                             <div className="grid grid-cols-2 gap-4">
                               <div>
