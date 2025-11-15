@@ -50,7 +50,7 @@ const CategoryFilter = ({
           <Badge
             key={category.id}
             variant={selectedCategories.includes(category.id) ? "default" : "outline"}
-            className={`cursor-pointer transition-all hover:scale-105 ${
+            className={`cursor-pointer transition-all hover:scale-105 px-3 py-2 text-sm min-h-[44px] flex items-center ${
               selectedCategories.includes(category.id)
                 ? "bg-ocean text-primary-foreground"
                 : "hover:bg-ocean/10"
