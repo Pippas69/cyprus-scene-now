@@ -51,8 +51,12 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
           location,
           category,
           cover_image_url,
+          business_id,
           businesses (
-            geo
+            id,
+            name,
+            logo_url,
+            city
           )
         `)
         .gte('end_at', new Date().toISOString());
@@ -62,22 +66,32 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
         return;
       }
 
-      if (data) {
+      if (data && data.length > 0) {
+        // Get unique business IDs
+        const businessIds = [...new Set(data.map(event => event.business_id))];
+
+        // Fetch coordinates using the RPC function
+        const { data: coordsData, error: coordsError } = await supabase
+          .rpc('get_business_coordinates', { business_ids: businessIds });
+
+        if (coordsError) {
+          console.error('Error fetching coordinates:', coordsError);
+          return;
+        }
+
+        // Create a map of business_id to coordinates
+        const coordsMap = new Map(
+          coordsData?.map((item: any) => [
+            item.business_id,
+            { lng: item.longitude, lat: item.latitude }
+          ]) || []
+        );
+
         const mappedEvents: EventLocation[] = data
-          .filter(event => event.businesses?.geo)
+          .filter(event => coordsMap.has(event.business_id))
           .map(event => {
-            // Parse PostGIS geography point format: "POINT(lng lat)"
-            const geoString = event.businesses.geo as any;
-            const match = geoString?.match(/POINT\(([^ ]+) ([^ ]+)\)/);
+            const coords = coordsMap.get(event.business_id)!;
             
-            if (!match) {
-              console.warn(`Could not parse coordinates for event ${event.id}`);
-              return null;
-            }
-
-            const lng = parseFloat(match[1]);
-            const lat = parseFloat(match[2]);
-
             return {
               id: event.id,
               title: event.title,
@@ -87,13 +101,15 @@ export default function RealMap({ city, neighborhood, selectedCategories }: Real
               location: event.location,
               category: event.category || [],
               cover_image_url: event.cover_image_url,
-              coordinates: [lng, lat] as [number, number],
+              coordinates: [coords.lng, coords.lat] as [number, number],
             };
-          })
-          .filter((event): event is EventLocation => event !== null);
+          });
 
         setEvents(mappedEvents);
         console.log('📍 Loaded events from database:', mappedEvents.length);
+      } else {
+        setEvents([]);
+        console.log('📍 No events found');
       }
     };
 

@@ -856,6 +856,14 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_business_coordinates: {
+        Args: { business_ids: string[] }
+        Returns: {
+          business_id: string
+          latitude: number
+          longitude: number
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
       longtransactionsenabled: { Args: never; Returns: boolean }
       populate_geometry_columns:
