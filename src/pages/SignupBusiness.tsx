@@ -10,7 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MAPBOX_CONFIG } from "@/config/mapbox";
 const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
 const cities = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 const formSchema = z.object({
@@ -37,6 +38,8 @@ const SignupBusiness = () => {
   } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
   const {
     register,
     handleSubmit,
@@ -53,6 +56,42 @@ const SignupBusiness = () => {
     }
   });
   const selectedCategories = watch("category") || [];
+  const address = watch("address");
+  const city = watch("city");
+
+  // Auto-geocode address and city
+  useEffect(() => {
+    if (!address || !city) {
+      setCoordinates(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setGeocoding(true);
+      try {
+        const searchText = `${address}, ${city}, Cyprus`;
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchText)}.json?access_token=${MAPBOX_CONFIG.publicToken}&country=cy&limit=1`
+        );
+        const data = await response.json();
+
+        if (data.features && data.features.length > 0) {
+          const [lng, lat] = data.features[0].center;
+          setCoordinates({ lng, lat });
+        } else {
+          setCoordinates(null);
+        }
+      } catch (error) {
+        console.error("Geocoding error:", error);
+        setCoordinates(null);
+      } finally {
+        setGeocoding(false);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [address, city]);
+
   const handleCategoryChange = (category: string, checked: boolean) => {
     const current = selectedCategories;
     if (checked) {
@@ -106,22 +145,40 @@ const SignupBusiness = () => {
         }
       }
 
-      // Create business record
-      const {
-        error: businessError
-      } = await supabase.from('businesses').insert({
-        user_id: authData.user.id,
-        name: data.businessName,
-        category: data.category,
-        city: data.city,
-        address: data.address,
-        phone: data.phone,
-        website: data.website || null,
-        description: data.description || null,
-        logo_url: logoUrl,
-        verified: false
-      });
-      if (businessError) throw businessError;
+      // Create business record with geo coordinates if available
+      if (coordinates) {
+        const { error: businessError } = await supabase.rpc('create_business_with_geo', {
+          p_user_id: authData.user.id,
+          p_name: data.businessName,
+          p_category: data.category,
+          p_city: data.city,
+          p_address: data.address,
+          p_phone: data.phone,
+          p_website: data.website || null,
+          p_description: data.description || null,
+          p_logo_url: logoUrl,
+          p_longitude: coordinates.lng,
+          p_latitude: coordinates.lat
+        });
+        if (businessError) throw businessError;
+      } else {
+        // Fallback to regular insert without geo coordinates
+        const {
+          error: businessError
+        } = await supabase.from('businesses').insert({
+          user_id: authData.user.id,
+          name: data.businessName,
+          category: data.category,
+          city: data.city,
+          address: data.address,
+          phone: data.phone,
+          website: data.website || null,
+          description: data.description || null,
+          logo_url: logoUrl,
+          verified: false
+        });
+        if (businessError) throw businessError;
+      }
 
       // Send registration confirmation email
       try {
