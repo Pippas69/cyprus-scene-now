@@ -18,6 +18,7 @@ const DashboardBusiness = () => {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string>("");
   const [businessLogoUrl, setBusinessLogoUrl] = useState<string | null>(null);
+  const [businessCoverUrl, setBusinessCoverUrl] = useState<string | null>(null);
 
   useEffect(() => {
     checkVerificationStatus();
@@ -35,7 +36,7 @@ const DashboardBusiness = () => {
 
       const { data: business, error } = await supabase
         .from("businesses")
-        .select("id, verified, name, logo_url")
+        .select("id, verified, name, logo_url, cover_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -50,6 +51,7 @@ const DashboardBusiness = () => {
       setBusinessId(business.id);
       setBusinessName(business.name ?? "");
       setBusinessLogoUrl(business.logo_url ?? null);
+      setBusinessCoverUrl(business.cover_url ?? null);
     } catch (error) {
       console.error("Error checking verification:", error);
       toast.error("Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.");
@@ -117,8 +119,21 @@ const DashboardBusiness = () => {
   // If verified, show dashboard
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-6">
+      <header className="relative overflow-hidden border-b sticky top-0 z-10">
+        {/* Cover Image or Gradient Background */}
+        {businessCoverUrl ? (
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${businessCoverUrl})` }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-card" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-card" />
+        )}
+        
+        {/* Content */}
+        <div className="relative container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Avatar className="h-14 w-14 border-2 border-border shadow-sm">
@@ -128,12 +143,12 @@ const DashboardBusiness = () => {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className={`text-3xl font-bold ${businessCoverUrl ? 'text-white' : 'text-foreground'}`}>
                   {businessName}
                 </h1>
                 <div className="flex items-center gap-2 mt-2">
                   <CheckCircle className="h-4 w-4 text-green-600" />
-                  <p className="text-sm text-muted-foreground">Επαληθευμένη Επιχείρηση</p>
+                  <p className={`text-sm ${businessCoverUrl ? 'text-white/90' : 'text-muted-foreground'}`}>Επαληθευμένη Επιχείρηση</p>
                 </div>
               </div>
             </div>
