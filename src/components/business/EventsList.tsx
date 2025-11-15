@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Trash2, Calendar, MapPin, Users } from "lucide-react";
 import { useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface EventsListProps {
   businessId: string;
@@ -13,6 +14,7 @@ interface EventsListProps {
 const EventsList = ({ businessId }: EventsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['business-events', businessId],

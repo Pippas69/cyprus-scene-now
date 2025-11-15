@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Trash2, Ticket, Calendar, Percent } from "lucide-react";
 import { useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OffersListProps {
   businessId: string;
@@ -14,6 +15,7 @@ interface OffersListProps {
 const OffersList = ({ businessId }: OffersListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: offers, isLoading } = useQuery({
     queryKey: ['business-offers', businessId],

@@ -92,9 +92,9 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold">{t.title}</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold">{t.title}</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.totalRsvps}</CardTitle>
