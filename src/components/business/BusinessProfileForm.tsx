@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageUploadField } from "./ImageUploadField";
 import { Loader2 } from "lucide-react";
+import { MAPBOX_CONFIG } from "@/config/mapbox";
 
 const categories = [
   "Καφετέριες & Εστιατόρια",
@@ -49,6 +50,8 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
   const [currentCoverUrl, setCurrentCoverUrl] = useState<string | null>(null);
+  const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
 
   const {
     register,
@@ -65,10 +68,43 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
   });
 
   const selectedCategories = watch("category") || [];
+  const address = watch("address");
+  const city = watch("city");
 
   useEffect(() => {
     fetchBusinessData();
   }, [businessId]);
+
+  // Auto-geocode when address or city changes
+  useEffect(() => {
+    const geocodeAddress = async () => {
+      if (!address || !city) return;
+      
+      const fullAddress = `${address}, ${city}, Cyprus`;
+      setGeocoding(true);
+      
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(fullAddress)}.json?access_token=${MAPBOX_CONFIG.publicToken}&limit=1`
+        );
+        
+        const data = await response.json();
+        
+        if (data.features && data.features.length > 0) {
+          const [lng, lat] = data.features[0].center;
+          setCoordinates({ lng, lat });
+          toast.success("Οι συντεταγμένες ενημερώθηκαν αυτόματα");
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error);
+      } finally {
+        setGeocoding(false);
+      }
+    };
+
+    const timeoutId = setTimeout(geocodeAddress, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [address, city]);
 
   const fetchBusinessData = async () => {
     try {
@@ -170,24 +206,44 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
         coverUrl = await handleCoverUpload(coverFile);
       }
 
-      // Update database
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          name: values.name,
-          description: values.description || null,
-          phone: values.phone || null,
-          website: values.website || null,
-          address: values.address || null,
-          city: values.city,
-          category: values.category,
-          logo_url: logoUrl,
-          cover_url: coverUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', businessId);
+      // If we have coordinates, use the function to update with PostGIS geometry
+      if (coordinates) {
+        const { error } = await supabase.rpc('update_business_with_geo', {
+          p_business_id: businessId,
+          p_name: values.name,
+          p_description: values.description || null,
+          p_phone: values.phone || null,
+          p_website: values.website || null,
+          p_address: values.address || null,
+          p_city: values.city,
+          p_category: values.category,
+          p_logo_url: logoUrl,
+          p_cover_url: coverUrl,
+          p_longitude: coordinates.lng,
+          p_latitude: coordinates.lat
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // No coordinates, update without geo
+        const { error } = await supabase
+          .from('businesses')
+          .update({
+            name: values.name,
+            description: values.description || null,
+            phone: values.phone || null,
+            website: values.website || null,
+            address: values.address || null,
+            city: values.city,
+            category: values.category,
+            logo_url: logoUrl,
+            cover_url: coverUrl,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', businessId);
+
+        if (error) throw error;
+      }
 
       toast.success("Το προφίλ ενημερώθηκε επιτυχώς!");
 
@@ -329,8 +385,20 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
 
           <div>
             <Label htmlFor="address">Διεύθυνση</Label>
-            <Input id="address" {...register("address")} placeholder="Οδός, Αριθμός" />
+            <div className="relative">
+              <Input id="address" {...register("address")} placeholder="Οδός, Αριθμός" />
+              {geocoding && (
+                <div className="absolute right-2 top-2.5">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
             {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
+            {coordinates && (
+              <p className="text-xs text-muted-foreground mt-1">
+                📍 Συντεταγμένες: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
