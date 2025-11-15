@@ -709,6 +709,22 @@ export type Database = {
             }
             Returns: string
           }
+      create_business_with_geo: {
+        Args: {
+          p_address: string
+          p_category: string[]
+          p_city: string
+          p_description: string
+          p_latitude: number
+          p_logo_url: string
+          p_longitude: number
+          p_name: string
+          p_phone: string
+          p_user_id: string
+          p_website: string
+        }
+        Returns: string
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
