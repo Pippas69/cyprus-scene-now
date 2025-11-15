@@ -16,7 +16,7 @@ const Index = () => {
       joinBtn: "Εγγραφή στο ΦΟΜΟ"
     },
     en: {
-      tagline: "Φόβος of Missing Out",
+      tagline: "Fear of Missing Out",
       heroMain: "Discover what's happening",
       heroSubtitle: "Right now, across Cyprus.",
       description: "Live social discovery platform — see where people are going, join trending events, and get exclusive QR discounts from partner businesses across Cyprus.",
