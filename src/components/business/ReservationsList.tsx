@@ -41,14 +41,16 @@ export const ReservationsList = ({ businessId, language }: ReservationsListProps
         .from('rsvps')
         .select(`
           *,
-          event:events(id, title, start_at),
-          profile:profiles(name, email)
+          events!inner(id, title, start_at),
+          profiles(name, email)
         `)
         .in('event_id', eventIds)
         .order('created_at', { ascending: false });
 
       if (rsvpsData) {
-        setReservations(rsvpsData as any);
+        // Filter out any RSVPs where event data is missing
+        const validReservations = rsvpsData.filter(r => r.events && r.events.id);
+        setReservations(validReservations as any);
       }
     }
 
@@ -64,9 +66,9 @@ export const ReservationsList = ({ businessId, language }: ReservationsListProps
   const exportToCSV = () => {
     const headers = ['Event', 'User', 'Email', 'Status', 'Notes', 'Date'];
     const rows = filteredReservations.map(r => [
-      r.event?.title || '',
-      r.profile?.name || '',
-      r.profile?.email || '',
+      r.events?.title || 'Deleted Event',
+      r.profiles?.name || 'Anonymous',
+      r.profiles?.email || '',
       r.status,
       r.notes || '',
       format(new Date(r.created_at), 'yyyy-MM-dd HH:mm'),
@@ -169,9 +171,11 @@ export const ReservationsList = ({ businessId, language }: ReservationsListProps
             <TableBody>
               {filteredReservations.map(reservation => (
                 <TableRow key={reservation.id}>
-                  <TableCell className="font-medium">{reservation.event?.title}</TableCell>
-                  <TableCell>{reservation.profile?.name || 'Anonymous'}</TableCell>
-                  <TableCell>{reservation.profile?.email || '-'}</TableCell>
+                  <TableCell className="font-medium">
+                    {reservation.events?.title || 'Deleted Event'}
+                  </TableCell>
+                  <TableCell>{reservation.profiles?.name || 'Anonymous'}</TableCell>
+                  <TableCell>{reservation.profiles?.email || '-'}</TableCell>
                   <TableCell>
                     <Badge variant={reservation.status === 'going' ? 'default' : 'secondary'}>
                       {reservation.status === 'going' ? t.going : t.interested}
