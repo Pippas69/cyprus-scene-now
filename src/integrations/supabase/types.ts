@@ -1464,6 +1464,23 @@ export type Database = {
         Returns: unknown
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_business_with_geo: {
+        Args: {
+          p_address: string
+          p_business_id: string
+          p_category: string[]
+          p_city: string
+          p_cover_url: string
+          p_description: string
+          p_latitude: number
+          p_logo_url: string
+          p_longitude: number
+          p_name: string
+          p_phone: string
+          p_website: string
+        }
+        Returns: undefined
+      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
