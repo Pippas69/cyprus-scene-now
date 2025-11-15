@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import EventCreationForm from "@/components/business/EventCreationForm";
 import OfferCreationForm from "@/components/business/OfferCreationForm";
 import EventsList from "@/components/business/EventsList";
@@ -16,6 +17,7 @@ const DashboardBusiness = () => {
   const [loading, setLoading] = useState(true);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string>("");
+  const [businessLogoUrl, setBusinessLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     checkVerificationStatus();
@@ -33,7 +35,7 @@ const DashboardBusiness = () => {
 
       const { data: business, error } = await supabase
         .from("businesses")
-        .select("id, verified, name")
+        .select("id, verified, name, logo_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -47,6 +49,7 @@ const DashboardBusiness = () => {
       setVerified(business.verified ?? false);
       setBusinessId(business.id);
       setBusinessName(business.name ?? "");
+      setBusinessLogoUrl(business.logo_url ?? null);
     } catch (error) {
       console.error("Error checking verification:", error);
       toast.error("Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.");
@@ -117,13 +120,21 @@ const DashboardBusiness = () => {
       <header className="bg-card border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                {businessName}
-              </h1>
-              <div className="flex items-center gap-2 mt-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <p className="text-sm text-muted-foreground">Επαληθευμένη Επιχείρηση</p>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-14 w-14 border-2 border-border shadow-sm">
+                <AvatarImage src={businessLogoUrl || undefined} alt={`${businessName} logo`} />
+                <AvatarFallback className="bg-muted text-lg font-semibold">
+                  {businessName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">
+                  {businessName}
+                </h1>
+                <div className="flex items-center gap-2 mt-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <p className="text-sm text-muted-foreground">Επαληθευμένη Επιχείρηση</p>
+                </div>
               </div>
             </div>
             <button
