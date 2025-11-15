@@ -299,6 +299,7 @@ const Feed = () => {
                 city=""
                 neighborhood=""
                 selectedCategories={selectedCategories}
+                eventCounts={{}}
               />
             </div>
           </TabsContent>

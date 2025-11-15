@@ -10,5 +10,10 @@ export const MAPBOX_CONFIG = {
   defaultCenter: [33.4299, 35.1264] as [number, number],
   defaultZoom: 9,
   defaultPitch: 45,
-  mapStyle: "mapbox://styles/mapbox/streets-v12",
+  mapStyle: "mapbox://styles/mapbox/light-v11",
+  
+  // Clustering configuration
+  clusterRadius: 50,
+  clusterMaxZoom: 13,
+  minZoomForMarkers: 10,
 };
