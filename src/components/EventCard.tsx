@@ -1,4 +1,4 @@
-import { Heart, Users, Clock, MapPin } from "lucide-react";
+import { Heart, Users, Clock, MapPin, CalendarCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { ReservationDialog } from "@/components/business/ReservationDialog";
 
 interface Event {
   id: string;
@@ -26,6 +27,9 @@ interface Event {
   interested_count?: number;
   going_count?: number;
   user_status?: string | null;
+  accepts_reservations?: boolean;
+  seating_options?: string[];
+  requires_approval?: boolean;
   businesses?: {
     name: string;
     logo_url: string | null;
@@ -46,24 +50,56 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
   const [loading, setLoading] = useState(false);
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [rsvpNotes, setRsvpNotes] = useState("");
+  const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [reservationStatus, setReservationStatus] = useState<string | null>(null);
   const { isFavorited, toggleFavorite, loading: favoriteLoading } = useFavorites(user?.id || null);
+
+  // Check if user has a reservation for this event
+  useEffect(() => {
+    if (user && event.accepts_reservations) {
+      checkReservationStatus();
+    }
+  }, [user, event.id, event.accepts_reservations]);
+
+  const checkReservationStatus = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('reservations')
+      .select('status')
+      .eq('event_id', event.id)
+      .eq('user_id', user.id)
+      .single();
+    
+    if (data) {
+      setReservationStatus(data.status);
+    }
+  };
 
   const translations = {
     el: {
       interested: "Ενδιαφέρομαι",
       going: "Έννα Πάω",
+      makeReservation: "Κάντε Κράτηση",
       ageRange: "Ηλικιακό Εύρος",
       free: "Δωρεάν",
       interestedCount: "Ενδιαφέρονται",
       goingCount: "Έννα Πάσιν",
+      reservationPending: "Κράτηση Εκκρεμεί",
+      reservationAccepted: "Κράτηση Εγκρίθηκε",
+      reservationDeclined: "Κράτηση Απορρίφθηκε",
     },
     en: {
       interested: "Interested",
       going: "I'm Going",
+      makeReservation: "Make Reservation",
       ageRange: "Age Range",
       free: "Free",
       interestedCount: "Interested",
       goingCount: "Going",
+      reservationPending: "Reservation Pending",
+      reservationAccepted: "Reservation Accepted",
+      reservationDeclined: "Reservation Declined",
     },
   };
 

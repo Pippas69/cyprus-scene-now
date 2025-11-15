@@ -134,6 +134,7 @@ export type Database = {
       }
       events: {
         Row: {
+          accepts_reservations: boolean | null
           business_id: string
           category: string[]
           cover_image_url: string | null
@@ -142,14 +143,18 @@ export type Database = {
           end_at: string
           id: string
           location: string
+          max_reservations: number | null
           min_age_hint: number | null
           price_tier: Database["public"]["Enums"]["price_tier"] | null
+          requires_approval: boolean | null
+          seating_options: string[] | null
           start_at: string
           tags: string[] | null
           title: string
           updated_at: string
         }
         Insert: {
+          accepts_reservations?: boolean | null
           business_id: string
           category: string[]
           cover_image_url?: string | null
@@ -158,14 +163,18 @@ export type Database = {
           end_at: string
           id?: string
           location: string
+          max_reservations?: number | null
           min_age_hint?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
+          requires_approval?: boolean | null
+          seating_options?: string[] | null
           start_at: string
           tags?: string[] | null
           title: string
           updated_at?: string
         }
         Update: {
+          accepts_reservations?: boolean | null
           business_id?: string
           category?: string[]
           cover_image_url?: string | null
@@ -174,8 +183,11 @@ export type Database = {
           end_at?: string
           id?: string
           location?: string
+          max_reservations?: number | null
           min_age_hint?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
+          requires_approval?: boolean | null
+          seating_options?: string[] | null
           start_at?: string
           tags?: string[] | null
           title?: string
@@ -505,6 +517,62 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservations: {
+        Row: {
+          business_notes: string | null
+          created_at: string
+          event_id: string
+          id: string
+          party_size: number
+          phone_number: string | null
+          preferred_time: string | null
+          reservation_name: string
+          seating_preference: string | null
+          special_requests: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_notes?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          party_size: number
+          phone_number?: string | null
+          preferred_time?: string | null
+          reservation_name: string
+          seating_preference?: string | null
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_notes?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          party_size?: number
+          phone_number?: string | null
+          preferred_time?: string | null
+          reservation_name?: string
+          seating_preference?: string | null
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]

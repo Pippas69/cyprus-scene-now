@@ -10,7 +10,7 @@ import OfferCreationForm from "@/components/business/OfferCreationForm";
 import EventsList from "@/components/business/EventsList";
 import OffersList from "@/components/business/OffersList";
 import BusinessProfileForm from "@/components/business/BusinessProfileForm";
-import { ReservationsList } from "@/components/business/ReservationsList";
+import { ReservationManagement } from "@/components/business/ReservationManagement";
 import { EventAnalytics } from "@/components/business/EventAnalytics";
 
 const DashboardBusiness = () => {
@@ -219,7 +219,7 @@ const DashboardBusiness = () => {
           </TabsContent>
 
           <TabsContent value="reservations" className="mt-0">
-            <ReservationsList businessId={businessId!} language="el" />
+            <ReservationManagement businessId={businessId!} language="el" />
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-0">
