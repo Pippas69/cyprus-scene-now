@@ -5,9 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { useFavorites } from "@/hooks/useFavorites";
+import { FavoriteButton } from "@/components/FavoriteButton";
 
 interface Event {
   id: string;
@@ -39,6 +44,9 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
   const [interestedCount, setInterestedCount] = useState(event.interested_count || 0);
   const [goingCount, setGoingCount] = useState(event.going_count || 0);
   const [loading, setLoading] = useState(false);
+  const [showNotesDialog, setShowNotesDialog] = useState(false);
+  const [rsvpNotes, setRsvpNotes] = useState("");
+  const { isFavorited, toggleFavorite, loading: favoriteLoading } = useFavorites(user?.id || null);
 
   const translations = {
     el: {
@@ -100,70 +108,65 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
     }
   };
 
-  const handleStatusClick = async (newStatus: 'interested' | 'going') => {
+  const handleStatusClick = async (newStatus: string) => {
     if (!user) {
       toast({
-        title: language === "el" ? "Απαιτείται σύνδεση" : "Login required",
-        description: language === "el" 
-          ? "Παρακαλώ συνδεθείτε για να συμμετάσχετε σε εκδηλώσεις" 
-          : "Please log in to participate in events",
+        title: "Login Required",
+        description: "Please login to RSVP to events",
         variant: "destructive",
       });
       return;
     }
 
+    // Show notes dialog for "going" status
+    if (newStatus === 'going' && status !== 'going') {
+      setShowNotesDialog(true);
+      return;
+    }
+
+    await updateRSVP(newStatus, "");
+  };
+
+  const updateRSVP = async (newStatus: string, notes: string) => {
     setLoading(true);
 
-    try {
-      // Check if user already has an RSVP
-      const { data: existingRsvp } = await supabase
+    if (status === newStatus) {
+      const { error } = await supabase
         .from('rsvps')
-        .select('*')
-        .eq('event_id', event.id)
+        .delete()
         .eq('user_id', user.id)
-        .single();
+        .eq('event_id', event.id);
 
-      if (existingRsvp) {
-        if (existingRsvp.status === newStatus) {
-          // Remove RSVP if clicking the same status
-          await supabase
-            .from('rsvps')
-            .delete()
-            .eq('id', existingRsvp.id);
-          setStatus(null);
-        } else {
-          // Update to new status
-          await supabase
-            .from('rsvps')
-            .update({ status: newStatus })
-            .eq('id', existingRsvp.id);
-          setStatus(newStatus);
-        }
-      } else {
-        // Create new RSVP
-        await supabase
-          .from('rsvps')
-          .insert({
-            event_id: event.id,
-            user_id: user.id,
-            status: newStatus,
-          });
-        setStatus(newStatus);
+      if (!error) {
+        setStatus(null);
+        toast({
+          title: "RSVP Removed",
+          description: "Your RSVP has been removed",
+        });
       }
+    } else {
+      const { error } = await supabase
+        .from('rsvps')
+        .upsert({
+          user_id: user.id,
+          event_id: event.id,
+          status: newStatus as 'interested' | 'going',
+          notes: notes || null,
+        });
 
-      await fetchCounts();
-    } catch (error) {
-      console.error('Error updating RSVP:', error);
-      toast({
-        title: language === "el" ? "Σφάλμα" : "Error",
-        description: language === "el" 
-          ? "Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά." 
-          : "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      if (!error) {
+        setStatus(newStatus);
+        toast({
+          title: "RSVP Updated",
+          description: `You're ${newStatus === 'going' ? 'going' : 'interested'}!`,
+        });
+      }
     }
+
+    setLoading(false);
+    setShowNotesDialog(false);
+    setRsvpNotes("");
+    fetchCounts();
   };
 
   const formatTime = (dateStr: string) => {
@@ -175,19 +178,31 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-hover transition-all duration-300 group">
-      {/* Image */}
-      <div className="relative h-48 bg-gradient-ocean overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center text-white/20 text-6xl">
-          🌊
+    <>
+      <Card className="overflow-hidden hover:shadow-hover transition-all duration-300 group relative">
+        {/* Favorite Button */}
+        {user && (
+          <FavoriteButton
+            isFavorited={isFavorited(event.id)}
+            onClick={() => toggleFavorite(event.id)}
+            loading={favoriteLoading}
+            className="absolute top-3 right-3 z-10 bg-background/80 hover:bg-background backdrop-blur-sm shadow-lg"
+            size="sm"
+          />
+        )}
+        
+        {/* Image */}
+        <div className="relative h-48 bg-gradient-ocean overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center text-white/20 text-6xl">
+            🌊
+          </div>
+          <Badge className="absolute top-3 left-3 bg-card/90 text-card-foreground">
+            {event.category[0] || "Event"}
+          </Badge>
+          <Badge className="absolute top-14 right-3 bg-accent text-accent-foreground">
+            {event.price_tier === 'free' ? t.free : event.price_tier}
+          </Badge>
         </div>
-        <Badge className="absolute top-3 left-3 bg-card/90 text-card-foreground">
-          {event.category[0] || "Event"}
-        </Badge>
-        <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground">
-          {event.price_tier === 'free' ? t.free : event.price_tier}
-        </Badge>
-      </div>
 
       {/* Content */}
       <div className="p-4 space-y-3">
@@ -274,6 +289,37 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
         )}
       </div>
     </Card>
+    <Dialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirm Your Attendance</DialogTitle>
+          <DialogDescription>
+            Add any special requests or notes (optional)
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              placeholder="e.g., Coming with 2 friends, dietary restrictions, etc."
+              value={rsvpNotes}
+              onChange={(e) => setRsvpNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowNotesDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => updateRSVP('going', rsvpNotes)} disabled={loading}>
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
