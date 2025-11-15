@@ -8,7 +8,7 @@ const Index = () => {
   const [language, setLanguage] = useState<"el" | "en">("el");
   const text = {
     el: {
-      tagline: "Φόβος of Missing Out",
+      tagline: "Fear of Missing Out",
       heroMain: "Επιλογές υπάρχουν, Απλά εν τες Ξέρεις",
       heroSubtitle: "Βρες που αξίζει να είσαι.",
       description: "Πλατφόρμα ζωντανής κοινωνικής ανακάλυψης — δείτε πού πηγαίνουν οι άνθρωποι, συμμετάσχετε σε trending εκδηλώσεις και αποκτήστε αποκλειστικές εκπτώσεις QR από συνεργαζόμενες επιχειρήσεις σε όλη την Κύπρο.",
@@ -16,7 +16,7 @@ const Index = () => {
       joinBtn: "Εγγραφή στο ΦΟΜΟ"
     },
     en: {
-      tagline: "Φόβος of Missing Out",
+      tagline: "Fear of Missing Out",
       heroMain: "Discover what's happening",
       heroSubtitle: "Right now, across Cyprus.",
       description: "Live social discovery platform — see where people are going, join trending events, and get exclusive QR discounts from partner businesses across Cyprus.",
