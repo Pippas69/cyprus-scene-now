@@ -6,38 +6,52 @@ import { Button } from "@/components/ui/button";
 import { Coffee, Moon, Palette, Dumbbell, Users, Briefcase, Sparkles, Plane, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import MapWrapper from "@/components/map/MapWrapper";
+import { useLanguage } from "@/hooks/useLanguage";
 
-const categories = [
-  { id: "cafe", label: "Καφέ & Εστιατόρια", icon: Coffee },
-  { id: "nightlife", label: "Νυχτερινή Ζωή", icon: Moon },
-  { id: "art", label: "Τέχνη & Πολιτισμός", icon: Palette },
-  { id: "fitness", label: "Γυμναστική", icon: Dumbbell },
-  { id: "family", label: "Οικογένεια", icon: Users },
-  { id: "business", label: "Business", icon: Briefcase },
-  { id: "lifestyle", label: "Lifestyle", icon: Sparkles },
-  { id: "travel", label: "Ταξίδια", icon: Plane },
-];
-
-const neighborhoods: Record<string, string[]> = {
-  Λευκωσία: [
-    "Έγκωμη",
-    "Αγλαντζιά",
-    "Λατσιά",
-    "Στρόβολος",
-    "Λακατάμια",
-    "Μακεδονίτισσα",
-    "Άγιος Δομέτιος",
-    "Κάτω Λευκωσία",
+const categories = {
+  el: [
+    { id: "cafe", label: "Καφέ & Εστιατόρια", icon: Coffee },
+    { id: "nightlife", label: "Νυχτερινή Ζωή", icon: Moon },
+    { id: "art", label: "Τέχνη & Πολιτισμός", icon: Palette },
+    { id: "fitness", label: "Γυμναστική", icon: Dumbbell },
+    { id: "family", label: "Οικογένεια", icon: Users },
+    { id: "business", label: "Business", icon: Briefcase },
+    { id: "lifestyle", label: "Lifestyle", icon: Sparkles },
+    { id: "travel", label: "Ταξίδια", icon: Plane },
   ],
-  Λεμεσός: ["Γερμασόγεια", "Αγ. Αθανάσιος", "Μουτταγιάκα", "Κάψαλος", "Ζακάκι", "Παλιά Λεμεσός"],
-  Λάρνακα: ["Φινικούδες", "Μακένζυ", "Δροσιά", "Άγιος Νικόλαος"],
-  Πάφος: ["Κάτω Πάφος", "Πάνω Πάφος", "Χλώρακας", "Τάλα"],
-  Παραλίμνι: ["Κέντρο", "Πρωταράς"],
-  "Αγία Νάπα": ["Κέντρο", "Νησί", "Μακρόνησος"],
+  en: [
+    { id: "cafe", label: "Cafés & Restaurants", icon: Coffee },
+    { id: "nightlife", label: "Nightlife", icon: Moon },
+    { id: "art", label: "Art & Culture", icon: Palette },
+    { id: "fitness", label: "Fitness", icon: Dumbbell },
+    { id: "family", label: "Family", icon: Users },
+    { id: "business", label: "Business", icon: Briefcase },
+    { id: "lifestyle", label: "Lifestyle", icon: Sparkles },
+    { id: "travel", label: "Travel", icon: Plane },
+  ],
+};
+
+const neighborhoods = {
+  el: {
+    Λευκωσία: ["Έγκωμη", "Αγλαντζιά", "Λατσιά", "Στρόβολος", "Λακατάμια", "Μακεδονίτισσα", "Άγιος Δομέτιος", "Κάτω Λευκωσία"],
+    Λεμεσός: ["Γερμασόγεια", "Αγ. Αθανάσιος", "Μουτταγιάκα", "Κάψαλος", "Ζακάκι", "Παλιά Λεμεσός"],
+    Λάρνακα: ["Φινικούδες", "Μακένζυ", "Δροσιά", "Άγιος Νικόλαος"],
+    Πάφος: ["Κάτω Πάφος", "Πάνω Πάφος", "Χλώρακας", "Τάλα"],
+    Παραλίμνι: ["Κέντρο", "Πρωταράς"],
+    "Αγία Νάπα": ["Κέντρο", "Νησί", "Μακρόνησος"],
+  },
+  en: {
+    Nicosia: ["Egkomi", "Aglandjia", "Latsia", "Strovolos", "Lakatamia", "Makedonitissa", "Agios Dometios", "Kato Nicosia"],
+    Limassol: ["Germasogeia", "Ag. Athanasios", "Mouttagiaka", "Kapsalos", "Zakaki", "Old Limassol"],
+    Larnaca: ["Finikoudes", "Mackenzie", "Drosia", "Agios Nikolaos"],
+    Paphos: ["Kato Paphos", "Pano Paphos", "Chlorakas", "Tala"],
+    Paralimni: ["Center", "Protaras"],
+    "Ayia Napa": ["Center", "Nissi", "Makronissos"],
+  },
 };
 
 const Xartis = () => {
-  const [language, setLanguage] = useState<"el" | "en">("el");
+  const { language, setLanguage } = useLanguage();
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -49,12 +63,16 @@ const Xartis = () => {
       subtitle: "Σύντομα θα βλέπεις ζωντανά τι γίνεται σε όλη την Κύπρο.",
       selectCity: "Επιλέξτε Πόλη",
       selectNeighborhood: "Επιλέξτε Περιοχή",
+      clearFilters: "Καθαρισμός φίλτρων",
+      activeFilters: "Ενεργά φίλτρα",
     },
     en: {
       title: "Events Map",
       subtitle: "Soon you’ll see what’s happening live across Cyprus.",
       selectCity: "Select City",
       selectNeighborhood: "Select Neighborhood",
+      clearFilters: "Clear Filters",
+      activeFilters: "Active Filters",
     },
   };
 
@@ -70,7 +88,7 @@ const Xartis = () => {
 
       if (data) {
         const counts: Record<string, number> = {};
-        categories.forEach(cat => {
+        categories.el.forEach(cat => {
           counts[cat.id] = data.filter(event => 
             event.category.includes(cat.id)
           ).length;
@@ -119,12 +137,11 @@ const Xartis = () => {
                 className="w-full md:w-64 border rounded-lg px-3 py-2 bg-background text-foreground"
               >
                 <option value="">{t.selectCity}</option>
-                <option value="Λευκωσία">Λευκωσία</option>
-                <option value="Λεμεσός">Λεμεσός</option>
-                <option value="Λάρνακα">Λάρνακα</option>
-                <option value="Πάφος">Πάφος</option>
-                <option value="Παραλίμνι">Παραλίμνι</option>
-                <option value="Αγία Νάπα">Αγία Νάπα</option>
+                {Object.keys(neighborhoods[language]).map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
               </select>
 
               {city && (
@@ -134,7 +151,7 @@ const Xartis = () => {
                   className="w-full md:w-64 border rounded-lg px-3 py-2 bg-background text-foreground"
                 >
                   <option value="">{t.selectNeighborhood}</option>
-                  {neighborhoods[city]?.map((n) => (
+                  {neighborhoods[language][city]?.map((n) => (
                     <option key={n} value={n}>
                       {n}
                     </option>
@@ -159,7 +176,7 @@ const Xartis = () => {
 
           {/* Category Filters */}
           <div className="flex flex-wrap gap-2">
-            {categories.map((category) => {
+            {categories[language].map((category) => {
               const Icon = category.icon;
               const isSelected = selectedCategories.includes(category.id);
               const count = eventCounts[category.id] || 0;
@@ -194,7 +211,7 @@ const Xartis = () => {
           {/* Active filters indicator */}
           {selectedCategories.length > 0 && (
             <div className="text-sm text-muted-foreground">
-              Ενεργά φίλτρα: {selectedCategories.length}
+              {t.activeFilters}: {selectedCategories.length}
             </div>
           )}
         </div>

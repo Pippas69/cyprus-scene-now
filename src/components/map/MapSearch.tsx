@@ -16,9 +16,14 @@ interface SearchResult {
 
 interface MapSearchProps {
   onResultClick: (coordinates: [number, number], eventId: string) => void;
+  language: "el" | "en";
 }
 
-export const MapSearch = ({ onResultClick }: MapSearchProps) => {
+export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
+  const text = {
+    el: { placeholder: "Αναζήτηση εκδηλώσεων..." },
+    en: { placeholder: "Search for events..." },
+  };
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -97,7 +102,7 @@ export const MapSearch = ({ onResultClick }: MapSearchProps) => {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
         <Input
           type="text"
-          placeholder="Αναζήτηση εκδηλώσεων..."
+          placeholder={text[language].placeholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setIsOpen(true)}
