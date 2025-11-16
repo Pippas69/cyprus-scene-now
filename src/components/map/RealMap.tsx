@@ -13,6 +13,7 @@ import { MapSearch } from './MapSearch';
 import { MapControls } from './MapControls';
 import { TimeFilter, type TimeFilterValue } from './TimeFilter';
 import { Loader2 } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface RealMapProps {
   city: string;
@@ -27,6 +28,7 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilterValue>("all");
+  const { language } = useLanguage();
 
   const { events, loading } = useMapEvents(selectedCategories, timeFilter);
 
@@ -102,18 +104,52 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
 
   useEffect(() => {
     if (!map.current || !city) return;
-    const coords: Record<string, [number, number]> = { 'Λευκωσία': [33.3823, 35.1856], 'Λεμεσός': [33.0333, 34.6667], 'Λάρνακα': [33.6333, 34.9167], 'Πάφος': [32.4250, 34.7667], 'Παραλίμνι': [35.0381, 33.9833], 'Αγία Νάπα': [34.9833, 34.0] };
+    const coords: Record<string, [number, number]> = { 
+      'Λευκωσία': [33.3823, 35.1856], 'Λεμεσός': [33.0333, 34.6667], 'Λάρνακα': [33.6333, 34.9167], 'Πάφος': [32.4250, 34.7667], 'Παραλίμνι': [35.0381, 33.9833], 'Αγία Νάπα': [34.9833, 34.0],
+      'Nicosia': [33.3823, 35.1856], 'Limassol': [33.0333, 34.6667], 'Larnaca': [33.6333, 34.9167], 'Paphos': [32.4250, 34.7667], 'Paralimni': [35.0381, 33.9833], 'Ayia Napa': [34.9833, 34.0]
+    };
     if (coords[city]) map.current.flyTo({ center: coords[city], zoom: neighborhood ? 13 : 11, duration: 1000 });
   }, [city, neighborhood]);
 
+  const handleSearchResultClick = (coords: [number, number], id: string) => {
+    map.current?.flyTo({ center: coords, zoom: 15, duration: 1000 });
+  };
+
   return (
     <div className="relative w-full h-[70vh] rounded-2xl overflow-hidden shadow-xl">
-      <div className="absolute top-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)]"><MapSearch onResultClick={(coords, id) => { map.current?.flyTo({ center: coords, zoom: 15, duration: 1000 }); }} /></div>
-      <div className="absolute top-20 left-4 z-10 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg max-w-[calc(100%-2rem)]"><TimeFilter value={timeFilter} onChange={setTimeFilter} /></div>
-      <MapControls onResetView={() => map.current?.flyTo({ center: MAPBOX_CONFIG.defaultCenter, zoom: MAPBOX_CONFIG.defaultZoom, duration: 1000 })} onToggleView={() => {}} onLocate={() => navigator.geolocation?.getCurrentPosition(p => map.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 13, duration: 1000 }))} isListView={false} />
-      {loading && <div className="absolute inset-0 z-20 bg-background/50 backdrop-blur-sm flex items-center justify-center"><div className="flex items-center gap-2 bg-background px-4 py-3 rounded-lg shadow-lg"><Loader2 className="animate-spin h-5 w-5 text-primary" /><span className="text-sm font-medium">Φόρτωση εκδηλώσεων...</span></div></div>}
+      <div className="absolute top-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)]">
+        <MapSearch onResultClick={handleSearchResultClick} language={language} />
+      </div>
+      
+      <div className="absolute top-20 left-4 z-10 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg max-w-[calc(100%-2rem)]">
+        <TimeFilter value={timeFilter} onChange={setTimeFilter} language={language} />
+      </div>
+      
+      <MapControls 
+        onResetView={() => map.current?.flyTo({ center: MAPBOX_CONFIG.defaultCenter, zoom: MAPBOX_CONFIG.defaultZoom, duration: 1000 })} 
+        onToggleView={() => {}} 
+        onLocate={() => navigator.geolocation?.getCurrentPosition(p => map.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 13, duration: 1000 }))} 
+        isListView={false} 
+      />
+      
+      {loading && (
+        <div className="absolute inset-0 z-20 bg-background/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="flex items-center gap-2 bg-background px-4 py-3 rounded-lg shadow-lg">
+            <Loader2 className="animate-spin h-5 w-5 text-primary" />
+            <span className="text-sm font-medium">{language === 'el' ? 'Φόρτωση εκδηλώσεων...' : 'Loading events...'}</span>
+          </div>
+        </div>
+      )}
+      
       <div ref={mapContainer} className="absolute inset-0" />
-      {!loading && events.length > 0 && <div className="absolute bottom-4 left-4 z-10 bg-background/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg"><p className="text-sm font-medium">{events.length} {events.length === 1 ? 'εκδήλωση' : 'εκδηλώσεις'}</p></div>}
+      
+      {!loading && events.length > 0 && (
+        <div className="absolute bottom-4 left-4 z-10 bg-background/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
+          <p className="text-sm font-medium">
+            {events.length} {language === 'el' ? (events.length === 1 ? 'εκδήλωση' : 'εκδηλώσεις') : (events.length === 1 ? 'event' : 'events')}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
