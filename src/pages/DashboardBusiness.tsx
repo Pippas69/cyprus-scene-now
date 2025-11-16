@@ -274,11 +274,11 @@ const DashboardBusiness = () => {
           </TabsContent>
 
           <TabsContent value="reservations" className="mt-0">
-            <ReservationManagement businessId={businessId!} language="el" />
+            <ReservationManagement businessId={businessId!} language={language} />
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-0">
-            <EventAnalytics businessId={businessId!} language="el" />
+            <EventAnalytics businessId={businessId!} language={language} />
           </TabsContent>
         </Tabs>
       </main>
