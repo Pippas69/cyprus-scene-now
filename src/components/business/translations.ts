@@ -143,6 +143,29 @@ export const businessTranslations = {
     coverPhoto: "Φωτογραφία Εξωφύλλου",
     // Removed duplicate keys - they already exist above (lines 104-112)
     geocodingAddress: "Εύρεση συντεταγμένων...",
+    publishing: "Δημοσίευση...",
+    
+    // Offer Creation
+    offerTitle: "Τίτλος Προσφοράς",
+    offerTitlePlaceholder: "π.χ. 20% Έκπτωση σε όλα τα ποτά",
+    discountPercent: "Ποσοστό Έκπτωσης (%)",
+    termsConditions: "Όροι & Προϋποθέσεις",
+    termsPlaceholder: "Προσθέστε οποιουσδήποτε όρους ή περιορισμούς...",
+    publishOffer: "Δημοσίευση Προσφοράς",
+    offerDescPlaceholder: "Προσθέστε λεπτομέρειες για την προσφορά σας...",
+    offerCreatedSuccess: "Η προσφορά δημοσιεύθηκε επιτυχώς",
+    offerCreationError: "Κάτι πήγε στραβά κατά τη δημιουργία της προσφοράς",
+    
+    // Business Profile
+    contactInfo: "Στοιχεία Επικοινωνίας",
+    phone: "Τηλέφωνο",
+    phonePlaceholder: "π.χ. 2310123456",
+    website: "Ιστοσελίδα",
+    websitePlaceholder: "π.χ. https://example.com",
+    address: "Διεύθυνση",
+    addressPlaceholder: "π.χ. Τσιμισκή 25",
+    businessNamePlaceholder: "π.χ. Το Καφενείο μας",
+    businessDescPlaceholder: "Πείτε μας για την επιχείρησή σας...",
     
     // Reservations
     reservations: "Κρατήσεις",
@@ -271,14 +294,15 @@ export const businessTranslations = {
     createOffer: "Create Offer",
     offerTitle: "Offer Title",
     offerTitlePlaceholder: "e.g. Happy Hour 50% Off",
-    offerDescription: "Description",
-    offerDescriptionPlaceholder: "e.g. 20% off all drinks",
-    percentOff: "Percent Off (%)",
-    percentOffPlaceholder: "e.g. 20",
-    terms: "Terms (optional)",
-    termsPlaceholder: "e.g. Valid only for alcoholic drinks",
-    offerCreated: "Offer created successfully",
-    creatingOffer: "Creating offer...",
+    offerDescPlaceholder: "Add details about your offer...",
+    description: "Description",
+    discountPercent: "Discount Percentage (%)",
+    termsConditions: "Terms & Conditions",
+    termsPlaceholder: "Add any terms or restrictions...",
+    publishOffer: "Publish Offer",
+    publishing: "Publishing...",
+    offerCreatedSuccess: "Offer published successfully",
+    offerCreationError: "Something went wrong while creating the offer",
     
     // Business Profile
     businessProfile: "Business Profile",
