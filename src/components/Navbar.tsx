@@ -166,7 +166,7 @@ const Navbar = ({
                         {userName.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden lg:inline text-[#012b67] font-medium">{userName}</span>
+                    <span className="hidden lg:inline bg-[#012b67] text-white font-medium px-3 py-1 rounded">{userName}</span>
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
