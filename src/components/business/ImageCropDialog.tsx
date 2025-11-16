@@ -9,6 +9,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { ZoomIn, ZoomOut } from "lucide-react";
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -31,6 +33,7 @@ export const ImageCropDialog = ({
     y: 24.6875,
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [zoom, setZoom] = useState(1);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -119,7 +122,45 @@ export const ImageCropDialog = ({
         <DialogHeader>
           <DialogTitle>Περικοπή Εικόνας (16:9)</DialogTitle>
         </DialogHeader>
-        <div className="flex justify-center items-center">
+        
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-4 px-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setZoom(Math.max(1, zoom - 0.1))}
+            disabled={zoom <= 1}
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-sm text-muted-foreground min-w-[3rem]">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Slider
+              value={[zoom]}
+              onValueChange={(value) => setZoom(value[0])}
+              min={1}
+              max={3}
+              step={0.1}
+              className="flex-1"
+            />
+          </div>
+          
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+            disabled={zoom >= 3}
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex justify-center items-center overflow-hidden">
           <ReactCrop
             crop={crop}
             onChange={(c) => setCrop(c)}
@@ -132,7 +173,12 @@ export const ImageCropDialog = ({
               src={imageSrc}
               alt="Crop preview"
               onLoad={onImageLoad}
-              className="max-w-full h-auto"
+              style={{
+                transform: `scale(${zoom})`,
+                transformOrigin: "center",
+                maxWidth: "100%",
+                height: "auto",
+              }}
             />
           </ReactCrop>
         </div>
