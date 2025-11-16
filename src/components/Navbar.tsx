@@ -140,7 +140,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
           <button
             onClick={() => navigate("/")}
             className={`font-cinzel text-3xl font-black tracking-tight transition-colors ${
-              scrolled ? "text-primary drop-shadow-md" : "text-white"
+              scrolled ? "text-secondary drop-shadow-lg" : "text-white"
             }`}
           >
             ΦΟΜΟ
@@ -153,7 +153,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
               <DropdownMenuTrigger asChild>
                 <button
                   className={`font-inter font-semibold transition-colors flex items-center gap-1 ${
-                    scrolled ? "text-ocean hover:text-primary" : "text-white hover:text-accent"
+                    scrolled ? "text-primary hover:text-secondary" : "text-white hover:text-accent"
                   }`}
                 >
                   {language === "el" ? "Εξερεύνηση" : "Explore"}
@@ -198,8 +198,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                 onClick={() => onLanguageToggle("el")}
                 className={`px-3 py-1 rounded text-sm font-bold transition-all ${
                   language === "el"
-                    ? scrolled ? "bg-ocean text-white" : "bg-white text-primary"
-                    : scrolled ? "text-ocean hover:bg-ocean/10" : "text-white hover:bg-white/20"
+                    ? scrolled ? "bg-secondary text-white shadow-md" : "bg-white text-primary"
+                    : scrolled ? "text-primary hover:bg-secondary/10" : "text-white hover:bg-white/20"
                 }`}
               >
                 🇬🇷 ΕΛ
@@ -208,8 +208,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                 onClick={() => onLanguageToggle("en")}
                 className={`px-3 py-1 rounded text-sm font-bold transition-all ${
                   language === "en"
-                    ? scrolled ? "bg-ocean text-white" : "bg-white text-primary"
-                    : scrolled ? "text-ocean hover:bg-ocean/10" : "text-white hover:bg-white/20"
+                    ? scrolled ? "bg-secondary text-white shadow-md" : "bg-white text-primary"
+                    : scrolled ? "text-primary hover:bg-secondary/10" : "text-white hover:bg-white/20"
                 }`}
               >
                 🇬🇧 EN
