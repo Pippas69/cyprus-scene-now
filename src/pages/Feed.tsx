@@ -32,7 +32,8 @@ const Feed = () => {
   const startYRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
   const {
-    language
+    language,
+    setLanguage
   } = useLanguage();
   const ITEMS_PER_PAGE = 12;
   const translations = {
@@ -253,7 +254,7 @@ const Feed = () => {
   const handleQuickFilterToggle = (filter: string) => setQuickFilters(prev => prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]);
   const displayedEvents = activeTab === 'forYou' ? getPersonalizedEvents() : events;
   return <div className="min-h-screen bg-background" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      <Navbar language={language} onLanguageToggle={(lang) => {}} />
+      <Navbar language={language} onLanguageToggle={setLanguage} />
       
       <div className="md:hidden">{pullDistance > 0 && <div className="fixed top-0 left-0 right-0 flex items-center justify-center transition-all z-50" style={{
         height: `${pullDistance}px`
