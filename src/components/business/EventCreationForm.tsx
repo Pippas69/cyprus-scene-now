@@ -50,6 +50,7 @@ interface EventCreationFormProps {
 const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [coverImage, setCoverImage] = useState<File | null>(null);
 
   const form = useForm<EventFormData>({
@@ -78,6 +79,8 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       // Upload cover image if provided
       if (coverImage) {
         try {
+          setIsCompressing(true);
+          
           // Compress image before upload (max 1920x1080, 85% quality)
           const compressedBlob = await compressImage(coverImage, 1920, 1080, 0.85);
           
@@ -96,8 +99,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             .getPublicUrl(fileName);
 
           coverImageUrl = publicUrl;
+          setIsCompressing(false);
         } catch (compressionError) {
           console.error('Error compressing image:', compressionError);
+          setIsCompressing(false);
           toast({
             title: "Σφάλμα",
             description: "Αποτυχία συμπίεσης εικόνας",
@@ -187,12 +192,20 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             />
 
             {/* Cover Image Upload */}
-            <ImageUploadField
-              label="Εικόνα Κάλυψης Εκδήλωσης"
-              onFileSelect={(file) => setCoverImage(file)}
-              aspectRatio="16/9"
-              maxSizeMB={5}
-            />
+            <div className="space-y-2">
+              <ImageUploadField
+                label="Εικόνα Κάλυψης Εκδήλωσης"
+                onFileSelect={(file) => setCoverImage(file)}
+                aspectRatio="16/9"
+                maxSizeMB={5}
+              />
+              {isCompressing && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Συμπίεση εικόνας...</span>
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
