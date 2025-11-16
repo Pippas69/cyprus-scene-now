@@ -524,12 +524,14 @@ export type Database = {
       reservations: {
         Row: {
           business_notes: string | null
+          confirmation_code: string | null
           created_at: string
           event_id: string
           id: string
           party_size: number
           phone_number: string | null
           preferred_time: string | null
+          qr_code_token: string | null
           reservation_name: string
           seating_preference: string | null
           special_requests: string | null
@@ -539,12 +541,14 @@ export type Database = {
         }
         Insert: {
           business_notes?: string | null
+          confirmation_code?: string | null
           created_at?: string
           event_id: string
           id?: string
           party_size: number
           phone_number?: string | null
           preferred_time?: string | null
+          qr_code_token?: string | null
           reservation_name: string
           seating_preference?: string | null
           special_requests?: string | null
@@ -554,12 +558,14 @@ export type Database = {
         }
         Update: {
           business_notes?: string | null
+          confirmation_code?: string | null
           created_at?: string
           event_id?: string
           id?: string
           party_size?: number
           phone_number?: string | null
           preferred_time?: string | null
+          qr_code_token?: string | null
           reservation_name?: string
           seating_preference?: string | null
           special_requests?: string | null
@@ -865,6 +871,8 @@ export type Database = {
           }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      generate_confirmation_code: { Args: never; Returns: string }
+      generate_qr_token: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
         Args: { geom1: unknown; geom2: unknown }
@@ -963,6 +971,7 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_available_capacity: { Args: { p_event_id: string }; Returns: number }
       get_business_coordinates: {
         Args: { business_ids: string[] }
         Returns: {

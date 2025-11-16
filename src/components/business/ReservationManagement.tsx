@@ -102,6 +102,18 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
 
       if (error) throw error;
 
+      // Send status change notification
+      try {
+        await supabase.functions.invoke('send-reservation-notification', {
+          body: {
+            reservationId: reservationId,
+            type: 'status_change'
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending status change email:', emailError);
+      }
+
       toast.success(t.statusUpdated);
       fetchData();
     } catch (error) {

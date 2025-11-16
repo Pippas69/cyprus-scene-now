@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Users, Phone, MapPin } from 'lucide-react';
+import { CalendarIcon, Users, Phone, MapPin, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -37,17 +37,39 @@ export const ReservationDialog = ({
   userId,
   onSuccess,
 }: ReservationDialogProps) => {
-  const isMobile = useIsMobile();
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     reservation_name: '',
-    party_size: '',
-    seating_preference: 'no_preference',
-    preferred_time: new Date(eventStartAt),
+    party_size: 2,
+    seating_preference: '',
+    preferred_time: eventStartAt,
     phone_number: '',
-    special_requests: '',
+    special_requests: ''
   });
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
+  const [capacityLoading, setCapacityLoading] = useState(false);
+
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (open && eventId) {
+      fetchAvailableCapacity();
+    }
+  }, [open, eventId]);
+
+  const fetchAvailableCapacity = async () => {
+    setCapacityLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_available_capacity', { p_event_id: eventId });
+      if (error) throw error;
+      setAvailableCapacity(data);
+    } catch (error) {
+      console.error('Error fetching capacity:', error);
+    } finally {
+      setCapacityLoading(false);
+    }
+  };
 
   const text = {
     el: {
