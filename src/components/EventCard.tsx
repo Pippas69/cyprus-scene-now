@@ -14,6 +14,9 @@ import { toast } from "@/hooks/use-toast";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { ReservationDialog } from "@/components/business/ReservationDialog";
+import LiveBadge from "@/components/feed/LiveBadge";
+import { formatDistanceToNow } from "date-fns";
+import { el, enUS } from "date-fns/locale";
 
 interface Event {
   id: string;
@@ -53,6 +56,27 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [reservationStatus, setReservationStatus] = useState<string | null>(null);
   const { isFavorited, toggleFavorite, loading: favoriteLoading } = useFavorites(user?.id || null);
+  const [countdown, setCountdown] = useState<string | null>(null);
+
+  // Calculate engagement score for badges
+  const engagementScore = (interestedCount || 0) + (goingCount || 0) * 2;
+  const now = new Date();
+  const startDate = new Date(event.start_at);
+  const endDate = new Date(event.end_at);
+  const isLive = now >= startDate && now <= endDate;
+  const hoursUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+  const hoursUntilEnd = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+  
+  // Determine badge type
+  const getBadgeType = (): "trending" | "hot" | "live" | "ending-soon" | null => {
+    if (isLive) return "live";
+    if (isLive && hoursUntilEnd > 0 && hoursUntilEnd < 2) return "ending-soon";
+    if (engagementScore > 100) return "hot";
+    if (engagementScore > 50) return "trending";
+    return null;
+  };
+
+  const badgeType = getBadgeType();
 
   // Check if user has a reservation for this event
   useEffect(() => {
@@ -104,6 +128,30 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
   };
 
   const t = translations[language];
+
+  // Countdown timer for events starting within 24 hours
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const start = new Date(event.start_at);
+      const diff = start.getTime() - now.getTime();
+      
+      if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        const locale = language === "el" ? el : enUS;
+        const timeStr = formatDistanceToNow(start, { locale, addSuffix: false });
+        setCountdown(language === "el" ? `Αρχίζει σε ${timeStr}` : `Starts in ${timeStr}`);
+      } else {
+        setCountdown(null);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [event.start_at, language]);
 
   useEffect(() => {
     if (!user || !event.id) return;
@@ -216,6 +264,9 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
   return (
     <>
       <Card className="overflow-hidden hover:shadow-hover transition-all duration-300 group relative">
+        {/* Live Badge */}
+        {badgeType && <LiveBadge type={badgeType} language={language} />}
+        
         {/* Favorite Button */}
         {user && (
           <FavoriteButton
@@ -271,10 +322,17 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
           </div>
         </div>
 
-        {/* Time */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>{formatTime(event.start_at)} - {formatTime(event.end_at)}</span>
+        {/* Time & Countdown */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>{formatTime(event.start_at)} - {formatTime(event.end_at)}</span>
+          </div>
+          {countdown && (
+            <div className="text-xs font-semibold text-accent animate-pulse">
+              {countdown}
+            </div>
+          )}
         </div>
 
         {/* Live Stats */}
