@@ -1,26 +1,23 @@
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/useLanguage";
 
-interface LanguageToggleProps {
-  language: "el" | "en";
-  onToggle: (lang: "el" | "en") => void;
-}
-
-const LanguageToggle = ({ language, onToggle }: LanguageToggleProps) => {
+const LanguageToggle = () => {
+  const { language, setLanguage } = useLanguage();
   return (
     <div className="flex gap-1 bg-muted rounded-lg p-1">
       <Button
         size="sm"
         variant={language === "el" ? "default" : "ghost"}
-        onClick={() => onToggle("el")}
-        className={language === "el" ? "bg-ocean text-primary-foreground" : ""}
+        onClick={() => setLanguage("el")}
+        className={language === "el" ? "bg-primary text-primary-foreground" : ""}
       >
         🇬🇷 ΕΛ
       </Button>
       <Button
         size="sm"
         variant={language === "en" ? "default" : "ghost"}
-        onClick={() => onToggle("en")}
-        className={language === "en" ? "bg-ocean text-primary-foreground" : ""}
+        onClick={() => setLanguage("en")}
+        className={language === "en" ? "bg-primary text-primary-foreground" : ""}
       >
         🇬🇧 EN
       </Button>
