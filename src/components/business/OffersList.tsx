@@ -99,14 +99,14 @@ const OffersList = ({ businessId }: OffersListProps) => {
       if (error) throw error;
 
       toast({
-        title: "Επιτυχία",
-        description: "Η προσφορά διαγράφηκε",
+        title: t.success,
+        description: t.offerDeleted,
       });
 
       queryClient.invalidateQueries({ queryKey: ['business-offers', businessId] });
     } catch (error: any) {
       toast({
-        title: "Σφάλμα",
+        title: t.error,
         description: error.message,
         variant: "destructive",
       });
@@ -123,14 +123,14 @@ const OffersList = ({ businessId }: OffersListProps) => {
       if (error) throw error;
 
       toast({
-        title: "Επιτυχία",
-        description: currentStatus ? "Η προσφορά απενεργοποιήθηκε" : "Η προσφορά ενεργοποιήθηκε",
+        title: t.success,
+        description: currentStatus ? t.offerDeactivated : t.offerActivated,
       });
 
       queryClient.invalidateQueries({ queryKey: ['business-offers', businessId] });
     } catch (error: any) {
       toast({
-        title: "Σφάλμα",
+        title: t.error,
         description: error.message,
         variant: "destructive",
       });
@@ -138,7 +138,8 @@ const OffersList = ({ businessId }: OffersListProps) => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('el-GR', {
+    const locale = language === "el" ? "el-GR" : "en-US";
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
@@ -146,7 +147,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
   };
 
   if (isLoading) {
-    return <div className="text-center py-8">Φόρτωση...</div>;
+    return <div className="text-center py-8">{t.loading}</div>;
   }
 
   if (!offers || offers.length === 0) {
@@ -155,7 +156,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
         <CardContent className="py-12 text-center">
           <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
-            Δεν έχετε δημοσιεύσει καμία προσφορά ακόμα.
+            {t.noOffers}
           </p>
         </CardContent>
       </Card>

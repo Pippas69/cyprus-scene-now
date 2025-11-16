@@ -15,6 +15,8 @@ import { Loader2 } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
 import { ImageCropDialog } from "./ImageCropDialog";
 import { compressImage } from "@/lib/imageCompression";
+import { useLanguage } from "@/hooks/useLanguage";
+import { businessTranslations } from "./translations";
 
 const eventSchema = z.object({
   title: z.string().trim().min(3, "Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες").max(100, "Ο τίτλος δεν μπορεί να υπερβαίνει τους 100 χαρακτήρες"),
@@ -50,6 +52,8 @@ interface EventCreationFormProps {
 
 const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const t = businessTranslations[language];
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -182,7 +186,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Δημιουργία Νέας Εκδήλωσης</CardTitle>
+        <CardTitle>{t.createEvent}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
