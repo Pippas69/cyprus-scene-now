@@ -274,8 +274,8 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
       {/* Images Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Εικόνες</CardTitle>
-          <CardDescription>Ενημερώστε το λογότυπο και την εικόνα εξωφύλλου της επιχείρησής σας</CardDescription>
+          <CardTitle>{t.images}</CardTitle>
+          <CardDescription>{t.imagesDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <ImageUploadField
@@ -300,8 +300,8 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
       {/* Basic Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Βασικές Πληροφορίες</CardTitle>
-          <CardDescription>Ενημερώστε τα βασικά στοιχεία της επιχείρησής σας</CardDescription>
+          <CardTitle>{t.basicInfo}</CardTitle>
+          <CardDescription>{t.basicInfoDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -361,7 +361,7 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
       <Card>
         <CardHeader>
           <CardTitle>{t.contactInfo}</CardTitle>
-          <CardDescription>Ενημερώστε τα στοιχεία επικοινωνίας σας</CardDescription>
+          <CardDescription>{t.basicInfoDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
