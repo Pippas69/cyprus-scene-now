@@ -26,6 +26,7 @@ interface Event {
   end_at: string;
   category: string[];
   price_tier: string;
+  cover_image_url?: string;
   business_id?: string;
   interested_count?: number;
   going_count?: number;
@@ -279,14 +280,27 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
         )}
         
         {/* Image */}
-        <div className="relative h-48 bg-gradient-ocean overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center text-white/20 text-6xl">
-            🌊
-          </div>
-          <Badge className="absolute top-3 left-3 bg-card/90 text-card-foreground">
+        <div className="relative h-48 overflow-hidden">
+          {event.cover_image_url ? (
+            <>
+              <img 
+                src={event.cover_image_url} 
+                alt={event.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Dark overlay for better badge readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-ocean flex items-center justify-center">
+              <div className="text-white/20 text-6xl">🌊</div>
+            </div>
+          )}
+          
+          <Badge className="absolute top-3 left-3 bg-card/90 text-card-foreground z-10">
             {event.category[0] || "Event"}
           </Badge>
-          <Badge className="absolute top-14 right-3 bg-accent text-accent-foreground">
+          <Badge className="absolute top-14 right-3 bg-accent text-accent-foreground z-10">
             {event.price_tier === 'free' ? t.free : event.price_tier}
           </Badge>
         </div>
