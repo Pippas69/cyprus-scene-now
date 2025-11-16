@@ -266,7 +266,7 @@ const Feed = () => {
               <h1 className="text-3xl font-bold text-primary">{t.title}</h1>
               <p className="text-muted-foreground">{t.subtitle}</p>
             </div>
-            <div className="flex items-center gap-2"><LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} /><LanguageToggle /></div>
+            <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
           </div>
           {activeTab !== 'map' && <CategoryFilter selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} language={language} />}
         </div>
