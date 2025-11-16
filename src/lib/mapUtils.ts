@@ -45,21 +45,25 @@ export const getCategoryColor = (category: string): string => {
 };
 
 // Format event time
-export const formatEventTime = (startAt: string, endAt: string): string => {
+export const formatEventTime = (startAt: string, endAt: string, language: "el" | "en" = "el"): string => {
   const start = new Date(startAt);
   const end = new Date(endAt);
   const today = new Date();
   
   const isToday = start.toDateString() === today.toDateString();
-  const dateStr = isToday ? "Σήμερα" : start.toLocaleDateString("el-GR", { 
+  
+  const locale = language === "el" ? "el-GR" : "en-US";
+  const todayText = language === "el" ? "Σήμερα" : "Today";
+  
+  const dateStr = isToday ? todayText : start.toLocaleDateString(locale, { 
     day: "numeric", 
     month: "short" 
   });
   
-  const timeStr = `${start.toLocaleTimeString("el-GR", { 
+  const timeStr = `${start.toLocaleTimeString(locale, { 
     hour: "2-digit", 
     minute: "2-digit" 
-  })} - ${end.toLocaleTimeString("el-GR", { 
+  })} - ${end.toLocaleTimeString(locale, { 
     hour: "2-digit", 
     minute: "2-digit" 
   })}`;
