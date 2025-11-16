@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
+import { compressImage } from "@/lib/imageCompression";
 
 const eventSchema = z.object({
   title: z.string().trim().min(3, "Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες").max(100, "Ο τίτλος δεν μπορεί να υπερβαίνει τους 100 χαρακτήρες"),
@@ -76,20 +77,35 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
       // Upload cover image if provided
       if (coverImage) {
-        const fileExt = coverImage.name.split('.').pop();
-        const fileName = `${businessId}-${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('event-covers')
-          .upload(fileName, coverImage);
+        try {
+          // Compress image before upload (max 1920x1080, 85% quality)
+          const compressedBlob = await compressImage(coverImage, 1920, 1080, 0.85);
+          
+          const fileName = `${businessId}-${Date.now()}.jpg`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('event-covers')
+            .upload(fileName, compressedBlob, {
+              contentType: 'image/jpeg'
+            });
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('event-covers')
-          .getPublicUrl(fileName);
+          const { data: { publicUrl } } = supabase.storage
+            .from('event-covers')
+            .getPublicUrl(fileName);
 
-        coverImageUrl = publicUrl;
+          coverImageUrl = publicUrl;
+        } catch (compressionError) {
+          console.error('Error compressing image:', compressionError);
+          toast({
+            title: "Σφάλμα",
+            description: "Αποτυχία συμπίεσης εικόνας",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       // Create event
