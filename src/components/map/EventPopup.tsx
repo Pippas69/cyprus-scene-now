@@ -102,7 +102,7 @@ export const EventPopup = ({ event, onClose, language }: EventPopupProps) => {
         <div className="space-y-2 text-sm">
           <div className="flex items-start gap-2 text-muted-foreground">
             <Calendar size={16} className="mt-0.5 flex-shrink-0" />
-            <span>{formatEventTime(event.start_at, event.end_at)}</span>
+            <span>{formatEventTime(event.start_at, event.end_at, language)}</span>
           </div>
           <div className="flex items-start gap-2 text-muted-foreground">
             <MapPin size={16} className="mt-0.5 flex-shrink-0" />
