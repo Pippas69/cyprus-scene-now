@@ -128,14 +128,14 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b-4 border-sunset-coral"
+      className="fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b-4 border-secondary"
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <button
             onClick={() => navigate("/")}
-            className="font-cinzel text-4xl font-black tracking-tight text-sunset-coral drop-shadow-lg"
+            className="font-cinzel text-4xl font-black tracking-tight text-secondary drop-shadow-lg"
           >
             ΦΟΜΟ
           </button>
@@ -145,7 +145,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
             {/* Explore Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="font-inter font-extrabold text-lg text-aegean hover:text-sunset-coral transition-colors flex items-center gap-1">
+                <button className="font-inter font-extrabold text-lg text-aegean hover:text-secondary transition-colors flex items-center gap-1">
                   {language === "el" ? "Εξερεύνηση" : "Explore"}
                   <ChevronDown className="w-5 h-5" />
                 </button>
@@ -179,19 +179,19 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
             </DropdownMenu>
             
             {!user && (
-              <button onClick={() => navigate("/login")} className="font-inter font-bold text-aegean hover:text-sunset-coral transition-colors">
+              <button onClick={() => navigate("/login")} className="font-inter font-bold text-aegean hover:text-secondary transition-colors">
                 {t.login}
               </button>
             )}
 
             {/* Language Toggle */}
-            <div className="flex gap-1 rounded-lg p-1 border-2 bg-background border-sunset-coral">
+            <div className="flex gap-1 rounded-lg p-1 border-2 bg-background border-aegean">
               <button
                 onClick={() => onLanguageToggle("el")}
                 className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${
                   language === "el"
-                    ? "bg-sunset-coral text-white shadow-md"
-                    : "text-sunset-coral hover:bg-sunset-coral/10"
+                    ? "bg-secondary text-white shadow-md"
+                    : "text-aegean hover:bg-aegean/10"
                 }`}
               >
                 🇬🇷 ΕΛ
@@ -200,8 +200,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                 onClick={() => onLanguageToggle("en")}
                 className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${
                   language === "en"
-                    ? "bg-sunset-coral text-white shadow-md"
-                    : "text-sunset-coral hover:bg-sunset-coral/10"
+                    ? "bg-secondary text-white shadow-md"
+                    : "text-aegean hover:bg-aegean/10"
                 }`}
               >
                 🇬🇧 EN
