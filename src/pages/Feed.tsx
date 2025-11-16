@@ -262,10 +262,6 @@ const Feed = () => {
       
       <div className="sticky top-16 z-40 bg-background border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-end mb-4">
-            <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
-          </div>
-          {activeTab !== 'map' && <CategoryFilter selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} language={language} />}
         </div>
       </div>
 
@@ -279,10 +275,7 @@ const Feed = () => {
               <TabsTrigger value="offers">{t.offers}</TabsTrigger>
               <TabsTrigger value="map" className="gap-2"><MapPin size={16} />{t.map}</TabsTrigger>
             </TabsList>
-            {activeTab !== 'map' && <SortDropdown language={language} sortBy={sortBy} onSortChange={setSortBy} />}
           </div>
-
-          {activeTab !== 'map' && activeTab !== 'offers' && <QuickFilters language={language} selectedFilters={quickFilters} onFilterToggle={handleQuickFilterToggle} />}
 
           <TabsContent value="trending" className="mt-6">
             {eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
