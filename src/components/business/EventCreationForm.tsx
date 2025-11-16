@@ -3,11 +3,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,42 +16,33 @@ import { ImageUploadField } from "./ImageUploadField";
 import { ImageCropDialog } from "./ImageCropDialog";
 import { compressImage } from "@/lib/imageCompression";
 import { useLanguage } from "@/hooks/useLanguage";
-import { businessTranslations } from "./translations";
+import { businessTranslations, eventCategories, seatingOptions } from "./translations";
+import { Switch } from "@/components/ui/switch";
 
-const eventSchema = z.object({
-  title: z.string().trim().min(3, "Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες").max(100, "Ο τίτλος δεν μπορεί να υπερβαίνει τους 100 χαρακτήρες"),
-  description: z.string().trim().min(10, "Η περιγραφή πρέπει να έχει τουλάχιστον 10 χαρακτήρες").max(1000, "Η περιγραφή δεν μπορεί να υπερβαίνει τους 1000 χαρακτήρες"),
-  location: z.string().trim().min(3, "Η τοποθεσία είναι υποχρεωτική"),
-  start_at: z.string().min(1, "Η ημερομηνία έναρξης είναι υποχρεωτική"),
-  end_at: z.string().min(1, "Η ημερομηνία λήξης είναι υποχρεωτική"),
-  category: z.array(z.string()).min(1, "Επιλέξτε τουλάχιστον μία κατηγορία"),
-  price_tier: z.enum(["free", "low", "medium", "high"]),
-  min_age_hint: z.number().min(0).max(100).optional(),
-  accepts_reservations: z.boolean().default(false),
-  max_reservations: z.number().min(1).optional(),
-  requires_approval: z.boolean().default(true),
-  seating_options: z.array(z.string()).optional(),
-});
+const createEventSchema = (language: 'el' | 'en') => {
+  return z.object({
+    title: z.string().trim().min(3, language === 'el' ? "Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες" : "Title must be at least 3 characters").max(100, language === 'el' ? "Ο τίτλος δεν μπορεί να υπερβαίνει τους 100 χαρακτήρες" : "Title cannot exceed 100 characters"),
+    description: z.string().trim().min(10, language === 'el' ? "Η περιγραφή πρέπει να έχει τουλάχιστον 10 χαρακτήρες" : "Description must be at least 10 characters").max(1000, language === 'el' ? "Η περιγραφή δεν μπορεί να υπερβαίνει τους 1000 χαρακτήρες" : "Description cannot exceed 1000 characters"),
+    location: z.string().trim().min(3, language === 'el' ? "Η τοποθεσία είναι υποχρεωτική" : "Location is required"),
+    start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required"),
+    end_at: z.string().min(1, language === 'el' ? "Η ημερομηνία λήξης είναι υποχρεωτική" : "End date is required"),
+    category: z.array(z.string()).min(1, language === 'el' ? "Επιλέξτε τουλάχιστον μία κατηγορία" : "Select at least one category"),
+    price_tier: z.enum(["free", "low", "medium", "high"]),
+    min_age_hint: z.number().min(0).max(100).optional(),
+    accepts_reservations: z.boolean().default(false),
+    max_reservations: z.number().min(1).optional(),
+    requires_approval: z.boolean().default(true),
+    seating_options: z.array(z.string()).optional(),
+  });
+};
 
-type EventFormData = z.infer<typeof eventSchema>;
-
-const categories = [
-  { id: "music", label: "Μουσική" },
-  { id: "sports", label: "Αθλητισμός" },
-  { id: "food", label: "Φαγητό & Ποτό" },
-  { id: "art", label: "Τέχνη" },
-  { id: "nightlife", label: "Νυχτερινή Ζωή" },
-  { id: "culture", label: "Πολιτισμός" },
-  { id: "family", label: "Οικογένεια" },
-  { id: "business", label: "Business" },
-];
+type EventFormData = z.infer<ReturnType<typeof createEventSchema>>;
 
 interface EventCreationFormProps {
   businessId: string;
 }
 
 const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
-  const { toast } = useToast();
   const { language } = useLanguage();
   const t = businessTranslations[language];
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +53,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
 
   const form = useForm<EventFormData>({
-    resolver: zodResolver(eventSchema),
+    resolver: zodResolver(createEventSchema(language)),
     defaultValues: {
       title: "",
       description: "",
@@ -227,7 +218,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             <div className="space-y-2">
               <ImageUploadField
                 label="Εικόνα Κάλυψης Εκδήλωσης"
-                onFileSelect={handleFileSelect}
+                language={language}
                 aspectRatio="16/9"
                 maxSizeMB={5}
               />

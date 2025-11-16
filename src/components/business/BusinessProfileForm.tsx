@@ -13,6 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ImageUploadField } from "./ImageUploadField";
 import { Loader2 } from "lucide-react";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
+import { useLanguage } from "@/hooks/useLanguage";
+import { businessTranslations, businessCategories, cities as cityOptions } from "./translations";
 
 const categories = [
   "Καφετέριες & Εστιατόρια",
@@ -44,6 +46,8 @@ interface BusinessProfileFormProps {
 }
 
 export default function BusinessProfileForm({ businessId }: BusinessProfileFormProps) {
+  const { language } = useLanguage();
+  const t = businessTranslations[language];
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -288,18 +292,20 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
         </CardHeader>
         <CardContent className="space-y-6">
           <ImageUploadField
-            label="Λογότυπο"
+            label={t.businessLogo}
             currentImageUrl={currentLogoUrl}
             onFileSelect={setLogoFile}
             aspectRatio="1/1"
             maxSizeMB={2}
+            language={language}
           />
           <ImageUploadField
-            label="Εικόνα Εξωφύλλου"
+            label={t.businessCover}
             currentImageUrl={currentCoverUrl}
             onFileSelect={setCoverFile}
             aspectRatio="16/9"
             maxSizeMB={5}
+            language={language}
           />
         </CardContent>
       </Card>
