@@ -148,9 +148,45 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <NavLink text={t.events} onClick={() => navigate("/ekdiloseis")} scrolled={scrolled} />
-            <NavLink text={t.map} onClick={() => navigate("/xartis")} scrolled={scrolled} />
-            <NavLink text={t.discounts} onClick={() => {}} scrolled={scrolled} />
+            {/* Explore Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`font-inter font-medium transition-colors flex items-center gap-1 ${
+                    scrolled ? "text-foreground hover:text-secondary" : "text-white hover:text-accent"
+                  }`}
+                >
+                  {language === "el" ? "Εξερεύνηση" : "Explore"}
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
+                <DropdownMenuItem 
+                  className="font-medium cursor-pointer"
+                  onClick={() => navigate("/feed")}
+                >
+                  {language === "el" ? "Αρχική" : "Home"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="font-medium cursor-pointer"
+                  onClick={() => navigate("/ekdiloseis")}
+                >
+                  {t.events}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="font-medium cursor-pointer"
+                  onClick={() => navigate("/xartis")}
+                >
+                  {t.map}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="font-medium cursor-pointer"
+                  onClick={() => {}}
+                >
+                  {t.discounts}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             {!user && (
               <NavLink text={t.login} onClick={() => navigate("/login")} scrolled={scrolled} />
