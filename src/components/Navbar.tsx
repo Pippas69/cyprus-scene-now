@@ -140,7 +140,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
           <button
             onClick={() => navigate("/")}
             className={`font-cinzel text-3xl font-black tracking-tight transition-colors ${
-              scrolled ? "text-secondary drop-shadow-lg" : "text-white"
+              scrolled ? "text-aegean drop-shadow-lg font-extrabold" : "text-white"
             }`}
           >
             ΦΟΜΟ
@@ -152,8 +152,8 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`font-inter font-semibold transition-colors flex items-center gap-1 ${
-                    scrolled ? "text-primary hover:text-secondary" : "text-white hover:text-accent"
+                  className={`font-inter font-bold text-base transition-colors flex items-center gap-1 ${
+                    scrolled ? "text-aegean hover:text-secondary" : "text-white hover:text-accent"
                   }`}
                 >
                   {language === "el" ? "Εξερεύνηση" : "Explore"}
@@ -193,23 +193,23 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
             )}
 
             {/* Language Toggle */}
-            <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted border border-border" : "bg-white/10 backdrop-blur-sm"}`}>
+            <div className={`flex gap-1 rounded-lg p-1 border-2 ${scrolled ? "bg-white border-aegean" : "bg-white/10 backdrop-blur-sm border-white/20"}`}>
               <button
                 onClick={() => onLanguageToggle("el")}
-                className={`px-3 py-1 rounded text-sm font-bold transition-all ${
+                className={`px-3 py-1.5 rounded text-sm font-extrabold transition-all ${
                   language === "el"
-                    ? scrolled ? "bg-secondary text-white shadow-md" : "bg-white text-primary"
-                    : scrolled ? "text-primary hover:bg-secondary/10" : "text-white hover:bg-white/20"
+                    ? scrolled ? "bg-aegean text-white shadow-md" : "bg-white text-aegean"
+                    : scrolled ? "text-aegean hover:bg-aegean/10" : "text-white hover:bg-white/20"
                 }`}
               >
                 🇬🇷 ΕΛ
               </button>
               <button
                 onClick={() => onLanguageToggle("en")}
-                className={`px-3 py-1 rounded text-sm font-bold transition-all ${
+                className={`px-3 py-1.5 rounded text-sm font-extrabold transition-all ${
                   language === "en"
-                    ? scrolled ? "bg-secondary text-white shadow-md" : "bg-white text-primary"
-                    : scrolled ? "text-primary hover:bg-secondary/10" : "text-white hover:bg-white/20"
+                    ? scrolled ? "bg-aegean text-white shadow-md" : "bg-white text-aegean"
+                    : scrolled ? "text-aegean hover:bg-aegean/10" : "text-white hover:bg-white/20"
                 }`}
               >
                 🇬🇧 EN
