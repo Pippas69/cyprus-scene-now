@@ -79,6 +79,18 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
       if (error) throw error;
 
+      // Send cancellation notification
+      try {
+        await supabase.functions.invoke('send-reservation-notification', {
+          body: {
+            reservationId: reservationId,
+            type: 'cancellation'
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending cancellation email:', emailError);
+      }
+
       toast.success(t.cancelled);
       fetchReservations();
     } catch (error) {
@@ -109,6 +121,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       error: 'Σφάλμα κατά την ακύρωση',
       specialRequests: 'Ειδικές Απαιτήσεις',
       businessNotes: 'Σημειώσεις Επιχείρησης',
+      confirmationCode: 'Κωδικός Επιβεβαίωσης',
     },
     en: {
       title: 'My Reservations',
@@ -129,6 +142,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       error: 'Error cancelling reservation',
       specialRequests: 'Special Requests',
       businessNotes: 'Business Notes',
+      confirmationCode: 'Confirmation Code',
     },
   };
 
@@ -182,6 +196,22 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Confirmation Code */}
+                {reservation.confirmation_code && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                    <p className="text-xs text-muted-foreground mb-1">{t.confirmationCode}</p>
+                    <p className="text-2xl font-bold text-primary tracking-wider">
+                      {reservation.confirmation_code}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {language === 'el' 
+                        ? 'Παρουσιάστε αυτόν τον κωδικό κατά την άφιξή σας'
+                        : 'Present this code upon arrival'
+                      }
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
