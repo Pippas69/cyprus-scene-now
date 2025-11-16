@@ -61,15 +61,18 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       const eventIds = eventsData.map((e) => e.id);
 
       if (eventIds.length > 0) {
-        const { data: reservationsData } = await supabase
+        const { data: reservationsData, error: reservationsError } = await supabase
           .from('reservations')
           .select(`
             *,
-            events!inner(id, title, start_at),
-            profiles(name, email)
+            events!inner(id, title, start_at)
           `)
           .in('event_id', eventIds)
           .order('created_at', { ascending: false });
+
+        if (reservationsError) {
+          console.error('Error fetching reservations:', reservationsError);
+        }
 
         if (reservationsData) {
           setReservations(reservationsData as any);
