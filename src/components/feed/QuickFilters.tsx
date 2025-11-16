@@ -41,8 +41,10 @@ const QuickFilters = ({ language, selectedFilters, onFilterToggle }: QuickFilter
             key={filter.id}
             variant={selectedFilters.includes(filter.id) ? "default" : "outline"}
             className={cn(
-              "cursor-pointer transition-all hover:scale-105",
-              selectedFilters.includes(filter.id) && "bg-primary text-primary-foreground"
+              "cursor-pointer transition-all hover:scale-105 font-semibold min-h-[40px] px-4",
+              selectedFilters.includes(filter.id) 
+                ? "bg-primary text-primary-foreground border-primary" 
+                : "bg-muted text-foreground border-border hover:bg-primary/10 hover:border-primary/30"
             )}
             onClick={() => onFilterToggle(filter.id)}
           >
