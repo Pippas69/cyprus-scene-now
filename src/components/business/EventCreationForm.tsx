@@ -126,10 +126,8 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         } catch (compressionError) {
           console.error('Error compressing image:', compressionError);
           setIsCompressing(false);
-          toast({
-            title: "Σφάλμα",
-            description: "Αποτυχία συμπίεσης εικόνας",
-            variant: "destructive",
+          toast.error(t.error, {
+            description: language === 'el' ? "Αποτυχία συμπίεσης εικόνας" : "Failed to compress image"
           });
           setIsSubmitting(false);
           return;
@@ -156,18 +154,15 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
       if (error) throw error;
 
-      toast({
-        title: "Επιτυχία!",
-        description: "Η εκδήλωση δημοσιεύθηκε επιτυχώς",
+      toast.success(t.success, {
+        description: t.eventCreatedSuccess
       });
 
       form.reset();
       setCoverImage(null);
     } catch (error: any) {
-      toast({
-        title: "Σφάλμα",
-        description: error.message || "Κάτι πήγε στραβά",
-        variant: "destructive",
+      toast.error(t.error, {
+        description: error.message || t.eventCreationError
       });
     } finally {
       setIsSubmitting(false);
@@ -217,8 +212,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             {/* Cover Image Upload */}
             <div className="space-y-2">
               <ImageUploadField
-                label="Εικόνα Κάλυψης Εκδήλωσης"
+                label={language === 'el' ? "Εικόνα Κάλυψης Εκδήλωσης" : "Event Cover Image"}
                 language={language}
+                onFileSelect={handleFileSelect}
                 aspectRatio="16/9"
                 maxSizeMB={5}
               />
@@ -324,36 +320,39 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               name="category"
               render={() => (
                 <FormItem>
-                  <FormLabel>Κατηγορίες *</FormLabel>
+                  <FormLabel>{t.categories || 'Categories'} *</FormLabel>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {categories.map((cat) => (
-                      <FormField
-                        key={cat.id}
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => {
-                          return (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(cat.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...field.value, cat.id])
-                                      : field.onChange(
-                                          field.value?.filter((value) => value !== cat.id)
-                                        );
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {cat.label}
-                              </FormLabel>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    ))}
+                    {eventCategories[language].map((cat, index) => {
+                      const catKey = eventCategories.el[index];
+                      return (
+                        <FormField
+                          key={catKey}
+                          control={form.control}
+                          name="category"
+                          render={({ field }) => {
+                            return (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(catKey)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, catKey])
+                                        : field.onChange(
+                                            field.value?.filter((value) => value !== catKey)
+                                          );
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {cat}
+                                </FormLabel>
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                   <FormMessage />
                 </FormItem>

@@ -97,6 +97,19 @@ export const businessTranslations = {
     selectSeatingOptions: "Επιλέξτε επιλογές καθισμάτων",
     compressingImage: "Συμπίεση εικόνας...",
     uploadingEvent: "Δημιουργία εκδήλωσης...",
+    eventFormDescription: "Συμπληρώστε τα στοιχεία της εκδήλωσής σας",
+    eventCoverImage: "Εικόνα Cover",
+    eventCreatedSuccess: "Η εκδήλωση δημοσιεύθηκε επιτυχώς",
+    eventCreationError: "Κάτι πήγε στραβά",
+    businessLogo: "Λογότυπο",
+    businessCover: "Εικόνα Εξωφύλλου",
+    images: "Εικόνες",
+    imagesDescription: "Ενημερώστε το λογότυπο και την εικόνα εξωφύλλου της επιχείρησής σας",
+    basicInfo: "Βασικές Πληροφορίες",
+    basicInfoDescription: "Ενημερώστε τα βασικά στοιχεία της επιχείρησής σας",
+    contactInfo: "Στοιχεία Επικοινωνίας",
+    profileUpdated: "Το προφίλ ενημερώθηκε επιτυχώς!",
+    profileUpdateError: "Αποτυχία ενημέρωσης προφίλ",
     
     // Offer Creation
     createOffer: "Δημιουργία Προσφοράς",
@@ -128,12 +141,7 @@ export const businessTranslations = {
     businessCategories: "Κατηγορίες Επιχείρησης",
     logo: "Λογότυπο",
     coverPhoto: "Φωτογραφία Εξωφύλλου",
-    profileUpdated: "Το προφίλ ενημερώθηκε επιτυχώς",
-    coordinatesUpdated: "Οι συντεταγμένες ενημερώθηκαν αυτόματα",
-    images: "Εικόνες",
-    basicInformation: "Βασικές Πληροφορίες",
-    contactInformation: "Στοιχεία Επικοινωνίας",
-    savingProfile: "Αποθήκευση προφίλ...",
+    // Removed duplicate keys - they already exist above (lines 104-112)
     geocodingAddress: "Εύρεση συντεταγμένων...",
     
     // Reservations
@@ -243,6 +251,21 @@ export const businessTranslations = {
     selectSeatingOptions: "Select seating options",
     compressingImage: "Compressing image...",
     uploadingEvent: "Creating event...",
+    eventFormDescription: "Fill in the details of your event",
+    eventCoverImage: "Cover Image",
+    eventCreatedSuccess: "Event published successfully",
+    eventCreationError: "Something went wrong",
+    businessLogo: "Logo",
+    businessCover: "Cover Image",
+    images: "Images",
+    imagesDescription: "Update your business logo and cover image",
+    basicInfo: "Basic Information",
+    basicInfoDescription: "Update your business basic details",
+    contactInfo: "Contact Information",
+    profileUpdated: "Profile updated successfully!",
+    profileUpdateError: "Failed to update profile",
+    
+    // Removed duplicate keys already defined above
     
     // Offer Creation
     createOffer: "Create Offer",
@@ -272,15 +295,7 @@ export const businessTranslations = {
     city: "City",
     selectCity: "Select city",
     businessCategories: "Business Categories",
-    logo: "Logo",
-    coverPhoto: "Cover Photo",
-    profileUpdated: "Profile updated successfully",
-    coordinatesUpdated: "Coordinates updated automatically",
-    images: "Images",
-    basicInformation: "Basic Information",
-    contactInformation: "Contact Information",
-    savingProfile: "Saving profile...",
-    geocodingAddress: "Finding coordinates...",
+    // Removed duplicate keys already defined above
     
     // Reservations
     reservations: "Reservations",
