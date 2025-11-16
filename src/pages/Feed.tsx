@@ -262,7 +262,11 @@ const Feed = () => {
       
       <div className="sticky top-16 z-40 bg-background/95 backdrop-blur border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-end mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-primary drop-shadow-sm">{t.title}</h1>
+              <p className="text-foreground/80 font-medium">{t.subtitle}</p>
+            </div>
             <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
           </div>
           {activeTab !== 'map' && <CategoryFilter selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} language={language} />}
