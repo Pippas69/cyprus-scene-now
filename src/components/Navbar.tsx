@@ -140,7 +140,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
           <button
             onClick={() => navigate("/")}
             className={`font-cinzel text-3xl font-black tracking-tight transition-colors ${
-              scrolled ? "text-ocean drop-shadow-sm" : "text-white"
+              scrolled ? "text-primary drop-shadow-md" : "text-white"
             }`}
           >
             ΦΟΜΟ
