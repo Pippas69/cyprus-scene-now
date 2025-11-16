@@ -7,7 +7,8 @@ import { MyRSVPs } from '@/components/user/MyRSVPs';
 import { MyReservations } from '@/components/user/MyReservations';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Calendar, User, CalendarCheck } from 'lucide-react';
+import { Heart, Calendar, User, CalendarCheck, Settings } from 'lucide-react';
+import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -51,6 +52,7 @@ const DashboardUser = () => {
       reservations: 'Κρατήσεις',
       saved: 'Αποθηκευμένα',
       profile: 'Προφίλ',
+      settings: 'Ρυθμίσεις',
     },
     en: {
       welcome: 'Welcome',
@@ -59,6 +61,7 @@ const DashboardUser = () => {
       reservations: 'Reservations',
       saved: 'Saved Events',
       profile: 'Profile',
+      settings: 'Settings',
     },
   };
 
@@ -84,7 +87,7 @@ const DashboardUser = () => {
         </Card>
 
           <Tabs defaultValue="rsvps" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="rsvps" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 {t.rsvps}
@@ -100,6 +103,10 @@ const DashboardUser = () => {
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 {t.profile}
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                {t.settings}
               </TabsTrigger>
             </TabsList>
 
@@ -117,6 +124,10 @@ const DashboardUser = () => {
 
           <TabsContent value="profile" className="mt-6">
             <ProfileSettings userId={user.id} language={language} />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6">
+            <UserAccountSettings userId={user.id} language={language} />
           </TabsContent>
         </Tabs>
       </div>

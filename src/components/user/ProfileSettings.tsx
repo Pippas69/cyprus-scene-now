@@ -68,10 +68,6 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
       city: 'Πόλη',
       town: 'Περιοχή',
       save: 'Αποθήκευση',
-      deleteAccount: 'Διαγραφή Λογαριασμού',
-      deleteWarning: 'Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.',
-      cancel: 'Ακύρωση',
-      confirm: 'Επιβεβαίωση',
     },
     en: {
       title: 'Profile Settings',
@@ -80,10 +76,6 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
       city: 'City',
       town: 'Town',
       save: 'Save Changes',
-      deleteAccount: 'Delete Account',
-      deleteWarning: 'This action cannot be undone.',
-      cancel: 'Cancel',
-      confirm: 'Confirm',
     },
   };
 
@@ -139,29 +131,6 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">{t.deleteAccount}</CardTitle>
-          <CardDescription>{t.deleteWarning}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive">{t.deleteAccount}</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t.deleteAccount}</AlertDialogTitle>
-                <AlertDialogDescription>{t.deleteWarning}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                <AlertDialogAction className="bg-destructive">{t.confirm}</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
     </div>
   );
 };

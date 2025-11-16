@@ -649,6 +649,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          default_city: string | null
+          email_notifications_enabled: boolean | null
+          id: string
+          notification_business_updates: boolean | null
+          notification_event_reminders: boolean | null
+          notification_new_events: boolean | null
+          notification_reservations: boolean | null
+          notification_rsvp_updates: boolean | null
+          profile_visibility: string | null
+          theme_preference: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_city?: string | null
+          email_notifications_enabled?: boolean | null
+          id?: string
+          notification_business_updates?: boolean | null
+          notification_event_reminders?: boolean | null
+          notification_new_events?: boolean | null
+          notification_reservations?: boolean | null
+          notification_rsvp_updates?: boolean | null
+          profile_visibility?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          default_city?: string | null
+          email_notifications_enabled?: boolean | null
+          id?: string
+          notification_business_updates?: boolean | null
+          notification_event_reminders?: boolean | null
+          notification_new_events?: boolean | null
+          notification_reservations?: boolean | null
+          notification_rsvp_updates?: boolean | null
+          profile_visibility?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       event_rsvp_counts: {
@@ -855,6 +903,7 @@ export type Database = {
         }
         Returns: string
       }
+      create_preferences_for_existing_users: { Args: never; Returns: undefined }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
