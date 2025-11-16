@@ -41,7 +41,7 @@ export const ReservationDialog = ({
     reservation_name: '',
     party_size: 2,
     seating_preference: '',
-    preferred_time: eventStartAt,
+    preferred_time: new Date(eventStartAt),
     phone_number: '',
     special_requests: ''
   });
@@ -73,48 +73,46 @@ export const ReservationDialog = ({
 
   const text = {
     el: {
-      title: 'Κάντε Κράτηση',
+      title: 'Νέα Κράτηση',
       description: `Κάντε κράτηση για ${eventTitle}`,
-      name: 'Όνομα Κράτησης',
+      reservationName: 'Όνομα Κράτησης',
       namePlaceholder: 'π.χ. Γιάννης Παπαδόπουλος',
       partySize: 'Αριθμός Ατόμων',
-      partySizePlaceholder: 'π.χ. 4',
-      seating: 'Προτίμηση Καθίσματος',
+      seatingPreference: 'Προτίμηση Θέσης',
+      preferredTime: 'Προτιμώμενη Ώρα',
+      phoneNumber: 'Τηλέφωνο',
+      phonePlaceholder: 'π.χ. +30 123 456 7890',
+      specialRequests: 'Ειδικές Απαιτήσεις',
+      requestsPlaceholder: 'Οποιεσδήποτε ειδικές απαιτήσεις...',
+      submit: 'Υποβολή',
+      submitting: 'Υποβολή...',
+      success: 'Επιτυχία',
+      error: 'Σφάλμα',
+      reservationCreated: 'Η κράτηση δημιουργήθηκε επιτυχώς!',
+      noPreference: 'Χωρίς Προτίμηση',
       indoor: 'Εσωτερικός Χώρος',
       outdoor: 'Εξωτερικός Χώρος',
-      noPreference: 'Χωρίς Προτίμηση',
-      preferredTime: 'Προτιμώμενη Ώρα',
-      phone: 'Τηλέφωνο',
-      phonePlaceholder: 'π.χ. 6912345678',
-      specialRequests: 'Ειδικές Απαιτήσεις',
-      specialRequestsPlaceholder: 'π.χ. Τραπέζι δίπλα στο παράθυρο, αλλεργίες...',
-      submit: 'Υποβολή Κράτησης',
-      cancel: 'Ακύρωση',
-      success: 'Η κράτηση υποβλήθηκε επιτυχώς!',
-      error: 'Σφάλμα κατά την υποβολή της κράτησης',
-      selectDate: 'Επιλέξτε ημερομηνία',
     },
     en: {
-      title: 'Make a Reservation',
+      title: 'New Reservation',
       description: `Make a reservation for ${eventTitle}`,
-      name: 'Reservation Name',
-      namePlaceholder: 'e.g. John Smith',
+      reservationName: 'Reservation Name',
+      namePlaceholder: 'e.g. John Doe',
       partySize: 'Party Size',
-      partySizePlaceholder: 'e.g. 4',
-      seating: 'Seating Preference',
+      seatingPreference: 'Seating Preference',
+      preferredTime: 'Preferred Time',
+      phoneNumber: 'Phone Number',
+      phonePlaceholder: 'e.g. +30 123 456 7890',
+      specialRequests: 'Special Requests',
+      requestsPlaceholder: 'Any special requirements...',
+      submit: 'Submit',
+      submitting: 'Submitting...',
+      success: 'Success',
+      error: 'Error',
+      reservationCreated: 'Reservation created successfully!',
+      noPreference: 'No Preference',
       indoor: 'Indoor',
       outdoor: 'Outdoor',
-      noPreference: 'No Preference',
-      preferredTime: 'Preferred Time',
-      phone: 'Phone Number',
-      phonePlaceholder: 'e.g. 6912345678',
-      specialRequests: 'Special Requests',
-      specialRequestsPlaceholder: 'e.g. Window table, allergies...',
-      submit: 'Submit Reservation',
-      cancel: 'Cancel',
-      success: 'Reservation submitted successfully!',
-      error: 'Error submitting reservation',
-      selectDate: 'Pick a date',
     },
   };
 
@@ -122,29 +120,53 @@ export const ReservationDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    if (availableCapacity !== null && formData.party_size > availableCapacity) {
+      toast.error(language === 'el' ? `Διαθέσιμα: ${availableCapacity}` : `Available: ${availableCapacity}`);
+      return;
+    }
 
+    if (formData.phone_number && !/^\+?[\d\s-()]+$/.test(formData.phone_number)) {
+      toast.error(language === 'el' ? 'Μη έγκυρο τηλέφωνο' : 'Invalid phone number');
+      return;
+    }
+
+    setLoading(true);
     try {
-      const { error } = await supabase.from('reservations').insert({
+      const { data: reservation, error } = await supabase.from('reservations').insert({
         event_id: eventId,
         user_id: userId,
         reservation_name: formData.reservation_name,
-        party_size: parseInt(formData.party_size),
-        seating_preference: formData.seating_preference,
+        party_size: formData.party_size,
+        seating_preference: formData.seating_preference || null,
         preferred_time: formData.preferred_time.toISOString(),
         phone_number: formData.phone_number || null,
         special_requests: formData.special_requests || null,
-        status: 'pending',
-      });
+      }).select().single();
 
       if (error) throw error;
 
-      toast.success(t.success);
+      try {
+        await supabase.functions.invoke('send-reservation-notification', {
+          body: { reservationId: reservation.id, type: 'new' }
+        });
+      } catch (emailError) {
+        console.error('Email error:', emailError);
+      }
+
+      toast.success(t.reservationCreated);
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
-      console.error('Error creating reservation:', error);
-      toast.error(t.error);
+    } catch (error: any) {
+      console.error('Error:', error);
+      if (error.message?.includes('capacity')) {
+        const match = error.message.match(/Available slots: (\d+)/);
+        const available = match ? match[1] : '0';
+        toast.error(language === 'el' ? `Διαθέσιμα: ${available}` : `Available: ${available}`);
+        fetchAvailableCapacity();
+      } else {
+        toast.error(error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -152,167 +174,164 @@ export const ReservationDialog = ({
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {capacityLoading ? (
+        <div className="text-sm text-muted-foreground">
+          {language === 'el' ? 'Έλεγχος διαθεσιμότητας...' : 'Checking availability...'}
+        </div>
+      ) : availableCapacity !== null && (
+        <div className={`p-3 rounded-lg ${
+          availableCapacity === 0 
+            ? 'bg-destructive/10 text-destructive' 
+            : availableCapacity < 10 
+            ? 'bg-warning/10 text-warning' 
+            : 'bg-success/10 text-success'
+        }`}>
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span className="font-medium">
+              {availableCapacity === 0 
+                ? (language === 'el' ? 'Πλήρως Κατειλημμένο' : 'Fully Booked')
+                : language === 'el'
+                ? `${availableCapacity} Διαθέσιμες Θέσεις`
+                : `${availableCapacity} Available Slots`
+              }
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
-        <Label htmlFor="name">
-          <Users className="inline h-4 w-4 mr-1" />
-          {t.name}
+        <Label htmlFor="reservation_name" className="flex items-center gap-2">
+          <User className="w-4 h-4" />
+          {t.reservationName}
         </Label>
         <Input
-          id="name"
+          id="reservation_name"
           value={formData.reservation_name}
           onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
           placeholder={t.namePlaceholder}
           required
-          className="h-11"
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="party-size">
-            <Users className="inline h-4 w-4 mr-1" />
-            {t.partySize}
-          </Label>
-          <Input
-            id="party-size"
-            type="number"
-            min="1"
-            value={formData.party_size}
-            onChange={(e) => setFormData({ ...formData, party_size: e.target.value })}
-            placeholder={t.partySizePlaceholder}
-            required
-            className="h-11"
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="party_size" className="flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          {t.partySize}
+        </Label>
+        <Input
+          id="party_size"
+          type="number"
+          min="1"
+          max={availableCapacity !== null ? availableCapacity : undefined}
+          value={formData.party_size}
+          onChange={(e) => setFormData({ ...formData, party_size: parseInt(e.target.value) || 1 })}
+          required
+          disabled={availableCapacity === 0}
+        />
+        {availableCapacity !== null && availableCapacity < formData.party_size && (
+          <p className="text-sm text-destructive">
+            {language === 'el'
+              ? `Μέγιστος αριθμός ατόμων: ${availableCapacity}`
+              : `Maximum party size: ${availableCapacity}`
+            }
+          </p>
+        )}
+      </div>
 
+      {seatingOptions && seatingOptions.length > 0 && (
         <div className="space-y-2">
-          <Label htmlFor="seating">
-            <MapPin className="inline h-4 w-4 mr-1" />
-            {t.seating}
+          <Label htmlFor="seating_preference" className="flex items-center gap-2">
+            <MapPin className="w-4 h-4" />
+            {t.seatingPreference}
           </Label>
           <Select
             value={formData.seating_preference}
             onValueChange={(value) => setFormData({ ...formData, seating_preference: value })}
           >
-            <SelectTrigger id="seating" className="h-11">
-              <SelectValue />
+            <SelectTrigger id="seating_preference">
+              <SelectValue placeholder={t.noPreference} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="no_preference">{t.noPreference}</SelectItem>
+              <SelectItem value="">{t.noPreference}</SelectItem>
               {seatingOptions.includes('indoor') && <SelectItem value="indoor">{t.indoor}</SelectItem>}
               {seatingOptions.includes('outdoor') && <SelectItem value="outdoor">{t.outdoor}</SelectItem>}
             </SelectContent>
           </Select>
         </div>
-      </div>
+      )}
 
       <div className="space-y-2">
-        <Label>
-          <CalendarIcon className="inline h-4 w-4 mr-1" />
+        <Label htmlFor="preferred_time" className="flex items-center gap-2">
+          <CalendarIcon className="w-4 h-4" />
           {t.preferredTime}
         </Label>
-        {isMobile ? (
-          <Drawer open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-11 justify-start text-left font-normal"
-              onClick={() => setCalendarOpen(true)}
-            >
+        <Popover open={showCalendar} onOpenChange={setShowCalendar}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full justify-start text-left">
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {formData.preferred_time ? format(formData.preferred_time, 'PPP') : <span>{t.selectDate}</span>}
+              {format(formData.preferred_time, 'PPP p')}
             </Button>
-            <DrawerContent>
-              <DrawerHeader>
-                <DrawerTitle>{t.preferredTime}</DrawerTitle>
-                <DrawerDescription>{t.selectDate}</DrawerDescription>
-              </DrawerHeader>
-              <div className="p-4">
-                <Calendar
-                  mode="single"
-                  selected={formData.preferred_time}
-                  onSelect={(date) => {
-                    if (date) {
-                      setFormData({ ...formData, preferred_time: date });
-                      setCalendarOpen(false);
-                    }
-                  }}
-                  initialFocus
-                  className="rounded-md border"
-                />
-              </div>
-            </DrawerContent>
-          </Drawer>
-        ) : (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-11 justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.preferred_time ? format(formData.preferred_time, 'PPP') : <span>{t.selectDate}</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={formData.preferred_time}
-                onSelect={(date) => date && setFormData({ ...formData, preferred_time: date })}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        )}
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={formData.preferred_time}
+              onSelect={(date) => {
+                if (date) {
+                  setFormData({ ...formData, preferred_time: date });
+                  setShowCalendar(false);
+                }
+              }}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">
-          <Phone className="inline h-4 w-4 mr-1" />
-          {t.phone}
+        <Label htmlFor="phone_number" className="flex items-center gap-2">
+          <Phone className="w-4 h-4" />
+          {t.phoneNumber}
         </Label>
         <Input
-          id="phone"
+          id="phone_number"
           type="tel"
           value={formData.phone_number}
           onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
           placeholder={t.phonePlaceholder}
-          className="h-11"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="special-requests">{t.specialRequests}</Label>
+        <Label htmlFor="special_requests">{t.specialRequests}</Label>
         <Textarea
-          id="special-requests"
+          id="special_requests"
           value={formData.special_requests}
           onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-          placeholder={t.specialRequestsPlaceholder}
+          placeholder={t.requestsPlaceholder}
           rows={3}
         />
       </div>
 
-      <div className="flex gap-3 pt-4">
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-11">
-          {t.cancel}
-        </Button>
-        <Button type="submit" disabled={loading} className="flex-1 h-11">
-          {t.submit}
-        </Button>
-      </div>
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={loading || availableCapacity === 0 || (availableCapacity !== null && formData.party_size > availableCapacity)}
+      >
+        {loading ? t.submitting : availableCapacity === 0 ? (language === 'el' ? 'Πλήρως Κατειλημμένο' : 'Fully Booked') : t.submit}
+      </Button>
     </form>
   );
 
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90vh]">
+        <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>{t.title}</DrawerTitle>
             <DrawerDescription>{t.description}</DrawerDescription>
           </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto">
+          <div className="px-4 pb-4">
             {formContent}
           </div>
         </DrawerContent>
