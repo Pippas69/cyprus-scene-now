@@ -39,7 +39,7 @@ const BottomNav = () => {
     { 
       icon: User, 
       label: "Profile", 
-      path: user ? (userRole === "business" ? "/dashboard-business" : "/dashboard") : "/login" 
+      path: user ? (userRole === "business" ? "/dashboard-business" : "/dashboard-user") : "/login" 
     },
   ];
 
