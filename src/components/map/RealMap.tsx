@@ -88,7 +88,7 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
             if (popupRef.current) popupRef.current.remove();
             const popupDiv = document.createElement('div');
             const popupRoot = ReactDOM.createRoot(popupDiv);
-            popupRoot.render(<EventPopup event={event} onClose={() => popupRef.current?.remove()} />);
+            popupRoot.render(<EventPopup event={event} onClose={() => popupRef.current?.remove()} language={language} />);
             popupRef.current = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: 'none', offset: 25 }).setLngLat([lng, lat]).setDOMContent(popupDiv).addTo(map.current!);
           }} />);
         }

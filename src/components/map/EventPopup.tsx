@@ -22,15 +22,30 @@ interface EventPopupProps {
     };
   };
   onClose: () => void;
+  language: "el" | "en";
 }
 
-export const EventPopup = ({ event, onClose }: EventPopupProps) => {
+export const EventPopup = ({ event, onClose, language }: EventPopupProps) => {
+  const text = {
+    el: {
+      details: "Λεπτομέρειες",
+      linkCopied: "Ο σύνδεσμος αντιγράφηκε!",
+      shareFailed: "Αποτυχία κοινοποίησης",
+    },
+    en: {
+      details: "Details",
+      linkCopied: "Link copied!",
+      shareFailed: "Failed to share",
+    },
+  };
+
+  const t = text[language];
   const handleShare = async () => {
     const success = await shareEvent(event.id, event.title);
     if (success) {
-      toast.success("Ο σύνδεσμος αντιγράφηκε!");
+      toast.success(t.linkCopied);
     } else {
-      toast.error("Αποτυχία κοινοποίησης");
+      toast.error(t.shareFailed);
     }
   };
 
@@ -113,7 +128,7 @@ export const EventPopup = ({ event, onClose }: EventPopupProps) => {
         <div className="flex gap-2 pt-2">
           <Button size="sm" className="flex-1" onClick={() => window.location.href = `/ekdiloseis?event=${event.id}`}>
             <ExternalLink size={14} className="mr-1.5" />
-            Λεπτομέρειες
+            {t.details}
           </Button>
           <Button size="sm" variant="outline" onClick={handleDirections}>
             <Navigation size={14} />
