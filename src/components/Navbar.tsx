@@ -4,70 +4,59 @@ import { useNavigate } from "react-router-dom";
 import { Menu, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 interface NavbarProps {
   language: "el" | "en";
   onLanguageToggle: (lang: "el" | "en") => void;
 }
-
-const NavLink = ({ text, onClick, scrolled }: { text: string; onClick: () => void; scrolled: boolean }) => (
-  <button
-    onClick={onClick}
-    className={`font-inter font-medium transition-colors ${
-      scrolled ? "text-foreground hover:text-secondary" : "text-white hover:text-accent"
-    }`}
-  >
+const NavLink = ({
+  text,
+  onClick,
+  scrolled
+}: {
+  text: string;
+  onClick: () => void;
+  scrolled: boolean;
+}) => <button onClick={onClick} className={`font-inter font-medium transition-colors ${scrolled ? "text-foreground hover:text-secondary" : "text-white hover:text-accent"}`}>
     {text}
-  </button>
-);
-
+  </button>;
 interface NavbarProps {
   language: "el" | "en";
   onLanguageToggle: (lang: "el" | "en") => void;
 }
-
-const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
+const Navbar = ({
+  language,
+  onLanguageToggle
+}: NavbarProps) => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
-
   useEffect(() => {
     checkUser();
-    
-    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+    const {
+      data: authListener
+    } = supabase.auth.onAuthStateChange(() => {
       checkUser();
     });
-
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
-
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
     setUser(user);
-    
     if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, name')
-        .eq('id', user.id)
-        .single();
-      
+      const {
+        data: profile
+      } = await supabase.from('profiles').select('role, name').eq('id', user.id).single();
       setUserRole(profile?.role || null);
       setUserName(profile?.name || user.email?.split('@')[0] || 'User');
     } else {
@@ -75,12 +64,10 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
       setUserName("");
     }
   };
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
   };
-
   const handleDashboardClick = () => {
     if (userRole === 'business') {
       navigate('/dashboard-business');
@@ -88,7 +75,6 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
       navigate('/dashboard-user');
     }
   };
-
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -96,7 +82,6 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
   const text = {
     el: {
       events: "Εκδηλώσεις",
@@ -108,7 +93,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
       forBusinesses: "Για Επιχειρήσεις",
       myDashboard: "Ο Λογαριασμός μου",
       settings: "Ρυθμίσεις",
-      signOut: "Αποσύνδεση",
+      signOut: "Αποσύνδεση"
     },
     en: {
       events: "Events",
@@ -120,23 +105,15 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
       forBusinesses: "For Businesses",
       myDashboard: "My Dashboard",
       settings: "Settings",
-      signOut: "Sign Out",
-    },
+      signOut: "Sign Out"
+    }
   };
-
   const t = text[language];
-
-  return (
-    <nav
-      className="fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b-4 border-accent"
-    >
+  return <nav className="fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b-4 border-accent">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <button
-            onClick={() => navigate("/")}
-            className="font-cinzel text-4xl font-black tracking-tight text-accent drop-shadow-lg"
-          >
+          <button onClick={() => navigate("/")} className="font-cinzel text-4xl font-black tracking-tight drop-shadow-lg text-[#013279]">
             ΦΟΜΟ
           </button>
 
@@ -151,66 +128,37 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
-                <DropdownMenuItem 
-                  className="font-medium cursor-pointer"
-                  onClick={() => navigate("/feed")}
-                >
+                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/feed")}>
                   {language === "el" ? "Αρχική" : "Home"}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="font-medium cursor-pointer"
-                  onClick={() => navigate("/ekdiloseis")}
-                >
+                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/ekdiloseis")}>
                   {t.events}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="font-medium cursor-pointer"
-                  onClick={() => navigate("/xartis")}
-                >
+                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/xartis")}>
                   {t.map}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="font-medium cursor-pointer"
-                  onClick={() => {}}
-                >
+                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {}}>
                   {t.discounts}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {!user && (
-              <button onClick={() => navigate("/login")} className="font-inter font-bold text-aegean hover:text-accent transition-colors">
+            {!user && <button onClick={() => navigate("/login")} className="font-inter font-bold text-aegean hover:text-accent transition-colors">
                 {t.login}
-              </button>
-            )}
+              </button>}
 
             {/* Language Toggle */}
             <div className="flex gap-1 rounded-lg p-1 border-2 bg-background border-accent">
-              <button
-                onClick={() => onLanguageToggle("el")}
-                className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${
-                  language === "el"
-                    ? "bg-accent text-white shadow-md"
-                    : "text-aegean hover:bg-accent/10"
-                }`}
-              >
+              <button onClick={() => onLanguageToggle("el")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${language === "el" ? "bg-accent text-white shadow-md" : "text-aegean hover:bg-accent/10"}`}>
                 🇬🇷 ΕΛ
               </button>
-              <button
-                onClick={() => onLanguageToggle("en")}
-                className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${
-                  language === "en"
-                    ? "bg-accent text-white shadow-md"
-                    : "text-aegean hover:bg-accent/10"
-                }`}
-              >
+              <button onClick={() => onLanguageToggle("en")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${language === "en" ? "bg-accent text-white shadow-md" : "text-aegean hover:bg-accent/10"}`}>
                 🇬🇧 EN
               </button>
             </div>
 
             {/* User Profile Menu or Join Dropdown */}
-            {user ? (
-              <DropdownMenu>
+            {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant={scrolled ? "outline" : "secondary"} className="gap-2">
                     <Avatar className="h-6 w-6">
@@ -223,85 +171,53 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem 
-                    className="font-medium cursor-pointer"
-                    onClick={handleDashboardClick}
-                  >
+                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={handleDashboardClick}>
                     <User className="w-4 h-4 mr-2" />
                     {t.myDashboard}
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="font-medium cursor-pointer"
-                    onClick={() => {
-                      handleDashboardClick();
-                      // Navigate to settings tab after dashboard loads
-                      setTimeout(() => {
-                        const settingsTab = document.querySelector('[value="settings"]');
-                        if (settingsTab instanceof HTMLElement) {
-                          settingsTab.click();
-                        }
-                      }, 100);
-                    }}
-                  >
+                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {
+                handleDashboardClick();
+                // Navigate to settings tab after dashboard loads
+                setTimeout(() => {
+                  const settingsTab = document.querySelector('[value="settings"]');
+                  if (settingsTab instanceof HTMLElement) {
+                    settingsTab.click();
+                  }
+                }, 100);
+              }}>
                     <Settings className="w-4 h-4 mr-2" />
                     {t.settings}
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="font-medium cursor-pointer text-destructive"
-                    onClick={handleSignOut}
-                  >
+                  <DropdownMenuItem className="font-medium cursor-pointer text-destructive" onClick={handleSignOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     {t.signOut}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <DropdownMenu>
+              </DropdownMenu> : <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="gradient" className="gap-1">
                     {t.signup} <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem 
-                    className="font-medium cursor-pointer"
-                    onClick={() => navigate("/signup")}
-                  >
+                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/signup")}>
                     {t.joinFomo}
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="font-medium cursor-pointer text-secondary"
-                    onClick={() => navigate("/signup-business")}
-                  >
+                  <DropdownMenuItem className="font-medium cursor-pointer text-secondary" onClick={() => navigate("/signup-business")}>
                     {t.forBusinesses}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+              </DropdownMenu>}
           </div>
 
           {/* Mobile Menu */}
           <div className="md:hidden flex items-center gap-4">
             {/* Language Toggle Mobile */}
             <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`}>
-              <button
-                onClick={() => onLanguageToggle("el")}
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                  language === "el"
-                    ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary"
-                    : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"
-                }`}
-              >
+              <button onClick={() => onLanguageToggle("el")} className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "el" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}>
                 🇬🇷
               </button>
-              <button
-                onClick={() => onLanguageToggle("en")}
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                  language === "en"
-                    ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary"
-                    : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"
-                }`}
-              >
+              <button onClick={() => onLanguageToggle("en")} className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "en" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}>
                 🇬🇧
               </button>
             </div>
@@ -314,13 +230,10 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] bg-background">
                 <div className="flex flex-col gap-6 mt-8">
-                  <button
-                    onClick={() => {
-                      navigate("/ekdiloseis");
-                      setMobileOpen(false);
-                    }}
-                    className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
-                  >
+                  <button onClick={() => {
+                  navigate("/ekdiloseis");
+                  setMobileOpen(false);
+                }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                     {t.events}
                   </button>
                   <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
@@ -330,72 +243,45 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                     {t.discounts}
                   </button>
                   
-                  {user ? (
-                    <>
-                      <button 
-                        onClick={() => {
-                          handleDashboardClick();
-                          setMobileOpen(false);
-                        }}
-                        className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
-                      >
+                  {user ? <>
+                      <button onClick={() => {
+                    handleDashboardClick();
+                    setMobileOpen(false);
+                  }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                         {t.myDashboard}
                       </button>
-                      <button 
-                        onClick={() => {
-                          handleSignOut();
-                          setMobileOpen(false);
-                        }}
-                        className="text-destructive font-inter font-medium text-lg hover:text-destructive/80 transition-colors"
-                      >
+                      <button onClick={() => {
+                    handleSignOut();
+                    setMobileOpen(false);
+                  }} className="text-destructive font-inter font-medium text-lg hover:text-destructive/80 transition-colors">
                         {t.signOut}
                       </button>
-                    </>
-                  ) : (
-                    <button 
-                      onClick={() => {
-                        navigate("/login");
-                        setMobileOpen(false);
-                      }}
-                      className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
-                    >
+                    </> : <button onClick={() => {
+                  navigate("/login");
+                  setMobileOpen(false);
+                }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                       {t.login}
-                    </button>
-                  )}
-                  {!user && (
-                    <div className="pt-4 border-t space-y-3">
-                    <Button 
-                      variant="gradient" 
-                      className="w-full" 
-                      size="lg"
-                      onClick={() => {
-                        navigate("/signup");
-                        setMobileOpen(false);
-                      }}
-                    >
+                    </button>}
+                  {!user && <div className="pt-4 border-t space-y-3">
+                    <Button variant="gradient" className="w-full" size="lg" onClick={() => {
+                    navigate("/signup");
+                    setMobileOpen(false);
+                  }}>
                       {t.joinFomo}
                     </Button>
-                    <Button 
-                      variant="premium" 
-                      className="w-full" 
-                      size="lg"
-                      onClick={() => {
-                        navigate("/signup-business");
-                        setMobileOpen(false);
-                      }}
-                    >
+                    <Button variant="premium" className="w-full" size="lg" onClick={() => {
+                    navigate("/signup-business");
+                    setMobileOpen(false);
+                  }}>
                       {t.forBusinesses}
                     </Button>
-                  </div>
-                  )}
+                  </div>}
                 </div>
               </SheetContent>
             </Sheet>
           </div>
         </div>
       </div>
-    </nav>
-  );
+    </nav>;
 };
-
 export default Navbar;
