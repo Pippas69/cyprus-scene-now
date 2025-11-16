@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
+import { ImageCropDialog } from "./ImageCropDialog";
 import { compressImage } from "@/lib/imageCompression";
 
 const eventSchema = z.object({
@@ -52,6 +53,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [tempImageSrc, setTempImageSrc] = useState<string>("");
+  const [tempImageFile, setTempImageFile] = useState<File | null>(null);
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -70,6 +74,30 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       seating_options: [],
     },
   });
+
+  const handleFileSelect = (file: File) => {
+    // Open crop dialog with the selected file
+    const reader = new FileReader();
+    reader.onload = () => {
+      setTempImageSrc(reader.result as string);
+      setTempImageFile(file);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    // Convert blob to File
+    const croppedFile = new File(
+      [croppedBlob],
+      tempImageFile?.name || "cropped-image.jpg",
+      { type: "image/jpeg" }
+    );
+    setCoverImage(croppedFile);
+    setCropDialogOpen(false);
+    setTempImageSrc("");
+    setTempImageFile(null);
+  };
 
   const onSubmit = async (data: EventFormData) => {
     setIsSubmitting(true);
@@ -195,7 +223,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             <div className="space-y-2">
               <ImageUploadField
                 label="Εικόνα Κάλυψης Εκδήλωσης"
-                onFileSelect={(file) => setCoverImage(file)}
+                onFileSelect={handleFileSelect}
                 aspectRatio="16/9"
                 maxSizeMB={5}
               />
@@ -371,6 +399,17 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
           </form>
         </Form>
       </CardContent>
+
+      <ImageCropDialog
+        open={cropDialogOpen}
+        onClose={() => {
+          setCropDialogOpen(false);
+          setTempImageSrc("");
+          setTempImageFile(null);
+        }}
+        imageSrc={tempImageSrc}
+        onCropComplete={handleCropComplete}
+      />
     </Card>
   );
 };
