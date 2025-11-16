@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
+import { ImageUploadField } from "./ImageUploadField";
 
 const eventSchema = z.object({
   title: z.string().trim().min(3, "Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες").max(100, "Ο τίτλος δεν μπορεί να υπερβαίνει τους 100 χαρακτήρες"),
@@ -167,6 +168,14 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+            {/* Cover Image Upload */}
+            <ImageUploadField
+              label="Εικόνα Κάλυψης Εκδήλωσης"
+              onFileSelect={(file) => setCoverImage(file)}
+              aspectRatio="16/9"
+              maxSizeMB={5}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
