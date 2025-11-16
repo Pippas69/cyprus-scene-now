@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -104,6 +104,33 @@ export const ImageCropDialog = ({
     []
   );
 
+  const handleReset = () => {
+    setZoom(1);
+    if (imgRef.current) {
+      const { width, height } = imgRef.current;
+      const aspectRatio = 16 / 9;
+
+      let cropWidth = width;
+      let cropHeight = width / aspectRatio;
+
+      if (cropHeight > height) {
+        cropHeight = height;
+        cropWidth = height * aspectRatio;
+      }
+
+      const x = (width - cropWidth) / 2;
+      const y = (height - cropHeight) / 2;
+
+      setCrop({
+        unit: "px",
+        width: cropWidth,
+        height: cropHeight,
+        x,
+        y,
+      });
+    }
+  };
+
   const handleCropConfirm = async () => {
     if (!imgRef.current || !completedCrop) return;
 
@@ -125,6 +152,15 @@ export const ImageCropDialog = ({
         
         {/* Zoom Controls */}
         <div className="flex items-center gap-4 px-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleReset}
+            title="Επαναφορά"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
           <Button
             type="button"
             variant="outline"
