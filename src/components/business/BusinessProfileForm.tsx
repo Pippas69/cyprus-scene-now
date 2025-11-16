@@ -14,20 +14,7 @@ import { ImageUploadField } from "./ImageUploadField";
 import { Loader2 } from "lucide-react";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
 import { useLanguage } from "@/hooks/useLanguage";
-import { businessTranslations, businessCategories, cities as cityOptions } from "./translations";
-
-const categories = [
-  "Καφετέριες & Εστιατόρια",
-  "Νυχτερινή Διασκέδαση",
-  "Τέχνη & Πολιτισμός",
-  "Fitness & Wellness",
-  "Οικογένεια & Κοινότητα",
-  "Επιχειρηματικότητα & Networking",
-  "Εξωτερικές Δραστηριότητες",
-  "Αγορές & Lifestyle"
-];
-
-const cities = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
+import { businessTranslations, businessCategories, cities } from "./translations";
 
 const businessProfileSchema = z.object({
   name: z.string().min(2, "Το όνομα πρέπει να έχει τουλάχιστον 2 χαρακτήρες"),
