@@ -149,10 +149,10 @@ const Navbar = ({
 
             {/* Language Toggle */}
             <div className="flex gap-1 rounded-lg p-1 border-2 border-accent bg-[#012b67]">
-              <button onClick={() => onLanguageToggle("el")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${language === "el" ? "bg-accent text-white shadow-md" : "text-white hover:bg-accent/10"}`}>
+              <button onClick={() => onLanguageToggle("el")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-white ${language === "el" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}>
                 🇬🇷 ΕΛ
               </button>
-              <button onClick={() => onLanguageToggle("en")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${language === "en" ? "bg-accent text-white shadow-md" : "text-white hover:bg-accent/10"}`}>
+              <button onClick={() => onLanguageToggle("en")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-white ${language === "en" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}>
                 🇬🇧 EN
               </button>
             </div>
