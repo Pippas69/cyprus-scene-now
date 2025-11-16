@@ -48,7 +48,7 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
 
       // Event breakdown - with null safety
       const eventBreakdown = events.map(event => ({
-        name: event?.title || 'Unknown Event',
+        name: event?.title || text[language].unknownEvent,
         interested: rsvps?.filter(r => r.event_id === event.id && r.status === 'interested').length || 0,
         going: rsvps?.filter(r => r.event_id === event.id && r.status === 'going').length || 0,
       }));
@@ -74,6 +74,7 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
       conversion: 'Ποσοστό Μετατροπής',
       eventPerformance: 'Απόδοση Εκδηλώσεων',
       loading: 'Φόρτωση αναλυτικών...',
+      unknownEvent: 'Άγνωστη Εκδήλωση',
     },
     en: {
       title: 'Analytics',
@@ -83,6 +84,7 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
       conversion: 'Conversion Rate',
       eventPerformance: 'Event Performance',
       loading: 'Loading analytics...',
+      unknownEvent: 'Unknown Event',
     },
   };
 
