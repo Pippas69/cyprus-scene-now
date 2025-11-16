@@ -106,25 +106,25 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
       interested: "Ενδιαφέρομαι",
       going: "Έννα Πάω",
       makeReservation: "Κάντε Κράτηση",
+      reservationPending: "Κράτηση Εκκρεμεί",
+      reservationConfirmed: "Κράτηση Εγκρίθηκε",
+      reservationDeclined: "Κράτηση Απορρίφθηκε",
       ageRange: "Ηλικιακό Εύρος",
       free: "Δωρεάν",
       interestedCount: "Ενδιαφέρονται",
       goingCount: "Έννα Πάσιν",
-      reservationPending: "Κράτηση Εκκρεμεί",
-      reservationAccepted: "Κράτηση Εγκρίθηκε",
-      reservationDeclined: "Κράτηση Απορρίφθηκε",
     },
     en: {
       interested: "Interested",
       going: "I'm Going",
       makeReservation: "Make Reservation",
+      reservationPending: "Reservation Pending",
+      reservationConfirmed: "Reservation Confirmed",
+      reservationDeclined: "Reservation Declined",
       ageRange: "Age Range",
       free: "Free",
       interestedCount: "Interested",
       goingCount: "Going",
-      reservationPending: "Reservation Pending",
-      reservationAccepted: "Reservation Accepted",
-      reservationDeclined: "Reservation Declined",
     },
   };
 
@@ -365,34 +365,53 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
 
         {/* Action Buttons */}
         {user && (
-          <div className="grid grid-cols-2 gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleStatusClick('interested')}
-              disabled={loading}
-              className={`gap-2 transition-all ${
-                status === 'interested'
-                  ? 'border-ocean text-ocean bg-ocean/5'
-                  : 'border-border text-muted-foreground hover:border-ocean/50'
-              }`}
-            >
-              <Heart className="h-4 w-4" />
-              {t.interested}
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => handleStatusClick('going')}
-              disabled={loading}
-              className={`gap-2 transition-all ${
-                status === 'going'
-                  ? 'bg-ocean hover:bg-ocean/90 text-white'
-                  : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-              }`}
-            >
-              <Users className="h-4 w-4" />
-              {t.going}
-            </Button>
+          <div className="space-y-2 pt-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleStatusClick('interested')}
+                disabled={loading}
+                className={`gap-2 transition-all ${
+                  status === 'interested'
+                    ? 'border-ocean text-ocean bg-ocean/5'
+                    : 'border-border text-muted-foreground hover:border-ocean/50'
+                }`}
+              >
+                <Heart className="h-4 w-4" />
+                {t.interested}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleStatusClick('going')}
+                disabled={loading}
+                className={`gap-2 transition-all ${
+                  status === 'going'
+                    ? 'bg-ocean hover:bg-ocean/90 text-white'
+                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                {t.going}
+              </Button>
+            </div>
+            
+            {/* Reservation Button */}
+            {event.accepts_reservations && (
+              <Button 
+                variant={reservationStatus ? "default" : "outline"}
+                size="sm" 
+                className="w-full gap-2"
+                onClick={() => setShowReservationDialog(true)}
+                disabled={reservationStatus === 'declined'}
+              >
+                <CalendarCheck className="h-4 w-4" />
+                {reservationStatus === 'pending' && t.reservationPending}
+                {reservationStatus === 'confirmed' && t.reservationConfirmed}
+                {reservationStatus === 'declined' && t.reservationDeclined}
+                {!reservationStatus && t.makeReservation}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -427,6 +446,24 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Reservation Dialog */}
+    {event.accepts_reservations && user && (
+      <ReservationDialog
+        open={showReservationDialog}
+        onOpenChange={setShowReservationDialog}
+        eventId={event.id}
+        eventTitle={event.title}
+        eventStartAt={event.start_at}
+        seatingOptions={event.seating_options || []}
+        language={language}
+        userId={user.id}
+        onSuccess={() => {
+          setShowReservationDialog(false);
+          checkReservationStatus();
+        }}
+      />
+    )}
     </>
   );
 };
