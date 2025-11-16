@@ -651,6 +651,23 @@ export type Database = {
       }
     }
     Views: {
+      event_rsvp_counts: {
+        Row: {
+          event_id: string | null
+          going_count: number | null
+          interested_count: number | null
+          total_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -980,8 +997,10 @@ export type Database = {
           longitude: number
         }[]
       }
+      get_discount_qr_token: { Args: { discount_id: string }; Returns: string }
       gettransactionid: { Args: never; Returns: unknown }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      mask_phone: { Args: { phone_number: string }; Returns: string }
       populate_geometry_columns:
         | { Args: { use_typmod?: boolean }; Returns: string }
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
@@ -1630,6 +1649,10 @@ export type Database = {
           table_name: string
         }
         Returns: string
+      }
+      user_has_reservation_with_business: {
+        Args: { business_id: string }
+        Returns: boolean
       }
     }
     Enums: {
