@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Trash2, Ticket, Calendar, Percent } from "lucide-react";
 import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface OffersListProps {
   businessId: string;
@@ -16,6 +17,40 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const { language } = useLanguage();
+
+  const translations = {
+    el: {
+      loading: "Φόρτωση...",
+      noOffers: "Δεν έχετε δημοσιεύσει καμία προσφορά ακόμα.",
+      success: "Επιτυχία",
+      offerDeleted: "Η προσφορά διαγράφηκε",
+      offerDeactivated: "Η προσφορά απενεργοποιήθηκε",
+      offerActivated: "Η προσφορά ενεργοποιήθηκε",
+      error: "Σφάλμα",
+      delete: "Διαγραφή",
+      active: "Ενεργή",
+      inactive: "Ανενεργή",
+      activate: "Ενεργοποίηση",
+      deactivate: "Απενεργοποίηση",
+    },
+    en: {
+      loading: "Loading...",
+      noOffers: "You haven't published any offers yet.",
+      success: "Success",
+      offerDeleted: "Offer deleted",
+      offerDeactivated: "Offer deactivated",
+      offerActivated: "Offer activated",
+      error: "Error",
+      delete: "Delete",
+      active: "Active",
+      inactive: "Inactive",
+      activate: "Activate",
+      deactivate: "Deactivate",
+    },
+  };
+
+  const t = translations[language];
 
   const { data: offers, isLoading } = useQuery({
     queryKey: ['business-offers', businessId],

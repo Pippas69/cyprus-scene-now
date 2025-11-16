@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Trash2, Calendar, MapPin, Users } from "lucide-react";
 import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface EventsListProps {
   businessId: string;
@@ -15,6 +16,32 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const { language } = useLanguage();
+
+  const translations = {
+    el: {
+      loading: "Φόρτωση...",
+      noEvents: "Δεν έχετε δημοσιεύσει καμία εκδήλωση ακόμα.",
+      success: "Επιτυχία",
+      eventDeleted: "Η εκδήλωση διαγράφηκε",
+      error: "Σφάλμα",
+      delete: "Διαγραφή",
+      interested: "Ενδιαφέρον",
+      going: "Θα Πάνε",
+    },
+    en: {
+      loading: "Loading...",
+      noEvents: "You haven't published any events yet.",
+      success: "Success",
+      eventDeleted: "Event deleted",
+      error: "Error",
+      delete: "Delete",
+      interested: "Interested",
+      going: "Going",
+    },
+  };
+
+  const t = translations[language];
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['business-events', businessId],
@@ -69,14 +96,14 @@ const EventsList = ({ businessId }: EventsListProps) => {
       if (error) throw error;
 
       toast({
-        title: "Επιτυχία",
-        description: "Η εκδήλωση διαγράφηκε",
+        title: t.success,
+        description: t.eventDeleted,
       });
 
       queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
     } catch (error: any) {
       toast({
-        title: "Σφάλμα",
+        title: t.error,
         description: error.message,
         variant: "destructive",
       });
@@ -84,7 +111,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('el-GR', {
+    const locale = language === "el" ? "el-GR" : "en-US";
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -94,7 +122,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   };
 
   if (isLoading) {
-    return <div className="text-center py-8">Φόρτωση...</div>;
+    return <div className="text-center py-8">{t.loading}</div>;
   }
 
   if (!events || events.length === 0) {
@@ -103,7 +131,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
         <CardContent className="py-12 text-center">
           <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
-            Δεν έχετε δημοσιεύσει καμία εκδήλωση ακόμα.
+            {t.noEvents}
           </p>
         </CardContent>
       </Card>
@@ -134,8 +162,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
                     <span>
-                      {event.realtime_stats?.[0]?.interested_count || 0} ενδιαφέρονται, {' '}
-                      {event.realtime_stats?.[0]?.going_count || 0} θα έρθουν
+                      {event.realtime_stats?.[0]?.interested_count || 0} {t.interested.toLowerCase()}, {' '}
+                      {event.realtime_stats?.[0]?.going_count || 0} {t.going.toLowerCase()}
                     </span>
                   </div>
                 </div>
