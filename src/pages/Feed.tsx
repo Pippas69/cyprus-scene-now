@@ -287,7 +287,6 @@ const Feed = () => {
           </div>
 
           {activeTab !== 'map' && activeTab !== 'offers' && <QuickFilters language={language} selectedFilters={quickFilters} onFilterToggle={handleQuickFilterToggle} />}
-          {activeTab === 'trending' && <HeroCarousel language={language} user={user} />}
 
           <TabsContent value="trending" className="mt-6">
             {eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
