@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User, Users as UsersIcon, TrendingUp } from "lucide-react";
+import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User, Users as UsersIcon, TrendingUp, MapPin, TrendingUp as FeedIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,15 +12,49 @@ import OffersList from "@/components/business/OffersList";
 import BusinessProfileForm from "@/components/business/BusinessProfileForm";
 import { ReservationManagement } from "@/components/business/ReservationManagement";
 import { EventAnalytics } from "@/components/business/EventAnalytics";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useLanguage } from "@/hooks/useLanguage";
+import Feed from "@/pages/Feed";
+import Xartis from "@/pages/Xartis";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [verified, setVerified] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string>("");
   const [businessLogoUrl, setBusinessLogoUrl] = useState<string | null>(null);
   const [businessCoverUrl, setBusinessCoverUrl] = useState<string | null>(null);
+
+  const translations = {
+    el: {
+      businessDashboard: "Διαχείριση Επιχείρησης",
+      feed: "Feed",
+      map: "Χάρτης",
+      events: "Εκδηλώσεις",
+      createEvent: "Δημιουργία Εκδήλωσης",
+      offers: "Προσφορές",
+      createOffer: "Δημιουργία Προσφοράς",
+      profile: "Προφίλ",
+      reservations: "Κρατήσεις",
+      analytics: "Αναλυτικά",
+    },
+    en: {
+      businessDashboard: "Business Management",
+      feed: "Feed",
+      map: "Map",
+      events: "Events",
+      createEvent: "Create Event",
+      offers: "Offers",
+      createOffer: "Create Offer",
+      profile: "Profile",
+      reservations: "Reservations",
+      analytics: "Analytics",
+    },
+  };
+
+  const t = translations[language];
 
   useEffect(() => {
     checkVerificationStatus();
@@ -150,53 +184,74 @@ const DashboardBusiness = () => {
                 </h1>
                 <div className="flex items-center gap-2 mt-2">
                   <CheckCircle className="h-4 w-4 text-green-600" />
-                  <p className={`text-sm ${businessCoverUrl ? 'text-white/90' : 'text-muted-foreground'}`}>Επαληθευμένη Επιχείρηση</p>
+                  <p className={`text-sm ${businessCoverUrl ? 'text-white/90' : 'text-muted-foreground'}`}>
+                    {language === "el" ? "Επαληθευμένη Επιχείρηση" : "Verified Business"}
+                  </p>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => navigate("/")}
-              className="gap-2 cursor-pointer flex items-center text-sm bg-secondary text-secondary-foreground rounded-lg px-4 py-2 hover:bg-secondary/80 transition-colors"
-            >
-              <Home className="h-4 w-4" />
-              <span className="hidden sm:inline">Αρχική</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
+              <button
+                onClick={() => navigate("/")}
+                className="gap-2 cursor-pointer flex items-center text-sm bg-secondary text-secondary-foreground rounded-lg px-4 py-2 hover:bg-secondary/80 transition-colors"
+              >
+                <Home className="h-4 w-4" />
+                <span className="hidden sm:inline">{language === "el" ? "Αρχική" : "Home"}</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
-        <Tabs defaultValue="events" className="w-full">
+        <Tabs defaultValue="feed" className="w-full">
           <TabsList className="w-full justify-start mb-8 h-auto flex-wrap gap-2 bg-muted/50 p-2">
+            <TabsTrigger value="feed" className="gap-2 data-[state=active]:bg-background">
+              <FeedIcon className="h-4 w-4" />
+              <span>{t.feed}</span>
+            </TabsTrigger>
+            <TabsTrigger value="map" className="gap-2 data-[state=active]:bg-background">
+              <MapPin className="h-4 w-4" />
+              <span>{t.map}</span>
+            </TabsTrigger>
             <TabsTrigger value="events" className="gap-2 data-[state=active]:bg-background">
               <Calendar className="h-4 w-4" />
-              <span>Εκδηλώσεις</span>
+              <span>{t.events}</span>
             </TabsTrigger>
             <TabsTrigger value="create-event" className="gap-2 data-[state=active]:bg-background">
               <Plus className="h-4 w-4" />
-              <span>Νέα Εκδήλωση</span>
+              <span>{t.createEvent}</span>
             </TabsTrigger>
             <TabsTrigger value="offers" className="gap-2 data-[state=active]:bg-background">
               <Ticket className="h-4 w-4" />
-              <span>Προσφορές</span>
+              <span>{t.offers}</span>
             </TabsTrigger>
             <TabsTrigger value="create-offer" className="gap-2 data-[state=active]:bg-background">
               <Plus className="h-4 w-4" />
-              <span>Νέα Προσφορά</span>
+              <span>{t.createOffer}</span>
             </TabsTrigger>
             <TabsTrigger value="profile" className="gap-2 data-[state=active]:bg-background">
               <User className="h-4 w-4" />
-              <span>Προφίλ</span>
+              <span>{t.profile}</span>
             </TabsTrigger>
             <TabsTrigger value="reservations" className="gap-2 data-[state=active]:bg-background">
               <UsersIcon className="h-4 w-4" />
-              <span>Κρατήσεις</span>
+              <span>{t.reservations}</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2 data-[state=active]:bg-background">
               <TrendingUp className="h-4 w-4" />
-              <span>Αναλυτικά</span>
+              <span>{t.analytics}</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="feed" className="mt-0">
+            <Feed />
+          </TabsContent>
+
+          <TabsContent value="map" className="mt-0">
+            <Xartis />
+          </TabsContent>
 
           <TabsContent value="events" className="mt-0">
             <EventsList businessId={businessId!} />
