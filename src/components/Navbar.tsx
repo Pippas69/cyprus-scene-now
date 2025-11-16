@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +41,53 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    checkUser();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      checkUser();
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, name')
+        .eq('id', user.id)
+        .single();
+      
+      setUserRole(profile?.role || null);
+      setUserName(profile?.name || user.email?.split('@')[0] || 'User');
+    } else {
+      setUserRole(null);
+      setUserName("");
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
+
+  const handleDashboardClick = () => {
+    if (userRole === 'business') {
+      navigate('/dashboard-business');
+    } else {
+      navigate('/dashboard-user');
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,6 +106,9 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
       signup: "Εγγραφή",
       joinFomo: "Εγγραφή στο ΦΟΜΟ",
       forBusinesses: "Για Επιχειρήσεις",
+      myDashboard: "Ο Λογαριασμός μου",
+      settings: "Ρυθμίσεις",
+      signOut: "Αποσύνδεση",
     },
     en: {
       events: "Events",
@@ -66,6 +118,9 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
       signup: "Sign Up",
       joinFomo: "Join ΦΟΜΟ",
       forBusinesses: "For Businesses",
+      myDashboard: "My Dashboard",
+      settings: "Settings",
+      signOut: "Sign Out",
     },
   };
 
@@ -96,7 +151,10 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
             <NavLink text={t.events} onClick={() => navigate("/ekdiloseis")} scrolled={scrolled} />
             <NavLink text={t.map} onClick={() => navigate("/xartis")} scrolled={scrolled} />
             <NavLink text={t.discounts} onClick={() => {}} scrolled={scrolled} />
-            <NavLink text={t.login} onClick={() => navigate("/login")} scrolled={scrolled} />
+            
+            {!user && (
+              <NavLink text={t.login} onClick={() => navigate("/login")} scrolled={scrolled} />
+            )}
 
             {/* Language Toggle */}
             <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`}>
@@ -122,28 +180,76 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
               </button>
             </div>
 
-            {/* Join Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="gradient" className="gap-1">
-                  {t.signup} <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem 
-                  className="font-medium cursor-pointer"
-                  onClick={() => navigate("/signup")}
-                >
-                  {t.joinFomo}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="font-medium cursor-pointer text-secondary"
-                  onClick={() => navigate("/signup-business")}
-                >
-                  {t.forBusinesses}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* User Profile Menu or Join Dropdown */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant={scrolled ? "outline" : "secondary"} className="gap-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback className="text-xs">
+                        {userName.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden lg:inline">{userName}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    className="font-medium cursor-pointer"
+                    onClick={handleDashboardClick}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    {t.myDashboard}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="font-medium cursor-pointer"
+                    onClick={() => {
+                      handleDashboardClick();
+                      // Navigate to settings tab after dashboard loads
+                      setTimeout(() => {
+                        const settingsTab = document.querySelector('[value="settings"]');
+                        if (settingsTab instanceof HTMLElement) {
+                          settingsTab.click();
+                        }
+                      }, 100);
+                    }}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    {t.settings}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="font-medium cursor-pointer text-destructive"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {t.signOut}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="gradient" className="gap-1">
+                    {t.signup} <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    className="font-medium cursor-pointer"
+                    onClick={() => navigate("/signup")}
+                  >
+                    {t.joinFomo}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="font-medium cursor-pointer text-secondary"
+                    onClick={() => navigate("/signup-business")}
+                  >
+                    {t.forBusinesses}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Mobile Menu */}
@@ -195,16 +301,41 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                   <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                     {t.discounts}
                   </button>
-                  <button 
-                    onClick={() => {
-                      navigate("/login");
-                      setMobileOpen(false);
-                    }}
-                    className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
-                  >
-                    {t.login}
-                  </button>
-                  <div className="pt-4 border-t space-y-3">
+                  
+                  {user ? (
+                    <>
+                      <button 
+                        onClick={() => {
+                          handleDashboardClick();
+                          setMobileOpen(false);
+                        }}
+                        className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
+                      >
+                        {t.myDashboard}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          handleSignOut();
+                          setMobileOpen(false);
+                        }}
+                        className="text-destructive font-inter font-medium text-lg hover:text-destructive/80 transition-colors"
+                      >
+                        {t.signOut}
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        navigate("/login");
+                        setMobileOpen(false);
+                      }}
+                      className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
+                    >
+                      {t.login}
+                    </button>
+                  )}
+                  {!user && (
+                    <div className="pt-4 border-t space-y-3">
                     <Button 
                       variant="gradient" 
                       className="w-full" 
@@ -228,6 +359,7 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
                       {t.forBusinesses}
                     </Button>
                   </div>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
