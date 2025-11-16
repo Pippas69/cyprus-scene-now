@@ -7,6 +7,7 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 import OfferCard from "@/components/OfferCard";
 import CategoryFilter from "@/components/CategoryFilter";
 import LanguageToggle from "@/components/LanguageToggle";
+import Navbar from "@/components/Navbar";
 import MapWrapper from "@/components/map/MapWrapper";
 import HeroCarousel from "@/components/feed/HeroCarousel";
 import QuickFilters from "@/components/feed/QuickFilters";
@@ -252,11 +253,13 @@ const Feed = () => {
   const handleQuickFilterToggle = (filter: string) => setQuickFilters(prev => prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]);
   const displayedEvents = activeTab === 'forYou' ? getPersonalizedEvents() : events;
   return <div className="min-h-screen bg-background" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+      <Navbar language={language} onLanguageToggle={(lang) => {}} />
+      
       <div className="md:hidden">{pullDistance > 0 && <div className="fixed top-0 left-0 right-0 flex items-center justify-center transition-all z-50" style={{
         height: `${pullDistance}px`
       }}><RefreshCw className={`text-muted-foreground ${isPulling ? "animate-spin" : ""}`} size={24} /></div>}</div>
       
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
+      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
