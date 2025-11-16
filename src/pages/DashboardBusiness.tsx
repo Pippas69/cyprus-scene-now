@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User, Users as UsersIcon, TrendingUp, MapPin, TrendingUp as FeedIcon } from "lucide-react";
+import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User, Users as UsersIcon, TrendingUp, MapPin, TrendingUp as FeedIcon, Settings } from "lucide-react";
+import { BusinessAccountSettings } from "@/components/user/BusinessAccountSettings";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ const DashboardBusiness = () => {
       profile: "Προφίλ",
       reservations: "Κρατήσεις",
       analytics: "Αναλυτικά",
+      settings: "Ρυθμίσεις",
     },
     en: {
       businessDashboard: "Business Management",
@@ -51,6 +53,7 @@ const DashboardBusiness = () => {
       profile: "Profile",
       reservations: "Reservations",
       analytics: "Analytics",
+      settings: "Settings",
     },
   };
 
@@ -243,6 +246,10 @@ const DashboardBusiness = () => {
               <TrendingUp className="h-4 w-4" />
               <span>{t.analytics}</span>
             </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2 data-[state=active]:bg-background">
+              <Settings className="h-4 w-4" />
+              <span>{t.settings}</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="feed" className="mt-0">
@@ -279,6 +286,10 @@ const DashboardBusiness = () => {
 
           <TabsContent value="analytics" className="mt-0">
             <EventAnalytics businessId={businessId!} language={language} />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-0">
+            <BusinessAccountSettings userId={businessId!} businessId={businessId!} language={language} />
           </TabsContent>
         </Tabs>
       </main>
