@@ -394,6 +394,25 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
             <Input id="address" {...register("address")} placeholder={t.addressPlaceholder} />
             {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Submit Buttons */}
+      <div className="flex gap-4">
+        <Button type="button" variant="outline" className="flex-1">
+          {t.cancel}
+        </Button>
+        <Button type="submit" className="flex-1" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {t.loading}
+            </>
+          ) : (
+            t.saveChanges
+          )}
+        </Button>
+      </div>
     </form>
   );
 }

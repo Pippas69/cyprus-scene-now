@@ -113,23 +113,23 @@ export const businessTranslations = {
     
     // Offer Creation
     createOffer: "Δημιουργία Προσφοράς",
+    description: "Περιγραφή",
+    publishing: "Δημοσίευση...",
     offerTitle: "Τίτλος Προσφοράς",
     offerTitlePlaceholder: "π.χ. Happy Hour 50% Έκπτωση",
-    offerDescription: "Περιγραφή",
-    offerDescriptionPlaceholder: "π.χ. 20% Έκπτωση σε όλα τα ποτά",
-    percentOff: "Ποσοστό Έκπτωσης (%)",
-    percentOffPlaceholder: "π.χ. 20",
-    terms: "Όροι (προαιρετικά)",
+    offerDescPlaceholder: "π.χ. 20% Έκπτωση σε όλα τα ποτά",
+    discountPercent: "Ποσοστό Έκπτωσης (%)",
+    termsConditions: "Όροι & Προϋποθέσεις",
     termsPlaceholder: "π.χ. Ισχύει μόνο για αλκοολούχα ποτά",
-    offerCreated: "Η προσφορά δημιουργήθηκε επιτυχώς",
-    creatingOffer: "Δημιουργία προσφοράς...",
+    publishOffer: "Δημοσίευση Προσφοράς",
+    offerCreatedSuccess: "Η προσφορά δημοσιεύθηκε επιτυχώς",
+    offerCreationError: "Κάτι πήγε στραβά κατά τη δημιουργία της προσφοράς",
     
     // Business Profile
     businessProfile: "Προφίλ Επιχείρησης",
     businessName: "Όνομα Επιχείρησης",
     businessNamePlaceholder: "π.χ. Το Μπαρ μου",
-    businessDescription: "Περιγραφή",
-    businessDescriptionPlaceholder: "Περιγράψτε την επιχείρησή σας...",
+    businessDescPlaceholder: "Περιγράψτε την επιχείρησή σας...",
     phone: "Τηλέφωνο",
     phonePlaceholder: "π.χ. +357 99 123456",
     website: "Ιστοσελίδα",
@@ -139,33 +139,9 @@ export const businessTranslations = {
     city: "Πόλη",
     selectCity: "Επιλέξτε πόλη",
     businessCategories: "Κατηγορίες Επιχείρησης",
-    logo: "Λογότυπο",
-    coverPhoto: "Φωτογραφία Εξωφύλλου",
-    // Removed duplicate keys - they already exist above (lines 104-112)
+    selectAtLeastOne: "επιλέξτε τουλάχιστον μία",
     geocodingAddress: "Εύρεση συντεταγμένων...",
-    publishing: "Δημοσίευση...",
-    
-    // Offer Creation
-    offerTitle: "Τίτλος Προσφοράς",
-    offerTitlePlaceholder: "π.χ. 20% Έκπτωση σε όλα τα ποτά",
-    discountPercent: "Ποσοστό Έκπτωσης (%)",
-    termsConditions: "Όροι & Προϋποθέσεις",
-    termsPlaceholder: "Προσθέστε οποιουσδήποτε όρους ή περιορισμούς...",
-    publishOffer: "Δημοσίευση Προσφοράς",
-    offerDescPlaceholder: "Προσθέστε λεπτομέρειες για την προσφορά σας...",
-    offerCreatedSuccess: "Η προσφορά δημοσιεύθηκε επιτυχώς",
-    offerCreationError: "Κάτι πήγε στραβά κατά τη δημιουργία της προσφοράς",
-    
-    // Business Profile
-    contactInfo: "Στοιχεία Επικοινωνίας",
-    phone: "Τηλέφωνο",
-    phonePlaceholder: "π.χ. 2310123456",
-    website: "Ιστοσελίδα",
-    websitePlaceholder: "π.χ. https://example.com",
-    address: "Διεύθυνση",
-    addressPlaceholder: "π.χ. Τσιμισκή 25",
-    businessNamePlaceholder: "π.χ. Το Καφενείο μας",
-    businessDescPlaceholder: "Πείτε μας για την επιχείρησή σας...",
+    coordinatesUpdated: "Οι συντεταγμένες ενημερώθηκαν",
     
     // Reservations
     reservations: "Κρατήσεις",
@@ -308,8 +284,7 @@ export const businessTranslations = {
     businessProfile: "Business Profile",
     businessName: "Business Name",
     businessNamePlaceholder: "e.g. My Bar",
-    businessDescription: "Description",
-    businessDescriptionPlaceholder: "Describe your business...",
+    businessDescPlaceholder: "Describe your business...",
     phone: "Phone",
     phonePlaceholder: "e.g. +357 99 123456",
     website: "Website",
@@ -319,7 +294,9 @@ export const businessTranslations = {
     city: "City",
     selectCity: "Select city",
     businessCategories: "Business Categories",
-    // Removed duplicate keys already defined above
+    selectAtLeastOne: "select at least one",
+    geocodingAddress: "Finding coordinates...",
+    coordinatesUpdated: "Coordinates updated",
     
     // Reservations
     reservations: "Reservations",
