@@ -73,6 +73,7 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
       going: 'Συμμετέχοντες',
       conversion: 'Ποσοστό Μετατροπής',
       eventPerformance: 'Απόδοση Εκδηλώσεων',
+      loading: 'Φόρτωση αναλυτικών...',
     },
     en: {
       title: 'Analytics',
@@ -81,13 +82,14 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
       going: 'Going',
       conversion: 'Conversion Rate',
       eventPerformance: 'Event Performance',
+      loading: 'Loading analytics...',
     },
   };
 
   const t = text[language];
 
   if (loading || !stats) {
-    return <div>Loading analytics...</div>;
+    return <div>{t.loading || 'Loading analytics...'}</div>;
   }
 
   return (
