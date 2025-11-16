@@ -234,29 +234,28 @@ const handler = async (req: Request): Promise<Response> => {
     const emailPromises = [];
 
     // Send to user
-    emailPromises.push(
-      resend.emails.send({
-        from: "Reservations <onboarding@resend.dev>",
-        to: [userProfile.email],
-        subject: userSubject,
-        html: userHtml,
-      })
-    );
+    const userEmailPromise = resend.emails.send({
+      from: "Reservations <onboarding@resend.dev>",
+      to: [userProfile.email],
+      subject: userSubject,
+      html: userHtml,
+    });
+    emailPromises.push(userEmailPromise);
 
     // Send to business if applicable
     if (businessEmail && businessSubject) {
-      emailPromises.push(
-        resend.emails.send({
-          from: "Reservations <onboarding@resend.dev>",
-          to: [businessEmail],
-          subject: businessSubject,
-          html: businessHtml,
-        })
-      );
+      const businessEmailPromise = resend.emails.send({
+        from: "Reservations <onboarding@resend.dev>",
+        to: [businessEmail],
+        subject: businessSubject,
+        html: businessHtml,
+      });
+      emailPromises.push(businessEmailPromise);
     }
 
-    await Promise.all(emailPromises);
-    console.log('Emails sent successfully');
+    const results = await Promise.all(emailPromises);
+    console.log('Email API responses:', JSON.stringify(results, null, 2));
+    console.log('Emails sent successfully to:', userProfile.email, businessEmail || 'no business email');
 
     return new Response(
       JSON.stringify({ success: true }),
