@@ -128,20 +128,14 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-background text-foreground shadow-card"
-          : "bg-transparent text-white"
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md border-b-4 border-secondary"
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <button
             onClick={() => navigate("/")}
-            className={`font-cinzel text-3xl font-black tracking-tight transition-colors ${
-              scrolled ? "text-aegean drop-shadow-lg font-extrabold" : "text-white"
-            }`}
+            className="font-cinzel text-4xl font-black tracking-tight text-secondary drop-shadow-lg"
           >
             ΦΟΜΟ
           </button>
@@ -151,13 +145,9 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
             {/* Explore Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
-                  className={`font-inter font-bold text-base transition-colors flex items-center gap-1 ${
-                    scrolled ? "text-aegean hover:text-secondary" : "text-white hover:text-accent"
-                  }`}
-                >
+                <button className="font-inter font-extrabold text-lg text-aegean hover:text-secondary transition-colors flex items-center gap-1">
                   {language === "el" ? "Εξερεύνηση" : "Explore"}
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-5 h-5" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
@@ -189,27 +179,29 @@ const Navbar = ({ language, onLanguageToggle }: NavbarProps) => {
             </DropdownMenu>
             
             {!user && (
-              <NavLink text={t.login} onClick={() => navigate("/login")} scrolled={scrolled} />
+              <button onClick={() => navigate("/login")} className="font-inter font-bold text-aegean hover:text-secondary transition-colors">
+                {t.login}
+              </button>
             )}
 
             {/* Language Toggle */}
-            <div className={`flex gap-1 rounded-lg p-1 border-2 ${scrolled ? "bg-white border-aegean" : "bg-white/10 backdrop-blur-sm border-white/20"}`}>
+            <div className="flex gap-1 rounded-lg p-1 border-2 bg-white border-aegean">
               <button
                 onClick={() => onLanguageToggle("el")}
-                className={`px-3 py-1.5 rounded text-sm font-extrabold transition-all ${
+                className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${
                   language === "el"
-                    ? scrolled ? "bg-aegean text-white shadow-md" : "bg-white text-aegean"
-                    : scrolled ? "text-aegean hover:bg-aegean/10" : "text-white hover:bg-white/20"
+                    ? "bg-aegean text-white shadow-md"
+                    : "text-aegean hover:bg-aegean/10"
                 }`}
               >
                 🇬🇷 ΕΛ
               </button>
               <button
                 onClick={() => onLanguageToggle("en")}
-                className={`px-3 py-1.5 rounded text-sm font-extrabold transition-all ${
+                className={`px-4 py-2 rounded text-sm font-extrabold transition-all ${
                   language === "en"
-                    ? scrolled ? "bg-aegean text-white shadow-md" : "bg-white text-aegean"
-                    : scrolled ? "text-aegean hover:bg-aegean/10" : "text-white hover:bg-white/20"
+                    ? "bg-aegean text-white shadow-md"
+                    : "text-aegean hover:bg-aegean/10"
                 }`}
               >
                 🇬🇧 EN
