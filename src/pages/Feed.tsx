@@ -264,20 +264,12 @@ const Feed = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col gap-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
+              <h1 className="text-3xl font-bold mb-2 text-[#012b67]">{t.title}</h1>
               <p className="text-muted-foreground">{t.subtitle}</p>
             </div>
             <div className="flex flex-wrap gap-4">
-              <LocationSwitcher 
-                language={language}
-                selectedCity={selectedCity}
-                onCityChange={setSelectedCity}
-              />
-              <CategoryFilter
-                language={language}
-                selectedCategories={selectedCategories}
-                onCategoryChange={setSelectedCategories}
-              />
+              <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
+              <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
             </div>
           </div>
         </div>
@@ -294,21 +286,11 @@ const Feed = () => {
               <TabsTrigger value="map" className="gap-2"><MapPin size={16} />{t.map}</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-4 flex-wrap">
-              <SortDropdown
-                language={language}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-              />
+              <SortDropdown language={language} sortBy={sortBy} onSortChange={setSortBy} />
             </div>
           </div>
 
-          {activeTab !== 'offers' && activeTab !== 'map' && (
-            <QuickFilters
-              language={language}
-              selectedFilters={quickFilters}
-              onFilterToggle={handleQuickFilterToggle}
-            />
-          )}
+          {activeTab !== 'offers' && activeTab !== 'map' && <QuickFilters language={language} selectedFilters={quickFilters} onFilterToggle={handleQuickFilterToggle} />}
 
           <TabsContent value="trending" className="mt-6">
             {eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
