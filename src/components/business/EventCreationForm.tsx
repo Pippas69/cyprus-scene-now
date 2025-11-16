@@ -182,9 +182,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Τίτλος *</FormLabel>
+                  <FormLabel>{t.eventTitle} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="π.χ. Live Music Night" {...field} />
+                    <Input placeholder={language === 'el' ? "π.χ. Live Music Night" : "e.g. Live Music Night"} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -196,12 +196,12 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Περιγραφή *</FormLabel>
+                  <FormLabel>{t.eventDescription} *</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Περιγράψτε την εκδήλωσή σας..."
+                      placeholder={language === 'el' ? "Περιγράψτε την εκδήλωσή σας..." : "Describe your event..."}
                       rows={4}
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -221,7 +221,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               {isCompressing && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Συμπίεση εικόνας...</span>
+                  <span>{t.compressingImage}</span>
                 </div>
               )}
             </div>
@@ -232,9 +232,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Τοποθεσία *</FormLabel>
+                    <FormLabel>{t.location || 'Location'} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="π.χ. Λευκωσία" {...field} />
+                      <Input placeholder={language === 'el' ? "π.χ. Λευκωσία" : "e.g. Nicosia"} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -246,7 +246,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 name="price_tier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Τιμή *</FormLabel>
+                    <FormLabel>{t.priceTier || 'Price'} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -254,10 +254,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="free">Δωρεάν</SelectItem>
-                        <SelectItem value="low">Χαμηλή (€)</SelectItem>
-                        <SelectItem value="medium">Μέτρια (€€)</SelectItem>
-                        <SelectItem value="high">Υψηλή (€€€)</SelectItem>
+                        <SelectItem value="free">{t.free || 'Free'}</SelectItem>
+                        <SelectItem value="low">{t.low || 'Low'} (€)</SelectItem>
+                        <SelectItem value="medium">{t.medium || 'Medium'} (€€)</SelectItem>
+                        <SelectItem value="high">{t.high || 'High'} (€€€)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -272,7 +272,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 name="start_at"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ημερομηνία Έναρξης *</FormLabel>
+                    <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
                     <FormControl>
                       <Input type="datetime-local" {...field} />
                     </FormControl>
@@ -286,7 +286,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 name="end_at"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ημερομηνία Λήξης *</FormLabel>
+                    <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
                     <FormControl>
                       <Input type="datetime-local" {...field} />
                     </FormControl>
@@ -301,11 +301,11 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               name="min_age_hint"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ελάχιστη Ηλικία (προαιρετικό)</FormLabel>
+                  <FormLabel>{t.minAge || 'Minimum Age (optional)'}</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
-                      placeholder="18"
+                      placeholder={language === 'el' ? "18" : "18"}
                       {...field}
                       onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                     />
@@ -360,7 +360,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             />
 
             <div>
-              <FormLabel>Εικόνα Εξώφυλλου (προαιρετικό)</FormLabel>
+              <FormLabel>{language === 'el' ? 'Εικόνα Εξώφυλλου (προαιρετικό)' : 'Cover Image (optional)'}</FormLabel>
               <Input
                 type="file"
                 accept="image/*"
@@ -370,14 +370,14 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             </div>
 
             <div className="space-y-4 p-4 border rounded-lg">
-              <h3 className="font-semibold">Ρυθμίσεις Κράτησης</h3>
+              <h3 className="font-semibold">{language === 'el' ? 'Ρυθμίσεις Κράτησης' : 'Reservation Settings'}</h3>
               
               <FormField
                 control={form.control}
                 name="accepts_reservations"
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between">
-                    <FormLabel>Αποδοχή Κρατήσεων</FormLabel>
+                    <FormLabel>{t.acceptsReservations || 'Accept Reservations'}</FormLabel>
                     <FormControl>
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
@@ -388,7 +388,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Δημοσίευση Εκδήλωσης
+              {language === 'el' ? 'Δημοσίευση Εκδήλωσης' : 'Publish Event'}
             </Button>
           </form>
         </Form>
