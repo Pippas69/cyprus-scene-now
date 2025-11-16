@@ -10,6 +10,7 @@ interface ImageUploadFieldProps {
   aspectRatio?: string;
   maxSizeMB?: number;
   accept?: string;
+  language: 'el' | 'en';
 }
 
 export const ImageUploadField = ({
@@ -18,7 +19,8 @@ export const ImageUploadField = ({
   onFileSelect,
   aspectRatio = "1/1",
   maxSizeMB = 2,
-  accept = "image/jpeg,image/png,image/webp"
+  accept = "image/jpeg,image/png,image/webp",
+  language
 }: ImageUploadFieldProps) => {
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -28,7 +30,10 @@ export const ImageUploadField = ({
 
     // Check file size
     if (file.size > maxSizeMB * 1024 * 1024) {
-      alert(`Το αρχείο πρέπει να είναι μικρότερο από ${maxSizeMB}MB`);
+      const message = language === 'el' 
+        ? `Το αρχείο πρέπει να είναι μικρότερο από ${maxSizeMB}MB`
+        : `File must be smaller than ${maxSizeMB}MB`;
+      alert(message);
       return;
     }
 
@@ -92,12 +97,14 @@ export const ImageUploadField = ({
             <Button type="button" variant="outline" asChild>
               <span>
                 <Upload className="mr-2 h-4 w-4" />
-                Επιλέξτε Αρχείο
+                {language === 'el' ? 'Επιλέξτε Αρχείο' : 'Select File'}
               </span>
             </Button>
           </Label>
           <p className="text-xs text-muted-foreground">
-            Μέγιστο μέγεθος: {maxSizeMB}MB. Τύποι: JPEG, PNG, WebP
+            {language === 'el' 
+              ? `Μέγιστο μέγεθος: ${maxSizeMB}MB. Τύποι: JPEG, PNG, WebP`
+              : `Maximum size: ${maxSizeMB}MB. Types: JPEG, PNG, WebP`}
           </p>
         </div>
       </div>
