@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import BottomNav from "@/components/BottomNav";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
 import Ekdiloseis from "./pages/Ekdiloseis";
@@ -29,24 +30,27 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/ekdiloseis" element={<Ekdiloseis />} />
-            <Route path="/xartis" element={<Xartis />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/signup-business" element={<SignupBusiness />} />
-            <Route path="/dashboard" element={<DashboardUser />} />
-            <Route path="/dashboard-business" element={<DashboardBusiness />} />
-            <Route path="/admin/verification" element={<AdminVerification />} />
-            <Route path="/admin/geocoding" element={<AdminGeocoding />} />
-            <Route path="/business/:businessId" element={<BusinessProfile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <div className="min-h-screen pb-16 md:pb-0">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/ekdiloseis" element={<Ekdiloseis />} />
+              <Route path="/xartis" element={<Xartis />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/signup-business" element={<SignupBusiness />} />
+              <Route path="/dashboard" element={<DashboardUser />} />
+              <Route path="/dashboard-business" element={<DashboardBusiness />} />
+              <Route path="/admin/verification" element={<AdminVerification />} />
+              <Route path="/admin/geocoding" element={<AdminGeocoding />} />
+              <Route path="/business/:businessId" element={<BusinessProfile />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <BottomNav />
+          </div>
         </BrowserRouter>
       </TooltipProvider>
     </LanguageProvider>
