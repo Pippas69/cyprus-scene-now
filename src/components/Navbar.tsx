@@ -160,13 +160,13 @@ const Navbar = ({
             {/* User Profile Menu or Join Dropdown */}
             {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant={scrolled ? "outline" : "secondary"} className="gap-2">
+                  <Button className="gap-2 bg-[#012b67] text-white hover:bg-[#012b67]/90 border-none">
                     <Avatar className="h-6 w-6">
                       <AvatarFallback className="text-xs">
                         {userName.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden lg:inline bg-[#012b67] text-white font-medium px-3 py-1 rounded">{userName}</span>
+                    <span className="hidden lg:inline font-medium">{userName}</span>
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
