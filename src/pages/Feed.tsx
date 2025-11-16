@@ -260,7 +260,7 @@ const Feed = () => {
         height: `${pullDistance}px`
       }}><RefreshCw className={`text-muted-foreground ${isPulling ? "animate-spin" : ""}`} size={24} /></div>}</div>
       
-      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur border-b">
+      <div className="sticky top-16 z-40 bg-background border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
