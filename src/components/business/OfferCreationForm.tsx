@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { businessTranslations } from "./translations";
 
 const offerSchema = z.object({
   title: z.string().trim().min(3, "Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες").max(100),
@@ -28,6 +30,8 @@ interface OfferCreationFormProps {
 
 const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const t = businessTranslations[language];
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<OfferFormData>({
@@ -83,7 +87,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Δημιουργία Νέας Προσφοράς</CardTitle>
+        <CardTitle>{t.createOffer}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
