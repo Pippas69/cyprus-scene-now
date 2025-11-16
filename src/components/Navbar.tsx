@@ -92,6 +92,7 @@ const Navbar = ({
       joinFomo: "Εγγραφή στο ΦΟΜΟ",
       forBusinesses: "Για Επιχειρήσεις",
       myDashboard: "Ο Λογαριασμός μου",
+      profile: "Προφίλ",
       settings: "Ρυθμίσεις",
       signOut: "Αποσύνδεση"
     },
@@ -104,6 +105,7 @@ const Navbar = ({
       joinFomo: "Join ΦΟΜΟ",
       forBusinesses: "For Businesses",
       myDashboard: "My Dashboard",
+      profile: "Profile",
       settings: "Settings",
       signOut: "Sign Out"
     }
@@ -173,7 +175,7 @@ const Navbar = ({
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem className="font-medium cursor-pointer" onClick={handleDashboardClick}>
                     <User className="w-4 h-4 mr-2" />
-                    {t.myDashboard}
+                    {userRole === 'business' ? t.myDashboard : t.profile}
                   </DropdownMenuItem>
                   <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {
                 handleDashboardClick();
@@ -248,7 +250,7 @@ const Navbar = ({
                     handleDashboardClick();
                     setMobileOpen(false);
                   }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
-                        {t.myDashboard}
+                        {userRole === 'business' ? t.myDashboard : t.profile}
                       </button>
                       <button onClick={() => {
                     handleSignOut();
