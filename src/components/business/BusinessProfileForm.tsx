@@ -318,31 +318,31 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="name">Όνομα Επιχείρησης *</Label>
-            <Input id="name" {...register("name")} />
+            <Label htmlFor="name">{t.businessName} *</Label>
+            <Input id="name" {...register("name")} placeholder={t.businessNamePlaceholder} />
             {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
-            <Label htmlFor="description">Περιγραφή</Label>
+            <Label htmlFor="description">{t.description}</Label>
             <Textarea 
               id="description" 
               {...register("description")} 
-              placeholder="Περιγράψτε την επιχείρησή σας..."
+              placeholder={t.businessDescPlaceholder}
               rows={4}
             />
             {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
           </div>
 
           <div>
-            <Label htmlFor="city">Πόλη *</Label>
+            <Label htmlFor="city">{t.city} *</Label>
             <select
               id="city"
               {...register("city")}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-              <option value="">Επιλέξτε πόλη</option>
-              {cities.map((city) => (
+              <option value="">{t.selectCity}</option>
+              {cities[language].map((city) => (
                 <option key={city} value={city}>{city}</option>
               ))}
             </select>
@@ -350,9 +350,9 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
           </div>
 
           <div>
-            <Label>Κατηγορίες *</Label>
+            <Label>{t.categories} * ({t.selectAtLeastOne})</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-              {categories.map((category) => (
+              {businessCategories[language].map((category) => (
                 <div key={category} className="flex items-center space-x-2">
                   <Checkbox
                     id={category}
@@ -373,58 +373,27 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
       {/* Contact Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Στοιχεία Επικοινωνίας</CardTitle>
+          <CardTitle>{t.contactInfo}</CardTitle>
           <CardDescription>Ενημερώστε τα στοιχεία επικοινωνίας σας</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="phone">Τηλέφωνο</Label>
-            <Input id="phone" {...register("phone")} placeholder="+357 99 123456" />
+            <Label htmlFor="phone">{t.phone}</Label>
+            <Input id="phone" {...register("phone")} placeholder={t.phonePlaceholder} />
             {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
           </div>
 
           <div>
-            <Label htmlFor="website">Ιστοσελίδα</Label>
-            <Input id="website" {...register("website")} placeholder="https://example.com" />
+            <Label htmlFor="website">{t.website}</Label>
+            <Input id="website" {...register("website")} placeholder={t.websitePlaceholder} />
             {errors.website && <p className="text-sm text-destructive mt-1">{errors.website.message}</p>}
           </div>
 
           <div>
-            <Label htmlFor="address">Διεύθυνση</Label>
-            <div className="relative">
-              <Input id="address" {...register("address")} placeholder="Οδός, Αριθμός" />
-              {geocoding && (
-                <div className="absolute right-2 top-2.5">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
+            <Label htmlFor="address">{t.address}</Label>
+            <Input id="address" {...register("address")} placeholder={t.addressPlaceholder} />
             {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
-            {coordinates && (
-              <p className="text-xs text-muted-foreground mt-1">
-                📍 Συντεταγμένες: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
-              </p>
-            )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Submit Button */}
-      <div className="flex justify-end gap-4">
-        <Button type="button" variant="outline" onClick={() => fetchBusinessData()}>
-          Ακύρωση
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Αποθήκευση...
-            </>
-          ) : (
-            "Αποθήκευση Αλλαγών"
-          )}
-        </Button>
-      </div>
     </form>
   );
 }
