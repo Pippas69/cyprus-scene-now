@@ -259,7 +259,10 @@ const Feed = () => {
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="text-white"><h1 className="text-3xl font-bold gradient-brand bg-clip-text text-transparent">{t.title}</h1><p className="text-muted-foreground">{t.subtitle}</p></div>
+            <div>
+              <h1 className="text-3xl font-bold gradient-brand bg-clip-text text-transparent">{t.title}</h1>
+              <p className="text-foreground">{t.subtitle}</p>
+            </div>
             <div className="flex items-center gap-2"><LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} /><LanguageToggle /></div>
           </div>
           {activeTab !== 'map' && <CategoryFilter selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} language={language} />}
