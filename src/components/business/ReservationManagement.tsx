@@ -134,7 +134,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
   const exportToCSV = () => {
     const headers = [t.event, t.name, 'Email', t.contact, t.details, t.status];
     const rows = filteredReservations.map((r) => [
-      r.events?.title || 'Unknown',
+      r.events?.title || t.unknownEvent,
       r.reservation_name,
       r.profiles?.email || '',
       r.phone_number || '',
@@ -185,6 +185,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       cancel: 'Ακύρωση',
       notesSaved: 'Οι σημειώσεις αποθηκεύτηκαν',
       specialRequests: 'Ειδικές Απαιτήσεις',
+      unknownEvent: 'Άγνωστη Εκδήλωση',
+      anonymous: 'Ανώνυμος',
     },
     en: {
       title: 'Reservation Management',
@@ -219,6 +221,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       cancel: 'Cancel',
       notesSaved: 'Notes saved',
       specialRequests: 'Special Requests',
+      unknownEvent: 'Unknown Event',
+      anonymous: 'Anonymous',
     },
   };
 
@@ -317,7 +321,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base truncate">{reservation.events?.title || 'Unknown Event'}</CardTitle>
+                    <CardTitle className="text-base truncate">{reservation.events?.title || t.unknownEvent}</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.reservation_name}</p>
                   </div>
                   {getStatusBadge(reservation.status)}
@@ -411,11 +415,11 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
             <TableBody>
               {filteredReservations.map((reservation) => (
                 <TableRow key={reservation.id}>
-                  <TableCell className="font-medium">{reservation.events?.title || 'Unknown Event'}</TableCell>
+                  <TableCell className="font-medium">{reservation.events?.title || t.unknownEvent}</TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{reservation.reservation_name}</div>
-                      <div className="text-sm text-muted-foreground">{reservation.profiles?.name || 'Anonymous'}</div>
+                      <div className="text-sm text-muted-foreground">{reservation.profiles?.name || t.anonymous}</div>
                     </div>
                   </TableCell>
                   <TableCell>
