@@ -14,12 +14,16 @@ const BottomNav = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-        setUserRole(profile?.role || "");
+        
+        // Check if user owns a business
+        const { data: business } = await supabase
+          .from("businesses")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        
+        // Set role based on business ownership
+        setUserRole(business ? "business" : "user");
       }
     };
     getUser();
