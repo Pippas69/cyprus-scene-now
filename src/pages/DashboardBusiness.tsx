@@ -184,7 +184,7 @@ const DashboardBusiness = () => {
               <div className="flex items-center gap-4">
                 <LanguageToggle />
                 <Button
-                  onClick={() => navigate("/feed")}
+                  onClick={() => navigate("/dashboard-business")}
                   variant="outline"
                   size="sm"
                   className="flex items-center gap-2"

@@ -90,7 +90,7 @@ const DashboardUser = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/dashboard-user')}
                 className="gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
