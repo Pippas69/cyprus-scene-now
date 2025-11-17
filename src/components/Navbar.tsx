@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { Menu, ChevronDown, User, Settings, LogOut, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { GlobalSearch } from "@/components/search/GlobalSearch";
 interface NavbarProps {
   language: "el" | "en";
   onLanguageToggle: (lang: "el" | "en") => void;
@@ -127,7 +128,7 @@ const Navbar = ({
           </button>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-4">
             {/* Explore Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -151,6 +152,9 @@ const Navbar = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Global Search */}
+            <GlobalSearch language={language} />
             
             {!user && <button onClick={() => navigate("/login")} className="font-inter font-bold text-aegean hover:text-accent transition-colors">
                 {t.login}
@@ -217,7 +221,19 @@ const Navbar = ({
           </div>
 
           {/* Mobile Menu */}
-          <div className="md:hidden flex items-center gap-4">
+          <div className="md:hidden flex items-center gap-2">
+            {/* Search Icon - Opens full screen search */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-foreground">
+                  <Search className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="top" className="h-full">
+                <GlobalSearch language={language} fullscreen />
+              </SheetContent>
+            </Sheet>
+
             {/* Language Toggle Mobile */}
             <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`}>
               <button onClick={() => onLanguageToggle("el")} className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "el" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}>

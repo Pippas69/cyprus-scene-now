@@ -327,9 +327,11 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
 
         {/* Title & Location */}
         <div>
-          <h3 className="font-bold text-lg group-hover:text-ocean transition-colors">
-            {event.title}
-          </h3>
+          <Link to={`/event/${event.id}`} className="block hover:opacity-80 transition-opacity">
+            <h3 className="font-bold text-lg group-hover:text-ocean transition-colors">
+              {event.title}
+            </h3>
+          </Link>
           <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
             <MapPin className="h-3 w-3" />
             <span>{event.location}</span>

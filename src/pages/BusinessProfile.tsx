@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle, MapPin, Phone, Globe, ArrowLeft } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import OfferCard from "@/components/OfferCard";
+import { FollowButton } from "@/components/business/FollowButton";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface Business {
   id: string;
@@ -61,6 +63,7 @@ interface Discount {
 const BusinessProfile = () => {
   const { businessId } = useParams();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [business, setBusiness] = useState<Business | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [offers, setOffers] = useState<Discount[]>([]);
@@ -200,13 +203,20 @@ const BusinessProfile = () => {
           </div>
 
           {/* Categories */}
-          <div className="flex flex-wrap gap-2 justify-center mt-4">
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
             {business.category.map((cat) => (
               <Badge key={cat} variant="secondary">
                 {cat}
               </Badge>
             ))}
           </div>
+
+          {/* Follow Button */}
+          {business.id && (
+            <div className="flex justify-center">
+              <FollowButton businessId={business.id} language={language} />
+            </div>
+          )}
         </div>
 
         {/* Contact Info Cards */}
