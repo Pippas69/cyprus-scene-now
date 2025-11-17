@@ -1,27 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, ChevronDown, User, Settings, LogOut, Search } from "lucide-react";
+import { Menu, ChevronDown, User as UserIcon, Settings, LogOut, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
-interface NavbarProps {
-  language: "el" | "en";
-  onLanguageToggle: (lang: "el" | "en") => void;
-}
-const NavLink = ({
-  text,
-  onClick,
-  scrolled
-}: {
-  text: string;
-  onClick: () => void;
-  scrolled: boolean;
-}) => <button onClick={onClick} className={`font-inter font-medium transition-colors ${scrolled ? "text-foreground hover:text-secondary" : "text-white hover:text-accent"}`}>
-    {text}
-  </button>;
+import type { User } from "@supabase/supabase-js";
+
 interface NavbarProps {
   language: "el" | "en";
   onLanguageToggle: (lang: "el" | "en") => void;
@@ -33,7 +20,7 @@ const Navbar = ({
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   useEffect(() => {
@@ -188,7 +175,7 @@ const Navbar = ({
                     const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
                     navigate(`${basePath}?tab=profile`);
                   }}>
-                    <User className="w-4 h-4 mr-2" />
+                    <UserIcon className="w-4 h-4 mr-2" />
                     {userRole === 'business' ? t.myDashboard : t.profile}
                   </DropdownMenuItem>
                   <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {

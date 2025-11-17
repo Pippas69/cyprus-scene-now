@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Coffee, Moon, Palette, Dumbbell, Users, Briefcase, Sparkles, Plane, X } from "lucide-react";

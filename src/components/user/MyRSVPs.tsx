@@ -13,7 +13,7 @@ export const MyRSVPs = ({ userId, language }: MyRSVPsProps) => {
   const { interested, going, loading } = useUserRSVPs(userId);
 
   const text = {
-    gr: {
+    el: {
       title: 'Οι Κρατήσεις Μου',
       interested: 'Ενδιαφέρομαι',
       going: 'Θα Πάω',

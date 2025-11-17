@@ -61,7 +61,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
   };
 
   const text = {
-    gr: {
+    el: {
       title: 'Ρυθμίσεις Προφίλ',
       name: 'Όνομα',
       email: 'Email',
