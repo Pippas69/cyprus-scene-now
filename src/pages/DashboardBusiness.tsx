@@ -25,6 +25,7 @@ const DashboardBusiness = () => {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'feed');
   const [verified, setVerified] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string>("");
   const [businessLogoUrl, setBusinessLogoUrl] = useState<string | null>(null);
@@ -74,6 +75,8 @@ const DashboardBusiness = () => {
         navigate("/login");
         return;
       }
+
+      setUserId(user.id);
 
       const { data: business, error } = await supabase
         .from("businesses")
@@ -291,7 +294,7 @@ const DashboardBusiness = () => {
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0">
-            <BusinessAccountSettings userId={businessId!} businessId={businessId!} language={language} />
+            <BusinessAccountSettings userId={userId!} businessId={businessId!} language={language} />
           </TabsContent>
         </Tabs>
       </main>
