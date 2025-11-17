@@ -173,20 +173,17 @@ const Navbar = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={handleDashboardClick}>
+                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {
+                    const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
+                    navigate(`${basePath}?tab=profile`);
+                  }}>
                     <User className="w-4 h-4 mr-2" />
                     {userRole === 'business' ? t.myDashboard : t.profile}
                   </DropdownMenuItem>
                   <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {
-                handleDashboardClick();
-                // Navigate to settings tab after dashboard loads
-                setTimeout(() => {
-                  const settingsTab = document.querySelector('[value="settings"]');
-                  if (settingsTab instanceof HTMLElement) {
-                    settingsTab.click();
-                  }
-                }, 100);
-              }}>
+                    const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
+                    navigate(`${basePath}?tab=settings`);
+                  }}>
                     <Settings className="w-4 h-4 mr-2" />
                     {t.settings}
                   </DropdownMenuItem>
@@ -247,7 +244,8 @@ const Navbar = ({
                   
                   {user ? <>
                       <button onClick={() => {
-                    handleDashboardClick();
+                    const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
+                    navigate(`${basePath}?tab=profile`);
                     setMobileOpen(false);
                   }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                         {userRole === 'business' ? t.myDashboard : t.profile}

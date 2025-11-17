@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User, Users as UsersIcon, TrendingUp, MapPin, TrendingUp as FeedIcon, Settings } from "lucide-react";
 import { BusinessAccountSettings } from "@/components/user/BusinessAccountSettings";
 import { useEffect, useState } from "react";
@@ -21,6 +21,8 @@ import Xartis from "@/pages/Xartis";
 const DashboardBusiness = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'feed');
   const [verified, setVerified] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -208,7 +210,7 @@ const DashboardBusiness = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
-        <Tabs defaultValue="feed" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start mb-8 h-auto flex-wrap gap-2 bg-muted/50 p-2">
             <TabsTrigger value="feed" className="gap-2 data-[state=active]:bg-background">
               <FeedIcon className="h-4 w-4" />
