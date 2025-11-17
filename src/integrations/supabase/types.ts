@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_followers: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_followers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_followers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           address: string | null
@@ -1046,6 +1082,10 @@ export type Database = {
           longitude: number
         }[]
       }
+      get_business_follower_count: {
+        Args: { business_id_param: string }
+        Returns: number
+      }
       get_discount_qr_token: { Args: { discount_id: string }; Returns: string }
       gettransactionid: { Args: never; Returns: unknown }
       longtransactionsenabled: { Args: never; Returns: boolean }
@@ -1090,6 +1130,24 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      search_content: {
+        Args: { search_query: string }
+        Returns: {
+          business_name: string
+          category: string[]
+          city: string
+          cover_image_url: string
+          id: string
+          location: string
+          logo_url: string
+          name: string
+          relevance_score: number
+          result_type: string
+          start_at: string
+          title: string
+          verified: boolean
+        }[]
+      }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown

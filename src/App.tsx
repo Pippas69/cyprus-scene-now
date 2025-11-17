@@ -20,6 +20,7 @@ import DashboardUser from "./pages/DashboardUser";
 import AdminVerification from "./pages/AdminVerification";
 import AdminGeocoding from "./pages/AdminGeocoding";
 import BusinessProfile from "./pages/BusinessProfile";
+import EventDetail from "./pages/EventDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,11 +44,12 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/signup-business" element={<SignupBusiness />} />
-                <Route path="/dashboard-user" element={<DashboardUser />} />
-                <Route path="/dashboard-business" element={<DashboardBusiness />} />
+                <Route path="/dashboard-user/*" element={<DashboardUser />} />
+                <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
                 <Route path="/admin/verification" element={<AdminVerification />} />
                 <Route path="/admin/geocoding" element={<AdminGeocoding />} />
                 <Route path="/business/:businessId" element={<BusinessProfile />} />
+                <Route path="/event/:eventId" element={<EventDetail />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
