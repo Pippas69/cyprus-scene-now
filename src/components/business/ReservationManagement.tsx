@@ -174,6 +174,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       pending: 'Εκκρεμείς',
       accepted: 'Εγκεκριμένες',
       declined: 'Απορριφθείσες',
+      confirmationCode: 'Κωδικός',
       allEvents: 'Όλες οι Εκδηλώσεις',
       allStatuses: 'Όλες οι Καταστάσεις',
       export: 'Εξαγωγή CSV',
@@ -210,6 +211,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       pending: 'Pending',
       accepted: 'Accepted',
       declined: 'Declined',
+      confirmationCode: 'Code',
       allEvents: 'All Events',
       allStatuses: 'All Statuses',
       export: 'Export CSV',
@@ -377,6 +379,11 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                       <strong>{t.specialRequests}:</strong> {reservation.special_requests}
                     </div>
                   )}
+                  {reservation.confirmation_code && (
+                    <div className="p-2 bg-primary/10 rounded text-xs font-mono">
+                      <strong>{t.confirmationCode}:</strong> {reservation.confirmation_code}
+                    </div>
+                  )}
                 </div>
                 
                 {reservation.status === 'pending' && (
@@ -423,6 +430,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                 <TableHead>{t.name}</TableHead>
                 <TableHead>{t.contact}</TableHead>
                 <TableHead>{t.details}</TableHead>
+                <TableHead>{t.confirmationCode}</TableHead>
                 <TableHead>{t.status}</TableHead>
                 <TableHead>{t.actions}</TableHead>
               </TableRow>
@@ -472,6 +480,13 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                         </div>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {reservation.confirmation_code && (
+                      <div className="font-mono text-sm bg-primary/10 px-2 py-1 rounded inline-block">
+                        {reservation.confirmation_code}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{getStatusBadge(reservation.status)}</TableCell>
                   <TableCell>
