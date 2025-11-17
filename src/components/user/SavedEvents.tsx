@@ -48,7 +48,7 @@ export const SavedEvents = ({ userId, language }: SavedEventsProps) => {
   const pastEvents = events.filter(e => new Date(e.start_at) <= new Date());
 
   const text = {
-    gr: {
+    el: {
       title: 'Αποθηκευμένα Εκδηλώσεις',
       upcoming: 'Επερχόμενα',
       past: 'Παρελθόντα',

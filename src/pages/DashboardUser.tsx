@@ -10,11 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, Calendar, User, CalendarCheck, Settings } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/hooks/useLanguage';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [language] = useState<'el' | 'en'>('en');
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'rsvps');
@@ -48,7 +49,7 @@ const DashboardUser = () => {
   };
 
   const text = {
-    gr: {
+    el: {
       welcome: 'Καλώς ήρθατε',
       dashboard: 'Πίνακας Ελέγχου',
       rsvps: 'Οι Κρατήσεις Μου',
