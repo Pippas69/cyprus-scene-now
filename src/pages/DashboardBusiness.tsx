@@ -171,16 +171,6 @@ const DashboardBusiness = () => {
               <LanguageToggle />
             </div>
 
-            {/* Cover Image */}
-            {businessCoverUrl && (
-              <div className="h-48 w-full overflow-hidden rounded-b-lg">
-                <img
-                  src={businessCoverUrl}
-                  alt="Business cover"
-                  className="w-full h-full object-cover object-center"
-                />
-              </div>
-            )}
           </header>
 
           {/* Main Content */}
