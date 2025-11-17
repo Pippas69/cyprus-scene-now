@@ -1,5 +1,4 @@
 import { useNavigate, Routes, Route } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { BusinessAccountSettings } from "@/components/user/BusinessAccountSettings";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +34,6 @@ const DashboardBusiness = () => {
   const translations = {
     el: {
       businessDashboard: "Διαχείριση Επιχείρησης",
-      backToFeed: "Επιστροφή στο Feed",
       pendingVerification: "Εκκρεμεί Επαλήθευση",
       verificationMessage:
         "Η επιχείρησή σας βρίσκεται υπό επαλήθευση. Θα ειδοποιηθείτε όταν ολοκληρωθεί η διαδικασία.",
@@ -43,7 +41,6 @@ const DashboardBusiness = () => {
     },
     en: {
       businessDashboard: "Business Dashboard",
-      backToFeed: "Back to Feed",
       pendingVerification: "Pending Verification",
       verificationMessage:
         "Your business is currently under verification. You will be notified once the process is complete.",
@@ -110,17 +107,7 @@ const DashboardBusiness = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-foreground">{t.businessDashboard}</h1>
-            <div className="flex items-center gap-4">
-              <LanguageToggle />
-              <Button
-                onClick={() => navigate("/feed")}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {t.backToFeed}
-              </Button>
-            </div>
+            <LanguageToggle />
           </div>
 
           <div className="max-w-2xl mx-auto bg-card rounded-lg shadow-md p-8 text-center">
@@ -181,18 +168,7 @@ const DashboardBusiness = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <LanguageToggle />
-                <Button
-                  onClick={() => navigate("/dashboard-business")}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t.backToFeed}</span>
-                </Button>
-              </div>
+              <LanguageToggle />
             </div>
 
             {/* Cover Image */}
