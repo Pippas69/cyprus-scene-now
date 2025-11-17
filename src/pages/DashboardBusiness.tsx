@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User, Users as UsersIcon, TrendingUp, MapPin, TrendingUp as FeedIcon, Settings } from "lucide-react";
+import { CheckCircle, Home, Clock, Plus, Calendar, Ticket, User, Users as UsersIcon, TrendingUp, MapPin, TrendingUp as FeedIcon, Settings, ArrowLeft } from "lucide-react";
 import { BusinessAccountSettings } from "@/components/user/BusinessAccountSettings";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -201,8 +201,8 @@ const DashboardBusiness = () => {
                 onClick={() => navigate("/")}
                 className="gap-2 cursor-pointer flex items-center text-sm bg-secondary text-secondary-foreground rounded-lg px-4 py-2 hover:bg-secondary/80 transition-colors"
               >
-                <Home className="h-4 w-4" />
-                <span className="hidden sm:inline">{language === "el" ? "Αρχική" : "Home"}</span>
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">{language === "el" ? "Πίσω στο Feed" : "Back to Feed"}</span>
               </button>
             </div>
           </div>
