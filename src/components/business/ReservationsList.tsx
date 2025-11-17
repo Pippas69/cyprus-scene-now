@@ -6,7 +6,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { format } from 'date-fns';
-import { RSVP, Event } from '@/types/database';
+
+interface RSVPWithEvent {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: 'interested' | 'going';
+  notes: string | null;
+  created_at: string;
+  events: { id: string; title: string; start_at: string };
+  profiles: { name: string; email: string };
+}
 
 interface ReservationsListProps {
   businessId: string;
@@ -14,8 +24,8 @@ interface ReservationsListProps {
 }
 
 export const ReservationsList = ({ businessId, language }: ReservationsListProps) => {
-  const [reservations, setReservations] = useState<RSVP[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [reservations, setReservations] = useState<RSVPWithEvent[]>([]);
+  const [events, setEvents] = useState<{ id: string; title: string }[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [loading, setLoading] = useState(true);
