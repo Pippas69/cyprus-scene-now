@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { RSVP, Event } from '@/types/database';
 
 interface ReservationsListProps {
   businessId: string;
@@ -13,8 +14,8 @@ interface ReservationsListProps {
 }
 
 export const ReservationsList = ({ businessId, language }: ReservationsListProps) => {
-  const [reservations, setReservations] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<RSVP[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -50,7 +51,7 @@ export const ReservationsList = ({ businessId, language }: ReservationsListProps
       if (rsvpsData) {
         // Filter out any RSVPs where event data is missing
         const validReservations = rsvpsData.filter(r => r.events && r.events.id);
-        setReservations(validReservations as any);
+        setReservations(validReservations as RSVPWithEvent[]);
       }
     }
 

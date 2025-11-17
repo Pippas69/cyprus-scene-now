@@ -164,15 +164,13 @@ const AdminVerification = () => {
             }
           });
         } catch (emailError) {
-          console.error('Failed to send rejection email:', emailError);
-          // Don't fail the rejection if email fails
+          // Silent fail - email notification is not critical
         }
       }
       toast.success("Η επιχείρηση απορρίφθηκε");
       fetchBusinesses();
       setSelectedBusiness(null);
     } catch (error) {
-      console.error("Error rejecting business:", error);
       toast.error("Σφάλμα απόρριψης επιχείρησης");
     }
   };
@@ -187,7 +185,6 @@ const AdminVerification = () => {
       toast.success("Οι σημειώσεις ενημερώθηκαν");
       fetchBusinesses();
     } catch (error) {
-      console.error("Error updating notes:", error);
       toast.error("Σφάλμα ενημέρωσης σημειώσεων");
     }
   };

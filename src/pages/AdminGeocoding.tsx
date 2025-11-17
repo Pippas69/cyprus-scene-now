@@ -40,7 +40,6 @@ const AdminGeocoding = () => {
         description: `Successfully geocoded ${data.successful} out of ${data.total} businesses`,
       });
     } catch (error: any) {
-      console.error('Geocoding error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to geocode businesses",

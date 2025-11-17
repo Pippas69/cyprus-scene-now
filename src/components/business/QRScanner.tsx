@@ -101,7 +101,6 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       scannerRef.current = scanner;
       setScanning(true);
     } catch (error) {
-      console.error('Error starting QR scanner:', error);
       toast.error(t.cameraError);
       setIsOpen(false);
     }

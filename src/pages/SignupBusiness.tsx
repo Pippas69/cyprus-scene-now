@@ -82,7 +82,6 @@ const SignupBusiness = () => {
           setCoordinates(null);
         }
       } catch (error) {
-        console.error("Geocoding error:", error);
         setCoordinates(null);
       } finally {
         setGeocoding(false);
@@ -190,8 +189,7 @@ const SignupBusiness = () => {
           }
         });
       } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError);
-        // Don't fail the signup if email fails
+        // Silent fail - email notification is not critical
       }
 
       // Show detailed success message
