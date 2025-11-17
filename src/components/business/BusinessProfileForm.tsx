@@ -270,19 +270,7 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
   }
 
   return (
-    <div className="space-y-6">
-      {/* Cover Image Display */}
-      {currentCoverUrl && (
-        <div className="h-48 w-full overflow-hidden rounded-lg border border-border">
-          <img
-            src={currentCoverUrl}
-            alt="Business cover"
-            className="w-full h-full object-cover object-center"
-          />
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Images Section */}
       <Card>
         <CardHeader>
@@ -413,6 +401,5 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
         </Button>
       </div>
     </form>
-    </div>
   );
 }
