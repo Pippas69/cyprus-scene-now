@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
@@ -25,35 +26,37 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen pb-16 md:pb-0">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/feed" element={<Feed />} />
-              <Route path="/ekdiloseis" element={<Ekdiloseis />} />
-              <Route path="/xartis" element={<Xartis />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/signup-business" element={<SignupBusiness />} />
-              <Route path="/dashboard-user" element={<DashboardUser />} />
-              <Route path="/dashboard-business" element={<DashboardBusiness />} />
-              <Route path="/admin/verification" element={<AdminVerification />} />
-              <Route path="/admin/geocoding" element={<AdminGeocoding />} />
-              <Route path="/business/:businessId" element={<BusinessProfile />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <BottomNav />
-          </div>
-        </BrowserRouter>
-      </TooltipProvider>
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen pb-16 md:pb-0">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/feed" element={<Feed />} />
+                <Route path="/ekdiloseis" element={<Ekdiloseis />} />
+                <Route path="/xartis" element={<Xartis />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/signup-business" element={<SignupBusiness />} />
+                <Route path="/dashboard-user" element={<DashboardUser />} />
+                <Route path="/dashboard-business" element={<DashboardBusiness />} />
+                <Route path="/admin/verification" element={<AdminVerification />} />
+                <Route path="/admin/geocoding" element={<AdminGeocoding />} />
+                <Route path="/business/:businessId" element={<BusinessProfile />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <BottomNav />
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
