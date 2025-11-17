@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, Phone, X } from 'lucide-react';
+import { Calendar, MapPin, Users, Phone, X, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import QRCode from 'qrcode';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +30,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     open: false,
     reservationId: null,
   });
+  const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchReservations();
@@ -65,8 +67,32 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     if (data) {
       setReservations(data as any);
+      // Generate QR codes for each reservation
+      generateQRCodes(data as any);
     }
     setLoading(false);
+  };
+
+  const generateQRCodes = async (reservations: any[]) => {
+    const codes: Record<string, string> = {};
+    for (const reservation of reservations) {
+      if (reservation.qr_code_token) {
+        try {
+          const qrDataUrl = await QRCode.toDataURL(reservation.qr_code_token, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF',
+            },
+          });
+          codes[reservation.id] = qrDataUrl;
+        } catch (error) {
+          console.error('Error generating QR code:', error);
+        }
+      }
+    }
+    setQrCodes(codes);
   };
 
   const handleCancelReservation = async (reservationId: string) => {
@@ -196,19 +222,36 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Confirmation Code */}
+                {/* Confirmation Code & QR Code */}
                 {reservation.confirmation_code && (
                   <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground mb-1">{t.confirmationCode}</p>
-                    <p className="text-2xl font-bold text-primary tracking-wider">
-                      {reservation.confirmation_code}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {language === 'el' 
-                        ? 'Παρουσιάστε αυτόν τον κωδικό κατά την άφιξή σας'
-                        : 'Present this code upon arrival'
-                      }
-                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 items-center">
+                      <div className="flex-1 w-full">
+                        <p className="text-xs text-muted-foreground mb-1">{t.confirmationCode}</p>
+                        <p className="text-2xl font-bold text-primary tracking-wider">
+                          {reservation.confirmation_code}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {language === 'el' 
+                            ? 'Παρουσιάστε αυτόν τον κωδικό ή το QR κατά την άφιξή σας'
+                            : 'Present this code or QR upon arrival'
+                          }
+                        </p>
+                      </div>
+                      {qrCodes[reservation.id] && (
+                        <div className="flex flex-col items-center gap-2">
+                          <img 
+                            src={qrCodes[reservation.id]} 
+                            alt="QR Code" 
+                            className="w-24 h-24 rounded border border-primary/20"
+                          />
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <QrCode className="h-3 w-3" />
+                            <span>QR Code</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 

@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { QRScanner } from './QRScanner';
 
 interface ReservationManagementProps {
   businessId: string;
@@ -296,7 +297,15 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
         <h2 className="text-3xl font-bold">
           {t.title} ({filteredReservations.length})
         </h2>
-        <div className="flex gap-3 flex-wrap w-full sm:w-auto">
+        <div className="flex gap-3 flex-wrap items-center w-full sm:w-auto">
+          <QRScanner 
+            businessId={businessId} 
+            language={language}
+            onReservationVerified={() => {
+              toast.success(language === 'el' ? 'Κράτηση επαληθεύτηκε!' : 'Reservation verified!');
+              fetchData();
+            }}
+          />
           <Select value={selectedEvent} onValueChange={setSelectedEvent}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue />
