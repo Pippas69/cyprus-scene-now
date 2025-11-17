@@ -54,10 +54,17 @@ const Navbar = ({
     } = await supabase.auth.getUser();
     setUser(user);
     if (user) {
+      // Check if user owns a business
+      const {
+        data: business
+      } = await supabase.from('businesses').select('id').eq('user_id', user.id).maybeSingle();
+      
+      // Also get profile data for name
       const {
         data: profile
-      } = await supabase.from('profiles').select('role, name').eq('id', user.id).single();
-      setUserRole(profile?.role || null);
+      } = await supabase.from('profiles').select('name').eq('id', user.id).single();
+      
+      setUserRole(business ? 'business' : 'user');
       setUserName(profile?.name || user.email?.split('@')[0] || 'User');
     } else {
       setUserRole(null);
