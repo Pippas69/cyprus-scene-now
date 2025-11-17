@@ -85,7 +85,6 @@ const DashboardBusiness = () => {
       setBusinessLogoUrl(business.logo_url ?? null);
       setBusinessCoverUrl(business.cover_url ?? null);
     } catch (error) {
-      console.error("Error checking verification:", error);
       toast.error("Σφάλμα κατά τον έλεγχο επαλήθευσης");
     } finally {
       setLoading(false);

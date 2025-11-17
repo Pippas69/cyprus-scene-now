@@ -65,7 +65,7 @@ export const ReservationDialog = ({
       if (error) throw error;
       setAvailableCapacity(data);
     } catch (error) {
-      console.error('Error fetching capacity:', error);
+      // Silent fail - capacity check is not critical
     } finally {
       setCapacityLoading(false);
     }

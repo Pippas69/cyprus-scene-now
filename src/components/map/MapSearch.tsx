@@ -86,7 +86,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
           setIsOpen(true);
         }
       } catch (err) {
-        console.error("Search error:", err);
+        // Silent fail - search errors are not critical
       } finally {
         setIsLoading(false);
       }

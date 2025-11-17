@@ -87,7 +87,7 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
           toast.success("Οι συντεταγμένες ενημερώθηκαν αυτόματα");
         }
       } catch (error) {
-        console.error('Geocoding error:', error);
+        // Silent fail - geocoding is auto-complete, not critical
       } finally {
         setGeocoding(false);
       }

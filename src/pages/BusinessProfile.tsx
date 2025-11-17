@@ -68,7 +68,6 @@ const BusinessProfile = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [offers, setOffers] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     checkUser();

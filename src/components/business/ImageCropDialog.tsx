@@ -139,7 +139,7 @@ export const ImageCropDialog = ({
       onCropComplete(croppedBlob);
       onClose();
     } catch (error) {
-      console.error("Error cropping image:", error);
+      // Silent fail - crop error is not critical
     }
   };
 

@@ -14,6 +14,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { QRScanner } from './QRScanner';
 
+interface ReservationWithEvent {
+  id: string;
+  event_id: string;
+  user_id: string;
+  reservation_name: string;
+  party_size: number;
+  status: string;
+  created_at: string;
+  phone_number: string | null;
+  preferred_time: string | null;
+  seating_preference: string | null;
+  special_requests: string | null;
+  business_notes: string | null;
+  confirmation_code: string | null;
+  qr_code_token: string | null;
+  events: { id: string; title: string; start_at: string };
+  profiles?: { name: string; email: string };
+}
+
 interface ReservationManagementProps {
   businessId: string;
   language: 'el' | 'en';
@@ -21,12 +40,12 @@ interface ReservationManagementProps {
 
 export const ReservationManagement = ({ businessId, language }: ReservationManagementProps) => {
   const isMobile = useIsMobile();
-  const [reservations, setReservations] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<ReservationWithEvent[]>([]);
+  const [events, setEvents] = useState<{ id: string; title: string; accepts_reservations: boolean }[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const [notesDialog, setNotesDialog] = useState<{ open: boolean; reservation: any }>({
+  const [notesDialog, setNotesDialog] = useState<{ open: boolean; reservation: ReservationWithEvent | null }>({
     open: false,
     reservation: null,
   });
