@@ -111,22 +111,11 @@ const Xartis = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar language={language} onLanguageToggle={setLanguage} />
-
-      {/* Header */}
-      <header className="pt-24 pb-6 px-4 bg-gradient-to-r from-primary to-accent">
-        <div className="container mx-auto">
-          <h1 className="font-poppins text-4xl md:text-5xl font-bold text-primary-foreground mb-2">{t.title}</h1>
-          <p className="font-inter text-lg text-primary-foreground/90">{t.subtitle}</p>
-        </div>
-      </header>
-
-      {/* Filters */}
-      <div className="border-b border-border bg-background sticky top-16 z-30 shadow-sm">
-        <div className="container mx-auto px-4 py-4 space-y-4">
-          {/* Location Filters */}
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+    <div className="flex flex-col h-full w-full">
+      {/* Filters Section */}
+      <div className="bg-background border-b border-border p-4">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex flex-col md:flex-row gap-4 flex-1">
               <select
                 value={city}
@@ -169,7 +158,7 @@ const Xartis = () => {
                 className="gap-2 whitespace-nowrap"
               >
                 <X size={16} />
-                Καθαρισμός φίλτρων
+                {t.clearFilters}
               </Button>
             )}
           </div>
@@ -180,22 +169,18 @@ const Xartis = () => {
               const Icon = category.icon;
               const isSelected = selectedCategories.includes(category.id);
               const count = eventCounts[category.id] || 0;
-              
+
               return (
                 <Badge
                   key={category.id}
                   variant={isSelected ? "default" : "outline"}
-                  className={`cursor-pointer px-4 py-2 transition-all hover:scale-105 ${
-                    isSelected 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md" 
-                      : "bg-background text-foreground hover:bg-muted border-2"
-                  }`}
+                  className="cursor-pointer hover:scale-105 transition-transform px-3 py-1.5 gap-2"
                   onClick={() => toggleCategory(category.id)}
                 >
-                  <Icon className="w-4 h-4 mr-2" />
-                  {category.label}
+                  <Icon size={14} />
+                  <span className="text-xs">{category.label}</span>
                   {count > 0 && (
-                    <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${
                       isSelected 
                         ? "bg-primary-foreground/20 text-primary-foreground" 
                         : "bg-muted text-muted-foreground"
@@ -218,18 +203,14 @@ const Xartis = () => {
       </div>
 
       {/* Interactive Map */}
-      <main className="flex-1 bg-gradient-to-b from-background to-muted/20">
-        <div className="container mx-auto px-4 py-6">
-          <MapWrapper 
-            city={city} 
-            neighborhood={neighborhood} 
-            selectedCategories={selectedCategories}
-            eventCounts={eventCounts}
-          />
-        </div>
-      </main>
-
-      <Footer language={language} onLanguageToggle={setLanguage} />
+      <div className="flex-1 w-full">
+        <MapWrapper 
+          city={city} 
+          neighborhood={neighborhood} 
+          selectedCategories={selectedCategories}
+          eventCounts={eventCounts}
+        />
+      </div>
     </div>
   );
 };
