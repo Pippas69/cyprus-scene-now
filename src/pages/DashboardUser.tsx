@@ -7,7 +7,7 @@ import { MyRSVPs } from '@/components/user/MyRSVPs';
 import { MyReservations } from '@/components/user/MyReservations';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Calendar, User, CalendarCheck, Settings, ArrowLeft } from 'lucide-react';
+import { Heart, Calendar, User, CalendarCheck, Settings } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { Button } from '@/components/ui/button';
 
@@ -83,20 +83,9 @@ const DashboardUser = () => {
       <div className="container mx-auto px-4 py-8">
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-3xl">
-                {t.welcome}!
-              </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/dashboard-user')}
-                className="gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Feed
-              </Button>
-            </div>
+            <CardTitle className="text-3xl">
+              {t.welcome}!
+            </CardTitle>
           </CardHeader>
         </Card>
 
