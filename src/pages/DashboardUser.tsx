@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SavedEvents } from '@/components/user/SavedEvents';
 import { MyRSVPs } from '@/components/user/MyRSVPs';
@@ -15,6 +15,8 @@ const DashboardUser = () => {
   const [loading, setLoading] = useState(true);
   const [language] = useState<'el' | 'en'>('en');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'rsvps');
 
   useEffect(() => {
     checkUser();
@@ -86,7 +88,7 @@ const DashboardUser = () => {
           </CardHeader>
         </Card>
 
-          <Tabs defaultValue="rsvps" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="rsvps" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
