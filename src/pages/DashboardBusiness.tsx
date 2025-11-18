@@ -180,7 +180,7 @@ const DashboardBusiness = () => {
           {/* Main Content */}
           <main className="flex-1 overflow-auto">
             <Routes>
-              <Route index element={<Feed />} />
+              <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />
               <Route path="analytics" element={businessId ? <EventAnalytics businessId={businessId} language={language} /> : null} />
               <Route path="events" element={businessId ? <EventsList businessId={businessId} /> : null} />
