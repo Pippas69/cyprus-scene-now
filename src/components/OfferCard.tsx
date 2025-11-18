@@ -21,9 +21,14 @@ interface Offer {
 interface OfferCardProps {
   offer: Offer;
   language: "el" | "en";
+  user?: any;
+  discount?: Offer;
+  style?: React.CSSProperties;
+  className?: string;
 }
 
-const OfferCard = ({ offer, language }: OfferCardProps) => {
+const OfferCard = ({ offer, discount, language, style, className }: OfferCardProps) => {
+  const offerData = offer || discount;
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return language === "el"
@@ -31,19 +36,21 @@ const OfferCard = ({ offer, language }: OfferCardProps) => {
       : date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   };
 
+  if (!offerData) return null;
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className={`overflow-hidden hover:shadow-lg transition-shadow ${className || ''}`} style={style}>
       <CardContent className="p-4">
         <div className="flex gap-4">
           {/* Business Logo - Clickable */}
           <Link 
-            to={`/business/${offer.business_id}`}
+            to={`/business/${offerData.business_id}`}
             className="flex-shrink-0 hover:opacity-80 transition-opacity"
           >
-            {offer.businesses.logo_url ? (
+            {offerData.businesses.logo_url ? (
               <img
-                src={offer.businesses.logo_url}
-                alt={offer.businesses.name}
+                src={offerData.businesses.logo_url}
+                alt={offerData.businesses.name}
                 className="w-16 h-16 rounded-lg object-cover"
               />
             ) : (
@@ -57,36 +64,36 @@ const OfferCard = ({ offer, language }: OfferCardProps) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1">
-                <h3 className="font-semibold text-lg line-clamp-1">{offer.title}</h3>
+                <h3 className="font-semibold text-lg line-clamp-1">{offerData.title}</h3>
                 <Link 
-                  to={`/business/${offer.business_id}`}
+                  to={`/business/${offerData.business_id}`}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  {offer.businesses.name}
+                  {offerData.businesses.name}
                 </Link>
               </div>
-              {offer.percent_off && (
+              {offerData.percent_off && (
                 <Badge variant="default" className="flex-shrink-0">
-                  {offer.percent_off}% OFF
+                  {offerData.percent_off}% OFF
                 </Badge>
               )}
             </div>
 
-            {offer.description && (
+            {offerData.description && (
               <p className="text-sm text-foreground/80 mb-3 line-clamp-2">
-                {offer.description}
+                {offerData.description}
               </p>
             )}
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                <span>{offer.businesses.city}</span>
+                <span>{offerData.businesses.city}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 <span>
-                  {language === "el" ? "Έως" : "Until"} {formatDate(offer.end_at)}
+                  {language === "el" ? "Έως" : "Until"} {formatDate(offerData.end_at)}
                 </span>
               </div>
             </div>
