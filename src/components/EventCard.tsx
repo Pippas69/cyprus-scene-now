@@ -45,9 +45,11 @@ interface EventCardProps {
   language: "el" | "en";
   event: Event;
   user: any;
+  style?: React.CSSProperties;
+  className?: string;
 }
 
-const EventCard = ({ language, event, user }: EventCardProps) => {
+const EventCard = ({ language, event, user, style, className }: EventCardProps) => {
   const [status, setStatus] = useState<string | null>(event.user_status || null);
   const [interestedCount, setInterestedCount] = useState(event.interested_count || 0);
   const [goingCount, setGoingCount] = useState(event.going_count || 0);
@@ -264,7 +266,7 @@ const EventCard = ({ language, event, user }: EventCardProps) => {
 
   return (
     <>
-      <Card className="overflow-hidden hover:shadow-hover transition-all duration-300 group relative">
+      <Card className={`overflow-hidden hover:shadow-hover transition-all duration-300 group relative ${className || ''}`} style={style}>
         {/* Live Badge */}
         {badgeType && <LiveBadge type={badgeType} language={language} />}
         

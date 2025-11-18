@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MapPin, Calendar, TrendingUp, RefreshCw } from "lucide-react";
+import { MapPin, Calendar, TrendingUp, RefreshCw, ChevronUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
@@ -29,7 +29,9 @@ const Feed = () => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [isPulling, setIsPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const startYRef = useRef<number | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const {
     language,
@@ -81,6 +83,24 @@ const Feed = () => {
   useEffect(() => {
     setPage(1);
   }, [activeTab, selectedCategories, quickFilters, sortBy, selectedCity]);
+
+  // Scroll to top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Smooth scroll to results on filter changes
+  useEffect(() => {
+    if (resultsRef.current && (selectedCategories.length > 0 || selectedCity || quickFilters.length > 0)) {
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [selectedCategories, selectedCity, quickFilters]);
   const getQuickFilterQuery = (query: any) => {
     const now = new Date();
     if (quickFilters.includes("tonight")) {
@@ -253,6 +273,10 @@ const Feed = () => {
   };
   const handleQuickFilterToggle = (filter: string) => setQuickFilters(prev => prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]);
   const displayedEvents = activeTab === 'forYou' ? getPersonalizedEvents() : events;
+  
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   return <div className="min-h-screen bg-background pt-20" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       <Navbar language={language} onLanguageToggle={setLanguage} />
       
@@ -292,59 +316,75 @@ const Feed = () => {
 
           {activeTab !== 'offers' && activeTab !== 'map' && <QuickFilters language={language} selectedFilters={quickFilters} onFilterToggle={handleQuickFilterToggle} />}
 
-          <TabsContent value="trending" className="mt-6">
+          {/* Results container ref for smooth scroll */}
+          <div ref={resultsRef} />
+
+          <TabsContent value="trending" className="mt-6 animate-fade-in">
             {eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
               length: 6
-            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any) => <EventCard key={event.id} event={{
+            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any, index: number) => <EventCard key={event.id} event={{
                 ...event,
                 interested_count: event.realtime_stats?.[0]?.interested_count || 0,
                 going_count: event.realtime_stats?.[0]?.going_count || 0
-              }} language={language} user={user} />)}</div>{displayedEvents.length >= ITEMS_PER_PAGE * page && <div className="flex justify-center mt-8"><Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">{t.loadMore}</Button></div>}</> : <EmptyState type="no-results" filters={{
+              }} language={language} user={user} style={{
+                animationDelay: `${Math.min(index * 50, 500)}ms`
+              }} className="animate-fade-in" />)}</div>{displayedEvents.length >= ITEMS_PER_PAGE * page && <div className="flex justify-center mt-8"><Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">{t.loadMore}</Button></div>}</> : <EmptyState type="no-results" filters={{
             categories: selectedCategories,
             city: selectedCity
           }} onClearFilters={handleClearFilters} language={language} />}
           </TabsContent>
 
-          <TabsContent value="upcoming" className="mt-6">
+          <TabsContent value="upcoming" className="mt-6 animate-fade-in">
             {eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
               length: 6
-            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any) => <EventCard key={event.id} event={{
+            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any, index: number) => <EventCard key={event.id} event={{
                 ...event,
                 interested_count: event.realtime_stats?.[0]?.interested_count || 0,
                 going_count: event.realtime_stats?.[0]?.going_count || 0
-              }} language={language} user={user} />)}</div>{displayedEvents.length >= ITEMS_PER_PAGE * page && <div className="flex justify-center mt-8"><Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">{t.loadMore}</Button></div>}</> : <EmptyState type="no-upcoming" filters={{
+              }} language={language} user={user} style={{
+                animationDelay: `${Math.min(index * 50, 500)}ms`
+              }} className="animate-fade-in" />)}</div>{displayedEvents.length >= ITEMS_PER_PAGE * page && <div className="flex justify-center mt-8"><Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">{t.loadMore}</Button></div>}</> : <EmptyState type="no-upcoming" filters={{
             categories: selectedCategories,
             city: selectedCity
           }} onClearFilters={handleClearFilters} language={language} />}
           </TabsContent>
 
-          <TabsContent value="forYou" className="mt-6">
+          <TabsContent value="forYou" className="mt-6 animate-fade-in">
             {!user ? <div className="text-center py-16"><p className="text-muted-foreground mb-4">{t.loginToSeePersonalized}</p><Button asChild><a href="/login">{t.login}</a></Button></div> : eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
               length: 6
-            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any) => <EventCard key={event.id} event={{
+            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any, index: number) => <EventCard key={event.id} event={{
               ...event,
               interested_count: event.realtime_stats?.[0]?.interested_count || 0,
               going_count: event.realtime_stats?.[0]?.going_count || 0
-            }} language={language} user={user} />)}</div> : <EmptyState type="no-results" filters={{
+            }} language={language} user={user} style={{
+              animationDelay: `${Math.min(index * 50, 500)}ms`
+            }} className="animate-fade-in" />)}</div> : <EmptyState type="no-results" filters={{
             categories: selectedCategories,
             city: selectedCity
           }} onClearFilters={handleClearFilters} language={language} />}
           </TabsContent>
 
-          <TabsContent value="offers" className="mt-6">
+          <TabsContent value="offers" className="mt-6 animate-fade-in">
             {offersLoading ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{Array.from({
               length: 4
-            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : offers && offers.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{offers.map((offer: any) => <OfferCard key={offer.id} offer={offer} language={language} />)}</div> : <EmptyState type="no-offers" filters={{
+            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : offers && offers.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{offers.map((offer: any, index: number) => <OfferCard key={offer.id} offer={offer} language={language} style={{
+              animationDelay: `${Math.min(index * 50, 500)}ms`
+            }} className="animate-fade-in" />)}</div> : <EmptyState type="no-offers" filters={{
             categories: selectedCategories,
             city: selectedCity
           }} onClearFilters={handleClearFilters} language={language} />}
           </TabsContent>
 
-          <TabsContent value="map" className="mt-6">
+          <TabsContent value="map" className="mt-6 animate-fade-in">
             <div className="h-[70vh]"><MapWrapper city={selectedCity || ""} neighborhood="" selectedCategories={selectedCategories} eventCounts={{}} /></div>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && <Button onClick={scrollToTop} className="fixed bottom-24 md:bottom-8 right-8 z-50 rounded-full w-12 h-12 p-0 shadow-glow animate-fade-in" size="icon" aria-label="Scroll to top">
+          <ChevronUp size={24} />
+        </Button>}
     </div>;
 };
 export default Feed;
