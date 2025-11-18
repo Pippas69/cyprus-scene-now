@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import OfferCard from "@/components/OfferCard";
+import OfferCardSkeleton from "@/components/OfferCardSkeleton";
 import CategoryFilter from "@/components/CategoryFilter";
 import LanguageToggle from "@/components/LanguageToggle";
 import Navbar from "@/components/Navbar";
@@ -14,9 +15,15 @@ import QuickFilters from "@/components/feed/QuickFilters";
 import SortDropdown from "@/components/feed/SortDropdown";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import EmptyState from "@/components/feed/EmptyState";
+import { FilterChips } from "@/components/feed/FilterChips";
+import { ErrorState } from "@/components/ErrorState";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { PullIndicator } from "@/components/ui/pull-indicator";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useScrollMemory } from "@/hooks/useScrollMemory";
+import { hapticFeedback } from "@/lib/haptics";
 import { getPersonalizedScore } from "@/lib/personalization";
 import type { User } from "@supabase/supabase-js";
 const Feed = () => {
@@ -33,10 +40,11 @@ const Feed = () => {
   const startYRef = useRef<number | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const {
-    language,
-    setLanguage
-  } = useLanguage();
+  const { language, setLanguage } = useLanguage();
+  
+  // Enable scroll memory
+  useScrollMemory();
+  
   const ITEMS_PER_PAGE = 12;
   const translations = {
     el: {
@@ -244,22 +252,24 @@ const Feed = () => {
   const handleTouchStart = (e: React.TouchEvent) => {
     if (window.scrollY === 0) startYRef.current = e.touches[0].pageY;
   };
+  
   const handleTouchMove = (e: React.TouchEvent) => {
     if (startYRef.current === null) return;
     const diff = e.touches[0].pageY - startYRef.current;
     if (diff > 0 && window.scrollY === 0) {
       setPullDistance(Math.min(diff, 100));
-      if (diff > 80) setIsPulling(true);
+      if (diff > 80) {
+        setIsPulling(true);
+        hapticFeedback.light();
+      }
     }
   };
+  
   const handleTouchEnd = () => {
     if (isPulling) {
-      queryClient.invalidateQueries({
-        queryKey: ['events']
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['offers']
-      });
+      hapticFeedback.medium();
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['offers'] });
     }
     setIsPulling(false);
     setPullDistance(0);
@@ -271,7 +281,21 @@ const Feed = () => {
     setSelectedCity(null);
     setPage(1);
   };
-  const handleQuickFilterToggle = (filter: string) => setQuickFilters(prev => prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]);
+  
+  const handleRemoveCategory = (category: string) => {
+    setSelectedCategories(prev => prev.filter(c => c !== category));
+  };
+  
+  const handleRemoveQuickFilter = (filter: string) => {
+    setQuickFilters(prev => prev.filter(f => f !== filter));
+  };
+  
+  const handleRemoveCity = () => {
+    setSelectedCity(null);
+  };
+  
+  const handleQuickFilterToggle = (filter: string) => 
+    setQuickFilters(prev => prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]);
   const displayedEvents = activeTab === 'forYou' ? getPersonalizedEvents() : events;
   
   const scrollToTop = () => {
@@ -279,12 +303,17 @@ const Feed = () => {
   };
   return <div className="min-h-screen bg-background pt-20" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       <Navbar language={language} onLanguageToggle={setLanguage} />
+      <OfflineIndicator />
       
-      <div className="md:hidden">{pullDistance > 0 && <div className="fixed top-0 left-0 right-0 flex items-center justify-center transition-all z-50" style={{
-        height: `${pullDistance}px`
-      }}><RefreshCw className={`text-muted-foreground ${isPulling ? "animate-spin" : ""}`} size={24} /></div>}</div>
+      <div className="md:hidden">
+        {pullDistance > 0 && (
+          <div className="fixed top-16 left-0 right-0 z-50 bg-background">
+            <PullIndicator progress={pullDistance} isRefreshing={isPulling} />
+          </div>
+        )}
+      </div>
       
-      <div className="sticky top-16 z-40 bg-background border-b">
+      <div className="sticky top-16 z-40 bg-background border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col gap-4">
             <div>
@@ -295,6 +324,16 @@ const Feed = () => {
               <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
               <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
             </div>
+            <FilterChips
+              categories={selectedCategories}
+              quickFilters={quickFilters}
+              selectedCity={selectedCity}
+              onRemoveCategory={handleRemoveCategory}
+              onRemoveQuickFilter={handleRemoveQuickFilter}
+              onRemoveCity={handleRemoveCity}
+              onClearAll={handleClearFilters}
+              language={language}
+            />
           </div>
         </div>
       </div>

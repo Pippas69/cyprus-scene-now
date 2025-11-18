@@ -11,8 +11,10 @@ import OffersList from "@/components/business/OffersList";
 import BusinessProfileForm from "@/components/business/BusinessProfileForm";
 import { ReservationManagement } from "@/components/business/ReservationManagement";
 import { EventAnalytics } from "@/components/business/EventAnalytics";
+import { QuickStats } from "@/components/business/QuickStats";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import Feed from "@/pages/Feed";
 import Xartis from "@/pages/Xartis";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -53,6 +55,9 @@ const DashboardBusiness = () => {
   useEffect(() => {
     checkVerificationStatus();
   }, []);
+  
+  // Enable real-time notifications
+  useRealtimeNotifications(businessId, userId);
 
   const checkVerificationStatus = async () => {
     try {
