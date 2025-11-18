@@ -26,7 +26,11 @@ import { useScrollMemory } from "@/hooks/useScrollMemory";
 import { hapticFeedback } from "@/lib/haptics";
 import { getPersonalizedScore } from "@/lib/personalization";
 import type { User } from "@supabase/supabase-js";
-const Feed = () => {
+interface FeedProps {
+  showNavbar?: boolean;
+}
+
+const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("trending");
   const [user, setUser] = useState<User | null>(null);
@@ -301,8 +305,8 @@ const Feed = () => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  return <div className="min-h-screen bg-background pt-20" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      <Navbar language={language} onLanguageToggle={setLanguage} />
+  return <div className={`min-h-screen bg-background ${showNavbar ? 'pt-20' : ''}`} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+      {showNavbar && <Navbar language={language} onLanguageToggle={setLanguage} />}
       <OfflineIndicator />
       
       <div className="md:hidden">
