@@ -1,6 +1,6 @@
 const EventCardSkeleton = () => {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border bg-card shadow-sm animate-pulse">
       {/* Image skeleton */}
       <div className="relative h-48 bg-gradient-to-br from-muted via-muted/50 to-muted overflow-hidden">
         <div className="absolute inset-0 shimmer" />
