@@ -147,7 +147,9 @@ export function UserLayout({ children }: UserLayoutProps) {
 
         {/* Main Layout with Sidebar and Content */}
         <div className="flex flex-1 w-full">
-          <UserSidebar />
+          <div className="h-[calc(100vh-3.5rem)] overflow-hidden">
+            <UserSidebar />
+          </div>
           
           <main className="flex-1 overflow-auto">
             {children}
