@@ -156,10 +156,10 @@ const BusinessProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section with Cover Image */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
+      <div className="relative h-64 md:h-80">
         {business.cover_url ? (
           <div
-            className="absolute inset-0 bg-cover bg-center"
+            className="absolute inset-0 bg-cover bg-center overflow-hidden"
             style={{ backgroundImage: `url(${business.cover_url})` }}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-background" />
