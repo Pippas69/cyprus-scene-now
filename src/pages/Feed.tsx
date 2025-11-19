@@ -321,7 +321,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col gap-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2 text-[#012b67]">{t.title}</h1>
+              <h1 className="text-3xl font-bold mb-2 text-[#012b67] dark:text-sand-white">{t.title}</h1>
               <p className="text-muted-foreground">{t.subtitle}</p>
             </div>
             <div className="flex flex-wrap gap-4">
