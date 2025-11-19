@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { UserLayout } from "@/components/layouts/UserLayout";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
 import Ekdiloseis from "./pages/Ekdiloseis";
@@ -38,15 +39,15 @@ const App = () => (
               <div className="min-h-screen pb-16 md:pb-0">
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route path="/feed" element={<Feed />} />
-                  <Route path="/ekdiloseis" element={<Ekdiloseis />} />
-                  <Route path="/xartis" element={<Xartis />} />
+                  <Route path="/feed" element={<UserLayout><Feed /></UserLayout>} />
+                  <Route path="/ekdiloseis" element={<UserLayout><Ekdiloseis /></UserLayout>} />
+                  <Route path="/xartis" element={<UserLayout><Xartis /></UserLayout>} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/signup-business" element={<SignupBusiness />} />
-                  <Route path="/dashboard-user/*" element={<DashboardUser />} />
+                  <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
                   <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
                   <Route path="/admin/verification" element={<AdminVerification />} />
                   <Route path="/admin/geocoding" element={<AdminGeocoding />} />
