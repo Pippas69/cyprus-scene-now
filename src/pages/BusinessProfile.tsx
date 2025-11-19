@@ -154,7 +154,7 @@ const BusinessProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Hero Section with Cover Image */}
       <div className="relative h-64 md:h-80">
         {business.cover_url ? (
@@ -173,7 +173,7 @@ const BusinessProfile = () => {
           variant="ghost"
           size="sm"
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm hover:bg-background"
+          className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm hover:bg-background safe-area-top"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Πίσω
@@ -181,7 +181,7 @@ const BusinessProfile = () => {
 
         {/* Logo positioned at bottom, overlapping */}
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-          <Avatar className="h-24 w-24 md:h-32 md:w-32 border-[6px] border-background shadow-lg">
+          <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 md:border-[6px] border-background shadow-lg">
             <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
             <AvatarFallback className="text-3xl font-bold bg-muted">
               {business.name.charAt(0).toUpperCase()}
@@ -191,7 +191,7 @@ const BusinessProfile = () => {
       </div>
 
       {/* Business Info */}
-      <div className="container mx-auto px-4 pt-16 md:pt-24 pb-8">
+      <div className="container mx-auto px-4 pt-16 md:pt-24 pb-24 md:pb-8">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
@@ -244,7 +244,7 @@ const BusinessProfile = () => {
                   <p className="text-sm text-muted-foreground">Τηλέφωνο</p>
                   <a
                     href={`tel:${business.phone}`}
-                    className="font-medium hover:text-primary"
+                    className="inline-block py-2 font-medium hover:text-primary"
                   >
                     {business.phone}
                   </a>
@@ -257,7 +257,7 @@ const BusinessProfile = () => {
             <Card>
               <CardContent className="flex items-center gap-3 p-4">
                 <Globe className="h-5 w-5 text-muted-foreground" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Ιστοσελίδα</p>
                   <a
                     href={business.website}
@@ -289,7 +289,7 @@ const BusinessProfile = () => {
 
         {/* Events and Offers Tabs */}
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 md:h-10">
             <TabsTrigger value="events">
               Εκδηλώσεις ({events.length})
             </TabsTrigger>

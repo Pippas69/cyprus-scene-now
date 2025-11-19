@@ -133,6 +133,15 @@ All colors MUST be HSL.
     border-radius: 4px;
   }
 
+  /* Safe area utilities for notched devices */
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
   .mapboxgl-popup-tip {
     border-top-color: hsl(var(--background));
   }
