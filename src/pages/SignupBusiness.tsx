@@ -233,7 +233,7 @@ const SignupBusiness = () => {
 
         {/* Why Join ΦΟΜΟ Section */}
         <div className="bg-white/95 backdrop-blur rounded-3xl shadow-elegant p-8 mb-8">
-          <h2 className="font-cinzel text-2xl text-midnight mb-6 text-center font-bold text-[#235674]">
+          <h2 className="font-cinzel text-2xl text-midnight mb-6 text-center font-bold text-[#235674] dark:text-sand-white">
             Τι προσφέρει το ΦΟΜΟ στις επιχειρήσεις:
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
@@ -267,7 +267,7 @@ const SignupBusiness = () => {
         {/* Main Form */}
         <div className="bg-white rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
-            <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2 text-[#235674]">
+            <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2 text-[#235674] dark:text-sand-white">
               Εγγραφή Επιχείρησης στο ΦΟΜΟ
             </h1>
             <p className="font-inter text-lg text-muted-foreground">

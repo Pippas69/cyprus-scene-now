@@ -110,7 +110,7 @@ const Navbar = ({
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <button onClick={() => navigate("/")} className="font-cinzel text-4xl font-black tracking-tight drop-shadow-lg text-[#012b67]">
+          <button onClick={() => navigate("/")} className="font-cinzel text-4xl font-black tracking-tight drop-shadow-lg text-[#012b67] dark:text-sand-white">
             ΦΟΜΟ
           </button>
 

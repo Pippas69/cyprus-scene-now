@@ -114,7 +114,7 @@ const Signup = () => {
 
         <div className="bg-white rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
-            <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2 text-[#2c6f84]">
+            <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2 text-[#2c6f84] dark:text-sand-white">
               Εγγραφή στο ΦΟΜΟ
             </h1>
             <p className="font-inter text-muted-foreground">

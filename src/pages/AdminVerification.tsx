@@ -205,7 +205,7 @@ const AdminVerification = () => {
   return <div className="min-h-screen bg-sand-light">
       <div className="bg-midnight text-white py-8 px-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="font-cinzel text-4xl font-bold mb-2 text-[#000048]">
+          <h1 className="font-cinzel text-4xl font-bold mb-2 text-[#000048] dark:text-sand-white">
             Πίνακας Επαλήθευσης Επιχειρήσεων ΦΟΜΟ
           </h1>
           <p className="font-inter text-seafoam">
