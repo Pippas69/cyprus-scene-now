@@ -317,7 +317,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         )}
       </div>
       
-      <div className={`sticky ${showNavbar ? 'top-16' : 'top-0'} z-40 bg-background border-b shadow-sm`}>
+      <div className={`sticky ${showNavbar ? 'top-20' : 'top-0'} z-40 bg-background border-b shadow-sm`}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col gap-4">
             <div>
