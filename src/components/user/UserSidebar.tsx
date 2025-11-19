@@ -119,7 +119,7 @@ export function UserSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="h-[calc(100vh-3.5rem)]">
+    <Sidebar collapsible="icon">
       {/* User Profile Section */}
       <SidebarHeader>
         <div className={`flex items-center gap-3 px-2 py-4 ${!open && 'justify-center'}`}>
