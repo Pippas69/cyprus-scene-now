@@ -117,23 +117,23 @@ const DashboardUser = () => {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="rsvps" className="mt-6">
+                <TabsContent value="rsvps" className="mt-6 animate-fade-in">
                   <MyRSVPs userId={user.id} language={language} />
                 </TabsContent>
 
-                <TabsContent value="reservations" className="mt-6">
+                <TabsContent value="reservations" className="mt-6 animate-fade-in">
                   <MyReservations userId={user.id} language={language} />
                 </TabsContent>
 
-                <TabsContent value="saved" className="mt-6">
+                <TabsContent value="saved" className="mt-6 animate-fade-in">
                   <SavedEvents userId={user.id} language={language} />
                 </TabsContent>
 
-                <TabsContent value="profile" className="mt-6">
+                <TabsContent value="profile" className="mt-6 animate-fade-in">
                   <ProfileSettings userId={user.id} language={language} />
                 </TabsContent>
 
-                <TabsContent value="settings" className="mt-6">
+                <TabsContent value="settings" className="mt-6 animate-fade-in">
                   <UserAccountSettings userId={user.id} language={language} />
                 </TabsContent>
       </Tabs>
