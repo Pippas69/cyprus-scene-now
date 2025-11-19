@@ -1,7 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Home, MapPin, Calendar, Heart, User, Settings, CalendarCheck } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 import {
   Sidebar,
   SidebarContent,
@@ -11,6 +15,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
 
@@ -48,6 +54,41 @@ export function UserSidebar() {
   const t = translations[language];
   const { open } = useSidebar();
   const location = useLocation();
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [userName, setUserName] = useState<string>('');
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      
+      if (user) {
+        // Get profile data
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, avatar_url')
+          .eq('id', user.id)
+          .single();
+        
+        setUserName(profile?.name || user.email?.split('@')[0] || 'User');
+        setUserAvatar(profile?.avatar_url || null);
+      }
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setTimeout(() => {
+          getUser();
+        }, 0);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   const currentPath = location.pathname;
   const searchParams = new URLSearchParams(location.search);
@@ -79,6 +120,24 @@ export function UserSidebar() {
 
   return (
     <Sidebar collapsible="icon">
+      {/* User Profile Section */}
+      <SidebarHeader>
+        <div className={`flex items-center gap-3 px-2 py-4 ${!open && 'justify-center'}`}>
+          <Avatar className={`${open ? 'h-10 w-10' : 'h-8 w-8'}`}>
+            <AvatarImage src={userAvatar || undefined} />
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {userName.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          {open && (
+            <div className="flex flex-col min-w-0">
+              <p className="text-sm font-medium truncate">{userName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
+          )}
+        </div>
+      </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>{t.mainNav}</SidebarGroupLabel>
