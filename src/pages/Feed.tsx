@@ -309,20 +309,20 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       
       <div className="md:hidden">
         {pullDistance > 0 && (
-          <div className={`fixed ${showNavbar ? 'top-16' : 'top-0'} left-0 right-0 z-50 bg-background`}>
+          <div className="fixed top-0 left-0 right-0 z-50 bg-background">
             <PullIndicator progress={pullDistance} isRefreshing={isPulling} />
           </div>
         )}
       </div>
       
-      <div className={`sticky ${showNavbar ? 'top-20' : 'top-0'} z-40 bg-background border-b shadow-sm`}>
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col gap-4">
+      <div className="sticky top-0 z-40 bg-background border-b shadow-sm">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex flex-col gap-3">
             <div>
-              <h1 className="text-3xl font-bold mb-2 text-[#012b67] dark:text-sand-white">{t.title}</h1>
-              <p className="text-muted-foreground">{t.subtitle}</p>
+              <h1 className="text-3xl font-bold mb-1 text-[#012b67] dark:text-sand-white">{t.title}</h1>
+              <p className="text-muted-foreground text-sm">{t.subtitle}</p>
             </div>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3">
               <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
               <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
             </div>
