@@ -24,6 +24,11 @@ const DashboardUser = () => {
     checkUser();
   }, []);
 
+  useEffect(() => {
+    const tab = searchParams.get('tab') || 'rsvps';
+    setActiveTab(tab);
+  }, [searchParams]);
+
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -81,7 +86,14 @@ const DashboardUser = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <Tabs 
+                value={activeTab} 
+                onValueChange={(value) => {
+                  setActiveTab(value);
+                  navigate(`/dashboard-user?tab=${value}`, { replace: true });
+                }} 
+                className="w-full"
+              >
                 <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="rsvps" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
