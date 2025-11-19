@@ -11,6 +11,8 @@ import { Heart, Calendar, User, CalendarCheck, Settings } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { UserSidebar } from '@/components/user/UserSidebar';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -80,62 +82,67 @@ const DashboardUser = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-3xl">
-              {t.welcome}!
-            </CardTitle>
-          </CardHeader>
-        </Card>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <UserSidebar />
+        
+        <div className="flex-1 flex flex-col">
+          <header className="h-14 border-b flex items-center px-4 bg-background">
+            <SidebarTrigger />
+            <h1 className="ml-4 text-lg font-semibold">{t.welcome}!</h1>
+          </header>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="rsvps" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                {t.rsvps}
-              </TabsTrigger>
-              <TabsTrigger value="reservations" className="flex items-center gap-2">
-                <CalendarCheck className="h-4 w-4" />
-                {t.reservations}
-              </TabsTrigger>
-              <TabsTrigger value="saved" className="flex items-center gap-2">
-                <Heart className="h-4 w-4" />
-                {t.saved}
-              </TabsTrigger>
-              <TabsTrigger value="profile" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                {t.profile}
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                {t.settings}
-              </TabsTrigger>
-            </TabsList>
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto px-4 py-8">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="rsvps" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t.rsvps}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="reservations" className="flex items-center gap-2">
+                    <CalendarCheck className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t.reservations}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="saved" className="flex items-center gap-2">
+                    <Heart className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t.saved}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="profile" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t.profile}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="settings" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t.settings}</span>
+                  </TabsTrigger>
+                </TabsList>
 
-          <TabsContent value="rsvps" className="mt-6">
-            <MyRSVPs userId={user.id} language={language} />
-          </TabsContent>
+                <TabsContent value="rsvps" className="mt-6">
+                  <MyRSVPs userId={user.id} language={language} />
+                </TabsContent>
 
-          <TabsContent value="reservations" className="mt-6">
-            <MyReservations userId={user.id} language={language} />
-          </TabsContent>
+                <TabsContent value="reservations" className="mt-6">
+                  <MyReservations userId={user.id} language={language} />
+                </TabsContent>
 
-          <TabsContent value="saved" className="mt-6">
-            <SavedEvents userId={user.id} language={language} />
-          </TabsContent>
+                <TabsContent value="saved" className="mt-6">
+                  <SavedEvents userId={user.id} language={language} />
+                </TabsContent>
 
-          <TabsContent value="profile" className="mt-6">
-            <ProfileSettings userId={user.id} language={language} />
-          </TabsContent>
+                <TabsContent value="profile" className="mt-6">
+                  <ProfileSettings userId={user.id} language={language} />
+                </TabsContent>
 
-          <TabsContent value="settings" className="mt-6">
-            <UserAccountSettings userId={user.id} language={language} />
-          </TabsContent>
-        </Tabs>
+                <TabsContent value="settings" className="mt-6">
+                  <UserAccountSettings userId={user.id} language={language} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
