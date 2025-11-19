@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
@@ -69,10 +68,8 @@ const Ekdiloseis = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar language={language} onLanguageToggle={setLanguage} />
-      
       {/* Hero Section */}
-      <div className="relative pt-24 pb-16 overflow-hidden bg-gradient-to-br from-primary via-primary to-accent">
+      <div className="relative py-16 overflow-hidden bg-gradient-to-br from-primary via-primary to-accent">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/50 to-primary opacity-90" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-10 blur-3xl">
           <div className="w-full h-full rounded-full bg-accent" />

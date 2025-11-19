@@ -8,7 +8,6 @@ import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
 import CategoryFilter from "@/components/CategoryFilter";
 import LanguageToggle from "@/components/LanguageToggle";
-import Navbar from "@/components/Navbar";
 import MapWrapper from "@/components/map/MapWrapper";
 import HeroCarousel from "@/components/feed/HeroCarousel";
 import QuickFilters from "@/components/feed/QuickFilters";
@@ -305,8 +304,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  return <div className={`min-h-screen bg-background ${showNavbar ? 'pt-20' : 'pt-4'}`} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      {showNavbar && <Navbar language={language} onLanguageToggle={setLanguage} />}
+  return <div className="min-h-screen bg-background">
       <OfflineIndicator />
       
       <div className="md:hidden">
