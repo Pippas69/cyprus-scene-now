@@ -181,7 +181,7 @@ const BusinessProfile = () => {
 
         {/* Logo positioned at bottom, overlapping */}
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-          <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-lg">
+          <Avatar className="h-24 w-24 md:h-32 md:w-32 border-[6px] border-background shadow-lg">
             <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
             <AvatarFallback className="text-3xl font-bold bg-muted">
               {business.name.charAt(0).toUpperCase()}
