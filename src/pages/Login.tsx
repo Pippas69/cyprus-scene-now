@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Μη έγκυρη διεύθυνση email" }),
@@ -22,6 +23,7 @@ const Login = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const stateMessage = location.state?.message;
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (stateMessage) {
@@ -105,16 +107,31 @@ const Login = () => {
       </div>
 
       <div className="max-w-md w-full space-y-8 relative z-10">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="text-white hover:text-seafoam mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Επιστροφή
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="text-white hover:text-seafoam"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Επιστροφή
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="text-white hover:text-seafoam"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
 
-        <div className="bg-white rounded-3xl shadow-elegant p-8 md:p-12">
+        <div className="bg-white dark:bg-card rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
             <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2">
               Σύνδεση στο ΦΟΜΟ
