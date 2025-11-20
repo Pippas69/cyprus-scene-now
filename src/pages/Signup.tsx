@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MapPin, Heart, ArrowLeft, Store } from "lucide-react";
+import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Languages } from "lucide-react";
+import { useTheme } from "next-themes";
+import LanguageToggle from "@/components/LanguageToggle";
 const signupSchema = z.object({
   firstName: z.string().trim().min(2, {
     message: "Το όνομα πρέπει να έχει τουλάχιστον 2 χαρακτήρες"
@@ -40,6 +42,7 @@ const Signup = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
+  const { theme, setTheme } = useTheme();
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -107,10 +110,28 @@ const Signup = () => {
       </div>
 
       <div className="max-w-2xl w-full space-y-8 relative z-10">
-        <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Επιστροφή
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Επιστροφή
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="text-white hover:text-seafoam"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+        </div>
 
         <div className="bg-white rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">

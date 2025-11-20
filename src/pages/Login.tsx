@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
+import LanguageToggle from "@/components/LanguageToggle";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Μη έγκυρη διεύθυνση email" }),
@@ -117,18 +118,21 @@ const Login = () => {
             Επιστροφή
           </Button>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="text-white hover:text-seafoam"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="text-white hover:text-seafoam"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className="bg-white dark:bg-card rounded-3xl shadow-elegant p-8 md:p-12">
