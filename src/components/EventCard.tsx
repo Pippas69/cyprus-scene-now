@@ -299,16 +299,16 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
             </div>
           )}
           
-          <Badge className="absolute top-14 left-3 bg-card/90 text-card-foreground z-10">
+          <Badge className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm text-foreground z-10">
             {event.category[0] || "Event"}
           </Badge>
-          <Badge className="absolute top-3 right-14 bg-accent text-accent-foreground z-10">
+          <Badge className="absolute bottom-3 right-3 bg-accent/90 backdrop-blur-sm text-accent-foreground z-10">
             {event.price_tier === 'free' ? t.free : event.price_tier}
           </Badge>
         </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-2">
         {/* Business Info - Clickable */}
         {event.businesses && (
           <Link 
@@ -354,17 +354,15 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
         </div>
 
         {/* Live Stats */}
-        <div className="flex gap-4 py-2 text-sm">
-          <div className="flex items-center gap-2">
-            <Heart className="h-4 w-4 text-coral" />
-            <span className="font-semibold">{interestedCount}</span>
-            <span className="text-muted-foreground">{t.interestedCount}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-ocean" />
-            <span className="font-semibold">{goingCount}</span>
-            <span className="text-muted-foreground">{t.goingCount}</span>
-          </div>
+        <div className="flex gap-3 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Heart className="h-4 w-4" />
+            {interestedCount}
+          </span>
+          <span className="flex items-center gap-1">
+            <Users className="h-4 w-4" />
+            {goingCount}
+          </span>
         </div>
 
         {/* Action Buttons */}
