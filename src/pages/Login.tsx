@@ -11,13 +11,8 @@ import { toast } from "sonner";
 import { ArrowLeft, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
-
-const loginSchema = z.object({
-  email: z.string().trim().email({ message: "Μη έγκυρη διεύθυνση email" }),
-  password: z.string().min(6, { message: "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες" }),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { useLanguage } from "@/hooks/useLanguage";
+import { authTranslations } from "@/translations/authTranslations";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -25,6 +20,15 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const stateMessage = location.state?.message;
   const { theme, setTheme } = useTheme();
+  const { language } = useLanguage();
+  const t = authTranslations[language];
+
+  const loginSchema = z.object({
+    email: z.string().trim().email({ message: t.invalidEmail }),
+    password: z.string().min(6, { message: t.passwordTooShort }),
+  });
+
+  type LoginFormValues = z.infer<typeof loginSchema>;
 
   useEffect(() => {
     if (stateMessage) {
@@ -52,7 +56,7 @@ const Login = () => {
 
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
-          toast.error("Λάθος email ή κωδικός");
+          toast.error(t.wrongCredentials);
         } else {
           toast.error(error.message);
         }
@@ -76,16 +80,16 @@ const Login = () => {
 
         // Determine redirect based on role and business ownership
         let redirectPath = "/feed";
-        let successMessage = "Επιτυχής σύνδεση!";
+        let successMessage = t.loginSuccess;
 
         if (profile?.role === 'admin') {
           redirectPath = "/admin/verification";
-          successMessage = "Καλωσόρισες, Διαχειριστή του ΦΟΜΟ!";
+          successMessage = t.adminWelcome;
         } else if (business) {
           redirectPath = "/dashboard-business";
           successMessage = business.verified 
-            ? "Καλωσόρισες στο dashboard σου!" 
-            : "Καλωσόρισες! Η επαλήθευση σου εκκρεμεί.";
+            ? t.businessWelcome
+            : t.businessPendingVerification;
         }
 
         toast.success(successMessage);
@@ -115,7 +119,7 @@ const Login = () => {
             className="text-white hover:text-seafoam"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Επιστροφή
+            {t.back}
           </Button>
           
           <div className="flex items-center gap-2">
@@ -138,10 +142,10 @@ const Login = () => {
         <div className="bg-white dark:bg-card rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
             <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2">
-              Σύνδεση στο ΦΟΜΟ
+              {t.login}
             </h1>
             <p className="font-inter text-foreground/80">
-              Καλώς ήρθες πίσω!
+              {t.welcomeBack}
             </p>
           </div>
 
@@ -152,9 +156,9 @@ const Login = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ηλεκτρονικό Ταχυδρομείο</FormLabel>
+                    <FormLabel>{t.email}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="giorgos@example.com" {...field} className="rounded-xl" />
+                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -166,9 +170,9 @@ const Login = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Κωδικός</FormLabel>
+                    <FormLabel>{t.password}</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••" {...field} className="rounded-xl" />
+                      <Input type="password" placeholder={t.passwordPlaceholder} {...field} className="rounded-xl" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -182,7 +186,7 @@ const Login = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? "Σύνδεση..." : "Σύνδεση"}
+                {isLoading ? t.loggingIn : t.loginButton}
               </Button>
 
               <div className="text-center">
@@ -191,23 +195,23 @@ const Login = () => {
                   onClick={() => navigate("/forgot-password")}
                   className="text-sm text-accent hover:text-accent/80 hover:underline mb-4 font-medium"
                 >
-                  Ξέχασες τον κωδικό σου;
+                  {t.forgotPassword}
                 </button>
               </div>
 
               <div className="text-center text-sm mb-4 p-3 bg-muted/30 dark:bg-muted/20 rounded-lg border border-border">
                 <p className="font-medium text-foreground">
-                  💼 Επιχείρηση;
+                  {t.businessNote}
                 </p>
                 <p className="mt-1 text-foreground/80">
-                  Χρησιμοποιήστε αυτή τη φόρμα για να συνδεθείτε στο dashboard σας.
+                  {t.businessNoteDesc}
                 </p>
               </div>
 
               <div className="text-center text-sm">
-                <span className="text-foreground/80">Δεν έχεις λογαριασμό;</span>{" "}
+                <span className="text-foreground/80">{t.noAccount}</span>{" "}
                 <Link to="/signup" className="text-accent hover:text-accent/80 hover:underline font-semibold">
-                  Εγγραφή
+                  {t.signupLink}
                 </Link>
               </div>
             </form>
