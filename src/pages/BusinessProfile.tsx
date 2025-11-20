@@ -172,7 +172,7 @@ const BusinessProfile = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/feed")}
           className="absolute top-4 left-4 z-[60] bg-background/80 backdrop-blur-sm hover:bg-background safe-area-top"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
