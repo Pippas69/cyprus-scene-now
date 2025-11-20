@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import EventCard from '@/components/EventCard';
+import { EventAttendees } from '@/components/EventAttendees';
 
 export default function EventDetail() {
   const { eventId } = useParams();
@@ -276,6 +277,9 @@ export default function EventDetail() {
                 </Link>
               </CardContent>
             </Card>
+
+            {/* Event Attendees */}
+            <EventAttendees eventId={eventId!} />
           </div>
         </div>
       </div>
