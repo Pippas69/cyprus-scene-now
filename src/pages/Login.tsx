@@ -119,7 +119,7 @@ const Login = () => {
             <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2">
               Σύνδεση στο ΦΟΜΟ
             </h1>
-            <p className="font-inter text-muted-foreground">
+            <p className="font-inter text-foreground/80">
               Καλώς ήρθες πίσω!
             </p>
           </div>
@@ -168,24 +168,24 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/forgot-password")}
-                  className="text-sm text-primary hover:underline mb-4"
+                  className="text-sm text-primary hover:text-primary/90 hover:underline mb-4 font-medium"
                 >
                   Ξέχασες τον κωδικό σου;
                 </button>
               </div>
 
-              <div className="text-center text-sm text-muted-foreground mb-4 p-3 bg-muted/50 rounded-lg">
-                <p className="font-medium">
+              <div className="text-center text-sm mb-4 p-3 bg-muted/30 dark:bg-muted/20 rounded-lg border border-border">
+                <p className="font-medium text-foreground">
                   💼 Επιχείρηση;
                 </p>
-                <p className="mt-1">
+                <p className="mt-1 text-foreground/80">
                   Χρησιμοποιήστε αυτή τη φόρμα για να συνδεθείτε στο dashboard σας.
                 </p>
               </div>
 
-              <div className="text-center text-sm text-muted-foreground">
-                Δεν έχεις λογαριασμό;{" "}
-                <Link to="/signup" className="text-primary hover:underline font-semibold">
+              <div className="text-center text-sm">
+                <span className="text-foreground/80">Δεν έχεις λογαριασμό;</span>{" "}
+                <Link to="/signup" className="text-primary hover:text-primary/90 hover:underline font-semibold">
                   Εγγραφή
                 </Link>
               </div>
