@@ -2,7 +2,8 @@ import { useEventRSVPs } from '@/hooks/useEventRSVPs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Heart, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Users, Heart, CheckCircle, Radio } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface EventAttendeesProps {
@@ -16,10 +17,16 @@ export const EventAttendees = ({ eventId }: EventAttendeesProps) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Attendees
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Attendees
+            </CardTitle>
+            <Badge variant="secondary" className="gap-1.5">
+              <Radio className="h-3 w-3 animate-pulse" />
+              Live
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-20 w-full" />
@@ -34,10 +41,16 @@ export const EventAttendees = ({ eventId }: EventAttendeesProps) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Attendees
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Attendees
+            </CardTitle>
+            <Badge variant="secondary" className="gap-1.5">
+              <Radio className="h-3 w-3 animate-pulse" />
+              Live
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-4">
@@ -51,10 +64,16 @@ export const EventAttendees = ({ eventId }: EventAttendeesProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Attendees ({totalAttendees})
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Attendees ({totalAttendees})
+          </CardTitle>
+          <Badge variant="secondary" className="gap-1.5">
+            <Radio className="h-3 w-3 animate-pulse" />
+            Live
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="going" className="w-full">
