@@ -227,7 +227,7 @@ const Signup = () => {
           </Form>
 
           <div className="mt-8 text-right">
-            <Link to="/signup-business" className="inline-flex items-center gap-2 text-sm text-primary hover:text-seafoam transition-colors font-medium">
+            <Link to="/signup-business" className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80 transition-colors font-medium">
               <Store className="h-4 w-4" />
               Έχεις δική σου επιχείρηση;
             </Link>
