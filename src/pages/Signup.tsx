@@ -13,36 +13,44 @@ import { toast } from "sonner";
 import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Languages } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
-const signupSchema = z.object({
-  firstName: z.string().trim().min(2, {
-    message: "Το όνομα πρέπει να έχει τουλάχιστον 2 χαρακτήρες"
-  }),
-  lastName: z.string().trim().min(2, {
-    message: "Το επίθετο πρέπει να έχει τουλάχιστον 2 χαρακτήρες"
-  }),
-  age: z.coerce.number().min(15, {
-    message: "Πρέπει να είστε τουλάχιστον 15 ετών"
-  }).max(100),
-  email: z.string().trim().email({
-    message: "Μη έγκυρη διεύθυνση email"
-  }),
-  password: z.string().min(6, {
-    message: "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες"
-  }),
-  town: z.string().min(1, {
-    message: "Παρακαλώ επιλέξτε πόλη"
-  }),
-  preferences: z.array(z.string()).optional()
-});
-type SignupFormValues = z.infer<typeof signupSchema>;
+import { useLanguage } from "@/hooks/useLanguage";
+import { authTranslations } from "@/translations/authTranslations";
+
 const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
+
 const Signup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const { theme, setTheme } = useTheme();
+  const { language } = useLanguage();
+  const t = authTranslations[language];
+
+  const signupSchema = z.object({
+    firstName: z.string().trim().min(2, {
+      message: language === "el" ? "Το όνομα πρέπει να έχει τουλάχιστον 2 χαρακτήρες" : "First name must be at least 2 characters"
+    }),
+    lastName: z.string().trim().min(2, {
+      message: language === "el" ? "Το επίθετο πρέπει να έχει τουλάχιστον 2 χαρακτήρες" : "Last name must be at least 2 characters"
+    }),
+    age: z.coerce.number().min(15, {
+      message: language === "el" ? "Πρέπει να είστε τουλάχιστον 15 ετών" : "You must be at least 15 years old"
+    }).max(100),
+    email: z.string().trim().email({
+      message: t.invalidEmail
+    }),
+    password: z.string().min(6, {
+      message: t.passwordTooShort
+    }),
+    town: z.string().min(1, {
+      message: language === "el" ? "Παρακαλώ επιλέξτε πόλη" : "Please select a town"
+    }),
+    preferences: z.array(z.string()).optional()
+  });
+
+  type SignupFormValues = z.infer<typeof signupSchema>;
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -79,14 +87,14 @@ const Signup = () => {
       });
       if (error) {
         if (error.message.includes("already registered")) {
-          toast.error("Αυτό το email είναι ήδη καταχωρημένο");
+          toast.error(language === "el" ? "Αυτό το email είναι ήδη καταχωρημένο" : "This email is already registered");
         } else {
           toast.error(error.message);
         }
         return;
       }
       if (data.user) {
-        toast.success("Επιτυχής εγγραφή! Καλώς ήρθες στο ΦΟΜΟ!");
+        toast.success(t.signupSuccess);
         navigate(redirectUrl);
       }
     } catch (error) {
@@ -113,7 +121,7 @@ const Signup = () => {
         <div className="flex items-center justify-between mb-4">
           <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Επιστροφή
+            {t.back}
           </Button>
           
           <div className="flex items-center gap-2">
@@ -136,10 +144,10 @@ const Signup = () => {
         <div className="bg-white rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
             <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2 text-[#2c6f84] dark:text-sand-white">
-              Εγγραφή στο ΦΟΜΟ
+              {t.signup}
             </h1>
             <p className="font-inter text-muted-foreground">
-              Γίνε μέλος της κοινότητας ΦΟΜΟ και δες πού αξίζει να είσαι.
+              {t.joinUs}
             </p>
           </div>
 
@@ -149,9 +157,9 @@ const Signup = () => {
                 <FormField control={form.control} name="firstName" render={({
                 field
               }) => <FormItem>
-                      <FormLabel>Όνομα</FormLabel>
+                      <FormLabel>{language === "el" ? "Όνομα" : "First Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Γιώργος" {...field} className="rounded-xl" />
+                        <Input placeholder={language === "el" ? "Γιώργος" : "George"} {...field} className="rounded-xl" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
@@ -159,9 +167,9 @@ const Signup = () => {
                 <FormField control={form.control} name="lastName" render={({
                 field
               }) => <FormItem>
-                      <FormLabel>Επίθετο</FormLabel>
+                      <FormLabel>{language === "el" ? "Επίθετο" : "Last Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Παπαδόπουλος" {...field} className="rounded-xl" />
+                        <Input placeholder={language === "el" ? "Παπαδόπουλος" : "Papadopoulos"} {...field} className="rounded-xl" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
@@ -170,7 +178,7 @@ const Signup = () => {
               <FormField control={form.control} name="age" render={({
               field
             }) => <FormItem>
-                    <FormLabel>Ηλικία</FormLabel>
+                    <FormLabel>{language === "el" ? "Ηλικία" : "Age"}</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="25" {...field} className="rounded-xl" />
                     </FormControl>
@@ -180,9 +188,9 @@ const Signup = () => {
               <FormField control={form.control} name="email" render={({
               field
             }) => <FormItem>
-                    <FormLabel>Ηλεκτρονικό Ταχυδρομείο</FormLabel>
+                    <FormLabel>{t.email}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="giorgos@example.com" {...field} className="rounded-xl" />
+                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -190,9 +198,9 @@ const Signup = () => {
               <FormField control={form.control} name="password" render={({
               field
             }) => <FormItem>
-                    <FormLabel>Κωδικός</FormLabel>
+                    <FormLabel>{t.password}</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••" {...field} className="rounded-xl" />
+                      <Input type="password" placeholder={t.passwordPlaceholder} {...field} className="rounded-xl" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -202,12 +210,12 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      Πόλη
+                      {language === "el" ? "Πόλη" : "Town"}
                     </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="rounded-xl">
-                          <SelectValue placeholder="Επιλέξτε πόλη" />
+                          <SelectValue placeholder={language === "el" ? "Επιλέξτε πόλη" : "Select town"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -222,7 +230,7 @@ const Signup = () => {
               <div className="space-y-3">
                 <FormLabel className="flex items-center gap-2">
                   <Heart className="h-4 w-4 text-primary" />
-                  Τι σου αρέσει περισσότερο; (προαιρετικό)
+                  {language === "el" ? "Τι σου αρέσει περισσότερο; (προαιρετικό)" : "What do you like most? (optional)"}
                 </FormLabel>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {categories.map(category => <div key={category} className="flex items-center space-x-2">
@@ -235,13 +243,13 @@ const Signup = () => {
               </div>
 
               <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={isLoading}>
-                {isLoading ? "Δημιουργία..." : "Δημιουργία Λογαριασμού"}
+                {isLoading ? t.signingUp : t.signupButton}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
-                Έχεις ήδη λογαριασμό;{" "}
+                {t.alreadyHaveAccount}{" "}
                 <Link to="/login" className="text-primary hover:underline font-semibold">
-                  Σύνδεση
+                  {t.loginLink}
                 </Link>
               </div>
             </form>
@@ -250,7 +258,7 @@ const Signup = () => {
           <div className="mt-8 text-right">
             <Link to="/signup-business" className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80 transition-colors font-medium">
               <Store className="h-4 w-4" />
-              Έχεις δική σου επιχείρηση;
+              {t.businessSignupLink}
             </Link>
           </div>
         </div>
