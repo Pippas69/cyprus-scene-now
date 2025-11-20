@@ -276,7 +276,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
             isFavorited={isFavorited(event.id)}
             onClick={() => toggleFavorite(event.id)}
             loading={favoriteLoading}
-            className="absolute top-3 right-3 z-10 bg-background/80 hover:bg-background backdrop-blur-sm shadow-lg"
+            className="absolute top-3 left-3 z-10 bg-background/80 hover:bg-background backdrop-blur-sm shadow-lg"
             size="sm"
           />
         )}
@@ -299,10 +299,10 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
             </div>
           )}
           
-          <Badge className="absolute top-3 left-3 bg-card/90 text-card-foreground z-10">
+          <Badge className="absolute top-14 left-3 bg-card/90 text-card-foreground z-10">
             {event.category[0] || "Event"}
           </Badge>
-          <Badge className="absolute top-14 right-3 bg-accent text-accent-foreground z-10">
+          <Badge className="absolute top-3 right-14 bg-accent text-accent-foreground z-10">
             {event.price_tier === 'free' ? t.free : event.price_tier}
           </Badge>
         </div>
