@@ -57,7 +57,7 @@ export const authTranslations = {
   },
   en: {
     // Login page
-    login: "Login to FOMO",
+    login: "Login to ΦΟΜΟ",
     welcomeBack: "Welcome back!",
     email: "Email",
     emailPlaceholder: "george@example.com",
@@ -74,7 +74,7 @@ export const authTranslations = {
     home: "Home",
     
     // Signup page
-    signup: "Sign up for FOMO",
+    signup: "Sign up for ΦΟΜΟ",
     joinUs: "Join the party!",
     fullName: "Full Name",
     fullNamePlaceholder: "George Papadopoulos",
@@ -103,7 +103,7 @@ export const authTranslations = {
     // Toast messages
     wrongCredentials: "Wrong email or password",
     loginSuccess: "Login successful!",
-    adminWelcome: "Welcome, FOMO Admin!",
+    adminWelcome: "Welcome, ΦΟΜΟ Admin!",
     businessWelcome: "Welcome to your dashboard!",
     businessPendingVerification: "Welcome! Your verification is pending.",
     emailSent: "Email sent",
