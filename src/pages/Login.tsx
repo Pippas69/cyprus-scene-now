@@ -185,7 +185,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/forgot-password")}
-                  className="text-sm text-primary hover:text-primary/90 hover:underline mb-4 font-medium"
+                  className="text-sm text-accent hover:text-accent/80 hover:underline mb-4 font-medium"
                 >
                   Ξέχασες τον κωδικό σου;
                 </button>
@@ -202,7 +202,7 @@ const Login = () => {
 
               <div className="text-center text-sm">
                 <span className="text-foreground/80">Δεν έχεις λογαριασμό;</span>{" "}
-                <Link to="/signup" className="text-primary hover:text-primary/90 hover:underline font-semibold">
+                <Link to="/signup" className="text-accent hover:text-accent/80 hover:underline font-semibold">
                   Εγγραφή
                 </Link>
               </div>
