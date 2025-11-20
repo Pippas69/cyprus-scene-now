@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface EventAttendee {
@@ -11,7 +12,9 @@ interface EventAttendee {
 }
 
 export const useEventRSVPs = (eventId: string | undefined) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ['event-rsvps', eventId],
     queryFn: async () => {
       if (!eventId) return { interested: [], going: [] };
@@ -51,4 +54,32 @@ export const useEventRSVPs = (eventId: string | undefined) => {
     },
     enabled: !!eventId,
   });
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!eventId) return;
+
+    const channel = supabase
+      .channel(`event-rsvps-${eventId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rsvps',
+          filter: `event_id=eq.${eventId}`,
+        },
+        () => {
+          // Invalidate and refetch the query when RSVPs change
+          queryClient.invalidateQueries({ queryKey: ['event-rsvps', eventId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [eventId, queryClient]);
+
+  return query;
 };
