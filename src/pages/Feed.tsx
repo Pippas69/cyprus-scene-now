@@ -3,6 +3,7 @@ import { MapPin, Calendar, TrendingUp, RefreshCw, ChevronUp } from "lucide-react
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
+import EventListItem from "@/components/EventListItem";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
@@ -12,6 +13,7 @@ import MapWrapper from "@/components/map/MapWrapper";
 import HeroCarousel from "@/components/feed/HeroCarousel";
 import QuickFilters from "@/components/feed/QuickFilters";
 import SortDropdown from "@/components/feed/SortDropdown";
+import ViewModeToggle from "@/components/feed/ViewModeToggle";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import EmptyState from "@/components/feed/EmptyState";
 import { FilterChips } from "@/components/feed/FilterChips";
@@ -21,6 +23,7 @@ import { PullIndicator } from "@/components/ui/pull-indicator";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useScrollMemory } from "@/hooks/useScrollMemory";
 import { hapticFeedback } from "@/lib/haptics";
 import { getPersonalizedScore } from "@/lib/personalization";
@@ -40,6 +43,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const [isPulling, setIsPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [viewMode, setViewMode] = useState<"card" | "compact">("card");
   const startYRef = useRef<number | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -47,6 +51,29 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   
   // Enable scroll memory
   useScrollMemory();
+  
+  // Get user preferences
+  const { preferences, updatePreferences } = useUserPreferences(user?.id || "");
+  
+  // Initialize view mode from preferences or localStorage
+  useEffect(() => {
+    if (user && preferences?.feed_view_mode) {
+      setViewMode(preferences.feed_view_mode as "card" | "compact");
+    } else {
+      const savedMode = localStorage.getItem("feed_view_mode") as "card" | "compact" | null;
+      if (savedMode) setViewMode(savedMode);
+    }
+  }, [user, preferences]);
+  
+  // Handle view mode change
+  const handleViewModeChange = (mode: "card" | "compact") => {
+    setViewMode(mode);
+    if (user) {
+      updatePreferences({ feed_view_mode: mode });
+    } else {
+      localStorage.setItem("feed_view_mode", mode);
+    }
+  };
   
   const ITEMS_PER_PAGE = 12;
   const translations = {
@@ -304,6 +331,57 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Helper function to render events based on view mode
+  const renderEvents = (events: any[]) => {
+    if (!events || events.length === 0) return null;
+
+    if (viewMode === "compact") {
+      return (
+        <div className="flex flex-col gap-2">
+          {events.map((event: any) => (
+            <EventListItem
+              key={event.id}
+              event={{
+                ...event,
+                interested_count: event.realtime_stats?.[0]?.interested_count || 0,
+                going_count: event.realtime_stats?.[0]?.going_count || 0
+              }}
+              interestedCount={event.realtime_stats?.[0]?.interested_count || 0}
+              goingCount={event.realtime_stats?.[0]?.going_count || 0}
+              userRSVP={event.rsvps?.[0] || null}
+              onRSVPChange={(eventId, newStatus) => {
+                // Handle RSVP change
+                queryClient.invalidateQueries({ queryKey: ['events'] });
+              }}
+              user={user}
+              language={language}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {events.map((event: any, index: number) => (
+          <EventCard
+            key={event.id}
+            event={{
+              ...event,
+              interested_count: event.realtime_stats?.[0]?.interested_count || 0,
+              going_count: event.realtime_stats?.[0]?.going_count || 0
+            }}
+            language={language}
+            user={user}
+            style={{ animationDelay: `${Math.min(index * 50, 500)}ms` }}
+            className="animate-fade-in"
+          />
+        ))}
+      </div>
+    );
+  };
+  
   return <div className="min-h-screen bg-background">
       <OfflineIndicator />
       
@@ -350,7 +428,14 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               <TabsTrigger value="offers">{t.offers}</TabsTrigger>
               <TabsTrigger value="map" className="gap-2"><MapPin size={16} />{t.map}</TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              {activeTab !== 'offers' && activeTab !== 'map' && (
+                <ViewModeToggle 
+                  viewMode={viewMode} 
+                  onViewModeChange={handleViewModeChange}
+                  language={language}
+                />
+              )}
               <SortDropdown language={language} sortBy={sortBy} onSortChange={setSortBy} />
             </div>
           </div>
@@ -361,48 +446,77 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           <div ref={resultsRef} />
 
           <TabsContent value="trending" className="mt-6 animate-fade-in">
-            {eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
-              length: 6
-            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any, index: number) => <EventCard key={event.id} event={{
-                ...event,
-                interested_count: event.realtime_stats?.[0]?.interested_count || 0,
-                going_count: event.realtime_stats?.[0]?.going_count || 0
-              }} language={language} user={user} style={{
-                animationDelay: `${Math.min(index * 50, 500)}ms`
-              }} className="animate-fade-in" />)}</div>{displayedEvents.length >= ITEMS_PER_PAGE * page && <div className="flex justify-center mt-8"><Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">{t.loadMore}</Button></div>}</> : <EmptyState type="no-results" filters={{
-            categories: selectedCategories,
-            city: selectedCity
-          }} onClearFilters={handleClearFilters} language={language} />}
+            {eventsLoading ? (
+              <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
+                {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
+              </div>
+            ) : displayedEvents && displayedEvents.length > 0 ? (
+              <>
+                {renderEvents(displayedEvents)}
+                {displayedEvents.length >= ITEMS_PER_PAGE * page && (
+                  <div className="flex justify-center mt-8">
+                    <Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">
+                      {t.loadMore}
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <EmptyState 
+                type="no-results" 
+                filters={{ categories: selectedCategories, city: selectedCity }} 
+                onClearFilters={handleClearFilters} 
+                language={language} 
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="upcoming" className="mt-6 animate-fade-in">
-            {eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
-              length: 6
-            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any, index: number) => <EventCard key={event.id} event={{
-                ...event,
-                interested_count: event.realtime_stats?.[0]?.interested_count || 0,
-                going_count: event.realtime_stats?.[0]?.going_count || 0
-              }} language={language} user={user} style={{
-                animationDelay: `${Math.min(index * 50, 500)}ms`
-              }} className="animate-fade-in" />)}</div>{displayedEvents.length >= ITEMS_PER_PAGE * page && <div className="flex justify-center mt-8"><Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">{t.loadMore}</Button></div>}</> : <EmptyState type="no-upcoming" filters={{
-            categories: selectedCategories,
-            city: selectedCity
-          }} onClearFilters={handleClearFilters} language={language} />}
+            {eventsLoading ? (
+              <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
+                {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
+              </div>
+            ) : displayedEvents && displayedEvents.length > 0 ? (
+              <>
+                {renderEvents(displayedEvents)}
+                {displayedEvents.length >= ITEMS_PER_PAGE * page && (
+                  <div className="flex justify-center mt-8">
+                    <Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">
+                      {t.loadMore}
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <EmptyState 
+                type="no-upcoming" 
+                filters={{ categories: selectedCategories, city: selectedCity }} 
+                onClearFilters={handleClearFilters} 
+                language={language} 
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="forYou" className="mt-6 animate-fade-in">
-            {!user ? <div className="text-center py-16"><p className="text-muted-foreground mb-4">{t.loginToSeePersonalized}</p><Button asChild><a href="/login">{t.login}</a></Button></div> : eventsLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({
-              length: 6
-            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : displayedEvents && displayedEvents.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{displayedEvents.map((event: any, index: number) => <EventCard key={event.id} event={{
-              ...event,
-              interested_count: event.realtime_stats?.[0]?.interested_count || 0,
-              going_count: event.realtime_stats?.[0]?.going_count || 0
-            }} language={language} user={user} style={{
-              animationDelay: `${Math.min(index * 50, 500)}ms`
-            }} className="animate-fade-in" />)}</div> : <EmptyState type="no-results" filters={{
-            categories: selectedCategories,
-            city: selectedCity
-          }} onClearFilters={handleClearFilters} language={language} />}
+            {!user ? (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground mb-4">{t.loginToSeePersonalized}</p>
+                <Button asChild><a href="/login">{t.login}</a></Button>
+              </div>
+            ) : eventsLoading ? (
+              <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
+                {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
+              </div>
+            ) : displayedEvents && displayedEvents.length > 0 ? (
+              renderEvents(displayedEvents)
+            ) : (
+              <EmptyState 
+                type="no-results" 
+                filters={{ categories: selectedCategories, city: selectedCity }} 
+                onClearFilters={handleClearFilters} 
+                language={language} 
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="offers" className="mt-6 animate-fade-in">

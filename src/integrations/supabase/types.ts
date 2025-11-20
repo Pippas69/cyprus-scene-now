@@ -690,6 +690,7 @@ export type Database = {
           created_at: string | null
           default_city: string | null
           email_notifications_enabled: boolean | null
+          feed_view_mode: string | null
           id: string
           notification_business_updates: boolean | null
           notification_event_reminders: boolean | null
@@ -705,6 +706,7 @@ export type Database = {
           created_at?: string | null
           default_city?: string | null
           email_notifications_enabled?: boolean | null
+          feed_view_mode?: string | null
           id?: string
           notification_business_updates?: boolean | null
           notification_event_reminders?: boolean | null
@@ -720,6 +722,7 @@ export type Database = {
           created_at?: string | null
           default_city?: string | null
           email_notifications_enabled?: boolean | null
+          feed_view_mode?: string | null
           id?: string
           notification_business_updates?: boolean | null
           notification_event_reminders?: boolean | null
