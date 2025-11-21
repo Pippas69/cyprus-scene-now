@@ -604,6 +604,7 @@ export type Database = {
           dob_year: number | null
           email: string | null
           first_name: string | null
+          gender: string | null
           id: string
           interests: string[] | null
           is_admin: boolean | null
@@ -624,6 +625,7 @@ export type Database = {
           dob_year?: number | null
           email?: string | null
           first_name?: string | null
+          gender?: string | null
           id: string
           interests?: string[] | null
           is_admin?: boolean | null
@@ -644,6 +646,7 @@ export type Database = {
           dob_year?: number | null
           email?: string | null
           first_name?: string | null
+          gender?: string | null
           id?: string
           interests?: string[] | null
           is_admin?: boolean | null
