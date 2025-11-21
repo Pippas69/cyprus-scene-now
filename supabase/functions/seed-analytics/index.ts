@@ -52,10 +52,23 @@ serve(async (req) => {
     // Fetch random users for diverse analytics
     const { data: users } = await supabase
       .from('profiles')
-      .select('id, age, city')
+      .select('id, age, city, gender')
       .limit(100);
 
-    const actualUsers = users && users.length > 0 ? users : [{ id: user.id, age: null, city: null }];
+    const actualUsers = users && users.length > 0 ? users : [{ id: user.id, age: null, city: null, gender: null }];
+
+    // Update users with gender if not set (for test data)
+    const genderOptions = ['male', 'female', 'non-binary', 'prefer-not-to-say'];
+    for (const testUser of actualUsers) {
+      if (!testUser.gender) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            gender: genderOptions[Math.floor(Math.random() * genderOptions.length)] 
+          })
+          .eq('id', testUser.id);
+      }
+    }
 
     console.log(`Found ${events?.length || 0} events and ${discounts?.length || 0} discounts`);
     console.log(`Found ${actualUsers.length} users for diversity`);

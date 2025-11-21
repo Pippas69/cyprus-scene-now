@@ -36,6 +36,7 @@ export interface AdvancedAnalytics {
   audienceInsights: {
     ageDistribution: Record<string, number>;
     cityDistribution: Record<string, number>;
+    genderDistribution: Record<string, number>;
     followerTrend: Array<{ date: string; followers: number }>;
   };
   timeAnalytics: {
@@ -230,13 +231,14 @@ export const useAdvancedAnalytics = (
 
       const { data: demographics, error: demographicsError } = await supabase
         .from('profiles')
-        .select('age, city')
+        .select('age, city, gender')
         .in('id', Array.from(engagedUserIds));
 
       if (demographicsError) throw demographicsError;
 
       const ageDistribution: Record<string, number> = {};
       const cityDistribution: Record<string, number> = {};
+      const genderDistribution: Record<string, number> = {};
 
       demographics?.forEach(profile => {
         if (profile.age) {
@@ -246,6 +248,7 @@ export const useAdvancedAnalytics = (
           else if (profile.age >= 25 && profile.age <= 34) ageGroup = '25-34';
           else if (profile.age >= 35 && profile.age <= 44) ageGroup = '35-44';
           else if (profile.age >= 45 && profile.age <= 60) ageGroup = '45-60';
+          else if (profile.age > 60) ageGroup = '60+';
           
           if (ageGroup) {
             ageDistribution[ageGroup] = (ageDistribution[ageGroup] || 0) + 1;
@@ -254,6 +257,10 @@ export const useAdvancedAnalytics = (
 
         if (profile.city) {
           cityDistribution[profile.city] = (cityDistribution[profile.city] || 0) + 1;
+        }
+
+        if (profile.gender) {
+          genderDistribution[profile.gender] = (genderDistribution[profile.gender] || 0) + 1;
         }
       });
 
@@ -313,11 +320,12 @@ export const useAdvancedAnalytics = (
         },
         eventPerformance,
         discountPerformance,
-        audienceInsights: {
-          ageDistribution,
-          cityDistribution,
-          followerTrend,
-        },
+      audienceInsights: {
+        ageDistribution,
+        cityDistribution,
+        genderDistribution,
+        followerTrend,
+      },
         timeAnalytics: {
           hourlyEngagement,
           dailyEngagement,

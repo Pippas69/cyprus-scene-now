@@ -10,19 +10,29 @@ interface AudienceInsightsProps {
 const translations = {
   el: {
     ageDistribution: 'Κατανομή Ηλικίας',
+    genderDistribution: 'Κατανομή Φύλου',
     cityDistribution: 'Κατανομή ανά Πόλη',
     followerTrend: 'Τάση Ακολούθων',
     followers: 'Ακόλουθοι',
     date: 'Ημερομηνία',
     noData: 'Δεν υπάρχουν δεδομένα',
+    male: 'Άνδρας',
+    female: 'Γυναίκα',
+    nonBinary: 'Μη-δυαδικό',
+    preferNotToSay: 'Προτιμώ να μην πω',
   },
   en: {
     ageDistribution: 'Age Distribution',
+    genderDistribution: 'Gender Distribution',
     cityDistribution: 'City Distribution',
     followerTrend: 'Follower Trend',
     followers: 'Followers',
     date: 'Date',
     noData: 'No data available',
+    male: 'Male',
+    female: 'Female',
+    nonBinary: 'Non-binary',
+    preferNotToSay: 'Prefer not to say',
   },
 };
 
@@ -59,6 +69,15 @@ export const AudienceInsights = ({ data, language }: AudienceInsightsProps) => {
       value: count,
     }));
 
+  const genderData = Object.entries(audienceInsights.genderDistribution)
+    .map(([gender, count]) => ({
+      name: gender === 'male' ? t.male :
+            gender === 'female' ? t.female :
+            gender === 'non-binary' ? t.nonBinary :
+            t.preferNotToSay,
+      value: count,
+    }));
+
   const followerData = audienceInsights.followerTrend.map(item => ({
     date: new Date(item.date).toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US', {
       month: 'short',
@@ -68,7 +87,7 @@ export const AudienceInsights = ({ data, language }: AudienceInsightsProps) => {
   }));
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Age Distribution */}
       <Card>
         <CardHeader>
@@ -91,6 +110,39 @@ export const AudienceInsights = ({ data, language }: AudienceInsightsProps) => {
                   dataKey="value"
                 >
                   {ageData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Gender Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.genderDistribution}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {genderData.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">{t.noData}</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={genderData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#ffc658"
+                  dataKey="value"
+                >
+                  {genderData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -136,7 +188,7 @@ export const AudienceInsights = ({ data, language }: AudienceInsightsProps) => {
       </Card>
 
       {/* Follower Trend */}
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-3">
         <CardHeader>
           <CardTitle>{t.followerTrend}</CardTitle>
         </CardHeader>
