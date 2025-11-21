@@ -18,8 +18,7 @@ const translations = {
     noData: 'Δεν υπάρχουν δεδομένα',
     male: 'Άνδρας',
     female: 'Γυναίκα',
-    nonBinary: 'Μη-δυαδικό',
-    preferNotToSay: 'Προτιμώ να μην πω',
+    other: 'Άλλο',
   },
   en: {
     ageDistribution: 'Age Distribution',
@@ -31,8 +30,7 @@ const translations = {
     noData: 'No data available',
     male: 'Male',
     female: 'Female',
-    nonBinary: 'Non-binary',
-    preferNotToSay: 'Prefer not to say',
+    other: 'Other',
   },
 };
 
@@ -73,8 +71,7 @@ export const AudienceInsights = ({ data, language }: AudienceInsightsProps) => {
     .map(([gender, count]) => ({
       name: gender === 'male' ? t.male :
             gender === 'female' ? t.female :
-            gender === 'non-binary' ? t.nonBinary :
-            t.preferNotToSay,
+            t.other,
       value: count,
     }));
 

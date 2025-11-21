@@ -29,6 +29,7 @@ const createSignupSchema = (language: "el" | "en") => {
     email: z.string().trim().email(vt.invalidEmail).max(255, vt.maxLength.replace('{max}', '255')),
     password: z.string().min(6, vt.passwordTooShort).max(100, vt.maxLength.replace('{max}', '100')),
     location: z.string().min(1, vt.locationRequired),
+    gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).min(1, vt.minSelection.replace('{min}', '1')),
   });
 };
@@ -40,6 +41,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     email: "",
     password: "",
     location: "",
+    gender: "",
     preferences: [] as string[],
   });
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,11 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
       email: "Email",
       password: "Κωδικός",
       location: "Περιοχή",
+      gender: "Φύλο",
+      genderPlaceholder: "Επιλέξτε φύλο (προαιρετικό)",
+      male: "Άνδρας",
+      female: "Γυναίκα",
+      other: "Άλλο",
       interests: "Τι σε ενδιαφέρει;",
       submit: "Δημιουργία Λογαριασμού",
       success: "Επιτυχής εγγραφή! Καλώς ήρθατε στο ΦΟΜΟ!",
@@ -65,6 +72,11 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
       email: "Email",
       password: "Password",
       location: "Location",
+      gender: "Gender",
+      genderPlaceholder: "Select gender (optional)",
+      male: "Male",
+      female: "Female",
+      other: "Other",
       interests: "What are you interested in?",
       submit: "Create Account",
       success: "Signup successful! Welcome to ΦΟΜΟ!",
@@ -127,6 +139,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
             first_name: formData.firstName,
             last_name: formData.lastName,
             town: formData.location,
+            gender: formData.gender || null,
             preferences: formData.preferences,
           },
         },
@@ -237,6 +250,24 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
                     {loc}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="gender">{t.gender}</Label>
+            <Select
+              value={formData.gender}
+              onValueChange={(value) => setFormData({ ...formData, gender: value })}
+              disabled={loading}
+            >
+              <SelectTrigger id="gender">
+                <SelectValue placeholder={t.genderPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">{t.male}</SelectItem>
+                <SelectItem value="female">{t.female}</SelectItem>
+                <SelectItem value="other">{t.other}</SelectItem>
               </SelectContent>
             </Select>
           </div>
