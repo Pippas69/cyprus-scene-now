@@ -39,6 +39,11 @@ const COLORS = [
 
 export const AudienceInsights = ({ data, language }: AudienceInsightsProps) => {
   const t = translations[language];
+  
+  if (!data?.audienceInsights) {
+    return <div className="text-center text-muted-foreground py-8">No audience data available</div>;
+  }
+  
   const { audienceInsights } = data;
 
   const ageData = Object.entries(audienceInsights.ageDistribution).map(([age, count]) => ({

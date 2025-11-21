@@ -56,6 +56,11 @@ const dayTranslations: Record<string, Record<string, string>> = {
 
 export const TimeAnalytics = ({ data, language }: TimeAnalyticsProps) => {
   const t = translations[language];
+  
+  if (!data?.timeAnalytics) {
+    return <div className="text-center text-muted-foreground py-8">No time analytics data available</div>;
+  }
+  
   const { timeAnalytics } = data;
 
   const hourlyData = Array.from({ length: 24 }, (_, i) => ({
