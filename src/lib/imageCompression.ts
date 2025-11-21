@@ -11,7 +11,7 @@ export const compressImage = async (
   maxWidth = 1920,
   maxHeight = 1080,
   quality = 0.85
-): Promise<Blob> => {
+): Promise<File> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const canvas = document.createElement('canvas');
@@ -41,7 +41,12 @@ export const compressImage = async (
       canvas.toBlob(
         (blob) => {
           if (blob) {
-            resolve(blob);
+            // Convert blob back to File
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
           } else {
             reject(new Error('Failed to compress image'));
           }

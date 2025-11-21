@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users, Copy } from "lucide-react";
-import { useEffect } from "react";
+import { Trash2, Calendar, MapPin, Users, Copy, Pencil } from "lucide-react";
+import EventEditDialog from "./EventEditDialog";
+import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -17,6 +18,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { language } = useLanguage();
+  const [editingEvent, setEditingEvent] = useState<any>(null);
 
   const translations = {
     el: {
@@ -28,6 +30,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       error: "Σφάλμα",
       delete: "Διαγραφή",
       duplicate: "Αντιγραφή",
+      edit: "Επεξεργασία",
       interested: "Ενδιαφέρον",
       going: "Θα Πάνε",
     },
@@ -40,6 +43,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       error: "Error",
       delete: "Delete",
       duplicate: "Duplicate",
+      edit: "Edit",
       interested: "Interested",
       going: "Going",
     },
@@ -188,8 +192,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
   }
 
   return (
-    <div className="space-y-4">
-      {events.map((event) => (
+    <>
+      <div className="space-y-4">
+        {events.map((event) => (
         <Card key={event.id}>
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -233,6 +238,14 @@ const EventsList = ({ businessId }: EventsListProps) => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setEditingEvent(event)}
+                  title={t.edit}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleDuplicate(event)}
                   title={t.duplicate}
                 >
@@ -251,8 +264,20 @@ const EventsList = ({ businessId }: EventsListProps) => {
             </div>
           </CardContent>
         </Card>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      {editingEvent && (
+        <EventEditDialog
+          event={editingEvent}
+          open={!!editingEvent}
+          onOpenChange={(open) => !open && setEditingEvent(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+          }}
+        />
+      )}
+    </>
   );
 };
 
