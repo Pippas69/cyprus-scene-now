@@ -5,9 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SavedEvents } from '@/components/user/SavedEvents';
 import { MyRSVPs } from '@/components/user/MyRSVPs';
 import { MyReservations } from '@/components/user/MyReservations';
+import { MyOffers } from '@/components/user/MyOffers';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Calendar, User, CalendarCheck, Settings } from 'lucide-react';
+import { Heart, Calendar, User, CalendarCheck, Settings, Percent } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -60,6 +61,7 @@ const DashboardUser = () => {
       rsvps: 'Οι Κρατήσεις Μου',
       reservations: 'Κρατήσεις',
       saved: 'Αποθηκευμένα',
+      offers: 'Προσφορές',
       profile: 'Προφίλ',
       settings: 'Ρυθμίσεις',
     },
@@ -69,6 +71,7 @@ const DashboardUser = () => {
       rsvps: 'My RSVPs',
       reservations: 'Reservations',
       saved: 'Saved Events',
+      offers: 'Offers',
       profile: 'Profile',
       settings: 'Settings',
     },
@@ -94,7 +97,7 @@ const DashboardUser = () => {
                 }} 
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="rsvps" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span className="hidden sm:inline">{t.rsvps}</span>
@@ -106,6 +109,10 @@ const DashboardUser = () => {
                   <TabsTrigger value="saved" className="flex items-center gap-2">
                     <Heart className="h-4 w-4" />
                     <span className="hidden sm:inline">{t.saved}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="offers" className="flex items-center gap-2">
+                    <Percent className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t.offers}</span>
                   </TabsTrigger>
                   <TabsTrigger value="profile" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
@@ -127,6 +134,10 @@ const DashboardUser = () => {
 
                 <TabsContent value="saved" className="mt-6 animate-fade-in">
                   <SavedEvents userId={user.id} language={language} />
+                </TabsContent>
+
+                <TabsContent value="offers" className="mt-6 animate-fade-in">
+                  <MyOffers userId={user.id} language={language} />
                 </TabsContent>
 
                 <TabsContent value="profile" className="mt-6 animate-fade-in">

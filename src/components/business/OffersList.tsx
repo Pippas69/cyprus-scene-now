@@ -8,6 +8,7 @@ import { Trash2, Ticket, Calendar, Percent } from "lucide-react";
 import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
+import { OfferQRScanner } from "./OfferQRScanner";
 
 interface OffersListProps {
   businessId: string;
@@ -166,6 +167,17 @@ const OffersList = ({ businessId }: OffersListProps) => {
   }
 
   return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-2">
+          <Percent className="h-5 w-5" />
+          <h2 className="text-2xl font-bold">
+            {language === "el" ? "Προσφορές" : "Offers"}
+          </h2>
+        </div>
+        <OfferQRScanner businessId={businessId} language={language} />
+      </div>
+      
     <div className="space-y-4">
       {offers.map((offer) => (
         <Card key={offer.id}>
@@ -232,6 +244,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
           </CardContent>
         </Card>
       ))}
+    </div>
     </div>
   );
 };
