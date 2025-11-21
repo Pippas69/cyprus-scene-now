@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, MapPin, CheckCircle, XCircle } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { toastTranslations } from "@/translations/toastTranslations";
 
 interface GeocodingResult {
   business: string;
@@ -23,6 +25,8 @@ const AdminGeocoding = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<GeocodingResponse | null>(null);
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const t = toastTranslations[language];
 
   const handleGeocode = async () => {
     setIsProcessing(true);
@@ -36,13 +40,15 @@ const AdminGeocoding = () => {
       setResults(data as GeocodingResponse);
       
       toast({
-        title: "Geocoding Complete",
-        description: `Successfully geocoded ${data.successful} out of ${data.total} businesses`,
+        title: t.success,
+        description: language === 'el' 
+          ? `Επιτυχής γεωκωδικοποίηση ${data.successful} από ${data.total} επιχειρήσεις`
+          : `Successfully geocoded ${data.successful} out of ${data.total} businesses`,
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to geocode businesses",
+        title: t.error,
+        description: error.message || t.failed,
         variant: "destructive",
       });
     } finally {

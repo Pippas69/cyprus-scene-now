@@ -21,10 +21,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BusinessSidebar } from "@/components/business/BusinessSidebar";
 import { BusinessFAB } from "@/components/business/BusinessFAB";
 import { Button } from "@/components/ui/button";
+import { toastTranslations } from "@/translations/toastTranslations";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const toastT = toastTranslations[language];
   const [verified, setVerified] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -64,7 +66,7 @@ const DashboardBusiness = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast.error("Πρέπει να συνδεθείτε πρώτα");
+        toast.error(toastT.mustLogin);
         navigate("/login");
         return;
       }
@@ -79,7 +81,7 @@ const DashboardBusiness = () => {
 
       // If user doesn't own a business, redirect to feed
       if (!business || error) {
-        toast.error("Δεν έχετε δικαίωμα πρόσβασης στο business dashboard");
+        toast.error(toastT.businessOnlyAccess);
         navigate("/feed");
         return;
       }
@@ -90,7 +92,7 @@ const DashboardBusiness = () => {
       setBusinessLogoUrl(business.logo_url ?? null);
       setBusinessCoverUrl(business.cover_url ?? null);
     } catch (error) {
-      toast.error("Σφάλμα κατά τον έλεγχο επαλήθευσης");
+      toast.error(toastT.error);
     } finally {
       setLoading(false);
     }
