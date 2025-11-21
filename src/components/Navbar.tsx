@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Menu, ChevronDown, User as UserIcon, Settings, LogOut, Search } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -142,6 +143,9 @@ const Navbar = ({
 
             {/* Global Search */}
             <GlobalSearch language={language} />
+            
+            {/* Notification Bell (only for logged-in users) */}
+            {user && <NotificationBell userId={user.id} />}
             
             {!user && <button onClick={() => navigate("/login")} className="font-inter font-bold text-aegean hover:text-accent transition-colors">
                 {t.login}
