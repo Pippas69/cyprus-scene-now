@@ -15,18 +15,24 @@ import { Loader2 } from "lucide-react";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations, businessCategories, cities } from "./translations";
+import { validationTranslations } from "@/translations/validationTranslations";
+import { toastTranslations } from "@/translations/toastTranslations";
 
-const businessProfileSchema = z.object({
-  name: z.string().min(2, "Το όνομα πρέπει να έχει τουλάχιστον 2 χαρακτήρες"),
-  description: z.string().max(500, "Η περιγραφή δεν μπορεί να υπερβαίνει τους 500 χαρακτήρες").optional(),
-  phone: z.string().regex(/^[0-9\s\-\+\(\)]+$/, "Μη έγκυρος αριθμός τηλεφώνου").optional().or(z.literal('')),
-  website: z.string().url("Μη έγκυρο URL").optional().or(z.literal('')),
-  address: z.string().optional(),
-  city: z.string().min(1, "Επιλέξτε πόλη"),
-  category: z.array(z.string()).min(1, "Επιλέξτε τουλάχιστον μία κατηγορία"),
-});
+const createBusinessProfileSchema = (language: 'el' | 'en') => {
+  const v = validationTranslations[language];
+  
+  return z.object({
+    name: z.string().min(2, v.nameRequired),
+    description: z.string().max(500, v.descriptionTooLong).optional(),
+    phone: z.string().regex(/^[0-9\s\-\+\(\)]+$/, v.invalidPhone).optional().or(z.literal('')),
+    website: z.string().url(v.invalidUrl).optional().or(z.literal('')),
+    address: z.string().optional(),
+    city: z.string().min(1, v.cityRequired),
+    category: z.array(z.string()).min(1, v.categoryRequired),
+  });
+};
 
-type FormValues = z.infer<typeof businessProfileSchema>;
+type FormValues = z.infer<ReturnType<typeof createBusinessProfileSchema>>;
 
 interface BusinessProfileFormProps {
   businessId: string;
@@ -35,6 +41,7 @@ interface BusinessProfileFormProps {
 export default function BusinessProfileForm({ businessId }: BusinessProfileFormProps) {
   const { language } = useLanguage();
   const t = businessTranslations[language];
+  const toastT = toastTranslations[language];
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -52,7 +59,7 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
     watch,
     reset
   } = useForm<FormValues>({
-    resolver: zodResolver(businessProfileSchema),
+    resolver: zodResolver(createBusinessProfileSchema(language)),
     defaultValues: {
       category: [],
     }
@@ -84,7 +91,7 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
         if (data.features && data.features.length > 0) {
           const [lng, lat] = data.features[0].center;
           setCoordinates({ lng, lat });
-          toast.success("Οι συντεταγμένες ενημερώθηκαν αυτόματα");
+          toast.success(toastT.coordinatesUpdated);
         }
       } catch (error) {
         // Silent fail - geocoding is auto-complete, not critical
@@ -122,7 +129,7 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
       }
     } catch (error) {
       console.error('Error fetching business:', error);
-      toast.error("Αποτυχία φόρτωσης δεδομένων");
+      toast.error(toastT.loadFailed);
     } finally {
       setInitialLoading(false);
     }
@@ -236,7 +243,7 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
         if (error) throw error;
       }
 
-      toast.success("Το προφίλ ενημερώθηκε επιτυχώς!");
+      toast.success(toastT.businessUpdated);
 
       // Refresh data
       setCurrentLogoUrl(logoUrl);
@@ -246,7 +253,7 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
 
     } catch (error) {
       console.error('Update error:', error);
-      toast.error("Αποτυχία ενημέρωσης προφίλ");
+      toast.error(toastT.businessUpdateFailed);
     } finally {
       setLoading(false);
     }
