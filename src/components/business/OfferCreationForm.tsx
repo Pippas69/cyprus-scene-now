@@ -14,6 +14,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations } from "./translations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 const createOfferSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -22,9 +23,15 @@ const createOfferSchema = (language: 'el' | 'en') => {
     title: z.string().trim().min(3, formatValidationMessage(v.minLength, { min: 3 })).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
     description: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
     percent_off: z.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).max(100, formatValidationMessage(v.maxValue, { max: 100 })),
-    start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required"),
+    start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required")
+      .refine((val) => new Date(val) >= new Date(new Date().setHours(0, 0, 0, 0)), {
+        message: language === 'el' ? "Η ημερομηνία έναρξης δεν μπορεί να είναι στο παρελθόν" : "Start date cannot be in the past"
+      }),
     end_at: z.string().min(1, language === 'el' ? "Η ημερομηνία λήξης είναι υποχρεωτική" : "End date is required"),
     terms: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
+  }).refine((data) => new Date(data.end_at) > new Date(data.start_at), {
+    message: language === 'el' ? "Η ημερομηνία λήξης πρέπει να είναι μετά την ημερομηνία έναρξης" : "End date must be after start date",
+    path: ["end_at"],
   });
 };
 
@@ -160,7 +167,12 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   <FormItem>
                     <FormLabel>{t.startDate} *</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => field.onChange(date?.toISOString() || "")}
+                        placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
+                        minDate={new Date()}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -174,7 +186,12 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   <FormItem>
                     <FormLabel>{t.endDate} *</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => field.onChange(date?.toISOString() || "")}
+                        placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
+                        minDate={new Date()}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

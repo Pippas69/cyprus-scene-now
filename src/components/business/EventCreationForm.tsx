@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
 import { ImageCropDialog } from "./ImageCropDialog";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { compressImage } from "@/lib/imageCompression";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations, eventCategories, seatingOptions } from "./translations";
@@ -28,7 +29,10 @@ const createEventSchema = (language: 'el' | 'en') => {
     title: z.string().trim().min(3, v.titleRequired).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
     description: z.string().trim().min(10, formatValidationMessage(v.minLength, { min: 10 })).max(1000, formatValidationMessage(v.maxLength, { max: 1000 })),
     location: z.string().trim().min(3, v.locationRequired),
-    start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required"),
+    start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required")
+      .refine((val) => new Date(val) >= new Date(new Date().setHours(0, 0, 0, 0)), {
+        message: language === 'el' ? "Η ημερομηνία έναρξης δεν μπορεί να είναι στο παρελθόν" : "Start date cannot be in the past"
+      }),
     end_at: z.string().min(1, language === 'el' ? "Η ημερομηνία λήξης είναι υποχρεωτική" : "End date is required"),
     category: z.array(z.string()).min(1, v.categoryRequired),
     price_tier: z.enum(["free", "low", "medium", "high"]),
@@ -37,6 +41,9 @@ const createEventSchema = (language: 'el' | 'en') => {
     max_reservations: z.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).optional(),
     requires_approval: z.boolean().default(true),
     seating_options: z.array(z.string()).optional(),
+  }).refine((data) => new Date(data.end_at) > new Date(data.start_at), {
+    message: language === 'el' ? "Η ημερομηνία λήξης πρέπει να είναι μετά την ημερομηνία έναρξης" : "End date must be after start date",
+    path: ["end_at"],
   });
 };
 
@@ -279,7 +286,12 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                   <FormItem>
                     <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => field.onChange(date?.toISOString() || "")}
+                        placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
+                        minDate={new Date()}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -293,7 +305,12 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                   <FormItem>
                     <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => field.onChange(date?.toISOString() || "")}
+                        placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
+                        minDate={new Date()}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
