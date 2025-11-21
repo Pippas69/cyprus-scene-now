@@ -3,13 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { trackEngagement } from '@/lib/analyticsTracking';
 
 interface FollowButtonProps {
   businessId: string;
   language: 'el' | 'en';
+  source?: 'profile' | 'event' | 'feed' | 'search' | 'direct';
 }
 
-export function FollowButton({ businessId, language }: FollowButtonProps) {
+export function FollowButton({ businessId, language, source = 'profile' }: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -82,6 +84,9 @@ export function FollowButton({ businessId, language }: FollowButtonProps) {
       if (!error) {
         setIsFollowing(false);
         setFollowerCount((prev) => prev - 1);
+        
+        // Track unfollow
+        trackEngagement(businessId, 'unfavorite', 'business', businessId);
       }
     } else {
       // Follow
@@ -90,11 +95,15 @@ export function FollowButton({ businessId, language }: FollowButtonProps) {
         .insert({
           business_id: businessId,
           user_id: userId,
+          source,
         });
 
       if (!error) {
         setIsFollowing(true);
         setFollowerCount((prev) => prev + 1);
+        
+        // Track follow
+        trackEngagement(businessId, 'favorite', 'business', businessId, { source });
       } else if (error.code === '23505') {
         // Already following
         setIsFollowing(true);

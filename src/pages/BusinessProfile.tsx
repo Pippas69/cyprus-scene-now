@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { trackEngagement } from "@/lib/analyticsTracking";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -108,6 +109,8 @@ const BusinessProfile = () => {
   useEffect(() => {
     if (businessId) {
       fetchBusinessData();
+      // Track profile view
+      trackEngagement(businessId, 'profile_view', 'business', businessId);
     }
   }, [businessId]);
 
@@ -276,6 +279,7 @@ const BusinessProfile = () => {
                   <a
                     href={`tel:${business.phone}`}
                     className="inline-block py-2 font-medium hover:text-primary"
+                    onClick={() => trackEngagement(business.id, 'phone_click', 'business', business.id)}
                   >
                     {business.phone}
                   </a>
@@ -295,6 +299,7 @@ const BusinessProfile = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-medium hover:text-primary truncate block"
+                    onClick={() => trackEngagement(business.id, 'website_click', 'business', business.id)}
                   >
                     {business.website.replace(/^https?:\/\//, '')}
                   </a>
