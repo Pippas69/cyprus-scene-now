@@ -70,38 +70,39 @@ export const useAdvancedAnalytics = (
 
       if (dailyError) throw dailyError;
 
-      // Fetch event views with event details
+      // Fetch all events for the business (no date filter on events themselves)
       const { data: events, error: eventsError } = await supabase
         .from('events')
         .select(`
           id,
           title,
-          event_views (
+          event_views!inner (
             id,
             user_id,
             viewed_at
           ),
           rsvps (
             id,
-            status
+            status,
+            created_at
           ),
           reservations (
             id
           )
         `)
         .eq('business_id', businessId)
-        .gte('created_at', startDate)
-        .lte('created_at', endDate);
+        .gte('event_views.viewed_at', startDate)
+        .lte('event_views.viewed_at', endDate);
 
       if (eventsError) throw eventsError;
 
-      // Fetch discount views with discount details
+      // Fetch all discounts for the business (no date filter on discounts themselves)
       const { data: discounts, error: discountsError } = await supabase
         .from('discounts')
         .select(`
           id,
           title,
-          discount_views (
+          discount_views!inner (
             id,
             user_id,
             viewed_at
@@ -111,8 +112,8 @@ export const useAdvancedAnalytics = (
           )
         `)
         .eq('business_id', businessId)
-        .gte('created_at', startDate)
-        .lte('created_at', endDate);
+        .gte('discount_views.viewed_at', startDate)
+        .lte('discount_views.viewed_at', endDate);
 
       if (discountsError) throw discountsError;
 
@@ -142,15 +143,15 @@ export const useAdvancedAnalytics = (
 
       if (rsvpError) throw rsvpError;
 
-      // Calculate overview metrics
-      const totalEventViews = dailyData?.reduce((sum, day) => sum + day.total_event_views, 0) || 0;
-      const totalDiscountViews = dailyData?.reduce((sum, day) => sum + day.total_discount_views, 0) || 0;
-      const uniqueEventViewers = dailyData?.reduce((sum, day) => sum + day.unique_event_viewers, 0) || 0;
-      const uniqueDiscountViewers = dailyData?.reduce((sum, day) => sum + day.unique_discount_viewers, 0) || 0;
+      // Calculate overview metrics from daily_analytics (more efficient)
+      const totalEventViews = dailyData?.reduce((sum, day) => sum + (day.total_event_views || 0), 0) || 0;
+      const totalDiscountViews = dailyData?.reduce((sum, day) => sum + (day.total_discount_views || 0), 0) || 0;
+      const uniqueEventViewers = dailyData?.reduce((sum, day) => sum + (day.unique_event_viewers || 0), 0) || 0;
+      const uniqueDiscountViewers = dailyData?.reduce((sum, day) => sum + (day.unique_discount_viewers || 0), 0) || 0;
       const totalReach = Math.max(uniqueEventViewers, uniqueDiscountViewers);
       const totalImpressions = totalEventViews + totalDiscountViews;
 
-      const totalRSVPs = dailyData?.reduce((sum, day) => sum + day.new_rsvps_interested + day.new_rsvps_going, 0) || 0;
+      const totalRSVPs = dailyData?.reduce((sum, day) => sum + (day.new_rsvps_interested || 0) + (day.new_rsvps_going || 0), 0) || 0;
       const engagementRate = totalImpressions > 0 ? (totalRSVPs / totalImpressions) * 100 : 0;
 
       const activeFollowers = followers?.filter(f => !f.unfollowed_at).length || 0;
@@ -161,8 +162,8 @@ export const useAdvancedAnalytics = (
         ? ((activeFollowers - previousFollowers) / previousFollowers) * 100 
         : 0;
 
-      const goingCount = dailyData?.reduce((sum, day) => sum + day.new_rsvps_going, 0) || 0;
-      const interestedCount = dailyData?.reduce((sum, day) => sum + day.new_rsvps_interested, 0) || 0;
+      const goingCount = dailyData?.reduce((sum, day) => sum + (day.new_rsvps_going || 0), 0) || 0;
+      const interestedCount = dailyData?.reduce((sum, day) => sum + (day.new_rsvps_interested || 0), 0) || 0;
       const conversionRate = interestedCount > 0 ? (goingCount / interestedCount) * 100 : 0;
 
       // Calculate event performance
