@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { toastTranslations } from "@/translations/toastTranslations";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { ReservationDialog } from "@/components/business/ReservationDialog";
@@ -60,6 +61,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
   const [reservationStatus, setReservationStatus] = useState<string | null>(null);
   const { isFavorited, toggleFavorite, loading: favoriteLoading } = useFavorites(user?.id || null);
   const [countdown, setCountdown] = useState<string | null>(null);
+  const tt = toastTranslations[language];
 
   // Calculate engagement score for badges
   const engagementScore = (interestedCount || 0) + (goingCount || 0) * 2;
@@ -198,8 +200,8 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
   const handleStatusClick = async (newStatus: string) => {
     if (!user) {
       toast({
-        title: "Login Required",
-        description: "Please login to RSVP to events",
+        title: tt.loginRequired,
+        description: tt.mustLogin,
         variant: "destructive",
       });
       return;
@@ -227,8 +229,8 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
       if (!error) {
         setStatus(null);
         toast({
-          title: "RSVP Removed",
-          description: "Your RSVP has been removed",
+          title: tt.deleted,
+          description: language === 'el' ? 'Το RSVP σας αφαιρέθηκε' : 'Your RSVP has been removed',
         });
       }
     } else {
@@ -244,8 +246,10 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
       if (!error) {
         setStatus(newStatus);
         toast({
-          title: "RSVP Updated",
-          description: `You're ${newStatus === 'going' ? 'going' : 'interested'}!`,
+          title: tt.updated,
+          description: language === 'el' 
+            ? `${newStatus === 'going' ? 'Έννα πάτε' : 'Ενδιαφέρεστε'}!` 
+            : `You're ${newStatus === 'going' ? 'going' : 'interested'}!`,
         });
       }
     }
@@ -421,17 +425,17 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
     <Dialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Your Attendance</DialogTitle>
+          <DialogTitle>{language === 'el' ? 'Επιβεβαιώστε τη Συμμετοχή σας' : 'Confirm Your Attendance'}</DialogTitle>
           <DialogDescription>
-            Add any special requests or notes (optional)
+            {language === 'el' ? 'Προσθέστε ειδικά αιτήματα ή σημειώσεις (προαιρετικό)' : 'Add any special requests or notes (optional)'}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{language === 'el' ? 'Σημειώσεις' : 'Notes'}</Label>
             <Textarea
               id="notes"
-              placeholder="e.g., Coming with 2 friends, dietary restrictions, etc."
+              placeholder={language === 'el' ? 'π.χ. Έρχομαι με 2 φίλους, διατροφικοί περιορισμοί, κλπ.' : 'e.g., Coming with 2 friends, dietary restrictions, etc.'}
               value={rsvpNotes}
               onChange={(e) => setRsvpNotes(e.target.value)}
               rows={3}
@@ -439,10 +443,10 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setShowNotesDialog(false)}>
-              Cancel
+              {language === 'el' ? 'Ακύρωση' : 'Cancel'}
             </Button>
             <Button onClick={() => updateRSVP('going', rsvpNotes)} disabled={loading}>
-              Confirm
+              {language === 'el' ? 'Επιβεβαίωση' : 'Confirm'}
             </Button>
           </div>
         </div>
