@@ -12,6 +12,7 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { usePasswordChange } from '@/hooks/usePasswordChange';
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from '@/hooks/use-toast';
+import { toastTranslations } from '@/translations/toastTranslations';
 import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,6 +31,7 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const tt = toastTranslations[language];
 
   const text = {
     el: {
@@ -165,13 +167,13 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
       URL.revokeObjectURL(url);
 
       toast({
-        title: 'Data exported',
-        description: 'Your data has been downloaded successfully.',
+        title: tt.success,
+        description: language === 'el' ? 'Τα δεδομένα σας λήφθηκαν επιτυχώς' : 'Your data has been downloaded successfully',
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to export data.',
+        title: tt.error,
+        description: tt.loadFailed,
         variant: 'destructive',
       });
     }
@@ -185,15 +187,15 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
       if (error) throw error;
 
       toast({
-        title: 'Account deleted',
-        description: 'Your account has been permanently deleted.',
+        title: tt.deleted,
+        description: language === 'el' ? 'Ο λογαριασμός σας διαγράφηκε οριστικά' : 'Your account has been permanently deleted',
       });
       
       await supabase.auth.signOut();
       navigate('/');
     } catch (error: any) {
       toast({
-        title: 'Error',
+        title: tt.error,
         description: error.message,
         variant: 'destructive',
       });
