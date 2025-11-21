@@ -12,34 +12,19 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Loader2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations } from "./translations";
+import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
+import { toastTranslations } from "@/translations/toastTranslations";
 
 const createOfferSchema = (language: 'el' | 'en') => {
-  const validationMessages = {
-    el: {
-      titleMin: "Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες",
-      discountMin: "Η έκπτωση πρέπει να είναι τουλάχιστον 1%",
-      discountMax: "Η έκπτωση δεν μπορεί να υπερβαίνει το 100%",
-      startRequired: "Η ημερομηνία έναρξης είναι υποχρεωτική",
-      endRequired: "Η ημερομηνία λήξης είναι υποχρεωτική",
-    },
-    en: {
-      titleMin: "Title must be at least 3 characters",
-      discountMin: "Discount must be at least 1%",
-      discountMax: "Discount cannot exceed 100%",
-      startRequired: "Start date is required",
-      endRequired: "End date is required",
-    },
-  };
-  
-  const msg = validationMessages[language];
+  const v = validationTranslations[language];
   
   return z.object({
-    title: z.string().trim().min(3, msg.titleMin).max(100),
-    description: z.string().trim().max(500).optional(),
-    percent_off: z.number().min(1, msg.discountMin).max(100, msg.discountMax),
-    start_at: z.string().min(1, msg.startRequired),
-    end_at: z.string().min(1, msg.endRequired),
-    terms: z.string().trim().max(500).optional(),
+    title: z.string().trim().min(3, formatValidationMessage(v.minLength, { min: 3 })).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
+    description: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
+    percent_off: z.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).max(100, formatValidationMessage(v.maxValue, { max: 100 })),
+    start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required"),
+    end_at: z.string().min(1, language === 'el' ? "Η ημερομηνία λήξης είναι υποχρεωτική" : "End date is required"),
+    terms: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
   });
 };
 
@@ -53,6 +38,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const { toast } = useToast();
   const { language } = useLanguage();
   const t = businessTranslations[language];
+  const toastT = toastTranslations[language];
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<OfferFormData>({
@@ -89,15 +75,15 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       if (error) throw error;
 
       toast({
-        title: t.success,
-        description: t.offerCreatedSuccess,
+        title: toastT.success,
+        description: toastT.offerCreated,
       });
 
       form.reset();
     } catch (error: any) {
       toast({
-        title: t.error,
-        description: error.message || t.offerCreationError,
+        title: toastT.error,
+        description: error.message || toastT.createFailed,
         variant: "destructive",
       });
     } finally {

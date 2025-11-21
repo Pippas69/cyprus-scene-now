@@ -18,19 +18,23 @@ import { compressImage } from "@/lib/imageCompression";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations, eventCategories, seatingOptions } from "./translations";
 import { Switch } from "@/components/ui/switch";
+import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
+import { toastTranslations } from "@/translations/toastTranslations";
 
 const createEventSchema = (language: 'el' | 'en') => {
+  const v = validationTranslations[language];
+  
   return z.object({
-    title: z.string().trim().min(3, language === 'el' ? "Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες" : "Title must be at least 3 characters").max(100, language === 'el' ? "Ο τίτλος δεν μπορεί να υπερβαίνει τους 100 χαρακτήρες" : "Title cannot exceed 100 characters"),
-    description: z.string().trim().min(10, language === 'el' ? "Η περιγραφή πρέπει να έχει τουλάχιστον 10 χαρακτήρες" : "Description must be at least 10 characters").max(1000, language === 'el' ? "Η περιγραφή δεν μπορεί να υπερβαίνει τους 1000 χαρακτήρες" : "Description cannot exceed 1000 characters"),
-    location: z.string().trim().min(3, language === 'el' ? "Η τοποθεσία είναι υποχρεωτική" : "Location is required"),
+    title: z.string().trim().min(3, v.titleRequired).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
+    description: z.string().trim().min(10, formatValidationMessage(v.minLength, { min: 10 })).max(1000, formatValidationMessage(v.maxLength, { max: 1000 })),
+    location: z.string().trim().min(3, v.locationRequired),
     start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required"),
     end_at: z.string().min(1, language === 'el' ? "Η ημερομηνία λήξης είναι υποχρεωτική" : "End date is required"),
-    category: z.array(z.string()).min(1, language === 'el' ? "Επιλέξτε τουλάχιστον μία κατηγορία" : "Select at least one category"),
+    category: z.array(z.string()).min(1, v.categoryRequired),
     price_tier: z.enum(["free", "low", "medium", "high"]),
     min_age_hint: z.number().min(0).max(100).optional(),
     accepts_reservations: z.boolean().default(false),
-    max_reservations: z.number().min(1).optional(),
+    max_reservations: z.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).optional(),
     requires_approval: z.boolean().default(true),
     seating_options: z.array(z.string()).optional(),
   });
@@ -45,6 +49,7 @@ interface EventCreationFormProps {
 const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const { language } = useLanguage();
   const t = businessTranslations[language];
+  const toastT = toastTranslations[language];
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -126,7 +131,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         } catch (compressionError) {
           console.error('Error compressing image:', compressionError);
           setIsCompressing(false);
-          toast.error(t.error, {
+          toast.error(toastT.error, {
             description: language === 'el' ? "Αποτυχία συμπίεσης εικόνας" : "Failed to compress image"
           });
           setIsSubmitting(false);
@@ -154,15 +159,15 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
       if (error) throw error;
 
-      toast.success(t.success, {
-        description: t.eventCreatedSuccess
+      toast.success(toastT.success, {
+        description: toastT.eventCreated
       });
 
       form.reset();
       setCoverImage(null);
     } catch (error: any) {
-      toast.error(t.error, {
-        description: error.message || t.eventCreationError
+      toast.error(toastT.error, {
+        description: error.message || toastT.eventCreateFailed
       });
     } finally {
       setIsSubmitting(false);
