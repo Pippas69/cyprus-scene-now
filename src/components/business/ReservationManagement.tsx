@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { QRScanner } from './QRScanner';
+import { toastTranslations } from '@/translations/toastTranslations';
 
 interface ReservationWithEvent {
   id: string;
@@ -137,11 +138,11 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
         console.error('Error sending status change email:', emailError);
       }
 
-      toast.success(t.statusUpdated);
+      toast.success(toastTranslations[language].statusUpdated);
       fetchData();
     } catch (error) {
       console.error('Error updating status:', error);
-      toast.error(t.error);
+      toast.error(toastTranslations[language].error);
     }
   };
 
@@ -156,13 +157,13 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
 
       if (error) throw error;
 
-      toast.success(t.notesSaved);
+      toast.success(toastTranslations[language].notesSaved);
       setNotesDialog({ open: false, reservation: null });
       setBusinessNotes('');
       fetchData();
     } catch (error) {
       console.error('Error saving notes:', error);
-      toast.error(t.error);
+      toast.error(toastTranslations[language].error);
     }
   };
 
@@ -321,7 +322,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
             businessId={businessId} 
             language={language}
             onReservationVerified={() => {
-              toast.success(language === 'el' ? 'Κράτηση επαληθεύτηκε!' : 'Reservation verified!');
+              toast.success(toastTranslations[language].reservationVerified);
               fetchData();
             }}
           />

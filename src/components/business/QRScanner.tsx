@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Camera, X, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { toastTranslations } from '@/translations/toastTranslations';
 
 interface QRScannerProps {
   businessId: string;
@@ -101,7 +102,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       scannerRef.current = scanner;
       setScanning(true);
     } catch (error) {
-      toast.error(t.cameraError);
+      toast.error(toastTranslations[language].cameraError);
       setIsOpen(false);
     }
   };
@@ -136,7 +137,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           success: false,
           message: t.notFound,
         });
-        toast.error(t.notFound);
+        toast.error(toastTranslations[language].qrNotFound);
         return;
       }
 
@@ -146,7 +147,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           success: false,
           message: t.wrongBusiness,
         });
-        toast.error(t.wrongBusiness);
+        toast.error(toastTranslations[language].wrongBusiness);
         return;
       }
 
@@ -157,7 +158,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           reservation,
           message: t.cancelled,
         });
-        toast.error(t.cancelled);
+        toast.error(toastTranslations[language].reservationCancelledStatus);
         return;
       }
 
@@ -167,7 +168,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           reservation,
           message: t.declined,
         });
-        toast.error(t.declined);
+        toast.error(toastTranslations[language].reservationDeclined);
         return;
       }
 
@@ -177,7 +178,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
         reservation,
         message: t.verified,
       });
-      toast.success(t.verified);
+      toast.success(toastTranslations[language].reservationVerified);
 
       if (onReservationVerified) {
         onReservationVerified(reservation);
@@ -188,7 +189,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
         success: false,
         message: t.invalid,
       });
-      toast.error(t.invalid);
+      toast.error(toastTranslations[language].qrInvalid);
     }
   };
 
