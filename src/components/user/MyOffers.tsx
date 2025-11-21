@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Percent, Store, CheckCircle, Calendar, FileText, QrCode, Download } from "lucide-react";
+import { Loader2, Percent, Store, CheckCircle, Calendar, FileText, QrCode, Download, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import QRCodeLib from "qrcode";
-import { format } from "date-fns";
+import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 
 interface MyOffersProps {
   userId: string;
@@ -72,6 +72,13 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     retry: { el: "Προσπαθήστε ξανά", en: "Retry" },
     qrError: { el: "Αποτυχία δημιουργίας QR κωδικού", en: "Failed to generate QR code" },
     downloadQR: { el: "Λήψη QR", en: "Download QR" },
+    expiresIn: { el: "Λήγει σε", en: "Expires in" },
+    days: { el: "ημέρες", en: "days" },
+    hours: { el: "ώρες", en: "hours" },
+    minutes: { el: "λεπτά", en: "minutes" },
+    day: { el: "ημέρα", en: "day" },
+    hour: { el: "ώρα", en: "hour" },
+    minute: { el: "λεπτό", en: "minute" },
   };
 
   const t = language === "el" ? {
@@ -90,6 +97,13 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     retry: text.retry.el,
     qrError: text.qrError.el,
     downloadQR: text.downloadQR.el,
+    expiresIn: text.expiresIn.el,
+    days: text.days.el,
+    hours: text.hours.el,
+    minutes: text.minutes.el,
+    day: text.day.el,
+    hour: text.hour.el,
+    minute: text.minute.el,
   } : {
     title: text.title.en,
     available: text.available.en,
@@ -106,6 +120,39 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     retry: text.retry.en,
     qrError: text.qrError.en,
     downloadQR: text.downloadQR.en,
+    expiresIn: text.expiresIn.en,
+    days: text.days.en,
+    hours: text.hours.en,
+    minutes: text.minutes.en,
+    day: text.day.en,
+    hour: text.hour.en,
+    minute: text.minute.en,
+  };
+
+  const getTimeRemaining = (endDate: string) => {
+    const now = new Date();
+    const end = new Date(endDate);
+    
+    const days = differenceInDays(end, now);
+    const hours = differenceInHours(end, now) % 24;
+    const minutes = differenceInMinutes(end, now) % 60;
+    
+    if (days > 0) {
+      return {
+        value: `${days} ${days === 1 ? t.day : t.days}${hours > 0 ? ` ${hours} ${hours === 1 ? t.hour : t.hours}` : ''}`,
+        urgency: days <= 1 ? 'high' : days <= 3 ? 'medium' : 'low'
+      };
+    } else if (hours > 0) {
+      return {
+        value: `${hours} ${hours === 1 ? t.hour : t.hours}${minutes > 0 ? ` ${minutes} ${minutes === 1 ? t.minute : t.minutes}` : ''}`,
+        urgency: 'high'
+      };
+    } else {
+      return {
+        value: `${minutes} ${minutes === 1 ? t.minute : t.minutes}`,
+        urgency: 'critical'
+      };
+    }
   };
 
   // Fetch available offers
@@ -263,12 +310,31 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                       <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
                     )}
 
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">
                         {t.validUntil}: {formatDate(offer.end_at)}
                       </span>
                     </div>
+
+                    {(() => {
+                      const timeRemaining = getTimeRemaining(offer.end_at);
+                      const urgencyColors = {
+                        low: 'text-muted-foreground bg-muted',
+                        medium: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-950',
+                        high: 'text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-950',
+                        critical: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950'
+                      };
+                      
+                      return (
+                        <div className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full w-fit ${urgencyColors[timeRemaining.urgency]}`}>
+                          <Clock className="h-4 w-4" />
+                          <span className="font-medium">
+                            {t.expiresIn}: {timeRemaining.value}
+                          </span>
+                        </div>
+                      );
+                    })()}
 
                     {offer.terms && (
                       <Collapsible>
