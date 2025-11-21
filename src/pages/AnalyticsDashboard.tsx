@@ -34,10 +34,13 @@ const translations = {
   },
 };
 
-export default function AnalyticsDashboard() {
+interface AnalyticsDashboardProps {
+  businessId: string;
+}
+
+export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardProps) {
   const { language } = useLanguage();
   const t = translations[language];
-  const { businessId } = useParams();
   const [isSeeding, setIsSeeding] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -45,8 +48,8 @@ export default function AnalyticsDashboard() {
     to: new Date(),
   });
 
-  const { data, isLoading, refetch } = useAdvancedAnalytics(
-    businessId || null,
+  const { data, isLoading, refetch, isRefetching } = useAdvancedAnalytics(
+    businessId,
     dateRange
       ? {
           startDate: dateRange.from || subDays(new Date(), 30),
@@ -69,19 +72,20 @@ export default function AnalyticsDashboard() {
       );
       
       setTimeout(() => refetch(), 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating test data:', error);
+      const errorMessage = error?.message || 'Unknown error';
       toast.error(
         language === 'el' 
-          ? 'Σφάλμα κατά τη δημιουργία δεδομένων δοκιμής' 
-          : 'Error generating test data'
+          ? `Σφάλμα κατά τη δημιουργία δεδομένων δοκιμής: ${errorMessage}` 
+          : `Error generating test data: ${errorMessage}`
       );
     } finally {
       setIsSeeding(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isRefetching) {
     return (
       <div className="container mx-auto py-8 space-y-6">
         <div className="flex items-center justify-between">
@@ -98,15 +102,15 @@ export default function AnalyticsDashboard() {
     );
   }
 
+  // Check if we have any daily analytics data (more accurate)
   const hasData = data && (
-    data.overview.totalReach > 0 ||
     data.overview.totalImpressions > 0 ||
     data.eventPerformance.length > 0 ||
     data.discountPerformance.length > 0
   );
 
   const hasEvents = data?.eventPerformance && data.eventPerformance.length > 0;
-  const hasViews = data?.overview.totalReach > 0;
+  const hasViews = data?.overview.totalImpressions > 0;
 
   if (!data || !hasData) {
     return (

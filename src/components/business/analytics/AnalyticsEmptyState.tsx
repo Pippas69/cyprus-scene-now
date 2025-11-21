@@ -122,7 +122,7 @@ export const AnalyticsEmptyState = ({ language, hasEvents, hasViews }: Analytics
                   </div>
                 </div>
 
-                <Button onClick={() => navigate('/dashboard-business/events')}>
+                <Button onClick={() => navigate('/dashboard-business/events/new')}>
                   {t.createFirstEvent}
                 </Button>
               </>

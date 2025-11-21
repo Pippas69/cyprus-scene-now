@@ -185,7 +185,7 @@ const DashboardBusiness = () => {
             <Routes>
               <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />
-              <Route path="analytics" element={businessId ? <AnalyticsDashboard /> : null} />
+              <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
               <Route path="events" element={businessId ? <EventsList businessId={businessId} /> : null} />
               <Route path="events/new" element={businessId ? <EventCreationForm businessId={businessId} /> : null} />
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
