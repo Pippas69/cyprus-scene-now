@@ -33,6 +33,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       inactive: "Ανενεργή",
       activate: "Ενεργοποίηση",
       deactivate: "Απενεργοποίηση",
+      terms: "Όροι:",
     },
     en: {
       loading: "Loading...",
@@ -47,6 +48,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       inactive: "Inactive",
       activate: "Activate",
       deactivate: "Deactivate",
+      terms: "Terms:",
     },
   };
 
@@ -175,7 +177,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-xl font-semibold">{offer.title}</h3>
                       <Badge variant={offer.active ? "default" : "secondary"}>
-                        {offer.active ? "Ενεργή" : "Ανενεργή"}
+                        {offer.active ? t.active : t.inactive}
                       </Badge>
                     </div>
                     {offer.description && (
@@ -204,7 +206,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
                 {offer.terms && (
                   <p className="text-xs text-muted-foreground italic">
-                    Όροι: {offer.terms}
+                    {t.terms} {offer.terms}
                   </p>
                 )}
               </div>
@@ -215,7 +217,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   size="sm"
                   onClick={() => toggleActive(offer.id, offer.active || false)}
                 >
-                  {offer.active ? "Απενεργοποίηση" : "Ενεργοποίηση"}
+                  {offer.active ? t.deactivate : t.activate}
                 </Button>
                 <Button
                   variant="ghost"

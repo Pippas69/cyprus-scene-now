@@ -1,6 +1,7 @@
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface FavoriteButtonProps {
   isFavorited: boolean;
@@ -17,6 +18,21 @@ export const FavoriteButton = ({
   className,
   size = 'default'
 }: FavoriteButtonProps) => {
+  const { language } = useLanguage();
+  
+  const translations = {
+    el: {
+      addToFavorites: 'Προσθήκη στα αγαπημένα',
+      removeFromFavorites: 'Αφαίρεση από αγαπημένα'
+    },
+    en: {
+      addToFavorites: 'Add to favorites',
+      removeFromFavorites: 'Remove from favorites'
+    }
+  };
+  
+  const t = translations[language];
+  
   return (
     <Button
       variant="ghost"
@@ -31,7 +47,7 @@ export const FavoriteButton = ({
         "transition-all hover:scale-110",
         className
       )}
-      aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+      aria-label={isFavorited ? t.removeFromFavorites : t.addToFavorites}
     >
       <Heart
         className={cn(

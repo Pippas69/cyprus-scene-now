@@ -1,6 +1,7 @@
 import { ChevronRight, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface BreadcrumbItem {
   label: string;
@@ -22,12 +23,13 @@ const pathToLabel: Record<string, { el: string; en: string }> = {
 
 export const Breadcrumbs = ({ items, className }: BreadcrumbsProps) => {
   const location = useLocation();
+  const { language } = useLanguage();
   const pathSegments = location.pathname.split('/').filter(Boolean);
   
   // Generate breadcrumb items from path if not provided
   const breadcrumbItems = items || pathSegments.map((segment, index) => {
     const path = '/' + pathSegments.slice(0, index + 1).join('/');
-    const label = pathToLabel[path]?.en || segment.charAt(0).toUpperCase() + segment.slice(1);
+    const label = pathToLabel[path]?.[language] || segment.charAt(0).toUpperCase() + segment.slice(1);
     
     return {
       label,
