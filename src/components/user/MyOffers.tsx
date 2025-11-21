@@ -52,8 +52,9 @@ interface Redemption {
 
 export function MyOffers({ userId, language }: MyOffersProps) {
   const [selectedOffer, setSelectedOffer] = useState<Discount | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
-  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
 
   const text = {
     title: { el: "Οι Προσφορές Μου", en: "My Offers" },
@@ -68,6 +69,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     qrCodeTitle: { el: "QR Κωδικός Προσφοράς", en: "Offer QR Code" },
     showTerms: { el: "Εμφάνιση όρων", en: "Show terms" },
     hideTerms: { el: "Απόκρυψη όρων", en: "Hide terms" },
+    retry: { el: "Προσπαθήστε ξανά", en: "Retry" },
+    qrError: { el: "Αποτυχία δημιουργίας QR κωδικού", en: "Failed to generate QR code" },
   };
 
   const t = language === "el" ? {
@@ -83,6 +86,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     qrCodeTitle: text.qrCodeTitle.el,
     showTerms: text.showTerms.el,
     hideTerms: text.hideTerms.el,
+    retry: text.retry.el,
+    qrError: text.qrError.el,
   } : {
     title: text.title.en,
     available: text.available.en,
@@ -96,6 +101,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     qrCodeTitle: text.qrCodeTitle.en,
     showTerms: text.showTerms.en,
     hideTerms: text.hideTerms.en,
+    retry: text.retry.en,
+    qrError: text.qrError.en,
   };
 
   // Fetch available offers
@@ -152,28 +159,36 @@ export function MyOffers({ userId, language }: MyOffersProps) {
 
   // Generate QR code when offer is selected
   useEffect(() => {
-    if (selectedOffer && qrCanvasRef.current) {
-      QRCodeLib.toCanvas(
-        qrCanvasRef.current,
-        selectedOffer.qr_code_token,
-        {
-          width: 300,
-          margin: 2,
-          color: {
-            dark: "#000000",
-            light: "#ffffff",
-          },
-        },
-        (error) => {
-          if (error) console.error("QR Code generation error:", error);
-        }
-      );
-
-      QRCodeLib.toDataURL(selectedOffer.qr_code_token, { width: 300 }, (err, url) => {
-        if (!err) setQrCodeUrl(url);
-      });
+    if (!selectedOffer) {
+      setQrCodeUrl(null);
+      setQrError(null);
+      return;
     }
-  }, [selectedOffer]);
+
+    setQrLoading(true);
+    setQrError(null);
+
+    // Small delay to ensure dialog is fully mounted
+    setTimeout(() => {
+      QRCodeLib.toDataURL(selectedOffer.qr_code_token, { 
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      })
+        .then(url => {
+          setQrCodeUrl(url);
+          setQrLoading(false);
+        })
+        .catch(err => {
+          console.error('Error generating QR code:', err);
+          setQrError(t.qrError);
+          setQrLoading(false);
+        });
+    }, 100);
+  }, [selectedOffer, t.qrError]);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), language === "el" ? "dd/MM/yyyy" : "MM/dd/yyyy");
@@ -356,14 +371,37 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                     </Badge>
                   )}
                 </div>
-                <div className="bg-white p-4 rounded-lg">
-                  <canvas ref={qrCanvasRef} />
+                <div className="bg-white p-4 rounded-lg flex items-center justify-center min-h-[300px]">
+                  {qrLoading && (
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  )}
+                  {qrError && (
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-destructive text-sm">{qrError}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedOffer(selectedOffer)}
+                      >
+                        {t.retry}
+                      </Button>
+                    </div>
+                  )}
+                  {!qrLoading && !qrError && qrCodeUrl && (
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="Offer QR Code" 
+                      className="w-[300px] h-[300px]"
+                    />
+                  )}
                 </div>
-                <p className="text-xs text-center text-muted-foreground max-w-xs">
-                  {language === "el"
-                    ? "Δείξτε αυτόν τον κωδικό QR στο κατάστημα για να εξαργυρώσετε την προσφορά"
-                    : "Show this QR code at the store to redeem the offer"}
-                </p>
+                {!qrLoading && !qrError && qrCodeUrl && (
+                  <p className="text-xs text-center text-muted-foreground max-w-xs">
+                    {language === "el"
+                      ? "Δείξτε αυτόν τον κωδικό QR στο κατάστημα για να εξαργυρώσετε την προσφορά"
+                      : "Show this QR code at the store to redeem the offer"}
+                  </p>
+                )}
               </>
             )}
           </div>
