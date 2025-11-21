@@ -19,18 +19,24 @@ export type Database = {
           business_id: string
           created_at: string
           id: string
+          source: string | null
+          unfollowed_at: string | null
           user_id: string
         }
         Insert: {
           business_id: string
           created_at?: string
           id?: string
+          source?: string | null
+          unfollowed_at?: string | null
           user_id: string
         }
         Update: {
           business_id?: string
           created_at?: string
           id?: string
+          source?: string | null
+          unfollowed_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -118,6 +124,119 @@ export type Database = {
           },
         ]
       }
+      daily_analytics: {
+        Row: {
+          business_id: string
+          created_at: string
+          date: string
+          discount_redemptions: number
+          engagement_rate: number | null
+          id: string
+          new_followers: number
+          new_reservations: number
+          new_rsvps_going: number
+          new_rsvps_interested: number
+          total_discount_views: number
+          total_event_views: number
+          unfollows: number
+          unique_discount_viewers: number
+          unique_event_viewers: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          date: string
+          discount_redemptions?: number
+          engagement_rate?: number | null
+          id?: string
+          new_followers?: number
+          new_reservations?: number
+          new_rsvps_going?: number
+          new_rsvps_interested?: number
+          total_discount_views?: number
+          total_event_views?: number
+          unfollows?: number
+          unique_discount_viewers?: number
+          unique_event_viewers?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          date?: string
+          discount_redemptions?: number
+          engagement_rate?: number | null
+          id?: string
+          new_followers?: number
+          new_reservations?: number
+          new_rsvps_going?: number
+          new_rsvps_interested?: number
+          total_discount_views?: number
+          total_event_views?: number
+          unfollows?: number
+          unique_discount_viewers?: number
+          unique_event_viewers?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_analytics_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_views: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          discount_id: string
+          id: string
+          session_id: string | null
+          source: string
+          user_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          discount_id: string
+          id?: string
+          session_id?: string | null
+          source: string
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          discount_id?: string
+          id?: string
+          session_id?: string | null
+          source?: string
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_views_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discounts: {
         Row: {
           active: boolean | null
@@ -164,6 +283,105 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engagement_events: {
+        Row: {
+          business_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_views: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          event_id: string
+          id: string
+          session_id: string | null
+          source: string
+          user_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          event_id: string
+          id?: string
+          session_id?: string | null
+          source: string
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          event_id?: string
+          id?: string
+          session_id?: string | null
+          source?: string
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_views_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1750,6 +1968,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_daily_analytics: { Args: never; Returns: undefined }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
