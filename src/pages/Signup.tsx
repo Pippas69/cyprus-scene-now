@@ -15,6 +15,8 @@ import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { authTranslations } from "@/translations/authTranslations";
+import { toastTranslations } from "@/translations/toastTranslations";
+import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 
 const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
@@ -27,25 +29,27 @@ const Signup = () => {
   const { theme, setTheme } = useTheme();
   const { language } = useLanguage();
   const t = authTranslations[language];
+  const tt = toastTranslations[language];
+  const vt = validationTranslations[language];
 
   const signupSchema = z.object({
     firstName: z.string().trim().min(2, {
-      message: language === "el" ? "Το όνομα πρέπει να έχει τουλάχιστον 2 χαρακτήρες" : "First name must be at least 2 characters"
+      message: vt.nameRequired
     }),
     lastName: z.string().trim().min(2, {
-      message: language === "el" ? "Το επίθετο πρέπει να έχει τουλάχιστον 2 χαρακτήρες" : "Last name must be at least 2 characters"
+      message: vt.nameRequired
     }),
     age: z.coerce.number().min(15, {
-      message: language === "el" ? "Πρέπει να είστε τουλάχιστον 15 ετών" : "You must be at least 15 years old"
+      message: formatValidationMessage(vt.minValue, { min: 15 })
     }).max(100),
     email: z.string().trim().email({
-      message: t.invalidEmail
+      message: vt.invalidEmail
     }),
     password: z.string().min(6, {
-      message: t.passwordTooShort
+      message: vt.passwordTooShort
     }),
     town: z.string().min(1, {
-      message: language === "el" ? "Παρακαλώ επιλέξτε πόλη" : "Please select a town"
+      message: vt.selectOption
     }),
     preferences: z.array(z.string()).optional()
   });
@@ -94,11 +98,11 @@ const Signup = () => {
         return;
       }
       if (data.user) {
-        toast.success(t.signupSuccess);
+        toast.success(tt.created);
         navigate(redirectUrl);
       }
     } catch (error) {
-      toast.error("Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.");
+      toast.error(tt.failed);
     } finally {
       setIsLoading(false);
     }
