@@ -1,9 +1,18 @@
 import { WifiOff } from 'lucide-react';
 import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export const OfflineIndicator = () => {
   const { isOffline } = useOfflineStatus();
+  const { language } = useLanguage();
+
+  const translations = {
+    el: { offline: 'Είστε εκτός σύνδεσης' },
+    en: { offline: "You're offline" }
+  };
+
+  const t = translations[language];
 
   if (!isOffline) return null;
 
@@ -15,7 +24,7 @@ export const OfflineIndicator = () => {
       "animate-fade-in"
     )}>
       <WifiOff className="h-4 w-4" />
-      <span className="text-sm font-medium">You're offline</span>
+      <span className="text-sm font-medium">{t.offline}</span>
     </div>
   );
 };

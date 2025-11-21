@@ -147,7 +147,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
 
       {isLoading && (
         <div className="absolute top-full mt-2 w-full bg-background border rounded-lg shadow-lg p-4 text-center text-sm text-muted-foreground">
-          Αναζήτηση...
+          {language === 'el' ? 'Αναζήτηση...' : 'Searching...'}
         </div>
       )}
     </div>

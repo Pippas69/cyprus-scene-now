@@ -13,20 +13,25 @@ import {
 import { X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { validationTranslations } from "@/translations/validationTranslations";
 
 interface SignupModalProps {
   onClose: () => void;
   language: "el" | "en";
 }
 
-const signupSchema = z.object({
-  firstName: z.string().trim().min(1, "Το όνομα είναι υποχρεωτικό").max(100, "Το όνομα πρέπει να είναι λιγότερο από 100 χαρακτήρες"),
-  lastName: z.string().trim().min(1, "Το επώνυμο είναι υποχρεωτικό").max(100, "Το επώνυμο πρέπει να είναι λιγότερο από 100 χαρακτήρες"),
-  email: z.string().trim().email("Μη έγκυρη διεύθυνση email").max(255, "Το email πρέπει να είναι λιγότερο από 255 χαρακτήρες"),
-  password: z.string().min(6, "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες").max(100, "Ο κωδικός πρέπει να είναι λιγότερο από 100 χαρακτήρες"),
-  location: z.string().min(1, "Η τοποθεσία είναι υποχρεωτική"),
-  preferences: z.array(z.string()).min(1, "Επέλεξε τουλάχιστον ένα ενδιαφέρον"),
-});
+const createSignupSchema = (language: "el" | "en") => {
+  const vt = validationTranslations[language];
+  
+  return z.object({
+    firstName: z.string().trim().min(1, vt.nameRequired).max(100, vt.maxLength.replace('{max}', '100')),
+    lastName: z.string().trim().min(1, vt.nameRequired).max(100, vt.maxLength.replace('{max}', '100')),
+    email: z.string().trim().email(vt.invalidEmail).max(255, vt.maxLength.replace('{max}', '255')),
+    password: z.string().min(6, vt.passwordTooShort).max(100, vt.maxLength.replace('{max}', '100')),
+    location: z.string().min(1, vt.locationRequired),
+    preferences: z.array(z.string()).min(1, vt.minSelection.replace('{min}', '1')),
+  });
+};
 
 const SignupModal = ({ onClose, language }: SignupModalProps) => {
   const [formData, setFormData] = useState({
@@ -93,12 +98,13 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     e.preventDefault();
     
     // Validate form data
+    const signupSchema = createSignupSchema(language);
     try {
       signupSchema.parse(formData);
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
-          title: "Σφάλμα επικύρωσης",
+          title: language === 'el' ? 'Σφάλμα επικύρωσης' : 'Validation Error',
           description: error.errors[0].message,
           variant: "destructive",
         });

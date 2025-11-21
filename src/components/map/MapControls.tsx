@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Home, List, Map, Crosshair } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface MapControlsProps {
   onResetView: () => void;
@@ -14,6 +15,25 @@ export const MapControls = ({
   onLocate,
   isListView,
 }: MapControlsProps) => {
+  const { language } = useLanguage();
+  
+  const translations = {
+    el: {
+      resetView: 'Επαναφορά προβολής',
+      showMap: 'Προβολή χάρτη',
+      showList: 'Προβολή λίστας',
+      myLocation: 'Η τοποθεσία μου'
+    },
+    en: {
+      resetView: 'Reset view',
+      showMap: 'Show map',
+      showList: 'Show list',
+      myLocation: 'My location'
+    }
+  };
+  
+  const t = translations[language];
+  
   return (
     <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
       <Button
@@ -21,7 +41,7 @@ export const MapControls = ({
         variant="secondary"
         onClick={onResetView}
         className="shadow-lg bg-background hover:bg-muted"
-        title="Επαναφορά προβολής"
+        title={t.resetView}
       >
         <Home size={18} />
       </Button>
@@ -31,7 +51,7 @@ export const MapControls = ({
         variant="secondary"
         onClick={onToggleView}
         className="shadow-lg bg-background hover:bg-muted"
-        title={isListView ? "Προβολή χάρτη" : "Προβολή λίστας"}
+        title={isListView ? t.showMap : t.showList}
       >
         {isListView ? <Map size={18} /> : <List size={18} />}
       </Button>
@@ -41,7 +61,7 @@ export const MapControls = ({
         variant="secondary"
         onClick={onLocate}
         className="shadow-lg bg-background hover:bg-muted"
-        title="Η τοποθεσία μου"
+        title={t.myLocation}
       >
         <Crosshair size={18} />
       </Button>

@@ -70,6 +70,37 @@ const BusinessProfile = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id: string } | null>(null);
 
+  const translations = {
+    el: {
+      businessNotFound: "Η επιχείρηση δεν βρέθηκε ή δεν είναι επαληθευμένη",
+      loadError: "Σφάλμα φόρτωσης δεδομένων",
+      back: "Πίσω",
+      city: "Πόλη",
+      phone: "Τηλέφωνο",
+      website: "Ιστοσελίδα",
+      about: "Σχετικά",
+      events: "Εκδηλώσεις",
+      offers: "Προσφορές",
+      noEventsScheduled: "Δεν υπάρχουν προγραμματισμένες εκδηλώσεις αυτή τη στιγμή",
+      noActiveOffers: "Δεν υπάρχουν ενεργές προσφορές αυτή τη στιγμή"
+    },
+    en: {
+      businessNotFound: "Business not found or not verified",
+      loadError: "Error loading data",
+      back: "Back",
+      city: "City",
+      phone: "Phone",
+      website: "Website",
+      about: "About",
+      events: "Events",
+      offers: "Offers",
+      noEventsScheduled: "No scheduled events at this time",
+      noActiveOffers: "No active offers at this time"
+    }
+  };
+
+  const t = translations[language];
+
   useEffect(() => {
     checkUser();
   }, []);
@@ -98,7 +129,7 @@ const BusinessProfile = () => {
       if (businessError) throw businessError;
 
       if (!businessData) {
-        toast.error("Η επιχείρηση δεν βρέθηκε ή δεν είναι επαληθευμένη");
+        toast.error(t.businessNotFound);
         navigate("/feed");
         return;
       }
@@ -135,7 +166,7 @@ const BusinessProfile = () => {
       setOffers(offersData || []);
     } catch (error) {
       console.error("Error fetching business data:", error);
-      toast.error("Σφάλμα φόρτωσης δεδομένων");
+      toast.error(t.loadError);
     } finally {
       setLoading(false);
     }
@@ -176,7 +207,7 @@ const BusinessProfile = () => {
           className="absolute top-4 left-4 z-[60] bg-background/80 backdrop-blur-sm hover:bg-background safe-area-top"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Πίσω
+          {t.back}
         </Button>
 
         {/* Logo positioned at bottom, overlapping */}
@@ -226,7 +257,7 @@ const BusinessProfile = () => {
               <CardContent className="flex items-center gap-3 p-4">
                 <MapPin className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Πόλη</p>
+                  <p className="text-sm text-muted-foreground">{t.city}</p>
                   <p className="font-medium">{business.city}</p>
                   {business.address && (
                     <p className="text-sm text-muted-foreground">{business.address}</p>
@@ -241,7 +272,7 @@ const BusinessProfile = () => {
               <CardContent className="flex items-center gap-3 p-4">
                 <Phone className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Τηλέφωνο</p>
+                  <p className="text-sm text-muted-foreground">{t.phone}</p>
                   <a
                     href={`tel:${business.phone}`}
                     className="inline-block py-2 font-medium hover:text-primary"
@@ -258,7 +289,7 @@ const BusinessProfile = () => {
               <CardContent className="flex items-center gap-3 p-4">
                 <Globe className="h-5 w-5 text-muted-foreground" />
                 <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">Ιστοσελίδα</p>
+                  <p className="text-sm text-muted-foreground">{t.website}</p>
                   <a
                     href={business.website}
                     target="_blank"
@@ -291,10 +322,10 @@ const BusinessProfile = () => {
         <Tabs defaultValue="events" className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 md:h-10">
             <TabsTrigger value="events">
-              Εκδηλώσεις ({events.length})
+              {t.events} ({events.length})
             </TabsTrigger>
             <TabsTrigger value="offers">
-              Προσφορές ({offers.length})
+              {t.offers} ({offers.length})
             </TabsTrigger>
           </TabsList>
 
@@ -303,14 +334,14 @@ const BusinessProfile = () => {
               <Card>
                 <CardContent className="text-center py-8">
                   <p className="text-muted-foreground">
-                    Δεν υπάρχουν προγραμματισμένες εκδηλώσεις αυτή τη στιγμή
+                    {t.noEventsScheduled}
                   </p>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {events.map((event) => (
-                  <EventCard key={event.id} event={event} language="el" user={user} />
+                  <EventCard key={event.id} event={event} language={language} user={user} />
                 ))}
               </div>
             )}
@@ -321,14 +352,14 @@ const BusinessProfile = () => {
               <Card>
                 <CardContent className="text-center py-8">
                   <p className="text-muted-foreground">
-                    Δεν υπάρχουν ενεργές προσφορές αυτή τη στιγμή
+                    {t.noActiveOffers}
                   </p>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {offers.map((offer) => (
-                  <OfferCard key={offer.id} offer={offer} language="el" />
+                  <OfferCard key={offer.id} offer={offer} language={language} />
                 ))}
               </div>
             )}
