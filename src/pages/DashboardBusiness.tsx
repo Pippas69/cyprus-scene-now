@@ -17,6 +17,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import Feed from "@/pages/Feed";
 import Xartis from "@/pages/Xartis";
+import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BusinessSidebar } from "@/components/business/BusinessSidebar";
 import { BusinessFAB } from "@/components/business/BusinessFAB";
@@ -184,7 +185,7 @@ const DashboardBusiness = () => {
             <Routes>
               <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />
-              <Route path="analytics" element={businessId ? <EventAnalytics businessId={businessId} language={language} /> : null} />
+              <Route path="analytics" element={businessId ? <AnalyticsDashboard /> : null} />
               <Route path="events" element={businessId ? <EventsList businessId={businessId} /> : null} />
               <Route path="events/new" element={businessId ? <EventCreationForm businessId={businessId} /> : null} />
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
