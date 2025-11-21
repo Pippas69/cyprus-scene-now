@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toastTranslations } from '@/translations/toastTranslations';
 
 interface ProfileSettingsProps {
   userId: string;
@@ -16,6 +17,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const t = toastTranslations[language];
 
   useEffect(() => {
     fetchProfile();
@@ -46,14 +48,14 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
 
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to update profile",
+        title: t.error,
+        description: t.profileUpdateFailed,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Success",
-        description: "Profile updated successfully",
+        title: t.success,
+        description: t.profileUpdated,
       });
     }
 
@@ -79,7 +81,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
     },
   };
 
-  const t = text[language];
+  const labels = text[language];
 
   if (!profile) return null;
 
@@ -87,12 +89,12 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
     <div className="max-w-2xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{t.title}</CardTitle>
+          <CardTitle>{labels.title}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">{t.name}</Label>
+              <Label htmlFor="name">{labels.name}</Label>
               <Input
                 id="name"
                 value={profile.name || ''}
@@ -100,7 +102,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">{t.email}</Label>
+              <Label htmlFor="email">{labels.email}</Label>
               <Input
                 id="email"
                 value={profile.email || ''}
@@ -109,7 +111,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="city">{t.city}</Label>
+              <Label htmlFor="city">{labels.city}</Label>
               <Input
                 id="city"
                 value={profile.city || ''}
@@ -117,7 +119,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="town">{t.town}</Label>
+              <Label htmlFor="town">{labels.town}</Label>
               <Input
                 id="town"
                 value={profile.town || ''}
@@ -125,7 +127,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
               />
             </div>
             <Button type="submit" disabled={loading}>
-              {t.save}
+              {labels.save}
             </Button>
           </form>
         </CardContent>

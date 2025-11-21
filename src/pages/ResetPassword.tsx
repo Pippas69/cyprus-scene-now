@@ -15,24 +15,34 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useLanguage } from "@/hooks/useLanguage";
+import { validationTranslations } from "@/translations/validationTranslations";
+import { toastTranslations } from "@/translations/toastTranslations";
 
-const resetPasswordSchema = z.object({
-  password: z.string().min(6, { message: "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες" }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Οι κωδικοί δεν ταιριάζουν",
-  path: ["confirmPassword"],
-});
-
-type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+const createResetPasswordSchema = (language: 'el' | 'en') => {
+  const v = validationTranslations[language];
+  
+  return z.object({
+    password: z.string().min(6, { message: v.passwordTooShort }),
+    confirmPassword: z.string(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: v.passwordsNoMatch,
+    path: ["confirmPassword"],
+  });
+};
 
 const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const t = toastTranslations[language];
+
+  const resetPasswordSchema = createResetPasswordSchema(language);
+  type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
   const form = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(createResetPasswordSchema(language)),
     defaultValues: {
       password: "",
       confirmPassword: "",
@@ -48,14 +58,14 @@ const ResetPassword = () => {
 
     if (error) {
       toast({
-        title: "Σφάλμα",
+        title: t.error,
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Επιτυχία",
-        description: "Ο κωδικός σας άλλαξε επιτυχώς",
+        title: t.success,
+        description: language === 'el' ? "Ο κωδικός σας άλλαξε επιτυχώς" : "Your password has been changed successfully",
       });
       setTimeout(() => navigate("/login"), 2000);
     }
@@ -69,10 +79,10 @@ const ResetPassword = () => {
         <div className="bg-card border border-border rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Νέος Κωδικός
+              {language === 'el' ? 'Νέος Κωδικός' : 'New Password'}
             </h1>
             <p className="text-muted-foreground">
-              Εισάγετε τον νέο σας κωδικό
+              {language === 'el' ? 'Εισάγετε τον νέο σας κωδικό' : 'Enter your new password'}
             </p>
           </div>
 
@@ -83,7 +93,7 @@ const ResetPassword = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Νέος Κωδικός</FormLabel>
+                    <FormLabel>{language === 'el' ? 'Νέος Κωδικός' : 'New Password'}</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
@@ -101,7 +111,7 @@ const ResetPassword = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Επιβεβαίωση Κωδικού</FormLabel>
+                    <FormLabel>{language === 'el' ? 'Επιβεβαίωση Κωδικού' : 'Confirm Password'}</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
@@ -115,7 +125,9 @@ const ResetPassword = () => {
               />
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Αποθήκευση..." : "Αλλαγή Κωδικού"}
+                {loading 
+                  ? (language === 'el' ? "Αποθήκευση..." : "Saving...") 
+                  : (language === 'el' ? "Αλλαγή Κωδικού" : "Change Password")}
               </Button>
             </form>
           </Form>
