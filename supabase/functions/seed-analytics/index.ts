@@ -58,7 +58,7 @@ serve(async (req) => {
     const actualUsers = users && users.length > 0 ? users : [{ id: user.id, age: null, city: null, gender: null }];
 
     // Update users with gender if not set (for test data)
-    const genderOptions = ['male', 'female', 'non-binary', 'prefer-not-to-say'];
+    const genderOptions = ['male', 'female', 'other'];
     for (const testUser of actualUsers) {
       if (!testUser.gender) {
         await supabase

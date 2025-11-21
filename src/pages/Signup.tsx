@@ -51,6 +51,7 @@ const Signup = () => {
     town: z.string().min(1, {
       message: vt.selectOption
     }),
+    gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional()
   });
 
@@ -64,6 +65,7 @@ const Signup = () => {
       email: "",
       password: "",
       town: "",
+      gender: undefined,
       preferences: []
     }
   });
@@ -85,6 +87,7 @@ const Signup = () => {
             last_name: values.lastName,
             age: values.age,
             town: values.town,
+            gender: values.gender,
             preferences: selectedPreferences
           }
         }
@@ -226,6 +229,31 @@ const Signup = () => {
                         {towns.map(town => <SelectItem key={town} value={town}>
                             {town}
                           </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>} />
+
+              <FormField control={form.control} name="gender" render={({
+              field
+            }) => <FormItem>
+                    <FormLabel>{language === "el" ? "Φύλο" : "Gender"}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue placeholder={language === "el" ? "Επιλέξτε φύλο (προαιρετικό)" : "Select gender (optional)"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="male">
+                          {language === "el" ? "Άνδρας" : "Male"}
+                        </SelectItem>
+                        <SelectItem value="female">
+                          {language === "el" ? "Γυναίκα" : "Female"}
+                        </SelectItem>
+                        <SelectItem value="other">
+                          {language === "el" ? "Άλλο" : "Other"}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

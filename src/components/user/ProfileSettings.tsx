@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -43,6 +44,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
         name: profile.name,
         city: profile.city,
         town: profile.town,
+        gender: profile.gender,
       })
       .eq('id', userId);
 
@@ -69,6 +71,11 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
       email: 'Email',
       city: 'Πόλη',
       town: 'Περιοχή',
+      gender: 'Φύλο',
+      genderPlaceholder: 'Επιλέξτε φύλο',
+      male: 'Άνδρας',
+      female: 'Γυναίκα',
+      other: 'Άλλο',
       save: 'Αποθήκευση',
     },
     en: {
@@ -77,6 +84,11 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
       email: 'Email',
       city: 'City',
       town: 'Town',
+      gender: 'Gender',
+      genderPlaceholder: 'Select gender',
+      male: 'Male',
+      female: 'Female',
+      other: 'Other',
       save: 'Save Changes',
     },
   };
@@ -125,6 +137,22 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
                 value={profile.town || ''}
                 onChange={(e) => setProfile({ ...profile, town: e.target.value })}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">{labels.gender}</Label>
+              <Select
+                value={profile.gender || ''}
+                onValueChange={(value) => setProfile({ ...profile, gender: value })}
+              >
+                <SelectTrigger id="gender">
+                  <SelectValue placeholder={labels.genderPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">{labels.male}</SelectItem>
+                  <SelectItem value="female">{labels.female}</SelectItem>
+                  <SelectItem value="other">{labels.other}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button type="submit" disabled={loading}>
               {labels.save}
