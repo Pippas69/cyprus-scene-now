@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Users, Phone, X, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { toastTranslations } from '@/translations/toastTranslations';
 import QRCode from 'qrcode';
 import {
   AlertDialog,
@@ -31,6 +32,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     reservationId: null,
   });
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
+  const tt = toastTranslations[language];
 
   useEffect(() => {
     fetchReservations();
@@ -117,11 +119,11 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         console.error('Error sending cancellation email:', emailError);
       }
 
-      toast.success(t.cancelled);
+      toast.success(tt.reservationCancelled);
       fetchReservations();
     } catch (error) {
       console.error('Error cancelling reservation:', error);
-      toast.error(t.error);
+      toast.error(tt.failed);
     } finally {
       setCancelDialog({ open: false, reservationId: null });
     }
@@ -144,7 +146,6 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       confirmCancelDescription: 'Είστε σίγουροι ότι θέλετε να ακυρώσετε αυτήν την κράτηση;',
       cancel: 'Όχι',
       confirm: 'Ναι, Ακύρωση',
-      error: 'Σφάλμα κατά την ακύρωση',
       specialRequests: 'Ειδικές Απαιτήσεις',
       businessNotes: 'Σημειώσεις Επιχείρησης',
       confirmationCode: 'Κωδικός Επιβεβαίωσης',
@@ -165,7 +166,6 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       confirmCancelDescription: 'Are you sure you want to cancel this reservation?',
       cancel: 'No',
       confirm: 'Yes, Cancel',
-      error: 'Error cancelling reservation',
       specialRequests: 'Special Requests',
       businessNotes: 'Business Notes',
       confirmationCode: 'Confirmation Code',
