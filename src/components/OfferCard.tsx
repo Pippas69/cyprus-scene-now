@@ -2,6 +2,8 @@ import { MapPin, Percent, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useViewTracking, trackDiscountView } from "@/lib/analyticsTracking";
+import { useRef } from "react";
 
 interface Offer {
   id: string;
@@ -28,7 +30,16 @@ interface OfferCardProps {
 }
 
 const OfferCard = ({ offer, discount, language, style, className }: OfferCardProps) => {
+  const cardRef = useRef<HTMLDivElement>(null);
   const offerData = offer || discount;
+  
+  // Track discount view when card is 50% visible
+  useViewTracking(cardRef, () => {
+    if (offerData?.id) {
+      trackDiscountView(offerData.id, 'feed');
+    }
+  }, { threshold: 0.5 });
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return language === "el"
@@ -39,7 +50,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   if (!offerData) return null;
 
   return (
-    <Card className={`overflow-hidden hover:shadow-lg transition-shadow ${className || ''}`} style={style}>
+    <Card ref={cardRef} className={`overflow-hidden hover:shadow-lg transition-shadow ${className || ''}`} style={style}>
       <CardContent className="p-4">
         <div className="flex gap-4">
           {/* Business Logo - Clickable */}

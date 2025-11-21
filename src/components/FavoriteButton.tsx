@@ -2,6 +2,7 @@ import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/hooks/useLanguage';
+import { trackEngagement } from '@/lib/analyticsTracking';
 
 interface FavoriteButtonProps {
   isFavorited: boolean;
@@ -9,6 +10,8 @@ interface FavoriteButtonProps {
   loading?: boolean;
   className?: string;
   size?: 'sm' | 'default' | 'lg';
+  businessId?: string;
+  eventId?: string;
 }
 
 export const FavoriteButton = ({ 
@@ -16,7 +19,9 @@ export const FavoriteButton = ({
   onClick, 
   loading = false,
   className,
-  size = 'default'
+  size = 'default',
+  businessId,
+  eventId
 }: FavoriteButtonProps) => {
   const { language } = useLanguage();
   
@@ -40,6 +45,17 @@ export const FavoriteButton = ({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        
+        // Track engagement
+        if (businessId && eventId) {
+          trackEngagement(
+            businessId, 
+            isFavorited ? 'unfavorite' : 'favorite',
+            'event',
+            eventId
+          );
+        }
+        
         onClick();
       }}
       disabled={loading}

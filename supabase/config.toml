@@ -1,1 +1,4 @@
 project_id = "iasahlgurfxufrtdigcr"
+
+[functions.seed-analytics]
+verify_jwt = true

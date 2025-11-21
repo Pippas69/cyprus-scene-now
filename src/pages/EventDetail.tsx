@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { trackEventView, trackEngagement } from '@/lib/analyticsTracking';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +37,10 @@ export default function EventDetail() {
 
   useEffect(() => {
     checkUser();
-    fetchEventDetails();
+    if (eventId) {
+      fetchEventDetails();
+      trackEventView(eventId, 'direct');
+    }
   }, [eventId]);
 
   const checkUser = async () => {
@@ -94,6 +98,11 @@ export default function EventDetail() {
 
   const handleShare = async () => {
     const url = window.location.href;
+    
+    // Track share engagement
+    if (event?.businesses?.id) {
+      trackEngagement(event.businesses.id, 'share', 'event', eventId || '');
+    }
     
     if (navigator.share) {
       try {

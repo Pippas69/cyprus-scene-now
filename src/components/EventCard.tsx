@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -18,6 +18,8 @@ import { ReservationDialog } from "@/components/business/ReservationDialog";
 import LiveBadge from "@/components/feed/LiveBadge";
 import { formatDistanceToNow } from "date-fns";
 import { el, enUS } from "date-fns/locale";
+import { useViewTracking, trackEventView } from "@/lib/analyticsTracking";
+import { useNavigate } from "react-router-dom";
 
 interface Event {
   id: string;
@@ -51,6 +53,8 @@ interface EventCardProps {
 }
 
 const EventCard = ({ language, event, user, style, className }: EventCardProps) => {
+  const navigate = useNavigate();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<string | null>(event.user_status || null);
   const [interestedCount, setInterestedCount] = useState(event.interested_count || 0);
   const [goingCount, setGoingCount] = useState(event.going_count || 0);
@@ -58,6 +62,13 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [rsvpNotes, setRsvpNotes] = useState("");
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+
+  // Track event view when card is 50% visible
+  useViewTracking(cardRef, () => {
+    if (event.id) {
+      trackEventView(event.id, 'feed');
+    }
+  }, { threshold: 0.5 });
   const [reservationStatus, setReservationStatus] = useState<string | null>(null);
   const { isFavorited, toggleFavorite, loading: favoriteLoading } = useFavorites(user?.id || null);
   const [countdown, setCountdown] = useState<string | null>(null);
@@ -270,7 +281,12 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
 
   return (
     <>
-      <Card className={`overflow-hidden hover:shadow-hover transition-all duration-300 group relative ${className || ''}`} style={style}>
+      <Card 
+        ref={cardRef}
+        className={`overflow-hidden hover:shadow-hover transition-all duration-300 group relative ${className || ''}`} 
+        style={style}
+        onClick={() => navigate(`/event/${event.id}`)}
+      >
         {/* Live Badge */}
         {badgeType && <LiveBadge type={badgeType} language={language} />}
         
@@ -282,6 +298,8 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
             loading={favoriteLoading}
             className="absolute top-3 left-3 z-10 bg-background/80 hover:bg-background backdrop-blur-sm shadow-lg"
             size="sm"
+            businessId={event.business_id}
+            eventId={event.id}
           />
         )}
         
