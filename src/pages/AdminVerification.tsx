@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Filter, Search } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { toastTranslations } from "@/translations/toastTranslations";
 const CITIES = ["Όλες", "Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 const STATUSES = ["Όλες", "Εκκρεμεί", "Εγκρίθηκε", "Απορρίφθηκε"];
 interface Business {
@@ -33,6 +35,8 @@ interface Business {
 }
 const AdminVerification = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const t = toastTranslations[language];
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +59,7 @@ const AdminVerification = () => {
       }
     } = await supabase.auth.getUser();
     if (!user) {
-      toast.error("Παρακαλώ συνδεθείτε");
+      toast.error(t.mustLogin);
       navigate("/login");
       return;
     }
@@ -63,7 +67,7 @@ const AdminVerification = () => {
       data: profile
     } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
     if (!profile?.is_admin) {
-      toast.error("Μόνο οι διαχειριστές μπορούν να έχουν πρόσβαση σε αυτή τη σελίδα.");
+      toast.error(t.adminOnly);
       navigate("/");
     }
   };
@@ -84,7 +88,7 @@ const AdminVerification = () => {
       setBusinesses(data || []);
     } catch (error) {
       console.error("Error fetching businesses:", error);
-      toast.error("Σφάλμα φόρτωσης επιχειρήσεων");
+      toast.error(t.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -134,11 +138,11 @@ const AdminVerification = () => {
           // Don't fail the approval if email fails
         }
       }
-      toast.success("Η επιχείρηση εγκρίθηκε!");
+      toast.success(t.businessApproved);
       fetchBusinesses();
     } catch (error) {
       console.error("Error approving business:", error);
-      toast.error("Σφάλμα έγκρισης επιχείρησης");
+      toast.error(t.businessUpdateFailed);
     }
   };
   const handleReject = async (businessId: string, rejectionNotes: string) => {
@@ -167,11 +171,11 @@ const AdminVerification = () => {
           // Silent fail - email notification is not critical
         }
       }
-      toast.success("Η επιχείρηση απορρίφθηκε");
+      toast.success(t.businessRejected);
       fetchBusinesses();
       setSelectedBusiness(null);
     } catch (error) {
-      toast.error("Σφάλμα απόρριψης επιχείρησης");
+      toast.error(t.businessUpdateFailed);
     }
   };
   const handleUpdateNotes = async (businessId: string, newNotes: string) => {
@@ -182,10 +186,10 @@ const AdminVerification = () => {
         verification_notes: newNotes
       }).eq("id", businessId);
       if (error) throw error;
-      toast.success("Οι σημειώσεις ενημερώθηκαν");
+      toast.success(t.notesSaved);
       fetchBusinesses();
     } catch (error) {
-      toast.error("Σφάλμα ενημέρωσης σημειώσεων");
+      toast.error(t.updateFailed);
     }
   };
   const getStatusBadge = (business: Business) => {
