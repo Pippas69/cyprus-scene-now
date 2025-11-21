@@ -10,6 +10,8 @@ import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { authTranslations } from "@/translations/authTranslations";
+import { toastTranslations } from "@/translations/toastTranslations";
+import { validationTranslations } from "@/translations/validationTranslations";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,9 +31,11 @@ const ForgotPassword = () => {
   const { theme, setTheme } = useTheme();
   const { language } = useLanguage();
   const t = authTranslations[language];
+  const tt = toastTranslations[language];
+  const vt = validationTranslations[language];
 
   const forgotPasswordSchema = z.object({
-    email: z.string().email({ message: t.invalidEmail }),
+    email: z.string().email({ message: vt.invalidEmail }),
   });
 
   type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
@@ -52,13 +56,13 @@ const ForgotPassword = () => {
 
     if (error) {
       toast({
-        title: t.errorOccurred,
+        title: tt.error,
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: t.emailSent,
+        title: tt.sent,
         description: t.checkEmailForReset,
       });
       setTimeout(() => navigate("/login"), 2000);

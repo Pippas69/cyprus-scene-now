@@ -13,6 +13,7 @@ import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { authTranslations } from "@/translations/authTranslations";
+import { toastTranslations } from "@/translations/toastTranslations";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ const Login = () => {
   const { theme, setTheme } = useTheme();
   const { language } = useLanguage();
   const t = authTranslations[language];
+  const tt = toastTranslations[language];
 
   const loginSchema = z.object({
     email: z.string().trim().email({ message: t.invalidEmail }),
@@ -96,7 +98,7 @@ const Login = () => {
         navigate(redirectPath);
       }
     } catch (error) {
-      toast.error("Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.");
+      toast.error(tt.failed);
     } finally {
       setIsLoading(false);
     }
