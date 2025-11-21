@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users } from "lucide-react";
+import { Trash2, Calendar, MapPin, Users, Copy } from "lucide-react";
 import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -24,8 +24,10 @@ const EventsList = ({ businessId }: EventsListProps) => {
       noEvents: "Δεν έχετε δημοσιεύσει καμία εκδήλωση ακόμα.",
       success: "Επιτυχία",
       eventDeleted: "Η εκδήλωση διαγράφηκε",
+      eventDuplicated: "Η εκδήλωση αντιγράφηκε επιτυχώς",
       error: "Σφάλμα",
       delete: "Διαγραφή",
+      duplicate: "Αντιγραφή",
       interested: "Ενδιαφέρον",
       going: "Θα Πάνε",
     },
@@ -34,8 +36,10 @@ const EventsList = ({ businessId }: EventsListProps) => {
       noEvents: "You haven't published any events yet.",
       success: "Success",
       eventDeleted: "Event deleted",
+      eventDuplicated: "Event duplicated successfully",
       error: "Error",
       delete: "Delete",
+      duplicate: "Duplicate",
       interested: "Interested",
       going: "Going",
     },
@@ -98,6 +102,51 @@ const EventsList = ({ businessId }: EventsListProps) => {
       toast({
         title: t.success,
         description: t.eventDeleted,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+    } catch (error: any) {
+      toast({
+        title: t.error,
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDuplicate = async (event: any) => {
+    try {
+      // Calculate new dates (add 7 days to original dates)
+      const originalStart = new Date(event.start_at);
+      const originalEnd = new Date(event.end_at);
+      const newStart = new Date(originalStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const newEnd = new Date(originalEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      const { error } = await supabase
+        .from('events')
+        .insert({
+          business_id: event.business_id,
+          title: `${event.title} (Copy)`,
+          description: event.description,
+          category: event.category,
+          location: event.location,
+          start_at: newStart.toISOString(),
+          end_at: newEnd.toISOString(),
+          cover_image_url: event.cover_image_url,
+          tags: event.tags,
+          min_age_hint: event.min_age_hint,
+          price_tier: event.price_tier,
+          accepts_reservations: event.accepts_reservations,
+          max_reservations: event.max_reservations,
+          seating_options: event.seating_options,
+          requires_approval: event.requires_approval,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: t.success,
+        description: t.eventDuplicated,
       });
 
       queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
@@ -180,14 +229,25 @@ const EventsList = ({ businessId }: EventsListProps) => {
                 </div>
               </div>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDelete(event.id)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDuplicate(event)}
+                  title={t.duplicate}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(event.id)}
+                  className="text-destructive hover:text-destructive"
+                  title={t.delete}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
