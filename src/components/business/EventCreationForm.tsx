@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,6 +55,7 @@ interface EventCreationFormProps {
 }
 
 const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const t = businessTranslations[language];
   const toastT = toastTranslations[language];
@@ -172,6 +174,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
       form.reset();
       setCoverImage(null);
+      
+      // Redirect to events list
+      navigate('/dashboard-business/events');
     } catch (error: any) {
       toast.error(toastT.error, {
         description: error.message || toastT.eventCreateFailed
