@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Ticket, TrendingUp, MapPin, User, Settings, Users, Home } from "lucide-react";
+import { Calendar, Ticket, TrendingUp, MapPin, User, Settings, Users, Home, QrCode } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,7 @@ const translations = {
     feed: "Feed",
     map: "Χάρτης",
     analytics: "Αναλυτικά",
+    qrAnalytics: "Στατιστικά QR",
     content: "Περιεχόμενο",
     events: "Εκδηλώσεις",
     offers: "Προσφορές",
@@ -36,6 +37,7 @@ const translations = {
     feed: "Feed",
     map: "Map",
     analytics: "Analytics",
+    qrAnalytics: "QR Analytics",
     content: "Content",
     events: "Events",
     offers: "Offers",
@@ -59,6 +61,7 @@ export function BusinessSidebar() {
     { title: t.feed, url: "/dashboard-business", icon: Home },
     { title: t.map, url: "/dashboard-business/map", icon: MapPin },
     { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
+    { title: t.qrAnalytics, url: "/dashboard-business/qr-analytics", icon: QrCode },
   ];
 
   const contentItems = [

@@ -189,6 +189,61 @@ export type Database = {
           },
         ]
       }
+      discount_scans: {
+        Row: {
+          device_info: Json | null
+          discount_id: string
+          id: string
+          location_info: Json | null
+          scan_type: string
+          scanned_at: string
+          scanned_by: string | null
+          success: boolean
+        }
+        Insert: {
+          device_info?: Json | null
+          discount_id: string
+          id?: string
+          location_info?: Json | null
+          scan_type?: string
+          scanned_at?: string
+          scanned_by?: string | null
+          success?: boolean
+        }
+        Update: {
+          device_info?: Json | null
+          discount_id?: string
+          id?: string
+          location_info?: Json | null
+          scan_type?: string
+          scanned_at?: string
+          scanned_by?: string | null
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_scans_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discount_scan_stats"
+            referencedColumns: ["discount_id"]
+          },
+          {
+            foreignKeyName: "discount_scans_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_scans_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discount_views: {
         Row: {
           created_at: string
@@ -221,6 +276,13 @@ export type Database = {
           viewed_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "discount_views_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discount_scan_stats"
+            referencedColumns: ["discount_id"]
+          },
           {
             foreignKeyName: "discount_views_discount_id_fkey"
             columns: ["discount_id"]
@@ -477,6 +539,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "favorite_discounts_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discount_scan_stats"
+            referencedColumns: ["discount_id"]
+          },
           {
             foreignKeyName: "favorite_discounts_discount_id_fkey"
             columns: ["discount_id"]
@@ -811,6 +880,13 @@ export type Database = {
             foreignKeyName: "redemptions_discount_id_fkey"
             columns: ["discount_id"]
             isOneToOne: false
+            referencedRelation: "discount_scan_stats"
+            referencedColumns: ["discount_id"]
+          },
+          {
+            foreignKeyName: "redemptions_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
             referencedRelation: "discounts"
             referencedColumns: ["id"]
           },
@@ -1039,6 +1115,30 @@ export type Database = {
       }
     }
     Views: {
+      discount_scan_stats: {
+        Row: {
+          business_id: string | null
+          discount_id: string | null
+          last_scanned_at: string | null
+          scans_last_24h: number | null
+          scans_last_7d: number | null
+          title: string | null
+          total_redemptions: number | null
+          total_scans: number | null
+          total_verifications: number | null
+          total_views: number | null
+          unique_scanners: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_rsvp_counts: {
         Row: {
           event_id: string | null

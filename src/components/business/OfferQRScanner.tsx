@@ -138,6 +138,12 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       if (offerError || !offer) {
         const msg = language === "el" ? t.errors.notFound.el : t.errors.notFound.en;
         setScanResult({ success: false, message: msg });
+        // Track failed verification
+        await supabase.from('discount_scans').insert({
+          discount_id: offer?.id,
+          scan_type: 'verify',
+          success: false,
+        });
         stopScanner();
         return;
       }
@@ -190,6 +196,13 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       // In a real scenario, you might want to scan a user QR that contains user_id + offer_token
       // For now, we'll just mark it as redeemed without linking to specific user
       
+      // Track successful verification
+      await supabase.from('discount_scans').insert({
+        discount_id: offer.id,
+        scan_type: 'verify',
+        success: true,
+      });
+      
       // Create redemption record
       const { error: redemptionError } = await supabase
         .from("redemptions")
@@ -211,6 +224,13 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
         stopScanner();
         return;
       }
+
+      // Track successful redemption
+      await supabase.from('discount_scans').insert({
+        discount_id: offer.id,
+        scan_type: 'redeem',
+        success: true,
+      });
 
       // Success!
       setScanResult({ 

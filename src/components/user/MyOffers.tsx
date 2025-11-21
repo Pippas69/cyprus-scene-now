@@ -207,7 +207,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     },
   });
 
-  // Generate QR code when offer is selected
+  // Generate QR code and track view when offer is selected
   useEffect(() => {
     if (!selectedOffer) {
       setQrCodeUrl(null);
@@ -217,6 +217,16 @@ export function MyOffers({ userId, language }: MyOffersProps) {
 
     setQrLoading(true);
     setQrError(null);
+
+    // Track QR code view
+    const trackView = async () => {
+      await supabase.from('discount_scans').insert({
+        discount_id: selectedOffer.id,
+        scan_type: 'view',
+        success: true,
+      });
+    };
+    trackView();
 
     // Small delay to ensure dialog is fully mounted
     setTimeout(() => {
