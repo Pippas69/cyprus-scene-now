@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Percent, Store, CheckCircle, Calendar, FileText, QrCode } from "lucide-react";
+import { Loader2, Percent, Store, CheckCircle, Calendar, FileText, QrCode, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -71,6 +71,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     hideTerms: { el: "Απόκρυψη όρων", en: "Hide terms" },
     retry: { el: "Προσπαθήστε ξανά", en: "Retry" },
     qrError: { el: "Αποτυχία δημιουργίας QR κωδικού", en: "Failed to generate QR code" },
+    downloadQR: { el: "Λήψη QR", en: "Download QR" },
   };
 
   const t = language === "el" ? {
@@ -88,6 +89,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     hideTerms: text.hideTerms.el,
     retry: text.retry.el,
     qrError: text.qrError.el,
+    downloadQR: text.downloadQR.el,
   } : {
     title: text.title.en,
     available: text.available.en,
@@ -103,6 +105,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     hideTerms: text.hideTerms.en,
     retry: text.retry.en,
     qrError: text.qrError.en,
+    downloadQR: text.downloadQR.en,
   };
 
   // Fetch available offers
@@ -396,11 +399,26 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                   )}
                 </div>
                 {!qrLoading && !qrError && qrCodeUrl && (
-                  <p className="text-xs text-center text-muted-foreground max-w-xs">
-                    {language === "el"
-                      ? "Δείξτε αυτόν τον κωδικό QR στο κατάστημα για να εξαργυρώσετε την προσφορά"
-                      : "Show this QR code at the store to redeem the offer"}
-                  </p>
+                  <>
+                    <p className="text-xs text-center text-muted-foreground max-w-xs">
+                      {language === "el"
+                        ? "Δείξτε αυτόν τον κωδικό QR στο κατάστημα για να εξαργυρώσετε την προσφορά"
+                        : "Show this QR code at the store to redeem the offer"}
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = qrCodeUrl;
+                        link.download = `offer-qr-${selectedOffer?.title.replace(/\s+/g, '-').toLowerCase()}.png`;
+                        link.click();
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      {t.downloadQR}
+                    </Button>
+                  </>
                 )}
               </>
             )}
