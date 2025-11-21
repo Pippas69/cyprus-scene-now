@@ -102,7 +102,7 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     );
   }
 
-  // Check if we have any daily analytics data (more accurate)
+  // Check if we have any data at all
   const hasData = data && (
     data.overview.totalImpressions > 0 ||
     data.eventPerformance.length > 0 ||

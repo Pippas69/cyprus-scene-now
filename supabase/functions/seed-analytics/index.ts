@@ -201,50 +201,21 @@ serve(async (req) => {
       console.log(`Attempted to insert ${followers.length} followers`);
     }
 
-    // Seed daily analytics
-    const dailyAnalytics = [];
-    for (let d = 0; d < 30; d++) {
-      const date = new Date(thirtyDaysAgo.getTime() + d * 24 * 60 * 60 * 1000);
-      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-      const multiplier = isWeekend ? 1.5 : 1;
-
-      dailyAnalytics.push({
-        business_id: businessId,
-        date: date.toISOString().split('T')[0],
-        total_event_views: Math.floor(randomInt(20, 50) * multiplier),
-        unique_event_viewers: Math.floor(randomInt(10, 30) * multiplier),
-        total_discount_views: Math.floor(randomInt(5, 20) * multiplier),
-        unique_discount_viewers: Math.floor(randomInt(3, 15) * multiplier),
-        new_followers: randomInt(0, 5),
-        unfollows: randomInt(0, 2),
-        new_rsvps_interested: randomInt(5, 15),
-        new_rsvps_going: randomInt(2, 10),
-        new_reservations: randomInt(1, 5),
-        discount_redemptions: randomInt(0, 3),
-        engagement_rate: (Math.random() * 0.15 + 0.05).toFixed(3),
-      });
-    }
-
-    const { error: analyticsError } = await supabase
-      .from('daily_analytics')
-      .insert(dailyAnalytics);
-
-    if (analyticsError && analyticsError.code !== '23505') {
-      console.error('Error inserting daily analytics:', analyticsError);
-    } else {
-      console.log(`Inserted ${dailyAnalytics.length} daily analytics records`);
-    }
+    // NOTE: We do NOT insert into daily_analytics here anymore
+    // The database triggers will automatically populate daily_analytics
+    // based on real user interactions with event_views, discount_views, etc.
+    console.log('Skipping daily_analytics insertion - will be auto-populated by triggers');
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Test data generated successfully',
+        message: 'Test data generated successfully. Analytics will be auto-populated by database triggers.',
         stats: {
           eventViews: events?.length ? 800 : 0,
           discountViews: discounts?.length ? 300 : 0,
           engagementEvents: 400,
           followers: followers.length,
-          dailyAnalytics: dailyAnalytics.length,
+          note: 'daily_analytics will be populated automatically by triggers'
         }
       }),
       {

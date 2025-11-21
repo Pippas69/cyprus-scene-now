@@ -51,6 +51,19 @@ export const EventPerformanceTable = ({ data, language }: EventPerformanceTableP
   const [sortField, setSortField] = useState<SortField>('impressions');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
+  if (!data?.eventPerformance) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground py-8">{t.noData}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');

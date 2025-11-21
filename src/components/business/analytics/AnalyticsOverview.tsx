@@ -32,6 +32,11 @@ const translations = {
 
 export const AnalyticsOverview = ({ data, language }: AnalyticsOverviewProps) => {
   const t = translations[language];
+  
+  if (!data?.overview) {
+    return <div className="text-center text-muted-foreground py-8">No overview data available</div>;
+  }
+  
   const { overview } = data;
 
   const stats = [
