@@ -13,6 +13,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Users, Phone, MapPin, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { toastTranslations, formatToastMessage } from '@/translations/toastTranslations';
+import { validationTranslations } from '@/translations/validationTranslations';
 
 interface ReservationDialogProps {
   open: boolean;
@@ -122,12 +124,12 @@ export const ReservationDialog = ({
     e.preventDefault();
     
     if (availableCapacity !== null && formData.party_size > availableCapacity) {
-      toast.error(language === 'el' ? `Διαθέσιμα: ${availableCapacity}` : `Available: ${availableCapacity}`);
+      toast.error(formatToastMessage(toastTranslations[language].capacityExceeded, { available: availableCapacity }));
       return;
     }
 
     if (formData.phone_number && !/^\+?[\d\s-()]+$/.test(formData.phone_number)) {
-      toast.error(language === 'el' ? 'Μη έγκυρο τηλέφωνο' : 'Invalid phone number');
+      toast.error(validationTranslations[language].invalidPhone);
       return;
     }
 
@@ -154,7 +156,7 @@ export const ReservationDialog = ({
         console.error('Email error:', emailError);
       }
 
-      toast.success(t.reservationCreated);
+      toast.success(toastTranslations[language].reservationCreated);
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
@@ -162,7 +164,7 @@ export const ReservationDialog = ({
       if (error.message?.includes('capacity')) {
         const match = error.message.match(/Available slots: (\d+)/);
         const available = match ? match[1] : '0';
-        toast.error(language === 'el' ? `Διαθέσιμα: ${available}` : `Available: ${available}`);
+        toast.error(formatToastMessage(toastTranslations[language].capacityExceeded, { available }));
         fetchAvailableCapacity();
       } else {
         toast.error(error.message);
