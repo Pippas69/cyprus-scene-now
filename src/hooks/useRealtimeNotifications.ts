@@ -73,9 +73,51 @@ export const useRealtimeNotifications = (businessId: string | null, userId: stri
       )
       .subscribe();
 
+    // Subscribe to QR code scans
+    const scansChannel = supabase
+      .channel('business-qr-scans-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'discount_scans'
+        },
+        async (payload) => {
+          // Check if this scan is for this business's offers
+          const { data: discount } = await supabase
+            .from('discounts')
+            .select('business_id, title')
+            .eq('id', payload.new.discount_id)
+            .single();
+
+          if (discount?.business_id === businessId && !notificationShownRef.current.has(payload.new.id)) {
+            notificationShownRef.current.add(payload.new.id);
+            
+            const scanTypeMap = {
+              view: 'viewed',
+              verify: 'verified',
+              redeem: 'redeemed'
+            };
+            
+            const scanAction = scanTypeMap[payload.new.scan_type as keyof typeof scanTypeMap] || 'scanned';
+            const icon = payload.new.scan_type === 'redeem' ? '✅' : payload.new.scan_type === 'verify' ? '🔍' : '👁️';
+            
+            toast(`QR Code ${scanAction.charAt(0).toUpperCase() + scanAction.slice(1)}! ${icon}`, {
+              description: `${discount.title} was ${scanAction}`,
+            });
+
+            queryClient.invalidateQueries({ queryKey: ['business-stats', businessId] });
+            queryClient.invalidateQueries({ queryKey: ['discount-scan-stats', businessId] });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(reservationsChannel);
       supabase.removeChannel(rsvpsChannel);
+      supabase.removeChannel(scansChannel);
     };
   }, [businessId, userId, queryClient]);
 };
