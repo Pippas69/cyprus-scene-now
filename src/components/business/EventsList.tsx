@@ -240,16 +240,18 @@ const EventsList = ({ businessId }: EventsListProps) => {
                   size="icon"
                   onClick={() => setEditingEvent(event)}
                   title={t.edit}
+                  aria-label={`Edit ${event.title}`}
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDuplicate(event)}
                   title={t.duplicate}
+                  aria-label={`Duplicate ${event.title}`}
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-4 w-4" aria-hidden="true" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -257,8 +259,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
                   onClick={() => handleDelete(event.id)}
                   className="text-destructive hover:text-destructive"
                   title={t.delete}
+                  aria-label={`Delete ${event.title}`}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
             </div>

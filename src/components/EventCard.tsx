@@ -318,7 +318,9 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
             </>
           ) : (
             <div className="absolute inset-0 bg-gradient-ocean flex items-center justify-center">
-              <div className="text-white/20 text-6xl">🌊</div>
+              <div className="text-white/20 text-6xl" aria-hidden="true" role="img" aria-label="Wave emoji decoration">
+                🌊
+              </div>
             </div>
           )}
           

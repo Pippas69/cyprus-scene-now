@@ -236,8 +236,9 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   size="icon"
                   onClick={() => handleDelete(offer.id)}
                   className="text-destructive hover:text-destructive"
+                  aria-label={`Delete ${offer.title}`}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
             </div>

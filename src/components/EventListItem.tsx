@@ -66,9 +66,9 @@ const EventListItem = ({
                 className="flex items-center gap-2 mb-1 hover:opacity-80 transition-opacity"
               >
                 <Avatar className="h-5 w-5 border">
-                  <AvatarImage src={event.businesses.logo_url || ""} />
+                  <AvatarImage src={event.businesses.logo_url || ""} alt={`${event.businesses.name} logo`} />
                   <AvatarFallback className="text-xs">
-                    <Building2 className="h-3 w-3" />
+                    <Building2 className="h-3 w-3" aria-hidden="true" />
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs font-medium truncate">
