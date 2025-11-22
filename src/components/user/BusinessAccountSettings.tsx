@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { usePasswordChange } from '@/hooks/usePasswordChange';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from '@/hooks/use-toast';
 import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +26,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const navigate = useNavigate();
   const { setLanguage } = useLanguage();
   const { preferences, isLoading, updatePreferences, isUpdating } = useUserPreferences(userId);
+  const { data: userProfile } = useUserProfile(userId);
   const { changePassword, isChanging } = usePasswordChange();
   
   const [currentPassword, setCurrentPassword] = useState('');
@@ -221,7 +223,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>{t.email}</Label>
-            <Input disabled value={preferences.user_id || ''} />
+            <Input disabled value={userProfile?.email || ''} />
           </div>
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">{t.userId}</Label>
