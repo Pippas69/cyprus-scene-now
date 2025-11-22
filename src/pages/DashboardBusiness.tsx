@@ -193,7 +193,6 @@ const DashboardBusiness = () => {
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
               <Route path="offers/new" element={businessId ? <OfferCreationForm businessId={businessId} /> : null} />
               <Route path="reservations" element={businessId ? <ReservationManagement businessId={businessId} language={language} /> : null} />
-              <Route path="profile" element={businessId ? <BusinessProfileForm businessId={businessId} /> : null} />
               <Route path="settings" element={userId && businessId ? <BusinessAccountSettings userId={userId} businessId={businessId} language={language} /> : null} />
             </Routes>
           </main>
