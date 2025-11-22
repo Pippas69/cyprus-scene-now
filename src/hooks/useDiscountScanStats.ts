@@ -58,14 +58,24 @@ export const useDiscountScanStats = (businessId: string | undefined) => {
     scanType: 'view' | 'verify' | 'redeem',
     success: boolean = true
   ) => {
-    const { error } = await supabase.from('discount_scans').insert({
-      discount_id: discountId,
-      scan_type: scanType,
-      success,
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase.from('discount_scans').insert({
+        discount_id: discountId,
+        scan_type: scanType,
+        success,
+        scanned_by: user?.id || null,
+      });
 
-    if (error) {
-      console.error('Error tracking scan:', error);
+      if (error) {
+        console.error('Error tracking scan:', error);
+      } else {
+        // Refetch stats after successful scan tracking
+        await fetchStats();
+      }
+    } catch (error) {
+      console.error('Failed to track scan:', error);
     }
   };
 
