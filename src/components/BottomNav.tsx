@@ -11,19 +11,24 @@ const BottomNav = () => {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        
-        // Check if user owns a business
-        const { data: business } = await supabase
-          .from("businesses")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        
-        // Set role based on business ownership
-        setUserRole(business ? "business" : "user");
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          
+          // Check if user owns a business
+          const { data: business } = await supabase
+            .from("businesses")
+            .select("id")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+          
+          // Set role based on business ownership with fallback
+          setUserRole(business ? "business" : "user");
+        }
+      } catch (error) {
+        console.warn('Error fetching user data in BottomNav:', error);
+        setUserRole("user");
       }
     };
     getUser();

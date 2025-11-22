@@ -33,16 +33,26 @@ export function UserLayout({ children }: UserLayoutProps) {
   }, []);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    if (user) {
-      const { data: business } = await supabase.from('businesses').select('id').eq('user_id', user.id).maybeSingle();
-      const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
-      setUserRole(business ? 'business' : 'user');
-      setUserName(profile?.name || user.email?.split('@')[0] || 'User');
-    } else {
-      setUserRole(null);
-      setUserName("");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        // Optimize: Fetch business and profile in parallel
+        const [businessResult, profileResult] = await Promise.all([
+          supabase.from('businesses').select('id').eq('user_id', user.id).maybeSingle(),
+          supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single()
+        ]);
+        
+        setUserRole(businessResult.data ? 'business' : 'user');
+        setUserName(profileResult.data?.name || user.email?.split('@')[0] || 'User');
+      } else {
+        setUserRole(null);
+        setUserName("");
+      }
+    } catch (error) {
+      console.warn('Error fetching user data:', error);
+      setUserName('User');
+      setUserRole('user');
     }
   };
 
@@ -120,10 +130,15 @@ export function UserLayout({ children }: UserLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {userName.charAt(0).toUpperCase()}
+                      {userName?.charAt(0)?.toUpperCase() || 'U'}
                     </AvatarFallback>
+                    {user?.user_metadata?.avatar_url && (
+                      <AvatarImage 
+                        src={user.user_metadata.avatar_url} 
+                        alt={userName || 'User'} 
+                      />
+                    )}
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

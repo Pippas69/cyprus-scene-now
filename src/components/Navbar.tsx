@@ -36,28 +36,30 @@ const Navbar = ({
     };
   }, []);
   const checkUser = async () => {
-    const {
-      data: {
-        user
+    try {
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        // Optimize: Fetch business and profile in parallel
+        const [businessResult, profileResult] = await Promise.all([
+          supabase.from('businesses').select('id').eq('user_id', user.id).maybeSingle(),
+          supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single()
+        ]);
+        
+        setUserRole(businessResult.data ? 'business' : 'user');
+        setUserName(profileResult.data?.name || user.email?.split('@')[0] || 'User');
+      } else {
+        setUserRole(null);
+        setUserName("");
       }
-    } = await supabase.auth.getUser();
-    setUser(user);
-    if (user) {
-      // Check if user owns a business
-      const {
-        data: business
-      } = await supabase.from('businesses').select('id').eq('user_id', user.id).maybeSingle();
-      
-      // Also get profile data for name
-      const {
-        data: profile
-      } = await supabase.from('profiles').select('name').eq('id', user.id).single();
-      
-      setUserRole(business ? 'business' : 'user');
-      setUserName(profile?.name || user.email?.split('@')[0] || 'User');
-    } else {
-      setUserRole(null);
-      setUserName("");
+    } catch (error) {
+      console.warn('Error fetching user data:', error);
+      setUserName('User');
+      setUserRole('user');
     }
   };
   const handleSignOut = async () => {
@@ -177,11 +179,17 @@ const Navbar = ({
             {/* User Profile Menu or Join Dropdown */}
             {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border-none">{/* ... keep existing code */}
+                  <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border-none">
                     <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs">
-                        {userName.substring(0, 2).toUpperCase()}
+                      <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                        {userName?.substring(0, 2)?.toUpperCase() || 'U'}
                       </AvatarFallback>
+                      {user?.user_metadata?.avatar_url && (
+                        <AvatarImage 
+                          src={user.user_metadata.avatar_url} 
+                          alt={userName || 'User'} 
+                        />
+                      )}
                     </Avatar>
                     <span className="hidden lg:inline font-medium">{userName}</span>
                     <ChevronDown className="w-4 h-4" />
