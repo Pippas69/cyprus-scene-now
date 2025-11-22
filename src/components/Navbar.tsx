@@ -147,9 +147,13 @@ const Navbar = ({
             {/* Notification Bell (only for logged-in users) */}
             {user && <NotificationBell userId={user.id} />}
             
-            {!user && <button onClick={() => navigate("/login")} className="font-inter font-bold text-aegean hover:text-accent transition-colors">
+            {!user && <Button 
+                variant="outline" 
+                onClick={() => navigate("/login")}
+                className="font-inter font-semibold border-2 border-aegean text-aegean hover:bg-aegean hover:text-white transition-all"
+              >
                 {t.login}
-              </button>}
+              </Button>}
 
             {/* Language Toggle */}
             <div className="flex gap-1 rounded-lg p-1 border-2 border-accent bg-[#012b67]">
