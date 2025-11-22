@@ -129,6 +129,63 @@ const Ekdiloseis = () => {
 
 // Limited View for Visitors
 const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPreviewEvents = async () => {
+      try {
+        // Fetch 6 upcoming events from verified businesses
+        const { data: eventsData, error } = await supabase
+          .from('events')
+          .select(`
+            *,
+            businesses!inner (
+              name,
+              logo_url,
+              verified
+            )
+          `)
+          .gt('start_at', new Date().toISOString())
+          .eq('businesses.verified', true)
+          .order('start_at', { ascending: true })
+          .limit(6);
+
+        if (error) throw error;
+
+        if (eventsData) {
+          // Fetch RSVP counts for each event
+          const eventsWithStats = await Promise.all(
+            eventsData.map(async (event) => {
+              const { data: rsvps } = await supabase
+                .from('rsvps')
+                .select('status')
+                .eq('event_id', event.id);
+
+              const interested_count = rsvps?.filter(r => r.status === 'interested').length || 0;
+              const going_count = rsvps?.filter(r => r.status === 'going').length || 0;
+
+              return {
+                ...event,
+                interested_count,
+                going_count,
+                user_status: null,
+              };
+            })
+          );
+
+          setEvents(eventsWithStats);
+        }
+      } catch (error) {
+        console.error('Error fetching preview events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPreviewEvents();
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -138,41 +195,41 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
     >
       {/* Preview Events - First 4 visible, rest blurred */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1, duration: 0.6 }}
-            className={`rounded-2xl overflow-hidden shadow-card bg-card transition-all duration-300 ${
-              i > 4 ? 'blur-md opacity-60 pointer-events-none scale-95' : ''
-            }`}
-            style={{
-              filter: i > 4 ? 'blur(4px)' : 'none',
-            }}
-          >
-            <EventCard 
-              language={language} 
-              event={{
-                id: `mock-${i}`,
-                title: i === 1 ? "Sunday Brunch at Lost + Found" : 
-                       i === 2 ? "Live Jazz Night" :
-                       i === 3 ? "Beach Yoga Session" :
-                       i === 4 ? "Art Exhibition Opening" :
-                       "Exclusive Event",
-                location: "Nicosia • 2.3 km away",
-                start_at: new Date().toISOString(),
-                end_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-                category: ["Café"],
-                price_tier: i % 2 === 0 ? "free" : "€€",
-                interested_count: 42 + i * 5,
-                going_count: 18 + i * 3,
-                user_status: null,
+        {loading ? (
+          // Show skeletons while loading
+          [1, 2, 3, 4, 5, 6].map((i) => (
+            <EventCardSkeleton key={i} />
+          ))
+        ) : events.length > 0 ? (
+          // Show real events
+          events.map((event, index) => (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.6 }}
+              className={`rounded-2xl overflow-hidden shadow-card bg-card transition-all duration-300 ${
+                index > 3 ? 'blur-md opacity-60 pointer-events-none scale-95' : ''
+              }`}
+              style={{
+                filter: index > 3 ? 'blur(4px)' : 'none',
               }}
-              user={null}
-            />
-          </motion.div>
-        ))}
+            >
+              <EventCard 
+                language={language} 
+                event={event}
+                user={null}
+              />
+            </motion.div>
+          ))
+        ) : (
+          // Show message if no events
+          <div className="col-span-full text-center py-12">
+            <p className="text-muted-foreground text-lg">
+              {language === "el" ? "Δεν υπάρχουν διαθέσιμες εκδηλώσεις αυτή τη στιγμή" : "No events available at the moment"}
+            </p>
+          </div>
+        )}
         
         {/* Gradient overlay on blurred cards */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-background/80" />
