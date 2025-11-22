@@ -218,13 +218,24 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     setQrLoading(true);
     setQrError(null);
 
-    // Track QR code view
+    // Track QR code view using the tracking utility
     const trackView = async () => {
-      await supabase.from('discount_scans').insert({
-        discount_id: selectedOffer.id,
-        scan_type: 'view',
-        success: true,
-      });
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        const { error } = await supabase.from('discount_scans').insert({
+          discount_id: selectedOffer.id,
+          scan_type: 'view',
+          success: true,
+          scanned_by: user?.id || null,
+        });
+
+        if (error) {
+          console.error('Error tracking QR view:', error);
+        }
+      } catch (error) {
+        console.error('Failed to track QR view:', error);
+      }
     };
     trackView();
 

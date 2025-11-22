@@ -67,7 +67,11 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
   // Track event view when card is 50% visible
   useViewTracking(cardRef, () => {
     if (event.id) {
-      trackEventView(event.id, 'feed');
+      const source = window.location.pathname.includes('/profile') ? 'profile' :
+                     window.location.pathname.includes('/xartis') ? 'map' :
+                     window.location.pathname.includes('/search') ? 'search' :
+                     window.location.pathname.includes('/feed') ? 'feed' : 'direct';
+      trackEventView(event.id, source as 'feed' | 'map' | 'search' | 'profile' | 'direct');
     }
   }, { threshold: 0.5 });
   const [reservationStatus, setReservationStatus] = useState<string | null>(null);

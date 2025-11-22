@@ -27,13 +27,17 @@ export const trackEventView = async (
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    await supabase.from('event_views').insert({
+    const { error } = await supabase.from('event_views').insert({
       event_id: eventId,
       user_id: user?.id || null,
       source,
       device_type: getDeviceType(),
       session_id: getSessionId(),
     });
+
+    if (error) {
+      console.error('Error tracking event view:', error);
+    }
   } catch (error) {
     console.error('Failed to track event view:', error);
   }
@@ -47,13 +51,17 @@ export const trackDiscountView = async (
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    await supabase.from('discount_views').insert({
+    const { error } = await supabase.from('discount_views').insert({
       discount_id: discountId,
       user_id: user?.id || null,
       source,
       device_type: getDeviceType(),
       session_id: getSessionId(),
     });
+
+    if (error) {
+      console.error('Error tracking discount view:', error);
+    }
   } catch (error) {
     console.error('Failed to track discount view:', error);
   }

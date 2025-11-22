@@ -36,7 +36,9 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   // Track discount view when card is 50% visible
   useViewTracking(cardRef, () => {
     if (offerData?.id) {
-      trackDiscountView(offerData.id, 'feed');
+      const source = window.location.pathname.includes('/profile') ? 'profile' : 
+                     window.location.pathname.includes('/feed') ? 'feed' : 'direct';
+      trackDiscountView(offerData.id, source as 'feed' | 'event' | 'profile' | 'direct');
     }
   }, { threshold: 0.5 });
   
