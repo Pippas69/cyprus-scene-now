@@ -24,6 +24,8 @@ import { BusinessSidebar } from "@/components/business/BusinessSidebar";
 import { BusinessFAB } from "@/components/business/BusinessFAB";
 import { Button } from "@/components/ui/button";
 import { toastTranslations } from "@/translations/toastTranslations";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { User, Settings, LogOut } from "lucide-react";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
@@ -36,6 +38,8 @@ const DashboardBusiness = () => {
   const [businessName, setBusinessName] = useState<string>("");
   const [businessLogoUrl, setBusinessLogoUrl] = useState<string | null>(null);
   const [businessCoverUrl, setBusinessCoverUrl] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
 
   const translations = {
     el: {
@@ -44,6 +48,9 @@ const DashboardBusiness = () => {
       verificationMessage:
         "Η επιχείρησή σας βρίσκεται υπό επαλήθευση. Θα ειδοποιηθείτε όταν ολοκληρωθεί η διαδικασία.",
       contactSupport: "Επικοινωνήστε με την υποστήριξη εάν έχετε ερωτήσεις.",
+      myProfile: "Το Προφίλ μου",
+      settings: "Ρυθμίσεις",
+      signOut: "Αποσύνδεση",
     },
     en: {
       businessDashboard: "Business Dashboard",
@@ -51,6 +58,9 @@ const DashboardBusiness = () => {
       verificationMessage:
         "Your business is currently under verification. You will be notified once the process is complete.",
       contactSupport: "Contact support if you have any questions.",
+      myProfile: "My Profile",
+      settings: "Settings",
+      signOut: "Sign Out",
     },
   };
 
@@ -75,29 +85,47 @@ const DashboardBusiness = () => {
 
       setUserId(user.id);
 
-      const { data: business, error } = await supabase
-        .from("businesses")
-        .select("id, verified, name, logo_url, cover_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // Fetch business and profile data in parallel
+      const [businessResult, profileResult] = await Promise.all([
+        supabase
+          .from("businesses")
+          .select("id, verified, name, logo_url, cover_url")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("name, avatar_url")
+          .eq("id", user.id)
+          .single()
+      ]);
 
       // If user doesn't own a business, redirect to feed
-      if (!business || error) {
+      if (!businessResult.data || businessResult.error) {
         toast.error(toastT.businessOnlyAccess);
         navigate("/feed");
         return;
       }
 
-      setVerified(business.verified ?? false);
-      setBusinessId(business.id);
-      setBusinessName(business.name ?? "");
-      setBusinessLogoUrl(business.logo_url ?? null);
-      setBusinessCoverUrl(business.cover_url ?? null);
+      setVerified(businessResult.data.verified ?? false);
+      setBusinessId(businessResult.data.id);
+      setBusinessName(businessResult.data.name ?? "");
+      setBusinessLogoUrl(businessResult.data.logo_url ?? null);
+      setBusinessCoverUrl(businessResult.data.cover_url ?? null);
+
+      // Set user profile data with defensive defaults
+      setUserName(profileResult.data?.name || user.email?.split('@')[0] || 'User');
+      setUserAvatarUrl(profileResult.data?.avatar_url || null);
     } catch (error) {
+      console.warn("Error fetching verification status:", error);
       toast.error(toastT.error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
   };
 
   if (loading) {
@@ -176,7 +204,43 @@ const DashboardBusiness = () => {
                   </div>
                 </div>
               </div>
-              <LanguageToggle />
+              <div className="flex items-center gap-3">
+                <LanguageToggle />
+                
+                {/* User Profile Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {userName?.charAt(0)?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                        {userAvatarUrl && (
+                          <AvatarImage 
+                            src={userAvatarUrl} 
+                            alt={userName} 
+                          />
+                        )}
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => navigate('/dashboard-user')}>
+                      <User className="mr-2 h-4 w-4" />
+                      {t.myProfile}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/dashboard-business/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t.settings}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {t.signOut}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
           </header>
