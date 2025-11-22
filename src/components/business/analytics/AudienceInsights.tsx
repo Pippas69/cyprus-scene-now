@@ -54,25 +54,24 @@ export const AudienceInsights = ({ data, language }: AudienceInsightsProps) => {
   
   const { audienceInsights } = data;
 
-  const ageData = Object.entries(audienceInsights.ageDistribution).map(([age, count]) => ({
-    name: age,
-    value: count,
+  const ageData = audienceInsights.ageDistribution.map((item) => ({
+    name: item.range,
+    value: item.count,
   }));
 
-  const cityData = Object.entries(audienceInsights.cityDistribution)
-    .sort((a, b) => b[1] - a[1])
+  const cityData = audienceInsights.cityDistribution
     .slice(0, 8)
-    .map(([city, count]) => ({
-      name: city,
-      value: count,
+    .map((item) => ({
+      name: item.city,
+      value: item.count,
     }));
 
-  const genderData = Object.entries(audienceInsights.genderDistribution)
-    .map(([gender, count]) => ({
-      name: gender === 'male' ? t.male :
-            gender === 'female' ? t.female :
+  const genderData = audienceInsights.genderDistribution
+    .map((item) => ({
+      name: item.gender === 'male' ? t.male :
+            item.gender === 'female' ? t.female :
             t.other,
-      value: count,
+      value: item.count,
     }));
 
   const followerData = audienceInsights.followerTrend.map(item => ({
