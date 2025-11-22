@@ -136,20 +136,19 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
     const fetchPreviewEvents = async () => {
       try {
         // Fetch 6 upcoming events from verified businesses
-        const { data: eventsData, error } = await supabase
-          .from('events')
-          .select(`
-            *,
-            businesses!inner (
-              name,
-              logo_url,
-              verified
-            )
-          `)
-          .gt('start_at', new Date().toISOString())
-          .eq('businesses.verified', true)
-          .order('start_at', { ascending: true })
-          .limit(6);
+      const { data: eventsData, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          businesses!inner (
+            name,
+            logo_url,
+            verified
+          )
+        `)
+        .eq('businesses.verified', true)
+        .order('start_at', { ascending: false })
+        .limit(6);
 
         if (error) throw error;
 
