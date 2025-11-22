@@ -148,9 +148,8 @@ const Navbar = ({
             {user && <NotificationBell userId={user.id} />}
             
             {!user && <Button 
-                variant="outline" 
                 onClick={() => navigate("/login")}
-                className="font-inter font-semibold border-2 border-aegean text-aegean hover:bg-aegean hover:text-white transition-all"
+                className="font-inter font-semibold bg-aegean text-white hover:bg-aegean/90 border-2 border-aegean transition-all"
               >
                 {t.login}
               </Button>}
