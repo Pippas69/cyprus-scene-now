@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import type { User } from "@supabase/supabase-js";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 
 interface EventListItemProps {
   event: any;
@@ -98,7 +99,7 @@ const EventListItem = ({
             {/* Category & Price */}
             <div className="flex gap-2 mt-2">
               <Badge variant="secondary" className="text-xs py-0 h-5">
-                {event.category[0]}
+                {getCategoryLabel(event.category[0], language)}
               </Badge>
               <Badge variant="outline" className="text-xs py-0 h-5">
                 {event.price_tier === 'free' ? t.free : event.price_tier}

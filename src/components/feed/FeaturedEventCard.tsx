@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatEventTime } from "@/lib/mapUtils";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 
 interface FeaturedEventCardProps {
   event: any;
@@ -26,17 +27,6 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
   };
 
   const t = translations[language];
-
-  const categoryLabels: Record<string, { el: string; en: string }> = {
-    cafe: { el: "Καφέ", en: "Cafe" },
-    nightlife: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
-    art: { el: "Τέχνη", en: "Art" },
-    fitness: { el: "Γυμναστική", en: "Fitness" },
-    family: { el: "Οικογένεια", en: "Family" },
-    business: { el: "Επιχείρηση", en: "Business" },
-    lifestyle: { el: "Τρόπος Ζωής", en: "Lifestyle" },
-    travel: { el: "Ταξίδι", en: "Travel" },
-  };
 
   const interestedCount = event.realtime_stats?.[0]?.interested_count || 0;
   const goingCount = event.realtime_stats?.[0]?.going_count || 0;
@@ -65,7 +55,7 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
           <div className="flex flex-wrap gap-2 mb-4">
             {event.category?.slice(0, 3).map((cat: string) => (
               <Badge key={cat} variant="secondary" className="bg-background/20 backdrop-blur-sm text-white border-white/20">
-                {categoryLabels[cat]?.[language] || cat}
+                {getCategoryLabel(cat, language)}
               </Badge>
             ))}
           </div>
