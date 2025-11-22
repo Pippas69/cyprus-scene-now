@@ -14,6 +14,7 @@ export interface AdvancedAnalytics {
     engagementRate: number;
     followerGrowth: number;
     conversionRate: number;
+    currentFollowers: number;
   };
   eventPerformance: Array<{
     eventId: string;
