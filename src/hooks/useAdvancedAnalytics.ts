@@ -46,6 +46,51 @@ export interface AdvancedAnalytics {
     hourlyEngagement: Record<number, number>;
     dailyEngagement: Record<string, number>;
   };
+  trafficSources: Array<{
+    source: string;
+    views: number;
+    unique_users: number;
+    conversions: number;
+  }>;
+  deviceAnalytics: Array<{
+    device_type: string;
+    views: number;
+    unique_users: number;
+    conversions: number;
+  }>;
+  conversionFunnel: {
+    views: number;
+    engagements: number;
+    interested: number;
+    committed: number;
+  };
+  engagementAnalysis: {
+    byType: Record<string, number>;
+    avgActionsPerUser: number;
+    totalUniqueUsers: number;
+  };
+  rsvpAnalytics: {
+    statusBreakdown: Record<string, number>;
+    reservationStats: {
+      total: number;
+      avgPartySize: number;
+      byStatus: Record<string, number>;
+    };
+    bookingTimeline: Array<{
+      daysBeforeEvent: number;
+      count: number;
+    }>;
+  };
+  followerGrowthDetailed: {
+    timeline: Array<{
+      date: string;
+      new_followers: number;
+      unfollows: number;
+    }>;
+    churnRate: number;
+    bySource: Record<string, number>;
+    netGrowth: number;
+  };
 }
 
 export function useAdvancedAnalytics(
@@ -259,6 +304,12 @@ export function useAdvancedAnalytics(
           hourlyEngagement,
           dailyEngagement,
         },
+        trafficSources: analyticsData.trafficSources || [],
+        deviceAnalytics: analyticsData.deviceAnalytics || [],
+        conversionFunnel: analyticsData.conversionFunnel || { views: 0, engagements: 0, interested: 0, committed: 0 },
+        engagementAnalysis: analyticsData.engagementAnalysis || { byType: {}, avgActionsPerUser: 0, totalUniqueUsers: 0 },
+        rsvpAnalytics: analyticsData.rsvpAnalytics || { statusBreakdown: {}, reservationStats: { total: 0, avgPartySize: 0, byStatus: {} }, bookingTimeline: [] },
+        followerGrowthDetailed: analyticsData.followerGrowthDetailed || { timeline: [], churnRate: 0, bySource: {}, netGrowth: 0 },
       };
 
       return analytics;
