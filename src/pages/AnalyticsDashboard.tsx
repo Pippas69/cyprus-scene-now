@@ -10,6 +10,14 @@ import { EventPerformanceTable } from '@/components/business/analytics/EventPerf
 import { AudienceInsights } from '@/components/business/analytics/AudienceInsights';
 import { TimeAnalytics } from '@/components/business/analytics/TimeAnalytics';
 import { AnalyticsEmptyState } from '@/components/business/analytics/AnalyticsEmptyState';
+import { TrafficSourceAnalysis } from '@/components/business/analytics/TrafficSourceAnalysis';
+import { DeviceAnalytics } from '@/components/business/analytics/DeviceAnalytics';
+import { ConversionFunnel } from '@/components/business/analytics/ConversionFunnel';
+import { EngagementAnalysis } from '@/components/business/analytics/EngagementAnalysis';
+import { RSVPAnalytics } from '@/components/business/analytics/RSVPAnalytics';
+import { FollowerGrowth } from '@/components/business/analytics/FollowerGrowth';
+import { InsightsEngine } from '@/components/business/analytics/InsightsEngine';
+import { ExportTools } from '@/components/business/analytics/ExportTools';
 import { Skeleton } from '@/components/ui/skeleton';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
@@ -21,15 +29,23 @@ const translations = {
   el: {
     title: 'Αναλυτικά Στοιχεία',
     overview: 'Επισκόπηση',
+    traffic: 'Επισκεψιμότητα',
+    engagement: 'Αλληλεπίδραση',
+    conversion: 'Μετατροπές',
     events: 'Εκδηλώσεις',
     audience: 'Κοινό',
+    insights: 'Συστάσεις',
     timing: 'Χρονισμός',
   },
   en: {
     title: 'Analytics',
     overview: 'Overview',
+    traffic: 'Traffic',
+    engagement: 'Engagement',
+    conversion: 'Conversion',
     events: 'Events',
     audience: 'Audience',
+    insights: 'Insights',
     timing: 'Timing',
   },
 };
@@ -160,10 +176,14 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
           <TabsTrigger value="overview">{t.overview}</TabsTrigger>
+          <TabsTrigger value="traffic" disabled={!showDetailedData}>{t.traffic}</TabsTrigger>
+          <TabsTrigger value="engagement" disabled={!showDetailedData}>{t.engagement}</TabsTrigger>
+          <TabsTrigger value="conversion" disabled={!showDetailedData}>{t.conversion}</TabsTrigger>
           <TabsTrigger value="events" disabled={!showDetailedData}>{t.events}</TabsTrigger>
           <TabsTrigger value="audience" disabled={!showDetailedData}>{t.audience}</TabsTrigger>
+          <TabsTrigger value="insights" disabled={!showDetailedData}>{t.insights}</TabsTrigger>
           <TabsTrigger value="timing" disabled={!showDetailedData}>{t.timing}</TabsTrigger>
         </TabsList>
 
@@ -173,12 +193,32 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
         {showDetailedData && (
           <>
+            <TabsContent value="traffic" className="space-y-6">
+              <TrafficSourceAnalysis data={data} language={language} />
+              <DeviceAnalytics data={data} language={language} />
+            </TabsContent>
+
+            <TabsContent value="engagement" className="space-y-6">
+              <EngagementAnalysis data={data} language={language} />
+              <FollowerGrowth data={data} language={language} />
+            </TabsContent>
+
+            <TabsContent value="conversion" className="space-y-6">
+              <ConversionFunnel data={data} language={language} />
+              <RSVPAnalytics data={data} language={language} />
+            </TabsContent>
+
             <TabsContent value="events" className="space-y-6">
               <EventPerformanceTable data={data} language={language} />
             </TabsContent>
 
             <TabsContent value="audience" className="space-y-6">
               <AudienceInsights data={data} language={language} />
+            </TabsContent>
+
+            <TabsContent value="insights" className="space-y-6">
+              <InsightsEngine data={data} language={language} />
+              <ExportTools data={data} language={language} businessId={businessId} />
             </TabsContent>
 
             <TabsContent value="timing" className="space-y-6">
