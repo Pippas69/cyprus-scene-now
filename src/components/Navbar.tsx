@@ -155,11 +155,21 @@ const Navbar = ({
               </Button>}
 
             {/* Language Toggle */}
-            <div className="flex gap-1 rounded-lg p-1 border-2 border-accent bg-primary">
-              <button onClick={() => onLanguageToggle("el")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-primary ${language === "el" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}>
+            <div className="flex gap-1 rounded-lg p-1 border-2 border-accent bg-primary" role="group" aria-label="Language selection">
+              <button 
+                onClick={() => onLanguageToggle("el")} 
+                className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-primary ${language === "el" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}
+                aria-label="Switch to Greek"
+                aria-pressed={language === "el"}
+              >
                 🇬🇷 ΕΛ
               </button>
-              <button onClick={() => onLanguageToggle("en")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-primary ${language === "en" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}>
+              <button 
+                onClick={() => onLanguageToggle("en")} 
+                className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-primary ${language === "en" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}
+                aria-label="Switch to English"
+                aria-pressed={language === "en"}
+              >
                 🇬🇧 EN
               </button>
             </div>
@@ -219,8 +229,13 @@ const Navbar = ({
             {/* Search Icon - Opens full screen search */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-foreground">
-                  <Search className="h-5 w-5" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-foreground"
+                  aria-label="Open search"
+                >
+                  <Search className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="top" className="h-full">
@@ -229,19 +244,34 @@ const Navbar = ({
             </Sheet>
 
             {/* Language Toggle Mobile */}
-            <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`}>
-              <button onClick={() => onLanguageToggle("el")} className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "el" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}>
+            <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`} role="group" aria-label="Language selection">
+              <button 
+                onClick={() => onLanguageToggle("el")} 
+                className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "el" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}
+                aria-label="Switch to Greek"
+                aria-pressed={language === "el"}
+              >
                 🇬🇷
               </button>
-              <button onClick={() => onLanguageToggle("en")} className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "en" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}>
+              <button 
+                onClick={() => onLanguageToggle("en")} 
+                className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "en" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}
+                aria-label="Switch to English"
+                aria-pressed={language === "en"}
+              >
                 🇬🇧
               </button>
             </div>
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className={scrolled ? "text-foreground" : "text-white"}>
-                  <Menu />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={scrolled ? "text-foreground" : "text-white"}
+                  aria-label="Open menu"
+                >
+                  <Menu aria-hidden="true" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] bg-background">

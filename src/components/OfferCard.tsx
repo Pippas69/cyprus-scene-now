@@ -66,7 +66,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               />
             ) : (
               <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-                <Percent className="h-8 w-8 text-muted-foreground" />
+                <Percent className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
               </div>
             )}
           </Link>
