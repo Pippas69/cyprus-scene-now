@@ -169,13 +169,15 @@ export function useAdvancedAnalytics(
         }
       }
 
-      // Use pre-calculated overview metrics from database function
-      const overview = analyticsData.overview || {
-        totalReach: 0,
-        totalImpressions: 0,
-        engagementRate: 0,
-        followerGrowth: 0,
-        conversionRate: 0
+      // Map database response to expected interface
+      const dbOverview = analyticsData.overview || {};
+      const overview = {
+        totalReach: dbOverview.uniqueViewers || 0,
+        totalImpressions: dbOverview.totalViews || 0,
+        engagementRate: dbOverview.engagementRate || 0,
+        followerGrowth: dbOverview.newFollowers || 0,
+        conversionRate: dbOverview.conversionRate || 0,
+        currentFollowers: dbOverview.newFollowers || 0,
       };
 
       // Use pre-calculated event performance from database function
