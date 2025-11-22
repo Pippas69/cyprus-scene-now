@@ -155,11 +155,11 @@ const Navbar = ({
               </Button>}
 
             {/* Language Toggle */}
-            <div className="flex gap-1 rounded-lg p-1 border-2 border-accent bg-[#012b67]">
-              <button onClick={() => onLanguageToggle("el")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-white ${language === "el" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}>
+            <div className="flex gap-1 rounded-lg p-1 border-2 border-accent bg-primary">
+              <button onClick={() => onLanguageToggle("el")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-primary ${language === "el" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}>
                 🇬🇷 ΕΛ
               </button>
-              <button onClick={() => onLanguageToggle("en")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-white ${language === "en" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}>
+              <button onClick={() => onLanguageToggle("en")} className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-primary ${language === "en" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}>
                 🇬🇧 EN
               </button>
             </div>
@@ -167,7 +167,7 @@ const Navbar = ({
             {/* User Profile Menu or Join Dropdown */}
             {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="gap-2 !bg-[#012b67] !text-white hover:!bg-[#012b67]/90 !border-none">
+                  <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border-none">{/* ... keep existing code */}
                     <Avatar className="h-6 w-6">
                       <AvatarFallback className="text-xs">
                         {userName.substring(0, 2).toUpperCase()}
