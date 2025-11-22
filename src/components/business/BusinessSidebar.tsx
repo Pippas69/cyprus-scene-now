@@ -74,7 +74,6 @@ export function BusinessSidebar() {
   ];
 
   const businessItems = [
-    { title: t.profile, url: "/dashboard-business/profile", icon: User },
     { title: t.settings, url: "/dashboard-business/settings", icon: Settings },
   ];
 
