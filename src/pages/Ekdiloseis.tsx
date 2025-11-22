@@ -135,7 +135,7 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
   useEffect(() => {
     const fetchPreviewEvents = async () => {
       try {
-        // Fetch 6 upcoming events from verified businesses
+        // Fetch all events from verified businesses
       const { data: eventsData, error } = await supabase
         .from('events')
         .select(`
@@ -147,8 +147,7 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
           )
         `)
         .eq('businesses.verified', true)
-        .order('start_at', { ascending: false })
-        .limit(6);
+        .order('start_at', { ascending: false });
 
         if (error) throw error;
 
@@ -196,7 +195,7 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative">
         {loading ? (
           // Show skeletons while loading
-          [1, 2, 3, 4, 5, 6].map((i) => (
+          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
             <EventCardSkeleton key={i} />
           ))
         ) : events.length > 0 ? (
