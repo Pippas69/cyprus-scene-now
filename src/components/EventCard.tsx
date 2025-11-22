@@ -13,6 +13,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { useFavorites } from "@/hooks/useFavorites";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { ReservationDialog } from "@/components/business/ReservationDialog";
 import LiveBadge from "@/components/feed/LiveBadge";
@@ -322,7 +323,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           )}
           
           <Badge className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm text-foreground z-10">
-            {event.category[0] || "Event"}
+            {getCategoryLabel(event.category[0], language)}
           </Badge>
           <Badge className="absolute bottom-3 right-3 bg-accent/90 backdrop-blur-sm text-accent-foreground z-10">
             {event.price_tier === 'free' ? t.free : event.price_tier}
