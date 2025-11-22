@@ -12,20 +12,24 @@ const translations = {
     totalReach: 'Συνολική Εμβέλεια',
     totalImpressions: 'Συνολικές Προβολές',
     engagementRate: 'Ποσοστό Αλληλεπίδρασης',
+    currentFollowers: 'Τρέχοντες Ακόλουθοι',
     followerGrowth: 'Αύξηση Ακολούθων',
     conversionRate: 'Ποσοστό Μετατροπής',
     uniqueViewers: 'μοναδικοί θεατές',
     totalViews: 'συνολικές προβολές',
+    totalFollowers: 'συνολικοί ακόλουθοι',
     vsLastPeriod: 'σε σχέση με προηγούμενη περίοδο',
   },
   en: {
     totalReach: 'Total Reach',
     totalImpressions: 'Total Impressions',
     engagementRate: 'Engagement Rate',
+    currentFollowers: 'Current Followers',
     followerGrowth: 'Follower Growth',
     conversionRate: 'Conversion Rate',
     uniqueViewers: 'unique viewers',
     totalViews: 'total views',
+    totalFollowers: 'total followers',
     vsLastPeriod: 'vs last period',
   },
 };
@@ -68,6 +72,15 @@ export const AnalyticsOverview = ({ data, language }: AnalyticsOverviewProps) =>
       bgColor: 'bg-pink-600/10',
     },
     {
+      label: t.currentFollowers,
+      value: overview.currentFollowers.toLocaleString(),
+      subtitle: t.totalFollowers,
+      icon: Users,
+      trend: 'neutral',
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bgColor: 'bg-indigo-600/10',
+    },
+    {
       label: t.followerGrowth,
       value: `${overview.followerGrowth >= 0 ? '+' : ''}${overview.followerGrowth.toFixed(1)}%`,
       subtitle: t.vsLastPeriod,
@@ -88,7 +101,7 @@ export const AnalyticsOverview = ({ data, language }: AnalyticsOverviewProps) =>
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         const TrendIcon = stat.trend === 'up' ? TrendingUp : stat.trend === 'down' ? TrendingDown : null;
