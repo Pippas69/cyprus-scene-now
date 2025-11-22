@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   const { language } = useLanguage();
   const t = translations[language];
   const [isSeeding, setIsSeeding] = useState(false);
+  const [showDetailedData, setShowDetailedData] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
@@ -57,6 +58,15 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
         }
       : undefined
   );
+
+  // Progressive loading: show overview first, then detailed data
+  useEffect(() => {
+    if (data && !showDetailedData && !isLoading) {
+      // Slight delay to show overview before detailed tabs
+      const timer = setTimeout(() => setShowDetailedData(true), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [data, showDetailedData, isLoading]);
 
   const handleGenerateTestData = async () => {
     setIsSeeding(true);
@@ -85,7 +95,8 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     }
   };
 
-  if (isLoading || isRefetching) {
+  // Show loading skeleton on initial load only
+  if (isLoading) {
     return (
       <div className="container mx-auto py-8 space-y-6">
         <div className="flex items-center justify-between">
@@ -151,26 +162,30 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">{t.overview}</TabsTrigger>
-          <TabsTrigger value="events">{t.events}</TabsTrigger>
-          <TabsTrigger value="audience">{t.audience}</TabsTrigger>
-          <TabsTrigger value="timing">{t.timing}</TabsTrigger>
+          <TabsTrigger value="events" disabled={!showDetailedData}>{t.events}</TabsTrigger>
+          <TabsTrigger value="audience" disabled={!showDetailedData}>{t.audience}</TabsTrigger>
+          <TabsTrigger value="timing" disabled={!showDetailedData}>{t.timing}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <AnalyticsOverview data={data} language={language} />
         </TabsContent>
 
-        <TabsContent value="events" className="space-y-6">
-          <EventPerformanceTable data={data} language={language} />
-        </TabsContent>
+        {showDetailedData && (
+          <>
+            <TabsContent value="events" className="space-y-6">
+              <EventPerformanceTable data={data} language={language} />
+            </TabsContent>
 
-        <TabsContent value="audience" className="space-y-6">
-          <AudienceInsights data={data} language={language} />
-        </TabsContent>
+            <TabsContent value="audience" className="space-y-6">
+              <AudienceInsights data={data} language={language} />
+            </TabsContent>
 
-        <TabsContent value="timing" className="space-y-6">
-          <TimeAnalytics data={data} language={language} />
-        </TabsContent>
+            <TabsContent value="timing" className="space-y-6">
+              <TimeAnalytics data={data} language={language} />
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   );

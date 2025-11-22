@@ -44,11 +44,11 @@ const translations = {
   },
 };
 
-type SortField = 'reach' | 'impressions' | 'interested' | 'going' | 'conversionRate' | 'reservations';
+type SortField = 'uniqueViewers' | 'views' | 'rsvpsInterested' | 'rsvpsGoing' | 'conversionRate' | 'reservations';
 
 export const EventPerformanceTable = ({ data, language }: EventPerformanceTableProps) => {
   const t = translations[language];
-  const [sortField, setSortField] = useState<SortField>('impressions');
+  const [sortField, setSortField] = useState<SortField>('views');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   if (!data?.eventPerformance) {
@@ -90,11 +90,11 @@ export const EventPerformanceTable = ({ data, language }: EventPerformanceTableP
       t.reservations,
     ];
     const rows = data.eventPerformance.map((event) => [
-      event.eventTitle,
-      event.reach,
-      event.impressions,
-      event.interested,
-      event.going,
+      event.eventName,
+      event.uniqueViewers,
+      event.views,
+      event.rsvpsInterested,
+      event.rsvpsGoing,
       `${event.conversionRate.toFixed(1)}%`,
       event.reservations,
     ]);
@@ -130,25 +130,25 @@ export const EventPerformanceTable = ({ data, language }: EventPerformanceTableP
               <TableHeader>
                 <TableRow>
                   <TableHead>{t.eventName}</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('reach')}>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('uniqueViewers')}>
                     <div className="flex items-center gap-1">
                       {t.reach}
                       <ArrowUpDown className="h-3 w-3" />
                     </div>
                   </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('impressions')}>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('views')}>
                     <div className="flex items-center gap-1">
                       {t.impressions}
                       <ArrowUpDown className="h-3 w-3" />
                     </div>
                   </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('interested')}>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('rsvpsInterested')}>
                     <div className="flex items-center gap-1">
                       {t.interested}
                       <ArrowUpDown className="h-3 w-3" />
                     </div>
                   </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('going')}>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('rsvpsGoing')}>
                     <div className="flex items-center gap-1">
                       {t.going}
                       <ArrowUpDown className="h-3 w-3" />
@@ -172,12 +172,12 @@ export const EventPerformanceTable = ({ data, language }: EventPerformanceTableP
                 {sortedData.map((event) => (
                   <TableRow key={event.eventId}>
                     <TableCell className="font-medium max-w-xs truncate">
-                      {event.eventTitle}
+                      {event.eventName}
                     </TableCell>
-                    <TableCell>{event.reach.toLocaleString()}</TableCell>
-                    <TableCell>{event.impressions.toLocaleString()}</TableCell>
-                    <TableCell>{event.interested.toLocaleString()}</TableCell>
-                    <TableCell>{event.going.toLocaleString()}</TableCell>
+                    <TableCell>{event.uniqueViewers.toLocaleString()}</TableCell>
+                    <TableCell>{event.views.toLocaleString()}</TableCell>
+                    <TableCell>{event.rsvpsInterested.toLocaleString()}</TableCell>
+                    <TableCell>{event.rsvpsGoing.toLocaleString()}</TableCell>
                     <TableCell>
                       <span
                         className={
