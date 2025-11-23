@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          admin_user_id: string | null
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          new_value: Json | null
+          old_value: Json | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       business_followers: {
         Row: {
           business_id: string
@@ -52,6 +91,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_followers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -120,6 +166,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "businesses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -242,6 +295,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discount_scans_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       discount_views: {
@@ -295,6 +355,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -398,6 +465,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "engagement_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_views: {
@@ -444,6 +518,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -560,6 +641,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "favorite_discounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       favorites: {
@@ -596,6 +684,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       featured: {
@@ -624,6 +719,39 @@ export type Database = {
           entity_type?: Database["public"]["Enums"]["entity_type"]
           id?: string
           start_at?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      featured_content: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          end_date: string
+          entity_id: string
+          entity_type: string
+          id: string
+          start_date: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          end_date: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          start_date: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          start_date?: string
           weight?: number | null
         }
         Relationships: []
@@ -663,6 +791,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -707,6 +842,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -897,31 +1039,53 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reports: {
         Row: {
+          admin_notes: string | null
           created_at: string
+          description: string | null
           entity_id: string
           entity_type: Database["public"]["Enums"]["entity_type"]
           id: string
           reason: string
+          reviewed_by: string | null
+          status: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
           created_at?: string
+          description?: string | null
           entity_id: string
           entity_type: Database["public"]["Enums"]["entity_type"]
           id?: string
           reason: string
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
           created_at?: string
+          description?: string | null
           entity_id?: string
           entity_type?: Database["public"]["Enums"]["entity_type"]
           id?: string
           reason?: string
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -930,6 +1094,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1036,6 +1207,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "rsvps_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       spatial_ref_sys: {
@@ -1109,6 +1287,27 @@ export type Database = {
           profile_visibility?: string | null
           theme_preference?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -1195,6 +1394,45 @@ export type Database = {
           f_table_schema?: unknown
           srid?: number | null
           type?: string | null
+        }
+        Relationships: []
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          city: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string | null
+          interests: string[] | null
+          last_name: string | null
+          name: string | null
+          town: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string | null
+          interests?: string[] | null
+          last_name?: string | null
+          name?: string | null
+          town?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string | null
+          interests?: string[] | null
+          last_name?: string | null
+          name?: string | null
+          town?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1500,6 +1738,13 @@ export type Database = {
       }
       get_discount_qr_token: { Args: { discount_id: string }; Returns: string }
       gettransactionid: { Args: never; Returns: unknown }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mask_phone: { Args: { phone_number: string }; Returns: string }
       populate_geometry_columns:
