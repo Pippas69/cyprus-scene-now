@@ -87,7 +87,15 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
   const initScanner = async () => {
     if (!videoRef.current) return;
 
+    // Wait for DOM to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
+      // Check if camera is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera not supported");
+      }
+
       const scanner = new QrScanner(
         videoRef.current,
         (result) => handleScan(result.data),
@@ -102,7 +110,27 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       scannerRef.current = scanner;
       setScanning(true);
     } catch (error) {
-      toast.error(toastTranslations[language].cameraError);
+      console.error("Scanner error:", error);
+      
+      let errorMsg = toastTranslations[language].cameraError;
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMsg = language === "el" 
+            ? "Δεν επιτράπηκε η πρόσβαση στην κάμερα. Παρακαλώ ελέγξτε τις ρυθμίσεις του προγράμματος περιήγησης."
+            : "Camera access was denied. Please check your browser settings.";
+        } else if (error.name === 'NotFoundError') {
+          errorMsg = language === "el"
+            ? "Δεν βρέθηκε κάμερα σε αυτή τη συσκευή"
+            : "No camera found on this device";
+        } else if (error.name === 'NotReadableError') {
+          errorMsg = language === "el"
+            ? "Η κάμερα χρησιμοποιείται ήδη από άλλη εφαρμογή"
+            : "Camera is already in use by another application";
+        }
+      }
+      
+      toast.error(errorMsg);
       setIsOpen(false);
     }
   };
