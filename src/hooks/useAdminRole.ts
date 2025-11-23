@@ -7,18 +7,31 @@ import { useEffect, useState } from 'react';
  * Uses the secure has_role() function from the database
  */
 export const useAdminRole = () => {
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null | undefined>(undefined); // undefined = loading, null = no user, string = user id
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id || null);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id || null);
     });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id || null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return useQuery({
     queryKey: ['admin-role', userId],
     queryFn: async () => {
-      if (!userId) return false;
+      if (!userId) {
+        console.log('[useAdminRole] No user ID, returning false');
+        return false;
+      }
+
+      console.log('[useAdminRole] Checking admin role for user:', userId);
 
       // Call the has_role RPC function (security definer)
       const { data, error } = await supabase
@@ -28,13 +41,14 @@ export const useAdminRole = () => {
         });
 
       if (error) {
-        console.error('Error checking admin role:', error);
+        console.error('[useAdminRole] Error checking admin role:', error);
         return false;
       }
 
+      console.log('[useAdminRole] Admin check result:', data);
       return data as boolean;
     },
-    enabled: !!userId,
+    enabled: userId !== undefined, // Only run when we know if there's a user or not
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 };
