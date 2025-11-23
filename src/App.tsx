@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { UserLayout } from "@/components/layouts/UserLayout";
+import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
+import AdminLayout from "@/components/layouts/AdminLayout";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
 import Ekdiloseis from "./pages/Ekdiloseis";
@@ -19,8 +21,14 @@ import ResetPassword from "./pages/ResetPassword";
 import SignupBusiness from "./pages/SignupBusiness";
 import DashboardBusiness from "./pages/DashboardBusiness";
 import DashboardUser from "./pages/DashboardUser";
+import AdminDashboard from "./pages/AdminDashboard";
 import AdminVerification from "./pages/AdminVerification";
 import AdminGeocoding from "./pages/AdminGeocoding";
+import AdminUsers from "./pages/AdminUsers";
+import AdminReports from "./pages/AdminReports";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSettings from "./pages/AdminSettings";
+import AdminForbidden from "./pages/AdminForbidden";
 import BusinessProfile from "./pages/BusinessProfile";
 import EventDetail from "./pages/EventDetail";
 import NotFound from "./pages/NotFound";
@@ -31,7 +39,9 @@ const queryClient = new QueryClient();
 function AppContent() {
   const location = window.location;
   const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/dashboard-user'];
-  const hideBottomNav = userLayoutRoutes.some(route => location.pathname.startsWith(route));
+  const adminRoutes = ['/admin'];
+  const hideBottomNav = userLayoutRoutes.some(route => location.pathname.startsWith(route)) || 
+                        adminRoutes.some(route => location.pathname.startsWith(route));
 
   return (
     <>
@@ -48,8 +58,19 @@ function AppContent() {
           <Route path="/signup-business" element={<SignupBusiness />} />
           <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
           <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
-          <Route path="/admin/verification" element={<AdminVerification />} />
-          <Route path="/admin/geocoding" element={<AdminGeocoding />} />
+          
+          {/* Admin Routes - Protected */}
+          <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="verification" element={<AdminVerification />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="reports" element={<AdminReports />} />
+            <Route path="settings" element={<AdminSettings />} />
+            <Route path="geocoding" element={<AdminGeocoding />} />
+          </Route>
+          <Route path="/admin/forbidden" element={<AdminForbidden />} />
+          
           <Route path="/business/:businessId" element={<BusinessProfile />} />
           <Route path="/event/:eventId" element={<EventDetail />} />
           <Route path="*" element={<NotFound />} />

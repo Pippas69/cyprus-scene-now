@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoicGlwcGFzNjkiLCJhIjoiY21oeHRoYjV6MDBmeTJtczRuNm03dWRnNyJ9.ws_aDgURsUhQ2LcoQ3EEjw';
+const MAPBOX_TOKEN = Deno.env.get('MAPBOX_API_TOKEN') || '';
 
 interface Business {
   id: string;
