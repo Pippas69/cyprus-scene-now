@@ -195,8 +195,15 @@ const DashboardBusiness = () => {
                 <SidebarTrigger />
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={businessLogoUrl || undefined} alt={businessName} />
-                    <AvatarFallback>{businessName.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {businessName?.charAt(0)?.toUpperCase() || 'B'}
+                    </AvatarFallback>
+                    {businessLogoUrl && (
+                      <AvatarImage 
+                        src={businessLogoUrl} 
+                        alt={businessName} 
+                      />
+                    )}
                   </Avatar>
                   <div>
                     <h1 className="text-lg font-semibold text-foreground">{businessName}</h1>
