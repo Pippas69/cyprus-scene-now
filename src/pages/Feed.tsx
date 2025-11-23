@@ -393,30 +393,32 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         )}
       </div>
       
-      <div className="sticky top-0 z-40 bg-background border-b shadow-sm">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h1 className="text-3xl font-bold mb-1 text-[#012b67] dark:text-sand-white">{t.title}</h1>
-              <p className="text-muted-foreground text-sm">{t.subtitle}</p>
+      {showNavbar && (
+        <div className="sticky top-0 z-40 bg-background border-b shadow-sm">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex flex-col gap-3">
+              <div>
+                <h1 className="text-3xl font-bold mb-1 text-[#012b67] dark:text-sand-white">{t.title}</h1>
+                <p className="text-muted-foreground text-sm">{t.subtitle}</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
+                <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
+              </div>
+              <FilterChips
+                categories={selectedCategories}
+                quickFilters={quickFilters}
+                selectedCity={selectedCity}
+                onRemoveCategory={handleRemoveCategory}
+                onRemoveQuickFilter={handleRemoveQuickFilter}
+                onRemoveCity={handleRemoveCity}
+                onClearAll={handleClearFilters}
+                language={language}
+              />
             </div>
-            <div className="flex flex-wrap gap-3">
-              <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
-              <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
-            </div>
-            <FilterChips
-              categories={selectedCategories}
-              quickFilters={quickFilters}
-              selectedCity={selectedCity}
-              onRemoveCategory={handleRemoveCategory}
-              onRemoveQuickFilter={handleRemoveQuickFilter}
-              onRemoveCity={handleRemoveCity}
-              onClearAll={handleClearFilters}
-              language={language}
-            />
           </div>
         </div>
-      </div>
+      )}
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
