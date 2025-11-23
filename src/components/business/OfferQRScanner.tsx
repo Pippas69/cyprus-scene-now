@@ -57,6 +57,18 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       notStarted: { el: "Η προσφορά δεν έχει ξεκινήσει ακόμα", en: "Offer hasn't started yet" },
       alreadyRedeemed: { el: "Αυτή η προσφορά έχει ήδη εξαργυρωθεί", en: "This offer has already been redeemed" },
       cameraError: { el: "Σφάλμα πρόσβασης κάμερας", en: "Camera access error" },
+      cameraPermissionDenied: { 
+        el: "Δεν επιτράπηκε η πρόσβαση στην κάμερα. Παρακαλώ ελέγξτε τις ρυθμίσεις του προγράμματος περιήγησης.", 
+        en: "Camera access was denied. Please check your browser settings." 
+      },
+      cameraNotFound: { 
+        el: "Δεν βρέθηκε κάμερα σε αυτή τη συσκευή", 
+        en: "No camera found on this device" 
+      },
+      cameraInUse: { 
+        el: "Η κάμερα χρησιμοποιείται ήδη από άλλη εφαρμογή", 
+        en: "Camera is already in use by another application" 
+      },
       scanError: { el: "Σφάλμα σάρωσης", en: "Scan error" },
     },
   };
@@ -93,6 +105,9 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     setIsScanning(true);
     setScanResult(null);
 
+    // Wait for DOM to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     const videoElement = document.getElementById("qr-video") as HTMLVideoElement;
     if (!videoElement) {
       const errorMsg = language === "el" ? t.errors.cameraError.el : t.errors.cameraError.en;
@@ -102,6 +117,11 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     }
 
     try {
+      // Check if camera is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera not supported");
+      }
+
       const qrScanner = new QrScanner(
         videoElement,
         async (result) => {
@@ -119,8 +139,21 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       setScanner(qrScanner);
     } catch (error) {
       console.error("Scanner error:", error);
-      const errorMsg = language === "el" ? t.errors.cameraError.el : t.errors.cameraError.en;
+      
+      let errorMsg = language === "el" ? t.errors.cameraError.el : t.errors.cameraError.en;
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMsg = language === "el" ? t.errors.cameraPermissionDenied.el : t.errors.cameraPermissionDenied.en;
+        } else if (error.name === 'NotFoundError') {
+          errorMsg = language === "el" ? t.errors.cameraNotFound.el : t.errors.cameraNotFound.en;
+        } else if (error.name === 'NotReadableError') {
+          errorMsg = language === "el" ? t.errors.cameraInUse.el : t.errors.cameraInUse.en;
+        }
+      }
+      
       toast.error(errorMsg);
+      setIsScanning(false);
     }
   };
 
@@ -292,11 +325,18 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
             {!isScanning && !scanResult && (
               <div className="flex flex-col items-center gap-4 py-8">
                 <Camera className="h-16 w-16 text-muted-foreground" />
-                <p className="text-center text-muted-foreground">
-                  {language === "el" 
-                    ? "Πατήστε το κουμπί για να ξεκινήσετε τη σάρωση του QR κωδικού προσφοράς"
-                    : "Press the button to start scanning the offer QR code"}
-                </p>
+                <div className="text-center space-y-2">
+                  <p className="text-muted-foreground">
+                    {language === "el" 
+                      ? "Πατήστε το κουμπί για να ξεκινήσετε τη σάρωση του QR κωδικού προσφοράς"
+                      : "Press the button to start scanning the offer QR code"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {language === "el"
+                      ? "Θα σας ζητηθεί να επιτρέψετε την πρόσβαση στην κάμερα"
+                      : "You will be asked to allow camera access"}
+                  </p>
+                </div>
                 <Button onClick={handleScanStart} size="lg">
                   <QrCode className="h-5 w-5 mr-2" />
                   {t.startScanning}
