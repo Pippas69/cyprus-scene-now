@@ -23,7 +23,7 @@ export const useAdminRole = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['admin-role', userId],
     queryFn: async () => {
       if (!userId) {
@@ -51,4 +51,11 @@ export const useAdminRole = () => {
     enabled: userId !== undefined, // Only run when we know if there's a user or not
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+
+  // Return custom loading state that accounts for disabled query
+  return {
+    data: query.data,
+    isLoading: userId === undefined || query.isLoading,
+    error: query.error,
+  };
 };
