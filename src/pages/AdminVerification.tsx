@@ -194,32 +194,32 @@ const AdminVerification = () => {
   };
   const getStatusBadge = (business: Business) => {
     if (business.verified) {
-      return <Badge className="bg-green-500">Εγκρίθηκε</Badge>;
+      return <Badge className="bg-green-500 dark:bg-green-600 text-white">Εγκρίθηκε</Badge>;
     } else if (business.verification_notes) {
-      return <Badge className="bg-red-500">Απορρίφθηκε</Badge>;
+      return <Badge className="bg-red-500 dark:bg-red-600 text-white">Απορρίφθηκε</Badge>;
     } else {
-      return <Badge className="bg-yellow-500">Εκκρεμεί</Badge>;
+      return <Badge className="bg-yellow-500 dark:bg-yellow-600 text-white">Εκκρεμεί</Badge>;
     }
   };
   if (loading) {
-    return <div className="min-h-screen gradient-hero flex items-center justify-center">
-        <p className="text-white text-xl">Φόρτωση...</p>
+    return <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-foreground text-xl">Φόρτωση...</p>
       </div>;
   }
-  return <div className="min-h-screen bg-sand-light">
-      <div className="bg-midnight text-white py-8 px-4">
+  return <div className="min-h-screen bg-background">
+      <div className="bg-card border-b py-8 px-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="font-cinzel text-4xl font-bold mb-2 text-[#000048] dark:text-sand-white">
+          <h1 className="font-cinzel text-4xl font-bold mb-2 text-foreground">
             Πίνακας Επαλήθευσης Επιχειρήσεων ΦΟΜΟ
           </h1>
-          <p className="font-inter text-seafoam">
+          <p className="font-inter text-muted-foreground">
             Ελέγξτε, εγκρίνετε ή απορρίψτε τις νέες εγγραφές επιχειρήσεων.
           </p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto py-8 px-4">
-        <div className="bg-white rounded-2xl shadow-elegant p-6 mb-6">
+        <div className="bg-card rounded-2xl shadow-elegant p-6 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -246,7 +246,7 @@ const AdminVerification = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-elegant overflow-hidden">
+        <div className="bg-card rounded-2xl shadow-elegant overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -379,7 +379,7 @@ const AdminVerification = () => {
             </TableBody>
           </Table>
 
-          {filteredBusinesses.length === 0 && <div className="text-center py-12 text-gray-500">
+          {filteredBusinesses.length === 0 && <div className="text-center py-12 text-muted-foreground">
               Δεν βρέθηκαν επιχειρήσεις
             </div>}
         </div>
