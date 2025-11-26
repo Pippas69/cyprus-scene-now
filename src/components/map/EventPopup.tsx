@@ -1,4 +1,5 @@
 import { X, MapPin, Calendar, ExternalLink, Share2, Navigation } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +27,8 @@ interface EventPopupProps {
 }
 
 export const EventPopup = ({ event, onClose, language }: EventPopupProps) => {
+  const navigate = useNavigate();
+  
   const text = {
     el: {
       details: "Λεπτομέρειες",
@@ -126,7 +129,7 @@ export const EventPopup = ({ event, onClose, language }: EventPopupProps) => {
 
         {/* Actions */}
         <div className="flex gap-2 pt-2">
-          <Button size="sm" className="flex-1" onClick={() => window.location.href = `/ekdiloseis?event=${event.id}`}>
+          <Button size="sm" className="flex-1" onClick={() => navigate(`/ekdiloseis?event=${event.id}`)}>
             <ExternalLink size={14} className="mr-1.5" />
             {t.details}
           </Button>
