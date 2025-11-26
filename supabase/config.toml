@@ -14,3 +14,12 @@ verify_jwt = false
 
 [functions.geocode-existing-businesses]
 verify_jwt = true
+
+[functions.monitor-database-performance]
+verify_jwt = false
+
+[functions.monitor-database-performance.schedule]
+cron = "*/5 * * * *"  # Run every 5 minutes
+
+[functions.get-database-metrics]
+verify_jwt = false
