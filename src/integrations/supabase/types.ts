@@ -109,6 +109,85 @@ export type Database = {
           },
         ]
       }
+      business_subscriptions: {
+        Row: {
+          beta_discount_percent: number | null
+          beta_tester: boolean | null
+          billing_cycle: Database["public"]["Enums"]["billing_cycle"] | null
+          business_id: string
+          canceled_at: string | null
+          commission_free_offers_remaining: number | null
+          created_at: string | null
+          current_period_end: string
+          current_period_start: string
+          id: string
+          monthly_budget_remaining_cents: number | null
+          plan_id: string | null
+          status: Database["public"]["Enums"]["subscription_status"] | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          beta_discount_percent?: number | null
+          beta_tester?: boolean | null
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"] | null
+          business_id: string
+          canceled_at?: string | null
+          commission_free_offers_remaining?: number | null
+          created_at?: string | null
+          current_period_end: string
+          current_period_start: string
+          id?: string
+          monthly_budget_remaining_cents?: number | null
+          plan_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"] | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          beta_discount_percent?: number | null
+          beta_tester?: boolean | null
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"] | null
+          business_id?: string
+          canceled_at?: string | null
+          commission_free_offers_remaining?: number | null
+          created_at?: string | null
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          monthly_budget_remaining_cents?: number | null
+          plan_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"] | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           address: string | null
@@ -180,6 +259,94 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_ledger: {
+        Row: {
+          business_id: string
+          commission_amount_cents: number
+          commission_percent: number
+          created_at: string | null
+          discount_id: string
+          id: string
+          invoice_id: string | null
+          original_price_cents: number
+          redeemed_at: string
+          redemption_id: string
+          status: Database["public"]["Enums"]["commission_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          commission_amount_cents: number
+          commission_percent: number
+          created_at?: string | null
+          discount_id: string
+          id?: string
+          invoice_id?: string | null
+          original_price_cents: number
+          redeemed_at: string
+          redemption_id: string
+          status?: Database["public"]["Enums"]["commission_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          commission_amount_cents?: number
+          commission_percent?: number
+          created_at?: string | null
+          discount_id?: string
+          id?: string
+          invoice_id?: string | null
+          original_price_cents?: number
+          redeemed_at?: string
+          redemption_id?: string
+          status?: Database["public"]["Enums"]["commission_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_ledger_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_ledger_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_ledger_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discount_scan_stats"
+            referencedColumns: ["discount_id"]
+          },
+          {
+            foreignKeyName: "commission_ledger_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_ledger_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "public_discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_ledger_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: false
+            referencedRelation: "redemptions"
             referencedColumns: ["id"]
           },
         ]
@@ -512,6 +679,79 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_boosts: {
+        Row: {
+          boost_tier: Database["public"]["Enums"]["boost_tier"]
+          business_id: string
+          created_at: string | null
+          daily_rate_cents: number
+          end_date: string
+          event_id: string
+          id: string
+          source: Database["public"]["Enums"]["boost_source"]
+          start_date: string
+          status: Database["public"]["Enums"]["boost_status"] | null
+          stripe_payment_intent_id: string | null
+          targeting_quality: number | null
+          total_cost_cents: number
+          updated_at: string | null
+        }
+        Insert: {
+          boost_tier: Database["public"]["Enums"]["boost_tier"]
+          business_id: string
+          created_at?: string | null
+          daily_rate_cents: number
+          end_date: string
+          event_id: string
+          id?: string
+          source: Database["public"]["Enums"]["boost_source"]
+          start_date: string
+          status?: Database["public"]["Enums"]["boost_status"] | null
+          stripe_payment_intent_id?: string | null
+          targeting_quality?: number | null
+          total_cost_cents: number
+          updated_at?: string | null
+        }
+        Update: {
+          boost_tier?: Database["public"]["Enums"]["boost_tier"]
+          business_id?: string
+          created_at?: string | null
+          daily_rate_cents?: number
+          end_date?: string
+          event_id?: string
+          id?: string
+          source?: Database["public"]["Enums"]["boost_source"]
+          start_date?: string
+          status?: Database["public"]["Enums"]["boost_status"] | null
+          stripe_payment_intent_id?: string | null
+          targeting_quality?: number | null
+          total_cost_cents?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_boosts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
@@ -936,6 +1176,144 @@ export type Database = {
           },
         ]
       }
+      offer_boosts: {
+        Row: {
+          active: boolean | null
+          business_id: string
+          commission_percent: number
+          created_at: string | null
+          discount_id: string
+          id: string
+          targeting_quality: number
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          business_id: string
+          commission_percent: number
+          created_at?: string | null
+          discount_id: string
+          id?: string
+          targeting_quality: number
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          business_id?: string
+          commission_percent?: number
+          created_at?: string | null
+          discount_id?: string
+          id?: string
+          targeting_quality?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_boosts_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: true
+            referencedRelation: "discount_scan_stats"
+            referencedColumns: ["discount_id"]
+          },
+          {
+            foreignKeyName: "offer_boosts_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: true
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_boosts_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: true
+            referencedRelation: "public_discounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_invoices: {
+        Row: {
+          boost_total_cents: number | null
+          business_id: string
+          commission_total_cents: number | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          paid_at: string | null
+          pdf_url: string | null
+          period_end: string
+          period_start: string
+          status: Database["public"]["Enums"]["invoice_status"] | null
+          stripe_invoice_id: string | null
+          subscription_total_cents: number | null
+          total_amount_cents: number
+          updated_at: string | null
+        }
+        Insert: {
+          boost_total_cents?: number | null
+          business_id: string
+          commission_total_cents?: number | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          pdf_url?: string | null
+          period_end: string
+          period_start: string
+          status?: Database["public"]["Enums"]["invoice_status"] | null
+          stripe_invoice_id?: string | null
+          subscription_total_cents?: number | null
+          total_amount_cents: number
+          updated_at?: string | null
+        }
+        Update: {
+          boost_total_cents?: number | null
+          business_id?: string
+          commission_total_cents?: number | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          pdf_url?: string | null
+          period_end?: string
+          period_start?: string
+          status?: Database["public"]["Enums"]["invoice_status"] | null
+          stripe_invoice_id?: string | null
+          subscription_total_cents?: number | null
+          total_amount_cents?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           body: string
@@ -1334,6 +1712,51 @@ export type Database = {
           proj4text?: string | null
           srid?: number
           srtext?: string | null
+        }
+        Relationships: []
+      }
+      subscription_plans: {
+        Row: {
+          active: boolean | null
+          commission_free_offers_count: number
+          created_at: string | null
+          display_order: number | null
+          event_boost_budget_cents: number
+          features: Json | null
+          id: string
+          name: string
+          price_annual_cents: number
+          price_monthly_cents: number
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          commission_free_offers_count: number
+          created_at?: string | null
+          display_order?: number | null
+          event_boost_budget_cents: number
+          features?: Json | null
+          id?: string
+          name: string
+          price_annual_cents: number
+          price_monthly_cents: number
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          commission_free_offers_count?: number
+          created_at?: string | null
+          display_order?: number | null
+          event_boost_budget_cents?: number
+          features?: Json | null
+          id?: string
+          name?: string
+          price_annual_cents?: number
+          price_monthly_cents?: number
+          slug?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2636,9 +3059,21 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "business" | "admin"
+      billing_cycle: "monthly" | "annual"
+      boost_source: "subscription" | "purchase"
+      boost_status: "scheduled" | "active" | "completed" | "canceled"
+      boost_tier: "basic" | "standard" | "premium" | "elite"
+      commission_status: "pending" | "invoiced" | "paid" | "disputed"
       entity_type: "event" | "business" | "discount"
+      invoice_status: "draft" | "pending" | "paid" | "overdue" | "canceled"
       price_tier: "free" | "low" | "medium" | "high"
       rsvp_status: "interested" | "going"
+      subscription_status:
+        | "active"
+        | "past_due"
+        | "canceled"
+        | "trialing"
+        | "paused"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2775,9 +3210,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "business", "admin"],
+      billing_cycle: ["monthly", "annual"],
+      boost_source: ["subscription", "purchase"],
+      boost_status: ["scheduled", "active", "completed", "canceled"],
+      boost_tier: ["basic", "standard", "premium", "elite"],
+      commission_status: ["pending", "invoiced", "paid", "disputed"],
       entity_type: ["event", "business", "discount"],
+      invoice_status: ["draft", "pending", "paid", "overdue", "canceled"],
       price_tier: ["free", "low", "medium", "high"],
       rsvp_status: ["interested", "going"],
+      subscription_status: [
+        "active",
+        "past_due",
+        "canceled",
+        "trialing",
+        "paused",
+      ],
     },
   },
 } as const
