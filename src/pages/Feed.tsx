@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { MapPin, Calendar, TrendingUp, RefreshCw, ChevronUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -398,7 +399,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           <div className="container mx-auto px-4 py-3">
             <div className="flex flex-col gap-3">
               <div>
-                <h1 className="text-3xl font-bold mb-1 text-[#012b67] dark:text-sand-white">{t.title}</h1>
+                <h1 className="text-3xl font-bold mb-1 text-foreground">{t.title}</h1>
                 <p className="text-muted-foreground text-sm">{t.subtitle}</p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -503,7 +504,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
             {!user ? (
               <div className="text-center py-16">
                 <p className="text-muted-foreground mb-4">{t.loginToSeePersonalized}</p>
-                <Button asChild><a href="/login">{t.login}</a></Button>
+                <Button asChild>
+                  <Link to="/login">{t.login}</Link>
+                </Button>
               </div>
             ) : eventsLoading ? (
               <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>

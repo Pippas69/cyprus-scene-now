@@ -52,6 +52,8 @@ export default {
 				seafoam: "hsl(var(--seafoam))",
 				"sand-white": "hsl(var(--sand-white))",
 				"stone-gray": "hsl(var(--stone-gray))",
+				midnight: "hsl(var(--midnight))",
+				ocean: "hsl(var(--ocean))",
       },
       fontFamily: {
         urbanist: ['Urbanist', 'sans-serif'],

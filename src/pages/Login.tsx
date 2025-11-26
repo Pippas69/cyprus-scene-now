@@ -141,9 +141,9 @@ const Login = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-card rounded-3xl shadow-elegant p-8 md:p-12">
+        <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
-            <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2">
+            <h1 className="font-cinzel text-4xl font-bold text-foreground mb-2">
               {t.login}
             </h1>
             <p className="font-inter text-foreground/80">

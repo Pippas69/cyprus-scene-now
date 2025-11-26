@@ -232,13 +232,13 @@ const SignupBusiness = () => {
         </Button>
 
         {/* Why Join ΦΟΜΟ Section */}
-        <div className="bg-white/95 backdrop-blur rounded-3xl shadow-elegant p-8 mb-8">
-          <h2 className="font-cinzel text-2xl text-midnight mb-6 text-center font-bold text-[#235674] dark:text-sand-white">
+        <div className="bg-card/95 backdrop-blur rounded-3xl shadow-elegant p-8 mb-8">
+          <h2 className="font-cinzel text-2xl text-foreground mb-6 text-center font-bold">
             Τι προσφέρει το ΦΟΜΟ στις επιχειρήσεις:
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4 bg-[#235674]">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
                 <Target className="h-6 w-6 text-white" />
               </div>
               <p className="font-inter text-sm text-muted-foreground">
@@ -246,7 +246,7 @@ const SignupBusiness = () => {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4 bg-[#235674]">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageCircle className="h-6 w-6 text-white" />
               </div>
               <p className="font-inter text-sm text-muted-foreground">
@@ -254,7 +254,7 @@ const SignupBusiness = () => {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-glow rounded-full flex items-center justify-center mx-auto mb-4 bg-[#225573]">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
                 <Ticket className="h-6 w-6 text-white" />
               </div>
               <p className="font-inter text-sm text-sm text-muted-foreground">
@@ -265,9 +265,9 @@ const SignupBusiness = () => {
         </div>
 
         {/* Main Form */}
-        <div className="bg-white rounded-3xl shadow-elegant p-8 md:p-12">
+        <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
-            <h1 className="font-cinzel text-4xl font-bold text-midnight mb-2 text-[#235674] dark:text-sand-white">
+            <h1 className="font-cinzel text-4xl font-bold text-foreground mb-2">
               Εγγραφή Επιχείρησης στο ΦΟΜΟ
             </h1>
             <p className="font-inter text-lg text-muted-foreground">

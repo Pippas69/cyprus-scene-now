@@ -32,10 +32,8 @@ const LocationSwitcher = ({ language, selectedCity, onCityChange }: LocationSwit
   const cities = [
     { value: null, label: t.allCyprus },
     { value: "Λευκωσία", label: t.nicosia },
-    { value: "Λεμεσός", label: t.limassol },
     { value: "Λάρνακα", label: t.larnaca },
-    { value: "Πάφος", label: t.paphos },
-    { value: "Αμμόχωστος", label: t.famagusta },
+    { value: "Παραλίμνι", label: "Παραλίμνι" },
   ];
 
   return (
