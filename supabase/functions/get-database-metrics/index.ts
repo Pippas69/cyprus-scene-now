@@ -18,14 +18,14 @@ Deno.serve(async (req) => {
     // Verify user is admin
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response('Unauthorized', { status: 401 });
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return new Response('Unauthorized', { status: 401 });
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
     }
 
     const { data: profile } = await supabase
@@ -35,78 +35,42 @@ Deno.serve(async (req) => {
       .single();
 
     if (!profile?.is_admin) {
-      return new Response('Forbidden', { status: 403 });
+      return new Response('Forbidden', { status: 403, headers: corsHeaders });
     }
 
-    console.log('Fetching database metrics...');
+    console.log('Fetching database metrics for admin:', user.id);
 
-    // Get connection stats from pg_stat_activity
-    const { data: connectionData } = await supabase.rpc('exec_sql', {
-      sql: `
-        SELECT 
-          state,
-          COUNT(*) as count
-        FROM pg_stat_activity
-        WHERE datname = current_database()
-        GROUP BY state
-      `
-    });
+    // Get connection stats
+    const { data: connectionStats } = await supabase
+      .from('connection_stats_monitor')
+      .select('*');
 
-    // Get slow queries from postgres logs (last hour)
-    const { data: slowQueries } = await supabase.rpc('exec_sql', {
-      sql: `
-        SELECT 
-          timestamp,
-          CAST(parsed.duration_ms AS FLOAT) as duration_ms,
-          parsed.query as query,
-          identifier as user
-        FROM postgres_logs
-        CROSS JOIN unnest(metadata) as m
-        CROSS JOIN unnest(m.parsed) as parsed
-        WHERE parsed.duration_ms IS NOT NULL
-          AND CAST(parsed.duration_ms AS FLOAT) > 1000
-          AND timestamp > NOW() - INTERVAL '1 hour'
-        ORDER BY CAST(parsed.duration_ms AS FLOAT) DESC
-        LIMIT 50
-      `
-    });
+    // Get recent monitoring alerts
+    const { data: recentAlerts } = await supabase
+      .from('monitoring_alerts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
 
-    // Get error rate from logs
-    const { data: errorData } = await supabase.rpc('exec_sql', {
-      sql: `
-        SELECT 
-          COUNT(*) FILTER (WHERE parsed.error_severity IN ('ERROR', 'FATAL', 'PANIC')) as errors,
-          COUNT(*) as total
-        FROM postgres_logs
-        CROSS JOIN unnest(metadata) as m
-        CROSS JOIN unnest(m.parsed) as parsed
-        WHERE timestamp > NOW() - INTERVAL '1 hour'
-      `
-    });
+    const stats = connectionStats || [];
+    const totalConnections = stats.reduce((sum, stat) => sum + stat.connection_count, 0);
+    const activeConnections = stats.find(s => s.state === 'active')?.connection_count || 0;
+    const idleConnections = stats.find(s => s.state === 'idle')?.connection_count || 0;
 
-    const connectionStats = connectionData || [];
-    const totalConnections = connectionStats.reduce((sum: number, stat: any) => sum + stat.count, 0);
-    const activeConnections = connectionStats.find((s: any) => s.state === 'active')?.count || 0;
-    const idleConnections = connectionStats.find((s: any) => s.state === 'idle')?.count || 0;
-
-    const queries = slowQueries || [];
-    const avgQueryTime = queries.length > 0
-      ? queries.reduce((sum: number, q: any) => sum + q.duration_ms, 0) / queries.length
-      : 0;
-
-    const errorRate = errorData?.[0]
-      ? (errorData[0].errors / errorData[0].total) * 100
-      : 0;
+    // Calculate error rate from recent alerts
+    const errorAlerts = recentAlerts?.filter(a => a.severity === 'error') || [];
+    const errorRate = recentAlerts ? (errorAlerts.length / recentAlerts.length) * 100 : 0;
 
     return new Response(
       JSON.stringify({
-        slowQueries: queries,
-        connectionStats,
+        slowQueries: [], // Not available without postgres_logs access
+        connectionStats: stats,
         totalConnections,
         activeConnections,
         idleConnections,
         errorRate,
-        avgQueryTime,
+        avgQueryTime: 0, // Not available
+        recentAlerts: recentAlerts || [],
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

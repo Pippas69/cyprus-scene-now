@@ -5,13 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface SlowQuery {
-  timestamp: string;
-  duration_ms: number;
-  query: string;
-  user: string;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -24,38 +17,46 @@ Deno.serve(async (req) => {
 
     console.log('Starting database performance monitoring...');
 
-    // Query slow queries from postgres logs (last 5 minutes)
-    const { data: slowQueries, error: slowQueriesError } = await supabase.rpc(
-      'exec_sql',
-      {
-        sql: `
-          SELECT 
-            timestamp,
-            CAST(parsed.duration_ms AS FLOAT) as duration_ms,
-            parsed.query as query,
-            identifier as user
-          FROM postgres_logs
-          CROSS JOIN unnest(metadata) as m
-          CROSS JOIN unnest(m.parsed) as parsed
-          WHERE parsed.duration_ms IS NOT NULL
-            AND CAST(parsed.duration_ms AS FLOAT) > 1000
-            AND timestamp > NOW() - INTERVAL '5 minutes'
-          ORDER BY CAST(parsed.duration_ms AS FLOAT) DESC
-          LIMIT 10
-        `
-      }
-    );
+    // Query connection statistics
+    const { data: connectionStats, error: connError } = await supabase
+      .from('connection_stats_monitor')
+      .select('*');
 
-    if (slowQueriesError) {
-      console.error('Error querying slow queries:', slowQueriesError);
-      throw slowQueriesError;
+    if (connError) {
+      console.error('Error querying connection stats:', connError);
+      throw connError;
     }
 
-    const queries = (slowQueries as SlowQuery[]) || [];
-    console.log(`Found ${queries.length} slow queries in the last 5 minutes`);
+    const totalConnections = connectionStats?.reduce((sum, stat) => sum + stat.connection_count, 0) || 0;
+    const activeConnections = connectionStats?.find(s => s.state === 'active')?.connection_count || 0;
 
-    // If we found slow queries, notify admins
-    if (queries.length > 0) {
+    console.log(`Total connections: ${totalConnections}, Active: ${activeConnections}`);
+
+    // Check if connection pool usage is high (>80%)
+    const CONNECTION_POOL_LIMIT = 100; // typical default
+    const connectionPoolUsage = (totalConnections / CONNECTION_POOL_LIMIT) * 100;
+
+    if (connectionPoolUsage > 80) {
+      console.log('⚠️ High connection pool usage detected:', connectionPoolUsage.toFixed(1) + '%');
+
+      // Log the alert
+      const { error: alertError } = await supabase
+        .from('monitoring_alerts')
+        .insert({
+          alert_type: 'high_connection_usage',
+          severity: 'warning',
+          message: `Connection pool usage is at ${connectionPoolUsage.toFixed(1)}%`,
+          details: {
+            total_connections: totalConnections,
+            active_connections: activeConnections,
+            threshold: 80,
+          },
+        });
+
+      if (alertError) {
+        console.error('Error logging alert:', alertError);
+      }
+
       // Get all admin users
       const { data: admins, error: adminsError } = await supabase
         .from('profiles')
@@ -64,21 +65,18 @@ Deno.serve(async (req) => {
 
       if (adminsError) {
         console.error('Error fetching admins:', adminsError);
-        throw adminsError;
-      }
+      } else if (admins && admins.length > 0) {
+        // Create notification for each admin
+        const notifications = admins.map(admin => ({
+          user_id: admin.id,
+          title: '⚠️ Database Alert',
+          message: `Connection pool usage is high (${connectionPoolUsage.toFixed(1)}%). Check the Database Monitoring page.`,
+          type: 'system',
+          entity_type: 'database',
+          entity_id: null,
+          read: false,
+        }));
 
-      // Create notification for each admin
-      const notifications = (admins || []).map(admin => ({
-        user_id: admin.id,
-        title: '🚨 Database Performance Alert',
-        message: `${queries.length} slow queries detected (>${queries[0].duration_ms.toFixed(0)}ms). Check the Database Monitoring page for details.`,
-        type: 'system',
-        entity_type: 'database',
-        entity_id: null,
-        read: false,
-      }));
-
-      if (notifications.length > 0) {
         const { error: notificationError } = await supabase
           .from('notifications')
           .insert(notifications);
@@ -89,20 +87,14 @@ Deno.serve(async (req) => {
           console.log(`Created ${notifications.length} admin notifications`);
         }
       }
-
-      // Log the slowest query details
-      const slowest = queries[0];
-      console.log('Slowest query:', {
-        duration: `${slowest.duration_ms.toFixed(0)}ms`,
-        query: slowest.query.substring(0, 100) + '...',
-        user: slowest.user,
-      });
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        slowQueriesFound: queries.length,
+        connectionPoolUsage: connectionPoolUsage.toFixed(1) + '%',
+        totalConnections,
+        activeConnections,
         timestamp: new Date().toISOString(),
       }),
       {
