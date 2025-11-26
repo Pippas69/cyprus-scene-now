@@ -27,11 +27,8 @@ export const useAdminRole = () => {
     queryKey: ['admin-role', userId],
     queryFn: async () => {
       if (!userId) {
-        console.log('[useAdminRole] No user ID, returning false');
         return false;
       }
-
-      console.log('[useAdminRole] Checking admin role for user:', userId);
 
       // Call the has_role RPC function (security definer)
       const { data, error } = await supabase
@@ -45,7 +42,6 @@ export const useAdminRole = () => {
         return false;
       }
 
-      console.log('[useAdminRole] Admin check result:', data);
       return data as boolean;
     },
     enabled: userId !== undefined, // Only run when we know if there's a user or not

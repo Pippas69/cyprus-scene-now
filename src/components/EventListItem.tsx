@@ -1,6 +1,6 @@
 import { Heart, Users, MapPin, Calendar, Building2 } from "lucide-react";
 import { format } from "date-fns";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -27,6 +27,8 @@ const EventListItem = ({
   user,
   language
 }: EventListItemProps) => {
+  const navigate = useNavigate();
+  
   const translations = {
     el: {
       interested: "Ενδιαφέρομαι",
@@ -129,7 +131,7 @@ const EventListItem = ({
               variant={userRSVP?.status === "interested" ? "default" : "outline"}
               onClick={() => {
                 if (!user) {
-                  window.location.href = "/login";
+                  navigate("/login");
                   return;
                 }
                 const newStatus = userRSVP?.status === "interested" ? null : "interested";
@@ -144,7 +146,7 @@ const EventListItem = ({
               variant={userRSVP?.status === "going" ? "default" : "outline"}
               onClick={() => {
                 if (!user) {
-                  window.location.href = "/login";
+                  navigate("/login");
                   return;
                 }
                 const newStatus = userRSVP?.status === "going" ? null : "going";
