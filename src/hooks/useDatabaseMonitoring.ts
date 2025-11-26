@@ -13,6 +13,15 @@ interface ConnectionStat {
   count: number;
 }
 
+interface MonitoringAlert {
+  id: string;
+  alert_type: string;
+  severity: string;
+  message: string;
+  details: any;
+  created_at: string;
+}
+
 interface DatabaseMetrics {
   slowQueries: SlowQuery[];
   connectionStats: ConnectionStat[];
@@ -21,6 +30,7 @@ interface DatabaseMetrics {
   idleConnections: number;
   errorRate: number;
   avgQueryTime: number;
+  recentAlerts: MonitoringAlert[];
 }
 
 export const useDatabaseMonitoring = () => {

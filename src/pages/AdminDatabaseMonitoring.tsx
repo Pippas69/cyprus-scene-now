@@ -152,11 +152,48 @@ const AdminDatabaseMonitoring = () => {
       {/* Slow Queries */}
       <Card>
         <CardHeader>
-          <CardTitle>Slow Queries (&gt;1s)</CardTitle>
-          <CardDescription>Queries that took longer than 1 second to execute</CardDescription>
+          <CardTitle>Recent Monitoring Alerts</CardTitle>
+          <CardDescription>Automated database health alerts from background monitoring</CardDescription>
         </CardHeader>
         <CardContent>
-          {metrics?.slowQueries && metrics.slowQueries.length > 0 ? (
+          {metrics?.recentAlerts && metrics.recentAlerts.length > 0 ? (
+            <ScrollArea className="h-96">
+              <div className="space-y-4">
+                {metrics.recentAlerts.map((alert) => (
+                  <div key={alert.id} className="border rounded-lg p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge variant={alert.severity === 'error' ? 'destructive' : alert.severity === 'warning' ? 'secondary' : 'default'}>
+                        {alert.severity.toUpperCase()}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <p className="font-medium">{alert.message}</p>
+                    {alert.details && (
+                      <code className="text-xs bg-muted p-2 rounded block overflow-x-auto">
+                        {JSON.stringify(alert.details, null, 2)}
+                      </code>
+                    )}
+                    <p className="text-xs text-muted-foreground">Type: {alert.alert_type}</p>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          ) : (
+            <p className="text-sm text-muted-foreground">No alerts in the database monitoring history.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Slow Queries Section (Hidden for now since not available) */}
+      {metrics?.slowQueries && metrics.slowQueries.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Slow Queries (&gt;1s)</CardTitle>
+            <CardDescription>Queries that took longer than 1 second to execute</CardDescription>
+          </CardHeader>
+          <CardContent>
             <ScrollArea className="h-96">
               <div className="space-y-4">
                 {metrics.slowQueries.map((query, index) => (
@@ -177,11 +214,9 @@ const AdminDatabaseMonitoring = () => {
                 ))}
               </div>
             </ScrollArea>
-          ) : (
-            <p className="text-sm text-muted-foreground">No slow queries detected in the last hour.</p>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

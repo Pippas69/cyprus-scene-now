@@ -802,6 +802,33 @@ export type Database = {
           },
         ]
       }
+      monitoring_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          message: string
+          severity: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          message: string
+          severity: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          message?: string
+          severity?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1314,6 +1341,14 @@ export type Database = {
       }
     }
     Views: {
+      connection_stats_monitor: {
+        Row: {
+          checked_at: string | null
+          connection_count: number | null
+          state: string | null
+        }
+        Relationships: []
+      }
       discount_scan_stats: {
         Row: {
           business_id: string | null
