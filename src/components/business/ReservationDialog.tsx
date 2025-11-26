@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toastTranslations, formatToastMessage } from '@/translations/toastTranslations';
 import { validationTranslations } from '@/translations/validationTranslations';
+import { reservationSchema } from '@/lib/reservationValidation';
 
 interface ReservationDialogProps {
   open: boolean;
@@ -123,13 +124,21 @@ export const ReservationDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (availableCapacity !== null && formData.party_size > availableCapacity) {
-      toast.error(formatToastMessage(toastTranslations[language].capacityExceeded, { available: availableCapacity }));
+    // Validate with Zod schema
+    try {
+      reservationSchema.parse(formData);
+    } catch (error: any) {
+      if (error.issues && error.issues[0]) {
+        toast.error(error.issues[0].message);
+      } else {
+        toast.error(validationTranslations[language].required);
+      }
       return;
     }
-
-    if (formData.phone_number && !/^\+?[\d\s-()]+$/.test(formData.phone_number)) {
-      toast.error(validationTranslations[language].invalidPhone);
+    
+    // Additional capacity check
+    if (availableCapacity !== null && formData.party_size > availableCapacity) {
+      toast.error(formatToastMessage(toastTranslations[language].capacityExceeded, { available: availableCapacity }));
       return;
     }
 
