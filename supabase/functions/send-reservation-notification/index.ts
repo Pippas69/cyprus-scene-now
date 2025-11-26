@@ -17,6 +17,8 @@ interface NotificationRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("send-reservation-notification invoked with method:", req.method);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

@@ -2,3 +2,15 @@ project_id = "iasahlgurfxufrtdigcr"
 
 [functions.seed-analytics]
 verify_jwt = true
+
+[functions.send-reservation-notification]
+verify_jwt = false
+
+[functions.send-business-notification]
+verify_jwt = false
+
+[functions.check-expiring-offers]
+verify_jwt = false
+
+[functions.geocode-existing-businesses]
+verify_jwt = true
