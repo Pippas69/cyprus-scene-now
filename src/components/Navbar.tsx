@@ -252,10 +252,10 @@ const Navbar = ({
             </Sheet>
 
             {/* Language Toggle Mobile */}
-            <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-white/10 backdrop-blur-sm"}`} role="group" aria-label="Language selection">
+            <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-background/10 backdrop-blur-sm"}`} role="group" aria-label="Language selection">
               <button 
                 onClick={() => onLanguageToggle("el")} 
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "el" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}
+                className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "el" ? scrolled ? "bg-primary text-primary-foreground" : "bg-background text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-background/80 hover:bg-background/20"}`}
                 aria-label="Switch to Greek"
                 aria-pressed={language === "el"}
               >
@@ -263,7 +263,7 @@ const Navbar = ({
               </button>
               <button 
                 onClick={() => onLanguageToggle("en")} 
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "en" ? scrolled ? "bg-primary text-primary-foreground" : "bg-white text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-white hover:bg-white/20"}`}
+                className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "en" ? scrolled ? "bg-primary text-primary-foreground" : "bg-background text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-background/80 hover:bg-background/20"}`}
                 aria-label="Switch to English"
                 aria-pressed={language === "en"}
               >
