@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { trackEventView, trackEngagement } from '@/lib/analyticsTracking';
+import { ReservationDialog } from '@/components/business/ReservationDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,11 @@ export default function EventDetail() {
   const [similarEvents, setSimilarEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [interestedCount, setInterestedCount] = useState(0);
+  const [goingCount, setGoingCount] = useState(0);
+  const [rsvpLoading, setRsvpLoading] = useState(false);
+  const [showReservationDialog, setShowReservationDialog] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -42,6 +48,27 @@ export default function EventDetail() {
       trackEventView(eventId, 'direct');
     }
   }, [eventId]);
+
+  useEffect(() => {
+    if (event && user) {
+      fetchRSVPStatus();
+    }
+  }, [event, user]);
+
+  const fetchRSVPStatus = async () => {
+    if (!user || !event) return;
+
+    const { data } = await supabase
+      .from('rsvps')
+      .select('status')
+      .eq('event_id', event.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data) {
+      setStatus(data.status);
+    }
+  };
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -77,6 +104,17 @@ export default function EventDetail() {
     }
 
     setEvent(eventData);
+
+    // Fetch RSVP counts
+    const { data: rsvpCounts } = await supabase
+      .from('rsvps')
+      .select('status')
+      .eq('event_id', eventId);
+
+    const interested = rsvpCounts?.filter(r => r.status === 'interested').length || 0;
+    const going = rsvpCounts?.filter(r => r.status === 'going').length || 0;
+    setInterestedCount(interested);
+    setGoingCount(going);
 
     // Fetch similar events (same category or location)
     const { data: similar } = await supabase
@@ -117,6 +155,74 @@ export default function EventDetail() {
     } else {
       navigator.clipboard.writeText(url);
       toast.success('Link copied to clipboard!');
+    }
+  };
+
+  const handleRSVP = async (newStatus: 'interested' | 'going') => {
+    if (!user) {
+      toast.error('Please login to RSVP');
+      navigate('/login');
+      return;
+    }
+
+    setRsvpLoading(true);
+
+    try {
+      if (status === newStatus) {
+        // Remove RSVP
+        const { error } = await supabase
+          .from('rsvps')
+          .delete()
+          .eq('event_id', event.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        setStatus(null);
+        if (newStatus === 'interested') {
+          setInterestedCount(prev => Math.max(0, prev - 1));
+        } else {
+          setGoingCount(prev => Math.max(0, prev - 1));
+        }
+        toast.success('RSVP removed');
+      } else {
+        // Add or update RSVP
+        const { error } = await supabase
+          .from('rsvps')
+          .upsert({
+            event_id: event.id,
+            user_id: user.id,
+            status: newStatus
+          });
+
+        if (error) throw error;
+
+        // Update counts
+        if (status === 'interested') {
+          setInterestedCount(prev => Math.max(0, prev - 1));
+        } else if (status === 'going') {
+          setGoingCount(prev => Math.max(0, prev - 1));
+        }
+
+        if (newStatus === 'interested') {
+          setInterestedCount(prev => prev + 1);
+        } else {
+          setGoingCount(prev => prev + 1);
+        }
+
+        setStatus(newStatus);
+        toast.success(`Marked as ${newStatus}`);
+      }
+
+      // Track engagement - using 'share' as a proxy for engagement tracking
+      if (event?.businesses?.id) {
+        trackEngagement(event.businesses.id, 'share', 'event', event.id);
+      }
+    } catch (error) {
+      console.error('RSVP error:', error);
+      toast.error('Failed to update RSVP');
+    } finally {
+      setRsvpLoading(false);
     }
   };
 
@@ -223,6 +329,66 @@ export default function EventDetail() {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* RSVP Buttons */}
+            {user && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRSVP('interested')}
+                      disabled={rsvpLoading}
+                      className={`gap-2 transition-all ${
+                        status === 'interested'
+                          ? 'border-ocean text-ocean bg-ocean/5'
+                          : 'border-border text-muted-foreground hover:border-ocean/50'
+                      }`}
+                    >
+                      <Heart className="h-4 w-4" />
+                      {text.interested}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleRSVP('going')}
+                      disabled={rsvpLoading}
+                      className={`gap-2 transition-all ${
+                        status === 'going'
+                          ? 'bg-ocean hover:bg-ocean/90 text-white'
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                      }`}
+                    >
+                      <Users className="h-4 w-4" />
+                      {text.going}
+                    </Button>
+                  </div>
+                  
+                  {/* RSVP Counts */}
+                  <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Heart className="h-4 w-4" />
+                      <span>{interestedCount}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      <span>{goingCount}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Reservation Button */}
+            {user && event.accepts_reservations && (
+              <Button
+                className="w-full gap-2"
+                onClick={() => setShowReservationDialog(true)}
+              >
+                <Calendar className="h-4 w-4" />
+                {language === 'el' ? 'Κράτηση' : 'Make Reservation'}
+              </Button>
+            )}
+
             {/* Share Button */}
             <Button
               variant="outline"
@@ -292,6 +458,24 @@ export default function EventDetail() {
           </div>
         </div>
       </div>
+
+      {/* Reservation Dialog */}
+      {user && event && (
+        <ReservationDialog
+          open={showReservationDialog}
+          onOpenChange={setShowReservationDialog}
+          eventId={event.id}
+          eventTitle={event.title}
+          eventStartAt={event.start_at}
+          seatingOptions={event.seating_options || []}
+          language={language}
+          userId={user.id}
+          onSuccess={() => {
+            setShowReservationDialog(false);
+            toast.success(language === 'el' ? 'Η κράτηση καταχωρήθηκε!' : 'Reservation submitted!');
+          }}
+        />
+      )}
 
       <Footer language={language} onLanguageToggle={() => {}} />
     </div>
