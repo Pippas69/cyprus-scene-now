@@ -11,7 +11,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
         gradient: "gradient-brand text-white shadow-glow hover:shadow-hover hover:scale-105 transition-all duration-300",
-        premium: "bg-white text-foreground border-2 border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-glow transition-all duration-300",
+        premium: "bg-background text-foreground border-2 border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-glow transition-all duration-300",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
         outline: "border-2 border-input bg-background text-foreground hover:bg-muted hover:border-primary hover:text-foreground shadow-sm",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm",

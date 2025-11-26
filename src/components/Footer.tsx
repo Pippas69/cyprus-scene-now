@@ -1,5 +1,6 @@
 import { Instagram, Facebook, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface FooterProps {
   language: "el" | "en";
@@ -56,36 +57,36 @@ const Footer = ({ language, onLanguageToggle }: FooterProps) => {
             <h4 className="font-poppins font-semibold text-lg">{t.explore}</h4>
             <ul className="space-y-2">
               <li>
-                <a
-                  href="/feed"
+                <Link
+                  to="/feed"
                   className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
                 >
                   {t.events}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/feed"
                   className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
                 >
                   {t.discounts}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/xartis"
                   className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
                 >
                   {t.map}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/feed"
                   className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
                 >
                   {t.blog}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -117,12 +118,12 @@ const Footer = ({ language, onLanguageToggle }: FooterProps) => {
               </a>
             </div>
             <div className="pt-2">
-              <a
-                href="#"
+              <Link
+                to="/signup-business"
                 className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm underline"
               >
                 {t.forBusiness}
-              </a>
+              </Link>
             </div>
           </div>
         </div>

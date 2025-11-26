@@ -313,7 +313,7 @@ const BusinessProfile = () => {
         {business.description && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Σχετικά</CardTitle>
+              <CardTitle>{t.about}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground whitespace-pre-wrap">
