@@ -6,7 +6,8 @@ import {
   BarChart3, 
   Flag, 
   Settings, 
-  MapPin 
+  MapPin,
+  Database
 } from 'lucide-react';
 import {
   Sidebar,
@@ -76,6 +77,11 @@ export const AdminSidebar = () => {
       title: t.sidebar.geocoding,
       icon: MapPin,
       href: '/admin/geocoding',
+    },
+    {
+      title: 'Database',
+      icon: Database,
+      href: '/admin/database',
     },
   ];
 
