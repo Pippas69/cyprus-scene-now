@@ -87,6 +87,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "business_followers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "business_followers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -240,6 +247,13 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "daily_analytics_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       discount_scans: {
@@ -286,6 +300,13 @@ export type Database = {
             columns: ["discount_id"]
             isOneToOne: false
             referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_scans_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "public_discounts"
             referencedColumns: ["id"]
           },
           {
@@ -348,6 +369,13 @@ export type Database = {
             columns: ["discount_id"]
             isOneToOne: false
             referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_views_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "public_discounts"
             referencedColumns: ["id"]
           },
           {
@@ -414,6 +442,13 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       engagement_events: {
@@ -456,6 +491,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
           {
@@ -598,6 +640,13 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       favorite_discounts: {
@@ -632,6 +681,13 @@ export type Database = {
             columns: ["discount_id"]
             isOneToOne: false
             referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_discounts_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "public_discounts"
             referencedColumns: ["id"]
           },
           {
@@ -910,6 +966,13 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "posts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -1057,6 +1120,13 @@ export type Database = {
             columns: ["discount_id"]
             isOneToOne: false
             referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "public_discounts"
             referencedColumns: ["id"]
           },
           {
@@ -1371,6 +1441,13 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_rsvp_counts: {
@@ -1431,6 +1508,108 @@ export type Database = {
           type?: string | null
         }
         Relationships: []
+      }
+      public_businesses: {
+        Row: {
+          address: string | null
+          category: string[] | null
+          city: string | null
+          cover_url: string | null
+          created_at: string | null
+          description: string | null
+          geo: unknown
+          id: string | null
+          logo_url: string | null
+          name: string | null
+          phone: string | null
+          verified: boolean | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string[] | null
+          city?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          geo?: unknown
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          phone?: string | null
+          verified?: boolean | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string[] | null
+          city?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          geo?: unknown
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          phone?: string | null
+          verified?: boolean | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      public_discounts: {
+        Row: {
+          active: boolean | null
+          business_id: string | null
+          created_at: string | null
+          description: string | null
+          end_at: string | null
+          id: string | null
+          percent_off: number | null
+          start_at: string | null
+          terms: string | null
+          title: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          business_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_at?: string | null
+          id?: string | null
+          percent_off?: number | null
+          start_at?: string | null
+          terms?: string | null
+          title?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          business_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_at?: string | null
+          id?: string | null
+          percent_off?: number | null
+          start_at?: string | null
+          terms?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       public_profiles: {
         Row: {
