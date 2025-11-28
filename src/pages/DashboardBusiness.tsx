@@ -20,6 +20,8 @@ import Feed from "@/pages/Feed";
 import Xartis from "@/pages/Xartis";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
 import SubscriptionStatus from "@/components/business/SubscriptionStatus";
+import BoostManagement from "@/components/business/BoostManagement";
+import BudgetTracker from "@/components/business/BudgetTracker";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BusinessSidebar } from "@/components/business/BusinessSidebar";
 import { BusinessFAB } from "@/components/business/BusinessFAB";
@@ -281,6 +283,7 @@ const DashboardBusiness = () => {
               <Route path="offers/new" element={businessId ? <OfferCreationForm businessId={businessId} /> : null} />
               <Route path="reservations" element={businessId ? <ReservationManagement businessId={businessId} language={language} /> : null} />
               <Route path="subscription" element={<SubscriptionStatus />} />
+              <Route path="boosts" element={businessId ? <BoostManagement businessId={businessId} /> : null} />
               <Route path="settings" element={userId && businessId ? <BusinessAccountSettings userId={userId} businessId={businessId} language={language} /> : null} />
             </Routes>
           </main>

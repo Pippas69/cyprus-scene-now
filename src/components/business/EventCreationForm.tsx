@@ -22,6 +22,8 @@ import { businessTranslations, eventCategories, seatingOptions } from "./transla
 import { Switch } from "@/components/ui/switch";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
+import EventBoostDialog from "./EventBoostDialog";
+import { useQuery } from "@tanstack/react-query";
 
 const createEventSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -65,6 +67,18 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState<string>("");
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
+  const [createdEventId, setCreatedEventId] = useState<string | null>(null);
+  const [boostDialogOpen, setBoostDialogOpen] = useState(false);
+
+  // Fetch subscription status
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(createEventSchema(language)),
@@ -149,7 +163,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       }
 
       // Create event
-      const { error } = await supabase.from('events').insert({
+      const { data: eventData, error } = await supabase.from('events').insert({
         business_id: businessId,
         title: data.title,
         description: data.description,
@@ -164,19 +178,26 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         max_reservations: data.max_reservations || null,
         requires_approval: data.requires_approval,
         seating_options: data.seating_options || [],
-      });
+      }).select().single();
 
       if (error) throw error;
 
       toast.success(toastT.success, {
-        description: toastT.eventCreated
+        description: toastT.eventCreated,
+        action: {
+          label: language === 'el' ? 'Προώθηση' : 'Boost',
+          onClick: () => {
+            setCreatedEventId(eventData.id);
+            setBoostDialogOpen(true);
+          },
+        },
       });
 
       form.reset();
       setCoverImage(null);
       
-      // Redirect to events list
-      navigate('/dashboard-business/events');
+      // Option to boost or redirect
+      setCreatedEventId(eventData.id);
     } catch (error: any) {
       toast.error(toastT.error, {
         description: error.message || toastT.eventCreateFailed
@@ -431,6 +452,23 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         imageSrc={tempImageSrc}
         onCropComplete={handleCropComplete}
       />
+
+      {createdEventId && (
+        <EventBoostDialog
+          open={boostDialogOpen}
+          onOpenChange={(open) => {
+            setBoostDialogOpen(open);
+            if (!open) {
+              // Redirect after closing boost dialog
+              navigate('/dashboard-business/events');
+            }
+          }}
+          eventId={createdEventId}
+          eventTitle={form.getValues("title")}
+          hasActiveSubscription={subscriptionData?.subscribed || false}
+          remainingBudgetCents={subscriptionData?.subscribed ? 100000 : 0}
+        />
+      )}
     </Card>
   );
 };

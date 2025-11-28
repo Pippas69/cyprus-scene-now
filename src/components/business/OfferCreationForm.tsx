@@ -15,6 +15,8 @@ import { businessTranslations } from "./translations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import OfferBoostSection from "./OfferBoostSection";
+import { useQuery } from "@tanstack/react-query";
 
 const createOfferSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -47,6 +49,21 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const t = businessTranslations[language];
   const toastT = toastTranslations[language];
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [boostData, setBoostData] = useState<{
+    enabled: boolean;
+    commissionPercent: number;
+    useCommissionFreeSlot: boolean;
+  }>({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
+
+  // Fetch subscription status
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const form = useForm<OfferFormData>({
     resolver: zodResolver(createOfferSchema(language)),
@@ -67,7 +84,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const onSubmit = async (data: OfferFormData) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('discounts').insert({
+      const { data: discountData, error } = await supabase.from('discounts').insert({
         business_id: businessId,
         title: data.title,
         description: data.description || null,
@@ -77,9 +94,24 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         terms: data.terms || null,
         qr_code_token: generateQRToken(),
         active: true,
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // Create boost if enabled
+      if (boostData.enabled && discountData) {
+        const { error: boostError } = await supabase.functions.invoke("create-offer-boost", {
+          body: {
+            discountId: discountData.id,
+            commissionPercent: boostData.commissionPercent,
+            useCommissionFreeSlot: boostData.useCommissionFreeSlot,
+          },
+        });
+
+        if (boostError) {
+          console.error("Boost creation error:", boostError);
+        }
+      }
 
       toast({
         title: toastT.success,
@@ -87,6 +119,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       });
 
       form.reset();
+      setBoostData({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
     } catch (error: any) {
       toast({
         title: toastT.error,
@@ -215,6 +248,15 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+            {/* Boost Section */}
+            <OfferBoostSection
+              hasActiveSubscription={subscriptionData?.subscribed || false}
+              remainingCommissionFreeOffers={
+                subscriptionData?.subscribed ? 5 : 0
+              }
+              onBoostChange={setBoostData}
             />
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
