@@ -32,6 +32,7 @@ import AdminDatabaseMonitoring from "./pages/AdminDatabaseMonitoring";
 import AdminForbidden from "./pages/AdminForbidden";
 import BusinessProfile from "./pages/BusinessProfile";
 import EventDetail from "./pages/EventDetail";
+import SubscriptionPlans from "./pages/SubscriptionPlans";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ function AppContent() {
           <Route path="/signup-business" element={<SignupBusiness />} />
           <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
           <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
+          <Route path="/subscription-plans" element={<SubscriptionPlans />} />
           
           {/* Admin Routes - Protected */}
           <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>

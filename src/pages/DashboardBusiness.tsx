@@ -19,6 +19,7 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import Feed from "@/pages/Feed";
 import Xartis from "@/pages/Xartis";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
+import SubscriptionStatus from "@/components/business/SubscriptionStatus";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BusinessSidebar } from "@/components/business/BusinessSidebar";
 import { BusinessFAB } from "@/components/business/BusinessFAB";
@@ -68,6 +69,21 @@ const DashboardBusiness = () => {
 
   useEffect(() => {
     checkVerificationStatus();
+  }, []);
+
+  useEffect(() => {
+    // Handle subscription success/cancel URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const subscriptionStatus = urlParams.get('subscription');
+    
+    if (subscriptionStatus === 'success') {
+      toast.success('Subscription successful!');
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (subscriptionStatus === 'canceled') {
+      toast.info('Subscription canceled');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
   
   // Enable real-time notifications
@@ -264,6 +280,7 @@ const DashboardBusiness = () => {
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
               <Route path="offers/new" element={businessId ? <OfferCreationForm businessId={businessId} /> : null} />
               <Route path="reservations" element={businessId ? <ReservationManagement businessId={businessId} language={language} /> : null} />
+              <Route path="subscription" element={<SubscriptionStatus />} />
               <Route path="settings" element={userId && businessId ? <BusinessAccountSettings userId={userId} businessId={businessId} language={language} /> : null} />
             </Routes>
           </main>
