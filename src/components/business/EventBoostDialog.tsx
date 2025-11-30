@@ -76,15 +76,35 @@ const EventBoostDialog = ({
           }
         );
         onOpenChange(false);
-      } else if (data.source === "stripe") {
-        // TODO: Handle Stripe payment flow with Elements
-        toast.info(
-          language === "el"
-            ? "Ανακατεύθυνση στην πληρωμή..."
-            : "Redirecting to payment..."
+      } else {
+        // Handle Stripe checkout flow
+        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+          "create-boost-checkout",
+          {
+            body: {
+              eventId,
+              tier,
+              startDate: startDate.toISOString().split("T")[0],
+              endDate: endDate.toISOString().split("T")[0],
+            },
+          }
         );
-        // For now, just close the dialog
-        onOpenChange(false);
+
+        if (checkoutError) throw checkoutError;
+
+        if (checkoutData.url) {
+          window.open(checkoutData.url, "_blank");
+          toast.success(
+            language === "el" ? "Ανακατεύθυνση στην πληρωμή" : "Redirecting to payment",
+            {
+              description:
+                language === "el"
+                  ? "Ολοκληρώστε την πληρωμή για να ενεργοποιήσετε την προώθηση"
+                  : "Complete payment to activate your boost",
+            }
+          );
+          onOpenChange(false);
+        }
       }
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {

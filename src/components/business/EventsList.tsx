@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users, Copy, Pencil } from "lucide-react";
+import { Trash2, Calendar, MapPin, Users, Copy, Pencil, Rocket } from "lucide-react";
 import EventEditDialog from "./EventEditDialog";
+import EventBoostDialog from "./EventBoostDialog";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -19,6 +20,17 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const [editingEvent, setEditingEvent] = useState<any>(null);
+  const [boostingEvent, setBoostingEvent] = useState<any>(null);
+
+  // Fetch subscription status
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const translations = {
     el: {
@@ -31,6 +43,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       delete: "Διαγραφή",
       duplicate: "Αντιγραφή",
       edit: "Επεξεργασία",
+      boost: "Προώθηση",
       interested: "Ενδιαφέρον",
       going: "Θα Πάνε",
     },
@@ -44,6 +57,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       delete: "Delete",
       duplicate: "Duplicate",
       edit: "Edit",
+      boost: "Boost",
       interested: "Interested",
       going: "Going",
     },
@@ -238,6 +252,16 @@ const EventsList = ({ businessId }: EventsListProps) => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setBoostingEvent(event)}
+                  title={t.boost}
+                  aria-label={`Boost ${event.title}`}
+                  className="text-primary hover:text-primary"
+                >
+                  <Rocket className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setEditingEvent(event)}
                   title={t.edit}
                   aria-label={`Edit ${event.title}`}
@@ -278,6 +302,17 @@ const EventsList = ({ businessId }: EventsListProps) => {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
           }}
+        />
+      )}
+
+      {boostingEvent && (
+        <EventBoostDialog
+          open={!!boostingEvent}
+          onOpenChange={(open) => !open && setBoostingEvent(null)}
+          eventId={boostingEvent.id}
+          eventTitle={boostingEvent.title}
+          hasActiveSubscription={subscriptionData?.subscribed || false}
+          remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
         />
       )}
     </>
