@@ -172,7 +172,7 @@ const Xartis = () => {
                 <Badge
                   key={category.id}
                   variant={isSelected ? "default" : "outline"}
-                  className="cursor-pointer hover:scale-105 transition-transform px-3 py-1.5 gap-2"
+                  className="cursor-pointer px-3 py-1.5 gap-2 transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-0.5 active:scale-95"
                   onClick={() => toggleCategory(category.id)}
                 >
                   <Icon size={14} />

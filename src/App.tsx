@@ -2,11 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { AnimatePresence, motion } from "framer-motion";
 import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -39,7 +40,7 @@ const queryClient = new QueryClient();
 
 // Component to conditionally render BottomNav
 function AppContent() {
-  const location = window.location;
+  const location = useLocation();
   const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/dashboard-user'];
   const adminRoutes = ['/admin'];
   const hideBottomNav = userLayoutRoutes.some(route => location.pathname.startsWith(route)) || 
@@ -48,11 +49,12 @@ function AppContent() {
   return (
     <>
       <div className="min-h-screen pb-16 md:pb-0">
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/feed" element={<UserLayout><Feed /></UserLayout>} />
-          <Route path="/ekdiloseis" element={<UserLayout><Ekdiloseis /></UserLayout>} />
-          <Route path="/xartis" element={<UserLayout><Xartis /></UserLayout>} />
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+          <Route path="/feed" element={<PageTransition><UserLayout><Feed /></UserLayout></PageTransition>} />
+          <Route path="/ekdiloseis" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
+          <Route path="/xartis" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -77,13 +79,26 @@ function AppContent() {
           
           <Route path="/business/:businessId" element={<BusinessProfile />} />
           <Route path="/event/:eventId" element={<EventDetail />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
+        </AnimatePresence>
       </div>
       {!hideBottomNav && <BottomNav />}
     </>
   );
 }
+
+// Page transition wrapper component
+const PageTransition = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    transition={{ duration: 0.3, ease: "easeOut" }}
+  >
+    {children}
+  </motion.div>
+);
 
 const App = () => (
   <ErrorBoundary>
