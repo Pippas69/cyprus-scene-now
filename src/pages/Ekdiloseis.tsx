@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -277,23 +277,34 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
 
 // Full View for Logged-in Users
 const FullExploreView = ({ language }: { language: "el" | "en" }) => {
+  const EVENTS_PER_PAGE = 12;
+  
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [personalizedEvents, setPersonalizedEvents] = useState<any[]>([]);
   const [otherEvents, setOtherEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [user, setUser] = useState<any>(null);
+  
+  const observerRef = useRef<IntersectionObserver | null>(null);
   
   const text = {
     el: {
       allEvents: "Όλες οι Εκδηλώσεις",
       forYou: "Προτεινόμενα για Εσένα",
       moreEvents: "Περισσότερες Εκδηλώσεις",
+      loadingMore: "Φόρτωση περισσότερων...",
+      endOfResults: "Αυτές είναι όλες οι εκδηλώσεις",
     },
     en: {
       allEvents: "All Events",
       forYou: "Recommended for You",
       moreEvents: "More Events",
+      loadingMore: "Loading more...",
+      endOfResults: "You've seen all events",
     },
   };
 
@@ -307,28 +318,51 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
     getUser();
   }, []);
 
+  // Reset page when filters change
   useEffect(() => {
-    fetchEvents();
+    setPage(0);
+    setHasMore(true);
+    fetchEvents(0, false);
   }, [selectedCategories, user]);
 
-  const fetchEvents = async () => {
-    setLoading(true);
+  // Load more when page changes
+  useEffect(() => {
+    if (page > 0) {
+      fetchEvents(page, true);
+    }
+  }, [page]);
+
+  const fetchEvents = async (pageNum: number = 0, append: boolean = false) => {
+    if (pageNum === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
+      const from = pageNum * EVENTS_PER_PAGE;
+      const to = from + EVENTS_PER_PAGE - 1;
+      
       let query = supabase
         .from('events')
-        .select('*')
+        .select('*', { count: 'exact' })
         .gte('end_at', new Date().toISOString())
-        .order('start_at', { ascending: true });
+        .order('start_at', { ascending: true })
+        .range(from, to);
 
       if (selectedCategories.length > 0) {
         query = query.overlaps('category', selectedCategories);
       }
 
-      const { data: eventsData, error } = await query;
+      const { data: eventsData, error, count } = await query;
 
       if (error) throw error;
 
       if (eventsData) {
+        // Check if there are more events to load
+        const totalLoaded = (pageNum + 1) * EVENTS_PER_PAGE;
+        setHasMore(count ? totalLoaded < count : false);
+        
         // Fetch RSVP counts and user status for each event
         const eventsWithStats = await Promise.all(
           eventsData.map(async (event) => {
@@ -362,22 +396,53 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
             !event.category?.some((cat: string) => userPreferences.includes(cat.toLowerCase()))
           );
           
-          setPersonalizedEvents(personalized);
-          setOtherEvents(others);
+          if (append) {
+            // When scrolling, only append to "others" section
+            setOtherEvents(prev => [...prev, ...others]);
+            // Personalized section doesn't paginate
+          } else {
+            // Fresh load
+            setPersonalizedEvents(personalized);
+            setOtherEvents(others);
+          }
         } else {
           // No preferences, show all as regular events
-          setPersonalizedEvents([]);
-          setOtherEvents(eventsWithStats);
+          if (append) {
+            setOtherEvents(prev => [...prev, ...eventsWithStats]);
+          } else {
+            setPersonalizedEvents([]);
+            setOtherEvents(eventsWithStats);
+          }
         }
 
-        setEvents(eventsWithStats);
+        if (!append) {
+          setEvents(eventsWithStats);
+        }
       }
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
-      setLoading(false);
+      if (pageNum === 0) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
   };
+
+  const lastEventRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading || loadingMore) return;
+    
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prev => prev + 1);
+      }
+    }, { threshold: 0.1 });
+    
+    if (node) observerRef.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
 
   return (
     <motion.div
@@ -464,6 +529,7 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
                 {otherEvents.map((event, i) => (
                   <motion.div
                     key={event.id}
+                    ref={i === otherEvents.length - 1 ? lastEventRef : null}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08, duration: 0.6 }}
@@ -474,11 +540,27 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
                   </motion.div>
                 ))}
               </div>
+
+              {/* Loading more indicator */}
+              {loadingMore && (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              )}
+
+              {/* End of results message */}
+              {!hasMore && otherEvents.length > 0 && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    {t.endOfResults}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
           {/* No events message */}
-          {events.length === 0 && (
+          {events.length === 0 && !loading && (
             <div className="text-center py-12">
               <p className="text-muted-foreground text-lg">
                 {language === "el" ? "Δεν βρέθηκαν εκδηλώσεις" : "No events found"}
