@@ -1,32 +1,32 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 const EventCardSkeleton = () => {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card shadow-sm animate-pulse">
+    <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
       {/* Image skeleton */}
-      <div className="relative h-48 bg-gradient-to-br from-muted via-muted/50 to-muted overflow-hidden">
-        <div className="absolute inset-0 shimmer" />
-      </div>
+      <Skeleton className="h-48 rounded-none rounded-t-lg" />
 
       {/* Content skeleton */}
       <div className="p-4 space-y-3">
         {/* Title & Location */}
         <div className="space-y-2">
-          <div className="h-5 bg-muted rounded-md w-3/4 shimmer" />
-          <div className="h-4 bg-muted rounded-md w-1/2 shimmer" />
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
         </div>
 
         {/* Time */}
-        <div className="h-4 bg-muted rounded-md w-2/3 shimmer" />
+        <Skeleton className="h-4 w-2/3" />
 
         {/* Stats */}
         <div className="flex gap-4 py-2">
-          <div className="h-4 bg-muted rounded-md w-20 shimmer" />
-          <div className="h-4 bg-muted rounded-md w-20 shimmer" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
         </div>
 
         {/* Buttons */}
         <div className="grid grid-cols-2 gap-2 pt-2">
-          <div className="h-9 bg-muted rounded-md shimmer" />
-          <div className="h-9 bg-muted rounded-md shimmer" />
+          <Skeleton className="h-9" />
+          <Skeleton className="h-9" />
         </div>
       </div>
     </div>

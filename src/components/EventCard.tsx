@@ -21,6 +21,7 @@ import { formatDistanceToNow } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { useViewTracking, trackEventView } from "@/lib/analyticsTracking";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface Event {
   id: string;
@@ -288,7 +289,13 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
     <>
       <Card 
         ref={cardRef}
-        className={`overflow-hidden hover:shadow-hover transition-all duration-300 group relative ${className || ''}`} 
+        className={cn(
+          "overflow-hidden group relative cursor-pointer",
+          "transition-all duration-300 ease-out",
+          "hover:shadow-hover hover:scale-[1.02] hover:-translate-y-1",
+          "active:scale-[0.98] active:translate-y-0",
+          className
+        )} 
         style={style}
         onClick={() => navigate(`/event/${event.id}`)}
       >
@@ -315,7 +322,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
               <img 
                 src={event.cover_image_url} 
                 alt={event.title}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110 group-hover:brightness-105"
               />
               {/* Dark overlay for better badge readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
