@@ -12,11 +12,14 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
-// Product ID to plan slug mapping
+// Product ID to plan slug mapping (includes both monthly and annual product IDs)
 const PRODUCT_TO_PLAN: Record<string, string> = {
-  'prod_RqVXjkK9fzPxX9': 'starter',
-  'prod_RqVXc5lAqKL1oo': 'growth',
-  'prod_RqVXz0YYzYLjDE': 'professional',
+  'prod_TVSonedIy7XkZP': 'starter',  // Starter Monthly
+  'prod_TVSrQMBUEJcK9U': 'starter',  // Starter Annual
+  'prod_TVSrruG57XDuaf': 'growth',   // Growth Monthly
+  'prod_TVSrS3ku7sHjV8': 'growth',   // Growth Annual
+  'prod_TVSrsxDx5fVltE': 'professional',  // Professional Monthly
+  'prod_TVSrJNi9KJtRYz': 'professional',  // Professional Annual
 };
 
 serve(async (req) => {
