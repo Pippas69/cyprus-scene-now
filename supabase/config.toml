@@ -9,6 +9,15 @@ verify_jwt = true
 [functions.customer-portal]
 verify_jwt = true
 
+[functions.create-event-boost]
+verify_jwt = true
+
+[functions.create-boost-checkout]
+verify_jwt = true
+
+[functions.create-offer-boost]
+verify_jwt = true
+
 [functions.seed-analytics]
 verify_jwt = true
 

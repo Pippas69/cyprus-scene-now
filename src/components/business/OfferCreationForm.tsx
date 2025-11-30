@@ -253,9 +253,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
             {/* Boost Section */}
             <OfferBoostSection
               hasActiveSubscription={subscriptionData?.subscribed || false}
-              remainingCommissionFreeOffers={
-                subscriptionData?.subscribed ? 5 : 0
-              }
+              remainingCommissionFreeOffers={subscriptionData?.commission_free_offers_remaining || 0}
               onBoostChange={setBoostData}
             />
 

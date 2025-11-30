@@ -9,13 +9,66 @@ import { Check, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { useLanguage } from '@/hooks/useLanguage';
 
 type BillingCycle = 'monthly' | 'annual';
 
 export default function SubscriptionPlans() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const translations = {
+    el: {
+      title: "Επιλέξτε το Πλάνο σας",
+      subtitle: "Επιλέξτε το ιδανικό πλάνο για να αναπτύξετε την επιχείρησή σας",
+      monthly: "Μηνιαίο",
+      annual: "Ετήσιο",
+      saveMonths: "Εξοικονόμηση 2 μηνών",
+      month: "μήνα",
+      year: "έτος",
+      perMonth: "μήνα",
+      billedAnnually: "χρέωση ετησίως",
+      mostPopular: "Δημοφιλέστερο",
+      yourPlan: "Το Πλάνο σας",
+      choosePlan: "Επιλογή Πλάνου",
+      currentPlan: "Τρέχον Πλάνο",
+      loading: "Φόρτωση...",
+      enterprise: "Enterprise",
+      enterpriseDesc: "Προσαρμοσμένες λύσεις για μεγάλες επιχειρήσεις",
+      customBudget: "Προσαρμοσμένος προϋπολογισμός προώθησης",
+      unlimitedOffers: "Απεριόριστες προσφορές χωρίς προμήθεια",
+      dedicatedManager: "Αποκλειστικός account manager",
+      prioritySupport: "Προτεραιότητα υποστήριξης",
+      contactUs: "Επικοινωνήστε μαζί μας",
+    },
+    en: {
+      title: "Choose Your Plan",
+      subtitle: "Select the perfect plan to grow your business",
+      monthly: "Monthly",
+      annual: "Annual",
+      saveMonths: "Save 2 months",
+      month: "month",
+      year: "year",
+      perMonth: "month",
+      billedAnnually: "billed annually",
+      mostPopular: "Most Popular",
+      yourPlan: "Your Plan",
+      choosePlan: "Choose Plan",
+      currentPlan: "Current Plan",
+      loading: "Loading...",
+      enterprise: "Enterprise",
+      enterpriseDesc: "Custom solutions for large-scale operations",
+      customBudget: "Custom event boost budgets",
+      unlimitedOffers: "Unlimited commission-free offers",
+      dedicatedManager: "Dedicated account manager",
+      prioritySupport: "Priority support",
+      contactUs: "Contact Us",
+    },
+  };
+
+  const t = translations[language];
 
   // Fetch subscription plans from database
   const { data: plans, isLoading: plansLoading } = useQuery({
@@ -109,15 +162,15 @@ export default function SubscriptionPlans() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
+          <h1 className="text-4xl font-bold mb-4">{t.title}</h1>
           <p className="text-muted-foreground text-lg mb-8">
-            Select the perfect plan to grow your business
+            {t.subtitle}
           </p>
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4">
             <Label htmlFor="billing-toggle" className={billingCycle === 'monthly' ? 'font-semibold' : ''}>
-              Monthly
+              {t.monthly}
             </Label>
             <Switch
               id="billing-toggle"
@@ -125,12 +178,12 @@ export default function SubscriptionPlans() {
               onCheckedChange={(checked) => setBillingCycle(checked ? 'annual' : 'monthly')}
             />
             <Label htmlFor="billing-toggle" className={billingCycle === 'annual' ? 'font-semibold' : ''}>
-              Annual
+              {t.annual}
             </Label>
             {billingCycle === 'annual' && (
               <Badge variant="secondary" className="ml-2">
                 <Sparkles className="w-3 h-3 mr-1" />
-                Save 2 months
+                {t.saveMonths}
               </Badge>
             )}
           </div>
@@ -140,7 +193,7 @@ export default function SubscriptionPlans() {
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           {plans?.map((plan) => {
             const price = billingCycle === 'monthly' ? plan.price_monthly_cents : plan.price_annual_cents;
-            const features = plan.features as string[] || [];
+            const features = (plan.features as Array<{ el: string; en: string }>) || [];
             const isMostPopular = plan.slug === 'growth';
             const isCurrent = isCurrentPlan(plan.slug);
 
@@ -151,12 +204,12 @@ export default function SubscriptionPlans() {
               >
                 {isMostPopular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge variant="default" className="px-4 py-1">Most Popular</Badge>
+                    <Badge variant="default" className="px-4 py-1">{t.mostPopular}</Badge>
                   </div>
                 )}
                 {isCurrent && (
                   <div className="absolute -top-4 right-4">
-                    <Badge variant="secondary" className="px-4 py-1">Your Plan</Badge>
+                    <Badge variant="secondary" className="px-4 py-1">{t.yourPlan}</Badge>
                   </div>
                 )}
                 
@@ -166,12 +219,12 @@ export default function SubscriptionPlans() {
                     <div className="text-3xl font-bold text-foreground mt-4">
                       {formatPrice(price)}
                       <span className="text-base font-normal text-muted-foreground">
-                        /{billingCycle === 'monthly' ? 'month' : 'year'}
+                        /{billingCycle === 'monthly' ? t.month : t.year}
                       </span>
                     </div>
                     {billingCycle === 'annual' && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        {formatPrice(price / 12)}/month billed annually
+                        {formatPrice(price / 12)}/{t.perMonth} {t.billedAnnually}
                       </p>
                     )}
                   </CardDescription>
@@ -182,7 +235,7 @@ export default function SubscriptionPlans() {
                     {features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
+                        <span className="text-sm">{language === 'el' ? feature.el : feature.en}</span>
                       </li>
                     ))}
                   </ul>
@@ -198,12 +251,12 @@ export default function SubscriptionPlans() {
                     {loadingPlan === plan.slug ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading...
+                        {t.loading}
                       </>
                     ) : isCurrent ? (
-                      'Current Plan'
+                      t.currentPlan
                     ) : (
-                      'Choose Plan'
+                      t.choosePlan
                     )}
                   </Button>
                 </CardFooter>
@@ -215,28 +268,28 @@ export default function SubscriptionPlans() {
         {/* Enterprise Card */}
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-2xl">Enterprise</CardTitle>
+            <CardTitle className="text-2xl">{t.enterprise}</CardTitle>
             <CardDescription>
-              Custom solutions for large-scale operations
+              {t.enterpriseDesc}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-sm">Custom event boost budgets</span>
+                <span className="text-sm">{t.customBudget}</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-sm">Unlimited commission-free offers</span>
+                <span className="text-sm">{t.unlimitedOffers}</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-sm">Dedicated account manager</span>
+                <span className="text-sm">{t.dedicatedManager}</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-sm">Priority support</span>
+                <span className="text-sm">{t.prioritySupport}</span>
               </li>
             </ul>
           </CardContent>
@@ -246,7 +299,7 @@ export default function SubscriptionPlans() {
               variant="outline"
               onClick={() => window.open('mailto:enterprise@example.com', '_blank')}
             >
-              Contact Us
+              {t.contactUs}
             </Button>
           </CardFooter>
         </Card>
