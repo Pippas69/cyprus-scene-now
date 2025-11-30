@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Footer from "@/components/Footer";
+
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import CategoryFilter from "@/components/CategoryFilter";
@@ -114,7 +114,7 @@ const Ekdiloseis = () => {
         )}
       </div>
 
-      <Footer language={language} onLanguageToggle={setLanguage} />
+      
       
       {/* Signup Modal */}
       {showSignupModal && (
