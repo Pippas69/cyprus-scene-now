@@ -41,3 +41,12 @@ cron = "*/5 * * * *"  # Run every 5 minutes
 
 [functions.get-database-metrics]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.calculate-monthly-commission]
+verify_jwt = false
+
+[functions.calculate-monthly-commission.schedule]
+cron = "0 0 1 * *"  # Run at midnight on the 1st of each month

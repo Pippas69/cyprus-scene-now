@@ -24,6 +24,7 @@ interface ScannedOffer {
   end_at: string;
   active: boolean;
   business_id: string;
+  original_price_cents: number | null;
 }
 
 export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
@@ -237,25 +238,61 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       });
       
       // Create redemption record
-      const { error: redemptionError } = await supabase
+      const { data: redemptionData, error: redemptionError } = await supabase
         .from("redemptions")
         .insert({
           discount_id: offer.id,
-          user_id: user.id, // This should ideally come from the user's QR code
+          user_id: user.id,
           verified: true,
-        });
+        })
+        .select()
+        .single();
 
       if (redemptionError) {
+        console.error('Error recording redemption:', redemptionError);
         const alreadyRedeemedMsg = language === "el" ? t.errors.alreadyRedeemed.el : t.errors.alreadyRedeemed.en;
         const scanErrorMsg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;
         
-        if (redemptionError.code === "23505") { // Unique constraint violation
+        if (redemptionError.code === "23505") {
           setScanResult({ success: false, message: alreadyRedeemedMsg });
         } else {
           setScanResult({ success: false, message: scanErrorMsg });
         }
         stopScanner();
         return;
+      }
+
+      // Check if offer has an active boost with commission
+      const { data: boostData } = await supabase
+        .from('offer_boosts')
+        .select('commission_percent, business_id')
+        .eq('discount_id', offer.id)
+        .eq('active', true)
+        .single();
+
+      // If boost exists with commission, create commission ledger entry
+      if (boostData && boostData.commission_percent > 0 && offer.original_price_cents) {
+        const commissionAmountCents = Math.round(
+          (offer.original_price_cents * boostData.commission_percent) / 100
+        );
+
+        const { error: commissionError } = await supabase
+          .from('commission_ledger')
+          .insert({
+            business_id: boostData.business_id,
+            discount_id: offer.id,
+            redemption_id: redemptionData.id,
+            original_price_cents: offer.original_price_cents,
+            commission_percent: boostData.commission_percent,
+            commission_amount_cents: commissionAmountCents,
+            redeemed_at: new Date().toISOString(),
+            status: 'pending'
+          });
+
+        if (commissionError) {
+          console.error('Error creating commission entry:', commissionError);
+          // Don't fail the redemption, just log the error
+        }
       }
 
       // Track successful redemption
