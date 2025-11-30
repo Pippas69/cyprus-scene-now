@@ -569,6 +569,7 @@ export type Database = {
           description: string | null
           end_at: string
           id: string
+          original_price_cents: number | null
           percent_off: number | null
           qr_code_token: string
           start_at: string
@@ -582,6 +583,7 @@ export type Database = {
           description?: string | null
           end_at: string
           id?: string
+          original_price_cents?: number | null
           percent_off?: number | null
           qr_code_token: string
           start_at: string
@@ -595,6 +597,7 @@ export type Database = {
           description?: string | null
           end_at?: string
           id?: string
+          original_price_cents?: number | null
           percent_off?: number | null
           qr_code_token?: string
           start_at?: string
@@ -3024,6 +3027,7 @@ export type Database = {
         Returns: unknown
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_boost_status: { Args: never; Returns: undefined }
       update_business_with_geo: {
         Args: {
           p_address: string

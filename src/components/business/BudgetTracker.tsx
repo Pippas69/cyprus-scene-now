@@ -1,141 +1,150 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Zap, Ticket } from "lucide-react";
-import { useLanguage } from "@/hooks/useLanguage";
+import { Loader2, TrendingUp } from "lucide-react";
 
 interface BudgetTrackerProps {
   businessId: string;
 }
 
-const BudgetTracker = ({ businessId }: BudgetTrackerProps) => {
+export const BudgetTracker = ({ businessId }: BudgetTrackerProps) => {
   const { language } = useLanguage();
 
-  const { data: subscription, isLoading } = useQuery({
-    queryKey: ["subscription-budget", businessId],
+  const { data: subscription, isLoading: subLoading } = useQuery({
+    queryKey: ['business-subscription', businessId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("business_subscriptions")
-        .select(`
-          *,
-          subscription_plans (
-            name,
-            event_boost_budget_cents,
-            commission_free_offers_count
-          )
-        `)
-        .eq("business_id", businessId)
+        .from('business_subscriptions')
+        .select('*, subscription_plans(*)')
+        .eq('business_id', businessId)
         .single();
 
       if (error) throw error;
       return data;
     },
-    refetchInterval: 60000, // Refresh every minute
   });
 
-  if (isLoading) {
+  // Fetch current month's pending commission
+  const { data: commissionData, isLoading: commissionLoading } = useQuery({
+    queryKey: ['pending-commission', businessId],
+    queryFn: async () => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { data, error } = await supabase
+        .from('commission_ledger')
+        .select('commission_amount_cents')
+        .eq('business_id', businessId)
+        .eq('status', 'pending')
+        .gte('redeemed_at', startOfMonth.toISOString());
+
+      if (error) throw error;
+
+      const total = data?.reduce((sum, item) => sum + item.commission_amount_cents, 0) || 0;
+      return total;
+    },
+  });
+
+  if (subLoading || commissionLoading) {
     return (
-      <Card>
-        <CardContent className="p-6 flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
-  if (!subscription || subscription.status !== "active") {
+  if (!subscription) {
     return null;
   }
 
-  const plan = subscription.subscription_plans;
-  const budgetUsedCents = (plan?.event_boost_budget_cents || 0) - (subscription.monthly_budget_remaining_cents || 0);
-  const budgetProgressPercent = plan?.event_boost_budget_cents
-    ? (budgetUsedCents / plan.event_boost_budget_cents) * 100
-    : 0;
+  const budgetUsedCents = (subscription.subscription_plans?.event_boost_budget_cents || 0) - 
+    (subscription.monthly_budget_remaining_cents || 0);
+  const budgetTotalCents = subscription.subscription_plans?.event_boost_budget_cents || 0;
+  const budgetUsedPercent = budgetTotalCents > 0 ? (budgetUsedCents / budgetTotalCents) * 100 : 0;
 
-  const offersUsed = (plan?.commission_free_offers_count || 0) - (subscription.commission_free_offers_remaining || 0);
-  const offersProgressPercent = plan?.commission_free_offers_count
-    ? (offersUsed / plan.commission_free_offers_count) * 100
-    : 0;
+  const offersUsed = (subscription.subscription_plans?.commission_free_offers_count || 0) -
+    (subscription.commission_free_offers_remaining || 0);
+  const offersTotalCount = subscription.subscription_plans?.commission_free_offers_count || 0;
+  const offersUsedPercent = offersTotalCount > 0 ? (offersUsed / offersTotalCount) * 100 : 0;
+
+  const pendingCommissionCents = commissionData || 0;
+  const pendingCommissionEuros = (pendingCommissionCents / 100).toFixed(2);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {/* Event Boost Budget */}
+    <>
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Zap className="h-4 w-4 text-primary" />
-              {language === "el" ? "Budget Προωθήσεων" : "Event Boost Budget"}
-            </CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {plan?.name}
-            </Badge>
-          </div>
+        <CardHeader>
+          <CardTitle>
+            {language === 'el' ? 'Υπόλοιπο Προωθήσεων & Προσφορών' : 'Event Boost Budget & Commission-Free Offers'}
+          </CardTitle>
+          <CardDescription>
+            {language === 'el' 
+              ? 'Παρακολουθήστε τη χρήση του πλάνου σας'
+              : 'Track your subscription plan usage'}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {language === "el" ? "Υπόλοιπο" : "Remaining"}
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">
+                {language === 'el' ? 'Budget Προωθήσεων' : 'Event Boost Budget'}
               </span>
-              <span className="font-bold">
-                €{((subscription.monthly_budget_remaining_cents || 0) / 100).toFixed(2)}
-              </span>
-            </div>
-            <Progress value={100 - budgetProgressPercent} className="h-2" />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                {language === "el" ? "Χρησιμοποιήθηκε" : "Used"}: €
-                {(budgetUsedCents / 100).toFixed(2)}
-              </span>
-              <span>
-                {language === "el" ? "Σύνολο" : "Total"}: €
-                {((plan?.event_boost_budget_cents || 0) / 100).toFixed(2)}
+              <span className="text-sm text-muted-foreground">
+                €{((subscription.monthly_budget_remaining_cents || 0) / 100).toFixed(2)} / 
+                €{(budgetTotalCents / 100).toFixed(2)}
               </span>
             </div>
+            <Progress value={100 - budgetUsedPercent} className="h-2" />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">
+                {language === 'el' ? 'Προσφορές Χωρίς Προμήθεια' : 'Commission-Free Offers'}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {subscription.commission_free_offers_remaining || 0} / {offersTotalCount}
+              </span>
+            </div>
+            <Progress value={100 - offersUsedPercent} className="h-2" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Commission-Free Offers */}
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Ticket className="h-4 w-4 text-primary" />
-              {language === "el" ? "Προσφορές Χωρίς Προμήθεια" : "Commission-Free Offers"}
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <CardTitle>
+              {language === 'el' ? 'Προμήθεια Αυτόν τον Μήνα' : 'Commission This Month'}
             </CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {plan?.name}
-            </Badge>
           </div>
+          <CardDescription>
+            {language === 'el' 
+              ? 'Εκκρεμής προμήθεια από εξαργυρώσεις προσφορών'
+              : 'Pending commission from offer redemptions'}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {language === "el" ? "Διαθέσιμες" : "Available"}
-              </span>
-              <span className="font-bold">
-                {subscription.commission_free_offers_remaining || 0}
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-2xl font-bold text-primary">€{pendingCommissionEuros}</span>
+              <span className="text-sm text-muted-foreground">
+                {language === 'el' ? 'Εκκρεμεί' : 'Pending'}
               </span>
             </div>
-            <Progress value={100 - offersProgressPercent} className="h-2" />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                {language === "el" ? "Χρησιμοποιήθηκαν" : "Used"}: {offersUsed}
-              </span>
-              <span>
-                {language === "el" ? "Σύνολο" : "Total"}: {plan?.commission_free_offers_count || 0}
-              </span>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              {language === 'el'
+                ? 'Η προμήθεια θα τιμολογηθεί στις αρχές του επόμενου μήνα'
+                : 'Commission will be invoiced at the start of next month'}
+            </p>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
 
