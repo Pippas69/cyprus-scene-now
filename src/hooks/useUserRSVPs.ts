@@ -24,7 +24,8 @@ interface RSVPWithEvent {
 }
 
 export const useUserRSVPs = (userId: string | null) => {
-  const [rsvps, setRsvps] = useState<RSVPWithEvent[]>([]);
+  const [upcomingRsvps, setUpcomingRsvps] = useState<RSVPWithEvent[]>([]);
+  const [pastRsvps, setPastRsvps] = useState<RSVPWithEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +33,8 @@ export const useUserRSVPs = (userId: string | null) => {
       fetchRSVPs();
       subscribeToRSVPs();
     } else {
-      setRsvps([]);
+      setUpcomingRsvps([]);
+      setPastRsvps([]);
       setLoading(false);
     }
   }, [userId]);
@@ -41,14 +43,17 @@ export const useUserRSVPs = (userId: string | null) => {
     if (!userId) return;
 
     setLoading(true);
-    const { data, error } = await supabase
+    const now = new Date().toISOString();
+
+    // Fetch upcoming RSVPs (events not ended)
+    const { data: upcomingData, error: upcomingError } = await supabase
       .from('rsvps')
       .select(`
         id,
         status,
         notes,
         created_at,
-        event:events(
+        event:events!inner(
           id,
           title,
           start_at,
@@ -61,10 +66,38 @@ export const useUserRSVPs = (userId: string | null) => {
         )
       `)
       .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .gte('events.end_at', now)
+      .order('events.start_at', { ascending: true });
 
-    if (!error && data) {
-      setRsvps(data as any);
+    // Fetch past RSVPs (events ended)
+    const { data: pastData, error: pastError } = await supabase
+      .from('rsvps')
+      .select(`
+        id,
+        status,
+        notes,
+        created_at,
+        event:events!inner(
+          id,
+          title,
+          start_at,
+          end_at,
+          location,
+          category,
+          price_tier,
+          cover_image_url,
+          business:businesses(id, name, logo_url)
+        )
+      `)
+      .eq('user_id', userId)
+      .lt('events.end_at', now)
+      .order('events.end_at', { ascending: false });
+
+    if (!upcomingError && upcomingData) {
+      setUpcomingRsvps(upcomingData as any);
+    }
+    if (!pastError && pastData) {
+      setPastRsvps(pastData as any);
     }
     setLoading(false);
   };
@@ -93,8 +126,17 @@ export const useUserRSVPs = (userId: string | null) => {
     };
   };
 
-  const interested = rsvps.filter(r => r.status === 'interested');
-  const going = rsvps.filter(r => r.status === 'going');
+  const interested = upcomingRsvps.filter(r => r.status === 'interested');
+  const going = upcomingRsvps.filter(r => r.status === 'going');
+  const pastInterested = pastRsvps.filter(r => r.status === 'interested');
+  const pastGoing = pastRsvps.filter(r => r.status === 'going');
 
-  return { rsvps, interested, going, loading, refetch: fetchRSVPs };
+  return { 
+    interested, 
+    going, 
+    pastInterested, 
+    pastGoing, 
+    loading, 
+    refetch: fetchRSVPs 
+  };
 };

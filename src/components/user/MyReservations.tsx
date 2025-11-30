@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, Phone, X, QrCode } from 'lucide-react';
+import { Calendar, MapPin, Users, Phone, X, QrCode, Clock, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface MyReservationsProps {
   userId: string;
@@ -25,8 +26,10 @@ interface MyReservationsProps {
 }
 
 export const MyReservations = ({ userId, language }: MyReservationsProps) => {
-  const [reservations, setReservations] = useState<any[]>([]);
+  const [upcomingReservations, setUpcomingReservations] = useState<any[]>([]);
+  const [pastReservations, setPastReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
   const [cancelDialog, setCancelDialog] = useState<{ open: boolean; reservationId: string | null }>({
     open: false,
     reservationId: null,
@@ -52,7 +55,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const fetchReservations = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const now = new Date().toISOString();
+
+    // Fetch upcoming reservations
+    const { data: upcomingData } = await supabase
       .from('reservations')
       .select(`
         *,
@@ -60,17 +66,39 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           id,
           title,
           start_at,
+          end_at,
           location,
           businesses(name, logo_url)
         )
       `)
       .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .gte('events.end_at', now)
+      .order('events.start_at', { ascending: true });
 
-    if (data) {
-      setReservations(data as any);
-      // Generate QR codes for each reservation
-      generateQRCodes(data as any);
+    // Fetch past reservations
+    const { data: pastData } = await supabase
+      .from('reservations')
+      .select(`
+        *,
+        events!inner(
+          id,
+          title,
+          start_at,
+          end_at,
+          location,
+          businesses(name, logo_url)
+        )
+      `)
+      .eq('user_id', userId)
+      .lt('events.end_at', now)
+      .order('events.end_at', { ascending: false });
+
+    if (upcomingData) {
+      setUpcomingReservations(upcomingData as any);
+      generateQRCodes(upcomingData as any);
+    }
+    if (pastData) {
+      setPastReservations(pastData as any);
     }
     setLoading(false);
   };
@@ -149,6 +177,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       specialRequests: 'Ειδικές Απαιτήσεις',
       businessNotes: 'Σημειώσεις Επιχείρησης',
       confirmationCode: 'Κωδικός Επιβεβαίωσης',
+      history: 'Ιστορικό Κρατήσεων',
+      pastReservations: 'Παλαιότερες Κρατήσεις',
+      noHistoryReservations: 'Δεν υπάρχει ιστορικό κρατήσεων',
+      eventEnded: 'Η εκδήλωση ολοκληρώθηκε',
+      showHistory: 'Εμφάνιση Ιστορικού',
+      hideHistory: 'Απόκρυψη Ιστορικού',
     },
     en: {
       title: 'My Reservations',
@@ -169,6 +203,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       specialRequests: 'Special Requests',
       businessNotes: 'Business Notes',
       confirmationCode: 'Confirmation Code',
+      history: 'Reservation History',
+      pastReservations: 'Past Reservations',
+      noHistoryReservations: 'No reservation history',
+      eventEnded: 'Event has ended',
+      showHistory: 'Show History',
+      hideHistory: 'Hide History',
     },
   };
 
@@ -188,6 +228,125 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     return <div className="text-center py-8">Loading...</div>;
   }
 
+  const renderReservationCard = (reservation: any, isPast: boolean = false) => (
+    <Card key={reservation.id} className={`overflow-hidden ${isPast ? 'opacity-70' : ''}`}>
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="flex-1">
+            <CardTitle className="text-xl">{reservation.events?.title}</CardTitle>
+            <CardDescription className="mt-2 flex items-center gap-2">
+              {reservation.events?.businesses?.logo_url && (
+                <img
+                  src={reservation.events.businesses.logo_url}
+                  alt={reservation.events.businesses.name}
+                  className="h-5 w-5 rounded-full object-cover"
+                />
+              )}
+              {reservation.events?.businesses?.name}
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            {isPast && (
+              <Badge variant="secondary" className="bg-background/80 backdrop-blur">
+                <Clock className="h-3 w-3 mr-1" />
+                {t.eventEnded}
+              </Badge>
+            )}
+            {getStatusBadge(reservation.status)}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Confirmation Code & QR Code */}
+        {reservation.confirmation_code && !isPast && (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="flex-1 w-full">
+                <p className="text-xs text-muted-foreground mb-1">{t.confirmationCode}</p>
+                <p className="text-2xl font-bold text-primary tracking-wider">
+                  {reservation.confirmation_code}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {language === 'el' 
+                    ? 'Παρουσιάστε αυτόν τον κωδικό ή το QR κατά την άφιξή σας'
+                    : 'Present this code or QR upon arrival'
+                  }
+                </p>
+              </div>
+              {qrCodes[reservation.id] && (
+                <div className="flex flex-col items-center gap-2">
+                  <img 
+                    src={qrCodes[reservation.id]} 
+                    alt="QR Code" 
+                    className="w-24 h-24 rounded border border-primary/20"
+                  />
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <QrCode className="h-3 w-3" />
+                    <span>QR Code</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span>{format(new Date(reservation.events.start_at), 'PPP')}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span>{reservation.party_size} {t.people}</span>
+          </div>
+          {reservation.events?.location && (
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="truncate">{reservation.events.location}</span>
+            </div>
+          )}
+          {reservation.seating_preference && reservation.seating_preference !== 'no_preference' && (
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span>{t[reservation.seating_preference]}</span>
+            </div>
+          )}
+          {reservation.phone_number && (
+            <div className="flex items-center gap-2 sm:col-span-2">
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              <span>{reservation.phone_number}</span>
+            </div>
+          )}
+        </div>
+
+        {reservation.special_requests && (
+          <div className="bg-muted p-3 rounded-lg">
+            <p className="text-sm font-medium mb-1">{t.specialRequests}</p>
+            <p className="text-sm text-muted-foreground">{reservation.special_requests}</p>
+          </div>
+        )}
+
+        {reservation.business_notes && (
+          <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+            <p className="text-sm font-medium mb-1">{t.businessNotes}</p>
+            <p className="text-sm">{reservation.business_notes}</p>
+          </div>
+        )}
+
+        {reservation.status === 'pending' && !isPast && (
+          <Button
+            variant="outline"
+            className="w-full h-11"
+            onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
+          >
+            <X className="h-4 w-4 mr-2" />
+            {t.cancelReservation}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -195,123 +354,49 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         <p className="text-muted-foreground mt-2">{t.description}</p>
       </div>
 
-      {reservations.length === 0 ? (
+      {upcomingReservations.length === 0 && pastReservations.length === 0 ? (
         <Card className="p-12 text-center">
           <p className="text-muted-foreground">{t.noReservations}</p>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {reservations.map((reservation) => (
-            <Card key={reservation.id} className="overflow-hidden">
-              <CardHeader className="pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                  <div className="flex-1">
-                    <CardTitle className="text-xl">{reservation.events?.title}</CardTitle>
-                    <CardDescription className="mt-2 flex items-center gap-2">
-                      {reservation.events?.businesses?.logo_url && (
-                        <img
-                          src={reservation.events.businesses.logo_url}
-                          alt={reservation.events.businesses.name}
-                          className="h-5 w-5 rounded-full object-cover"
-                        />
-                      )}
-                      {reservation.events?.businesses?.name}
-                    </CardDescription>
-                  </div>
-                  {getStatusBadge(reservation.status)}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Confirmation Code & QR Code */}
-                {reservation.confirmation_code && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                    <div className="flex flex-col sm:flex-row gap-4 items-center">
-                      <div className="flex-1 w-full">
-                        <p className="text-xs text-muted-foreground mb-1">{t.confirmationCode}</p>
-                        <p className="text-2xl font-bold text-primary tracking-wider">
-                          {reservation.confirmation_code}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {language === 'el' 
-                            ? 'Παρουσιάστε αυτόν τον κωδικό ή το QR κατά την άφιξή σας'
-                            : 'Present this code or QR upon arrival'
-                          }
-                        </p>
-                      </div>
-                      {qrCodes[reservation.id] && (
-                        <div className="flex flex-col items-center gap-2">
-                          <img 
-                            src={qrCodes[reservation.id]} 
-                            alt="QR Code" 
-                            className="w-24 h-24 rounded border border-primary/20"
-                          />
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <QrCode className="h-3 w-3" />
-                            <span>QR Code</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{format(new Date(reservation.events.start_at), 'PPP')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{reservation.party_size} {t.people}</span>
-                  </div>
-                  {reservation.events?.location && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="truncate">{reservation.events.location}</span>
-                    </div>
-                  )}
-                  {reservation.seating_preference && reservation.seating_preference !== 'no_preference' && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{t[reservation.seating_preference]}</span>
-                    </div>
-                  )}
-                  {reservation.phone_number && (
-                    <div className="flex items-center gap-2 sm:col-span-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{reservation.phone_number}</span>
-                    </div>
-                  )}
-                </div>
-
-                {reservation.special_requests && (
-                  <div className="bg-muted p-3 rounded-lg">
-                    <p className="text-sm font-medium mb-1">{t.specialRequests}</p>
-                    <p className="text-sm text-muted-foreground">{reservation.special_requests}</p>
-                  </div>
-                )}
-
-                {reservation.business_notes && (
-                  <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
-                    <p className="text-sm font-medium mb-1">{t.businessNotes}</p>
-                    <p className="text-sm">{reservation.business_notes}</p>
-                  </div>
-                )}
-
-                {reservation.status === 'pending' && (
-                  <Button
-                    variant="outline"
-                    className="w-full h-11"
-                    onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    {t.cancelReservation}
-                  </Button>
-                )}
-              </CardContent>
+        <>
+          {/* Upcoming Reservations */}
+          {upcomingReservations.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">{t.noReservations}</p>
             </Card>
-          ))}
-        </div>
+          ) : (
+            <div className="grid gap-4">
+              {upcomingReservations.map((reservation) => renderReservationCard(reservation, false))}
+            </div>
+          )}
+
+          {/* History Section */}
+          {pastReservations.length > 0 && (
+            <Collapsible open={showHistory} onOpenChange={setShowHistory} className="mt-8">
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-semibold">
+                      {t.history} ({pastReservations.length})
+                    </span>
+                  </div>
+                  <ChevronDown 
+                    className={`h-5 w-5 text-muted-foreground transition-transform ${showHistory ? 'rotate-180' : ''}`}
+                  />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4">
+                <div className="grid gap-4">
+                  {pastReservations.map((reservation) => (
+                    renderReservationCard(reservation, true)
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </>
       )}
 
       <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
