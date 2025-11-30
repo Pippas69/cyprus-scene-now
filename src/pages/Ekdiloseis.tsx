@@ -147,7 +147,8 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
           )
         `)
         .eq('businesses.verified', true)
-        .order('start_at', { ascending: false });
+        .gte('end_at', new Date().toISOString())
+        .order('start_at', { ascending: true });
 
         if (error) throw error;
 
@@ -316,6 +317,7 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
       let query = supabase
         .from('events')
         .select('*')
+        .gte('end_at', new Date().toISOString())
         .order('start_at', { ascending: true });
 
       if (selectedCategories.length > 0) {
