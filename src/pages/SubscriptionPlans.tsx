@@ -68,6 +68,16 @@ const translations = {
     monthlyReport: "Μηνιαία",
     advancedReport: "Προηγμένα",
     realtimeReport: "Real-time",
+    // New boost breakdown translations
+    eventBoostBreakdown: "Ανάλυση Event Boosts",
+    eventsPerMonth: "Events ανά μήνα",
+    budgetPerEvent: "Budget ανά Event",
+    totalBoostValue: "Συνολική Αξία Boosts",
+    valueBonus: "Μπόνους Αξίας",
+    offerBoostQuality: "Ποιότητα Boost Προσφορών",
+    enhanced: "Ενισχυμένη",
+    youSave: "Κερδίζετε",
+    bonusValue: "επιπλέον αξία!",
   },
   en: {
     title: "Choose Your Plan",
@@ -118,6 +128,16 @@ const translations = {
     monthlyReport: "Monthly",
     advancedReport: "Advanced",
     realtimeReport: "Real-time",
+    // New boost breakdown translations
+    eventBoostBreakdown: "Event Boost Breakdown",
+    eventsPerMonth: "Events per month",
+    budgetPerEvent: "Budget per Event",
+    totalBoostValue: "Total Boost Value",
+    valueBonus: "Value Bonus",
+    offerBoostQuality: "Offer Boost Quality",
+    enhanced: "Enhanced",
+    youSave: "You save",
+    bonusValue: "extra value!",
   },
 };
 
@@ -258,6 +278,35 @@ export default function SubscriptionPlans() {
       support: support[plan.slug as keyof typeof support] || support.starter,
       analytics: analytics[plan.slug as keyof typeof analytics] || analytics.starter,
     };
+  };
+
+  // Get boost breakdown details per plan based on agreed pricing structure
+  const getBoostBreakdown = (slug: string, planPriceCents: number) => {
+    const breakdown: Record<string, { events: number; budgetPerEvent: number; offerQuality: string }> = {
+      starter: { events: 3, budgetPerEvent: 4000, offerQuality: 'basic' }, // 3 × €40 = €120
+      growth: { events: 5, budgetPerEvent: 5000, offerQuality: 'enhanced' }, // 5 × €50 = €250
+      professional: { events: 10, budgetPerEvent: 8000, offerQuality: 'premium' }, // 10 × €80 = €800
+    };
+    const details = breakdown[slug] || breakdown.starter;
+    const totalBoostValue = details.events * details.budgetPerEvent;
+    const valueBonus = totalBoostValue - planPriceCents;
+    const bonusPercentage = Math.round((valueBonus / planPriceCents) * 100);
+    
+    return {
+      ...details,
+      totalBoostValue,
+      valueBonus,
+      bonusPercentage,
+    };
+  };
+
+  const getOfferQualityLabel = (quality: string) => {
+    const labels: Record<string, { el: string; en: string }> = {
+      basic: { el: t.basic, en: translations.en.basic },
+      enhanced: { el: t.enhanced, en: translations.en.enhanced },
+      premium: { el: t.premium, en: translations.en.premium },
+    };
+    return labels[quality]?.[language] || labels.basic[language];
   };
 
   if (plansLoading) {
@@ -480,7 +529,56 @@ export default function SubscriptionPlans() {
                             </p>
                           </div>
 
-                          {/* Key Benefits */}
+                          {/* Event Boost Breakdown - Main Section */}
+                          {(() => {
+                            const boostDetails = getBoostBreakdown(plan.slug, billingCycle === 'monthly' ? plan.price_monthly_cents : Math.round(plan.price_annual_cents / 12));
+                            return (
+                              <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-sm font-medium">
+                                  <Zap className="w-4 h-4 text-primary" />
+                                  {t.eventBoostBreakdown}
+                                </div>
+                                
+                                {/* Visual Calculation */}
+                                <div className={`p-4 rounded-xl bg-gradient-to-r ${gradientColor} text-white`}>
+                                  <div className="flex items-center justify-center gap-2 text-lg font-bold">
+                                    <span>{boostDetails.events} events</span>
+                                    <span>×</span>
+                                    <span>{formatPrice(boostDetails.budgetPerEvent)}</span>
+                                    <span>=</span>
+                                    <span className="text-xl">{formatPrice(boostDetails.totalBoostValue)}</span>
+                                  </div>
+                                  {boostDetails.valueBonus > 0 && (
+                                    <div className="text-center mt-2 text-white/90 text-sm">
+                                      🎁 {t.youSave} <span className="font-bold">{formatPrice(boostDetails.valueBonus)}</span> ({boostDetails.bonusPercentage}% {t.bonusValue})
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Breakdown Grid */}
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="p-3 bg-muted/50 rounded-lg">
+                                    <div className="text-xs text-muted-foreground mb-1">{t.eventsPerMonth}</div>
+                                    <div className="font-semibold text-lg">{boostDetails.events}</div>
+                                  </div>
+                                  <div className="p-3 bg-muted/50 rounded-lg">
+                                    <div className="text-xs text-muted-foreground mb-1">{t.budgetPerEvent}</div>
+                                    <div className="font-semibold text-lg">{formatPrice(boostDetails.budgetPerEvent)}</div>
+                                  </div>
+                                  <div className="p-3 bg-muted/50 rounded-lg">
+                                    <div className="text-xs text-muted-foreground mb-1">{t.totalBoostValue}</div>
+                                    <div className="font-semibold text-lg text-primary">{formatPrice(boostDetails.totalBoostValue)}</div>
+                                  </div>
+                                  <div className="p-3 bg-muted/50 rounded-lg">
+                                    <div className="text-xs text-muted-foreground mb-1">{t.valueBonus}</div>
+                                    <div className="font-semibold text-lg text-green-600">+{formatPrice(boostDetails.valueBonus)}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Additional Benefits */}
                           <div>
                             <div className="flex items-center gap-2 text-sm font-medium mb-3">
                               <Shield className="w-4 h-4 text-primary" />
@@ -488,12 +586,12 @@ export default function SubscriptionPlans() {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                               <div className="p-3 bg-muted/50 rounded-lg">
-                                <div className="text-xs text-muted-foreground mb-1">{t.boostValue}</div>
-                                <div className="font-semibold">{formatPrice(plan.event_boost_budget_cents)}/{t.month}</div>
-                              </div>
-                              <div className="p-3 bg-muted/50 rounded-lg">
                                 <div className="text-xs text-muted-foreground mb-1">{t.commissionFree}</div>
                                 <div className="font-semibold">{plan.commission_free_offers_count} {language === 'el' ? 'προσφορές' : 'offers'}</div>
+                              </div>
+                              <div className="p-3 bg-muted/50 rounded-lg">
+                                <div className="text-xs text-muted-foreground mb-1">{t.offerBoostQuality}</div>
+                                <div className="font-semibold">{getOfferQualityLabel(getBoostBreakdown(plan.slug, plan.price_monthly_cents).offerQuality)}</div>
                               </div>
                               <div className="p-3 bg-muted/50 rounded-lg">
                                 <div className="text-xs text-muted-foreground mb-1">{t.targeting}</div>
