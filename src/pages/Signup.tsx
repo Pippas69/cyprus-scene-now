@@ -17,6 +17,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { authTranslations } from "@/translations/authTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
+import { Confetti, useConfetti } from "@/components/ui/confetti";
 
 const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
@@ -31,6 +32,7 @@ const Signup = () => {
   const t = authTranslations[language];
   const tt = toastTranslations[language];
   const vt = validationTranslations[language];
+  const confetti = useConfetti();
 
   const signupSchema = z.object({
     firstName: z.string().trim().min(2, {
@@ -101,8 +103,10 @@ const Signup = () => {
         return;
       }
       if (data.user) {
+        confetti.trigger();
         toast.success(tt.created);
-        navigate(redirectUrl);
+        // Delay navigation to let confetti play
+        setTimeout(() => navigate(redirectUrl), 1500);
       }
     } catch (error) {
       toast.error(tt.failed);
@@ -113,7 +117,9 @@ const Signup = () => {
   const togglePreference = (category: string) => {
     setSelectedPreferences(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
   };
-  return <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  return <>
+    <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
+    <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
           <div className="w-full h-full rounded-full bg-gradient-glow" />
@@ -295,6 +301,7 @@ const Signup = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  </>;
 };
 export default Signup;

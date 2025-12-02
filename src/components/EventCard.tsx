@@ -22,6 +22,7 @@ import { el, enUS } from "date-fns/locale";
 import { useViewTracking, trackEventView } from "@/lib/analyticsTracking";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Confetti, useConfetti } from "@/components/ui/confetti";
 
 interface Event {
   id: string;
@@ -79,6 +80,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
   const { isFavorited, toggleFavorite, loading: favoriteLoading } = useFavorites(user?.id || null);
   const [countdown, setCountdown] = useState<string | null>(null);
   const tt = toastTranslations[language];
+  const confetti = useConfetti();
 
   // Calculate engagement score for badges
   const engagementScore = (interestedCount || 0) + (goingCount || 0) * 2;
@@ -262,6 +264,10 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
 
       if (!error) {
         setStatus(newStatus);
+        // Trigger confetti for "going" status
+        if (newStatus === 'going') {
+          confetti.trigger();
+        }
         toast({
           title: tt.updated,
           description: language === 'el' 
@@ -287,7 +293,10 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
 
   return (
     <>
-      <Card 
+      {/* Confetti celebration for "Going" */}
+      <Confetti isActive={confetti.isActive} onComplete={confetti.reset} />
+      
+      <Card
         ref={cardRef}
         className={cn(
           "overflow-hidden group relative cursor-pointer",
