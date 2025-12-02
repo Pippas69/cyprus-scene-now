@@ -87,35 +87,58 @@ serve(async (req) => {
 
         if (!business) throw new Error("Business not found for user");
 
-        // Get subscription plan from product
-        const productId = subscription.items.data[0].price.product as string;
-        const product = await stripe.products.retrieve(productId);
-        const planSlug = product.metadata?.plan_slug;
-
-        if (!planSlug) throw new Error("Plan slug not found in product metadata");
-
-        const { data: plan } = await supabaseClient
-          .from('subscription_plans')
-          .select('*')
-          .eq('slug', planSlug)
-          .single();
-
-        if (!plan) throw new Error("Plan not found for slug");
+        // Get plan from session metadata (passed from create-subscription-checkout)
+        const planId = session.metadata?.plan_id;
+        
+        if (!planId) {
+          // Fallback: use product ID mapping
+          const productId = subscription.items.data[0].price.product as string;
+          const PRODUCT_TO_PLAN: Record<string, string> = {
+            'prod_TVSonedIy7XkZP': 'starter',
+            'prod_TVSrQMBUEJcK9U': 'starter',
+            'prod_TVSrruG57XDuaf': 'growth',
+            'prod_TVSrS3ku7sHjV8': 'growth',
+            'prod_TVSrsxDx5fVltE': 'professional',
+            'prod_TVSrJNi9KJtRYz': 'professional',
+          };
+          const planSlug = PRODUCT_TO_PLAN[productId];
+          if (!planSlug) throw new Error(`Unknown product ID: ${productId}`);
+          
+          const { data: plan } = await supabaseClient
+            .from('subscription_plans')
+            .select('*')
+            .eq('slug', planSlug)
+            .single();
+          
+          if (!plan) throw new Error("Plan not found for slug");
+          
+          // Use the found plan
+          var resolvedPlan = plan;
+        } else {
+          const { data: plan } = await supabaseClient
+            .from('subscription_plans')
+            .select('*')
+            .eq('id', planId)
+            .single();
+          
+          if (!plan) throw new Error("Plan not found for ID");
+          var resolvedPlan = plan;
+        }
 
         // Create or update business subscription
         const { error: subError } = await supabaseClient
           .from('business_subscriptions')
           .upsert({
             business_id: business.id,
-            plan_id: plan.id,
+            plan_id: resolvedPlan.id,
             stripe_customer_id: customerId,
             stripe_subscription_id: subscription.id,
             status: 'active',
             billing_cycle: subscription.items.data[0].price.recurring?.interval === 'year' ? 'annual' : 'monthly',
             current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            monthly_budget_remaining_cents: plan.event_boost_budget_cents,
-            commission_free_offers_remaining: plan.commission_free_offers_count
+            monthly_budget_remaining_cents: resolvedPlan.event_boost_budget_cents,
+            commission_free_offers_remaining: resolvedPlan.commission_free_offers_count
           });
 
         if (subError) throw subError;

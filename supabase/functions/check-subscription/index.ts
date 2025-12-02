@@ -86,7 +86,6 @@ serve(async (req) => {
       customer: customerId,
       status: 'active',
       limit: 1,
-      expand: ['data.items.data.price.product'],
     });
 
     const hasActiveSub = subscriptions.data.length > 0;
