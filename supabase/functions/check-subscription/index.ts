@@ -12,6 +12,18 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+// Safe timestamp conversion helper
+const safeTimestampToISO = (timestamp: number | null | undefined): string => {
+  if (timestamp === null || timestamp === undefined || isNaN(timestamp)) {
+    return new Date().toISOString();
+  }
+  try {
+    return new Date(timestamp * 1000).toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+};
+
 // Product ID to plan slug mapping (includes both monthly and annual product IDs)
 const PRODUCT_TO_PLAN: Record<string, string> = {
   'prod_TVSonedIy7XkZP': 'starter',  // Starter Monthly
@@ -99,8 +111,8 @@ serve(async (req) => {
     }
 
     const subscription = subscriptions.data[0];
-    const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-    const subscriptionStart = new Date(subscription.current_period_start * 1000).toISOString();
+    const subscriptionEnd = safeTimestampToISO(subscription.current_period_end);
+    const subscriptionStart = safeTimestampToISO(subscription.current_period_start);
     
     const priceItem = subscription.items.data[0];
     const productId = typeof priceItem.price.product === 'string' 

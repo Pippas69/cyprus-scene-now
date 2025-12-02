@@ -12,6 +12,18 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Safe timestamp conversion helper
+const safeTimestampToISO = (timestamp: number | null | undefined): string => {
+  if (timestamp === null || timestamp === undefined || isNaN(timestamp)) {
+    return new Date().toISOString(); // Fallback to now
+  }
+  try {
+    return new Date(timestamp * 1000).toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -135,8 +147,8 @@ serve(async (req) => {
             stripe_subscription_id: subscription.id,
             status: 'active',
             billing_cycle: subscription.items.data[0].price.recurring?.interval === 'year' ? 'annual' : 'monthly',
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_start: safeTimestampToISO(subscription.current_period_start),
+            current_period_end: safeTimestampToISO(subscription.current_period_end),
             monthly_budget_remaining_cents: resolvedPlan.event_boost_budget_cents,
             commission_free_offers_remaining: resolvedPlan.commission_free_offers_count
           });
@@ -191,8 +203,8 @@ serve(async (req) => {
             .update({
               monthly_budget_remaining_cents: businessSub.subscription_plans.event_boost_budget_cents,
               commission_free_offers_remaining: businessSub.subscription_plans.commission_free_offers_count,
-              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
+              current_period_start: safeTimestampToISO(subscription.current_period_start),
+              current_period_end: safeTimestampToISO(subscription.current_period_end)
             })
             .eq('id', businessSub.id);
 
