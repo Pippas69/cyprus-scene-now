@@ -246,7 +246,7 @@ const SignupBusiness = () => {
         businessId = businessData?.id;
       }
 
-      // Update invite code if used
+      // Update invite code if used and create beta subscription
       if (isBetaMode && data.inviteCode && businessId) {
         const normalizedCode = data.inviteCode.toUpperCase().trim();
         
@@ -266,6 +266,25 @@ const SignupBusiness = () => {
             used_at: new Date().toISOString()
           })
           .eq('code', normalizedCode);
+
+        // Auto-assign Growth Plan for beta businesses
+        const GROWTH_PLAN_ID = '5bd802c4-0aae-4141-a310-f41492aff7e5';
+        const periodStart = new Date();
+        const periodEnd = new Date();
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1); // 1 year validity for beta
+
+        await supabase.from('business_subscriptions').insert({
+          business_id: businessId,
+          plan_id: GROWTH_PLAN_ID,
+          status: 'active',
+          billing_cycle: 'monthly',
+          current_period_start: periodStart.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          monthly_budget_remaining_cents: 25000, // €250 Growth plan budget
+          commission_free_offers_remaining: 10,  // Growth plan offers
+          beta_tester: true,
+          beta_discount_percent: 20 // 20% discount when they choose a paid plan post-launch
+        });
       }
 
       // Send registration confirmation email
