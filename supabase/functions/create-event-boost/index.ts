@@ -138,15 +138,26 @@ serve(async (req) => {
 
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-      // Check if customer exists
+      // Check if customer exists, create if not
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-      let customerId = customers.data.length > 0 ? customers.data[0].id : undefined;
+      let customerId: string;
+
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found existing Stripe customer", { customerId });
+      } else {
+        const newCustomer = await stripe.customers.create({
+          email: user.email,
+          metadata: { supabase_user_id: user.id },
+        });
+        customerId = newCustomer.id;
+        logStep("Created new Stripe customer", { customerId });
+      }
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: totalCostCents,
         currency: "eur",
         customer: customerId,
-        customer_email: customerId ? undefined : user.email,
         metadata: {
           type: "event_boost",
           event_id: eventId,
