@@ -98,7 +98,7 @@ export const AdminSidebar = () => {
           <div className="h-8 w-8 rounded bg-amber-500" />
           <div>
             <p className="text-sm font-semibold">Admin Panel</p>
-            <p className="text-xs text-muted-foreground">Ekdiloseis</p>
+            <p className="text-xs text-muted-foreground">ΦΟΜΟ</p>
           </div>
         </div>
       </SidebarHeader>
