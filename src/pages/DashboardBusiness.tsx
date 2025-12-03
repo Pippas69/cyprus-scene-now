@@ -19,7 +19,7 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import Feed from "@/pages/Feed";
 import Xartis from "@/pages/Xartis";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
-import SubscriptionStatus from "@/components/business/SubscriptionStatus";
+import SubscriptionPlans from "@/pages/SubscriptionPlans";
 import BoostManagement from "@/components/business/BoostManagement";
 import BudgetTracker from "@/components/business/BudgetTracker";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -282,7 +282,7 @@ const DashboardBusiness = () => {
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
               <Route path="offers/new" element={businessId ? <OfferCreationForm businessId={businessId} /> : null} />
               <Route path="reservations" element={businessId ? <ReservationManagement businessId={businessId} language={language} /> : null} />
-              <Route path="subscription" element={<SubscriptionStatus />} />
+              <Route path="subscription" element={<SubscriptionPlans embedded />} />
               <Route path="boosts" element={businessId ? <BoostManagement businessId={businessId} /> : null} />
               <Route path="settings" element={userId && businessId ? <BusinessAccountSettings userId={userId} businessId={businessId} language={language} /> : null} />
             </Routes>
