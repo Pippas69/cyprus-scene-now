@@ -287,6 +287,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          onboarding_completed: boolean | null
           phone: string | null
           updated_at: string
           user_id: string
@@ -306,6 +307,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          onboarding_completed?: boolean | null
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -325,6 +327,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          onboarding_completed?: boolean | null
           phone?: string | null
           updated_at?: string
           user_id?: string
