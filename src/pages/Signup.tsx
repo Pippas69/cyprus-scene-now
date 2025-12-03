@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Languages } from "lucide-react";
+import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -18,6 +18,8 @@ import { authTranslations } from "@/translations/authTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 import { Confetti, useConfetti } from "@/components/ui/confetti";
+import { useBetaMode } from "@/hooks/useBetaMode";
+import { OceanLoader } from "@/components/ui/ocean-loader";
 
 const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
@@ -33,6 +35,7 @@ const Signup = () => {
   const tt = toastTranslations[language];
   const vt = validationTranslations[language];
   const confetti = useConfetti();
+  const { isBetaMode, isLoading: betaLoading, betaMessage } = useBetaMode();
 
   const signupSchema = z.object({
     firstName: z.string().trim().min(2, {
@@ -71,6 +74,7 @@ const Signup = () => {
       preferences: []
     }
   });
+
   const onSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     try {
@@ -105,7 +109,6 @@ const Signup = () => {
       if (data.user) {
         confetti.trigger();
         toast.success(tt.created);
-        // Delay navigation to let confetti play
         setTimeout(() => navigate(redirectUrl), 1500);
       }
     } catch (error) {
@@ -114,9 +117,109 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
+
   const togglePreference = (category: string) => {
     setSelectedPreferences(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
   };
+
+  // Show loading while checking beta mode
+  if (betaLoading) {
+    return (
+      <div className="min-h-screen gradient-hero flex items-center justify-center">
+        <OceanLoader size="lg" />
+      </div>
+    );
+  }
+
+  // Show Coming Soon if beta mode is enabled
+  if (isBetaMode) {
+    return (
+      <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
+            <div className="w-full h-full rounded-full bg-gradient-glow" />
+          </div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-seafoam/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        </div>
+
+        <div className="max-w-md w-full space-y-8 relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t.back}
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="text-white hover:text-seafoam"
+              >
+                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12 text-center">
+            {/* Logo */}
+            <div className="mb-8">
+              <h1 className="font-cinzel text-5xl font-bold text-primary mb-2">ΦΟΜΟ</h1>
+              <div className="w-24 h-1 bg-gradient-to-r from-primary to-seafoam mx-auto rounded-full" />
+            </div>
+
+            {/* Coming Soon Icon */}
+            <div className="mb-6">
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="h-10 w-10 text-primary animate-pulse" />
+              </div>
+            </div>
+
+            {/* Message */}
+            <h2 className="font-cinzel text-3xl font-bold text-foreground mb-4">
+              {language === 'el' ? betaMessage.el : betaMessage.en}
+            </h2>
+            
+            <p className="font-inter text-muted-foreground mb-8 leading-relaxed">
+              {language === 'el' 
+                ? 'Ετοιμάζουμε κάτι ξεχωριστό για εσένα! Η εφαρμογή βρίσκεται σε φάση beta.'
+                : 'We\'re preparing something special for you! The app is currently in beta phase.'
+              }
+            </p>
+
+            {/* Sparkles decoration */}
+            <div className="flex justify-center gap-2 mb-8">
+              <Sparkles className="h-5 w-5 text-primary animate-bounce" style={{ animationDelay: "0s" }} />
+              <Sparkles className="h-5 w-5 text-seafoam animate-bounce" style={{ animationDelay: "0.2s" }} />
+              <Sparkles className="h-5 w-5 text-sunset-coral animate-bounce" style={{ animationDelay: "0.4s" }} />
+            </div>
+
+            {/* Business Signup Link */}
+            <div className="pt-6 border-t border-border">
+              <p className="text-sm text-muted-foreground mb-4">
+                {language === 'el' 
+                  ? 'Είστε επιχείρηση με κωδικό πρόσκλησης;'
+                  : 'Are you a business with an invite code?'
+                }
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/signup-business")}
+                className="gap-2"
+              >
+                <Store className="h-4 w-4" />
+                {language === 'el' ? 'Εγγραφή Επιχείρησης' : 'Business Signup'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular signup form (when beta mode is disabled)
   return <>
     <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
     <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

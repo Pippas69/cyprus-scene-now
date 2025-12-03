@@ -7,7 +7,8 @@ import {
   Flag, 
   Settings, 
   MapPin,
-  Database
+  Database,
+  Ticket
 } from 'lucide-react';
 import {
   Sidebar,
@@ -82,6 +83,11 @@ export const AdminSidebar = () => {
       title: 'Database',
       icon: Database,
       href: '/admin/database',
+    },
+    {
+      title: language === 'el' ? 'Διαχείριση Beta' : 'Beta Management',
+      icon: Ticket,
+      href: '/admin/beta',
     },
   ];
 
