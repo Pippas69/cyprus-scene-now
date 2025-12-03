@@ -12,8 +12,9 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { usePasswordChange } from '@/hooks/usePasswordChange';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { toast } from '@/hooks/use-toast';
-import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,6 +56,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const { preferences, isLoading, updatePreferences, isUpdating } = useUserPreferences(userId);
   const { data: userProfile } = useUserProfile(userId);
   const { changePassword, isChanging } = usePasswordChange();
+  const { resetOnboarding } = useOnboardingStatus(businessId);
   
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -116,6 +118,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       dark: 'Σκοτεινό',
       system: 'Σύστημα',
       cancel: 'Ακύρωση',
+      restartTour: 'Επανεκκίνηση Περιήγησης',
+      restartTourDescription: 'Δείτε ξανά τον οδηγό εισαγωγής',
     },
     en: {
       accountSettings: 'Account Settings',
@@ -150,6 +154,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       dark: 'Dark',
       system: 'System',
       cancel: 'Cancel',
+      restartTour: 'Restart Onboarding Tour',
+      restartTourDescription: 'View the introduction guide again',
     },
   };
 
@@ -786,6 +792,23 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           <CardTitle>{t.appPreferences}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>{t.restartTour}</Label>
+            <p className="text-sm text-muted-foreground">{t.restartTourDescription}</p>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                await resetOnboarding();
+                navigate('/dashboard-business');
+                window.location.reload();
+              }}
+              className="w-full"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              {t.restartTour}
+            </Button>
+          </div>
+          <Separator />
           <div className="space-y-2">
             <Label htmlFor="language">{t.languagePreference}</Label>
             <Select

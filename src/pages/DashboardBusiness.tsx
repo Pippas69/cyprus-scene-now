@@ -16,6 +16,8 @@ import { QuickStats } from "@/components/business/QuickStats";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
+import { OnboardingTour } from "@/components/business/OnboardingTour";
 import Feed from "@/pages/Feed";
 import Xartis from "@/pages/Xartis";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
@@ -90,6 +92,22 @@ const DashboardBusiness = () => {
   
   // Enable real-time notifications
   useRealtimeNotifications(businessId, userId);
+
+  // Onboarding tour
+  const { onboardingCompleted, completeOnboarding, isLoading: onboardingLoading } = useOnboardingStatus(businessId);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding tour for new businesses
+  useEffect(() => {
+    if (!loading && !onboardingLoading && verified && onboardingCompleted === false) {
+      setShowOnboarding(true);
+    }
+  }, [loading, onboardingLoading, verified, onboardingCompleted]);
+
+  const handleOnboardingComplete = async () => {
+    await completeOnboarding();
+    setShowOnboarding(false);
+  };
 
   const checkVerificationStatus = async () => {
     try {
@@ -201,7 +219,13 @@ const DashboardBusiness = () => {
 
   // Main dashboard for verified businesses
   return (
-    <SidebarProvider>
+    <>
+      <OnboardingTour 
+        isOpen={showOnboarding} 
+        onComplete={handleOnboardingComplete}
+        language={language}
+      />
+      <SidebarProvider>
       <div className="min-h-screen w-full flex">
         <BusinessSidebar />
         
@@ -292,7 +316,8 @@ const DashboardBusiness = () => {
           <BusinessFAB />
         </div>
       </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </>
   );
 };
 
