@@ -32,6 +32,7 @@ import AdminReports from "./pages/AdminReports";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminDatabaseMonitoring from "./pages/AdminDatabaseMonitoring";
+import AdminBetaManagement from "./pages/AdminBetaManagement";
 import AdminForbidden from "./pages/AdminForbidden";
 import BusinessProfile from "./pages/BusinessProfile";
 import EventDetail from "./pages/EventDetail";
@@ -76,6 +77,7 @@ function AppContent() {
             <Route path="settings" element={<AdminSettings />} />
             <Route path="geocoding" element={<AdminGeocoding />} />
             <Route path="database" element={<AdminDatabaseMonitoring />} />
+            <Route path="beta" element={<AdminBetaManagement />} />
           </Route>
           <Route path="/admin/forbidden" element={<AdminForbidden />} />
           
