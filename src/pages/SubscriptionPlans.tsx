@@ -153,7 +153,11 @@ const planColors: Record<string, string> = {
   professional: 'from-purple-500 to-pink-500',
 };
 
-export default function SubscriptionPlans() {
+interface SubscriptionPlansProps {
+  embedded?: boolean;
+}
+
+export default function SubscriptionPlans({ embedded = false }: SubscriptionPlansProps) {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
@@ -318,14 +322,18 @@ export default function SubscriptionPlans() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
+    <div className={embedded ? "bg-background" : "min-h-screen bg-gradient-to-b from-background via-background to-muted/30"}>
       {/* Hero Header */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-sunset-coral/5" />
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2" />
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-sunset-coral/10 rounded-full blur-3xl -translate-y-1/2" />
+        {!embedded && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-sunset-coral/5" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2" />
+            <div className="absolute top-0 right-1/4 w-96 h-96 bg-sunset-coral/10 rounded-full blur-3xl -translate-y-1/2" />
+          </>
+        )}
         
-        <div className="relative max-w-7xl mx-auto px-4 pt-16 pb-12">
+        <div className={`relative max-w-7xl mx-auto px-4 ${embedded ? 'pt-6 pb-6' : 'pt-16 pb-12'}`}>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
