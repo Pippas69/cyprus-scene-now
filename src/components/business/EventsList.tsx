@@ -9,6 +9,16 @@ import EventBoostDialog from "./EventBoostDialog";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface EventsListProps {
   businessId: string;
@@ -21,6 +31,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const { language } = useLanguage();
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [boostingEvent, setBoostingEvent] = useState<any>(null);
+  const [deletingEvent, setDeletingEvent] = useState<{ id: string; title: string } | null>(null);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -46,6 +57,11 @@ const EventsList = ({ businessId }: EventsListProps) => {
       boost: "Προώθηση",
       interested: "Ενδιαφέρον",
       going: "Θα Πάνε",
+      deleteConfirmTitle: "Διαγραφή Εκδήλωσης",
+      deleteConfirmDescription: "Είστε σίγουροι ότι θέλετε να διαγράψετε την εκδήλωση",
+      deleteConfirmWarning: "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
+      cancel: "Ακύρωση",
+      confirmDelete: "Διαγραφή",
     },
     en: {
       loading: "Loading...",
@@ -60,6 +76,11 @@ const EventsList = ({ businessId }: EventsListProps) => {
       boost: "Boost",
       interested: "Interested",
       going: "Going",
+      deleteConfirmTitle: "Delete Event",
+      deleteConfirmDescription: "Are you sure you want to delete",
+      deleteConfirmWarning: "This action cannot be undone.",
+      cancel: "Cancel",
+      confirmDelete: "Delete",
     },
   };
 
@@ -280,7 +301,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleDelete(event.id)}
+                  onClick={() => setDeletingEvent({ id: event.id, title: event.title })}
                   className="text-destructive hover:text-destructive"
                   title={t.delete}
                   aria-label={`Delete ${event.title}`}
@@ -315,6 +336,31 @@ const EventsList = ({ businessId }: EventsListProps) => {
           remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
         />
       )}
+
+      <AlertDialog open={!!deletingEvent} onOpenChange={(open) => !open && setDeletingEvent(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.deleteConfirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.deleteConfirmDescription} <strong>"{deletingEvent?.title}"</strong>? {t.deleteConfirmWarning}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingEvent) {
+                  handleDelete(deletingEvent.id);
+                  setDeletingEvent(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t.confirmDelete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
