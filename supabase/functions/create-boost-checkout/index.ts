@@ -81,6 +81,29 @@ serve(async (req) => {
 
     logStep("Cost calculated", { days, dailyRateCents, totalCostCents });
 
+    // Create boost record FIRST with pending status
+    const { data: boostData, error: boostError } = await supabaseClient
+      .from("event_boosts")
+      .insert({
+        event_id: eventId,
+        business_id: businessId,
+        boost_tier: tier,
+        start_date: startDate,
+        end_date: endDate,
+        daily_rate_cents: dailyRateCents,
+        total_cost_cents: totalCostCents,
+        source: "stripe_payment",
+        status: "pending",
+        targeting_quality: tier === "elite" ? 100 : tier === "premium" ? 85 : tier === "standard" ? 70 : 50,
+      })
+      .select()
+      .single();
+
+    if (boostError) throw boostError;
+    
+    const boostId = boostData.id;
+    logStep("Boost record created with pending status", { boostId });
+
     // Create Stripe checkout session
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("Stripe not configured");
@@ -113,6 +136,7 @@ serve(async (req) => {
       cancel_url: `${origin}/dashboard-business?boost=canceled`,
       metadata: {
         type: "event_boost",
+        boost_id: boostId, // Critical: This is used by webhook to find the boost
         event_id: eventId,
         business_id: businessId,
         tier,
@@ -123,28 +147,10 @@ serve(async (req) => {
       },
     });
 
-    // Create boost record with pending payment
-    const { error: boostError } = await supabaseClient
-      .from("event_boosts")
-      .insert({
-        event_id: eventId,
-        business_id: businessId,
-        boost_tier: tier,
-        start_date: startDate,
-        end_date: endDate,
-        daily_rate_cents: dailyRateCents,
-        total_cost_cents: totalCostCents,
-        source: "stripe_payment",
-        status: "pending",
-        targeting_quality: tier === "elite" ? 100 : tier === "premium" ? 85 : tier === "standard" ? 70 : 50,
-      });
-
-    if (boostError) throw boostError;
-
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    logStep("Checkout session created", { sessionId: session.id, boostId, url: session.url });
 
     return new Response(
-      JSON.stringify({ url: session.url }),
+      JSON.stringify({ url: session.url, boostId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
