@@ -67,7 +67,7 @@ serve(async (req) => {
     // Handle checkout.session.completed
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      logStep("Processing checkout.session.completed", { sessionId: session.id });
+      logStep("Processing checkout.session.completed", { sessionId: session.id, mode: session.mode });
 
       if (session.mode === "subscription") {
         // Handle subscription checkout
@@ -159,21 +159,29 @@ serve(async (req) => {
       } else if (session.mode === "payment") {
         // Handle boost payment
         const metadata = session.metadata;
+        logStep("Processing boost payment", { metadata });
         
-        if (metadata?.boost_id) {
-          logStep("Processing boost payment", { boostId: metadata.boost_id });
+        if (metadata?.type === "event_boost" && metadata?.boost_id) {
+          const boostId = metadata.boost_id;
+          logStep("Updating boost to scheduled", { boostId });
           
-          // Update event_boost status to scheduled
+          // Update event_boost status from pending to scheduled
           const { error: boostError } = await supabaseClient
             .from('event_boosts')
             .update({
               status: 'scheduled',
               stripe_payment_intent_id: session.payment_intent as string
             })
-            .eq('id', metadata.boost_id);
+            .eq('id', boostId)
+            .eq('status', 'pending'); // Only update if still pending
 
-          if (boostError) throw boostError;
-          logStep("Boost status updated to scheduled");
+          if (boostError) {
+            logStep("Error updating boost", { error: boostError.message });
+            throw boostError;
+          }
+          logStep("Boost status updated to scheduled successfully");
+        } else {
+          logStep("Payment completed but no boost_id in metadata - skipping boost update");
         }
       }
     }

@@ -53,39 +53,45 @@ const EventBoostDialog = ({
   const handleBoost = async () => {
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-event-boost", {
-        body: {
-          eventId,
-          tier,
-          startDate: startDate.toISOString().split("T")[0],
-          endDate: endDate.toISOString().split("T")[0],
-          useSubscriptionBudget: canUseSubscriptionBudget,
-        },
-      });
+      const formattedStartDate = startDate.toISOString().split("T")[0];
+      const formattedEndDate = endDate.toISOString().split("T")[0];
 
-      if (error) throw error;
+      if (canUseSubscriptionBudget) {
+        // Use subscription budget - call create-event-boost
+        const { data, error } = await supabase.functions.invoke("create-event-boost", {
+          body: {
+            eventId,
+            tier,
+            startDate: formattedStartDate,
+            endDate: formattedEndDate,
+            useSubscriptionBudget: true,
+          },
+        });
 
-      if (data.source === "subscription") {
-        toast.success(
-          language === "el" ? "Προώθηση ενεργοποιήθηκε!" : "Boost activated!",
-          {
-            description:
-              language === "el"
-                ? "Το υπόλοιπο budget σας ενημερώθηκε."
-                : "Your budget balance has been updated.",
-          }
-        );
-        onOpenChange(false);
+        if (error) throw error;
+
+        if (data.success) {
+          toast.success(
+            language === "el" ? "Προώθηση ενεργοποιήθηκε!" : "Boost activated!",
+            {
+              description:
+                language === "el"
+                  ? "Το υπόλοιπο budget σας ενημερώθηκε."
+                  : "Your budget balance has been updated.",
+            }
+          );
+          onOpenChange(false);
+        }
       } else {
-        // Handle Stripe checkout flow
+        // No subscription budget - go directly to Stripe checkout
         const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
           "create-boost-checkout",
           {
             body: {
               eventId,
               tier,
-              startDate: startDate.toISOString().split("T")[0],
-              endDate: endDate.toISOString().split("T")[0],
+              startDate: formattedStartDate,
+              endDate: formattedEndDate,
             },
           }
         );
