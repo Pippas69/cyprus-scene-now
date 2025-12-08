@@ -154,6 +154,7 @@ export function DateTimePicker({
 
             <div className="flex gap-2">
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 className="flex-1"
@@ -163,6 +164,7 @@ export function DateTimePicker({
                 {language === 'el' ? 'Καθαρισμός' : 'Clear'}
               </Button>
               <Button
+                type="button"
                 size="sm"
                 className="flex-1"
                 onClick={handleDone}
