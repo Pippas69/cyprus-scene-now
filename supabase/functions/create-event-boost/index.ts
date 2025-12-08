@@ -133,7 +133,7 @@ serve(async (req) => {
         total_cost_cents: totalCostCents,
         source: "subscription_budget",
         status: "scheduled",
-        targeting_quality: tier === "elite" ? 100 : tier === "premium" ? 85 : tier === "standard" ? 70 : 50,
+        targeting_quality: tier === "elite" ? 5 : tier === "premium" ? 4 : tier === "standard" ? 3 : 2,
       });
 
     if (boostError) throw boostError;

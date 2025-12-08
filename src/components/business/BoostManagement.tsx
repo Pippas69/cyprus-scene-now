@@ -13,6 +13,13 @@ interface BoostManagementProps {
   businessId: string;
 }
 
+const getQualityPercentage = (quality: number | null) => {
+  const qualityMap: Record<number, number> = {
+    1: 40, 2: 50, 3: 70, 4: 85, 5: 100
+  };
+  return qualityMap[quality || 2] || 50;
+};
+
 const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
@@ -158,7 +165,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                     <div className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-muted-foreground" />
                       <span>
-                        {language === "el" ? "Ποιότητα:" : "Quality:"} {boost.targeting_quality}%
+                        {language === "el" ? "Ποιότητα:" : "Quality:"} {getQualityPercentage(boost.targeting_quality)}%
                       </span>
                     </div>
                   </div>
@@ -240,7 +247,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     <span>
                       {language === "el" ? "Ποιότητα Στόχευσης:" : "Targeting Quality:"}{" "}
-                      {boost.targeting_quality}%
+                      {getQualityPercentage(boost.targeting_quality)}%
                     </span>
                   </div>
 
