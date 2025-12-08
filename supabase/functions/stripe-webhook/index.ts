@@ -51,8 +51,10 @@ serve(async (req) => {
       logStep("Webhook signature verified", { type: event.type });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logStep("Webhook signature verification failed", { error: errorMsg });
-      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+      console.error("[STRIPE-WEBHOOK] Signature verification FAILED:", errorMsg);
+      console.error("[STRIPE-WEBHOOK] Received signature:", signature?.substring(0, 20) + "...");
+      console.error("[STRIPE-WEBHOOK] Webhook secret configured:", webhookSecret ? "Yes (starts with " + webhookSecret.substring(0, 10) + "...)" : "No");
+      return new Response(JSON.stringify({ error: "Invalid signature", details: errorMsg }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
