@@ -94,7 +94,7 @@ serve(async (req) => {
         daily_rate_cents: dailyRateCents,
         total_cost_cents: totalCostCents,
         source: "purchase",
-        status: "pending",
+        status: "scheduled",
         targeting_quality: tier === "elite" ? 100 : tier === "premium" ? 85 : tier === "standard" ? 70 : 50,
       })
       .select()
