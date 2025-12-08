@@ -95,7 +95,7 @@ serve(async (req) => {
         total_cost_cents: totalCostCents,
         source: "purchase",
         status: "scheduled",
-        targeting_quality: tier === "elite" ? 100 : tier === "premium" ? 85 : tier === "standard" ? 70 : 50,
+        targeting_quality: tier === "elite" ? 5 : tier === "premium" ? 4 : tier === "standard" ? 3 : 2,
       })
       .select()
       .single();
