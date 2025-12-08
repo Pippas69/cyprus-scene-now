@@ -93,7 +93,7 @@ serve(async (req) => {
         end_date: endDate,
         daily_rate_cents: dailyRateCents,
         total_cost_cents: totalCostCents,
-        source: "stripe_payment",
+        source: "purchase",
         status: "pending",
         targeting_quality: tier === "elite" ? 100 : tier === "premium" ? 85 : tier === "standard" ? 70 : 50,
       })
