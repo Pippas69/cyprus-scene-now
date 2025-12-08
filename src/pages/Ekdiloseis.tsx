@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/hooks/useLanguage";
 
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
@@ -11,7 +12,7 @@ import { Loader2 } from "lucide-react";
 
 const Ekdiloseis = () => {
   const navigate = useNavigate();
-  const [language, setLanguage] = useState<"el" | "en">("el");
+  const { language } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSignupModal, setShowSignupModal] = useState(false);

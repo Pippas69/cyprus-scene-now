@@ -1,13 +1,11 @@
 import { Instagram, Facebook, Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
+import LanguageToggle from "@/components/LanguageToggle";
 
-interface FooterProps {
-  language: "el" | "en";
-  onLanguageToggle: (lang: "el" | "en") => void;
-}
+const Footer = () => {
+  const { language } = useLanguage();
 
-const Footer = ({ language, onLanguageToggle }: FooterProps) => {
   const text = {
     el: {
       tagline: "Ζήσε το τώρα. Ανακάλυψε τι συμβαίνει στην Κύπρο, ζωντανά.",
@@ -133,24 +131,7 @@ const Footer = ({ language, onLanguageToggle }: FooterProps) => {
           <p className="text-primary-foreground/70 text-sm">
             {t.madeWith} ❤️ {t.inCyprus}
           </p>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant={language === "el" ? "secondary" : "ghost"}
-              onClick={() => onLanguageToggle("el")}
-              className="text-xs"
-            >
-              🇬🇷 ΕΛ
-            </Button>
-            <Button
-              size="sm"
-              variant={language === "en" ? "secondary" : "ghost"}
-              onClick={() => onLanguageToggle("en")}
-              className="text-xs"
-            >
-              🇬🇧 EN
-            </Button>
-          </div>
+          <LanguageToggle />
         </div>
       </div>
     </footer>

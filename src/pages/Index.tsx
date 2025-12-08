@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,10 +8,11 @@ import FeaturesSection from "@/components/home/FeaturesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import StatsSection from "@/components/home/StatsSection";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [language, setLanguage] = useState<"el" | "en">("el");
+  const { language } = useLanguage();
 
   useEffect(() => {
     const checkAuthAndRedirect = async () => {
@@ -37,13 +38,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar language={language} onLanguageToggle={setLanguage} />
+      <Navbar />
       <HeroSection language={language} />
       <MarqueeSection />
       <FeaturesSection language={language} />
       <HowItWorksSection language={language} />
       <StatsSection language={language} />
-      <Footer language={language} onLanguageToggle={setLanguage} />
+      <Footer />
     </div>
   );
 };

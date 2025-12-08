@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { User as UserIcon, Settings, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
+import LanguageToggle from '@/components/LanguageToggle';
 import type { User } from '@supabase/supabase-js';
 
 interface UserLayoutProps {
@@ -17,7 +18,7 @@ interface UserLayoutProps {
 
 export function UserLayout({ children }: UserLayoutProps) {
   const navigate = useNavigate();
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
@@ -107,21 +108,8 @@ export function UserLayout({ children }: UserLayoutProps) {
           </div>
 
           {/* Language Toggle */}
-          <div className="flex items-center gap-2 mr-4">
-            <Button
-              variant={language === 'el' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setLanguage('el')}
-            >
-              ΕΛ
-            </Button>
-            <Button
-              variant={language === 'en' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setLanguage('en')}
-            >
-              EN
-            </Button>
+          <div className="mr-4">
+            <LanguageToggle />
           </div>
 
           {/* User Menu */}

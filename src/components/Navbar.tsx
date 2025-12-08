@@ -8,22 +8,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
+import { useLanguage } from "@/hooks/useLanguage";
+import LanguageToggle from "@/components/LanguageToggle";
 import type { User } from "@supabase/supabase-js";
 
-interface NavbarProps {
-  language: "el" | "en";
-  onLanguageToggle: (lang: "el" | "en") => void;
-}
-const Navbar = ({
-  language,
-  onLanguageToggle
-}: NavbarProps) => {
+const Navbar = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+
   useEffect(() => {
     checkUser();
     const {
@@ -35,6 +32,7 @@ const Navbar = ({
       authListener.subscription.unsubscribe();
     };
   }, []);
+
   const checkUser = async () => {
     try {
       const {
@@ -62,10 +60,12 @@ const Navbar = ({
       setUserRole('user');
     }
   };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
   };
+
   const handleDashboardClick = () => {
     if (userRole === 'business') {
       navigate('/dashboard-business');
@@ -73,6 +73,7 @@ const Navbar = ({
       navigate('/dashboard-user');
     }
   };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -80,6 +81,7 @@ const Navbar = ({
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
   const text = {
     el: {
       events: "Εκδηλώσεις",
@@ -108,8 +110,11 @@ const Navbar = ({
       signOut: "Sign Out"
     }
   };
+
   const t = text[language];
-  return <nav className="fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b-4 border-accent">
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b-4 border-accent">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -157,24 +162,7 @@ const Navbar = ({
               </Button>}
 
             {/* Language Toggle */}
-            <div className="flex gap-1 rounded-lg p-1 border-2 border-accent bg-primary" role="group" aria-label="Language selection">
-              <button 
-                onClick={() => onLanguageToggle("el")} 
-                className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-primary ${language === "el" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}
-                aria-label="Switch to Greek"
-                aria-pressed={language === "el"}
-              >
-                🇬🇷 ΕΛ
-              </button>
-              <button 
-                onClick={() => onLanguageToggle("en")} 
-                className={`px-4 py-2 rounded text-sm font-extrabold transition-all bg-accent text-primary ${language === "en" ? "shadow-lg" : "opacity-70 hover:opacity-90"}`}
-                aria-label="Switch to English"
-                aria-pressed={language === "en"}
-              >
-                🇬🇧 EN
-              </button>
-            </div>
+            <LanguageToggle />
 
             {/* User Profile Menu or Join Dropdown */}
             {user ? <DropdownMenu>
@@ -252,31 +240,14 @@ const Navbar = ({
             </Sheet>
 
             {/* Language Toggle Mobile */}
-            <div className={`flex gap-1 rounded-lg p-1 ${scrolled ? "bg-muted" : "bg-background/10 backdrop-blur-sm"}`} role="group" aria-label="Language selection">
-              <button 
-                onClick={() => onLanguageToggle("el")} 
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "el" ? scrolled ? "bg-primary text-primary-foreground" : "bg-background text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-background/80 hover:bg-background/20"}`}
-                aria-label="Switch to Greek"
-                aria-pressed={language === "el"}
-              >
-                🇬🇷
-              </button>
-              <button 
-                onClick={() => onLanguageToggle("en")} 
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${language === "en" ? scrolled ? "bg-primary text-primary-foreground" : "bg-background text-primary" : scrolled ? "text-foreground hover:bg-background" : "text-background/80 hover:bg-background/20"}`}
-                aria-label="Switch to English"
-                aria-pressed={language === "en"}
-              >
-                🇬🇧
-              </button>
-            </div>
+            <LanguageToggle />
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className={scrolled ? "text-foreground" : "text-white"}
+                  className={scrolled ? "text-foreground" : "text-foreground"}
                   aria-label="Open menu"
                 >
                   <Menu aria-hidden="true" />
@@ -290,7 +261,10 @@ const Navbar = ({
                 }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                     {t.events}
                   </button>
-                  <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
+                  <button onClick={() => {
+                    navigate("/xartis");
+                    setMobileOpen(false);
+                  }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
                     {t.map}
                   </button>
                   <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
@@ -337,6 +311,8 @@ const Navbar = ({
           </div>
         </div>
       </div>
-    </nav>;
+    </nav>
+  );
 };
+
 export default Navbar;

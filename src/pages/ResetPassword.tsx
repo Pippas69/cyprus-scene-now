@@ -18,6 +18,9 @@ import {
 import { useLanguage } from "@/hooks/useLanguage";
 import { validationTranslations } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 
 const createResetPasswordSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -36,6 +39,7 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useLanguage();
+  const { theme, setTheme } = useTheme();
   const t = toastTranslations[language];
 
   const resetPasswordSchema = createResetPasswordSchema(language);
@@ -77,6 +81,21 @@ const ResetPassword = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <div className="w-full max-w-md">
         <div className="bg-card border border-border rounded-lg shadow-lg p-8">
+          <div className="flex items-center justify-end gap-2 mb-6">
+            <LanguageToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
               {language === 'el' ? 'Νέος Κωδικός' : 'New Password'}
