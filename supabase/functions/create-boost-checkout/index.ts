@@ -73,10 +73,11 @@ serve(async (req) => {
     const dailyRateCents = boostTiers[tier];
     if (!dailyRateCents) throw new Error("Invalid tier");
 
-    // Calculate total cost
+    // Calculate total cost (minimum 1 day)
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const diffMs = end.getTime() - start.getTime();
+    const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1); // Include both start and end day
     const totalCostCents = dailyRateCents * days;
 
     logStep("Cost calculated", { days, dailyRateCents, totalCostCents });
@@ -153,8 +154,22 @@ serve(async (req) => {
       JSON.stringify({ url: session.url, boostId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+  } catch (error: any) {
+    // Handle different error types properly
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    } else if (typeof error === "string") {
+      errorMessage = error;
+    } else {
+      try {
+        errorMessage = JSON.stringify(error);
+      } catch {
+        errorMessage = String(error);
+      }
+    }
     logStep("ERROR", { message: errorMessage });
     return new Response(
       JSON.stringify({ error: errorMessage }),
