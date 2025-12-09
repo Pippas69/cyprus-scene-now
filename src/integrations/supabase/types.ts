@@ -280,6 +280,7 @@ export type Database = {
           address: string | null
           category: string[]
           city: string
+          closes_at: string | null
           cover_url: string | null
           created_at: string
           description: string | null
@@ -288,6 +289,7 @@ export type Database = {
           logo_url: string | null
           name: string
           onboarding_completed: boolean | null
+          opens_at: string | null
           phone: string | null
           updated_at: string
           user_id: string
@@ -300,6 +302,7 @@ export type Database = {
           address?: string | null
           category: string[]
           city: string
+          closes_at?: string | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -308,6 +311,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           onboarding_completed?: boolean | null
+          opens_at?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -320,6 +324,7 @@ export type Database = {
           address?: string | null
           category?: string[]
           city?: string
+          closes_at?: string | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -328,6 +333,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           onboarding_completed?: boolean | null
+          opens_at?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -917,6 +923,7 @@ export type Database = {
           location: string
           max_reservations: number | null
           min_age_hint: number | null
+          price: number | null
           price_tier: Database["public"]["Enums"]["price_tier"] | null
           requires_approval: boolean | null
           seating_options: string[] | null
@@ -937,6 +944,7 @@ export type Database = {
           location: string
           max_reservations?: number | null
           min_age_hint?: number | null
+          price?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
           requires_approval?: boolean | null
           seating_options?: string[] | null
@@ -957,6 +965,7 @@ export type Database = {
           location?: string
           max_reservations?: number | null
           min_age_hint?: number | null
+          price?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
           requires_approval?: boolean | null
           seating_options?: string[] | null

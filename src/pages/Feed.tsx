@@ -12,6 +12,8 @@ import CategoryFilter from "@/components/CategoryFilter";
 import LanguageToggle from "@/components/LanguageToggle";
 import MapWrapper from "@/components/map/MapWrapper";
 import HeroCarousel from "@/components/feed/HeroCarousel";
+import SmartSearchBar from "@/components/feed/SmartSearchBar";
+import FeedSidebar from "@/components/feed/FeedSidebar";
 import QuickFilters from "@/components/feed/QuickFilters";
 import SortDropdown from "@/components/feed/SortDropdown";
 import ViewModeToggle from "@/components/feed/ViewModeToggle";
@@ -29,6 +31,7 @@ import { useScrollMemory } from "@/hooks/useScrollMemory";
 import { hapticFeedback } from "@/lib/haptics";
 import { getPersonalizedScore } from "@/lib/personalization";
 import type { User } from "@supabase/supabase-js";
+
 interface FeedProps {
   showNavbar?: boolean;
 }
@@ -45,6 +48,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const [pullDistance, setPullDistance] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [viewMode, setViewMode] = useState<"card" | "compact">("card");
+  const [searchParams, setSearchParams] = useState<{
+    date: Date | null;
+    time: string | null;
+    partySize: number | null;
+  }>({ date: null, time: null, partySize: null });
   const startYRef = useRef<number | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -382,9 +390,26 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       </div>
     );
   };
-  
-  return <div className="min-h-screen bg-background">
-      <OfflineIndicator />
+  const handleSmartSearch = (params: { date: Date | null; time: string | null; partySize: number | null }) => {
+    setSearchParams(params);
+    // Apply time-based quick filters
+    if (params.time === "morning") {
+      setQuickFilters(prev => [...prev.filter(f => !["tonight", "weekend"].includes(f))]);
+    } else if (params.time === "evening" || params.time === "night") {
+      setQuickFilters(prev => {
+        const filtered = prev.filter(f => !["tonight", "weekend"].includes(f));
+        return [...filtered, "tonight"];
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex">
+      {/* Desktop Sidebar */}
+      {showNavbar && <FeedSidebar language={language} user={user} />}
+
+      <div className="flex-1">
+        <OfflineIndicator />
       
       <div className="md:hidden">
         {pullDistance > 0 && (
@@ -448,6 +473,17 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Smart Search Bar - RSRVIN Inspired */}
+      {showNavbar && (
+        <div className="container mx-auto px-4 -mt-4 mb-6 relative z-30">
+          <SmartSearchBar
+            language={language}
+            onSearch={handleSmartSearch}
+            className="max-w-4xl mx-auto"
+          />
         </div>
       )}
 
@@ -575,6 +611,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       {showScrollTop && <Button onClick={scrollToTop} className="fixed bottom-24 md:bottom-8 right-8 z-50 rounded-full w-12 h-12 p-0 shadow-glow animate-fade-in" size="icon" aria-label="Scroll to top">
           <ChevronUp size={24} />
         </Button>}
-    </div>;
+      </div>
+    </div>
+  );
 };
 export default Feed;
