@@ -152,7 +152,7 @@ export function UserLayout({ children }: UserLayoutProps) {
         <div className="flex flex-1 w-full">
           <UserSidebar />
           
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto min-h-0">
             {children}
           </main>
         </div>
