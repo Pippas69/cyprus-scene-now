@@ -98,48 +98,54 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 3 - Connect */}
+          {/* Column 4 - Connect */}
           <div className="space-y-4">
             <h4 className="font-poppins font-semibold text-lg">{t.connect}</h4>
-            <div className="flex gap-3">
+            <ul className="space-y-2">
+              <li>
+                <Link to="/contact" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  {language === "el" ? "Επικοινωνία" : "Contact Us"}
+                </Link>
+              </li>
+              <li>
+                <a href="mailto:hello@fomo.cy" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  hello@fomo.cy
+                </a>
+              </li>
+            </ul>
+            <div className="flex gap-3 pt-2">
               <a
                 href="#"
-                className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                className="w-8 h-8 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <Instagram className="w-4 h-4" />
               </a>
               <a
                 href="#"
-                className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                className="w-8 h-8 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
                 aria-label="Facebook"
               >
-                <Facebook className="w-5 h-5" />
+                <Facebook className="w-4 h-4" />
               </a>
               <a
                 href="mailto:hello@fomo.cy"
-                className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                className="w-8 h-8 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
                 aria-label="Email"
               >
-                <Mail className="w-5 h-5" />
+                <Mail className="w-4 h-4" />
               </a>
-            </div>
-            <div className="pt-2">
-              <Link
-                to="/signup-business"
-                className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm underline"
-              >
-                {t.forBusiness}
-              </Link>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="border-t border-primary-foreground/20 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-primary-foreground/70 text-sm">
-            {t.madeWith} ❤️ {t.inCyprus}
-          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-sm text-primary-foreground/70">
+            <p>{t.rights}</p>
+            <span className="hidden sm:inline">•</span>
+            <p>{t.madeWith} ❤️ {t.inCyprus}</p>
+          </div>
           <LanguageToggle />
         </div>
       </div>
