@@ -34,8 +34,8 @@ const QuickFilters = ({ language, selectedFilters, onFilterToggle }: QuickFilter
   ];
 
   return (
-    <ScrollArea className="w-full whitespace-nowrap">
-      <div className="flex gap-2 pb-2">
+    <ScrollArea className="w-full whitespace-nowrap overflow-hidden">
+      <div className="flex gap-2 pb-2 pr-4">
         {filters.map((filter) => (
           <Badge
             key={filter.id}
