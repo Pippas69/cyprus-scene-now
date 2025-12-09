@@ -44,13 +44,13 @@ const CategoryFilter = ({
   };
 
   return (
-    <ScrollArea className="w-full whitespace-nowrap">
-      <div className="flex gap-2 pb-4">
+    <ScrollArea className="w-full whitespace-nowrap overflow-hidden">
+      <div className="flex gap-2 pb-2 pr-4">
         {categories[language].map((category) => (
           <Badge
             key={category.id}
             variant={selectedCategories.includes(category.id) ? "default" : "outline"}
-            className={`cursor-pointer transition-all hover:scale-105 px-3 py-2 text-sm font-semibold min-h-[44px] flex items-center ${
+            className={`cursor-pointer transition-all hover:scale-105 px-3 py-2 text-sm font-semibold min-h-[40px] flex items-center flex-shrink-0 ${
               selectedCategories.includes(category.id)
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-muted text-foreground border-border hover:bg-primary/10 hover:border-primary/30"
@@ -61,7 +61,7 @@ const CategoryFilter = ({
           </Badge>
         ))}
       </div>
-      <ScrollBar orientation="horizontal" />
+      <ScrollBar orientation="horizontal" className="invisible" />
     </ScrollArea>
   );
 };

@@ -394,6 +394,36 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         )}
       </div>
       
+      {/* Mobile header when inside UserLayout */}
+      {!showNavbar && (
+        <div className="sticky top-0 z-40 bg-background border-b shadow-sm">
+          <div className="px-4 py-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-bold text-foreground">{t.title}</h1>
+              <LanguageToggle />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
+            </div>
+            <div className="overflow-hidden">
+              <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
+            </div>
+            {(selectedCategories.length > 0 || quickFilters.length > 0 || selectedCity) && (
+              <FilterChips
+                categories={selectedCategories}
+                quickFilters={quickFilters}
+                selectedCity={selectedCity}
+                onRemoveCategory={handleRemoveCategory}
+                onRemoveQuickFilter={handleRemoveQuickFilter}
+                onRemoveCity={handleRemoveCity}
+                onClearAll={handleClearFilters}
+                language={language}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       {showNavbar && (
         <div className="sticky top-0 z-40 bg-background border-b shadow-sm">
           <div className="container mx-auto px-4 py-3">
