@@ -32,6 +32,7 @@ interface Event {
   end_at: string;
   category: string[];
   price_tier: string;
+  price?: number | null; // Actual price in EUR
   cover_image_url?: string;
   business_id?: string;
   interested_count?: number;
@@ -347,8 +348,14 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           <Badge className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm text-foreground z-10">
             {getCategoryLabel(event.category[0], language)}
           </Badge>
-          <Badge className="absolute bottom-3 right-3 bg-accent/90 backdrop-blur-sm text-accent-foreground z-10">
-            {event.price_tier === 'free' ? t.free : event.price_tier}
+          <Badge className="absolute bottom-3 right-3 bg-accent/90 backdrop-blur-sm text-accent-foreground font-semibold z-10">
+            {event.price ? (
+              `€${event.price.toFixed(2)}`
+            ) : event.price_tier === 'free' ? (
+              t.free
+            ) : (
+              <span className="capitalize">{event.price_tier}</span>
+            )}
           </Badge>
         </div>
 
