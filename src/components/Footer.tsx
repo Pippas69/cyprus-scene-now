@@ -40,14 +40,13 @@ const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           {/* Column 1 - ΦΟΜΟ */}
-          <div className="space-y-4">
+          <div className="col-span-2 md:col-span-1 space-y-4">
             <h3 className="font-urbanist text-4xl font-black">ΦΟΜΟ</h3>
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
               {t.tagline}
             </p>
-            <p className="text-primary-foreground/60 text-xs">{t.rights}</p>
           </div>
 
           {/* Column 2 - Explore */}
@@ -55,35 +54,45 @@ const Footer = () => {
             <h4 className="font-poppins font-semibold text-lg">{t.explore}</h4>
             <ul className="space-y-2">
               <li>
-                <Link
-                  to="/feed"
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
-                >
+                <Link to="/feed" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
                   {t.events}
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/feed"
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
-                >
+                <Link to="/feed" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
                   {t.discounts}
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/xartis"
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
-                >
+                <Link to="/xartis" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
                   {t.map}
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/feed"
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
-                >
+                <Link to="/blog" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
                   {t.blog}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3 - Business */}
+          <div className="space-y-4">
+            <h4 className="font-poppins font-semibold text-lg">{t.forBusiness}</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/features" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  {language === "el" ? "Χαρακτηριστικά" : "Features"}
+                </Link>
+              </li>
+              <li>
+                <Link to="/pricing" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  {language === "el" ? "Τιμοκατάλογος" : "Pricing"}
+                </Link>
+              </li>
+              <li>
+                <Link to="/signup-business" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  {language === "el" ? "Εγγραφή" : "Sign Up"}
                 </Link>
               </li>
             </ul>
