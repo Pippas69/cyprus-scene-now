@@ -29,7 +29,7 @@ All colors MUST be HSL.
 
     /* Muted - Lighter tones */
     --muted: 30 20% 90%;
-    --muted-foreground: 0 0% 45%;
+    --muted-foreground: 0 0% 30%;
 
     /* Accent - Seafoam Teal */
     --accent: 174 62% 56%; /* Seafoam Teal #4ECDC4 */
