@@ -37,6 +37,11 @@ import AdminForbidden from "./pages/AdminForbidden";
 import BusinessProfile from "./pages/BusinessProfile";
 import EventDetail from "./pages/EventDetail";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
+import Features from "./pages/Features";
+import PricingPublic from "./pages/PricingPublic";
+import Contact from "./pages/Contact";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +60,11 @@ function AppContent() {
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+          <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
+          <Route path="/pricing" element={<PageTransition><PricingPublic /></PageTransition>} />
+          <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+          <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+          <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
           <Route path="/feed" element={<PageTransition><UserLayout><Feed showNavbar={false} /></UserLayout></PageTransition>} />
           <Route path="/ekdiloseis" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
           <Route path="/xartis" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />

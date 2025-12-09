@@ -140,6 +140,75 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content_el: string
+          content_en: string
+          created_at: string | null
+          excerpt_el: string | null
+          excerpt_en: string | null
+          featured_image: string | null
+          id: string
+          published_at: string | null
+          read_time_minutes: number | null
+          slug: string
+          title_el: string
+          title_en: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content_el: string
+          content_en: string
+          created_at?: string | null
+          excerpt_el?: string | null
+          excerpt_en?: string | null
+          featured_image?: string | null
+          id?: string
+          published_at?: string | null
+          read_time_minutes?: number | null
+          slug: string
+          title_el: string
+          title_en: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content_el?: string
+          content_en?: string
+          created_at?: string | null
+          excerpt_el?: string | null
+          excerpt_en?: string | null
+          featured_image?: string | null
+          id?: string
+          published_at?: string | null
+          read_time_minutes?: number | null
+          slug?: string
+          title_el?: string
+          title_en?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_followers: {
         Row: {
           business_id: string
@@ -446,6 +515,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contact_submissions: {
+        Row: {
+          business_name: string | null
+          business_type: string | null
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          message: string | null
+          phone: string | null
+          website: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          business_type?: string | null
+          created_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          message?: string | null
+          phone?: string | null
+          website?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          business_type?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          message?: string | null
+          phone?: string | null
+          website?: string | null
+        }
+        Relationships: []
       }
       daily_analytics: {
         Row: {
