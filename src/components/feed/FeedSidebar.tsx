@@ -118,14 +118,14 @@ const FeedSidebar = ({ language, user, className }: FeedSidebarProps) => {
             <item.icon
               className={cn(
                 "h-5 w-5 shrink-0",
-                item.active ? "text-ocean" : "text-foreground/70 group-hover:text-foreground"
+                item.active ? "text-ocean" : "text-card-foreground/80 dark:text-gray-200 group-hover:text-card-foreground"
               )}
             />
             {!collapsed && (
               <span
                 className={cn(
                   "text-sm font-medium",
-                  item.active ? "text-ocean" : "text-foreground"
+                  item.active ? "text-ocean" : "text-card-foreground dark:text-gray-100"
                 )}
               >
                 {item.label}
@@ -151,9 +151,9 @@ const FeedSidebar = ({ language, user, className }: FeedSidebarProps) => {
               collapsed && "justify-center"
             )}
           >
-            <item.icon className="h-5 w-5 shrink-0 text-foreground/70 group-hover:text-foreground" />
+            <item.icon className="h-5 w-5 shrink-0 text-card-foreground/80 dark:text-gray-200 group-hover:text-card-foreground" />
             {!collapsed && (
-              <span className="text-sm font-medium text-foreground">{item.label}</span>
+              <span className="text-sm font-medium text-card-foreground dark:text-gray-100">{item.label}</span>
             )}
           </Link>
         ))}
@@ -172,13 +172,13 @@ const FeedSidebar = ({ language, user, className }: FeedSidebarProps) => {
         >
           {theme === "dark" ? (
             <>
-              <Sun className="h-5 w-5 text-foreground/70" />
-              {!collapsed && <span className="text-sm font-medium text-foreground">{t.lightMode}</span>}
+              <Sun className="h-5 w-5 text-card-foreground dark:text-gray-200" />
+              {!collapsed && <span className="text-sm font-medium text-card-foreground dark:text-gray-100">{t.lightMode}</span>}
             </>
           ) : (
             <>
-              <Moon className="h-5 w-5 text-foreground/70" />
-              {!collapsed && <span className="text-sm font-medium text-foreground">{t.darkMode}</span>}
+              <Moon className="h-5 w-5 text-card-foreground dark:text-gray-200" />
+              {!collapsed && <span className="text-sm font-medium text-card-foreground dark:text-gray-100">{t.darkMode}</span>}
             </>
           )}
         </Button>
