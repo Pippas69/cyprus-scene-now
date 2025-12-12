@@ -110,7 +110,7 @@ const FeedSidebar = ({ language, user, className }: FeedSidebarProps) => {
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl",
               "transition-all duration-200",
-              "hover:bg-muted/80 group",
+              "hover:bg-accent group",
               item.active && "bg-ocean/10 text-ocean",
               collapsed && "justify-center"
             )}
@@ -118,7 +118,7 @@ const FeedSidebar = ({ language, user, className }: FeedSidebarProps) => {
             <item.icon
               className={cn(
                 "h-5 w-5 shrink-0",
-                item.active ? "text-ocean" : "text-muted-foreground group-hover:text-foreground"
+                item.active ? "text-ocean" : "text-foreground/70 group-hover:text-foreground"
               )}
             />
             {!collapsed && (
@@ -147,11 +147,11 @@ const FeedSidebar = ({ language, user, className }: FeedSidebarProps) => {
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl",
               "transition-all duration-200",
-              "hover:bg-muted/80 group",
+              "hover:bg-accent group",
               collapsed && "justify-center"
             )}
           >
-            <item.icon className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-foreground" />
+            <item.icon className="h-5 w-5 shrink-0 text-foreground/70 group-hover:text-foreground" />
             {!collapsed && (
               <span className="text-sm font-medium text-foreground">{item.label}</span>
             )}
@@ -166,19 +166,19 @@ const FeedSidebar = ({ language, user, className }: FeedSidebarProps) => {
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className={cn(
             "w-full justify-start gap-3 px-3 py-2.5 rounded-xl",
-            "hover:bg-muted/80",
+            "hover:bg-accent",
             collapsed && "justify-center"
           )}
         >
           {theme === "dark" ? (
             <>
-              <Sun className="h-5 w-5 text-muted-foreground" />
-              {!collapsed && <span className="text-sm font-medium">{t.lightMode}</span>}
+              <Sun className="h-5 w-5 text-foreground/70" />
+              {!collapsed && <span className="text-sm font-medium text-foreground">{t.lightMode}</span>}
             </>
           ) : (
             <>
-              <Moon className="h-5 w-5 text-muted-foreground" />
-              {!collapsed && <span className="text-sm font-medium">{t.darkMode}</span>}
+              <Moon className="h-5 w-5 text-foreground/70" />
+              {!collapsed && <span className="text-sm font-medium text-foreground">{t.darkMode}</span>}
             </>
           )}
         </Button>
