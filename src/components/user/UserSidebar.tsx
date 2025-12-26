@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, MapPin, Calendar, Heart, User, Settings, CalendarCheck, Percent } from 'lucide-react';
+import { Home, MapPin, Calendar, Heart, User, Settings, CalendarCheck, Percent, MessageCircle } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
@@ -31,6 +31,7 @@ const translations = {
     reservations: 'Κρατήσεις',
     saved: 'Αποθηκευμένα',
     offers: 'Προσφορές',
+    messages: 'Μηνύματα',
     account: 'Λογαριασμός',
     profile: 'Προφίλ',
     settings: 'Ρυθμίσεις',
@@ -45,6 +46,7 @@ const translations = {
     reservations: 'Reservations',
     saved: 'Saved Events',
     offers: 'Offers',
+    messages: 'Messages',
     account: 'Account',
     profile: 'Profile',
     settings: 'Settings',
@@ -107,6 +109,7 @@ export function UserSidebar() {
     { title: t.reservations, url: '/dashboard-user?tab=reservations', icon: CalendarCheck, tab: 'reservations' },
     { title: t.saved, url: '/dashboard-user?tab=saved', icon: Heart, tab: 'saved' },
     { title: t.offers, url: '/dashboard-user?tab=offers', icon: Percent, tab: 'offers' },
+    { title: t.messages, url: '/messages', icon: MessageCircle },
   ];
 
   const accountItems = [

@@ -42,6 +42,7 @@ import PricingPublic from "./pages/PricingPublic";
 import Contact from "./pages/Contact";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,7 +50,7 @@ const queryClient = new QueryClient();
 // Component to conditionally render BottomNav
 function AppContent() {
   const location = useLocation();
-  const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/dashboard-user'];
+  const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/dashboard-user', '/messages'];
   const adminRoutes = ['/admin'];
   const hideBottomNav = userLayoutRoutes.some(route => location.pathname.startsWith(route)) || 
                         adminRoutes.some(route => location.pathname.startsWith(route));
@@ -74,6 +75,7 @@ function AppContent() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/signup-business" element={<SignupBusiness />} />
           <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
+          <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
           <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
           <Route path="/subscription-plans" element={<SubscriptionPlans />} />
           
