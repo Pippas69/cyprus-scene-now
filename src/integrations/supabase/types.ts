@@ -2431,6 +2431,226 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_commission_rates: {
+        Row: {
+          commission_percent: number
+          created_at: string
+          id: string
+          plan_slug: string
+        }
+        Insert: {
+          commission_percent: number
+          created_at?: string
+          id?: string
+          plan_slug: string
+        }
+        Update: {
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          plan_slug?: string
+        }
+        Relationships: []
+      }
+      ticket_orders: {
+        Row: {
+          business_id: string
+          commission_cents: number
+          commission_percent: number
+          created_at: string
+          customer_email: string
+          customer_name: string
+          event_id: string
+          id: string
+          status: Database["public"]["Enums"]["ticket_order_status"]
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          subtotal_cents: number
+          total_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          commission_cents?: number
+          commission_percent?: number
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          event_id: string
+          id?: string
+          status?: Database["public"]["Enums"]["ticket_order_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subtotal_cents?: number
+          total_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          commission_cents?: number
+          commission_percent?: number
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          event_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["ticket_order_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subtotal_cents?: number
+          total_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_orders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_tiers: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          description: string | null
+          event_id: string
+          id: string
+          max_per_order: number
+          name: string
+          price_cents: number
+          quantity_sold: number
+          quantity_total: number
+          sale_end_at: string | null
+          sale_start_at: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          max_per_order?: number
+          name: string
+          price_cents?: number
+          quantity_sold?: number
+          quantity_total: number
+          sale_end_at?: string | null
+          sale_start_at?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          max_per_order?: number
+          name?: string
+          price_cents?: number
+          quantity_sold?: number
+          quantity_total?: number
+          sale_end_at?: string | null
+          sale_start_at?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_tiers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          checked_in_at: string | null
+          checked_in_by: string | null
+          created_at: string
+          event_id: string
+          id: string
+          order_id: string
+          qr_code_token: string
+          status: Database["public"]["Enums"]["ticket_status"]
+          tier_id: string
+          user_id: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          order_id: string
+          qr_code_token?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tier_id: string
+          user_id: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          order_id?: string
+          qr_code_token?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tier_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_connections: {
         Row: {
           created_at: string
@@ -3844,6 +4064,8 @@ export type Database = {
         | "canceled"
         | "trialing"
         | "paused"
+      ticket_order_status: "pending" | "completed" | "refunded" | "cancelled"
+      ticket_status: "valid" | "used" | "cancelled" | "refunded"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -4005,6 +4227,8 @@ export const Constants = {
         "trialing",
         "paused",
       ],
+      ticket_order_status: ["pending", "completed", "refunded", "cancelled"],
+      ticket_status: ["valid", "used", "cancelled", "refunded"],
     },
   },
 } as const
