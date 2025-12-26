@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, TrendingUp, RefreshCw, ChevronUp } from "lucide-react";
+import { MapPin, Calendar, TrendingUp, RefreshCw, ChevronUp, Filter, Map, ArrowUp } from "lucide-react";
+import { FloatingActionButton, FABAction } from "@/components/ui/floating-action-button";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -646,10 +647,32 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         </Tabs>
       </div>
 
-      {/* Scroll to Top Button */}
-      {showScrollTop && <Button onClick={scrollToTop} className="fixed bottom-24 md:bottom-8 right-8 z-50 rounded-full w-12 h-12 p-0 shadow-glow animate-fade-in" size="icon" aria-label="Scroll to top">
-          <ChevronUp size={24} />
-        </Button>}
+      {/* Floating Action Button with Quick Actions */}
+      {showScrollTop && (
+        <FloatingActionButton
+          icon={<ArrowUp size={24} />}
+          onClick={scrollToTop}
+          actions={[
+            {
+              icon: <Filter size={20} />,
+              label: language === 'el' ? 'Φίλτρα' : 'Filters',
+              onClick: () => {
+                const filtersEl = document.querySelector('[data-filters]');
+                filtersEl?.scrollIntoView({ behavior: 'smooth' });
+              }
+            },
+            {
+              icon: <Map size={20} />,
+              label: language === 'el' ? 'Χάρτης' : 'Map',
+              onClick: () => setActiveTab('map')
+            }
+          ]}
+          position="bottom-right"
+          size="large"
+          variant="primary"
+          pulse={false}
+        />
+      )}
       </div>
     </div>
   );

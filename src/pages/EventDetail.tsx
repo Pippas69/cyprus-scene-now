@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import { trackEventView, trackEngagement } from '@/lib/analyticsTracking';
 import { ReservationDialog } from '@/components/business/ReservationDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { RippleButton } from '@/components/ui/ripple-button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -29,6 +31,31 @@ import { format } from 'date-fns';
 import EventCard from '@/components/EventCard';
 import { EventAttendees } from '@/components/EventAttendees';
 import { LiveEventFeed } from '@/components/feed/LiveEventFeed';
+
+// Staggered animation variants for similar events
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 400,
+      damping: 30,
+    },
+  },
+};
 
 export default function EventDetail() {
   const { eventId } = useParams();
@@ -253,6 +280,7 @@ export default function EventDetail() {
       going: 'Θα πάω',
       details: 'Λεπτομέρειες',
       liveFeed: 'Live Feed',
+      makeReservation: 'Κράτηση',
     },
     en: {
       backToEvents: 'Back to Events',
@@ -263,6 +291,7 @@ export default function EventDetail() {
       going: 'Going',
       details: 'Details',
       liveFeed: 'Live Feed',
+      makeReservation: 'Make Reservation',
     },
   };
 
@@ -284,31 +313,40 @@ export default function EventDetail() {
       
       <div className="container mx-auto px-4 py-8 pt-24">
         {/* Back Button */}
-        <Button
+        <RippleButton
           variant="ghost"
           onClick={() => navigate(-1)}
           className="mb-4 gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
           {text.backToEvents}
-        </Button>
+        </RippleButton>
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="md:col-span-2 space-y-6">
             {/* Hero Image */}
             {event.cover_image_url && (
-              <div className="aspect-video rounded-lg overflow-hidden">
+              <motion.div 
+                className="aspect-video rounded-lg overflow-hidden shadow-lg"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
                 <img
                   src={event.cover_image_url}
                   alt={event.title}
                   className="w-full h-full object-cover"
                 />
-              </div>
+              </motion.div>
             )}
 
             {/* Title and Categories */}
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
               <h1 className="text-4xl font-bold mb-4">{event.title}</h1>
               <div className="flex flex-wrap gap-2">
                 {event.category?.map((cat: string) => (
@@ -317,7 +355,7 @@ export default function EventDetail() {
                   </Badge>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
             {/* Tabs for Details and Live Feed */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -338,7 +376,7 @@ export default function EventDetail() {
               <TabsContent value="details" className="space-y-6 mt-6">
                 {/* Description */}
                 {event.description && (
-                  <Card>
+                  <Card variant="glass">
                     <CardContent className="pt-6">
                       <p className="text-muted-foreground whitespace-pre-wrap">
                         {event.description}
@@ -351,16 +389,22 @@ export default function EventDetail() {
                 {similarEvents.length > 0 && (
                   <div>
                     <h2 className="text-2xl font-bold mb-4">{text.similarEvents}</h2>
-                    <div className="grid gap-4">
+                    <motion.div 
+                      className="grid gap-4"
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
                       {similarEvents.map((similar) => (
-                        <EventCard
-                          key={similar.id}
-                          event={similar}
-                          language={language}
-                          user={user}
-                        />
+                        <motion.div key={similar.id} variants={itemVariants}>
+                          <EventCard
+                            event={similar}
+                            language={language}
+                            user={user}
+                          />
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                   </div>
                 )}
               </TabsContent>
@@ -380,13 +424,18 @@ export default function EventDetail() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             {/* RSVP Buttons */}
             {user && (
-              <Card>
+              <Card variant="glass" className="backdrop-blur-md">
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-2 gap-2">
-                    <Button
+                    <RippleButton
                       variant="outline"
                       size="sm"
                       onClick={() => handleRSVP('interested')}
@@ -399,8 +448,8 @@ export default function EventDetail() {
                     >
                       <Heart className="h-4 w-4" />
                       {text.interested}
-                    </Button>
-                    <Button
+                    </RippleButton>
+                    <RippleButton
                       size="sm"
                       onClick={() => handleRSVP('going')}
                       disabled={rsvpLoading}
@@ -412,7 +461,7 @@ export default function EventDetail() {
                     >
                       <Users className="h-4 w-4" />
                       {text.going}
-                    </Button>
+                    </RippleButton>
                   </div>
                   
                   {/* RSVP Counts */}
@@ -432,27 +481,27 @@ export default function EventDetail() {
 
             {/* Reservation Button */}
             {user && event.accepts_reservations && (
-              <Button
+              <RippleButton
                 className="w-full gap-2"
                 onClick={() => setShowReservationDialog(true)}
               >
                 <Calendar className="h-4 w-4" />
-                {language === 'el' ? 'Κράτηση' : 'Make Reservation'}
-              </Button>
+                {text.makeReservation}
+              </RippleButton>
             )}
 
             {/* Share Button */}
-            <Button
+            <RippleButton
               variant="outline"
               className="w-full gap-2"
               onClick={handleShare}
             >
               <Share2 className="h-4 w-4" />
               {text.share}
-            </Button>
+            </RippleButton>
 
             {/* Event Details Card */}
-            <Card>
+            <Card variant="glass" className="backdrop-blur-md">
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-start gap-3">
                   <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -477,7 +526,7 @@ export default function EventDetail() {
             </Card>
 
             {/* Business Card */}
-            <Card>
+            <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-3">{text.hostedBy}</p>
                 <Link
@@ -507,29 +556,18 @@ export default function EventDetail() {
 
             {/* Event Attendees */}
             <EventAttendees eventId={eventId!} />
-          </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Reservation Dialog */}
-      {user && event && (
-        <ReservationDialog
-          open={showReservationDialog}
-          onOpenChange={setShowReservationDialog}
-          eventId={event.id}
-          eventTitle={event.title}
-          eventStartAt={event.start_at}
-          seatingOptions={event.seating_options || []}
-          language={language}
-          userId={user.id}
-          onSuccess={() => {
-            setShowReservationDialog(false);
-            toast.success(language === 'el' ? 'Η κράτηση καταχωρήθηκε!' : 'Reservation submitted!');
-          }}
-        />
-      )}
-
       <Footer />
+
+      {/* Reservation Dialog */}
+      <ReservationDialog
+        eventId={event.id}
+        open={showReservationDialog}
+        onOpenChange={setShowReservationDialog}
+      />
     </div>
   );
 }

@@ -8,10 +8,11 @@ import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Calendar, User, CalendarCheck, Settings, Percent } from 'lucide-react';
+import { Heart, Calendar, User, CalendarCheck, Settings, Percent, Plus, Bookmark, UserCog } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
+import { FloatingActionButton } from '@/components/ui/floating-action-button';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -148,6 +149,41 @@ const DashboardUser = () => {
                   <UserAccountSettings userId={user.id} language={language} />
                 </TabsContent>
       </Tabs>
+
+      {/* Floating Action Button for Quick Navigation */}
+      <FloatingActionButton
+        icon={<Plus size={24} />}
+        onClick={() => navigate('/feed')}
+        actions={[
+          {
+            icon: <Calendar size={20} />,
+            label: t.rsvps,
+            onClick: () => {
+              setActiveTab('rsvps');
+              navigate('/dashboard-user?tab=rsvps', { replace: true });
+            }
+          },
+          {
+            icon: <Bookmark size={20} />,
+            label: t.saved,
+            onClick: () => {
+              setActiveTab('saved');
+              navigate('/dashboard-user?tab=saved', { replace: true });
+            }
+          },
+          {
+            icon: <UserCog size={20} />,
+            label: t.profile,
+            onClick: () => {
+              setActiveTab('profile');
+              navigate('/dashboard-user?tab=profile', { replace: true });
+            }
+          }
+        ]}
+        position="bottom-right"
+        size="large"
+        variant="secondary"
+      />
     </div>
   );
 };
