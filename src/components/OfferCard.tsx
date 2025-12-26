@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useViewTracking, trackDiscountView } from "@/lib/analyticsTracking";
 import { useRef } from "react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { cn } from "@/lib/utils";
 
 interface Offer {
   id: string;
@@ -31,6 +33,7 @@ interface OfferCardProps {
 
 const OfferCard = ({ offer, discount, language, style, className }: OfferCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const { ref: revealRef, isInView } = useScrollReveal({ threshold: 0.1 });
   const offerData = offer || discount;
   
   // Track discount view when card is 50% visible
@@ -52,7 +55,20 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   if (!offerData) return null;
 
   return (
-    <Card ref={cardRef} className={`overflow-hidden hover:shadow-lg transition-shadow ${className || ''}`} style={style}>
+    <Card 
+      ref={(node) => {
+        (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        (revealRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
+      variant="glass"
+      interactive
+      className={cn(
+        "overflow-hidden transition-all duration-300",
+        isInView ? "animate-fade-in" : "opacity-0",
+        className
+      )} 
+      style={style}
+    >
       <CardContent className="p-4">
         <div className="flex gap-4">
           {/* Business Logo - Clickable */}

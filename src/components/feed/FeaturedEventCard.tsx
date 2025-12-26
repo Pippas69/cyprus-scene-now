@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Users, Heart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatEventTime } from "@/lib/mapUtils";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { cn } from "@/lib/utils";
 
 interface FeaturedEventCardProps {
   event: any;
@@ -32,8 +33,12 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
   const goingCount = event.realtime_stats?.[0]?.going_count || 0;
 
   return (
-    <Link to={`/ekdiloseis/${event.id}`} className="block">
-      <div className="relative w-full h-[350px] md:h-[500px] rounded-2xl overflow-hidden group">
+    <Link to={`/ekdiloseis/${event.id}`} className="block group">
+      <div className={cn(
+        "relative w-full h-[350px] md:h-[500px] rounded-2xl overflow-hidden",
+        "ring-2 ring-transparent transition-all duration-500",
+        "group-hover:ring-accent/50 group-hover:shadow-premium"
+      )}>
         {/* Background Image */}
         <div className="absolute inset-0">
           {event.cover_image_url ? (
@@ -100,12 +105,12 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
                 <span>{goingCount} {t.going}</span>
               </div>
             </div>
-            <Button 
+            <RippleButton 
               size="lg" 
-              className="bg-background text-primary hover:bg-background/90 font-semibold"
+              className="bg-background text-primary hover:bg-background/90 font-semibold shadow-lg"
             >
               {t.viewDetails}
-            </Button>
+            </RippleButton>
           </div>
         </div>
       </div>
