@@ -7,6 +7,8 @@ import MarqueeSection from "@/components/home/MarqueeSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import StatsSection from "@/components/home/StatsSection";
+import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
+import ParallaxSection from "@/components/ui/parallax-section";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -40,9 +42,14 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection language={language} />
+      <PartnerLogoMarquee language={language} />
       <MarqueeSection />
-      <FeaturesSection language={language} />
-      <HowItWorksSection language={language} />
+      <ParallaxSection intensity={0.2}>
+        <FeaturesSection language={language} />
+      </ParallaxSection>
+      <ParallaxSection intensity={0.15} fadeOnScroll>
+        <HowItWorksSection language={language} />
+      </ParallaxSection>
       <StatsSection language={language} />
       <Footer />
     </div>
