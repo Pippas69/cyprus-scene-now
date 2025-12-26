@@ -45,6 +45,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
+import TicketSuccess from "./pages/TicketSuccess";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ function AppContent() {
           <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
           <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
           <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+          <Route path="/ticket-success" element={<PageTransition><TicketSuccess /></PageTransition>} />
           
           {/* Admin Routes - Protected */}
           <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>

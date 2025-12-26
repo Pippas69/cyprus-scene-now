@@ -117,6 +117,47 @@ serve(async (req) => {
       .eq("id", orderId);
     logStep("Order completed");
 
+    // Fetch tickets with their QR tokens for email
+    const { data: createdTickets } = await supabaseClient
+      .from("tickets")
+      .select("id, qr_code_token, ticket_tiers(name)")
+      .eq("order_id", orderId);
+
+    // Fetch user email and event title for email notification
+    const { data: orderDetails } = await supabaseClient
+      .from("ticket_orders")
+      .select("customer_email, events(title)")
+      .eq("id", orderId)
+      .single();
+
+    // Send email with tickets (fire and forget - don't block on this)
+    if (orderDetails?.customer_email && createdTickets && createdTickets.length > 0) {
+      const tickets = createdTickets.map((t: any) => ({
+        id: t.id,
+        qrToken: t.qr_code_token,
+        tierName: (t.ticket_tiers as any)?.name || "General",
+      }));
+
+      const eventTitle = (orderDetails.events as any)?.title || "Event";
+
+      // Call send-ticket-email function
+      fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          orderId,
+          userEmail: orderDetails.customer_email,
+          eventTitle,
+          tickets,
+        }),
+      }).catch(err => logStep("Email send error (non-blocking)", err));
+
+      logStep("Email notification triggered");
+    }
+
     // Record commission in commission_ledger if applicable
     if (order.commission_cents > 0) {
       // We would insert into commission_ledger here
