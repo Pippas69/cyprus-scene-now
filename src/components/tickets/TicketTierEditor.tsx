@@ -1,0 +1,264 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Plus, X, Ticket, Euro, Users } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+
+export interface TicketTier {
+  id?: string;
+  name: string;
+  description?: string;
+  price_cents: number;
+  currency: string;
+  quantity_total: number;
+  max_per_order: number;
+  sort_order: number;
+}
+
+interface TicketTierEditorProps {
+  tiers: TicketTier[];
+  onTiersChange: (tiers: TicketTier[]) => void;
+  commissionPercent: number;
+}
+
+const t = {
+  el: {
+    addTier: "Προσθήκη Κατηγορίας Εισιτηρίου",
+    tierName: "Όνομα Κατηγορίας",
+    tierNamePlaceholder: "π.χ. Γενική Είσοδος, VIP",
+    description: "Περιγραφή",
+    descriptionPlaceholder: "Προαιρετική περιγραφή...",
+    price: "Τιμή (€)",
+    quantity: "Διαθέσιμα",
+    maxPerOrder: "Μέγ. ανά παραγγελία",
+    freeTickets: "Δωρεάν Εισιτήρια",
+    commission: "Προμήθεια πλατφόρμας",
+    youReceive: "Θα λάβετε",
+    remove: "Αφαίρεση",
+    noTiers: "Δεν έχετε προσθέσει κατηγορίες εισιτηρίων ακόμα",
+    noTickets: "Χωρίς εισιτήρια (μόνο RSVP/Κράτηση)",
+    enableTickets: "Ενεργοποίηση Πώλησης Εισιτηρίων",
+  },
+  en: {
+    addTier: "Add Ticket Tier",
+    tierName: "Tier Name",
+    tierNamePlaceholder: "e.g. General Admission, VIP",
+    description: "Description",
+    descriptionPlaceholder: "Optional description...",
+    price: "Price (€)",
+    quantity: "Quantity",
+    maxPerOrder: "Max per Order",
+    freeTickets: "Free Tickets",
+    commission: "Platform commission",
+    youReceive: "You receive",
+    remove: "Remove",
+    noTiers: "No ticket tiers added yet",
+    noTickets: "No tickets (RSVP/Reservation only)",
+    enableTickets: "Enable Ticket Sales",
+  },
+};
+
+export const TicketTierEditor = ({
+  tiers,
+  onTiersChange,
+  commissionPercent,
+}: TicketTierEditorProps) => {
+  const { language } = useLanguage();
+  const text = t[language];
+  const [ticketsEnabled, setTicketsEnabled] = useState(tiers.length > 0);
+
+  const addTier = () => {
+    const newTier: TicketTier = {
+      name: "",
+      description: "",
+      price_cents: 0,
+      currency: "eur",
+      quantity_total: 100,
+      max_per_order: 10,
+      sort_order: tiers.length,
+    };
+    onTiersChange([...tiers, newTier]);
+    setTicketsEnabled(true);
+  };
+
+  const updateTier = (index: number, updates: Partial<TicketTier>) => {
+    const updated = [...tiers];
+    updated[index] = { ...updated[index], ...updates };
+    onTiersChange(updated);
+  };
+
+  const removeTier = (index: number) => {
+    onTiersChange(tiers.filter((_, i) => i !== index));
+    if (tiers.length === 1) {
+      setTicketsEnabled(false);
+    }
+  };
+
+  const calculateNetRevenue = (priceCents: number) => {
+    if (priceCents === 0) return 0;
+    const commission = Math.round(priceCents * commissionPercent / 100);
+    return priceCents - commission;
+  };
+
+  const formatPrice = (cents: number) => {
+    return (cents / 100).toFixed(2);
+  };
+
+  const handleToggleTickets = (enabled: boolean) => {
+    setTicketsEnabled(enabled);
+    if (!enabled) {
+      onTiersChange([]);
+    } else if (tiers.length === 0) {
+      addTier();
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Toggle for enabling tickets */}
+      <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+        <div className="flex items-center gap-3">
+          <Ticket className="h-5 w-5 text-primary" />
+          <div>
+            <p className="font-medium">{text.enableTickets}</p>
+            <p className="text-sm text-muted-foreground">
+              {ticketsEnabled 
+                ? (language === 'el' ? "Οι χρήστες θα μπορούν να αγοράσουν εισιτήρια" : "Users will be able to purchase tickets")
+                : text.noTickets
+              }
+            </p>
+          </div>
+        </div>
+        <Switch
+          checked={ticketsEnabled}
+          onCheckedChange={handleToggleTickets}
+        />
+      </div>
+
+      {ticketsEnabled && (
+        <>
+          {/* Commission info */}
+          {commissionPercent > 0 && (
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-sm">
+                <span className="font-medium">{text.commission}:</span>{" "}
+                {commissionPercent}%
+                <span className="text-muted-foreground ml-2">
+                  {language === 'el' 
+                    ? "(Αναβαθμίστε το πλάνο σας για μικρότερη προμήθεια)"
+                    : "(Upgrade your plan for lower commission)"
+                  }
+                </span>
+              </p>
+            </div>
+          )}
+
+          {/* Ticket tiers */}
+          <div className="space-y-3">
+            {tiers.map((tier, index) => (
+              <Card key={index} className="relative">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => removeTier(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                
+                <CardContent className="pt-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{text.tierName} *</Label>
+                      <Input
+                        value={tier.name}
+                        onChange={(e) => updateTier(index, { name: e.target.value })}
+                        placeholder={text.tierNamePlaceholder}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>{text.description}</Label>
+                      <Input
+                        value={tier.description || ""}
+                        onChange={(e) => updateTier(index, { description: e.target.value })}
+                        placeholder={text.descriptionPlaceholder}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1">
+                        <Euro className="h-3 w-3" />
+                        {text.price}
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={tier.price_cents / 100}
+                        onChange={(e) => updateTier(index, { 
+                          price_cents: Math.round(parseFloat(e.target.value || "0") * 100) 
+                        })}
+                      />
+                      {tier.price_cents > 0 && commissionPercent > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {text.youReceive}: €{formatPrice(calculateNetRevenue(tier.price_cents))}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {text.quantity}
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={tier.quantity_total}
+                        onChange={(e) => updateTier(index, { 
+                          quantity_total: parseInt(e.target.value || "1") 
+                        })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{text.maxPerOrder}</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max={tier.quantity_total}
+                        value={tier.max_per_order}
+                        onChange={(e) => updateTier(index, { 
+                          max_per_order: parseInt(e.target.value || "1") 
+                        })}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={addTier}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {text.addTier}
+          </Button>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default TicketTierEditor;

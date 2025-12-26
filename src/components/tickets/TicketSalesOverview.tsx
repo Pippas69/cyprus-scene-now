@@ -1,0 +1,201 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Ticket, Euro, Users, TrendingUp, CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+
+interface TicketSalesOverviewProps {
+  eventId: string;
+}
+
+const t = {
+  el: {
+    ticketSales: "Πωλήσεις Εισιτηρίων",
+    totalRevenue: "Συνολικά Έσοδα",
+    ticketsSold: "Εισιτήρια Πωλημένα",
+    checkedIn: "Check-ins",
+    byTier: "Ανά Κατηγορία",
+    sold: "πωλημένα",
+    available: "διαθέσιμα",
+    free: "Δωρεάν",
+    commission: "Προμήθεια",
+    netRevenue: "Καθαρά Έσοδα",
+    noTiers: "Δεν υπάρχουν κατηγορίες εισιτηρίων",
+  },
+  en: {
+    ticketSales: "Ticket Sales",
+    totalRevenue: "Total Revenue",
+    ticketsSold: "Tickets Sold",
+    checkedIn: "Check-ins",
+    byTier: "By Tier",
+    sold: "sold",
+    available: "available",
+    free: "Free",
+    commission: "Commission",
+    netRevenue: "Net Revenue",
+    noTiers: "No ticket tiers available",
+  },
+};
+
+export const TicketSalesOverview = ({ eventId }: TicketSalesOverviewProps) => {
+  const { language } = useLanguage();
+  const text = t[language];
+
+  const { data: overview, isLoading } = useQuery({
+    queryKey: ["ticket-sales-overview", eventId],
+    queryFn: async () => {
+      // Fetch tiers
+      const { data: tiers, error: tiersError } = await supabase
+        .from("ticket_tiers")
+        .select("*")
+        .eq("event_id", eventId)
+        .order("sort_order");
+
+      if (tiersError) throw tiersError;
+
+      // Fetch orders
+      const { data: orders, error: ordersError } = await supabase
+        .from("ticket_orders")
+        .select("*")
+        .eq("event_id", eventId)
+        .eq("status", "completed");
+
+      if (ordersError) throw ordersError;
+
+      // Fetch tickets for check-in count
+      const { data: tickets, error: ticketsError } = await supabase
+        .from("tickets")
+        .select("status, tier_id")
+        .eq("event_id", eventId);
+
+      if (ticketsError) throw ticketsError;
+
+      const totalRevenue = orders?.reduce((sum, o) => sum + o.subtotal_cents, 0) || 0;
+      const totalCommission = orders?.reduce((sum, o) => sum + o.commission_cents, 0) || 0;
+      const ticketsSold = tiers?.reduce((sum, t) => sum + t.quantity_sold, 0) || 0;
+      const checkedIn = tickets?.filter(t => t.status === "used").length || 0;
+
+      return {
+        tiers: tiers || [],
+        totalRevenue,
+        totalCommission,
+        netRevenue: totalRevenue - totalCommission,
+        ticketsSold,
+        checkedIn,
+        totalTickets: tickets?.length || 0,
+      };
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <Skeleton className="h-40 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!overview || overview.tiers.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-muted-foreground">
+          <Ticket className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p>{text.noTiers}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
+
+  return (
+    <div className="space-y-4">
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Euro className="h-4 w-4" />
+              {text.totalRevenue}
+            </div>
+            <p className="text-2xl font-bold mt-1">{formatPrice(overview.totalRevenue)}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Ticket className="h-4 w-4" />
+              {text.ticketsSold}
+            </div>
+            <p className="text-2xl font-bold mt-1">{overview.ticketsSold}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <CheckCircle2 className="h-4 w-4" />
+              {text.checkedIn}
+            </div>
+            <p className="text-2xl font-bold mt-1">{overview.checkedIn}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <TrendingUp className="h-4 w-4" />
+              {text.netRevenue}
+            </div>
+            <p className="text-2xl font-bold mt-1 text-green-600">{formatPrice(overview.netRevenue)}</p>
+            {overview.totalCommission > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {text.commission}: {formatPrice(overview.totalCommission)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tier breakdown */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">{text.byTier}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {overview.tiers.map((tier) => {
+            const soldPercent = tier.quantity_total > 0 
+              ? (tier.quantity_sold / tier.quantity_total) * 100 
+              : 0;
+            const available = tier.quantity_total - tier.quantity_sold;
+
+            return (
+              <div key={tier.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{tier.name}</span>
+                    <Badge variant="outline">
+                      {tier.price_cents === 0 ? text.free : formatPrice(tier.price_cents)}
+                    </Badge>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {tier.quantity_sold} {text.sold} / {available} {text.available}
+                  </span>
+                </div>
+                <Progress value={soldPercent} className="h-2" />
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default TicketSalesOverview;
