@@ -551,6 +551,24 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
         }}
       />
     )}
+
+    {/* Share Dialog */}
+    <ShareDialog
+      open={showShareDialog}
+      onOpenChange={setShowShareDialog}
+      event={{
+        id: event.id,
+        title: event.title,
+        location: event.location,
+        start_at: event.start_at,
+        cover_image_url: event.cover_image_url,
+        businesses: event.businesses ? {
+          id: event.business_id || '',
+          name: event.businesses.name,
+        } : undefined,
+      }}
+      language={language}
+    />
     </>
   );
 };
