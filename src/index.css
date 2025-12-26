@@ -362,12 +362,76 @@ All colors MUST be HSL.
     animation: shimmer 1.5s ease-in-out infinite;
   }
 
+  /* Enhanced shimmer for skeleton loading */
+  .shimmer-skeleton {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--muted) / 0.3) 20%,
+      hsl(var(--accent) / 0.1) 50%,
+      hsl(var(--muted) / 0.3) 80%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-slide 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-slide {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
   @keyframes shimmer {
     0% {
       background-position: -200% 0;
     }
     100% {
       background-position: 200% 0;
+    }
+  }
+  
+  /* 3D Card Tilt Glow Effect */
+  .card-glow {
+    position: relative;
+  }
+  
+  .card-glow::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: var(--gradient-ocean);
+    border-radius: inherit;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+    filter: blur(8px);
+  }
+  
+  .card-glow:hover::before {
+    opacity: 0.4;
+  }
+
+  /* Trending badge glow */
+  .badge-glow-trending {
+    box-shadow: 0 0 12px hsla(var(--accent) / 0.5);
+    animation: badge-pulse 2s ease-in-out infinite;
+  }
+
+  .badge-glow-hot {
+    box-shadow: 0 0 12px hsla(var(--secondary) / 0.6);
+    animation: badge-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes badge-pulse {
+    0%, 100% {
+      box-shadow: 0 0 12px hsla(var(--accent) / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 20px hsla(var(--accent) / 0.6);
     }
   }
 
