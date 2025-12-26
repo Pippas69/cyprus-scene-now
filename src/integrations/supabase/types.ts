@@ -265,6 +265,238 @@ export type Database = {
           },
         ]
       }
+      business_post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "business_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_post_poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_index: number
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_index: number
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_index?: number
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_post_poll_votes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "business_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_post_poll_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_post_poll_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_post_views: {
+        Row: {
+          id: string
+          post_id: string
+          session_id: string | null
+          user_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_post_views_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "business_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_post_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_post_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_posts: {
+        Row: {
+          business_id: string
+          content: string | null
+          created_at: string
+          expires_at: string | null
+          hashtags: string[] | null
+          id: string
+          is_pinned: boolean | null
+          likes_count: number | null
+          linked_event_id: string | null
+          media_urls: string[] | null
+          mentions: string[] | null
+          poll_ends_at: string | null
+          poll_multiple_choice: boolean | null
+          poll_options: Json | null
+          poll_question: string | null
+          post_type: Database["public"]["Enums"]["business_post_type"]
+          published_at: string | null
+          scheduled_at: string | null
+          shares_count: number | null
+          updated_at: string
+          views_count: number | null
+          visibility: Database["public"]["Enums"]["post_visibility"]
+        }
+        Insert: {
+          business_id: string
+          content?: string | null
+          created_at?: string
+          expires_at?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          linked_event_id?: string | null
+          media_urls?: string[] | null
+          mentions?: string[] | null
+          poll_ends_at?: string | null
+          poll_multiple_choice?: boolean | null
+          poll_options?: Json | null
+          poll_question?: string | null
+          post_type?: Database["public"]["Enums"]["business_post_type"]
+          published_at?: string | null
+          scheduled_at?: string | null
+          shares_count?: number | null
+          updated_at?: string
+          views_count?: number | null
+          visibility?: Database["public"]["Enums"]["post_visibility"]
+        }
+        Update: {
+          business_id?: string
+          content?: string | null
+          created_at?: string
+          expires_at?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          linked_event_id?: string | null
+          media_urls?: string[] | null
+          mentions?: string[] | null
+          poll_ends_at?: string | null
+          poll_multiple_choice?: boolean | null
+          poll_options?: Json | null
+          poll_question?: string | null
+          post_type?: Database["public"]["Enums"]["business_post_type"]
+          published_at?: string | null
+          scheduled_at?: string | null
+          shares_count?: number | null
+          updated_at?: string
+          views_count?: number | null
+          visibility?: Database["public"]["Enums"]["post_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_posts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_posts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_posts_linked_event_id_fkey"
+            columns: ["linked_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_subscriptions: {
         Row: {
           beta_discount_percent: number | null
@@ -3569,9 +3801,17 @@ export type Database = {
       boost_source: "subscription" | "purchase"
       boost_status: "scheduled" | "active" | "completed" | "canceled"
       boost_tier: "basic" | "standard" | "premium" | "elite"
+      business_post_type:
+        | "announcement"
+        | "photo"
+        | "video"
+        | "poll"
+        | "behind_the_scenes"
+        | "story"
       commission_status: "pending" | "invoiced" | "paid" | "disputed"
       entity_type: "event" | "business" | "discount"
       invoice_status: "draft" | "pending" | "paid" | "overdue" | "canceled"
+      post_visibility: "public" | "followers" | "private"
       price_tier: "free" | "low" | "medium" | "high"
       rsvp_status: "interested" | "going"
       subscription_status:
@@ -3720,9 +3960,18 @@ export const Constants = {
       boost_source: ["subscription", "purchase"],
       boost_status: ["scheduled", "active", "completed", "canceled"],
       boost_tier: ["basic", "standard", "premium", "elite"],
+      business_post_type: [
+        "announcement",
+        "photo",
+        "video",
+        "poll",
+        "behind_the_scenes",
+        "story",
+      ],
       commission_status: ["pending", "invoiced", "paid", "disputed"],
       entity_type: ["event", "business", "discount"],
       invoice_status: ["draft", "pending", "paid", "overdue", "canceled"],
+      post_visibility: ["public", "followers", "private"],
       price_tier: ["free", "low", "medium", "high"],
       rsvp_status: ["interested", "going"],
       subscription_status: [
