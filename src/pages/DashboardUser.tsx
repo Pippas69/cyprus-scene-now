@@ -88,17 +88,38 @@ const DashboardUser = () => {
     );
   }
 
+  // Get the current section title based on active tab
+  const getSectionTitle = () => {
+    const titles: Record<string, string> = {
+      rsvps: t.rsvps,
+      reservations: t.reservations,
+      saved: t.saved,
+      offers: t.offers,
+      profile: t.profile,
+      settings: t.settings,
+    };
+    return titles[activeTab] || t.dashboard;
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-              <Tabs 
-                value={activeTab} 
-                onValueChange={(value) => {
-                  setActiveTab(value);
-                  navigate(`/dashboard-user?tab=${value}`, { replace: true });
-                }} 
-                className="w-full"
-              >
-                <TabsContent value="rsvps" className="animate-fade-in">
+      {/* Welcome Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground">{getSectionTitle()}</h1>
+        <p className="text-muted-foreground mt-1">
+          {language === 'el' ? 'Διαχειριστείτε τα δεδομένα σας' : 'Manage your data'}
+        </p>
+      </div>
+
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(value) => {
+          setActiveTab(value);
+          navigate(`/dashboard-user?tab=${value}`, { replace: true });
+        }} 
+        className="w-full"
+      >
+        <TabsContent value="rsvps" className="animate-fade-in">
                   <MyRSVPs userId={user.id} language={language} />
                 </TabsContent>
 
