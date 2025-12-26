@@ -51,6 +51,8 @@ export const MyTickets = () => {
     qrToken: string;
     tierName: string;
     eventTitle: string;
+    eventDate?: string;
+    eventLocation?: string;
   } | null>(null);
 
   const { data: tickets, isLoading } = useQuery({
@@ -185,6 +187,8 @@ export const MyTickets = () => {
                     qrToken: ticket.qr_code_token,
                     tierName: ticket.ticket_tiers?.name || "",
                     eventTitle: ticket.events?.title || "",
+                    eventDate: ticket.events?.start_at || "",
+                    eventLocation: ticket.events?.location || "",
                   })}
                 >
                   <QrCode className="h-4 w-4 mr-1" />

@@ -7,8 +7,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Ticket } from "lucide-react";
+import { Download, Ticket, FileText } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { generateTicketPdf } from "@/lib/ticketPdf";
 
 interface TicketQRDialogProps {
   ticket: {
@@ -16,6 +17,8 @@ interface TicketQRDialogProps {
     qrToken: string;
     tierName: string;
     eventTitle: string;
+    eventDate?: string;
+    eventLocation?: string;
   } | null;
   onClose: () => void;
 }
@@ -24,12 +27,14 @@ const t = {
   el: {
     yourTicket: "Το Εισιτήριό Σας",
     scanAtEntry: "Σαρώστε αυτό το QR στην είσοδο",
-    download: "Λήψη",
+    downloadQR: "QR Εικόνα",
+    downloadPdf: "PDF Εισιτήριο",
   },
   en: {
     yourTicket: "Your Ticket",
     scanAtEntry: "Scan this QR code at entry",
-    download: "Download",
+    downloadQR: "QR Image",
+    downloadPdf: "PDF Ticket",
   },
 };
 
@@ -37,6 +42,7 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
   const { language } = useLanguage();
   const text = t[language];
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
     if (ticket?.qrToken) {
@@ -53,13 +59,32 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
     }
   }, [ticket?.qrToken]);
 
-  const handleDownload = () => {
+  const handleDownloadQR = () => {
     if (!qrDataUrl || !ticket) return;
     
     const link = document.createElement("a");
     link.download = `ticket-${ticket.eventTitle.slice(0, 20)}-${ticket.id.slice(0, 8)}.png`;
     link.href = qrDataUrl;
     link.click();
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!ticket) return;
+    setIsGeneratingPdf(true);
+    try {
+      await generateTicketPdf({
+        eventTitle: ticket.eventTitle,
+        eventDate: ticket.eventDate || "",
+        eventLocation: ticket.eventLocation || "",
+        tierName: ticket.tierName,
+        ticketId: ticket.id,
+        qrToken: ticket.qrToken,
+      });
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   return (
@@ -88,10 +113,21 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
             {text.scanAtEntry}
           </p>
 
-          <Button variant="outline" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-2" />
-            {text.download}
-          </Button>
+          <div className="flex gap-2 w-full">
+            <Button variant="outline" onClick={handleDownloadQR} className="flex-1">
+              <Download className="h-4 w-4 mr-2" />
+              {text.downloadQR}
+            </Button>
+            <Button 
+              variant="default" 
+              onClick={handleDownloadPdf} 
+              className="flex-1"
+              disabled={isGeneratingPdf}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              {text.downloadPdf}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
