@@ -8,8 +8,9 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { SplashScreen } from "@/components/ui/splash-screen";
+import { PageTransition } from "@/components/ui/page-transition";
 import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -104,17 +105,7 @@ function AppContent() {
   );
 }
 
-// Page transition wrapper component
-const PageTransition = ({ children }: { children: React.ReactNode }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    transition={{ duration: 0.3, ease: "easeOut" }}
-  >
-    {children}
-  </motion.div>
-);
+// PageTransition is now imported from @/components/ui/page-transition
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
