@@ -125,7 +125,7 @@ export function UserSidebar() {
     <Sidebar collapsible="icon">
       {/* User Profile Section */}
       <SidebarHeader>
-        <div className={`flex items-center gap-3 px-2 py-4 ${!open && 'justify-center'}`}>
+        <div className={`flex items-center gap-3 px-2 py-4 text-sidebar-foreground ${!open && 'justify-center'}`}>
           <Avatar className={`${open ? 'h-10 w-10' : 'h-8 w-8'}`}>
             <AvatarImage src={userAvatar || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground">
@@ -134,7 +134,7 @@ export function UserSidebar() {
           </Avatar>
           {open && (
             <div className="flex flex-col min-w-0">
-              <p className="text-sm font-medium truncate">{userName}</p>
+              <p className="text-sm font-medium truncate text-sidebar-foreground">{userName}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           )}
@@ -149,7 +149,7 @@ export function UserSidebar() {
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isItemActive(item.url)}>
-                    <NavLink to={item.url} className="flex items-center gap-2">
+                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
                       {open && <span>{item.title}</span>}
                     </NavLink>
@@ -167,7 +167,7 @@ export function UserSidebar() {
               {activityItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
-                    <NavLink to={item.url} className="flex items-center gap-2">
+                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
                       {open && <span>{item.title}</span>}
                     </NavLink>
@@ -185,7 +185,7 @@ export function UserSidebar() {
               {accountItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
-                    <NavLink to={item.url} className="flex items-center gap-2">
+                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
                       {open && <span>{item.title}</span>}
                     </NavLink>
