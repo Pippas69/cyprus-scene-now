@@ -31,6 +31,7 @@ import { format } from 'date-fns';
 import EventCard from '@/components/EventCard';
 import { EventAttendees } from '@/components/EventAttendees';
 import { LiveEventFeed } from '@/components/feed/LiveEventFeed';
+import { ShareDialog } from '@/components/sharing/ShareDialog';
 
 // Staggered animation variants for similar events
 const containerVariants = {
@@ -71,6 +72,7 @@ export default function EventDetail() {
   const [goingCount, setGoingCount] = useState(0);
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
 
   useEffect(() => {
@@ -176,28 +178,8 @@ export default function EventDetail() {
     setLoading(false);
   };
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    
-    // Track share engagement
-    if (event?.businesses?.id) {
-      trackEngagement(event.businesses.id, 'share', 'event', eventId || '');
-    }
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: event.title,
-          text: event.description || '',
-          url,
-        });
-      } catch (err) {
-        console.error('Share failed:', err);
-      }
-    } else {
-      navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard!');
-    }
+  const handleShare = () => {
+    setShowShareDialog(true);
   };
 
   const handleRSVP = async (newStatus: 'interested' | 'going') => {
@@ -579,6 +561,14 @@ export default function EventDetail() {
           }}
         />
       )}
+
+      {/* Share Dialog */}
+      <ShareDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        event={event}
+        language={language}
+      />
     </div>
   );
 }

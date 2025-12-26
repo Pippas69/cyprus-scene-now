@@ -1,4 +1,4 @@
-import { Heart, Users, Clock, MapPin, CalendarCheck } from "lucide-react";
+import { Heart, Users, Clock, MapPin, CalendarCheck, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { RippleButton } from "@/components/ui/ripple-button";
@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Confetti, useConfetti } from "@/components/ui/confetti";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { ShareDialog } from "@/components/sharing/ShareDialog";
 
 interface Event {
   id: string;
@@ -69,6 +70,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [rsvpNotes, setRsvpNotes] = useState("");
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   // Track event view when card is 50% visible
   useViewTracking(cardRef, () => {
@@ -321,6 +323,19 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
       >
         {/* Live Badge */}
         {badgeType && <LiveBadge type={badgeType} language={language} />}
+        
+        {/* Share Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-3 right-3 z-10 bg-background/80 hover:bg-background backdrop-blur-sm shadow-lg h-8 w-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowShareDialog(true);
+          }}
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
         
         {/* Favorite Button */}
         {user && (
