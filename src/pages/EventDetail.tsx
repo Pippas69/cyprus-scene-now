@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -22,10 +23,12 @@ import {
   ArrowLeft,
   Heart,
   CheckCircle,
+  MessageSquare,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import EventCard from '@/components/EventCard';
 import { EventAttendees } from '@/components/EventAttendees';
+import { LiveEventFeed } from '@/components/feed/LiveEventFeed';
 
 export default function EventDetail() {
   const { eventId } = useParams();
@@ -35,11 +38,13 @@ export default function EventDetail() {
   const [similarEvents, setSimilarEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [interestedCount, setInterestedCount] = useState(0);
   const [goingCount, setGoingCount] = useState(0);
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
 
   useEffect(() => {
     checkUser();
@@ -73,6 +78,16 @@ export default function EventDetail() {
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+      
+      setUserProfile(profile);
+    }
   };
 
   const fetchEventDetails = async () => {
@@ -226,6 +241,8 @@ export default function EventDetail() {
     }
   };
 
+  const isAttendee = status === 'interested' || status === 'going';
+
   const t = {
     el: {
       backToEvents: 'Επιστροφή στα Events',
@@ -234,6 +251,8 @@ export default function EventDetail() {
       similarEvents: 'Παρόμοια Events',
       interested: 'Ενδιαφέρομαι',
       going: 'Θα πάω',
+      details: 'Λεπτομέρειες',
+      liveFeed: 'Live Feed',
     },
     en: {
       backToEvents: 'Back to Events',
@@ -242,6 +261,8 @@ export default function EventDetail() {
       similarEvents: 'Similar Events',
       interested: 'Interested',
       going: 'Going',
+      details: 'Details',
+      liveFeed: 'Live Feed',
     },
   };
 
@@ -298,33 +319,64 @@ export default function EventDetail() {
               </div>
             </div>
 
-            {/* Description */}
-            {event.description && (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-muted-foreground whitespace-pre-wrap">
-                    {event.description}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            {/* Tabs for Details and Live Feed */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="details" className="gap-2">
+                  {text.details}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="livefeed" 
+                  disabled={!isAttendee}
+                  className="gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  {text.liveFeed}
+                </TabsTrigger>
+              </TabsList>
 
-            {/* Similar Events */}
-            {similarEvents.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold mb-4">{text.similarEvents}</h2>
-                <div className="grid gap-4">
-                  {similarEvents.map((similar) => (
-                    <EventCard
-                      key={similar.id}
-                      event={similar}
-                      language={language}
-                      user={user}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+              <TabsContent value="details" className="space-y-6 mt-6">
+                {/* Description */}
+                {event.description && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-muted-foreground whitespace-pre-wrap">
+                        {event.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Similar Events */}
+                {similarEvents.length > 0 && (
+                  <div>
+                    <h2 className="text-2xl font-bold mb-4">{text.similarEvents}</h2>
+                    <div className="grid gap-4">
+                      {similarEvents.map((similar) => (
+                        <EventCard
+                          key={similar.id}
+                          event={similar}
+                          language={language}
+                          user={user}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="livefeed" className="mt-6">
+                {isAttendee && (
+                  <LiveEventFeed
+                    eventId={eventId!}
+                    userId={user?.id}
+                    userAvatar={userProfile?.avatar_url}
+                    userName={[userProfile?.first_name, userProfile?.last_name].filter(Boolean).join(' ')}
+                    language={language}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Sidebar */}
