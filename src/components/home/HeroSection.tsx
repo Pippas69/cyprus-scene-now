@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import PhoneMockup from "./PhoneMockup";
+import Typewriter from "@/components/ui/typewriter";
+import ParticleBackground from "@/components/ui/particle-background";
 
 interface HeroSectionProps {
   language: "el" | "en";
@@ -10,11 +12,15 @@ interface HeroSectionProps {
 const HeroSection = ({ language }: HeroSectionProps) => {
   const navigate = useNavigate();
 
+  const phrases = {
+    el: ["Απλά εν τες Ξέρεις", "αξίζει να είσαι", "τζι'αν γίνεται τώρα", "σε περιμένει"],
+    en: ["happening now", "worth attending", "trending nearby", "waiting for you"],
+  };
+
   const text = {
     el: {
       tagline: "Φόβος of Missing Out",
       heroMain: "Επιλογές υπάρχουν,",
-      heroSub: "Απλά εν τες Ξέρεις",
       description: "Πλατφόρμα ζωντανής κοινωνικής ανακάλυψης — δείτε πού πηγαίνουν οι άνθρωποι, συμμετάσχετε σε trending εκδηλώσεις και αποκτήστε αποκλειστικές εκπτώσεις QR.",
       joinBtn: "Εγγραφή στο ΦΟΜΟ",
       exploreBtn: "Εξερεύνηση",
@@ -22,7 +28,6 @@ const HeroSection = ({ language }: HeroSectionProps) => {
     en: {
       tagline: "Fear of Missing Out",
       heroMain: "Discover what's",
-      heroSub: "happening now",
       description: "Live social discovery platform — see where people are going, join trending events, and get exclusive QR discounts from partner businesses.",
       joinBtn: "Join ΦΟΜΟ",
       exploreBtn: "Explore",
@@ -33,6 +38,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/30">
+      {/* Particle background */}
+      <ParticleBackground particleCount={25} className="z-0" />
       {/* Floating decorative shapes */}
       <motion.div
         animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
@@ -92,7 +99,12 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               </h1>
               <div className="relative inline-block">
                 <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sunset-coral via-aegean to-seafoam">
-                  {t.heroSub}
+                  <Typewriter 
+                    phrases={phrases[language]} 
+                    typingSpeed={70}
+                    deletingSpeed={40}
+                    pauseDuration={2500}
+                  />
                 </h1>
                 <motion.div
                   initial={{ scaleX: 0 }}
