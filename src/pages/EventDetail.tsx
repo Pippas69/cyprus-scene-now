@@ -563,11 +563,22 @@ export default function EventDetail() {
       <Footer />
 
       {/* Reservation Dialog */}
-      <ReservationDialog
-        eventId={event.id}
-        open={showReservationDialog}
-        onOpenChange={setShowReservationDialog}
-      />
+      {user && (
+        <ReservationDialog
+          eventId={event.id}
+          eventTitle={event.title}
+          eventStartAt={event.start_at}
+          seatingOptions={event.seating_options || []}
+          language={language}
+          userId={user.id}
+          open={showReservationDialog}
+          onOpenChange={setShowReservationDialog}
+          onSuccess={() => {
+            setShowReservationDialog(false);
+            toast.success(language === 'el' ? 'Η κράτησή σας υποβλήθηκε!' : 'Reservation submitted!');
+          }}
+        />
+      )}
     </div>
   );
 }
