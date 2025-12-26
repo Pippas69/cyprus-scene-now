@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { SavedEvents } from '@/components/user/SavedEvents';
 import { MyRSVPs } from '@/components/user/MyRSVPs';
 import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Calendar, User, CalendarCheck, Settings, Percent, Plus, Bookmark, UserCog } from 'lucide-react';
+import { Plus, Bookmark, UserCog, Calendar } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -98,34 +98,7 @@ const DashboardUser = () => {
                 }} 
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="rsvps" className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t.rsvps}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="reservations" className="flex items-center gap-2">
-                    <CalendarCheck className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t.reservations}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="saved" className="flex items-center gap-2">
-                    <Heart className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t.saved}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="offers" className="flex items-center gap-2">
-                    <Percent className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t.offers}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="profile" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t.profile}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="settings" className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t.settings}</span>
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="rsvps" className="mt-6 animate-fade-in">
+                <TabsContent value="rsvps" className="animate-fade-in">
                   <MyRSVPs userId={user.id} language={language} />
                 </TabsContent>
 
