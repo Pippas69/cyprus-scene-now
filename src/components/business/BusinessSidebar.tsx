@@ -71,7 +71,8 @@ export function BusinessSidebar() {
   ];
 
   const contentItems = [
-    { title: t.posts, url: "/dashboard-business/posts", icon: PenSquare },
+    // Posts feature hidden but kept in code
+    // { title: t.posts, url: "/dashboard-business/posts", icon: PenSquare },
     { title: t.events, url: "/dashboard-business/events", icon: Calendar },
     { title: t.offers, url: "/dashboard-business/offers", icon: Ticket },
   ];
