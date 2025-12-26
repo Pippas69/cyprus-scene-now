@@ -1970,6 +1970,62 @@ export type Database = {
         }
         Relationships: []
       }
+      user_connections: {
+        Row: {
+          created_at: string
+          id: string
+          receiver_id: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          receiver_id: string
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_connections_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           created_at: string | null
@@ -2412,6 +2468,10 @@ export type Database = {
             }
             Returns: string
           }
+      calculate_user_similarity: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: number
+      }
       create_business_with_geo: {
         Args: {
           p_address: string
@@ -2584,6 +2644,31 @@ export type Database = {
         Returns: number
       }
       get_discount_qr_token: { Args: { discount_id: string }; Returns: string }
+      get_event_attendees_with_similarity: {
+        Args: { current_user_id: string; event_id_param: string }
+        Returns: {
+          avatar_url: string
+          city: string
+          connection_status: string
+          interests: string[]
+          name: string
+          rsvp_status: string
+          similarity_score: number
+          user_id: string
+        }[]
+      }
+      get_similar_users: {
+        Args: { limit_count?: number; target_user_id: string }
+        Returns: {
+          avatar_url: string
+          city: string
+          connection_status: string
+          interests: string[]
+          name: string
+          similarity_score: number
+          user_id: string
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
       has_role: {
         Args: {

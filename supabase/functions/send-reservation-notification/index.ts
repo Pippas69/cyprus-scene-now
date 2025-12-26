@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://cdn.jsdelivr.net/npm/resend@3.5.0/+esm";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
