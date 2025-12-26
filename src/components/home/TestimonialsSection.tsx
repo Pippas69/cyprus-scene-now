@@ -1,0 +1,183 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+interface TestimonialsSectionProps {
+  language: "en" | "el";
+}
+
+const testimonials = [
+  {
+    id: 1,
+    name: "Maria Georgiou",
+    role: { en: "Event Enthusiast", el: "Λάτρης Εκδηλώσεων" },
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+    rating: 5,
+    text: {
+      en: "ΦΟΜΟ changed how I discover events in Cyprus! I never miss the best parties and cultural happenings anymore.",
+      el: "Το ΦΟΜΟ άλλαξε τον τρόπο που ανακαλύπτω εκδηλώσεις στην Κύπρο! Δεν χάνω πια τα καλύτερα πάρτι και πολιτιστικά δρώμενα.",
+    },
+  },
+  {
+    id: 2,
+    name: "Andreas Christodoulou",
+    role: { en: "Bar Owner, Limassol", el: "Ιδιοκτήτης Bar, Λεμεσός" },
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+    rating: 5,
+    text: {
+      en: "Our venue's bookings increased by 40% since joining ΦΟΜΟ. The platform connects us directly with our target audience.",
+      el: "Οι κρατήσεις του μαγαζιού μας αυξήθηκαν κατά 40% από τότε που μπήκαμε στο ΦΟΜΟ. Η πλατφόρμα μας συνδέει άμεσα με το κοινό μας.",
+    },
+  },
+  {
+    id: 3,
+    name: "Elena Papantoniou",
+    role: { en: "Music Festival Organizer", el: "Διοργανώτρια Μουσικών Φεστιβάλ" },
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+    rating: 5,
+    text: {
+      en: "The analytics and boost features helped our summer festival reach 10,000+ attendees. Absolutely essential for event promotion!",
+      el: "Τα analytics και οι λειτουργίες boost βοήθησαν το καλοκαιρινό μας φεστιβάλ να φτάσει 10.000+ επισκέπτες. Απολύτως απαραίτητο!",
+    },
+  },
+  {
+    id: 4,
+    name: "Nikos Stavrou",
+    role: { en: "University Student", el: "Φοιτητής Πανεπιστημίου" },
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
+    rating: 5,
+    text: {
+      en: "Best app for finding student nights and discounts! The QR offers save me so much money every weekend.",
+      el: "Η καλύτερη εφαρμογή για φοιτητικές βραδιές και εκπτώσεις! Οι προσφορές με QR μου εξοικονομούν πολλά κάθε Σαββατοκύριακο.",
+    },
+  },
+];
+
+const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
+  const [current, setCurrent] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  const next = () => setCurrent((prev) => (prev + 1) % testimonials.length);
+  const prev = () => setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+
+  const content = {
+    en: {
+      title: "What People Say",
+      subtitle: "Join thousands discovering the best of Cyprus",
+    },
+    el: {
+      title: "Τι Λένε οι Άνθρωποι",
+      subtitle: "Γίνε μέρος χιλιάδων που ανακαλύπτουν το καλύτερο της Κύπρου",
+    },
+  };
+
+  return (
+    <section className="py-20 md:py-32 bg-gradient-to-b from-background via-aegean/5 to-background overflow-hidden">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
+            {content[language].title}
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            {content[language].subtitle}
+          </p>
+        </motion.div>
+
+        <div
+          className="relative max-w-4xl mx-auto"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={current}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-8 md:p-12 shadow-card"
+            >
+              <Quote className="w-12 h-12 text-sunset-coral/30 mb-6" />
+              
+              <p className="text-lg md:text-xl text-foreground mb-8 leading-relaxed">
+                "{testimonials[current].text[language]}"
+              </p>
+
+              <div className="flex items-center gap-4">
+                <img
+                  src={testimonials[current].avatar}
+                  alt={testimonials[current].name}
+                  className="w-14 h-14 rounded-full object-cover border-2 border-sunset-coral/30"
+                />
+                <div>
+                  <h4 className="font-semibold text-foreground">
+                    {testimonials[current].name}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    {testimonials[current].role[language]}
+                  </p>
+                  <div className="flex gap-1 mt-1">
+                    {Array.from({ length: testimonials[current].rating }).map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-sunset-coral text-sunset-coral" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={prev}
+              className="rounded-full border-aegean/30 hover:bg-aegean/10"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+
+            <div className="flex gap-2">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    i === current
+                      ? "bg-sunset-coral w-6"
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={next}
+              className="rounded-full border-aegean/30 hover:bg-aegean/10"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default TestimonialsSection;

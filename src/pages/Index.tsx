@@ -9,6 +9,12 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 import StatsSection from "@/components/home/StatsSection";
 import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
 import ParallaxSection from "@/components/ui/parallax-section";
+import ScrollProgress from "@/components/ui/scroll-progress";
+import WaveDivider from "@/components/ui/wave-divider";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
+import FAQSection from "@/components/home/FAQSection";
+import NewsletterSection from "@/components/home/NewsletterSection";
+import UpcomingEventsPreview from "@/components/home/UpcomingEventsPreview";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -40,17 +46,30 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <ScrollProgress />
       <Navbar />
       <HeroSection language={language} />
       <PartnerLogoMarquee language={language} />
+      <WaveDivider variant="aegean" />
       <MarqueeSection />
+      <WaveDivider variant="seafoam" flip />
       <ParallaxSection intensity={0.2}>
         <FeaturesSection language={language} />
       </ParallaxSection>
+      <WaveDivider variant="coral" />
       <ParallaxSection intensity={0.15} fadeOnScroll>
         <HowItWorksSection language={language} />
       </ParallaxSection>
+      <WaveDivider variant="aegean" flip />
+      <UpcomingEventsPreview language={language} />
+      <WaveDivider variant="seafoam" />
       <StatsSection language={language} />
+      <WaveDivider variant="coral" flip />
+      <TestimonialsSection language={language} />
+      <WaveDivider variant="aegean" />
+      <NewsletterSection language={language} />
+      <WaveDivider variant="sand" flip />
+      <FAQSection language={language} />
       <Footer />
     </div>
   );
