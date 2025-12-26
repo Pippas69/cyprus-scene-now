@@ -14,7 +14,7 @@ import { el, enUS } from "date-fns/locale";
 interface PostSchedulerProps {
   isScheduled: boolean;
   scheduledDate: Date | null;
-  onScheduledChange: (isScheduled: boolean) => void;
+  onScheduledChanged: (isScheduled: boolean) => void;
   onDateChange: (date: Date | null) => void;
   language: 'el' | 'en';
 }
@@ -62,10 +62,10 @@ const bestTimes = [
 export function PostScheduler({
   isScheduled,
   scheduledDate,
-  onScheduledChanged: onScheduledChange,
+  onScheduledChanged,
   onDateChange,
   language,
-}: PostSchedulerProps & { onScheduledChanged?: (isScheduled: boolean) => void }) {
+}: PostSchedulerProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     scheduledDate || undefined
   );
@@ -110,13 +110,13 @@ export function PostScheduler({
     
     const scheduledDateTime = setMinutes(setHours(date, hour), 0);
     onDateChange(scheduledDateTime);
-    onScheduledChange(true);
+    onScheduledChanged(true);
   };
 
   const clearSchedule = () => {
     setSelectedDate(undefined);
     onDateChange(null);
-    onScheduledChange(false);
+    onScheduledChanged(false);
   };
 
   // Generate hour options
@@ -146,7 +146,7 @@ export function PostScheduler({
         </div>
         <Switch
           checked={isScheduled}
-          onCheckedChange={onScheduledChange}
+          onCheckedChange={onScheduledChanged}
         />
       </div>
 
