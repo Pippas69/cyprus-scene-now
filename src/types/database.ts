@@ -22,6 +22,15 @@ export interface Event {
   updated_at: string;
   business?: Business;
   businesses?: Business;
+  // Enhanced event fields
+  performers: string[] | null;
+  dress_code: string | null;
+  parking_info: string | null;
+  accessibility_info: string[] | null;
+  external_ticket_url: string | null;
+  gallery_urls: string[] | null;
+  venue_name: string | null;
+  is_indoor: boolean | null;
 }
 
 export interface Business {

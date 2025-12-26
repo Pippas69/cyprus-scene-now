@@ -303,8 +303,10 @@ const DashboardBusiness = () => {
               <Route path="map" element={<Xartis />} />
               <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
               <Route path="qr-analytics" element={businessId ? <QRScanAnalytics businessId={businessId} language={language} /> : null} />
+              {/* Posts feature hidden but kept in code
               <Route path="posts" element={businessId ? <BusinessPostsList businessId={businessId} language={language} /> : null} />
               <Route path="posts/new" element={businessId ? <BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /> : null} />
+              */}
               <Route path="events" element={businessId ? <EventsList businessId={businessId} /> : null} />
               <Route path="events/new" element={businessId ? <EventCreationForm businessId={businessId} /> : null} />
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />

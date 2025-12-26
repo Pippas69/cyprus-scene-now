@@ -1412,16 +1412,23 @@ export type Database = {
       events: {
         Row: {
           accepts_reservations: boolean | null
+          accessibility_info: string[] | null
           business_id: string
           category: string[]
           cover_image_url: string | null
           created_at: string
           description: string | null
+          dress_code: string | null
           end_at: string
+          external_ticket_url: string | null
+          gallery_urls: string[] | null
           id: string
+          is_indoor: boolean | null
           location: string
           max_reservations: number | null
           min_age_hint: number | null
+          parking_info: string | null
+          performers: string[] | null
           price: number | null
           price_tier: Database["public"]["Enums"]["price_tier"] | null
           requires_approval: boolean | null
@@ -1430,19 +1437,27 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string
+          venue_name: string | null
         }
         Insert: {
           accepts_reservations?: boolean | null
+          accessibility_info?: string[] | null
           business_id: string
           category: string[]
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          dress_code?: string | null
           end_at: string
+          external_ticket_url?: string | null
+          gallery_urls?: string[] | null
           id?: string
+          is_indoor?: boolean | null
           location: string
           max_reservations?: number | null
           min_age_hint?: number | null
+          parking_info?: string | null
+          performers?: string[] | null
           price?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
           requires_approval?: boolean | null
@@ -1451,19 +1466,27 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string
+          venue_name?: string | null
         }
         Update: {
           accepts_reservations?: boolean | null
+          accessibility_info?: string[] | null
           business_id?: string
           category?: string[]
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          dress_code?: string | null
           end_at?: string
+          external_ticket_url?: string | null
+          gallery_urls?: string[] | null
           id?: string
+          is_indoor?: boolean | null
           location?: string
           max_reservations?: number | null
           min_age_hint?: number | null
+          parking_info?: string | null
+          performers?: string[] | null
           price?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
           requires_approval?: boolean | null
@@ -1472,6 +1495,7 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+          venue_name?: string | null
         }
         Relationships: [
           {
