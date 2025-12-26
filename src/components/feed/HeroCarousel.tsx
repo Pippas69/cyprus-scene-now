@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import FeaturedEventCard from "./FeaturedEventCard";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonGroup, ContentReveal } from "@/components/ui/skeleton";
 
 interface HeroCarouselProps {
   language: "el" | "en";
@@ -64,7 +64,7 @@ const HeroCarousel = ({ language, user }: HeroCarouselProps) => {
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-4">{t.featured}</h2>
         <div className="relative w-full h-[350px] md:h-[500px] rounded-2xl overflow-hidden">
-          <Skeleton className="w-full h-full" />
+          <SkeletonGroup count={1} className="h-full" itemClassName="h-full rounded-2xl" />
         </div>
       </div>
     );

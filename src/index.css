@@ -133,9 +133,25 @@ All colors MUST be HSL.
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
+  }
+
+  /* Focus ring animations */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
+    transition: ring 0.15s ease-out, box-shadow 0.15s ease-out;
+  }
+
+  /* Selection styling */
+  ::selection {
+    background-color: hsl(var(--accent) / 0.3);
+    color: hsl(var(--foreground));
   }
 
   /* Mapbox popup styling */
