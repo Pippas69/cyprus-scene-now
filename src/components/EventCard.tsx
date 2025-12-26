@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { Confetti, useConfetti } from "@/components/ui/confetti";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { ShareDialog } from "@/components/sharing/ShareDialog";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { motion } from "framer-motion";
 
 interface Event {
   id: string;
@@ -297,6 +299,35 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
     });
   };
 
+  // 3D tilt effect state
+  const [tiltStyle, setTiltStyle] = useState({});
+  const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = ((y - centerY) / centerY) * -6;
+    const rotateY = ((x - centerX) / centerX) * 6;
+
+    setTiltStyle({
+      transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`,
+    });
+
+    setGlarePosition({ x: (x / rect.width) * 100, y: (y / rect.height) * 100 });
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    setTiltStyle({});
+    setGlarePosition({ x: 50, y: 50 });
+  };
+
   return (
     <>
       {/* Confetti celebration for "Going" */}
@@ -304,7 +335,6 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
       
       <Card
         ref={(node) => {
-          // Combine refs for both tracking and reveal animation
           (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
           (revealRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
         }}
@@ -312,15 +342,29 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
         interactive
         className={cn(
           "overflow-hidden group relative cursor-pointer",
-          "transition-all duration-300 ease-out",
-          "hover:shadow-hover hover:-translate-y-1",
-          "active:scale-[0.98] active:translate-y-0",
+          "transition-all duration-200 ease-out will-change-transform",
+          "hover:shadow-hover",
+          "active:scale-[0.98]",
           isInView ? "animate-fade-in" : "opacity-0",
+          badgeType && "card-glow",
           className
         )} 
-        style={style}
+        style={{ ...style, ...tiltStyle }}
         onClick={() => navigate(`/event/${event.id}`)}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={handleMouseLeave}
       >
+        {/* Glass glare effect on hover */}
+        {isHovering && (
+          <div
+            className="pointer-events-none absolute inset-0 z-30 overflow-hidden rounded-lg"
+            style={{
+              background: `radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, hsla(0, 0%, 100%, 0.12) 0%, transparent 50%)`,
+            }}
+          />
+        )}
+
         {/* Live Badge */}
         {badgeType && <LiveBadge type={badgeType} language={language} />}
         
@@ -328,7 +372,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-3 right-3 z-10 bg-background/80 hover:bg-background backdrop-blur-sm shadow-lg h-8 w-8"
+          className="absolute top-3 right-3 z-10 bg-background/80 hover:bg-background backdrop-blur-sm shadow-lg h-8 w-8 transition-transform hover:scale-110"
           onClick={(e) => {
             e.stopPropagation();
             setShowShareDialog(true);
@@ -337,8 +381,8 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           <Share2 className="h-4 w-4" />
         </Button>
         
-        {/* Favorite Button */}
-        {user && (
+        {/* Favorite Button - moved to avoid collision with badge */}
+        {user && !badgeType && (
           <FavoriteButton
             isFavorited={isFavorited(event.id)}
             onClick={() => toggleFavorite(event.id)}
@@ -350,7 +394,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           />
         )}
         
-        {/* Image */}
+        {/* Image with enhanced gradient */}
         <div className="relative h-48 overflow-hidden">
           {event.cover_image_url ? (
             <>
@@ -359,21 +403,34 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
                 alt={event.title}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110 group-hover:brightness-105"
               />
-              {/* Dark overlay for better badge readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              {/* Enhanced gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             </>
           ) : (
             <div className="absolute inset-0 bg-gradient-ocean flex items-center justify-center">
-              <div className="text-white/20 text-6xl" aria-hidden="true" role="img" aria-label="Wave emoji decoration">
+              <motion.div 
+                className="text-white/20 text-6xl"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                aria-hidden="true"
+              >
                 🌊
-              </div>
+              </motion.div>
             </div>
           )}
           
-          <Badge className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm text-foreground z-10">
+          {/* Category badge with glass effect */}
+          <Badge className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-md text-foreground z-10 border border-border/50 shadow-md">
             {getCategoryLabel(event.category[0], language)}
           </Badge>
-          <Badge className="absolute bottom-3 right-3 bg-accent/90 backdrop-blur-sm text-accent-foreground font-semibold z-10">
+          
+          {/* Price badge with gradient */}
+          <Badge className={cn(
+            "absolute bottom-3 right-3 backdrop-blur-md font-semibold z-10 border-0 shadow-md",
+            event.price_tier === 'free' 
+              ? "bg-gradient-to-r from-accent to-seafoam text-white" 
+              : "bg-accent/90 text-accent-foreground"
+          )}>
             {event.price ? (
               `€${event.price.toFixed(2)}`
             ) : event.price_tier === 'free' ? (
@@ -430,16 +487,22 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           )}
         </div>
 
-        {/* Live Stats */}
-        <div className="flex gap-3 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Heart className="h-4 w-4" />
-            {interestedCount}
-          </span>
-          <span className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            {goingCount}
-          </span>
+        {/* Live Stats with Animated Counters */}
+        <div className="flex gap-4 text-sm text-muted-foreground">
+          <motion.span 
+            className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-full"
+            whileHover={{ scale: 1.05 }}
+          >
+            <Heart className="h-3.5 w-3.5 text-secondary" />
+            <AnimatedCounter value={interestedCount} className="font-medium" />
+          </motion.span>
+          <motion.span 
+            className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-full"
+            whileHover={{ scale: 1.05 }}
+          >
+            <Users className="h-3.5 w-3.5 text-ocean" />
+            <AnimatedCounter value={goingCount} className="font-medium" />
+          </motion.span>
         </div>
 
         {/* Action Buttons */}
