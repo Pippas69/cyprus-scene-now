@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, ChevronDown, User as UserIcon, Settings, LogOut, Search } from "lucide-react";
+import { Menu, ChevronDown, User as UserIcon, Settings, LogOut, Search, MessageCircle } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageToggle from "@/components/LanguageToggle";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
 import type { User } from "@supabase/supabase-js";
 
 const Navbar = () => {
@@ -20,6 +21,7 @@ const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const { data: unreadCount } = useUnreadCount();
 
   useEffect(() => {
     checkUser();
@@ -94,7 +96,8 @@ const Navbar = () => {
       myDashboard: "Ο Λογαριασμός μου",
       profile: "Προφίλ",
       settings: "Ρυθμίσεις",
-      signOut: "Αποσύνδεση"
+      signOut: "Αποσύνδεση",
+      messages: "Μηνύματα"
     },
     en: {
       events: "Events",
@@ -107,7 +110,8 @@ const Navbar = () => {
       myDashboard: "My Dashboard",
       profile: "Profile",
       settings: "Settings",
-      signOut: "Sign Out"
+      signOut: "Sign Out",
+      messages: "Messages"
     }
   };
 
@@ -150,6 +154,24 @@ const Navbar = () => {
 
             {/* Global Search */}
             <GlobalSearch language={language} />
+            
+            {/* Messages Icon (only for logged-in users) */}
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/messages')}
+                className="relative"
+                aria-label={t.messages}
+              >
+                <MessageCircle className="h-5 w-5" />
+                {(unreadCount ?? 0) > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-medium">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </Button>
+            )}
             
             {/* Notification Bell (only for logged-in users) */}
             {user && <NotificationBell userId={user.id} />}
