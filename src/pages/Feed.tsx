@@ -470,9 +470,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
             <div className="flex gap-2 overflow-x-auto pb-1">
               <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
             </div>
-            <div className="overflow-hidden">
-              <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
-            </div>
+            <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
             {(selectedCategories.length > 0 || quickFilters.length > 0 || selectedCity) && (
               <FilterChips
                 categories={selectedCategories}
