@@ -27,6 +27,8 @@ import BudgetTracker from "@/components/business/BudgetTracker";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BusinessSidebar } from "@/components/business/BusinessSidebar";
 import { BusinessFAB } from "@/components/business/BusinessFAB";
+import { BusinessPostsList } from "@/components/business/posting/BusinessPostsList";
+import { BusinessPostForm } from "@/components/business/posting/BusinessPostForm";
 import { Button } from "@/components/ui/button";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -301,6 +303,8 @@ const DashboardBusiness = () => {
               <Route path="map" element={<Xartis />} />
               <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
               <Route path="qr-analytics" element={businessId ? <QRScanAnalytics businessId={businessId} language={language} /> : null} />
+              <Route path="posts" element={businessId ? <BusinessPostsList businessId={businessId} language={language} /> : null} />
+              <Route path="posts/new" element={businessId ? <BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /> : null} />
               <Route path="events" element={businessId ? <EventsList businessId={businessId} /> : null} />
               <Route path="events/new" element={businessId ? <EventCreationForm businessId={businessId} /> : null} />
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
