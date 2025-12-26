@@ -18,7 +18,7 @@ export interface BusinessPost {
   expires_at: string | null;
   hashtags: string[];
   poll_question: string | null;
-  poll_options: { text: string }[];
+  poll_options: { text: string }[] | null;
   poll_ends_at: string | null;
   poll_multiple_choice: boolean;
   views_count: number;
@@ -57,7 +57,13 @@ export function useBusinessPosts(businessId: string | null) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as BusinessPost[];
+      
+      return (data || []).map(post => ({
+        ...post,
+        poll_options: Array.isArray(post.poll_options) 
+          ? post.poll_options as { text: string }[]
+          : null
+      })) as BusinessPost[];
     },
     enabled: !!businessId,
   });
