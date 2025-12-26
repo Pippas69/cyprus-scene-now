@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Calendar, TrendingUp, RefreshCw, ChevronUp } from "lucide-react";
+import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
@@ -28,6 +29,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useScrollMemory } from "@/hooks/useScrollMemory";
+import { useStaggeredAnimation } from "@/hooks/useStaggeredAnimation";
 import { hapticFeedback } from "@/lib/haptics";
 import { getPersonalizedScore } from "@/lib/personalization";
 import type { User } from "@supabase/supabase-js";
@@ -341,53 +343,90 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Stagger animation config
+  const { getStaggerDelay } = useStaggeredAnimation({ baseDelay: 0, delayIncrement: 60, maxDelay: 400 });
+
+  // Animation variants for staggered grid
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.06,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring" as const,
+        stiffness: 400,
+        damping: 30,
+      },
+    },
+  };
+
   // Helper function to render events based on view mode
   const renderEvents = (events: any[]) => {
     if (!events || events.length === 0) return null;
 
     if (viewMode === "compact") {
       return (
-        <div className="flex flex-col gap-2">
-          {events.map((event: any) => (
-            <EventListItem
-              key={event.id}
+        <motion.div 
+          className="flex flex-col gap-2"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {events.map((event: any, index: number) => (
+            <motion.div key={event.id} variants={itemVariants}>
+              <EventListItem
+                event={{
+                  ...event,
+                  interested_count: event.realtime_stats?.[0]?.interested_count || 0,
+                  going_count: event.realtime_stats?.[0]?.going_count || 0
+                }}
+                interestedCount={event.realtime_stats?.[0]?.interested_count || 0}
+                goingCount={event.realtime_stats?.[0]?.going_count || 0}
+                userRSVP={event.rsvps?.[0] || null}
+                onRSVPChange={(eventId, newStatus) => {
+                  queryClient.invalidateQueries({ queryKey: ['events'] });
+                }}
+                user={user}
+                language={language}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
+      );
+    }
+
+    return (
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {events.map((event: any, index: number) => (
+          <motion.div key={event.id} variants={itemVariants}>
+            <EventCard
               event={{
                 ...event,
                 interested_count: event.realtime_stats?.[0]?.interested_count || 0,
                 going_count: event.realtime_stats?.[0]?.going_count || 0
               }}
-              interestedCount={event.realtime_stats?.[0]?.interested_count || 0}
-              goingCount={event.realtime_stats?.[0]?.going_count || 0}
-              userRSVP={event.rsvps?.[0] || null}
-              onRSVPChange={(eventId, newStatus) => {
-                // Handle RSVP change
-                queryClient.invalidateQueries({ queryKey: ['events'] });
-              }}
-              user={user}
               language={language}
+              user={user}
             />
-          ))}
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {events.map((event: any, index: number) => (
-          <EventCard
-            key={event.id}
-            event={{
-              ...event,
-              interested_count: event.realtime_stats?.[0]?.interested_count || 0,
-              going_count: event.realtime_stats?.[0]?.going_count || 0
-            }}
-            language={language}
-            user={user}
-            style={{ animationDelay: `${Math.min(index * 50, 500)}ms` }}
-            className="animate-fade-in"
-          />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     );
   };
   const handleSmartSearch = (params: { date: Date | null; time: string | null; partySize: number | null }) => {
