@@ -26,12 +26,15 @@ import {
   Heart,
   CheckCircle,
   MessageSquare,
+  ExternalLink,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import EventCard from '@/components/EventCard';
 import { EventAttendees } from '@/components/EventAttendees';
 import { LiveEventFeed } from '@/components/feed/LiveEventFeed';
 import { ShareDialog } from '@/components/sharing/ShareDialog';
+import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
+import { useTicketTiers } from '@/hooks/useTicketTiers';
 
 // Staggered animation variants for similar events
 const containerVariants = {
@@ -74,6 +77,9 @@ export default function EventDetail() {
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  
+  // Fetch ticket tiers for this event
+  const { data: ticketTiers = [], isLoading: ticketsLoading } = useTicketTiers(eventId || '');
 
   useEffect(() => {
     checkUser();
@@ -263,6 +269,7 @@ export default function EventDetail() {
       details: 'Λεπτομέρειες',
       liveFeed: 'Live Feed',
       makeReservation: 'Κράτηση',
+      buyTickets: 'Αγοράστε εισιτήρια',
     },
     en: {
       backToEvents: 'Back to Events',
@@ -274,10 +281,15 @@ export default function EventDetail() {
       details: 'Details',
       liveFeed: 'Live Feed',
       makeReservation: 'Make Reservation',
+      buyTickets: 'Buy tickets',
     },
   };
 
   const text = t[language];
+
+  // Check if event has native tickets or external URL
+  const hasNativeTickets = ticketTiers.length > 0;
+  const hasExternalTickets = event?.external_ticket_url;
 
   if (loading) {
     return (
@@ -459,6 +471,34 @@ export default function EventDetail() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Native Ticket Purchase */}
+            {hasNativeTickets && (
+              <TicketPurchaseCard
+                eventId={event.id}
+                eventTitle={event.title}
+                tiers={ticketTiers}
+                onSuccess={(orderId, isFree) => {
+                  if (isFree) {
+                    toast.success(language === 'el' 
+                      ? 'Τα εισιτήριά σας είναι έτοιμα!' 
+                      : 'Your tickets are ready!'
+                    );
+                  }
+                }}
+              />
+            )}
+
+            {/* External Ticket Link */}
+            {!hasNativeTickets && hasExternalTickets && (
+              <RippleButton
+                className="w-full gap-2"
+                onClick={() => window.open(event.external_ticket_url, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4" />
+                {text.buyTickets}
+              </RippleButton>
             )}
 
             {/* Reservation Button */}
