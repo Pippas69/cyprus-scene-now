@@ -26,6 +26,8 @@ import EventBoostDialog from "./EventBoostDialog";
 import { useQuery } from "@tanstack/react-query";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
+import { TicketTierEditor, type TicketTier } from "@/components/tickets/TicketTierEditor";
+import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 const createEventSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -84,6 +86,13 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   // New state for dynamic fields
   const [newPerformer, setNewPerformer] = useState("");
   const [newTag, setNewTag] = useState("");
+  
+  // Ticket tiers state
+  const [ticketTiers, setTicketTiers] = useState<TicketTier[]>([]);
+  
+  // Get commission rate for ticket pricing
+  const { data: commissionData } = useCommissionRate(businessId);
+  const commissionPercent = commissionData?.commissionPercent ?? 12;
   
   // Collapsible sections state
   const [openSections, setOpenSections] = useState({
@@ -242,6 +251,29 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
       if (error) throw error;
 
+      // Save ticket tiers if any
+      if (ticketTiers.length > 0) {
+        const tiersToInsert = ticketTiers.map((tier, index) => ({
+          event_id: eventData.id,
+          name: tier.name,
+          description: tier.description || null,
+          price_cents: tier.price_cents,
+          currency: tier.currency,
+          quantity_total: tier.quantity_total,
+          max_per_order: tier.max_per_order,
+          sort_order: index,
+        }));
+
+        const { error: tiersError } = await supabase
+          .from('ticket_tiers')
+          .insert(tiersToInsert);
+
+        if (tiersError) {
+          console.error('Error saving ticket tiers:', tiersError);
+          toast.error(language === 'el' ? 'Σφάλμα αποθήκευσης εισιτηρίων' : 'Error saving ticket tiers');
+        }
+      }
+
       toast.success(toastT.success, {
         description: toastT.eventCreated,
         action: {
@@ -255,6 +287,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
       form.reset();
       setCoverImage(null);
+      setTicketTiers([]);
       setCreatedEventId(eventData.id);
     } catch (error: any) {
       toast.error(toastT.error, {
@@ -576,13 +609,20 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 onToggle={() => setOpenSections(s => ({ ...s, tickets: !s.tickets }))}
               />
               <CollapsibleContent className="space-y-4 pt-4">
+                {/* Native Ticket Tiers */}
+                <TicketTierEditor
+                  tiers={ticketTiers}
+                  onTiersChange={setTicketTiers}
+                  commissionPercent={commissionPercent}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="price_tier"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.priceTier || 'Price'} *</FormLabel>
+                        <FormLabel>{t.priceTier || 'Price Indicator'}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -596,6 +636,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                             <SelectItem value="high">{t.high || 'High'} (€€€)</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormDescription>
+                          {language === 'el' ? "Δείκτης τιμής για χρήστες" : "Price indicator for users"}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -621,29 +664,31 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="external_ticket_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Link className="h-4 w-4" />
-                        {t.externalTicketUrl || "Ticket URL"}
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="url" 
-                          placeholder={t.externalTicketUrlPlaceholder || "https://tickets.example.com/..."} 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {language === 'el' ? "Προαιρετικό link για αγορά εισιτηρίων" : "Optional link to purchase tickets"}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {ticketTiers.length === 0 && (
+                  <FormField
+                    control={form.control}
+                    name="external_ticket_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Link className="h-4 w-4" />
+                          {t.externalTicketUrl || "External Ticket URL"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="url" 
+                            placeholder={t.externalTicketUrlPlaceholder || "https://tickets.example.com/..."} 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {language === 'el' ? "Χρησιμοποιήστε αν πουλάτε εισιτήρια εκτός πλατφόρμας" : "Use if selling tickets outside the platform"}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}

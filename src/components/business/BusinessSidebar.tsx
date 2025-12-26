@@ -75,6 +75,7 @@ export function BusinessSidebar() {
     // { title: t.posts, url: "/dashboard-business/posts", icon: PenSquare },
     { title: t.events, url: "/dashboard-business/events", icon: Calendar },
     { title: t.offers, url: "/dashboard-business/offers", icon: Ticket },
+    { title: language === 'el' ? "Πωλήσεις Εισιτηρίων" : "Ticket Sales", url: "/dashboard-business/ticket-sales", icon: Ticket },
   ];
 
   const customerItems = [

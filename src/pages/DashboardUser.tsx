@@ -8,11 +8,12 @@ import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Bookmark, UserCog, Calendar } from 'lucide-react';
+import { Plus, Bookmark, UserCog, Calendar, Ticket } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
+import { MyTickets } from '@/components/tickets/MyTickets';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -63,6 +64,7 @@ const DashboardUser = () => {
       reservations: 'Κρατήσεις',
       saved: 'Αποθηκευμένα',
       offers: 'Προσφορές',
+      tickets: 'Τα Εισιτήριά μου',
       profile: 'Προφίλ',
       settings: 'Ρυθμίσεις',
     },
@@ -73,6 +75,7 @@ const DashboardUser = () => {
       reservations: 'Reservations',
       saved: 'Saved Events',
       offers: 'Offers',
+      tickets: 'My Tickets',
       profile: 'Profile',
       settings: 'Settings',
     },
@@ -95,6 +98,7 @@ const DashboardUser = () => {
       reservations: t.reservations,
       saved: t.saved,
       offers: t.offers,
+      tickets: t.tickets,
       profile: t.profile,
       settings: t.settings,
     };
@@ -135,6 +139,10 @@ const DashboardUser = () => {
                   <MyOffers userId={user.id} language={language} />
                 </TabsContent>
 
+                <TabsContent value="tickets" className="mt-6 animate-fade-in">
+                  <MyTickets />
+                </TabsContent>
+
                 <TabsContent value="profile" className="mt-6 animate-fade-in">
                   <ProfileSettings userId={user.id} language={language} />
                 </TabsContent>
@@ -155,6 +163,14 @@ const DashboardUser = () => {
             onClick: () => {
               setActiveTab('rsvps');
               navigate('/dashboard-user?tab=rsvps', { replace: true });
+            }
+          },
+          {
+            icon: <Ticket size={20} />,
+            label: t.tickets,
+            onClick: () => {
+              setActiveTab('tickets');
+              navigate('/dashboard-user?tab=tickets', { replace: true });
             }
           },
           {
