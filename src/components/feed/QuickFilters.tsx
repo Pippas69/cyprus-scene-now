@@ -34,14 +34,14 @@ const QuickFilters = ({ language, selectedFilters, onFilterToggle }: QuickFilter
   ];
 
   return (
-    <ScrollArea className="w-full whitespace-nowrap overflow-hidden">
-      <div className="flex gap-2 pb-2 pr-4">
+    <div className="w-full overflow-x-auto scrollbar-hide touch-pan-x" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex gap-2 pb-2 pr-4 pl-1">
         {filters.map((filter) => (
           <Badge
             key={filter.id}
             variant={selectedFilters.includes(filter.id) ? "default" : "outline"}
             className={cn(
-              "cursor-pointer transition-all hover:scale-105 font-semibold min-h-[40px] px-4",
+              "cursor-pointer transition-all hover:scale-105 font-semibold min-h-[40px] px-4 flex-shrink-0",
               selectedFilters.includes(filter.id) 
                 ? "bg-primary text-primary-foreground border-primary" 
                 : "bg-muted text-foreground border-border hover:bg-primary/10 hover:border-primary/30"
@@ -52,8 +52,7 @@ const QuickFilters = ({ language, selectedFilters, onFilterToggle }: QuickFilter
           </Badge>
         ))}
       </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+    </div>
   );
 };
 

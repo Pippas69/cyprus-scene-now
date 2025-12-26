@@ -48,8 +48,8 @@ const categories = {
   };
 
   return (
-    <ScrollArea className="w-full whitespace-nowrap overflow-hidden">
-      <div className="flex gap-2 pb-2 pr-4">
+    <div className="w-full overflow-x-auto scrollbar-hide touch-pan-x" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex gap-2 pb-2 pr-4 pl-1">
         {categories[language].map((category) => (
           <Badge
             key={category.id}
@@ -66,8 +66,7 @@ const categories = {
           </Badge>
         ))}
       </div>
-      <ScrollBar orientation="horizontal" className="invisible" />
-    </ScrollArea>
+    </div>
   );
 };
 
