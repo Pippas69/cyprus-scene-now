@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackEngagement } from "@/lib/analyticsTracking";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { CheckCircle, MapPin, Phone, Globe, ArrowLeft } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import OfferCard from "@/components/OfferCard";
@@ -60,6 +61,32 @@ interface Discount {
     city: string;
   };
 }
+
+// Staggered animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring" as const,
+      stiffness: 400,
+      damping: 30,
+    },
+  },
+};
 
 const BusinessProfile = () => {
   const { businessId } = useParams();
@@ -203,7 +230,7 @@ const BusinessProfile = () => {
         )}
 
         {/* Back Button */}
-        <Button
+        <RippleButton
           variant="ghost"
           size="sm"
           onClick={() => navigate("/feed")}
@@ -211,22 +238,32 @@ const BusinessProfile = () => {
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t.back}
-        </Button>
+        </RippleButton>
 
         {/* Logo positioned at bottom, overlapping */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-          <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 md:border-[6px] border-background shadow-lg">
+        <motion.div 
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+        >
+          <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 md:border-[6px] border-background shadow-lg ring-2 ring-primary/20">
             <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
             <AvatarFallback className="text-3xl font-bold bg-muted">
               {business.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-        </div>
+        </motion.div>
       </div>
 
       {/* Business Info */}
       <div className="container mx-auto px-4 pt-16 md:pt-24 pb-24 md:pb-8">
-        <div className="text-center mb-8">
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           <div className="flex items-center justify-center gap-2 mb-2">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
               {business.name}
@@ -251,125 +288,162 @@ const BusinessProfile = () => {
               <FollowButton businessId={business.id} language={language} />
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Contact Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {business.city && (
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.city}</p>
-                  <p className="font-medium">{business.city}</p>
-                  {business.address && (
-                    <p className="text-sm text-muted-foreground">{business.address}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <motion.div variants={itemVariants}>
+              <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t.city}</p>
+                    <p className="font-medium">{business.city}</p>
+                    {business.address && (
+                      <p className="text-sm text-muted-foreground">{business.address}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
 
           {business.phone && (
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <Phone className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.phone}</p>
-                  <a
-                    href={`tel:${business.phone}`}
-                    className="inline-block py-2 font-medium hover:text-primary"
-                    onClick={() => trackEngagement(business.id, 'phone_click', 'business', business.id)}
-                  >
-                    {business.phone}
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
+            <motion.div variants={itemVariants}>
+              <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t.phone}</p>
+                    <a
+                      href={`tel:${business.phone}`}
+                      className="inline-block py-2 font-medium hover:text-primary transition-colors"
+                      onClick={() => trackEngagement(business.id, 'phone_click', 'business', business.id)}
+                    >
+                      {business.phone}
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
 
           {business.website && (
-            <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <Globe className="h-5 w-5 text-muted-foreground" />
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">{t.website}</p>
-                  <a
-                    href={business.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium hover:text-primary truncate block"
-                    onClick={() => trackEngagement(business.id, 'website_click', 'business', business.id)}
-                  >
-                    {business.website.replace(/^https?:\/\//, '')}
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
+            <motion.div variants={itemVariants}>
+              <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <Globe className="h-5 w-5 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground">{t.website}</p>
+                    <a
+                      href={business.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium hover:text-primary truncate block transition-colors"
+                      onClick={() => trackEngagement(business.id, 'website_click', 'business', business.id)}
+                    >
+                      {business.website.replace(/^https?:\/\//, '')}
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
 
         {/* Description */}
         {business.description && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t.about}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground whitespace-pre-wrap">
-                {business.description}
-              </p>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card variant="gradient" shine className="mb-8">
+              <CardHeader>
+                <CardTitle>{t.about}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {business.description}
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
         {/* Events and Offers Tabs */}
-        <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 md:h-10">
-            <TabsTrigger value="events">
-              {t.events} ({events.length})
-            </TabsTrigger>
-            <TabsTrigger value="offers">
-              {t.offers} ({offers.length})
-            </TabsTrigger>
-          </TabsList>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Tabs defaultValue="events" className="w-full">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 md:h-10">
+              <TabsTrigger value="events">
+                {t.events} ({events.length})
+              </TabsTrigger>
+              <TabsTrigger value="offers">
+                {t.offers} ({offers.length})
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="events" className="mt-6">
-            {events.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    {t.noEventsScheduled}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((event) => (
-                  <EventCard key={event.id} event={event} language={language} user={user} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
+            <TabsContent value="events" className="mt-6">
+              {events.length === 0 ? (
+                <Card variant="glass">
+                  <CardContent className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      {t.noEventsScheduled}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <motion.div 
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {events.map((event) => (
+                    <motion.div key={event.id} variants={itemVariants}>
+                      <EventCard event={event} language={language} user={user} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </TabsContent>
 
-          <TabsContent value="offers" className="mt-6">
-            {offers.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    {t.noActiveOffers}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {offers.map((offer) => (
-                  <OfferCard key={offer.id} offer={offer} language={language} user={user} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="offers" className="mt-6">
+              {offers.length === 0 ? (
+                <Card variant="glass">
+                  <CardContent className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      {t.noActiveOffers}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <motion.div 
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {offers.map((offer) => (
+                    <motion.div key={offer.id} variants={itemVariants}>
+                      <OfferCard offer={offer} language={language} user={user} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </motion.div>
       </div>
     </div>
   );
