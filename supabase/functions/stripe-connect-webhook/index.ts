@@ -65,10 +65,111 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Handle account.updated events
+    // Handle v2 Connect account events (thin payload - need to fetch account details)
+    if (event.type === "v2.core.account.updated" || 
+        event.type === "v2.core.account.created" ||
+        event.type === "v2.core.account.closed") {
+      
+      // For v2 thin payload, the data contains the account ID
+      const eventData = event.data as { id?: string };
+      const accountId = eventData?.id;
+      
+      if (!accountId) {
+        logStep("No account ID in v2 event data", { eventData });
+        return new Response(JSON.stringify({ received: true, warning: "No account ID" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      logStep("Processing v2 event", { eventType: event.type, accountId });
+
+      // Fetch full account details from Stripe API
+      let account: Stripe.Account;
+      try {
+        account = await stripe.accounts.retrieve(accountId);
+        logStep("Fetched account details", {
+          accountId: account.id,
+          chargesEnabled: account.charges_enabled,
+          payoutsEnabled: account.payouts_enabled,
+          detailsSubmitted: account.details_submitted
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logStep("Failed to fetch account from Stripe", { error: errorMessage, accountId });
+        return new Response(JSON.stringify({ received: true, warning: "Failed to fetch account" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      // Handle account closure
+      if (event.type === "v2.core.account.closed") {
+        logStep("Account closed", { accountId });
+        
+        const { error: updateError } = await supabaseClient
+          .from("businesses")
+          .update({
+            stripe_onboarding_completed: false,
+            stripe_payouts_enabled: false,
+          })
+          .eq("stripe_account_id", accountId);
+
+        if (updateError) {
+          logStep("Failed to update business for closed account", { error: updateError });
+        } else {
+          logStep("Business marked as disconnected", { accountId });
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      // Handle account created or updated - update business record
+      const { data: business, error: businessError } = await supabaseClient
+        .from("businesses")
+        .select("id, stripe_account_id")
+        .eq("stripe_account_id", accountId)
+        .single();
+
+      if (businessError || !business) {
+        logStep("Business not found for account", { accountId });
+        return new Response(JSON.stringify({ received: true, warning: "Business not found" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      const { error: updateError } = await supabaseClient
+        .from("businesses")
+        .update({
+          stripe_onboarding_completed: account.details_submitted ?? false,
+          stripe_payouts_enabled: account.payouts_enabled ?? false,
+        })
+        .eq("id", business.id);
+
+      if (updateError) {
+        logStep("Failed to update business", { error: updateError });
+      } else {
+        logStep("Business updated successfully (v2)", { 
+          businessId: business.id,
+          onboardingCompleted: account.details_submitted,
+          payoutsEnabled: account.payouts_enabled
+        });
+      }
+
+      return new Response(JSON.stringify({ received: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Handle classic account.updated events (backward compatibility)
     if (event.type === "account.updated") {
       const account = event.data.object as Stripe.Account;
-      logStep("Processing account.updated", { 
+      logStep("Processing classic account.updated", { 
         accountId: account.id,
         chargesEnabled: account.charges_enabled,
         payoutsEnabled: account.payouts_enabled,
@@ -84,7 +185,6 @@ serve(async (req) => {
 
       if (businessError || !business) {
         logStep("Business not found for account", { accountId: account.id });
-        // Return 200 anyway to acknowledge receipt
         return new Response(JSON.stringify({ received: true, warning: "Business not found" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -103,7 +203,7 @@ serve(async (req) => {
       if (updateError) {
         logStep("Failed to update business", { error: updateError });
       } else {
-        logStep("Business updated successfully", { 
+        logStep("Business updated successfully (classic)", { 
           businessId: business.id,
           onboardingCompleted: account.details_submitted,
           payoutsEnabled: account.payouts_enabled
