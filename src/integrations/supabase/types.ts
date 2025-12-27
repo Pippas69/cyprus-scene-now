@@ -592,6 +592,9 @@ export type Database = {
           onboarding_completed: boolean | null
           opens_at: string | null
           phone: string | null
+          stripe_account_id: string | null
+          stripe_onboarding_completed: boolean | null
+          stripe_payouts_enabled: boolean | null
           updated_at: string
           user_id: string
           verification_notes: string | null
@@ -614,6 +617,9 @@ export type Database = {
           onboarding_completed?: boolean | null
           opens_at?: string | null
           phone?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarding_completed?: boolean | null
+          stripe_payouts_enabled?: boolean | null
           updated_at?: string
           user_id: string
           verification_notes?: string | null
@@ -636,6 +642,9 @@ export type Database = {
           onboarding_completed?: boolean | null
           opens_at?: string | null
           phone?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarding_completed?: boolean | null
+          stripe_payouts_enabled?: boolean | null
           updated_at?: string
           user_id?: string
           verification_notes?: string | null
