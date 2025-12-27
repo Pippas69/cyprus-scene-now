@@ -55,17 +55,24 @@ serve(async (req) => {
       throw new Error("Missing required fields");
     }
 
-    // Fetch event and business info
+    // Fetch event and business info (including Stripe Connect status)
     const { data: event, error: eventError } = await supabaseClient
       .from("events")
-      .select("*, businesses(*)")
+      .select("*, businesses(*, stripe_account_id, stripe_onboarding_completed, stripe_payouts_enabled)")
       .eq("id", eventId)
       .single();
 
     if (eventError || !event) {
       throw new Error("Event not found");
     }
-    logStep("Event fetched", { eventTitle: event.title, businessId: event.business_id });
+    
+    const business = event.businesses;
+    logStep("Event fetched", { 
+      eventTitle: event.title, 
+      businessId: event.business_id,
+      hasStripeConnect: !!business?.stripe_account_id,
+      payoutsEnabled: business?.stripe_payouts_enabled
+    });
 
     // Get business subscription to determine commission rate
     const { data: subscription } = await supabaseClient
@@ -270,7 +277,11 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://lovable.dev";
     
-    const session = await stripe.checkout.sessions.create({
+    // Check if business has Stripe Connect set up for payment splitting
+    const hasStripeConnect = business?.stripe_account_id && business?.stripe_payouts_enabled;
+    
+    // Build session config
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email!,
       line_items: lineItems,
@@ -283,7 +294,26 @@ serve(async (req) => {
         user_id: user.id,
         ticket_breakdown: JSON.stringify(ticketBreakdown),
       },
-    });
+    };
+    
+    // If business has Stripe Connect, use payment splitting
+    if (hasStripeConnect) {
+      logStep("Using Stripe Connect payment splitting", { 
+        connectedAccountId: business.stripe_account_id,
+        applicationFee: commissionCents 
+      });
+      
+      sessionConfig.payment_intent_data = {
+        application_fee_amount: commissionCents, // Platform takes commission
+        transfer_data: {
+          destination: business.stripe_account_id!, // Business receives the rest
+        },
+      };
+    } else {
+      logStep("Business not connected to Stripe - using standard checkout (manual payout required)");
+    }
+    
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     // Update order with session ID
     await supabaseClient

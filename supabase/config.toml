@@ -37,7 +37,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.monitor-database-performance.schedule]
-cron = "*/5 * * * *"  # Run every 5 minutes
+cron = "*/5 * * * *"
 
 [functions.get-database-metrics]
 verify_jwt = false
@@ -49,4 +49,25 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.calculate-monthly-commission.schedule]
-cron = "0 0 1 * *"  # Run at midnight on the 1st of each month
+cron = "0 0 1 * *"
+
+[functions.create-ticket-checkout]
+verify_jwt = true
+
+[functions.process-ticket-payment]
+verify_jwt = true
+
+[functions.validate-ticket]
+verify_jwt = true
+
+[functions.send-ticket-email]
+verify_jwt = false
+
+[functions.create-connect-account]
+verify_jwt = true
+
+[functions.create-connect-login-link]
+verify_jwt = true
+
+[functions.stripe-connect-webhook]
+verify_jwt = false

@@ -1,0 +1,297 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, CreditCard, CheckCircle2, ExternalLink, AlertCircle, Banknote, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface StripeConnectOnboardingProps {
+  businessId: string;
+  language: 'el' | 'en';
+}
+
+const translations = {
+  el: {
+    title: 'Πληρωμές & Εκταμιεύσεις',
+    description: 'Συνδέστε τον τραπεζικό σας λογαριασμό για να λαμβάνετε πληρωμές από πωλήσεις εισιτηρίων',
+    notConnected: 'Δεν έχει συνδεθεί',
+    pendingOnboarding: 'Εκκρεμεί ολοκλήρωση',
+    connected: 'Συνδεδεμένο',
+    payoutsEnabled: 'Εκταμιεύσεις ενεργές',
+    payoutsDisabled: 'Εκταμιεύσεις απενεργοποιημένες',
+    connectAccount: 'Σύνδεση Τραπεζικού Λογαριασμού',
+    completeSetup: 'Ολοκλήρωση Ρύθμισης',
+    viewDashboard: 'Προβολή Πίνακα Πληρωμών',
+    connectDescription: 'Για να λαμβάνετε πληρωμές από πωλήσεις εισιτηρίων, πρέπει να συνδέσετε τον τραπεζικό σας λογαριασμό. Η διαδικασία διαρκεί λίγα λεπτά.',
+    pendingDescription: 'Η ρύθμιση του λογαριασμού σας δεν έχει ολοκληρωθεί. Κάντε κλικ παρακάτω για να συνεχίσετε.',
+    connectedDescription: 'Ο λογαριασμός σας είναι έτοιμος να λάβει πληρωμές. Τα έσοδα από πωλήσεις εισιτηρίων θα κατατίθενται αυτόματα.',
+    loading: 'Φόρτωση...',
+    error: 'Σφάλμα κατά τη φόρτωση της κατάστασης πληρωμών',
+    redirecting: 'Μεταφορά στη ρύθμιση πληρωμών...',
+    whatYouNeed: 'Τι θα χρειαστείτε:',
+    bankAccount: 'Στοιχεία τραπεζικού λογαριασμού',
+    idVerification: 'Ταυτότητα για επαλήθευση',
+    businessInfo: 'Φορολογικά στοιχεία επιχείρησης',
+    commissionNote: 'Η προμήθεια πλατφόρμας αφαιρείται αυτόματα από κάθε πώληση',
+  },
+  en: {
+    title: 'Payments & Payouts',
+    description: 'Connect your bank account to receive payments from ticket sales',
+    notConnected: 'Not connected',
+    pendingOnboarding: 'Setup pending',
+    connected: 'Connected',
+    payoutsEnabled: 'Payouts enabled',
+    payoutsDisabled: 'Payouts disabled',
+    connectAccount: 'Connect Bank Account',
+    completeSetup: 'Complete Setup',
+    viewDashboard: 'View Payment Dashboard',
+    connectDescription: 'To receive payments from ticket sales, you need to connect your bank account. This process takes just a few minutes.',
+    pendingDescription: 'Your account setup is not complete. Click below to continue.',
+    connectedDescription: 'Your account is ready to receive payments. Ticket sale revenue will be deposited automatically.',
+    loading: 'Loading...',
+    error: 'Error loading payment status',
+    redirecting: 'Redirecting to payment setup...',
+    whatYouNeed: 'What you\'ll need:',
+    bankAccount: 'Bank account details',
+    idVerification: 'ID for verification',
+    businessInfo: 'Business tax information',
+    commissionNote: 'Platform commission is automatically deducted from each sale',
+  },
+};
+
+type ConnectStatus = 'not_connected' | 'pending' | 'connected';
+
+export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectOnboardingProps) => {
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [status, setStatus] = useState<ConnectStatus>('not_connected');
+  const [payoutsEnabled, setPayoutsEnabled] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const t = translations[language];
+
+  useEffect(() => {
+    fetchConnectStatus();
+    
+    // Check URL params for onboarding completion
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('stripe_onboarding') === 'complete') {
+      toast.success(language === 'el' ? 'Ρύθμιση ολοκληρώθηκε!' : 'Setup complete!');
+      window.history.replaceState({}, '', window.location.pathname);
+      fetchConnectStatus(); // Refresh status
+    } else if (urlParams.get('stripe_refresh') === 'true') {
+      toast.info(language === 'el' ? 'Παρακαλώ ολοκληρώστε τη ρύθμιση' : 'Please complete setup');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [businessId]);
+
+  const fetchConnectStatus = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from('businesses')
+        .select('stripe_account_id, stripe_onboarding_completed, stripe_payouts_enabled')
+        .eq('id', businessId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      if (!data.stripe_account_id) {
+        setStatus('not_connected');
+      } else if (!data.stripe_onboarding_completed) {
+        setStatus('pending');
+      } else {
+        setStatus('connected');
+      }
+
+      setPayoutsEnabled(data.stripe_payouts_enabled ?? false);
+    } catch (err) {
+      console.error('Error fetching connect status:', err);
+      setError(t.error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConnectOrContinue = async () => {
+    try {
+      setActionLoading(true);
+
+      const { data, error } = await supabase.functions.invoke('create-connect-account');
+
+      if (error) throw error;
+
+      if (data?.url) {
+        toast.info(t.redirecting);
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error('Error creating connect account:', err);
+      toast.error(language === 'el' ? 'Σφάλμα κατά τη ρύθμιση' : 'Error during setup');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleViewDashboard = async () => {
+    try {
+      setActionLoading(true);
+
+      const { data, error } = await supabase.functions.invoke('create-connect-login-link');
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (err) {
+      console.error('Error creating login link:', err);
+      toast.error(language === 'el' ? 'Σφάλμα κατά τη φόρτωση' : 'Error loading dashboard');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-6">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Banknote className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">{t.title}</CardTitle>
+              <CardDescription>{t.description}</CardDescription>
+            </div>
+          </div>
+          <Badge 
+            variant={status === 'connected' ? 'default' : status === 'pending' ? 'secondary' : 'outline'}
+            className={status === 'connected' && payoutsEnabled ? 'bg-green-500 hover:bg-green-600' : ''}
+          >
+            {status === 'not_connected' && t.notConnected}
+            {status === 'pending' && t.pendingOnboarding}
+            {status === 'connected' && (payoutsEnabled ? t.payoutsEnabled : t.connected)}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {status === 'not_connected' && (
+          <>
+            <p className="text-sm text-muted-foreground">{t.connectDescription}</p>
+            
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <p className="text-sm font-medium">{t.whatYouNeed}</p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  {t.bankAccount}
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t.idVerification}
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t.businessInfo}
+                </li>
+              </ul>
+            </div>
+            
+            <Button 
+              onClick={handleConnectOrContinue} 
+              disabled={actionLoading}
+              className="w-full"
+              size="lg"
+            >
+              {actionLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <ArrowRight className="h-4 w-4 mr-2" />
+              )}
+              {t.connectAccount}
+            </Button>
+          </>
+        )}
+
+        {status === 'pending' && (
+          <>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{t.pendingDescription}</AlertDescription>
+            </Alert>
+            
+            <Button 
+              onClick={handleConnectOrContinue} 
+              disabled={actionLoading}
+              className="w-full"
+            >
+              {actionLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <ArrowRight className="h-4 w-4 mr-2" />
+              )}
+              {t.completeSetup}
+            </Button>
+          </>
+        )}
+
+        {status === 'connected' && (
+          <>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <span className="text-muted-foreground">{t.connectedDescription}</span>
+            </div>
+            
+            <p className="text-xs text-muted-foreground italic">
+              {t.commissionNote}
+            </p>
+            
+            <Button 
+              variant="outline"
+              onClick={handleViewDashboard} 
+              disabled={actionLoading}
+              className="w-full"
+            >
+              {actionLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <ExternalLink className="h-4 w-4 mr-2" />
+              )}
+              {t.viewDashboard}
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default StripeConnectOnboarding;
