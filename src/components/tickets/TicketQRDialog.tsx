@@ -19,6 +19,9 @@ interface TicketQRDialogProps {
     eventTitle: string;
     eventDate?: string;
     eventLocation?: string;
+    customerName?: string;
+    purchaseDate?: string;
+    pricePaid?: string;
   } | null;
   onClose: () => void;
 }
@@ -79,6 +82,9 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
         tierName: ticket.tierName,
         ticketId: ticket.id,
         qrToken: ticket.qrToken,
+        customerName: ticket.customerName,
+        purchaseDate: ticket.purchaseDate,
+        pricePaid: ticket.pricePaid,
       });
     } catch (err) {
       console.error("PDF generation error:", err);

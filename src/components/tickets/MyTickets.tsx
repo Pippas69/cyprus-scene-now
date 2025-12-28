@@ -25,6 +25,9 @@ const t = {
     checkedIn: "Check-in",
     upcoming: "Επερχόμενες",
     past: "Παρελθούσες",
+    purchased: "Αγοράστηκε",
+    ticketHolder: "Κάτοχος",
+    free: "Δωρεάν",
   },
   en: {
     myTickets: "My Tickets",
@@ -38,6 +41,9 @@ const t = {
     checkedIn: "Checked In",
     upcoming: "Upcoming",
     past: "Past",
+    purchased: "Purchased",
+    ticketHolder: "Ticket Holder",
+    free: "Free",
   },
 };
 
@@ -53,6 +59,9 @@ export const MyTickets = () => {
     eventTitle: string;
     eventDate?: string;
     eventLocation?: string;
+    customerName?: string;
+    purchaseDate?: string;
+    pricePaid?: string;
   } | null>(null);
 
   const { data: tickets, isLoading } = useQuery({
@@ -69,9 +78,9 @@ export const MyTickets = () => {
           status,
           checked_in_at,
           created_at,
-          ticket_tiers(name, price_cents),
+          ticket_tiers(name, price_cents, currency),
           events(id, title, start_at, location, cover_image_url),
-          ticket_orders(customer_name)
+          ticket_orders(customer_name, total_cents)
         `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -132,75 +141,104 @@ export const MyTickets = () => {
     );
   }
 
-  const TicketCard = ({ ticket }: { ticket: typeof tickets[0] }) => (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <div className="flex">
-        {ticket.events?.cover_image_url && (
-          <div className="w-24 h-full flex-shrink-0">
-            <img
-              src={ticket.events.cover_image_url}
-              alt={ticket.events.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-        <CardContent className="flex-1 p-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold truncate">{ticket.events?.title}</h3>
-              <p className="text-sm text-primary font-medium">
-                {ticket.ticket_tiers?.name}
-              </p>
-              
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                {ticket.events?.start_at && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {format(new Date(ticket.events.start_at), "dd MMM yyyy, HH:mm", { locale: dateLocale })}
+  const formatPrice = (priceCents: number | undefined, currency: string = 'eur') => {
+    if (priceCents === undefined || priceCents === 0) return text.free;
+    const amount = (priceCents / 100).toFixed(2);
+    return currency.toUpperCase() === 'EUR' ? `€${amount}` : `${amount} ${currency.toUpperCase()}`;
+  };
+
+  const TicketCard = ({ ticket }: { ticket: typeof tickets[0] }) => {
+    const pricePaid = formatPrice(ticket.ticket_tiers?.price_cents, ticket.ticket_tiers?.currency);
+    
+    return (
+      <Card className="overflow-hidden hover:shadow-md transition-shadow">
+        <div className="flex">
+          {ticket.events?.cover_image_url && (
+            <div className="w-24 h-full flex-shrink-0">
+              <img
+                src={ticket.events.cover_image_url}
+                alt={ticket.events.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <CardContent className="flex-1 p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold truncate">{ticket.events?.title}</h3>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-primary font-medium">
+                    {ticket.ticket_tiers?.name}
+                  </p>
+                  <span className="text-sm font-semibold text-foreground">
+                    {pricePaid}
                   </span>
-                )}
-                {ticket.events?.location && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {ticket.events.location}
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                  {ticket.events?.start_at && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(ticket.events.start_at), "dd MMM yyyy, HH:mm", { locale: dateLocale })}
+                    </span>
+                  )}
+                  {ticket.events?.location && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {ticket.events.location}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
+                  <span>
+                    {text.purchased}: {format(new Date(ticket.created_at), "dd MMM yyyy", { locale: dateLocale })}
                   </span>
+                  {ticket.ticket_orders?.customer_name && (
+                    <span>
+                      {text.ticketHolder}: {ticket.ticket_orders.customer_name}
+                    </span>
+                  )}
+                </div>
+
+                {ticket.checked_in_at && (
+                  <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {text.checkedIn}: {format(new Date(ticket.checked_in_at), "HH:mm", { locale: dateLocale })}
+                  </div>
                 )}
               </div>
 
-              {ticket.checked_in_at && (
-                <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
-                  <CheckCircle2 className="h-3 w-3" />
-                  {text.checkedIn}: {format(new Date(ticket.checked_in_at), "HH:mm", { locale: dateLocale })}
-                </div>
-              )}
+              <div className="flex flex-col items-end gap-2">
+                {getStatusBadge(ticket.status)}
+                
+                {ticket.status === "valid" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedTicket({
+                      id: ticket.id,
+                      qrToken: ticket.qr_code_token,
+                      tierName: ticket.ticket_tiers?.name || "",
+                      eventTitle: ticket.events?.title || "",
+                      eventDate: ticket.events?.start_at || "",
+                      eventLocation: ticket.events?.location || "",
+                      customerName: ticket.ticket_orders?.customer_name || "",
+                      purchaseDate: ticket.created_at,
+                      pricePaid: pricePaid,
+                    })}
+                  >
+                    <QrCode className="h-4 w-4 mr-1" />
+                    {text.showQR}
+                  </Button>
+                )}
+              </div>
             </div>
-
-            <div className="flex flex-col items-end gap-2">
-              {getStatusBadge(ticket.status)}
-              
-              {ticket.status === "valid" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedTicket({
-                    id: ticket.id,
-                    qrToken: ticket.qr_code_token,
-                    tierName: ticket.ticket_tiers?.name || "",
-                    eventTitle: ticket.events?.title || "",
-                    eventDate: ticket.events?.start_at || "",
-                    eventLocation: ticket.events?.location || "",
-                  })}
-                >
-                  <QrCode className="h-4 w-4 mr-1" />
-                  {text.showQR}
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </div>
-    </Card>
-  );
+          </CardContent>
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
