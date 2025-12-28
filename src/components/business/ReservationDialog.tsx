@@ -169,14 +169,30 @@ export const ReservationDialog = ({
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error:', error);
-      if (error.message?.includes('capacity')) {
+      console.error('Reservation error:', error);
+      
+      // Handle specific error types
+      if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('RLS')) {
+        toast.error(language === 'el' 
+          ? 'Δεν έχετε δικαίωμα να κάνετε κράτηση. Παρακαλώ συνδεθείτε ξανά.' 
+          : 'You don\'t have permission to make a reservation. Please log in again.');
+      } else if (error.code === '23503' || error.message?.includes('foreign key')) {
+        toast.error(language === 'el' 
+          ? 'Η εκδήλωση δεν είναι διαθέσιμη για κράτηση.' 
+          : 'This event is not available for reservations.');
+      } else if (error.message?.includes('capacity')) {
         const match = error.message.match(/Available slots: (\d+)/);
         const available = match ? match[1] : '0';
         toast.error(formatToastMessage(toastTranslations[language].capacityExceeded, { available }));
         fetchAvailableCapacity();
+      } else if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
+        toast.error(language === 'el' 
+          ? 'Η συνεδρία σας έληξε. Παρακαλώ συνδεθείτε ξανά.' 
+          : 'Your session has expired. Please log in again.');
       } else {
-        toast.error(error.message);
+        toast.error(language === 'el' 
+          ? `Σφάλμα κράτησης: ${error.message}` 
+          : `Reservation error: ${error.message}`);
       }
     } finally {
       setLoading(false);

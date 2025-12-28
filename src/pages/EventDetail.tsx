@@ -35,6 +35,7 @@ import { LiveEventFeed } from '@/components/feed/LiveEventFeed';
 import { ShareDialog } from '@/components/sharing/ShareDialog';
 import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
 import { useTicketTiers } from '@/hooks/useTicketTiers';
+import { ErrorState } from '@/components/ErrorState';
 
 // Staggered animation variants for similar events
 const containerVariants = {
@@ -68,6 +69,7 @@ export default function EventDetail() {
   const [event, setEvent] = useState<any>(null);
   const [similarEvents, setSimilarEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -129,31 +131,40 @@ export default function EventDetail() {
     if (!eventId) return;
 
     setLoading(true);
+    setError(null);
 
-    // Fetch event with business details
-    const { data: eventData, error } = await supabase
-      .from('events')
-      .select(`
-        *,
-        businesses!inner(
-          id,
-          name,
-          logo_url,
-          verified,
-          city,
-          category
-        )
-      `)
-      .eq('id', eventId)
-      .single();
+    try {
+      // Fetch event with business details
+      const { data: eventData, error: fetchError } = await supabase
+        .from('events')
+        .select(`
+          *,
+          businesses!inner(
+            id,
+            name,
+            logo_url,
+            verified,
+            city,
+            category
+          )
+        `)
+        .eq('id', eventId)
+        .maybeSingle();
 
-    if (error || !eventData) {
-      toast.error('Event not found');
-      navigate('/feed');
-      return;
-    }
+      if (fetchError) {
+        console.error('Event fetch error:', fetchError);
+        setError(fetchError.message);
+        setLoading(false);
+        return;
+      }
 
-    setEvent(eventData);
+      if (!eventData) {
+        setError(language === 'el' ? 'Η εκδήλωση δεν βρέθηκε' : 'Event not found');
+        setLoading(false);
+        return;
+      }
+
+      setEvent(eventData);
 
     // Fetch RSVP counts
     const { data: rsvpCounts } = await supabase
@@ -180,8 +191,13 @@ export default function EventDetail() {
       )
       .limit(3);
 
-    setSimilarEvents(similar || []);
-    setLoading(false);
+      setSimilarEvents(similar || []);
+    } catch (err: any) {
+      console.error('Event details error:', err);
+      setError(err.message || 'Failed to load event details');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleShare = () => {
@@ -299,7 +315,30 @@ export default function EventDetail() {
     );
   }
 
-  if (!event) return null;
+  if (error || !event) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 pt-24">
+          <RippleButton
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="mb-4 gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {language === 'el' ? 'Επιστροφή' : 'Go Back'}
+          </RippleButton>
+          
+          <ErrorState
+            title={language === 'el' ? 'Σφάλμα φόρτωσης' : 'Failed to load event'}
+            message={error || (language === 'el' ? 'Η εκδήλωση δεν βρέθηκε' : 'Event not found')}
+            onRetry={() => fetchEventDetails()}
+            showRetry
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
