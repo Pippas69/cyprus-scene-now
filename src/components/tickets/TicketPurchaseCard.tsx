@@ -159,9 +159,8 @@ export const TicketPurchaseCard = ({
         );
         onSuccess?.(data.orderId, true);
       } else {
-        // Redirect to Stripe checkout
-        window.open(data.url, '_blank');
-        onSuccess?.(data.orderId, false);
+        // Redirect to Stripe checkout in same tab to avoid pop-up blockers
+        window.location.href = data.url;
       }
     } catch (error: any) {
       console.error('Checkout error:', error);
