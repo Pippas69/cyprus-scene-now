@@ -26,7 +26,7 @@ import EventBoostDialog from "./EventBoostDialog";
 import { useQuery } from "@tanstack/react-query";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { TicketTierEditor, type TicketTier } from "@/components/tickets/TicketTierEditor";
+import { TicketTierEditor, type TicketTier, validateTicketTiers } from "@/components/tickets/TicketTierEditor";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 const createEventSchema = (language: 'el' | 'en') => {
@@ -89,6 +89,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   
   // Ticket tiers state
   const [ticketTiers, setTicketTiers] = useState<TicketTier[]>([]);
+  const [ticketTierErrors, setTicketTierErrors] = useState<string[]>([]);
   
   // Get commission rate for ticket pricing
   const { data: commissionData } = useCommissionRate(businessId);
@@ -190,6 +191,20 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   };
 
   const onSubmit = async (data: EventFormData) => {
+    // Validate ticket tiers before submitting
+    if (ticketTiers.length > 0) {
+      const tierErrors = validateTicketTiers(ticketTiers, language);
+      setTicketTierErrors(tierErrors);
+      if (tierErrors.length > 0) {
+        setOpenSections(prev => ({ ...prev, tickets: true }));
+        toast.error(
+          language === 'el' ? 'Σφάλμα επικύρωσης εισιτηρίων' : 'Ticket validation error',
+          { description: language === 'el' ? 'Παρακαλώ συμπληρώστε τα ονόματα κατηγοριών εισιτηρίων' : 'Please fill in all ticket tier names' }
+        );
+        return;
+      }
+    }
+    
     setIsSubmitting(true);
     try {
       let coverImageUrl = null;
@@ -612,8 +627,15 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 {/* Native Ticket Tiers */}
                 <TicketTierEditor
                   tiers={ticketTiers}
-                  onTiersChange={setTicketTiers}
+                  onTiersChange={(tiers) => {
+                    setTicketTiers(tiers);
+                    // Clear errors when user makes changes
+                    if (ticketTierErrors.length > 0) {
+                      setTicketTierErrors([]);
+                    }
+                  }}
                   commissionPercent={commissionPercent}
+                  validationErrors={ticketTierErrors}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
