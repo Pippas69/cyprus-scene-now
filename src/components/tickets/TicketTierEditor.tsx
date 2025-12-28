@@ -22,6 +22,7 @@ interface TicketTierEditorProps {
   tiers: TicketTier[];
   onTiersChange: (tiers: TicketTier[]) => void;
   commissionPercent: number;
+  validationErrors?: string[];
 }
 
 const t = {
@@ -41,6 +42,7 @@ const t = {
     noTiers: "Δεν έχετε προσθέσει κατηγορίες εισιτηρίων ακόμα",
     noTickets: "Χωρίς εισιτήρια (μόνο RSVP/Κράτηση)",
     enableTickets: "Ενεργοποίηση Πώλησης Εισιτηρίων",
+    tierNameRequired: "Το όνομα κατηγορίας είναι υποχρεωτικό",
   },
   en: {
     addTier: "Add Ticket Tier",
@@ -58,21 +60,40 @@ const t = {
     noTiers: "No ticket tiers added yet",
     noTickets: "No tickets (RSVP/Reservation only)",
     enableTickets: "Enable Ticket Sales",
+    tierNameRequired: "Tier name is required",
   },
+};
+
+// Validation helper
+export const validateTicketTiers = (tiers: TicketTier[], language: 'el' | 'en'): string[] => {
+  const errors: string[] = [];
+  tiers.forEach((tier, index) => {
+    if (!tier.name.trim()) {
+      errors.push(
+        language === 'el' 
+          ? `Κατηγορία ${index + 1}: Το όνομα είναι υποχρεωτικό` 
+          : `Tier ${index + 1}: Name is required`
+      );
+    }
+  });
+  return errors;
 };
 
 export const TicketTierEditor = ({
   tiers,
   onTiersChange,
   commissionPercent,
+  validationErrors = [],
 }: TicketTierEditorProps) => {
   const { language } = useLanguage();
   const text = t[language];
   const [ticketsEnabled, setTicketsEnabled] = useState(tiers.length > 0);
+  const [touchedTiers, setTouchedTiers] = useState<Set<number>>(new Set());
 
   const addTier = () => {
+    const defaultName = language === 'el' ? 'Γενική Είσοδος' : 'General Admission';
     const newTier: TicketTier = {
-      name: "",
+      name: tiers.length === 0 ? defaultName : "",
       description: "",
       price_cents: 0,
       currency: "eur",
@@ -82,6 +103,14 @@ export const TicketTierEditor = ({
     };
     onTiersChange([...tiers, newTier]);
     setTicketsEnabled(true);
+  };
+
+  const markTierTouched = (index: number) => {
+    setTouchedTiers(prev => new Set(prev).add(index));
+  };
+
+  const isTierInvalid = (index: number) => {
+    return !tiers[index]?.name.trim();
   };
 
   const updateTier = (index: number, updates: Partial<TicketTier>) => {
@@ -118,6 +147,20 @@ export const TicketTierEditor = ({
 
   return (
     <div className="space-y-4">
+      {/* Validation errors display */}
+      {validationErrors.length > 0 && (
+        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+          <p className="text-sm font-medium text-destructive mb-1">
+            {language === 'el' ? 'Παρακαλώ διορθώστε τα παρακάτω:' : 'Please fix the following:'}
+          </p>
+          <ul className="text-sm text-destructive list-disc list-inside">
+            {validationErrors.map((error, i) => (
+              <li key={i}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Toggle for enabling tickets */}
       <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
         <div className="flex items-center gap-3">
@@ -173,12 +216,19 @@ export const TicketTierEditor = ({
                 <CardContent className="pt-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>{text.tierName} *</Label>
+                      <Label className={touchedTiers.has(index) && isTierInvalid(index) ? "text-destructive" : ""}>
+                        {text.tierName} *
+                      </Label>
                       <Input
                         value={tier.name}
                         onChange={(e) => updateTier(index, { name: e.target.value })}
+                        onBlur={() => markTierTouched(index)}
                         placeholder={text.tierNamePlaceholder}
+                        className={touchedTiers.has(index) && isTierInvalid(index) ? "border-destructive focus-visible:ring-destructive" : ""}
                       />
+                      {touchedTiers.has(index) && isTierInvalid(index) && (
+                        <p className="text-xs text-destructive">{text.tierNameRequired}</p>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
