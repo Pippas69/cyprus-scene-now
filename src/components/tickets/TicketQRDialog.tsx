@@ -22,6 +22,7 @@ interface TicketQRDialogProps {
     customerName?: string;
     purchaseDate?: string;
     pricePaid?: string;
+    businessName?: string;
   } | null;
   onClose: () => void;
 }
@@ -85,6 +86,7 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
         customerName: ticket.customerName,
         purchaseDate: ticket.purchaseDate,
         pricePaid: ticket.pricePaid,
+        businessName: ticket.businessName,
       });
     } catch (err) {
       console.error("PDF generation error:", err);
@@ -106,7 +108,10 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
         <div className="flex flex-col items-center gap-4 py-4">
           <div className="text-center">
             <h3 className="font-semibold">{ticket?.eventTitle}</h3>
-            <p className="text-sm text-primary">{ticket?.tierName}</p>
+            {ticket?.businessName && (
+              <p className="text-xs text-muted-foreground">by {ticket.businessName}</p>
+            )}
+            <p className="text-sm text-primary mt-1">{ticket?.tierName}</p>
           </div>
 
           {qrDataUrl && (

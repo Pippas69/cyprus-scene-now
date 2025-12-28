@@ -120,25 +120,37 @@ serve(async (req) => {
     // Fetch tickets with their QR tokens for email
     const { data: createdTickets } = await supabaseClient
       .from("tickets")
-      .select("id, qr_code_token, ticket_tiers(name)")
+      .select("id, qr_code_token, ticket_tiers(name, price_cents, currency)")
       .eq("order_id", orderId);
 
-    // Fetch user email and event title for email notification
+    // Fetch user email, event details, and business name for email notification
     const { data: orderDetails } = await supabaseClient
       .from("ticket_orders")
-      .select("customer_email, events(title)")
+      .select("customer_email, customer_name, events(title, start_at, location, businesses(name))")
       .eq("id", orderId)
       .single();
 
     // Send email with tickets (fire and forget - don't block on this)
     if (orderDetails?.customer_email && createdTickets && createdTickets.length > 0) {
-      const tickets = createdTickets.map((t: any) => ({
-        id: t.id,
-        qrToken: t.qr_code_token,
-        tierName: (t.ticket_tiers as any)?.name || "General",
-      }));
+      const tickets = createdTickets.map((t: any) => {
+        const priceCents = (t.ticket_tiers as any)?.price_cents || 0;
+        const currency = (t.ticket_tiers as any)?.currency || 'eur';
+        const pricePaid = priceCents === 0 ? 'Free' : `€${(priceCents / 100).toFixed(2)}`;
+        
+        return {
+          id: t.id,
+          qrToken: t.qr_code_token,
+          tierName: (t.ticket_tiers as any)?.name || "General",
+          pricePaid,
+        };
+      });
 
-      const eventTitle = (orderDetails.events as any)?.title || "Event";
+      const event = orderDetails.events as any;
+      const eventTitle = event?.title || "Event";
+      const eventDate = event?.start_at || "";
+      const eventLocation = event?.location || "";
+      const businessName = event?.businesses?.name || "";
+      const customerName = orderDetails.customer_name || "";
 
       // Call send-ticket-email function
       fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-email`, {
@@ -151,6 +163,10 @@ serve(async (req) => {
           orderId,
           userEmail: orderDetails.customer_email,
           eventTitle,
+          eventDate,
+          eventLocation,
+          businessName,
+          customerName,
           tickets,
         }),
       }).catch(err => logStep("Email send error (non-blocking)", err));

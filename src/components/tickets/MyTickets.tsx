@@ -62,6 +62,7 @@ export const MyTickets = () => {
     customerName?: string;
     purchaseDate?: string;
     pricePaid?: string;
+    businessName?: string;
   } | null>(null);
 
   const { data: tickets, isLoading } = useQuery({
@@ -79,7 +80,7 @@ export const MyTickets = () => {
           checked_in_at,
           created_at,
           ticket_tiers(name, price_cents, currency),
-          events(id, title, start_at, location, cover_image_url),
+          events(id, title, start_at, location, cover_image_url, businesses(name)),
           ticket_orders(customer_name, total_cents)
         `)
         .eq("user_id", user.id)
@@ -149,6 +150,7 @@ export const MyTickets = () => {
 
   const TicketCard = ({ ticket }: { ticket: typeof tickets[0] }) => {
     const pricePaid = formatPrice(ticket.ticket_tiers?.price_cents, ticket.ticket_tiers?.currency);
+    const businessName = (ticket.events as any)?.businesses?.name;
     
     return (
       <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -166,7 +168,10 @@ export const MyTickets = () => {
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold truncate">{ticket.events?.title}</h3>
-                <div className="flex items-center gap-2">
+                {businessName && (
+                  <p className="text-xs text-muted-foreground">by {businessName}</p>
+                )}
+                <div className="flex items-center gap-2 mt-1">
                   <p className="text-sm text-primary font-medium">
                     {ticket.ticket_tiers?.name}
                   </p>
@@ -226,6 +231,7 @@ export const MyTickets = () => {
                       customerName: ticket.ticket_orders?.customer_name || "",
                       purchaseDate: ticket.created_at,
                       pricePaid: pricePaid,
+                      businessName: businessName,
                     })}
                   >
                     <QrCode className="h-4 w-4 mr-1" />
