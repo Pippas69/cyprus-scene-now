@@ -206,7 +206,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   };
   const {
     data: events,
-    isLoading: eventsLoading
+    isLoading: eventsLoading,
+    error: eventsError,
+    refetch: refetchEvents
   } = useQuery({
     queryKey: ['events', selectedCategories, activeTab, page, quickFilters, sortBy, selectedCity],
     queryFn: async () => {
@@ -253,7 +255,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   };
   const {
     data: offers,
-    isLoading: offersLoading
+    isLoading: offersLoading,
+    error: offersError,
+    refetch: refetchOffers
   } = useQuery({
     queryKey: ['offers', selectedCategories, selectedCity],
     queryFn: async () => {
@@ -557,6 +561,15 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
                 {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
               </div>
+            ) : eventsError ? (
+              <ErrorState
+                title={language === 'el' ? 'Σφάλμα φόρτωσης' : 'Failed to load events'}
+                message={language === 'el' 
+                  ? `Δεν ήταν δυνατή η φόρτωση των εκδηλώσεων: ${(eventsError as Error).message}` 
+                  : `Could not load events: ${(eventsError as Error).message}`}
+                onRetry={() => refetchEvents()}
+                showRetry
+              />
             ) : displayedEvents && displayedEvents.length > 0 ? (
               <>
                 {renderEvents(displayedEvents)}
@@ -583,6 +596,15 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
                 {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
               </div>
+            ) : eventsError ? (
+              <ErrorState
+                title={language === 'el' ? 'Σφάλμα φόρτωσης' : 'Failed to load events'}
+                message={language === 'el' 
+                  ? `Δεν ήταν δυνατή η φόρτωση των εκδηλώσεων: ${(eventsError as Error).message}` 
+                  : `Could not load events: ${(eventsError as Error).message}`}
+                onRetry={() => refetchEvents()}
+                showRetry
+              />
             ) : displayedEvents && displayedEvents.length > 0 ? (
               <>
                 {renderEvents(displayedEvents)}
@@ -629,14 +651,39 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           </TabsContent>
 
           <TabsContent value="offers" className="mt-6 animate-fade-in">
-            {offersLoading ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{Array.from({
-              length: 4
-            }).map((_, i) => <EventCardSkeleton key={i} />)}</div> : offers && offers.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{offers.map((offer: any, index: number) => <OfferCard key={offer.id} offer={offer} language={language} style={{
-              animationDelay: `${Math.min(index * 50, 500)}ms`
-            }} className="animate-fade-in" />)}</div> : <EmptyState type="no-offers" filters={{
-            categories: selectedCategories,
-            city: selectedCity
-          }} onClearFilters={handleClearFilters} language={language} />}
+            {offersLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => <OfferCardSkeleton key={i} />)}
+              </div>
+            ) : offersError ? (
+              <ErrorState
+                title={language === 'el' ? 'Σφάλμα φόρτωσης' : 'Failed to load offers'}
+                message={language === 'el' 
+                  ? `Δεν ήταν δυνατή η φόρτωση των προσφορών: ${(offersError as Error).message}` 
+                  : `Could not load offers: ${(offersError as Error).message}`}
+                onRetry={() => refetchOffers()}
+                showRetry
+              />
+            ) : offers && offers.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {offers.map((offer: any, index: number) => (
+                  <OfferCard 
+                    key={offer.id} 
+                    offer={offer} 
+                    language={language} 
+                    style={{ animationDelay: `${Math.min(index * 50, 500)}ms` }} 
+                    className="animate-fade-in" 
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState 
+                type="no-offers" 
+                filters={{ categories: selectedCategories, city: selectedCity }} 
+                onClearFilters={handleClearFilters} 
+                language={language} 
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="map" className="mt-6 animate-fade-in">
