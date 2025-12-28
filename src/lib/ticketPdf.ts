@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
+import { format } from "date-fns";
 
 interface TicketPdfData {
   eventTitle: string;
@@ -9,6 +10,8 @@ interface TicketPdfData {
   ticketId: string;
   qrToken: string;
   customerName?: string;
+  purchaseDate?: string;
+  pricePaid?: string;
 }
 
 export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> => {
@@ -42,42 +45,70 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
   // Event details box
   pdf.setDrawColor(229, 231, 235);
   pdf.setFillColor(249, 250, 251);
-  pdf.roundedRect(15, 50, 180, 60, 5, 5, "FD");
+  pdf.roundedRect(15, 50, 180, 70, 5, 5, "FD");
 
   pdf.setTextColor(55, 65, 81);
   pdf.setFontSize(18);
   pdf.setFont("helvetica", "bold");
-  pdf.text(ticket.eventTitle, 105, 68, { align: "center", maxWidth: 170 });
+  pdf.text(ticket.eventTitle, 105, 65, { align: "center", maxWidth: 170 });
 
   pdf.setTextColor(107, 114, 128);
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "normal");
-  pdf.text(`📅 ${ticket.eventDate}`, 105, 85, { align: "center" });
-  pdf.text(`📍 ${ticket.eventLocation}`, 105, 95, { align: "center" });
+  
+  // Format event date nicely if it's a valid date
+  let formattedEventDate = ticket.eventDate;
+  try {
+    if (ticket.eventDate) {
+      formattedEventDate = format(new Date(ticket.eventDate), "dd MMMM yyyy, HH:mm");
+    }
+  } catch {
+    // Keep original if parsing fails
+  }
+  
+  pdf.text(`📅 ${formattedEventDate}`, 105, 82, { align: "center" });
+  pdf.text(`📍 ${ticket.eventLocation}`, 105, 92, { align: "center" });
 
-  // Ticket tier
+  // Customer name if provided
+  if (ticket.customerName) {
+    pdf.setTextColor(55, 65, 81);
+    pdf.setFontSize(11);
+    pdf.text(`👤 ${ticket.customerName}`, 105, 105, { align: "center" });
+  }
+
+  // Ticket tier with price
+  const tierText = ticket.pricePaid 
+    ? `${ticket.tierName.toUpperCase()} - ${ticket.pricePaid}`
+    : ticket.tierName.toUpperCase();
+  
   pdf.setFillColor(14, 165, 233);
-  pdf.roundedRect(60, 118, 90, 15, 3, 3, "F");
+  pdf.roundedRect(40, 128, 130, 15, 3, 3, "F");
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(14);
+  pdf.setFontSize(13);
   pdf.setFont("helvetica", "bold");
-  pdf.text(ticket.tierName.toUpperCase(), 105, 128, { align: "center" });
+  pdf.text(tierText, 105, 138, { align: "center" });
 
   // QR Code
-  pdf.addImage(qrDataUrl, "PNG", 55, 145, 100, 100);
+  pdf.addImage(qrDataUrl, "PNG", 55, 150, 100, 100);
 
   // Instructions
   pdf.setTextColor(107, 114, 128);
   pdf.setFontSize(10);
   pdf.setFont("helvetica", "normal");
-  pdf.text("Scan this QR code at the event entrance", 105, 255, { align: "center" });
+  pdf.text("Scan this QR code at the event entrance", 105, 260, { align: "center" });
 
-  // Ticket ID footer
+  // Footer with ticket details
   pdf.setFontSize(8);
-  pdf.text(`Ticket ID: ${ticket.ticketId}`, 105, 275, { align: "center" });
+  pdf.text(`Ticket ID: ${ticket.ticketId}`, 105, 272, { align: "center" });
 
-  if (ticket.customerName) {
-    pdf.text(`Ticket holder: ${ticket.customerName}`, 105, 282, { align: "center" });
+  // Purchase date
+  if (ticket.purchaseDate) {
+    try {
+      const formattedPurchaseDate = format(new Date(ticket.purchaseDate), "dd MMM yyyy");
+      pdf.text(`Purchased: ${formattedPurchaseDate}`, 105, 279, { align: "center" });
+    } catch {
+      // Skip if date parsing fails
+    }
   }
 
   // Download

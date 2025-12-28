@@ -286,7 +286,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email!,
       line_items: lineItems,
       mode: "payment",
-      success_url: `${origin}/tickets/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
+      success_url: `${origin}/ticket-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
       cancel_url: `${origin}/ekdiloseis/${eventId}?cancelled=true`,
       metadata: {
         order_id: order.id,
