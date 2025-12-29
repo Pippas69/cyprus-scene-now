@@ -73,7 +73,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     defaultValues: {
       title: "",
       description: "",
-      original_price: 0,
+      original_price: undefined as unknown as number,
       percent_off: 20,
       max_purchases: null,
       max_per_user: 1,
@@ -152,7 +152,16 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            console.error("Form validation errors:", errors);
+            toast({
+              title: toastT.error,
+              description: language === 'el' 
+                ? "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία" 
+                : "Please fill in all required fields",
+              variant: "destructive",
+            });
+          })} className="space-y-6">
             <FormField
               control={form.control}
               name="title"
@@ -197,8 +206,12 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                       step="0.01"
                       min="0.01"
                       placeholder="10.00"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      required
+                      value={field.value || ''}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        field.onChange(isNaN(val) ? undefined : val);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
