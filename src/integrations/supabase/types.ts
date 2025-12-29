@@ -209,6 +209,63 @@ export type Database = {
           },
         ]
       }
+      boost_analytics: {
+        Row: {
+          boost_id: string
+          clicks: number
+          created_at: string
+          date: string
+          event_id: string
+          id: string
+          impressions: number
+          rsvps_going: number
+          rsvps_interested: number
+          unique_viewers: number
+          updated_at: string
+        }
+        Insert: {
+          boost_id: string
+          clicks?: number
+          created_at?: string
+          date?: string
+          event_id: string
+          id?: string
+          impressions?: number
+          rsvps_going?: number
+          rsvps_interested?: number
+          unique_viewers?: number
+          updated_at?: string
+        }
+        Update: {
+          boost_id?: string
+          clicks?: number
+          created_at?: string
+          date?: string
+          event_id?: string
+          id?: string
+          impressions?: number
+          rsvps_going?: number
+          rsvps_interested?: number
+          unique_viewers?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boost_analytics_boost_id_fkey"
+            columns: ["boost_id"]
+            isOneToOne: false
+            referencedRelation: "event_boosts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boost_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_followers: {
         Row: {
           business_id: string
