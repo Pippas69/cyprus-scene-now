@@ -98,7 +98,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                 {t.heroMain}
               </h1>
               <div className="relative inline-block">
-                <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sunset-coral via-aegean to-seafoam">
+                <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-ocean">
                   <Typewriter 
                     phrases={phrases[language]} 
                     typingSpeed={70}
@@ -110,7 +110,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
                   transition={{ duration: 0.8, delay: 0.5 }}
-                  className="absolute -bottom-2 left-0 right-0 h-1.5 bg-gradient-to-r from-sunset-coral to-seafoam rounded-full origin-left"
+                  className="absolute -bottom-2 left-0 right-0 h-1.5 bg-gradient-ocean rounded-full origin-left"
                 />
               </div>
             </motion.div>
@@ -133,7 +133,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               <Button
                 size="lg"
                 onClick={() => navigate("/signup")}
-                className="text-lg px-8 py-6 bg-gradient-to-r from-sunset-coral to-aegean hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl text-white"
+                className="text-lg px-8 py-6 bg-gradient-ocean hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl text-white"
               >
                 {t.joinBtn}
               </Button>
