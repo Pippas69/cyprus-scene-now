@@ -83,10 +83,11 @@ serve(async (req) => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f1f5f9;">
-          <!-- Header with ΦΟΜΟ branding -->
-          <div style="background: linear-gradient(135deg, #102b4a 0%, #1a3d5c 100%); padding: 40px 24px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 3px;">ΦΟΜΟ</h1>
-            <p style="color: #3ec3b7; margin: 12px 0 0 0; font-size: 15px; font-weight: 500;">Your tickets are ready! 🎉</p>
+          <!-- Header with ΦΟΜΟ branding - matching splash screen gradient -->
+          <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 48px 24px 36px 24px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 42px; font-weight: bold; letter-spacing: 4px;">ΦΟΜΟ</h1>
+            <p style="color: rgba(255,255,255,0.85); margin: 10px 0 20px 0; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">Cyprus Events</p>
+            <p style="color: #ffffff; margin: 0; font-size: 16px; font-weight: 500;">Your tickets are ready! 🎉</p>
           </div>
           
           <div style="background-color: #ffffff; padding: 32px 24px;">
