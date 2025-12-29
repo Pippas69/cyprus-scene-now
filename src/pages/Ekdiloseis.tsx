@@ -527,7 +527,7 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
         <TimeAccessFilters
           language={language}
           selectedFilters={timeAccessFilters}
-          onFiltersChange={setTimeAccessFilters}
+          onFilterChange={setTimeAccessFilters}
         />
         <CategoryFilter
           language={language}
