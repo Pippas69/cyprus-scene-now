@@ -98,12 +98,13 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                 {t.heroMain}
               </h1>
               <div className="relative inline-block">
-                <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-ocean">
+                <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black">
                   <Typewriter 
                     phrases={phrases[language]} 
                     typingSpeed={70}
                     deletingSpeed={40}
                     pauseDuration={2500}
+                    className="text-transparent bg-clip-text bg-gradient-ocean"
                   />
                 </h1>
                 <motion.div
