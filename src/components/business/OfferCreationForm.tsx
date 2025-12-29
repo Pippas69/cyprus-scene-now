@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations } from "./translations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
@@ -18,6 +18,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import OfferBoostSection from "./OfferBoostSection";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 
 const createOfferSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -51,10 +52,12 @@ interface OfferCreationFormProps {
 const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const { toast } = useToast();
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const t = businessTranslations[language];
   const toastT = toastTranslations[language];
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
     commissionPercent: number;
@@ -112,13 +115,19 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   };
 
   const onSubmit = async (data: OfferFormData) => {
-    console.log("Offer submit called with data:", data);
+    console.log("=== OFFER SUBMIT START ===");
+    console.log("Data:", data);
+    console.log("BusinessId:", businessId);
+    
     setSubmitError(null);
+    setSubmitSuccess(false);
     setIsSubmitting(true);
     
     try {
       // Check authentication
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log("Auth check:", { user: user?.id, authError });
+      
       if (!user) {
         throw new Error(language === 'el' ? "Παρακαλώ συνδεθείτε ξανά" : "Please log in again");
       }
@@ -127,6 +136,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         throw new Error(language === 'el' ? "Δεν βρέθηκε επιχείρηση" : "No business found");
       }
 
+      console.log("Inserting discount...");
       const { data: discountData, error } = await supabase.from('discounts').insert({
         business_id: businessId,
         title: data.title,
@@ -142,6 +152,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         active: true,
       }).select().single();
 
+      console.log("Insert result:", { discountData, error });
+
       if (error) {
         console.error("Supabase insert error:", error);
         // Check for RLS/permission errors
@@ -155,6 +167,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       // Create boost if enabled
       if (boostData.enabled && discountData) {
+        console.log("Creating boost...");
         const { error: boostError } = await supabase.functions.invoke("create-offer-boost", {
           body: {
             discountId: discountData.id,
@@ -168,6 +181,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         }
       }
 
+      console.log("=== OFFER SUBMIT SUCCESS ===");
+      setSubmitSuccess(true);
+      
       toast({
         title: toastT.success,
         description: toastT.offerCreated,
@@ -175,8 +191,14 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       form.reset();
       setBoostData({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
+      
+      // Navigate to offers list after short delay
+      setTimeout(() => {
+        navigate('/dashboard-business/offers');
+      }, 1500);
+      
     } catch (error: unknown) {
-      console.error("Offer creation error:", error);
+      console.error("=== OFFER SUBMIT ERROR ===", error);
       const errorMessage = error instanceof Error ? error.message : toastT.createFailed;
       setSubmitError(errorMessage);
       toast({
@@ -425,23 +447,53 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               onBoostChange={setBoostData}
             />
 
+            {/* Success State */}
+            {submitSuccess && (
+              <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-800 dark:text-green-200">
+                  {language === 'el' ? 'Επιτυχία!' : 'Success!'}
+                </AlertTitle>
+                <AlertDescription className="text-green-700 dark:text-green-300">
+                  {language === 'el' 
+                    ? 'Η προσφορά δημοσιεύτηκε. Ανακατεύθυνση στη λίστα προσφορών...' 
+                    : 'Offer published. Redirecting to offers list...'}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Visible Error State */}
             {submitError && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>{language === 'el' ? 'Σφάλμα' : 'Error'}</AlertTitle>
                 <AlertDescription>{submitError}</AlertDescription>
               </Alert>
+            )}
+
+            {/* Disabled Reason */}
+            {!isLoadingBusiness && !isBusinessVerified && (
+              <p className="text-sm text-destructive text-center font-medium">
+                {language === 'el' 
+                  ? '⚠️ Το κουμπί είναι απενεργοποιημένο επειδή η επιχείρησή σας δεν έχει επαληθευτεί' 
+                  : '⚠️ Button is disabled because your business is not verified'}
+              </p>
             )}
 
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={isSubmitting || (!isLoadingBusiness && !isBusinessVerified)}
+              disabled={isSubmitting || (!isLoadingBusiness && !isBusinessVerified) || submitSuccess}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {t.publishing}
+                </>
+              ) : submitSuccess ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {language === 'el' ? 'Δημοσιεύτηκε!' : 'Published!'}
                 </>
               ) : (
                 t.publishOffer
