@@ -165,13 +165,34 @@ serve(async (req) => {
         
         if (metadata?.type === "event_boost" && metadata?.boost_id) {
           const boostId = metadata.boost_id;
-          logStep("Updating boost to scheduled", { boostId });
+          logStep("Updating boost after payment", { boostId });
           
-          // Update event_boost status from pending to scheduled
+          // Get the boost to check start_date
+          const { data: boostData, error: fetchError } = await supabaseClient
+            .from('event_boosts')
+            .select('start_date')
+            .eq('id', boostId)
+            .single();
+          
+          if (fetchError) {
+            logStep("Error fetching boost", { error: fetchError.message });
+            throw fetchError;
+          }
+          
+          // Determine status: active if start_date is today or past, otherwise scheduled
+          const startDate = new Date(boostData.start_date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          startDate.setHours(0, 0, 0, 0);
+          
+          const newStatus = startDate <= today ? 'active' : 'scheduled';
+          logStep("Determined boost status", { startDate: boostData.start_date, newStatus });
+          
+          // Update event_boost status from pending
           const { error: boostError } = await supabaseClient
             .from('event_boosts')
             .update({
-              status: 'scheduled',
+              status: newStatus,
               stripe_payment_intent_id: session.payment_intent as string
             })
             .eq('id', boostId)
@@ -181,7 +202,7 @@ serve(async (req) => {
             logStep("Error updating boost", { error: boostError.message });
             throw boostError;
           }
-          logStep("Boost status updated to scheduled successfully");
+          logStep(`Boost status updated to ${newStatus} successfully`);
         } else {
           logStep("Payment completed but no boost_id in metadata - skipping boost update");
         }
