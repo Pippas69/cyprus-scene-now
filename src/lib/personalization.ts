@@ -27,13 +27,34 @@ interface UserFavorite {
   };
 }
 
+export interface ActiveBoost {
+  event_id: string;
+  targeting_quality: number;
+  boost_tier: string;
+}
+
 export const getPersonalizedScore = (
   event: Event,
   userProfile: UserProfile | null,
   userRSVPs: UserRSVP[],
-  userFavorites: UserFavorite[]
+  userFavorites: UserFavorite[],
+  activeBoosts?: ActiveBoost[]
 ): number => {
   let score = 0;
+
+  // Apply boost bonus first (affects all users, not just those with profiles)
+  if (activeBoosts) {
+    const boost = activeBoosts.find(b => b.event_id === event.id);
+    if (boost) {
+      // Boost bonus based on targeting_quality (2-5)
+      // Elite (5): +100 points - top priority for matched users
+      // Premium (4): +75 points - high priority
+      // Standard (3): +50 points - medium priority
+      // Basic (2): +25 points - lower priority
+      const boostBonus = boost.targeting_quality * 25;
+      score += boostBonus;
+    }
+  }
 
   if (!userProfile) return score;
 

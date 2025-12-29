@@ -79,19 +79,27 @@ const DashboardBusiness = () => {
   }, []);
 
   useEffect(() => {
-    // Handle subscription success/cancel URL parameters
+    // Handle subscription and boost success/cancel URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const subscriptionStatus = urlParams.get('subscription');
+    const boostStatus = urlParams.get('boost');
     
     if (subscriptionStatus === 'success') {
-      toast.success('Subscription successful!');
-      // Clean up URL
+      toast.success(language === 'el' ? 'Η συνδρομή ολοκληρώθηκε επιτυχώς!' : 'Subscription successful!');
       window.history.replaceState({}, '', window.location.pathname);
     } else if (subscriptionStatus === 'canceled') {
-      toast.info('Subscription canceled');
+      toast.info(language === 'el' ? 'Η συνδρομή ακυρώθηκε' : 'Subscription canceled');
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, []);
+    
+    if (boostStatus === 'success') {
+      toast.success(language === 'el' ? 'Το boost ενεργοποιήθηκε επιτυχώς!' : 'Boost activated successfully!');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (boostStatus === 'canceled') {
+      toast.info(language === 'el' ? 'Η πληρωμή boost ακυρώθηκε' : 'Boost payment canceled');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [language]);
   
   // Enable real-time notifications
   useRealtimeNotifications(businessId, userId);

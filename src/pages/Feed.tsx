@@ -31,7 +31,7 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useScrollMemory } from "@/hooks/useScrollMemory";
 import { useStaggeredAnimation } from "@/hooks/useStaggeredAnimation";
 import { hapticFeedback } from "@/lib/haptics";
-import { getPersonalizedScore } from "@/lib/personalization";
+import { getPersonalizedScore, type ActiveBoost } from "@/lib/personalization";
 import type { User } from "@supabase/supabase-js";
 
 interface FeedProps {
@@ -276,11 +276,42 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     enabled: !!user
   });
 
+  // Fetch active boosts to apply to personalization
+  const {
+    data: activeBoosts
+  } = useQuery({
+    queryKey: ['active-boosts'],
+    queryFn: async () => {
+      const now = new Date().toISOString().split('T')[0]; // Just the date part
+      const { data, error } = await supabase
+        .from('event_boosts')
+        .select('event_id, targeting_quality, boost_tier')
+        .eq('status', 'active')
+        .lte('start_date', now)
+        .gte('end_date', now);
+      
+      if (error) {
+        console.error('Error fetching active boosts:', error);
+        return [];
+      }
+      return data as ActiveBoost[];
+    },
+    staleTime: 60000 // Cache for 1 minute
+  });
+
   const getPersonalizedEvents = () => {
-    if (!personalizedData || !events) return events || [];
+    if (!events) return [];
+    
+    // Apply personalization with boosts (works for all users, not just logged in)
     return events.map(event => ({
       ...event,
-      personalizedScore: getPersonalizedScore(event, personalizedData.profile, personalizedData.rsvps, personalizedData.favorites)
+      personalizedScore: getPersonalizedScore(
+        event, 
+        personalizedData?.profile || null, 
+        personalizedData?.rsvps || [], 
+        personalizedData?.favorites || [],
+        activeBoosts || []
+      )
     })).sort((a, b) => b.personalizedScore - a.personalizedScore);
   };
 
@@ -342,7 +373,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     setSelectedCity(null);
   };
 
-  const displayedEvents = user && personalizedData ? getPersonalizedEvents() : events;
+  // Always apply personalization to include boost effects for all users
+  const displayedEvents = activeBoosts?.length || (user && personalizedData) ? getPersonalizedEvents() : events;
   
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
