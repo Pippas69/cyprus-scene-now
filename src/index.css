@@ -79,48 +79,64 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 207 72% 22%;
+    --background: 207 72% 12%; /* Darker aegean for dark mode background */
     --foreground: 30 75% 98%;
     
     --midnight: 207 72% 85%; /* Light midnight for dark mode */
     --ocean: 207 72% 55%; /* Brighter ocean for dark mode */
 
-    --card: 207 72% 18%;
+    --card: 207 72% 16%;
     --card-foreground: 30 75% 98%;
 
-    --popover: 207 72% 18%;
+    --popover: 207 72% 16%;
     --popover-foreground: 30 75% 98%;
 
-    --primary: 207 72% 22%;
+    /* Primary shifts to brighter teal for visibility in dark mode */
+    --primary: 174 62% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 100% 70%;
+    /* Secondary uses seafoam in dark mode (ocean theme, not coral) */
+    --secondary: 174 50% 40%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 207 40% 15%;
-    --muted-foreground: 30 20% 70%;
+    --muted: 207 40% 18%;
+    --muted-foreground: 30 20% 75%;
 
     --accent: 174 62% 56%;
-    --accent-foreground: 207 72% 22%;
+    --accent-foreground: 207 72% 12%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 207 40% 15%;
-    --input: 207 40% 15%;
+    --border: 207 40% 22%;
+    --input: 207 40% 22%;
     --ring: 174 62% 56%;
 
+    /* Ocean theme shadows for dark mode */
     --shadow-card: 0 4px 20px -4px hsla(0 0% 0% / 0.4);
-    --shadow-hover: 0 8px 32px -8px hsla(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 40px hsla(0 100% 70% / 0.3);
+    --shadow-hover: 0 8px 32px -8px hsla(174 62% 56% / 0.3);
+    --shadow-glow: 0 0 40px hsla(174 62% 56% / 0.25);
     --shadow-premium: 0 20px 60px -15px hsla(0 0% 0% / 0.5);
 
+    /* Ocean brand colors for dark mode */
+    --aegean: 207 72% 45%; /* Brighter aegean for visibility */
+    --seafoam: 174 62% 60%; /* Slightly brighter seafoam */
+    --sand-white: 30 75% 95%;
+    --stone-gray: 30 20% 85%;
+
+    /* Dark mode gradients */
+    --gradient-brand: linear-gradient(90deg, hsl(207 72% 35%) 0%, hsl(174 62% 56%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsla(207 72% 15% / 0.95) 0%, hsla(174 62% 40% / 0.9) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(207 72% 12%), hsl(207 72% 16%));
+    --gradient-glow: radial-gradient(circle at 50% 0%, hsla(174 62% 56% / 0.15) 0%, transparent 60%);
+    --gradient-ocean: linear-gradient(135deg, hsl(207 72% 35%) 0%, hsl(174 62% 56%) 100%);
+
     /* Sidebar Variables - Dark Mode (high contrast for visibility) */
-    --sidebar: 207 72% 18%;
+    --sidebar: 207 72% 14%;
     --sidebar-foreground: 30 75% 95%;
     --sidebar-primary: 174 62% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 207 50% 25%;
+    --sidebar-accent: 207 50% 22%;
     --sidebar-accent-foreground: 30 75% 98%;
     --sidebar-border: 207 40% 25%;
     --sidebar-ring: 174 62% 56%;
@@ -422,7 +438,7 @@ All colors MUST be HSL.
   }
 
   .badge-glow-hot {
-    box-shadow: 0 0 12px hsla(var(--secondary) / 0.6);
+    box-shadow: 0 0 12px hsla(var(--accent) / 0.7);
     animation: badge-pulse 1.5s ease-in-out infinite;
   }
 
