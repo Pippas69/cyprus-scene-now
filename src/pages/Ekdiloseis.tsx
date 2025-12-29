@@ -7,6 +7,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import CategoryFilter from "@/components/CategoryFilter";
+import TimeAccessFilters from "@/components/feed/TimeAccessFilters";
 import SignupModal from "@/components/SignupModal";
 import { Loader2 } from "lucide-react";
 
@@ -281,6 +282,7 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
   const EVENTS_PER_PAGE = 12;
   
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [timeAccessFilters, setTimeAccessFilters] = useState<string[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [personalizedEvents, setPersonalizedEvents] = useState<any[]>([]);
   const [otherEvents, setOtherEvents] = useState<any[]>([]);
@@ -291,6 +293,70 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
   const [user, setUser] = useState<any>(null);
   
   const observerRef = useRef<IntersectionObserver | null>(null);
+  
+  // Time/Access filter logic
+  const getTimeAccessFilterQuery = (query: any, filters: string[]) => {
+    const now = new Date();
+    
+    filters.forEach(filter => {
+      switch (filter) {
+        case 'liveNow':
+          query = query.lte('start_at', now.toISOString()).gte('end_at', now.toISOString());
+          break;
+        case 'tonight':
+          const tonightStart = new Date(now);
+          tonightStart.setHours(18, 0, 0, 0);
+          const tonightEnd = new Date(now);
+          tonightEnd.setHours(23, 59, 59, 999);
+          query = query.gte('start_at', tonightStart.toISOString()).lte('start_at', tonightEnd.toISOString());
+          break;
+        case 'monFri':
+          const dayOfWeek = now.getDay();
+          const daysUntilMonday = dayOfWeek === 0 ? 1 : (dayOfWeek === 6 ? 2 : (1 - dayOfWeek + 7) % 7 || 7);
+          const daysUntilFriday = dayOfWeek === 0 ? 5 : (dayOfWeek === 6 ? 6 : (5 - dayOfWeek + 7) % 7);
+          const mondayStart = new Date(now);
+          mondayStart.setDate(now.getDate() + (dayOfWeek >= 1 && dayOfWeek <= 5 ? 1 - dayOfWeek : daysUntilMonday));
+          mondayStart.setHours(0, 0, 0, 0);
+          const fridayEnd = new Date(now);
+          fridayEnd.setDate(now.getDate() + (dayOfWeek >= 1 && dayOfWeek <= 5 ? 5 - dayOfWeek : daysUntilFriday));
+          fridayEnd.setHours(23, 59, 59, 999);
+          query = query.gte('start_at', mondayStart.toISOString()).lte('start_at', fridayEnd.toISOString());
+          break;
+        case 'theWeekend':
+          const currentDay = now.getDay();
+          let saturdayStart = new Date(now);
+          if (currentDay === 0) {
+            saturdayStart.setDate(now.getDate() - 1);
+          } else if (currentDay === 6) {
+            // Already Saturday
+          } else {
+            saturdayStart.setDate(now.getDate() + (6 - currentDay));
+          }
+          saturdayStart.setHours(0, 0, 0, 0);
+          const sundayEnd = new Date(saturdayStart);
+          sundayEnd.setDate(saturdayStart.getDate() + 1);
+          sundayEnd.setHours(23, 59, 59, 999);
+          query = query.gte('start_at', saturdayStart.toISOString()).lte('start_at', sundayEnd.toISOString());
+          break;
+        case 'thisMonth':
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+          query = query.gte('start_at', monthStart.toISOString()).lte('start_at', monthEnd.toISOString());
+          break;
+        case 'freeEntrance':
+          query = query.eq('price_tier', 'free');
+          break;
+        case 'withReservations':
+          query = query.eq('accepts_reservations', true);
+          break;
+        case 'withTickets':
+          query = query.not('external_ticket_url', 'is', null);
+          break;
+      }
+    });
+    
+    return query;
+  };
   
   const text = {
     el: {
@@ -324,7 +390,7 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
     setPage(0);
     setHasMore(true);
     fetchEvents(0, false);
-  }, [selectedCategories, user]);
+  }, [selectedCategories, timeAccessFilters, user]);
 
   // Load more when page changes
   useEffect(() => {
@@ -353,6 +419,11 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
 
       if (selectedCategories.length > 0) {
         query = query.overlaps('category', selectedCategories);
+      }
+
+      // Apply time/access filters
+      if (timeAccessFilters.length > 0) {
+        query = getTimeAccessFilterQuery(query, timeAccessFilters);
       }
 
       const { data: eventsData, error, count } = await query;
@@ -452,7 +523,12 @@ const FullExploreView = ({ language }: { language: "el" | "en" }) => {
       transition={{ duration: 0.6 }}
     >
       {/* Filters */}
-      <div className="mb-8">
+      <div className="mb-6 space-y-4">
+        <TimeAccessFilters
+          language={language}
+          selectedFilters={timeAccessFilters}
+          onFiltersChange={setTimeAccessFilters}
+        />
         <CategoryFilter
           language={language}
           selectedCategories={selectedCategories}
