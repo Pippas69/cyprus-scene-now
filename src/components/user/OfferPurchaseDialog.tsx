@@ -14,10 +14,11 @@ interface Offer {
   description: string | null;
   percent_off: number | null;
   original_price_cents: number;
-  start_at: string;
+  start_at?: string;
   end_at: string;
-  terms: string | null;
-  max_per_user: number | null;
+  terms?: string | null;
+  max_per_user?: number | null;
+  business_id?: string;
   businesses: {
     name: string;
     logo_url: string | null;

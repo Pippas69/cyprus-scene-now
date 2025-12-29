@@ -1,13 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Percent, Store, CheckCircle, Calendar, FileText, QrCode, Download, Clock } from "lucide-react";
+import { Loader2, Percent, Store, CheckCircle, Calendar, Clock, QrCode, Download, ShoppingBag, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import QRCodeLib from "qrcode";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 
@@ -16,32 +15,22 @@ interface MyOffersProps {
   language: "el" | "en";
 }
 
-interface Discount {
+interface OfferPurchase {
   id: string;
-  title: string;
-  description: string | null;
-  percent_off: number | null;
-  start_at: string;
-  end_at: string;
-  terms: string | null;
-  qr_code_token: string;
-  active: boolean;
-  business_id: string;
-  businesses: {
-    name: string;
-    logo_url: string | null;
-    city: string;
-  };
-}
-
-interface Redemption {
-  id: string;
-  redeemed_at: string;
   discount_id: string;
+  original_price_cents: number;
+  discount_percent: number;
+  final_price_cents: number;
+  status: string;
+  qr_code_token: string | null;
+  created_at: string;
+  expires_at: string;
+  redeemed_at: string | null;
   discounts: {
+    id: string;
     title: string;
+    description: string | null;
     percent_off: number | null;
-    business_id: string;
     businesses: {
       name: string;
       logo_url: string | null;
@@ -51,26 +40,25 @@ interface Redemption {
 }
 
 export function MyOffers({ userId, language }: MyOffersProps) {
-  const [selectedOffer, setSelectedOffer] = useState<Discount | null>(null);
+  const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
 
   const text = {
-    title: { el: "Οι Προσφορές Μου", en: "My Offers" },
-    available: { el: "Διαθέσιμες", en: "Available" },
+    title: { el: "Οι Αγορές Μου", en: "My Purchases" },
+    active: { el: "Ενεργές", en: "Active" },
     redeemed: { el: "Εξαργυρωμένες", en: "Redeemed" },
-    noOffers: { el: "Δεν βρέθηκαν διαθέσιμες προσφορές", en: "No available offers found" },
+    expired: { el: "Ληγμένες", en: "Expired" },
+    noPurchases: { el: "Δεν έχετε αγοράσει προσφορές ακόμα", en: "You haven't purchased any offers yet" },
     noRedeemed: { el: "Δεν έχετε εξαργυρώσει προσφορές ακόμα", en: "You haven't redeemed any offers yet" },
+    noExpired: { el: "Δεν έχετε ληγμένες προσφορές", en: "No expired offers" },
     viewQR: { el: "Εμφάνιση QR", en: "Show QR Code" },
-    validUntil: { el: "Ισχύει μέχρι", en: "Valid until" },
-    terms: { el: "Όροι", en: "Terms" },
-    redeemedOn: { el: "Εξαργυρώθηκε στις", en: "Redeemed on" },
-    qrCodeTitle: { el: "QR Κωδικός Προσφοράς", en: "Offer QR Code" },
-    showTerms: { el: "Εμφάνιση όρων", en: "Show terms" },
-    hideTerms: { el: "Απόκρυψη όρων", en: "Hide terms" },
-    retry: { el: "Προσπαθήστε ξανά", en: "Retry" },
-    qrError: { el: "Αποτυχία δημιουργίας QR κωδικού", en: "Failed to generate QR code" },
+    expiresOn: { el: "Λήγει", en: "Expires" },
+    purchasedOn: { el: "Αγοράστηκε", en: "Purchased" },
+    redeemedOn: { el: "Εξαργυρώθηκε", en: "Redeemed on" },
+    qrCodeTitle: { el: "QR Κωδικός", en: "QR Code" },
+    showAtVenue: { el: "Δείξτε αυτόν τον κωδικό στο κατάστημα", en: "Show this code at the venue" },
     downloadQR: { el: "Λήψη QR", en: "Download QR" },
     expiresIn: { el: "Λήγει σε", en: "Expires in" },
     days: { el: "ημέρες", en: "days" },
@@ -79,23 +67,27 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     day: { el: "ημέρα", en: "day" },
     hour: { el: "ώρα", en: "hour" },
     minute: { el: "λεπτό", en: "minute" },
+    youPaid: { el: "Πληρώσατε", en: "You paid" },
+    originalPrice: { el: "Αρχική τιμή", en: "Original price" },
+    qrError: { el: "Αποτυχία δημιουργίας QR", en: "Failed to generate QR" },
+    retry: { el: "Επανάληψη", en: "Retry" },
+    browseOffers: { el: "Δείτε Προσφορές", en: "Browse Offers" },
   };
 
   const t = language === "el" ? {
     title: text.title.el,
-    available: text.available.el,
+    active: text.active.el,
     redeemed: text.redeemed.el,
-    noOffers: text.noOffers.el,
+    expired: text.expired.el,
+    noPurchases: text.noPurchases.el,
     noRedeemed: text.noRedeemed.el,
+    noExpired: text.noExpired.el,
     viewQR: text.viewQR.el,
-    validUntil: text.validUntil.el,
-    terms: text.terms.el,
+    expiresOn: text.expiresOn.el,
+    purchasedOn: text.purchasedOn.el,
     redeemedOn: text.redeemedOn.el,
     qrCodeTitle: text.qrCodeTitle.el,
-    showTerms: text.showTerms.el,
-    hideTerms: text.hideTerms.el,
-    retry: text.retry.el,
-    qrError: text.qrError.el,
+    showAtVenue: text.showAtVenue.el,
     downloadQR: text.downloadQR.el,
     expiresIn: text.expiresIn.el,
     days: text.days.el,
@@ -104,21 +96,25 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     day: text.day.el,
     hour: text.hour.el,
     minute: text.minute.el,
+    youPaid: text.youPaid.el,
+    originalPrice: text.originalPrice.el,
+    qrError: text.qrError.el,
+    retry: text.retry.el,
+    browseOffers: text.browseOffers.el,
   } : {
     title: text.title.en,
-    available: text.available.en,
+    active: text.active.en,
     redeemed: text.redeemed.en,
-    noOffers: text.noOffers.en,
+    expired: text.expired.en,
+    noPurchases: text.noPurchases.en,
     noRedeemed: text.noRedeemed.en,
+    noExpired: text.noExpired.en,
     viewQR: text.viewQR.en,
-    validUntil: text.validUntil.en,
-    terms: text.terms.en,
+    expiresOn: text.expiresOn.en,
+    purchasedOn: text.purchasedOn.en,
     redeemedOn: text.redeemedOn.en,
     qrCodeTitle: text.qrCodeTitle.en,
-    showTerms: text.showTerms.en,
-    hideTerms: text.hideTerms.en,
-    retry: text.retry.en,
-    qrError: text.qrError.en,
+    showAtVenue: text.showAtVenue.en,
     downloadQR: text.downloadQR.en,
     expiresIn: text.expiresIn.en,
     days: text.days.en,
@@ -127,6 +123,11 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     day: text.day.en,
     hour: text.hour.en,
     minute: text.minute.en,
+    youPaid: text.youPaid.en,
+    originalPrice: text.originalPrice.en,
+    qrError: text.qrError.en,
+    retry: text.retry.en,
+    browseOffers: text.browseOffers.en,
   };
 
   const getTimeRemaining = (endDate: string) => {
@@ -147,51 +148,29 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         value: `${hours} ${hours === 1 ? t.hour : t.hours}${minutes > 0 ? ` ${minutes} ${minutes === 1 ? t.minute : t.minutes}` : ''}`,
         urgency: 'high'
       };
-    } else {
+    } else if (minutes > 0) {
       return {
         value: `${minutes} ${minutes === 1 ? t.minute : t.minutes}`,
         urgency: 'critical'
       };
+    } else {
+      return { value: '', urgency: 'expired' };
     }
   };
 
-  // Fetch available offers
-  const { data: offers, isLoading: offersLoading } = useQuery({
-    queryKey: ["user-offers", userId],
-    queryFn: async () => {
-      const now = new Date().toISOString();
-      const { data, error } = await supabase
-        .from("discounts")
-        .select(`
-          *,
-          businesses (
-            name,
-            logo_url,
-            city
-          )
-        `)
-        .eq("active", true)
-        .lte("start_at", now)
-        .gte("end_at", now)
-        .order("end_at", { ascending: true });
-
-      if (error) throw error;
-      return data as Discount[];
-    },
-  });
-
-  // Fetch redemption history
-  const { data: redemptions, isLoading: redemptionsLoading } = useQuery({
-    queryKey: ["user-redemptions", userId],
+  // Fetch purchased offers
+  const { data: purchases, isLoading } = useQuery({
+    queryKey: ["user-offer-purchases", userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("redemptions")
+        .from("offer_purchases")
         .select(`
           *,
           discounts (
+            id,
             title,
+            description,
             percent_off,
-            business_id,
             businesses (
               name,
               logo_url,
@@ -200,16 +179,21 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           )
         `)
         .eq("user_id", userId)
-        .order("redeemed_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Redemption[];
+      return data as OfferPurchase[];
     },
   });
 
-  // Generate QR code and track view when offer is selected
+  // Separate purchases by status
+  const activePurchases = purchases?.filter(p => p.status === 'paid' && new Date(p.expires_at) > new Date()) || [];
+  const redeemedPurchases = purchases?.filter(p => p.status === 'redeemed') || [];
+  const expiredPurchases = purchases?.filter(p => p.status === 'expired' || (p.status === 'paid' && new Date(p.expires_at) <= new Date())) || [];
+
+  // Generate QR code when purchase is selected
   useEffect(() => {
-    if (!selectedOffer) {
+    if (!selectedPurchase || !selectedPurchase.qr_code_token) {
       setQrCodeUrl(null);
       setQrError(null);
       return;
@@ -218,30 +202,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     setQrLoading(true);
     setQrError(null);
 
-    // Track QR code view using the tracking utility
-    const trackView = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        const { error } = await supabase.from('discount_scans').insert({
-          discount_id: selectedOffer.id,
-          scan_type: 'view',
-          success: true,
-          scanned_by: user?.id || null,
-        });
-
-        if (error) {
-          console.error('Error tracking QR view:', error);
-        }
-      } catch (error) {
-        console.error('Failed to track QR view:', error);
-      }
-    };
-    trackView();
-
-    // Small delay to ensure dialog is fully mounted
     setTimeout(() => {
-      QRCodeLib.toDataURL(selectedOffer.qr_code_token, { 
+      QRCodeLib.toDataURL(selectedPurchase.qr_code_token!, { 
         width: 300,
         margin: 2,
         color: {
@@ -259,13 +221,21 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           setQrLoading(false);
         });
     }, 100);
-  }, [selectedOffer, t.qrError]);
+  }, [selectedPurchase, t.qrError]);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), language === "el" ? "dd/MM/yyyy" : "MM/dd/yyyy");
   };
 
-  if (offersLoading || redemptionsLoading) {
+  const handleDownloadQR = () => {
+    if (!qrCodeUrl || !selectedPurchase) return;
+    const link = document.createElement('a');
+    link.download = `offer-${selectedPurchase.id}.png`;
+    link.href = qrCodeUrl;
+    link.click();
+  };
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -273,119 +243,153 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     );
   }
 
+  const PurchaseCard = ({ purchase, showQR = true }: { purchase: OfferPurchase; showQR?: boolean }) => {
+    const timeRemaining = getTimeRemaining(purchase.expires_at);
+    const urgencyColors: Record<string, string> = {
+      low: 'text-muted-foreground bg-muted',
+      medium: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-950',
+      high: 'text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-950',
+      critical: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950',
+      expired: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950'
+    };
+
+    return (
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 flex-1">
+              {purchase.discounts.businesses.logo_url ? (
+                <img
+                  src={purchase.discounts.businesses.logo_url}
+                  alt={purchase.discounts.businesses.name}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                  <Store className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{purchase.discounts.businesses.name}</p>
+                <p className="text-xs text-muted-foreground">{purchase.discounts.businesses.city}</p>
+              </div>
+            </div>
+            {purchase.status === 'redeemed' ? (
+              <Badge variant="secondary" className="shrink-0">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                {language === "el" ? "Χρησιμοποιήθηκε" : "Used"}
+              </Badge>
+            ) : purchase.status === 'expired' || new Date(purchase.expires_at) <= new Date() ? (
+              <Badge variant="destructive" className="shrink-0">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {language === "el" ? "Έληξε" : "Expired"}
+              </Badge>
+            ) : (
+              <Badge variant="default" className="text-lg font-bold shrink-0">
+                -{purchase.discount_percent}%
+              </Badge>
+            )}
+          </div>
+          <CardTitle className="text-lg mt-2">{purchase.discounts.title}</CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-3">
+          {purchase.discounts.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">{purchase.discounts.description}</p>
+          )}
+
+          <div className="flex items-center justify-between text-sm bg-muted/50 rounded-lg p-3">
+            <div>
+              <p className="text-muted-foreground text-xs">{t.originalPrice}</p>
+              <p className="line-through">€{(purchase.original_price_cents / 100).toFixed(2)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-muted-foreground text-xs">{t.youPaid}</p>
+              <p className="font-bold text-primary">€{(purchase.final_price_cents / 100).toFixed(2)}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              {t.purchasedOn}: {formatDate(purchase.created_at)}
+            </span>
+          </div>
+
+          {purchase.redeemed_at && (
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-muted-foreground">
+                {t.redeemedOn}: {formatDate(purchase.redeemed_at)}
+              </span>
+            </div>
+          )}
+
+          {showQR && purchase.status === 'paid' && new Date(purchase.expires_at) > new Date() && (
+            <>
+              <div className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full w-fit ${urgencyColors[timeRemaining.urgency]}`}>
+                <Clock className="h-4 w-4" />
+                <span className="font-medium">
+                  {t.expiresIn}: {timeRemaining.value}
+                </span>
+              </div>
+
+              <Button
+                onClick={() => setSelectedPurchase(purchase)}
+                className="w-full"
+                variant="default"
+              >
+                <QrCode className="h-4 w-4 mr-2" />
+                {t.viewQR}
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="container max-w-6xl mx-auto p-6">
       <div className="flex items-center gap-3 mb-6">
-        <Percent className="h-8 w-8 text-primary" />
+        <ShoppingBag className="h-8 w-8 text-primary" />
         <h1 className="text-3xl font-bold">{t.title}</h1>
       </div>
 
-      <Tabs defaultValue="available" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="available">{t.available}</TabsTrigger>
+      <Tabs defaultValue="active" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="active">
+            {t.active}
+            {activePurchases.length > 0 && (
+              <Badge variant="secondary" className="ml-2">{activePurchases.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="redeemed">{t.redeemed}</TabsTrigger>
+          <TabsTrigger value="expired">{t.expired}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="available" className="mt-6">
-          {!offers || offers.length === 0 ? (
+        <TabsContent value="active" className="mt-6">
+          {activePurchases.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Percent className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">{t.noOffers}</p>
+                <ShoppingBag className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-4">{t.noPurchases}</p>
+                <Button asChild variant="outline">
+                  <a href="/feed">{t.browseOffers}</a>
+                </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {offers.map((offer) => (
-                <Card key={offer.id} className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 flex-1">
-                        {offer.businesses.logo_url ? (
-                          <img
-                            src={offer.businesses.logo_url}
-                            alt={offer.businesses.name}
-                            className="h-10 w-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                            <Store className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate">{offer.businesses.name}</p>
-                          <p className="text-xs text-muted-foreground">{offer.businesses.city}</p>
-                        </div>
-                      </div>
-                      {offer.percent_off && (
-                        <Badge variant="default" className="text-lg font-bold shrink-0">
-                          -{offer.percent_off}%
-                        </Badge>
-                      )}
-                    </div>
-                    <CardTitle className="text-lg mt-2">{offer.title}</CardTitle>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    {offer.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
-                    )}
-
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {t.validUntil}: {formatDate(offer.end_at)}
-                      </span>
-                    </div>
-
-                    {(() => {
-                      const timeRemaining = getTimeRemaining(offer.end_at);
-                      const urgencyColors = {
-                        low: 'text-muted-foreground bg-muted',
-                        medium: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-950',
-                        high: 'text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-950',
-                        critical: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950'
-                      };
-                      
-                      return (
-                        <div className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full w-fit ${urgencyColors[timeRemaining.urgency]}`}>
-                          <Clock className="h-4 w-4" />
-                          <span className="font-medium">
-                            {t.expiresIn}: {timeRemaining.value}
-                          </span>
-                        </div>
-                      );
-                    })()}
-
-                    {offer.terms && (
-                      <Collapsible>
-                        <CollapsibleTrigger className="flex items-center gap-2 text-sm text-primary hover:underline">
-                          <FileText className="h-4 w-4" />
-                          <span>{t.showTerms}</span>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-2 text-xs text-muted-foreground">
-                          {offer.terms}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    )}
-
-                    <Button
-                      onClick={() => setSelectedOffer(offer)}
-                      className="w-full"
-                      variant="outline"
-                    >
-                      <QrCode className="h-4 w-4 mr-2" />
-                      {t.viewQR}
-                    </Button>
-                  </CardContent>
-                </Card>
+              {activePurchases.map((purchase) => (
+                <PurchaseCard key={purchase.id} purchase={purchase} />
               ))}
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="redeemed" className="mt-6">
-          {!redemptions || redemptions.length === 0 ? (
+          {redeemedPurchases.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -394,118 +398,71 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {redemptions.map((redemption) => (
-                <Card key={redemption.id} className="overflow-hidden opacity-75">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 flex-1">
-                        {redemption.discounts.businesses.logo_url ? (
-                          <img
-                            src={redemption.discounts.businesses.logo_url}
-                            alt={redemption.discounts.businesses.name}
-                            className="h-10 w-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                            <Store className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate">
-                            {redemption.discounts.businesses.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {redemption.discounts.businesses.city}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="shrink-0">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        {language === "el" ? "Χρησιμοποιήθηκε" : "Used"}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-lg mt-2">{redemption.discounts.title}</CardTitle>
-                  </CardHeader>
+              {redeemedPurchases.map((purchase) => (
+                <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
-                  <CardContent>
-                    {redemption.discounts.percent_off && (
-                      <Badge variant="outline" className="mb-2">
-                        -{redemption.discounts.percent_off}%
-                      </Badge>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      {t.redeemedOn}: {formatDate(redemption.redeemed_at)}
-                    </p>
-                  </CardContent>
-                </Card>
+        <TabsContent value="expired" className="mt-6">
+          {expiredPurchases.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">{t.noExpired}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {expiredPurchases.map((purchase) => (
+                <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />
               ))}
             </div>
           )}
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!selectedOffer} onOpenChange={() => setSelectedOffer(null)}>
+      <Dialog open={!!selectedPurchase} onOpenChange={() => setSelectedPurchase(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t.qrCodeTitle}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
-            {selectedOffer && (
+            {selectedPurchase && (
               <>
                 <div className="text-center">
-                  <p className="font-semibold text-lg">{selectedOffer.title}</p>
-                  <p className="text-sm text-muted-foreground">{selectedOffer.businesses.name}</p>
-                  {selectedOffer.percent_off && (
-                    <Badge variant="default" className="text-xl font-bold mt-2">
-                      -{selectedOffer.percent_off}%
-                    </Badge>
-                  )}
+                  <p className="font-semibold text-lg">{selectedPurchase.discounts.title}</p>
+                  <p className="text-sm text-muted-foreground">{selectedPurchase.discounts.businesses.name}</p>
+                  <Badge variant="default" className="text-xl font-bold mt-2">
+                    -{selectedPurchase.discount_percent}%
+                  </Badge>
                 </div>
-                <div className="bg-white p-4 rounded-lg flex items-center justify-center min-h-[300px]">
-                  {qrLoading && (
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  )}
-                  {qrError && (
-                    <div className="flex flex-col items-center gap-2">
+
+                <div className="bg-white p-4 rounded-lg shadow-lg">
+                  {qrLoading ? (
+                    <div className="w-[300px] h-[300px] flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : qrError ? (
+                    <div className="w-[300px] h-[300px] flex flex-col items-center justify-center gap-2">
                       <p className="text-destructive text-sm">{qrError}</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedOffer(selectedOffer)}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => setSelectedPurchase({...selectedPurchase})}>
                         {t.retry}
                       </Button>
                     </div>
-                  )}
-                  {!qrLoading && !qrError && qrCodeUrl && (
-                    <img 
-                      src={qrCodeUrl} 
-                      alt="Offer QR Code" 
-                      className="w-[300px] h-[300px]"
-                    />
-                  )}
+                  ) : qrCodeUrl ? (
+                    <img src={qrCodeUrl} alt="QR Code" className="w-[300px] h-[300px]" />
+                  ) : null}
                 </div>
-                {!qrLoading && !qrError && qrCodeUrl && (
-                  <>
-                    <p className="text-xs text-center text-muted-foreground max-w-xs">
-                      {language === "el"
-                        ? "Δείξτε αυτόν τον κωδικό QR στο κατάστημα για να εξαργυρώσετε την προσφορά"
-                        : "Show this QR code at the store to redeem the offer"}
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = qrCodeUrl;
-                        link.download = `offer-qr-${selectedOffer?.title.replace(/\s+/g, '-').toLowerCase()}.png`;
-                        link.click();
-                      }}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      {t.downloadQR}
-                    </Button>
-                  </>
+
+                <p className="text-sm text-muted-foreground text-center">{t.showAtVenue}</p>
+
+                {qrCodeUrl && (
+                  <Button onClick={handleDownloadQR} variant="outline" className="w-full">
+                    <Download className="h-4 w-4 mr-2" />
+                    {t.downloadQR}
+                  </Button>
                 )}
               </>
             )}
