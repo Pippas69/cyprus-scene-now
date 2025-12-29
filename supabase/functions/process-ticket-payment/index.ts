@@ -185,6 +185,78 @@ serve(async (req) => {
       }
     }
 
+    // Send ticket sale notification to business owner
+    try {
+      const event = orderDetails?.events as any;
+      const businessId = event?.business_id || order.event_id ? undefined : null;
+      
+      // Get the business owner's user_id and check notification preferences
+      const { data: eventData } = await supabaseClient
+        .from("events")
+        .select("business_id, title, businesses(user_id, name)")
+        .eq("id", order.event_id)
+        .single();
+
+      if (eventData?.businesses) {
+        const businessUserId = (eventData.businesses as any).user_id;
+        const businessName = (eventData.businesses as any).name;
+        
+        // Check user preferences for ticket sale notifications
+        const { data: prefs } = await supabaseClient
+          .from("user_preferences")
+          .select("notification_ticket_sales, email_notifications_enabled")
+          .eq("user_id", businessUserId)
+          .single();
+
+        // Only send if notifications are enabled (default to true if not set)
+        const shouldNotify = (prefs?.email_notifications_enabled !== false) && 
+                            (prefs?.notification_ticket_sales !== false);
+
+        if (shouldNotify) {
+          // Get business owner's email
+          const { data: profile } = await supabaseClient
+            .from("profiles")
+            .select("email")
+            .eq("id", businessUserId)
+            .single();
+
+          if (profile?.email) {
+            // Get primary ticket tier name
+            const primaryTier = ticketBreakdown[0];
+            const { data: tierData } = await supabaseClient
+              .from("ticket_tiers")
+              .select("name")
+              .eq("id", primaryTier?.tierId)
+              .single();
+
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-sale-notification`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                orderId,
+                eventId: order.event_id,
+                eventTitle: eventData.title,
+                customerName: orderDetails?.customer_name || "",
+                ticketCount: ticketsToCreate.length,
+                totalAmount: order.total_cents || 0,
+                tierName: tierData?.name || "General",
+                businessEmail: profile.email,
+                businessName,
+              }),
+            });
+            logStep("Ticket sale notification sent to business owner");
+          }
+        } else {
+          logStep("Ticket sale notifications disabled for business owner");
+        }
+      }
+    } catch (notifError) {
+      logStep("Error sending ticket sale notification", { error: notifError instanceof Error ? notifError.message : String(notifError) });
+    }
+
     // Record commission in commission_ledger if applicable
     if (order.commission_cents > 0) {
       // We would insert into commission_ledger here

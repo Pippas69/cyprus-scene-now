@@ -2781,10 +2781,12 @@ export type Database = {
           feed_view_mode: string | null
           id: string
           notification_business_updates: boolean | null
+          notification_daily_sales_summary: boolean | null
           notification_event_reminders: boolean | null
           notification_new_events: boolean | null
           notification_reservations: boolean | null
           notification_rsvp_updates: boolean | null
+          notification_ticket_sales: boolean | null
           profile_visibility: string | null
           theme_preference: string | null
           updated_at: string | null
@@ -2797,10 +2799,12 @@ export type Database = {
           feed_view_mode?: string | null
           id?: string
           notification_business_updates?: boolean | null
+          notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_new_events?: boolean | null
           notification_reservations?: boolean | null
           notification_rsvp_updates?: boolean | null
+          notification_ticket_sales?: boolean | null
           profile_visibility?: string | null
           theme_preference?: string | null
           updated_at?: string | null
@@ -2813,10 +2817,12 @@ export type Database = {
           feed_view_mode?: string | null
           id?: string
           notification_business_updates?: boolean | null
+          notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_new_events?: boolean | null
           notification_reservations?: boolean | null
           notification_rsvp_updates?: boolean | null
+          notification_ticket_sales?: boolean | null
           profile_visibility?: string | null
           theme_preference?: string | null
           updated_at?: string | null

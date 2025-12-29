@@ -71,3 +71,12 @@ verify_jwt = true
 
 [functions.stripe-connect-webhook]
 verify_jwt = false
+
+[functions.send-ticket-sale-notification]
+verify_jwt = false
+
+[functions.send-daily-sales-summary]
+verify_jwt = false
+
+[functions.send-daily-sales-summary.schedule]
+cron = "0 6 * * *"
