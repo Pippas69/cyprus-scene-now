@@ -6,7 +6,7 @@ import { MyEvents } from '@/components/user/MyEvents';
 import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
-import { Plus, UserCog, Calendar, Ticket } from 'lucide-react';
+import { Compass, Map, Ticket, Percent } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { useLanguage } from '@/hooks/useLanguage';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
@@ -63,6 +63,8 @@ const DashboardUser = () => {
       tickets: 'Τα Εισιτήριά μου',
       profile: 'Προφίλ',
       settings: 'Ρυθμίσεις',
+      browseEvents: 'Ανακάλυψε Εκδηλώσεις',
+      exploreMap: 'Εξερεύνησε Χάρτη',
     },
     en: {
       welcome: 'Welcome',
@@ -73,6 +75,8 @@ const DashboardUser = () => {
       tickets: 'My Tickets',
       profile: 'Profile',
       settings: 'Settings',
+      browseEvents: 'Browse Events',
+      exploreMap: 'Explore Map',
     },
   };
 
@@ -142,18 +146,20 @@ const DashboardUser = () => {
                 </TabsContent>
       </Tabs>
 
-      {/* Floating Action Button for Quick Navigation */}
+      {/* Quick Actions FAB */}
       <FloatingActionButton
-        icon={<Plus size={24} />}
+        icon={<Compass size={24} />}
         onClick={() => navigate('/feed')}
         actions={[
           {
-            icon: <Calendar size={20} />,
-            label: t.myEvents,
-            onClick: () => {
-              setActiveTab('events');
-              navigate('/dashboard-user?tab=events', { replace: true });
-            }
+            icon: <Compass size={20} />,
+            label: t.browseEvents,
+            onClick: () => navigate('/feed')
+          },
+          {
+            icon: <Map size={20} />,
+            label: t.exploreMap,
+            onClick: () => navigate('/xartis')
           },
           {
             icon: <Ticket size={20} />,
@@ -164,17 +170,18 @@ const DashboardUser = () => {
             }
           },
           {
-            icon: <UserCog size={20} />,
-            label: t.profile,
+            icon: <Percent size={20} />,
+            label: t.offers,
             onClick: () => {
-              setActiveTab('profile');
-              navigate('/dashboard-user?tab=profile', { replace: true });
+              setActiveTab('offers');
+              navigate('/dashboard-user?tab=offers', { replace: true });
             }
           }
         ]}
         position="bottom-right"
         size="large"
-        variant="secondary"
+        variant="primary"
+        pulse={true}
       />
     </div>
   );
