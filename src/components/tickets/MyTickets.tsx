@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Ticket, Calendar, MapPin, QrCode, Download, CheckCircle2 } from "lucide-react";
+import { Ticket, Calendar, MapPin, QrCode, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -63,6 +63,8 @@ export const MyTickets = () => {
     purchaseDate?: string;
     pricePaid?: string;
     businessName?: string;
+    eventCoverImage?: string;
+    eventTime?: string;
   } | null>(null);
 
   const { data: tickets, isLoading } = useQuery({
@@ -151,6 +153,8 @@ export const MyTickets = () => {
   const TicketCard = ({ ticket }: { ticket: typeof tickets[0] }) => {
     const pricePaid = formatPrice(ticket.ticket_tiers?.price_cents, ticket.ticket_tiers?.currency);
     const businessName = (ticket.events as any)?.businesses?.name;
+    const eventCoverImage = ticket.events?.cover_image_url;
+    const eventTime = ticket.events?.start_at;
     
     return (
       <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -232,6 +236,8 @@ export const MyTickets = () => {
                       purchaseDate: ticket.created_at,
                       pricePaid: pricePaid,
                       businessName: businessName,
+                      eventCoverImage: eventCoverImage || undefined,
+                      eventTime: eventTime || undefined,
                     })}
                   >
                     <QrCode className="h-4 w-4 mr-1" />

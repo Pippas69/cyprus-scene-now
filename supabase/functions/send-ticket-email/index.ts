@@ -32,8 +32,8 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { orderId, userEmail, eventTitle, tickets, eventDate, eventLocation, businessName, customerName } = await req.json();
-    logStep("Request data", { orderId, userEmail, eventTitle, ticketCount: tickets?.length, businessName });
+    const { orderId, userEmail, eventTitle, tickets, eventDate, eventLocation, businessName, customerName, eventCoverImage } = await req.json();
+    logStep("Request data", { orderId, userEmail, eventTitle, ticketCount: tickets?.length, businessName, hasEventCover: !!eventCoverImage });
 
     if (!orderId || !userEmail || !tickets || tickets.length === 0) {
       throw new Error("Missing required fields: orderId, userEmail, or tickets");
@@ -57,17 +57,20 @@ serve(async (req) => {
       }
     }
 
-    // Generate QR code URLs for each ticket (using a public QR code generator)
+    // Generate QR code URLs for each ticket
     const ticketDetails = tickets.map((ticket: { id: string; tierName: string; qrToken: string; pricePaid?: string }, index: number) => {
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ticket.qrToken)}`;
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ticket.qrToken)}&color=102b4a`;
       return `
-        <div style="background: #ffffff; border: 2px solid #0ea5e9; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <div style="background: #f0f9ff; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-            <h3 style="margin: 0; color: #0369a1; font-size: 16px;">Ticket ${index + 1}</h3>
-            <p style="margin: 4px 0 0 0; color: #0ea5e9; font-weight: bold;">${ticket.tierName}${ticket.pricePaid ? ` - ${ticket.pricePaid}` : ''}</p>
+        <div style="background: #ffffff; border: 2px solid #3ec3b7; border-radius: 16px; padding: 24px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 12px rgba(16, 43, 74, 0.08);">
+          <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f7f5 100%); border-radius: 12px; padding: 14px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #102b4a; font-size: 14px; font-weight: 600;">Ticket ${index + 1}</p>
+            <p style="margin: 6px 0 0 0; color: #3ec3b7; font-weight: bold; font-size: 16px;">${ticket.tierName}${ticket.pricePaid ? ` - ${ticket.pricePaid}` : ''}</p>
           </div>
-          <img src="${qrCodeUrl}" alt="QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border: 4px solid #0ea5e9; border-radius: 8px;" />
-          <p style="font-size: 11px; color: #64748b; margin: 12px 0 0 0;">Ticket ID: ${ticket.id.slice(0, 8)}</p>
+          <div style="background: #ffffff; padding: 16px; border-radius: 12px; display: inline-block; border: 3px solid #3ec3b7;">
+            <img src="${qrCodeUrl}" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
+          </div>
+          <p style="font-size: 12px; color: #64748b; margin: 16px 0 0 0;">Scan at entry</p>
+          <p style="font-size: 10px; color: #94a3b8; margin: 8px 0 0 0;">ID: ${ticket.id.slice(0, 8).toUpperCase()}</p>
         </div>
       `;
     }).join("");
@@ -80,49 +83,69 @@ serve(async (req) => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f1f5f9;">
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); padding: 32px 24px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 1px;">CYPRUS SCENE</h1>
-            <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Your tickets are ready!</p>
+          <!-- Header with ΦΟΜΟ branding -->
+          <div style="background: linear-gradient(135deg, #102b4a 0%, #1a3d5c 100%); padding: 40px 24px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 3px;">ΦΟΜΟ</h1>
+            <p style="color: #3ec3b7; margin: 12px 0 0 0; font-size: 15px; font-weight: 500;">Your tickets are ready! 🎉</p>
           </div>
           
           <div style="background-color: #ffffff; padding: 32px 24px;">
             <!-- Greeting -->
-            ${customerName ? `<p style="color: #374151; font-size: 16px; margin: 0 0 24px 0;">Hi ${customerName},</p>` : ''}
-            <p style="color: #374151; font-size: 16px; margin: 0 0 24px 0;">Thank you for your purchase! Your tickets for the event are confirmed and ready to use.</p>
+            ${customerName ? `<p style="color: #102b4a; font-size: 16px; margin: 0 0 24px 0;">Hi <strong>${customerName}</strong>,</p>` : ''}
+            <p style="color: #374151; font-size: 16px; margin: 0 0 28px 0; line-height: 1.6;">Thank you for your purchase! Your tickets are confirmed and ready for use. We can't wait to see you there!</p>
             
             <!-- Event Details Card -->
-            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 24px; margin-bottom: 24px; border-left: 4px solid #0ea5e9;">
-              <h2 style="margin: 0 0 16px 0; color: #0f172a; font-size: 20px;">${eventTitle}</h2>
-              ${businessName ? `<p style="margin: 0 0 12px 0; color: #64748b; font-size: 14px;">Organized by: <strong style="color: #0369a1;">${businessName}</strong></p>` : ''}
-              ${formattedDate ? `<p style="margin: 0 0 8px 0; color: #374151; font-size: 14px;"><strong>Date:</strong> ${formattedDate}</p>` : ''}
-              ${eventLocation ? `<p style="margin: 0; color: #374151; font-size: 14px;"><strong>Location:</strong> ${eventLocation}</p>` : ''}
+            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f7f5 100%); border-radius: 16px; padding: 24px; margin-bottom: 28px; border-left: 4px solid #3ec3b7;">
+              <h2 style="margin: 0 0 16px 0; color: #102b4a; font-size: 22px; font-weight: bold;">${eventTitle}</h2>
+              ${businessName ? `<p style="margin: 0 0 16px 0; color: #64748b; font-size: 14px;">Organized by <strong style="color: #102b4a;">${businessName}</strong></p>` : ''}
+              <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                ${formattedDate ? `
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 18px;">📅</span>
+                    <span style="color: #374151; font-size: 14px;">${formattedDate}</span>
+                  </div>
+                ` : ''}
+                ${eventLocation ? `
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 18px;">📍</span>
+                    <span style="color: #374151; font-size: 14px;">${eventLocation}</span>
+                  </div>
+                ` : ''}
+              </div>
             </div>
 
+            <!-- Event Cover Image -->
+            ${eventCoverImage ? `
+              <div style="border-radius: 16px; overflow: hidden; margin-bottom: 28px;">
+                <img src="${eventCoverImage}" alt="${eventTitle}" style="width: 100%; height: auto; display: block;" />
+              </div>
+            ` : ''}
+
             <!-- Order Info -->
-            <p style="color: #64748b; font-size: 13px; margin: 0 0 24px 0;">Order ID: ${orderId.slice(0, 8).toUpperCase()}</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 24px 0; text-transform: uppercase; letter-spacing: 1px;">Order #${orderId.slice(0, 8).toUpperCase()}</p>
 
             <!-- Tickets Section -->
-            <h3 style="color: #0f172a; margin: 0 0 16px 0; font-size: 18px; text-align: center;">Your QR Codes</h3>
-            <p style="color: #64748b; margin: 0 0 20px 0; text-align: center; font-size: 14px;">Show these QR codes at the event entrance for check-in</p>
+            <h3 style="color: #102b4a; margin: 0 0 8px 0; font-size: 20px; text-align: center; font-weight: bold;">Your Entry Passes</h3>
+            <p style="color: #64748b; margin: 0 0 24px 0; text-align: center; font-size: 14px;">Present these QR codes at the entrance</p>
             
             ${ticketDetails}
 
             <!-- Footer Note -->
-            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center;">
-              <p style="color: #64748b; font-size: 14px; margin: 0 0 8px 0;">
-                You can also view and download your tickets anytime from your dashboard.
+            <div style="margin-top: 36px; padding-top: 24px; border-top: 2px solid #e2e8f0; text-align: center;">
+              <p style="color: #64748b; font-size: 14px; margin: 0 0 12px 0; line-height: 1.6;">
+                You can also access your tickets anytime from your <strong>ΦΟΜΟ dashboard</strong>.
               </p>
-              <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-                Have questions? Contact the event organizer for assistance.
+              <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+                Questions? Contact the event organizer for assistance.
               </p>
             </div>
           </div>
 
           <!-- Brand Footer -->
-          <div style="background: #0f172a; padding: 24px; text-align: center;">
+          <div style="background: #102b4a; padding: 28px; text-align: center;">
+            <p style="color: #3ec3b7; font-size: 18px; font-weight: bold; letter-spacing: 2px; margin: 0 0 8px 0;">ΦΟΜΟ</p>
             <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-              © ${new Date().getFullYear()} Cyprus Scene. Discover events in Cyprus.
+              © ${new Date().getFullYear()} ΦΟΜΟ. Discover events in Cyprus.
             </p>
           </div>
         </body>
@@ -130,13 +153,13 @@ serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "Cyprus Scene <onboarding@resend.dev>",
+      from: "ΦΟΜΟ <tickets@fomo.cy>",
       to: [userEmail],
-      subject: `Your tickets for ${eventTitle} - Cyprus Scene`,
+      subject: `🎟️ Your tickets for ${eventTitle}`,
       html: emailHtml,
     });
 
-    logStep("Email sent", emailResponse);
+    logStep("Email sent successfully", emailResponse);
 
     return new Response(JSON.stringify({ success: true, emailId: emailResponse.data?.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

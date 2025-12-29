@@ -123,14 +123,14 @@ serve(async (req) => {
       .select("id, qr_code_token, ticket_tiers(name, price_cents, currency)")
       .eq("order_id", orderId);
 
-    // Fetch user email, event details, and business name for email notification
+    // Fetch user email, event details, business name, and cover image for email notification
     const { data: orderDetails } = await supabaseClient
       .from("ticket_orders")
-      .select("customer_email, customer_name, events(title, start_at, location, businesses(name))")
+      .select("customer_email, customer_name, events(title, start_at, location, cover_image_url, businesses(name))")
       .eq("id", orderId)
       .single();
 
-    // Send email with tickets (fire and forget - don't block on this)
+    // Send email with tickets - now with proper await and error handling
     if (orderDetails?.customer_email && createdTickets && createdTickets.length > 0) {
       const tickets = createdTickets.map((t: any) => {
         const priceCents = (t.ticket_tiers as any)?.price_cents || 0;
@@ -149,29 +149,40 @@ serve(async (req) => {
       const eventTitle = event?.title || "Event";
       const eventDate = event?.start_at || "";
       const eventLocation = event?.location || "";
+      const eventCoverImage = event?.cover_image_url || "";
       const businessName = event?.businesses?.name || "";
       const customerName = orderDetails.customer_name || "";
 
-      // Call send-ticket-email function
-      fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        },
-        body: JSON.stringify({
-          orderId,
-          userEmail: orderDetails.customer_email,
-          eventTitle,
-          eventDate,
-          eventLocation,
-          businessName,
-          customerName,
-          tickets,
-        }),
-      }).catch(err => logStep("Email send error (non-blocking)", err));
+      // Call send-ticket-email function with proper error handling
+      try {
+        const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            orderId,
+            userEmail: orderDetails.customer_email,
+            eventTitle,
+            eventDate,
+            eventLocation,
+            eventCoverImage,
+            businessName,
+            customerName,
+            tickets,
+          }),
+        });
 
-      logStep("Email notification triggered");
+        if (!emailResponse.ok) {
+          const errorData = await emailResponse.text();
+          logStep("Email send failed", { status: emailResponse.status, error: errorData });
+        } else {
+          logStep("Email notification sent successfully");
+        }
+      } catch (emailError) {
+        logStep("Email send error", { error: emailError instanceof Error ? emailError.message : String(emailError) });
+      }
     }
 
     // Record commission in commission_ledger if applicable
