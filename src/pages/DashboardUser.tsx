@@ -2,15 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { SavedEvents } from '@/components/user/SavedEvents';
-import { MyRSVPs } from '@/components/user/MyRSVPs';
+import { MyEvents } from '@/components/user/MyEvents';
 import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Bookmark, UserCog, Calendar, Ticket } from 'lucide-react';
+import { Plus, UserCog, Calendar, Ticket } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
-import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { MyTickets } from '@/components/tickets/MyTickets';
@@ -21,14 +18,14 @@ const DashboardUser = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'rsvps');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'events');
 
   useEffect(() => {
     checkUser();
   }, []);
 
   useEffect(() => {
-    const tab = searchParams.get('tab') || 'rsvps';
+    const tab = searchParams.get('tab') || 'events';
     setActiveTab(tab);
   }, [searchParams]);
 
@@ -60,9 +57,8 @@ const DashboardUser = () => {
     el: {
       welcome: 'Καλώς ήρθατε',
       dashboard: 'Πίνακας Ελέγχου',
-      rsvps: 'Οι Κρατήσεις Μου',
+      myEvents: 'Οι Εκδηλώσεις Μου',
       reservations: 'Κρατήσεις',
-      saved: 'Αποθηκευμένα',
       offers: 'Προσφορές',
       tickets: 'Τα Εισιτήριά μου',
       profile: 'Προφίλ',
@@ -71,9 +67,8 @@ const DashboardUser = () => {
     en: {
       welcome: 'Welcome',
       dashboard: 'Dashboard',
-      rsvps: 'My RSVPs',
+      myEvents: 'My Events',
       reservations: 'Reservations',
-      saved: 'Saved Events',
       offers: 'Offers',
       tickets: 'My Tickets',
       profile: 'Profile',
@@ -94,9 +89,8 @@ const DashboardUser = () => {
   // Get the current section title based on active tab
   const getSectionTitle = () => {
     const titles: Record<string, string> = {
-      rsvps: t.rsvps,
+      events: t.myEvents,
       reservations: t.reservations,
-      saved: t.saved,
       offers: t.offers,
       tickets: t.tickets,
       profile: t.profile,
@@ -123,17 +117,13 @@ const DashboardUser = () => {
         }} 
         className="w-full"
       >
-        <TabsContent value="rsvps" className="animate-fade-in">
-                  <MyRSVPs userId={user.id} language={language} />
-                </TabsContent>
+        <TabsContent value="events" className="animate-fade-in">
+          <MyEvents userId={user.id} language={language} />
+        </TabsContent>
 
-                <TabsContent value="reservations" className="mt-6 animate-fade-in">
-                  <MyReservations userId={user.id} language={language} />
-                </TabsContent>
-
-                <TabsContent value="saved" className="mt-6 animate-fade-in">
-                  <SavedEvents userId={user.id} language={language} />
-                </TabsContent>
+        <TabsContent value="reservations" className="mt-6 animate-fade-in">
+          <MyReservations userId={user.id} language={language} />
+        </TabsContent>
 
                 <TabsContent value="offers" className="mt-6 animate-fade-in">
                   <MyOffers userId={user.id} language={language} />
@@ -159,10 +149,10 @@ const DashboardUser = () => {
         actions={[
           {
             icon: <Calendar size={20} />,
-            label: t.rsvps,
+            label: t.myEvents,
             onClick: () => {
-              setActiveTab('rsvps');
-              navigate('/dashboard-user?tab=rsvps', { replace: true });
+              setActiveTab('events');
+              navigate('/dashboard-user?tab=events', { replace: true });
             }
           },
           {
@@ -171,14 +161,6 @@ const DashboardUser = () => {
             onClick: () => {
               setActiveTab('tickets');
               navigate('/dashboard-user?tab=tickets', { replace: true });
-            }
-          },
-          {
-            icon: <Bookmark size={20} />,
-            label: t.saved,
-            onClick: () => {
-              setActiveTab('saved');
-              navigate('/dashboard-user?tab=saved', { replace: true });
             }
           },
           {
