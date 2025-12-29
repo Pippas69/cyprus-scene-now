@@ -1181,12 +1181,15 @@ export type Database = {
           description: string | null
           end_at: string
           id: string
+          max_per_user: number | null
+          max_purchases: number | null
           original_price_cents: number | null
           percent_off: number | null
           qr_code_token: string
           start_at: string
           terms: string | null
           title: string
+          total_purchased: number | null
         }
         Insert: {
           active?: boolean | null
@@ -1195,12 +1198,15 @@ export type Database = {
           description?: string | null
           end_at: string
           id?: string
+          max_per_user?: number | null
+          max_purchases?: number | null
           original_price_cents?: number | null
           percent_off?: number | null
           qr_code_token: string
           start_at: string
           terms?: string | null
           title: string
+          total_purchased?: number | null
         }
         Update: {
           active?: boolean | null
@@ -1209,12 +1215,15 @@ export type Database = {
           description?: string | null
           end_at?: string
           id?: string
+          max_per_user?: number | null
+          max_purchases?: number | null
           original_price_cents?: number | null
           percent_off?: number | null
           qr_code_token?: string
           start_at?: string
           terms?: string | null
           title?: string
+          total_purchased?: number | null
         }
         Relationships: [
           {
@@ -1931,6 +1940,108 @@ export type Database = {
             foreignKeyName: "offer_boosts_discount_id_fkey"
             columns: ["discount_id"]
             isOneToOne: true
+            referencedRelation: "public_discounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_purchases: {
+        Row: {
+          business_id: string
+          business_payout_cents: number
+          commission_amount_cents: number
+          commission_percent: number
+          created_at: string | null
+          discount_id: string
+          discount_percent: number
+          expires_at: string
+          final_price_cents: number
+          id: string
+          original_price_cents: number
+          qr_code_token: string | null
+          redeemed_at: string | null
+          redeemed_by: string | null
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          business_payout_cents: number
+          commission_amount_cents?: number
+          commission_percent?: number
+          created_at?: string | null
+          discount_id: string
+          discount_percent: number
+          expires_at: string
+          final_price_cents: number
+          id?: string
+          original_price_cents: number
+          qr_code_token?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          business_payout_cents?: number
+          commission_amount_cents?: number
+          commission_percent?: number
+          created_at?: string | null
+          discount_id?: string
+          discount_percent?: number
+          expires_at?: string
+          final_price_cents?: number
+          id?: string
+          original_price_cents?: number
+          qr_code_token?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_purchases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_purchases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_purchases_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discount_scan_stats"
+            referencedColumns: ["discount_id"]
+          },
+          {
+            foreignKeyName: "offer_purchases_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_purchases_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
             referencedRelation: "public_discounts"
             referencedColumns: ["id"]
           },

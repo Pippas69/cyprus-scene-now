@@ -1,0 +1,172 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  console.log(`[PROCESS-OFFER-PAYMENT] ${step}`, details ? JSON.stringify(details) : "");
+};
+
+// Generate a secure QR token
+const generateQRToken = (): string => {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+    // Create client with anon key for user auth
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    // Create admin client for database operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Authenticate user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    
+    const user = userData.user;
+    if (!user) throw new Error("User not authenticated");
+    logStep("User authenticated", { userId: user.id });
+
+    // Parse request body
+    const { purchaseId } = await req.json();
+    if (!purchaseId) throw new Error("Purchase ID is required");
+
+    // Fetch the purchase record
+    const { data: purchase, error: purchaseError } = await supabaseAdmin
+      .from("offer_purchases")
+      .select("*")
+      .eq("id", purchaseId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (purchaseError || !purchase) {
+      throw new Error("Purchase not found");
+    }
+
+    if (purchase.status === "paid") {
+      // Already processed, return existing data
+      return new Response(JSON.stringify({ 
+        success: true, 
+        qrToken: purchase.qr_code_token,
+        alreadyProcessed: true 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    if (purchase.status !== "pending") {
+      throw new Error(`Cannot process purchase with status: ${purchase.status}`);
+    }
+
+    // Verify payment with Stripe
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    
+    if (!purchase.stripe_checkout_session_id) {
+      throw new Error("No checkout session found for this purchase");
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(purchase.stripe_checkout_session_id);
+    
+    if (session.payment_status !== "paid") {
+      throw new Error("Payment not completed");
+    }
+    logStep("Payment verified", { sessionId: session.id, paymentStatus: session.payment_status });
+
+    // Generate unique QR code token
+    const qrCodeToken = generateQRToken();
+
+    // Update purchase record to paid status
+    const { error: updateError } = await supabaseAdmin
+      .from("offer_purchases")
+      .update({
+        status: "paid",
+        qr_code_token: qrCodeToken,
+        stripe_payment_intent_id: session.payment_intent as string,
+      })
+      .eq("id", purchaseId);
+
+    if (updateError) {
+      throw new Error(`Failed to update purchase: ${updateError.message}`);
+    }
+    logStep("Purchase updated to paid", { purchaseId, qrCodeToken });
+
+    // Increment total_purchased on discounts table
+    const { error: incrementError } = await supabaseAdmin.rpc("increment_discount_purchased", {
+      discount_id: purchase.discount_id,
+    });
+
+    // If RPC doesn't exist, do manual update
+    if (incrementError) {
+      await supabaseAdmin
+        .from("discounts")
+        .update({ total_purchased: (await supabaseAdmin.from("discounts").select("total_purchased").eq("id", purchase.discount_id).single()).data?.total_purchased + 1 || 1 })
+        .eq("id", purchase.discount_id);
+    }
+    logStep("Discount purchase count incremented");
+
+    // Create commission ledger entry if there's a commission
+    if (purchase.commission_amount_cents > 0) {
+      // We need a redemption_id for the ledger, but since this is prepaid, we create it now
+      // and mark as "prepaid" type
+      const { error: ledgerError } = await supabaseAdmin
+        .from("commission_ledger")
+        .insert({
+          business_id: purchase.business_id,
+          discount_id: purchase.discount_id,
+          redemption_id: purchaseId, // Use purchase ID as reference
+          original_price_cents: purchase.original_price_cents,
+          commission_percent: purchase.commission_percent,
+          commission_amount_cents: purchase.commission_amount_cents,
+          redeemed_at: new Date().toISOString(),
+          status: "pending",
+        });
+
+      if (ledgerError) {
+        logStep("Commission ledger error (non-fatal)", { error: ledgerError.message });
+      } else {
+        logStep("Commission ledger entry created");
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      qrToken: qrCodeToken,
+      purchaseId 
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400,
+    });
+  }
+});
