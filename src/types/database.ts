@@ -119,6 +119,7 @@ export interface UserPreferences {
   notification_reservations: boolean | null;
   notification_ticket_sales: boolean | null;
   notification_daily_sales_summary: boolean | null;
+  notification_push_enabled: boolean | null;
   created_at: string | null;
   updated_at: string | null;
 }

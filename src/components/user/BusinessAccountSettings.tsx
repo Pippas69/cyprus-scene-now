@@ -8,13 +8,14 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { usePasswordChange } from '@/hooks/usePasswordChange';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { toast } from '@/hooks/use-toast';
-import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, RotateCcw } from 'lucide-react';
+import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, RotateCcw, BellRing } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,6 +59,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const { data: userProfile } = useUserProfile(userId);
   const { changePassword, isChanging } = usePasswordChange();
   const { resetOnboarding } = useOnboardingStatus(businessId);
+  const { isSupported: pushSupported, isSubscribed: pushSubscribed, isLoading: pushLoading, subscribe: subscribePush, unsubscribe: unsubscribePush, permissionState } = usePushNotifications(userId);
   
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -110,6 +112,10 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       ticketSaleDescription: 'Λάβετε email όταν πωλούνται εισιτήρια',
       dailySalesSummary: 'Ημερήσια Σύνοψη Πωλήσεων',
       dailySalesSummaryDescription: 'Λάβετε καθημερινή αναφορά πωλήσεων στις 9:00',
+      pushNotifications: 'Push Ειδοποιήσεις',
+      pushNotificationsDescription: 'Άμεσες ειδοποιήσεις στον browser για πωλήσεις',
+      pushNotSupported: 'Ο browser σας δεν υποστηρίζει push ειδοποιήσεις',
+      pushPermissionDenied: 'Ενεργοποιήστε τις ειδοποιήσεις στις ρυθμίσεις του browser',
       privacy: 'Απόρρητο & Δεδομένα',
       downloadData: 'Λήψη Δεδομένων Επιχείρησης',
       downloadBusinessData: 'Λήψη Δεδομένων',
@@ -150,6 +156,10 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       ticketSaleDescription: 'Receive emails when tickets are sold',
       dailySalesSummary: 'Daily Sales Summary',
       dailySalesSummaryDescription: 'Receive daily sales report at 9:00 AM',
+      pushNotifications: 'Push Notifications',
+      pushNotificationsDescription: 'Instant browser notifications for sales',
+      pushNotSupported: 'Your browser does not support push notifications',
+      pushPermissionDenied: 'Enable notifications in your browser settings',
       privacy: 'Privacy & Data',
       downloadData: 'Download Business Data',
       downloadBusinessData: 'Download Data',
@@ -779,6 +789,36 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_daily_sales_summary: checked })
                 }
+              />
+            </div>
+          </div>
+          <Separator />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="push-notifications" className="flex items-center gap-2">
+                  <BellRing className="h-4 w-4" />
+                  {t.pushNotifications}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {!pushSupported 
+                    ? t.pushNotSupported 
+                    : permissionState === 'denied' 
+                      ? t.pushPermissionDenied 
+                      : t.pushNotificationsDescription}
+                </p>
+              </div>
+              <Switch
+                id="push-notifications"
+                disabled={!pushSupported || permissionState === 'denied' || pushLoading}
+                checked={pushSubscribed}
+                onCheckedChange={async (checked) => {
+                  if (checked) {
+                    await subscribePush();
+                  } else {
+                    await unsubscribePush();
+                  }
+                }}
               />
             </div>
           </div>

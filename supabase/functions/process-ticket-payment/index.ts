@@ -204,7 +204,7 @@ serve(async (req) => {
         // Check user preferences for ticket sale notifications
         const { data: prefs } = await supabaseClient
           .from("user_preferences")
-          .select("notification_ticket_sales, email_notifications_enabled")
+          .select("notification_ticket_sales, email_notifications_enabled, notification_push_enabled")
           .eq("user_id", businessUserId)
           .single();
 
@@ -251,6 +251,35 @@ serve(async (req) => {
           }
         } else {
           logStep("Ticket sale notifications disabled for business owner");
+        }
+
+        // Send push notification if enabled
+        const shouldSendPush = prefs?.notification_push_enabled === true;
+        if (shouldSendPush) {
+          try {
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push-notification`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                userId: businessUserId,
+                title: "New Ticket Sale! 🎟️",
+                body: `${orderDetails?.customer_name || "Someone"} purchased ${ticketsToCreate.length} ticket${ticketsToCreate.length > 1 ? 's' : ''} for ${eventData.title}`,
+                data: {
+                  url: "/dashboard-business/ticket-sales",
+                  orderId,
+                  eventId: order.event_id,
+                },
+              }),
+            });
+            logStep("Push notification sent to business owner");
+          } catch (pushError) {
+            logStep("Error sending push notification", { 
+              error: pushError instanceof Error ? pushError.message : String(pushError) 
+            });
+          }
         }
       }
     } catch (notifError) {
