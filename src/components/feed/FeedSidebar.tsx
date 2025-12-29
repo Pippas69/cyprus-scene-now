@@ -75,7 +75,7 @@ const FeedSidebar = ({ language, user, className }: FeedSidebarProps) => {
   ];
 
   const userNavItems = user ? [
-    { icon: Heart, label: t.favorites, href: "/dashboard-user?tab=favorites", active: false },
+    { icon: Heart, label: t.favorites, href: "/dashboard-user?tab=events", active: false },
     { icon: Settings, label: t.settings, href: "/dashboard-user?tab=settings", active: false },
   ] : [
     { icon: LogIn, label: t.login, href: "/login", active: false },
