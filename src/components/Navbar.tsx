@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/Logo";
 import { useNavigate } from "react-router-dom";
 import { Menu, ChevronDown, User as UserIcon, Settings, LogOut, Search, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -128,12 +129,8 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <button onClick={() => navigate("/")} className="flex items-center">
-            <img 
-              src="/fomo-logo.png" 
-              alt="ΦΟΜΟ" 
-              className="h-10 md:h-12 w-auto object-contain rounded-lg"
-            />
+          <button onClick={() => navigate("/")}>
+            <Logo size="md" />
           </button>
 
           {/* Desktop Navigation */}
