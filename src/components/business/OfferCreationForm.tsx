@@ -285,42 +285,45 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   </FormItem>
                 )}
               />
-                name="start_at"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t.startDate} *</FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) => field.onChange(date?.toISOString() || "")}
-                        placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
-                        minDate={new Date()}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="end_at"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t.endDate} *</FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) => field.onChange(date?.toISOString() || "")}
-                        placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
-                        minDate={new Date()}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
+
+            <FormField
+              control={form.control}
+              name="start_at"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.startDate} *</FormLabel>
+                  <FormControl>
+                    <DateTimePicker
+                      value={field.value ? new Date(field.value) : undefined}
+                      onChange={(date) => field.onChange(date?.toISOString() || "")}
+                      placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
+                      minDate={new Date()}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="end_at"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.endDate} *</FormLabel>
+                  <FormControl>
+                    <DateTimePicker
+                      value={field.value ? new Date(field.value) : undefined}
+                      onChange={(date) => field.onChange(date?.toISOString() || "")}
+                      placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
+                      minDate={new Date()}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

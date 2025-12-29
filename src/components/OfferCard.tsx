@@ -1,20 +1,25 @@
-import { MapPin, Percent, Calendar } from "lucide-react";
+import { MapPin, Percent, Calendar, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useViewTracking, trackDiscountView } from "@/lib/analyticsTracking";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { cn } from "@/lib/utils";
+import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 
 interface Offer {
   id: string;
   title: string;
   description: string | null;
   percent_off: number | null;
+  original_price_cents?: number | null;
   start_at: string;
   end_at: string;
   business_id: string;
+  terms?: string | null;
+  max_per_user?: number | null;
   businesses: {
     name: string;
     logo_url: string | null;
@@ -35,6 +40,14 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   const cardRef = useRef<HTMLDivElement>(null);
   const { ref: revealRef, isInView } = useScrollReveal({ threshold: 0.1 });
   const offerData = offer || discount;
+  const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
+
+  // Calculate prices
+  const originalPriceCents = offerData?.original_price_cents || 0;
+  const percentOff = offerData?.percent_off || 0;
+  const originalPrice = originalPriceCents / 100;
+  const finalPrice = originalPrice * (1 - percentOff / 100);
+  const hasPricing = originalPriceCents > 0;
   
   // Track discount view when card is 50% visible
   useViewTracking(cardRef, () => {
@@ -114,7 +127,19 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               </p>
             )}
 
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            {/* Pricing Display */}
+            {hasPricing && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm line-through text-muted-foreground">
+                  €{originalPrice.toFixed(2)}
+                </span>
+                <span className="text-lg font-bold text-primary">
+                  €{finalPrice.toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 <span>{offerData.businesses.city}</span>
@@ -126,9 +151,40 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 </span>
               </div>
             </div>
+
+            {/* Buy Button */}
+            {hasPricing && (
+              <Button 
+                onClick={() => setIsPurchaseOpen(true)} 
+                className="w-full"
+                size="sm"
+              >
+                <ShoppingBag className="h-4 w-4 mr-2" />
+                {language === "el" ? "Αγορά Τώρα" : "Buy Now"}
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
+
+      {/* Purchase Dialog */}
+      {offerData && hasPricing && (
+        <OfferPurchaseDialog
+          isOpen={isPurchaseOpen}
+          onClose={() => setIsPurchaseOpen(false)}
+          offer={{
+            id: offerData.id,
+            title: offerData.title,
+            description: offerData.description,
+            original_price_cents: originalPriceCents,
+            percent_off: percentOff,
+            end_at: offerData.end_at,
+            business_id: offerData.business_id,
+            businesses: offerData.businesses,
+          }}
+          language={language}
+        />
+      )}
     </Card>
   );
 };
