@@ -49,8 +49,12 @@ const InfoNavbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="font-urbanist text-2xl font-black text-primary">
-            ΦΟΜΟ
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/fomo-logo.png" 
+              alt="ΦΟΜΟ" 
+              className="h-10 w-auto object-contain rounded-lg"
+            />
           </Link>
 
           {/* Desktop Navigation */}

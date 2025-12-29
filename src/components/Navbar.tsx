@@ -128,8 +128,12 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <button onClick={() => navigate("/")} className="font-cinzel text-4xl font-black tracking-tight drop-shadow-lg text-foreground">
-            ΦΟΜΟ
+          <button onClick={() => navigate("/")} className="flex items-center">
+            <img 
+              src="/fomo-logo.png" 
+              alt="ΦΟΜΟ" 
+              className="h-10 md:h-12 w-auto object-contain rounded-lg"
+            />
           </button>
 
           {/* Desktop Navigation */}
