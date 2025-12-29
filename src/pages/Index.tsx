@@ -56,7 +56,7 @@ const Index = () => {
       <ParallaxSection intensity={0.2}>
         <FeaturesSection language={language} />
       </ParallaxSection>
-      <WaveDivider variant="coral" />
+      <WaveDivider variant="aegean" />
       <ParallaxSection intensity={0.15} fadeOnScroll>
         <HowItWorksSection language={language} />
       </ParallaxSection>
@@ -64,7 +64,7 @@ const Index = () => {
       <UpcomingEventsPreview language={language} />
       <WaveDivider variant="seafoam" />
       <StatsSection language={language} />
-      <WaveDivider variant="coral" flip />
+      <WaveDivider variant="seafoam" flip />
       <TestimonialsSection language={language} />
       <WaveDivider variant="aegean" />
       <NewsletterSection language={language} />

@@ -20,7 +20,7 @@ interface ConfettiProps {
 
 const COLORS = [
   'hsl(207 72% 22%)',   // Aegean
-  'hsl(0 100% 70%)',    // Sunset Coral
+  'hsl(174 62% 56%)',   // Seafoam
   'hsl(174 62% 56%)',   // Seafoam
   'hsl(30 75% 98%)',    // Sand White
   'hsl(207 72% 35%)',   // Ocean

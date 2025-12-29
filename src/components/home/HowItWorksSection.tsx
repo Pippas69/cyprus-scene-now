@@ -71,7 +71,7 @@ const HowItWorksSection = ({ language }: HowItWorksSectionProps) => {
 
         <div className="relative max-w-4xl mx-auto">
           {/* Connecting line */}
-          <div className="hidden md:block absolute top-24 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-sunset-coral via-aegean to-seafoam" />
+          <div className="hidden md:block absolute top-24 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-aegean via-seafoam to-seafoam" />
 
           <div className="grid md:grid-cols-3 gap-12">
             {t.steps.map((step, index) => (
@@ -89,14 +89,14 @@ const HowItWorksSection = ({ language }: HowItWorksSectionProps) => {
                   className="relative mx-auto mb-6"
                 >
                   <div className={`w-20 h-20 rounded-full bg-background shadow-lg border-2 ${
-                    index === 0 ? "border-sunset-coral" : index === 1 ? "border-aegean" : "border-seafoam"
+                    index === 0 ? "border-aegean" : index === 1 ? "border-seafoam" : "border-seafoam"
                   } flex items-center justify-center mx-auto`}>
                     <step.icon className={`w-8 h-8 ${
-                      index === 0 ? "text-sunset-coral" : index === 1 ? "text-aegean" : "text-seafoam"
+                      index === 0 ? "text-aegean" : index === 1 ? "text-seafoam" : "text-seafoam"
                     }`} />
                   </div>
                   <span className={`absolute -top-2 -right-2 w-8 h-8 rounded-full ${
-                    index === 0 ? "bg-sunset-coral" : index === 1 ? "bg-aegean" : "bg-seafoam"
+                    index === 0 ? "bg-aegean" : index === 1 ? "bg-seafoam" : "bg-seafoam"
                   } text-white text-sm font-bold flex items-center justify-center`}>
                     {step.number.slice(-1)}
                   </span>

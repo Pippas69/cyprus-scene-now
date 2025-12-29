@@ -44,7 +44,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       <motion.div
         animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 left-[10%] w-32 h-32 rounded-full bg-sunset-coral/20 blur-2xl"
+        className="absolute top-20 left-[10%] w-32 h-32 rounded-full bg-aegean/20 blur-2xl"
       />
       <motion.div
         animate={{ y: [0, 20, 0], rotate: [0, -5, 0] }}
@@ -61,7 +61,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       <motion.div
         animate={{ y: [0, -30, 0], x: [0, 10, 0] }}
         transition={{ duration: 5, repeat: Infinity }}
-        className="absolute top-[30%] left-[5%] w-4 h-4 rounded-full bg-sunset-coral/60"
+        className="absolute top-[30%] left-[5%] w-4 h-4 rounded-full bg-aegean/60"
       />
       <motion.div
         animate={{ y: [0, 20, 0], x: [0, -15, 0] }}
@@ -83,7 +83,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <span className="inline-block px-4 py-2 rounded-full bg-sunset-coral/10 text-sunset-coral font-medium text-sm mb-6">
+              <span className="inline-block px-4 py-2 rounded-full bg-aegean/10 text-aegean font-medium text-sm mb-6">
                 {t.tagline}
               </span>
             </motion.div>

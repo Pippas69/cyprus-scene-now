@@ -32,7 +32,7 @@ const MarqueeSection = () => {
               className="text-lg md:text-xl font-medium text-foreground/70 flex items-center gap-4"
             >
               {item}
-              <span className="text-sunset-coral">✦</span>
+              <span className="text-aegean">✦</span>
             </span>
           ))}
         </motion.div>

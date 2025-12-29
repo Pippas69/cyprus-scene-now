@@ -18,8 +18,8 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
           title: "Ανακαλύψτε",
           description: "Βρείτε εκδηλώσεις κοντά σας σε πραγματικό χρόνο. Από beach parties μέχρι wine tastings.",
           detail: "Με χάρτη και GPS εντοπισμό",
-          color: "sunset-coral",
-          gradient: "from-sunset-coral to-sunset-coral/60",
+          color: "aegean",
+          gradient: "from-aegean to-aegean/60",
         },
         {
           icon: Users,
@@ -47,8 +47,8 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
           title: "Discover",
           description: "Find events near you in real-time. From beach parties to wine tastings.",
           detail: "With map and GPS tracking",
-          color: "sunset-coral",
-          gradient: "from-sunset-coral to-sunset-coral/60",
+          color: "aegean",
+          gradient: "from-aegean to-aegean/60",
         },
         {
           icon: Users,
@@ -89,7 +89,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
     <section className="py-24 bg-background relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-seafoam/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-sunset-coral/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-aegean/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
       
       <div className="container mx-auto px-4 relative z-10">
         <motion.h2

@@ -10,7 +10,7 @@ const WaveDivider = ({ variant = "aegean", flip = false, className }: WaveDivide
   const colorMap = {
     aegean: "fill-aegean/20",
     seafoam: "fill-seafoam/20",
-    coral: "fill-sunset-coral/20",
+    coral: "fill-aegean/20",
     sand: "fill-sand/30",
   };
 

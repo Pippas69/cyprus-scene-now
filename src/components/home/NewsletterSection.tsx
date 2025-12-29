@@ -54,10 +54,10 @@ const NewsletterSection = ({ language }: NewsletterSectionProps) => {
   return (
     <section className="py-20 md:py-32 relative overflow-hidden">
       {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-aegean/10 via-sunset-coral/5 to-seafoam/10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-aegean/10 via-seafoam/5 to-seafoam/10" />
       
       {/* Decorative Elements */}
-      <div className="absolute top-10 left-10 w-32 h-32 bg-sunset-coral/10 rounded-full blur-3xl" />
+      <div className="absolute top-10 left-10 w-32 h-32 bg-aegean/10 rounded-full blur-3xl" />
       <div className="absolute bottom-10 right-10 w-40 h-40 bg-seafoam/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 relative z-10">
@@ -67,7 +67,7 @@ const NewsletterSection = ({ language }: NewsletterSectionProps) => {
           viewport={{ once: true }}
           className="max-w-2xl mx-auto text-center"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sunset-coral/10 text-sunset-coral mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-aegean/10 text-aegean mb-6">
             <Sparkles className="w-4 h-4" />
             <span className="text-sm font-medium">Newsletter</span>
           </div>
@@ -96,7 +96,7 @@ const NewsletterSection = ({ language }: NewsletterSectionProps) => {
             <RippleButton
               type="submit"
               disabled={isSubmitting || isSuccess}
-              className="h-12 px-8 bg-gradient-to-r from-sunset-coral to-aegean hover:opacity-90 text-white font-medium"
+              className="h-12 px-8 bg-gradient-ocean hover:opacity-90 text-white font-medium"
               rippleColor="rgba(255, 255, 255, 0.3)"
             >
               {isSuccess ? (
