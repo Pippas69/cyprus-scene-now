@@ -11,6 +11,41 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Branded email template parts
+const emailHeader = `
+  <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 48px 24px 36px 24px; text-align: center; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #ffffff; margin: 0; font-size: 42px; font-weight: bold; letter-spacing: 4px; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</h1>
+    <p style="color: rgba(255,255,255,0.85); margin: 10px 0 0 0; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">Cyprus Events</p>
+  </div>
+`;
+
+const emailFooter = `
+  <div style="background: #102b4a; padding: 28px; text-align: center; border-radius: 0 0 12px 12px;">
+    <p style="color: #3ec3b7; font-size: 18px; font-weight: bold; letter-spacing: 2px; margin: 0 0 8px 0; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2025 ΦΟΜΟ. Discover events in Cyprus.</p>
+  </div>
+`;
+
+const wrapEmailContent = (content: string) => `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  </head>
+  <body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      ${emailHeader}
+      <div style="padding: 32px 24px;">
+        ${content}
+      </div>
+      ${emailFooter}
+    </div>
+  </body>
+  </html>
+`;
+
 interface NotificationRequest {
   reservationId: string;
   type: 'new' | 'status_change' | 'cancellation';
@@ -89,146 +124,126 @@ const handler = async (req: Request): Promise<Response> => {
     let businessSubject = '';
     let businessHtml = '';
 
-    // Determine language based on user preference (default to Greek for now)
-    const lang = 'el';
-
     if (type === 'new') {
-      // User confirmation email (Greek)
+      // User confirmation email
       userSubject = `Επιβεβαίωση Κράτησης - ${eventTitle}`;
-      userHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #2563eb;">Επιβεβαίωση Κράτησης</h1>
-          <p>Γεια σου ${userProfile.name || 'φίλε'},</p>
-          <p>Η κράτησή σου έχει καταχωρηθεί επιτυχώς!</p>
-          
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2 style="margin-top: 0;">Λεπτομέρειες Κράτησης</h2>
-            <p><strong>Κωδικός Επιβεβαίωσης:</strong> <span style="font-size: 24px; color: #2563eb; font-weight: bold;">${reservation.confirmation_code}</span></p>
-            <p><strong>Εκδήλωση:</strong> ${eventTitle}</p>
-            <p><strong>Ημερομηνία:</strong> ${eventDate}</p>
-            <p><strong>Τοποθεσία:</strong> ${event.location}</p>
-            <p><strong>Όνομα Κράτησης:</strong> ${reservation.reservation_name}</p>
-            <p><strong>Άτομα:</strong> ${reservation.party_size}</p>
-            ${reservation.seating_preference ? `<p><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
-            ${reservation.preferred_time ? `<p><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
-            <p><strong>Κατάσταση:</strong> ${reservation.status === 'pending' ? 'Εκκρεμεί' : reservation.status === 'accepted' ? 'Εγκρίθηκε' : 'Απορρίφθηκε'}</p>
-          </div>
-          
-          ${reservation.status === 'pending' ? '<p style="color: #f59e0b;"><em>Η κράτησή σου εκκρεμεί και περιμένει έγκριση από την επιχείρηση.</em></p>' : ''}
-          
-          <p>Θα λάβεις email όταν η κατάσταση της κράτησής σου αλλάξει.</p>
-          
-          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-            Παρουσίασε τον κωδικό επιβεβαίωσης κατά την άφιξή σου.
-          </p>
-          
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">
-            ${businessName}<br/>
-            Αυτό είναι ένα αυτόματο email. Παρακαλώ μην απαντήσετε.
-          </p>
+      userHtml = wrapEmailContent(`
+        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Επιβεβαίωση Κράτησης 🎉</h2>
+        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+          Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
+          Η κράτησή σου έχει καταχωρηθεί επιτυχώς!
+        </p>
+        
+        <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${eventTitle}</h3>
+          <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> <span style="font-size: 20px; color: #0d3b66; font-weight: bold;">${reservation.confirmation_code}</span></p>
+          <p style="color: #475569; margin: 4px 0;">📅 ${eventDate}</p>
+          <p style="color: #475569; margin: 4px 0;">📍 ${event.location}</p>
+          <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+          <p style="color: #475569; margin: 12px 0 0 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
+          <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
+          ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
+          ${reservation.preferred_time ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
+          <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: #f59e0b;">Εκκρεμεί</span></p>
         </div>
-      `;
+        
+        <p style="color: #f59e0b; font-style: italic; margin: 16px 0;">
+          ⏳ Η κράτησή σου εκκρεμεί και περιμένει έγκριση από την επιχείρηση.
+        </p>
+        
+        <p style="color: #64748b; font-size: 14px;">
+          Θα λάβεις email όταν η κατάσταση της κράτησής σου αλλάξει.<br>
+          Παρουσίασε τον κωδικό επιβεβαίωσης κατά την άφιξή σου.
+        </p>
+      `);
 
-      // Business notification email (Greek)
+      // Business notification email
       if (businessEmail) {
         businessSubject = `Νέα Κράτηση - ${eventTitle}`;
-        businessHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #2563eb;">Νέα Κράτηση</h1>
-            <p>Έχετε μια νέα κράτηση για την εκδήλωσή σας!</p>
-            
-            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h2 style="margin-top: 0;">Λεπτομέρειες Κράτησης</h2>
-              <p><strong>Κωδικός:</strong> ${reservation.confirmation_code}</p>
-              <p><strong>Εκδήλωση:</strong> ${eventTitle}</p>
-              <p><strong>Πελάτης:</strong> ${reservation.reservation_name}</p>
-              <p><strong>Email:</strong> ${userProfile.email}</p>
-              ${reservation.phone_number ? `<p><strong>Τηλέφωνο:</strong> ${reservation.phone_number}</p>` : ''}
-              <p><strong>Άτομα:</strong> ${reservation.party_size}</p>
-              ${reservation.seating_preference ? `<p><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
-              ${reservation.preferred_time ? `<p><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
-              ${reservation.special_requests ? `<p><strong>Ειδικές Απαιτήσεις:</strong> ${reservation.special_requests}</p>` : ''}
-            </div>
-            
-            <p>Συνδεθείτε στο dashboard σας για να διαχειριστείτε αυτή την κράτηση.</p>
-            
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-            <p style="color: #6b7280; font-size: 12px;">
-              Αυτό είναι ένα αυτόματο email από το σύστημα κρατήσεων.
-            </p>
+        businessHtml = wrapEmailContent(`
+          <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Νέα Κράτηση! 📋</h2>
+          <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+            Έχετε μια νέα κράτηση για την εκδήλωσή σας.
+          </p>
+          
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <h3 style="color: #0d3b66; margin: 0 0 16px 0;">${eventTitle}</h3>
+            <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός:</strong> ${reservation.confirmation_code}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Πελάτης:</strong> ${reservation.reservation_name}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Email:</strong> ${userProfile.email}</p>
+            ${reservation.phone_number ? `<p style="color: #475569; margin: 4px 0;"><strong>Τηλέφωνο:</strong> ${reservation.phone_number}</p>` : ''}
+            <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
+            ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
+            ${reservation.preferred_time ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
+            ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικές Απαιτήσεις:</strong> ${reservation.special_requests}</p>` : ''}
           </div>
-        `;
+          
+          <p style="color: #64748b; font-size: 14px;">
+            Συνδεθείτε στο dashboard σας για να διαχειριστείτε αυτή την κράτηση.
+          </p>
+        `);
       }
     } else if (type === 'status_change') {
-      const statusText = reservation.status === 'accepted' ? 'Εγκρίθηκε' : 'Απορρίφθηκε';
-      const statusColor = reservation.status === 'accepted' ? '#16a34a' : '#dc2626';
+      const isAccepted = reservation.status === 'accepted';
+      const statusText = isAccepted ? 'Εγκρίθηκε' : 'Απορρίφθηκε';
+      const statusEmoji = isAccepted ? '✅' : '❌';
       
       userSubject = `Ενημέρωση Κράτησης - ${statusText}`;
-      userHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: ${statusColor};">Η Κράτησή σας ${statusText}</h1>
-          <p>Γεια σου ${userProfile.name || 'φίλε'},</p>
-          <p>Η κατάσταση της κράτησής σου έχει ενημερωθεί.</p>
-          
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Κωδικός Επιβεβαίωσης:</strong> ${reservation.confirmation_code}</p>
-            <p><strong>Εκδήλωση:</strong> ${eventTitle}</p>
-            <p><strong>Ημερομηνία:</strong> ${eventDate}</p>
-            <p><strong>Κατάσταση:</strong> <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span></p>
-          </div>
-          
-          ${reservation.status === 'accepted' 
-            ? '<p>Ανυπομονούμε να σας δούμε! Παρουσιάστε με τον κωδικό επιβεβαίωσης κατά την άφιξή σας.</p>' 
-            : '<p>Λυπούμαστε που δεν μπορούμε να σας εξυπηρετήσουμε αυτή τη φορά. Ελπίζουμε να σας δούμε σύντομα!</p>'}
-          
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">
-            ${businessName}<br/>
-            Αυτό είναι ένα αυτόματο email. Παρακαλώ μην απαντήσετε.
-          </p>
+      userHtml = wrapEmailContent(`
+        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Ενημέρωση Κράτησης ${statusEmoji}</h2>
+        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+          Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
+          Η κατάσταση της κράτησής σου έχει ενημερωθεί.
+        </p>
+        
+        <div style="background: ${isAccepted ? 'linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%)' : '#fef2f2'}; border-left: 4px solid ${isAccepted ? '#4ecdc4' : '#ef4444'}; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> ${reservation.confirmation_code}</p>
+          <p style="color: #475569; margin: 4px 0;"><strong>Εκδήλωση:</strong> ${eventTitle}</p>
+          <p style="color: #475569; margin: 4px 0;">📅 ${eventDate}</p>
+          <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: ${isAccepted ? '#059669' : '#dc2626'}; font-weight: bold;">${statusText}</span></p>
         </div>
-      `;
+        
+        ${isAccepted 
+          ? `<p style="color: #059669; font-weight: 600;">🎉 Ανυπομονούμε να σας δούμε! Παρουσιάστε τον κωδικό επιβεβαίωσης κατά την άφιξή σας.</p>` 
+          : `<p style="color: #64748b; font-size: 14px;">Λυπούμαστε που δεν μπορούμε να σας εξυπηρετήσουμε αυτή τη φορά. Ελπίζουμε να σας δούμε σύντομα!</p>`
+        }
+      `);
     } else if (type === 'cancellation') {
       userSubject = `Ακύρωση Κράτησης - ${eventTitle}`;
-      userHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #dc2626;">Κράτηση Ακυρώθηκε</h1>
-          <p>Γεια σου ${userProfile.name || 'φίλε'},</p>
-          <p>Η κράτησή σου έχει ακυρωθεί επιτυχώς.</p>
-          
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Κωδικός Επιβεβαίωσης:</strong> ${reservation.confirmation_code}</p>
-            <p><strong>Εκδήλωση:</strong> ${eventTitle}</p>
-            <p><strong>Ημερομηνία:</strong> ${eventDate}</p>
-          </div>
-          
-          <p>Ελπίζουμε να σας δούμε σύντομα σε μια άλλη εκδήλωση!</p>
-          
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">
-            ${businessName}<br/>
-            Αυτό είναι ένα αυτόματο email. Παρακαλώ μην απαντήσετε.
-          </p>
+      userHtml = wrapEmailContent(`
+        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Κράτηση Ακυρώθηκε</h2>
+        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+          Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
+          Η κράτησή σου έχει ακυρωθεί επιτυχώς.
+        </p>
+        
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός:</strong> ${reservation.confirmation_code}</p>
+          <p style="color: #475569; margin: 4px 0;"><strong>Εκδήλωση:</strong> ${eventTitle}</p>
+          <p style="color: #475569; margin: 4px 0;">📅 ${eventDate}</p>
         </div>
-      `;
+        
+        <p style="color: #64748b; font-size: 14px;">
+          Ελπίζουμε να σας δούμε σύντομα σε μια άλλη εκδήλωση!
+        </p>
+      `);
 
       // Notify business about cancellation
       if (businessEmail) {
         businessSubject = `Ακύρωση Κράτησης - ${eventTitle}`;
-        businessHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #dc2626;">Ακύρωση Κράτησης</h1>
-            <p>Μια κράτηση ακυρώθηκε.</p>
-            
-            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>Κωδικός:</strong> ${reservation.confirmation_code}</p>
-              <p><strong>Εκδήλωση:</strong> ${eventTitle}</p>
-              <p><strong>Πελάτης:</strong> ${reservation.reservation_name}</p>
-              <p><strong>Άτομα:</strong> ${reservation.party_size}</p>
-            </div>
+        businessHtml = wrapEmailContent(`
+          <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Ακύρωση Κράτησης</h2>
+          <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+            Μια κράτηση ακυρώθηκε.
+          </p>
+          
+          <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός:</strong> ${reservation.confirmation_code}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Εκδήλωση:</strong> ${eventTitle}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Πελάτης:</strong> ${reservation.reservation_name}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
           </div>
-        `;
+        `);
       }
     }
 
