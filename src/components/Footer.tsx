@@ -2,6 +2,7 @@ import { Instagram, Facebook, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageToggle from "@/components/LanguageToggle";
+import { Logo } from "@/components/Logo";
 
 const Footer = () => {
   const { language } = useLanguage();
@@ -43,7 +44,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           {/* Column 1 - ΦΟΜΟ */}
           <div className="col-span-2 md:col-span-1 space-y-4">
-            <h3 className="font-urbanist text-4xl font-black">ΦΟΜΟ</h3>
+            <Logo size="lg" />
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
               {t.tagline}
             </p>

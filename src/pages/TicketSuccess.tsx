@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessCheckmark } from "@/components/ui/success-animation";
 import { OceanLoader } from "@/components/ui/ocean-loader";
-import { Ticket, ArrowRight, AlertCircle, Download } from "lucide-react";
+import { Logo } from "@/components/Logo";
+import { Ticket, ArrowRight, AlertCircle } from "lucide-react";
 
 const t = {
   el: {
@@ -110,7 +111,13 @@ export const TicketSuccess = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="max-w-md w-full mx-4">
+      <Card className="max-w-md w-full mx-4 overflow-hidden">
+        {/* Branded Header */}
+        <div className="bg-gradient-ocean p-6 text-center">
+          <Logo size="lg" className="mx-auto shadow-none hover:scale-100" />
+          <p className="text-white/85 text-xs tracking-widest uppercase mt-2">Cyprus Events</p>
+        </div>
+        
         <CardContent className="p-8 text-center">
           <SuccessCheckmark isVisible={true} size="lg" className="mx-auto mb-6" />
           
