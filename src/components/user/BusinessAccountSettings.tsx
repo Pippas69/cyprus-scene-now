@@ -106,6 +106,10 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       newRSVPs: 'Νέα RSVP',
       eventCapacity: 'Πλήρης Χωρητικότητα',
       verificationUpdates: 'Ενημερώσεις Επαλήθευσης',
+      ticketSaleNotifications: 'Ειδοποιήσεις Πώλησης Εισιτηρίων',
+      ticketSaleDescription: 'Λάβετε email όταν πωλούνται εισιτήρια',
+      dailySalesSummary: 'Ημερήσια Σύνοψη Πωλήσεων',
+      dailySalesSummaryDescription: 'Λάβετε καθημερινή αναφορά πωλήσεων στις 9:00',
       privacy: 'Απόρρητο & Δεδομένα',
       downloadData: 'Λήψη Δεδομένων Επιχείρησης',
       downloadBusinessData: 'Λήψη Δεδομένων',
@@ -142,6 +146,10 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       newRSVPs: 'New RSVPs',
       eventCapacity: 'Event Capacity Reached',
       verificationUpdates: 'Verification Updates',
+      ticketSaleNotifications: 'Ticket Sale Notifications',
+      ticketSaleDescription: 'Receive emails when tickets are sold',
+      dailySalesSummary: 'Daily Sales Summary',
+      dailySalesSummaryDescription: 'Receive daily sales report at 9:00 AM',
       privacy: 'Privacy & Data',
       downloadData: 'Download Business Data',
       downloadBusinessData: 'Download Data',
@@ -742,6 +750,37 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 updatePreferences({ notification_business_updates: checked })
               }
             />
+          </div>
+          <Separator />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="ticket-sales">{t.ticketSaleNotifications}</Label>
+                <p className="text-xs text-muted-foreground">{t.ticketSaleDescription}</p>
+              </div>
+              <Switch
+                id="ticket-sales"
+                checked={preferences.notification_ticket_sales ?? true}
+                onCheckedChange={(checked) =>
+                  updatePreferences({ notification_ticket_sales: checked })
+                }
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="daily-summary">{t.dailySalesSummary}</Label>
+                <p className="text-xs text-muted-foreground">{t.dailySalesSummaryDescription}</p>
+              </div>
+              <Switch
+                id="daily-summary"
+                checked={preferences.notification_daily_sales_summary ?? true}
+                onCheckedChange={(checked) =>
+                  updatePreferences({ notification_daily_sales_summary: checked })
+                }
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
