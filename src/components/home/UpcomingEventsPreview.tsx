@@ -130,7 +130,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   
                   {event.category?.[0] && (
-                    <span className="absolute top-3 left-3 px-3 py-1 bg-sunset-coral/90 text-white text-xs font-medium rounded-full">
+                    <span className="absolute top-3 left-3 px-3 py-1 bg-aegean/90 text-white text-xs font-medium rounded-full">
                       {event.category[0]}
                     </span>
                   )}
@@ -143,7 +143,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-sunset-coral" />
+                      <Calendar className="w-4 h-4 text-aegean" />
                       <span>{format(new Date(event.start_at), "EEE, MMM d")}</span>
                     </div>
                     <div className="flex items-center gap-2">

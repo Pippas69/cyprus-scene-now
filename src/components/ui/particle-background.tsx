@@ -20,10 +20,10 @@ const ParticleBackground = ({ particleCount = 30, className = "" }: ParticleBack
   const particles = useMemo<Particle[]>(() => {
     const colors = [
       "bg-seafoam/20",
-      "bg-sunset-coral/25",
+      "bg-aegean/25",
       "bg-aegean/20",
       "bg-seafoam/30",
-      "bg-sunset-coral/15",
+      "bg-seafoam/15",
     ];
     
     return Array.from({ length: particleCount }, (_, i) => ({

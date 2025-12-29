@@ -111,7 +111,7 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
               transition={{ duration: 0.5, ease: "easeInOut" }}
               className="bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-8 md:p-12 shadow-card"
             >
-              <Quote className="w-12 h-12 text-sunset-coral/30 mb-6" />
+              <Quote className="w-12 h-12 text-aegean/30 mb-6" />
               
               <p className="text-lg md:text-xl text-foreground mb-8 leading-relaxed">
                 "{testimonials[current].text[language]}"
@@ -121,7 +121,7 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
                 <img
                   src={testimonials[current].avatar}
                   alt={testimonials[current].name}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-sunset-coral/30"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-aegean/30"
                 />
                 <div>
                   <h4 className="font-semibold text-foreground">
@@ -132,7 +132,7 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
                   </p>
                   <div className="flex gap-1 mt-1">
                     {Array.from({ length: testimonials[current].rating }).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-sunset-coral text-sunset-coral" />
+                      <Star key={i} className="w-4 h-4 fill-aegean text-aegean" />
                     ))}
                   </div>
                 </div>
@@ -158,7 +158,7 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
                   onClick={() => setCurrent(i)}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     i === current
-                      ? "bg-sunset-coral w-6"
+                      ? "bg-aegean w-6"
                       : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                   }`}
                 />
