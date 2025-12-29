@@ -10,7 +10,7 @@ import EventListItem from "@/components/EventListItem";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
-import CategoryFilter from "@/components/CategoryFilter";
+import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import LanguageToggle from "@/components/LanguageToggle";
 import MapWrapper from "@/components/map/MapWrapper";
 import HeroCarousel from "@/components/feed/HeroCarousel";
@@ -474,7 +474,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
             <div className="flex gap-2 overflow-x-auto pb-1">
               <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
             </div>
-            <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
+            <HierarchicalCategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
             {(selectedCategories.length > 0 || quickFilters.length > 0 || selectedCity) && (
               <FilterChips
                 categories={selectedCategories}
@@ -501,7 +501,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </div>
               <div className="flex flex-wrap gap-3">
                 <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
-                <CategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
+                <HierarchicalCategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
               </div>
               <FilterChips
                 categories={selectedCategories}

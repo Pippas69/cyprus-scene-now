@@ -14,8 +14,45 @@ interface FilterChipsProps {
 }
 
 const categoryLabels: Record<string, { el: string; en: string }> = {
-  cafe: { el: 'Καφέ', en: 'Cafe' },
+  // Main categories
+  cafe: { el: 'Καφέ', en: 'Café' },
+  restaurant: { el: 'Εστιατόρια', en: 'Restaurant' },
   nightlife: { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
+  'beach-summer': { el: 'Παραλία/Καλοκαίρι', en: 'Beach/Summer' },
+  'fitness-wellness': { el: 'Γυμναστική/Ευεξία', en: 'Fitness/Wellness' },
+  'art-culture': { el: 'Τέχνη & Πολιτισμός', en: 'Art & Culture' },
+  
+  // Restaurant sub-options
+  brunch: { el: 'Brunch', en: 'Brunch' },
+  breakfast: { el: 'Πρωινό', en: 'Breakfast' },
+  lunch: { el: 'Μεσημεριανό', en: 'Lunch' },
+  dinner: { el: 'Δείπνο', en: 'Dinner' },
+  
+  // Nightlife sub-options
+  bars: { el: 'Μπαρ', en: 'Bars' },
+  clubs: { el: 'Κλαμπ', en: 'Clubs' },
+  'wine-cocktail-bars': { el: 'Κρασί/Κοκτέιλ Μπαρ', en: 'Wine/Cocktail Bars' },
+  'shisha-lounges': { el: 'Shisha Lounges', en: 'Shisha Lounges' },
+  'rooftop-bars': { el: 'Rooftop Bars', en: 'Rooftop Bars' },
+  
+  // Beach/Summer sub-options
+  'beach-bars': { el: 'Beach Bars', en: 'Beach Bars' },
+  'summer-events': { el: 'Καλοκαιρινές Εκδηλώσεις', en: 'Summer Events' },
+  'seaside-restaurants': { el: 'Παραθαλάσσια Εστιατόρια', en: 'Seaside Restaurants' },
+  
+  // Fitness/Wellness sub-options
+  'yoga-pilates': { el: 'Yoga/Pilates', en: 'Yoga/Pilates' },
+  'outdoor-activities': { el: 'Υπαίθριες Δραστηριότητες', en: 'Outdoor Activities' },
+  'wellness-retreats': { el: 'Wellness Retreats', en: 'Wellness Retreats' },
+  sports: { el: 'Αθλητισμός', en: 'Sports' },
+  
+  // Art & Culture sub-options
+  museums: { el: 'Μουσεία', en: 'Museums' },
+  theaters: { el: 'Θέατρα', en: 'Theaters' },
+  cinema: { el: 'Κινηματογράφος', en: 'Cinema' },
+  'concerts-live-music': { el: 'Συναυλίες/Live Μουσική', en: 'Concerts/Live Music' },
+  
+  // Legacy categories for backward compatibility
   art: { el: 'Τέχνη', en: 'Art' },
   fitness: { el: 'Γυμναστική', en: 'Fitness' },
   family: { el: 'Οικογένεια', en: 'Family' },

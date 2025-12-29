@@ -3,16 +3,51 @@
 type Language = 'el' | 'en';
 
 const categoryMap: Record<string, { el: string; en: string }> = {
-  // English keys (lowercase)
-  'cafe': { el: 'Καφέ', en: 'Cafe' },
+  // Main categories
+  'cafe': { el: 'Καφέ', en: 'Café' },
+  'restaurant': { el: 'Εστιατόρια', en: 'Restaurant' },
   'nightlife': { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
+  'beach-summer': { el: 'Παραλία/Καλοκαίρι', en: 'Beach/Summer' },
+  'fitness-wellness': { el: 'Γυμναστική/Ευεξία', en: 'Fitness/Wellness' },
+  'art-culture': { el: 'Τέχνη & Πολιτισμός', en: 'Art & Culture' },
+  
+  // Restaurant sub-options
+  'brunch': { el: 'Brunch', en: 'Brunch' },
+  'breakfast': { el: 'Πρωινό', en: 'Breakfast' },
+  'lunch': { el: 'Μεσημεριανό', en: 'Lunch' },
+  'dinner': { el: 'Δείπνο', en: 'Dinner' },
+  
+  // Nightlife sub-options
+  'bars': { el: 'Μπαρ', en: 'Bars' },
+  'clubs': { el: 'Κλαμπ', en: 'Clubs' },
+  'wine-cocktail-bars': { el: 'Κρασί/Κοκτέιλ Μπαρ', en: 'Wine/Cocktail Bars' },
+  'shisha-lounges': { el: 'Shisha Lounges', en: 'Shisha Lounges' },
+  'rooftop-bars': { el: 'Rooftop Bars', en: 'Rooftop Bars' },
+  
+  // Beach/Summer sub-options
+  'beach-bars': { el: 'Beach Bars', en: 'Beach Bars' },
+  'summer-events': { el: 'Καλοκαιρινές Εκδηλώσεις', en: 'Summer Events' },
+  'seaside-restaurants': { el: 'Παραθαλάσσια Εστιατόρια', en: 'Seaside Restaurants' },
+  
+  // Fitness/Wellness sub-options
+  'yoga-pilates': { el: 'Yoga/Pilates', en: 'Yoga/Pilates' },
+  'outdoor-activities': { el: 'Υπαίθριες Δραστηριότητες', en: 'Outdoor Activities' },
+  'wellness-retreats': { el: 'Wellness Retreats', en: 'Wellness Retreats' },
+  'sports': { el: 'Αθλητισμός', en: 'Sports' },
+  
+  // Art & Culture sub-options
+  'museums': { el: 'Μουσεία', en: 'Museums' },
+  'theaters': { el: 'Θέατρα', en: 'Theaters' },
+  'cinema': { el: 'Κινηματογράφος', en: 'Cinema' },
+  'concerts-live-music': { el: 'Συναυλίες/Live Μουσική', en: 'Concerts/Live Music' },
+  
+  // Legacy categories for backward compatibility
   'art': { el: 'Τέχνη', en: 'Art' },
   'fitness': { el: 'Fitness', en: 'Fitness' },
   'family': { el: 'Οικογένεια', en: 'Family' },
   'business': { el: 'Επιχειρήσεις', en: 'Business' },
   'food': { el: 'Φαγητό & Ποτό', en: 'Food & Drinks' },
   'music': { el: 'Μουσική', en: 'Music' },
-  'sports': { el: 'Αθλητισμός', en: 'Sports' },
   'culture': { el: 'Πολιτισμός', en: 'Culture' },
   'entertainment': { el: 'Ψυχαγωγία', en: 'Entertainment' },
   'education': { el: 'Εκπαίδευση', en: 'Education' },
@@ -24,7 +59,6 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'party': { el: 'Πάρτι', en: 'Party' },
   'concert': { el: 'Συναυλία', en: 'Concert' },
   'theater': { el: 'Θέατρο', en: 'Theater' },
-  'cinema': { el: 'Κινηματογράφος', en: 'Cinema' },
   'workshop': { el: 'Εργαστήριο', en: 'Workshop' },
   'seminar': { el: 'Σεμινάριο', en: 'Seminar' },
   'conference': { el: 'Συνέδριο', en: 'Conference' },
