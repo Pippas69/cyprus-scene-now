@@ -85,6 +85,7 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [mode, setMode] = useState<"camera" | "manual">("camera");
+  const [lastScannedToken, setLastScannedToken] = useState("");
 
   useEffect(() => {
     return () => {
@@ -131,6 +132,7 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
   const handleScan = async (qrToken: string, action: "check" | "checkin" = "check") => {
     if (isProcessing || !qrToken) return;
     
+    setLastScannedToken(qrToken);
     setIsProcessing(true);
     stopScanning();
 
@@ -158,9 +160,8 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
   };
 
   const handleCheckIn = () => {
-    if (scanResult?.ticket) {
-      // Re-validate with checkin action
-      handleScan(manualCode || "", "checkin");
+    if (scanResult?.ticket && lastScannedToken) {
+      handleScan(lastScannedToken, "checkin");
     }
   };
 
@@ -173,6 +174,7 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
   const reset = () => {
     setScanResult(null);
     setManualCode("");
+    setLastScannedToken("");
     if (mode === "camera") {
       startScanning();
     }
