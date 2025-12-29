@@ -54,10 +54,21 @@ serve(async (req) => {
     const { purchaseId } = await req.json();
     if (!purchaseId) throw new Error("Purchase ID is required");
 
-    // Fetch the purchase record
+    // Fetch the purchase record with discount and business info
     const { data: purchase, error: purchaseError } = await supabaseAdmin
       .from("offer_purchases")
-      .select("*")
+      .select(`
+        *,
+        discounts:discount_id (
+          title,
+          terms,
+          business_id,
+          businesses:business_id (
+            name,
+            logo_url
+          )
+        )
+      `)
       .eq("id", purchaseId)
       .eq("user_id", user.id)
       .single();
@@ -130,14 +141,12 @@ serve(async (req) => {
 
     // Create commission ledger entry if there's a commission
     if (purchase.commission_amount_cents > 0) {
-      // We need a redemption_id for the ledger, but since this is prepaid, we create it now
-      // and mark as "prepaid" type
       const { error: ledgerError } = await supabaseAdmin
         .from("commission_ledger")
         .insert({
           business_id: purchase.business_id,
           discount_id: purchase.discount_id,
-          redemption_id: purchaseId, // Use purchase ID as reference
+          redemption_id: purchaseId,
           original_price_cents: purchase.original_price_cents,
           commission_percent: purchase.commission_percent,
           commission_amount_cents: purchase.commission_amount_cents,
@@ -149,6 +158,57 @@ serve(async (req) => {
         logStep("Commission ledger error (non-fatal)", { error: ledgerError.message });
       } else {
         logStep("Commission ledger entry created");
+      }
+    }
+
+    // Fetch user profile for email
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("first_name, name, email")
+      .eq("id", user.id)
+      .single();
+
+    // Send confirmation email with QR code
+    const discount = purchase.discounts;
+    const business = discount?.businesses;
+    
+    if (user.email && discount && business) {
+      try {
+        const emailPayload = {
+          purchaseId: purchase.id,
+          userEmail: user.email,
+          userName: profile?.first_name || profile?.name || undefined,
+          offerTitle: discount.title,
+          offerTerms: discount.terms || undefined,
+          businessName: business.name,
+          businessLogo: business.logo_url || undefined,
+          originalPriceCents: purchase.original_price_cents,
+          finalPriceCents: purchase.final_price_cents,
+          discountPercent: purchase.discount_percent,
+          expiresAt: purchase.expires_at,
+          qrCodeToken: qrCodeToken,
+        };
+
+        const emailResponse = await fetch(
+          `${supabaseUrl}/functions/v1/send-offer-email`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify(emailPayload),
+          }
+        );
+
+        if (emailResponse.ok) {
+          logStep("Confirmation email sent successfully");
+        } else {
+          const errorText = await emailResponse.text();
+          logStep("Email sending failed (non-fatal)", { error: errorText });
+        }
+      } catch (emailError) {
+        logStep("Email sending error (non-fatal)", { error: emailError instanceof Error ? emailError.message : String(emailError) });
       }
     }
 
