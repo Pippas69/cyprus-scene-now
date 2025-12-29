@@ -338,17 +338,15 @@ const HierarchicalCategoryFilter = ({
                     {category.subOptions?.map((subOption) => (
                       <label
                         key={subOption.id}
+                        htmlFor={subOption.id}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
                           selectedCategories.includes(subOption.id)
                             ? "bg-ocean/10 text-ocean"
                             : "hover:bg-muted"
                         }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleSubOption(subOption.id);
-                        }}
                       >
                         <Checkbox
+                          id={subOption.id}
                           checked={selectedCategories.includes(subOption.id)}
                           onCheckedChange={() => toggleSubOption(subOption.id)}
                           className="data-[state=checked]:bg-ocean data-[state=checked]:border-ocean"
