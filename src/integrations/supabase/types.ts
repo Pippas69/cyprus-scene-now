@@ -2156,6 +2156,36 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       realtime_stats: {
         Row: {
           age_bucket_15_17: number | null
@@ -2784,6 +2814,7 @@ export type Database = {
           notification_daily_sales_summary: boolean | null
           notification_event_reminders: boolean | null
           notification_new_events: boolean | null
+          notification_push_enabled: boolean | null
           notification_reservations: boolean | null
           notification_rsvp_updates: boolean | null
           notification_ticket_sales: boolean | null
@@ -2802,6 +2833,7 @@ export type Database = {
           notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_new_events?: boolean | null
+          notification_push_enabled?: boolean | null
           notification_reservations?: boolean | null
           notification_rsvp_updates?: boolean | null
           notification_ticket_sales?: boolean | null
@@ -2820,6 +2852,7 @@ export type Database = {
           notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_new_events?: boolean | null
+          notification_push_enabled?: boolean | null
           notification_reservations?: boolean | null
           notification_rsvp_updates?: boolean | null
           notification_ticket_sales?: boolean | null
