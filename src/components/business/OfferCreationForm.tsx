@@ -24,7 +24,10 @@ const createOfferSchema = (language: 'el' | 'en') => {
   return z.object({
     title: z.string().trim().min(3, formatValidationMessage(v.minLength, { min: 3 })).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
     description: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
-    percent_off: z.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).max(100, formatValidationMessage(v.maxValue, { max: 100 })),
+    original_price: z.number().min(0.01, language === 'el' ? "Η τιμή πρέπει να είναι τουλάχιστον €0.01" : "Price must be at least €0.01"),
+    percent_off: z.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).max(99, formatValidationMessage(v.maxValue, { max: 99 })),
+    max_purchases: z.number().min(1).optional().nullable(),
+    max_per_user: z.number().min(1).default(1),
     start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required")
       .refine((val) => new Date(val) >= new Date(new Date().setHours(0, 0, 0, 0)), {
         message: language === 'el' ? "Η ημερομηνία έναρξης δεν μπορεί να είναι στο παρελθόν" : "Start date cannot be in the past"
@@ -70,12 +73,19 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     defaultValues: {
       title: "",
       description: "",
-      percent_off: 10,
+      original_price: 0,
+      percent_off: 20,
+      max_purchases: null,
+      max_per_user: 1,
       start_at: "",
       end_at: "",
       terms: "",
     },
   });
+
+  const watchedPrice = form.watch("original_price");
+  const watchedDiscount = form.watch("percent_off");
+  const finalPrice = watchedPrice ? (watchedPrice * (100 - (watchedDiscount || 0)) / 100).toFixed(2) : "0.00";
 
   const generateQRToken = () => {
     return `${businessId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -88,7 +98,10 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         business_id: businessId,
         title: data.title,
         description: data.description || null,
+        original_price_cents: Math.round(data.original_price * 100),
         percent_off: data.percent_off,
+        max_purchases: data.max_purchases || null,
+        max_per_user: data.max_per_user || 1,
         start_at: data.start_at,
         end_at: data.end_at,
         terms: data.terms || null,
@@ -120,10 +133,11 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       form.reset();
       setBoostData({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : toastT.createFailed;
       toast({
         title: toastT.error,
-        description: error.message || toastT.createFailed,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -173,6 +187,27 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
             <FormField
               control={form.control}
+              name="original_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{language === 'el' ? 'Αρχική Τιμή (€)' : 'Original Price (€)'} *</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      step="0.01"
+                      min="0.01"
+                      placeholder="10.00"
+                      {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="percent_off"
               render={({ field }) => (
                 <FormItem>
@@ -181,10 +216,10 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                     <Input 
                       type="number" 
                       min="1"
-                      max="100"
+                      max="99"
                       placeholder="20"
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -192,9 +227,64 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               )}
             />
 
+            {/* Price Preview */}
+            {watchedPrice > 0 && (
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{language === 'el' ? 'Αρχική τιμή' : 'Original price'}</span>
+                  <span className="line-through">€{watchedPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{language === 'el' ? 'Έκπτωση' : 'Discount'}</span>
+                  <span className="text-green-600">-{watchedDiscount}%</span>
+                </div>
+                <div className="flex justify-between font-semibold text-lg border-t pt-2">
+                  <span>{language === 'el' ? 'Ο πελάτης πληρώνει' : 'Customer pays'}</span>
+                  <span className="text-primary">€{finalPrice}</span>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
+                name="max_purchases"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'el' ? 'Μέγ. Αγορές (προαιρετικό)' : 'Max Purchases (optional)'}</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="1"
+                        placeholder={language === 'el' ? 'Απεριόριστες' : 'Unlimited'}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="max_per_user"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'el' ? 'Μέγ. ανά Χρήστη' : 'Max Per User'}</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="1"
+                        placeholder="1"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
                 name="start_at"
                 render={({ field }) => (
                   <FormItem>

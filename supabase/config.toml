@@ -86,3 +86,9 @@ verify_jwt = false
 
 [functions.get-vapid-key]
 verify_jwt = false
+
+[functions.create-offer-checkout]
+verify_jwt = true
+
+[functions.process-offer-payment]
+verify_jwt = true
