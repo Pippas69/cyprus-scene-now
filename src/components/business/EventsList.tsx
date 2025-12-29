@@ -2,10 +2,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users, Copy, Pencil, Rocket } from "lucide-react";
+import { Trash2, Calendar, MapPin, Users, Copy, Pencil, Rocket, BarChart3, Sparkles } from "lucide-react";
 import EventEditDialog from "./EventEditDialog";
 import EventBoostDialog from "./EventBoostDialog";
+import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
+import { useEventActiveBoost } from "@/hooks/useBoostAnalytics";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -24,6 +27,22 @@ interface EventsListProps {
   businessId: string;
 }
 
+// Helper component to show active boost badge
+const ActiveBoostBadge = ({ eventId, label, onViewStats }: { eventId: string; label: string; onViewStats: (boostId: string) => void }) => {
+  const { activeBoost } = useEventActiveBoost(eventId);
+  if (!activeBoost) return null;
+  return (
+    <Badge 
+      variant="default" 
+      className="bg-gradient-to-r from-amber-500 to-orange-500 text-white cursor-pointer hover:opacity-90 flex items-center gap-1"
+      onClick={() => onViewStats(activeBoost.id)}
+    >
+      <Sparkles className="h-3 w-3" />
+      {label}
+    </Badge>
+  );
+};
+
 const EventsList = ({ businessId }: EventsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -32,6 +51,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [boostingEvent, setBoostingEvent] = useState<any>(null);
   const [deletingEvent, setDeletingEvent] = useState<{ id: string; title: string } | null>(null);
+  const [viewingBoostEventId, setViewingBoostEventId] = useState<string | null>(null);
+  const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
+  const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -55,6 +77,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       duplicate: "Αντιγραφή",
       edit: "Επεξεργασία",
       boost: "Προώθηση",
+      viewStats: "Στατιστικά",
+      boosted: "Προωθείται",
       interested: "Ενδιαφέρον",
       going: "Θα Πάνε",
       deleteConfirmTitle: "Διαγραφή Εκδήλωσης",
@@ -74,6 +98,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       duplicate: "Duplicate",
       edit: "Edit",
       boost: "Boost",
+      viewStats: "View Stats",
+      boosted: "Boosted",
       interested: "Interested",
       going: "Going",
       deleteConfirmTitle: "Delete Event",
@@ -234,7 +260,13 @@ const EventsList = ({ businessId }: EventsListProps) => {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xl font-semibold">{event.title}</h3>
+                  <ActiveBoostBadge eventId={event.id} label={t.boosted} onViewStats={(boostId) => {
+                    setSelectedBoostId(boostId);
+                    setPerformanceDialogOpen(true);
+                  }} />
+                </div>
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                   {event.description}
                 </p>
@@ -361,6 +393,13 @@ const EventsList = ({ businessId }: EventsListProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Boost Performance Dialog */}
+      <BoostPerformanceDialog
+        boostId={selectedBoostId}
+        open={performanceDialogOpen}
+        onOpenChange={setPerformanceDialogOpen}
+      />
     </>
   );
 };

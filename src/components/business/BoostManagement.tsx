@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Ticket, Calendar, TrendingUp, Pause, Play } from "lucide-react";
+import { Loader2, Zap, Ticket, Calendar, TrendingUp, Pause, Play, BarChart3, Eye, MousePointer, Users } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useBoostsQuickStats } from "@/hooks/useBoostAnalytics";
+import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
 
 interface BoostManagementProps {
   businessId: string;
@@ -25,6 +27,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const [loading, setLoading] = useState(true);
   const [eventBoosts, setEventBoosts] = useState<any[]>([]);
   const [offerBoosts, setOfferBoosts] = useState<any[]>([]);
+  const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
+  const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
+
+  // Get quick stats for all boosts
+  const boostIds = eventBoosts.map(b => b.id);
+  const { stats: quickStats, loading: statsLoading } = useBoostsQuickStats(boostIds);
 
   useEffect(() => {
     fetchBoosts();
@@ -154,6 +162,33 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {/* Quick Stats Row */}
+                  {quickStats[boost.id] && (
+                    <div className="grid grid-cols-3 gap-2 p-3 bg-muted/50 rounded-lg">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                          <Eye className="h-3 w-3" />
+                          <span className="text-xs">{language === "el" ? "Εμφανίσεις" : "Impressions"}</span>
+                        </div>
+                        <p className="font-bold">{quickStats[boost.id].impressions.toLocaleString()}</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                          <MousePointer className="h-3 w-3" />
+                          <span className="text-xs">{language === "el" ? "Κλικ" : "Clicks"}</span>
+                        </div>
+                        <p className="font-bold">{quickStats[boost.id].clicks.toLocaleString()}</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                          <Users className="h-3 w-3" />
+                          <span className="text-xs">{language === "el" ? "Μετατροπές" : "Conversions"}</span>
+                        </div>
+                        <p className="font-bold">{quickStats[boost.id].conversions.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -180,6 +215,18 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                       </p>
                     </div>
                     <div className="flex gap-2">
+                      {/* View Performance Button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedBoostId(boost.id);
+                          setPerformanceDialogOpen(true);
+                        }}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-1" />
+                        {language === "el" ? "Απόδοση" : "Performance"}
+                      </Button>
                       {boost.status === "active" && (
                         <Button size="sm" variant="outline">
                           <Pause className="h-4 w-4 mr-1" />
@@ -279,6 +326,13 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Boost Performance Dialog */}
+      <BoostPerformanceDialog
+        boostId={selectedBoostId}
+        open={performanceDialogOpen}
+        onOpenChange={setPerformanceDialogOpen}
+      />
     </div>
   );
 };
