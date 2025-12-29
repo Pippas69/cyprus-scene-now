@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { Logo } from "@/components/Logo";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageToggle from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
@@ -49,12 +50,8 @@ const InfoNavbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img 
-              src="/fomo-logo.png" 
-              alt="ΦΟΜΟ" 
-              className="h-10 w-auto object-contain rounded-lg"
-            />
+          <Link to="/">
+            <Logo size="md" />
           </Link>
 
           {/* Desktop Navigation */}
