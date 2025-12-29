@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations } from "./translations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
@@ -17,6 +17,7 @@ import { toastTranslations } from "@/translations/toastTranslations";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import OfferBoostSection from "./OfferBoostSection";
 import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const createOfferSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -24,10 +25,11 @@ const createOfferSchema = (language: 'el' | 'en') => {
   return z.object({
     title: z.string().trim().min(3, formatValidationMessage(v.minLength, { min: 3 })).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
     description: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
-    original_price: z.number().min(0.01, language === 'el' ? "Η τιμή πρέπει να είναι τουλάχιστον €0.01" : "Price must be at least €0.01"),
-    percent_off: z.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).max(99, formatValidationMessage(v.maxValue, { max: 99 })),
-    max_purchases: z.number().min(1).optional().nullable(),
-    max_per_user: z.number().min(1).default(1),
+    original_price: z.coerce.number({ message: language === 'el' ? "Εισάγετε έγκυρη τιμή" : "Enter a valid price" })
+      .min(0.01, language === 'el' ? "Η τιμή πρέπει να είναι τουλάχιστον €0.01" : "Price must be at least €0.01"),
+    percent_off: z.coerce.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).max(99, formatValidationMessage(v.maxValue, { max: 99 })),
+    max_purchases: z.coerce.number().min(1).optional().nullable(),
+    max_per_user: z.coerce.number().min(1).default(1),
     start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required")
       .refine((val) => new Date(val) >= new Date(new Date().setHours(0, 0, 0, 0)), {
         message: language === 'el' ? "Η ημερομηνία έναρξης δεν μπορεί να είναι στο παρελθόν" : "Start date cannot be in the past"
@@ -52,6 +54,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const t = businessTranslations[language];
   const toastT = toastTranslations[language];
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
     commissionPercent: number;
@@ -67,6 +70,23 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       return data;
     },
   });
+
+  // Fetch business verification status
+  const { data: businessData, isLoading: isLoadingBusiness } = useQuery({
+    queryKey: ["business-verification", businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("businesses")
+        .select("verified, name")
+        .eq("id", businessId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!businessId,
+  });
+
+  const isBusinessVerified = businessData?.verified === true;
 
   const form = useForm<OfferFormData>({
     resolver: zodResolver(createOfferSchema(language)),
@@ -92,8 +112,21 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   };
 
   const onSubmit = async (data: OfferFormData) => {
+    console.log("Offer submit called with data:", data);
+    setSubmitError(null);
     setIsSubmitting(true);
+    
     try {
+      // Check authentication
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error(language === 'el' ? "Παρακαλώ συνδεθείτε ξανά" : "Please log in again");
+      }
+
+      if (!businessId) {
+        throw new Error(language === 'el' ? "Δεν βρέθηκε επιχείρηση" : "No business found");
+      }
+
       const { data: discountData, error } = await supabase.from('discounts').insert({
         business_id: businessId,
         title: data.title,
@@ -109,7 +142,16 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         active: true,
       }).select().single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error);
+        // Check for RLS/permission errors
+        if (error.code === '42501' || error.message?.includes('policy') || error.message?.includes('permission')) {
+          throw new Error(language === 'el' 
+            ? "Δεν έχετε δικαίωμα δημοσίευσης προσφορών. Η επιχείρησή σας πρέπει να είναι επαληθευμένη." 
+            : "You don't have permission to publish offers. Your business must be verified.");
+        }
+        throw error;
+      }
 
       // Create boost if enabled
       if (boostData.enabled && discountData) {
@@ -134,7 +176,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       form.reset();
       setBoostData({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
     } catch (error: unknown) {
+      console.error("Offer creation error:", error);
       const errorMessage = error instanceof Error ? error.message : toastT.createFailed;
+      setSubmitError(errorMessage);
       toast({
         title: toastT.error,
         description: errorMessage,
@@ -151,14 +195,32 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         <CardTitle>{t.createOffer}</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Verification Warning */}
+        {!isLoadingBusiness && !isBusinessVerified && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>
+              {language === 'el' ? 'Η επιχείρησή σας δεν έχει επαληθευτεί' : 'Your business is not verified'}
+            </AlertTitle>
+            <AlertDescription>
+              {language === 'el' 
+                ? 'Δεν μπορείτε να δημοσιεύσετε προσφορές μέχρι να επαληθευτεί η επιχείρησή σας. Επικοινωνήστε με την υποστήριξη για περισσότερες πληροφορίες.' 
+                : 'You cannot publish offers until your business is verified. Contact support for more information.'}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
             console.error("Form validation errors:", errors);
+            const firstError = Object.values(errors)[0];
+            const errorMessage = firstError?.message || (language === 'el' 
+              ? "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία" 
+              : "Please fill in all required fields");
+            setSubmitError(errorMessage as string);
             toast({
               title: toastT.error,
-              description: language === 'el' 
-                ? "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία" 
-                : "Please fill in all required fields",
+              description: errorMessage as string,
               variant: "destructive",
             });
           })} className="space-y-6">
@@ -363,7 +425,19 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               onBoostChange={setBoostData}
             />
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {/* Visible Error State */}
+            {submitError && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{submitError}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting || (!isLoadingBusiness && !isBusinessVerified)}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
