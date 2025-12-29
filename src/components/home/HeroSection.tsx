@@ -13,7 +13,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const navigate = useNavigate();
 
   const phrases = {
-    el: ["Απλά εν τες Ξέρεις", "αξίζει να είσαι", "τζι'αν γίνεται τώρα", "σε περιμένει"],
+    el: ["απλά εν τες ξέρεις", "τζιαιρός να τες μάθεις", "τζαι περιμένουν σε", "δε που αξίζει να είσαι"],
     en: ["happening now", "worth attending", "trending nearby", "waiting for you"],
   };
 
