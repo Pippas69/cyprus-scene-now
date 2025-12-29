@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, Check } from "lucide-react";
@@ -29,7 +30,9 @@ const HierarchicalCategoryFilter = ({
   language,
 }: HierarchicalCategoryFilterProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const badgeRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const categories: { el: Category[]; en: Category[] } = {
     el: [
@@ -164,9 +167,13 @@ const HierarchicalCategoryFilter = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (openDropdown) {
-        const ref = dropdownRefs.current[openDropdown];
-        if (ref && !ref.contains(event.target as Node)) {
+        const badgeEl = badgeRefs.current[openDropdown];
+        const dropdownEl = dropdownRef.current;
+        const target = event.target as Node;
+        
+        if (badgeEl && !badgeEl.contains(target) && dropdownEl && !dropdownEl.contains(target)) {
           setOpenDropdown(null);
+          setDropdownPosition(null);
         }
       }
     };
@@ -174,6 +181,46 @@ const HierarchicalCategoryFilter = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openDropdown]);
+
+  // Update dropdown position on scroll/resize
+  useEffect(() => {
+    if (!openDropdown) return;
+
+    const updatePosition = () => {
+      const badgeEl = badgeRefs.current[openDropdown];
+      if (badgeEl) {
+        const rect = badgeEl.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + 8,
+          left: rect.left,
+        });
+      }
+    };
+
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [openDropdown]);
+
+  const handleToggleDropdown = (categoryId: string) => {
+    if (openDropdown === categoryId) {
+      setOpenDropdown(null);
+      setDropdownPosition(null);
+    } else {
+      const badgeEl = badgeRefs.current[categoryId];
+      if (badgeEl) {
+        const rect = badgeEl.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + 8,
+          left: rect.left,
+        });
+      }
+      setOpenDropdown(categoryId);
+    }
+  };
 
   const toggleSimpleCategory = (categoryId: string) => {
     if (selectedCategories.includes(categoryId)) {
@@ -212,7 +259,7 @@ const HierarchicalCategoryFilter = ({
           <div
             key={category.id}
             className="relative flex-shrink-0"
-            ref={(el) => (dropdownRefs.current[category.id] = el)}
+            ref={(el) => (badgeRefs.current[category.id] = el)}
           >
             {/* Category Badge */}
             <Badge
@@ -236,9 +283,7 @@ const HierarchicalCategoryFilter = ({
               }`}
               onClick={() => {
                 if (category.hasDropdown) {
-                  setOpenDropdown(
-                    openDropdown === category.id ? null : category.id
-                  );
+                  handleToggleDropdown(category.id);
                 } else {
                   toggleSimpleCategory(category.id);
                 }
@@ -266,16 +311,28 @@ const HierarchicalCategoryFilter = ({
                   <Check size={16} className="ml-1" />
                 )}
             </Badge>
+          </div>
+        ))}
 
-            {/* Dropdown Menu */}
-            <AnimatePresence>
-              {category.hasDropdown && openDropdown === category.id && (
+        {/* Portal Dropdown Menu */}
+        {openDropdown && dropdownPosition && createPortal(
+          <AnimatePresence>
+            {categories[language].map((category) => (
+              category.hasDropdown && openDropdown === category.id && (
                 <motion.div
+                  key={category.id}
+                  ref={dropdownRef}
                   initial={{ opacity: 0, y: -8, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.95 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="absolute top-full left-0 mt-2 z-50 min-w-[200px] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+                  style={{
+                    position: 'fixed',
+                    top: dropdownPosition.top,
+                    left: dropdownPosition.left,
+                    zIndex: 9999,
+                  }}
+                  className="min-w-[200px] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
                 >
                   <div className="p-2 space-y-1">
                     {category.subOptions?.map((subOption) => (
@@ -303,10 +360,11 @@ const HierarchicalCategoryFilter = ({
                     ))}
                   </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ))}
+              )
+            ))}
+          </AnimatePresence>,
+          document.body
+        )}
       </div>
     </div>
   );
