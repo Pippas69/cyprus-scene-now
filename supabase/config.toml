@@ -80,3 +80,9 @@ verify_jwt = false
 
 [functions.send-daily-sales-summary.schedule]
 cron = "0 6 * * *"
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.get-vapid-key]
+verify_jwt = false
