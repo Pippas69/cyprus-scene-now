@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, TrendingUp, RefreshCw, ChevronUp, Filter, Map, ArrowUp } from "lucide-react";
+import { MapPin, Calendar, RefreshCw, ChevronUp, Filter, Map, ArrowUp } from "lucide-react";
 import { FloatingActionButton, FABAction } from "@/components/ui/floating-action-button";
 import { motion } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
 import EventListItem from "@/components/EventListItem";
@@ -16,7 +15,7 @@ import MapWrapper from "@/components/map/MapWrapper";
 import HeroCarousel from "@/components/feed/HeroCarousel";
 import SmartSearchBar from "@/components/feed/SmartSearchBar";
 import FeedSidebar from "@/components/feed/FeedSidebar";
-import QuickFilters from "@/components/feed/QuickFilters";
+import TimeAccessFilters from "@/components/feed/TimeAccessFilters";
 import SortDropdown from "@/components/feed/SortDropdown";
 import ViewModeToggle from "@/components/feed/ViewModeToggle";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
@@ -41,10 +40,9 @@ interface FeedProps {
 
 const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState("trending");
   const [user, setUser] = useState<User | null>(null);
   const [page, setPage] = useState(1);
-  const [quickFilters, setQuickFilters] = useState<string[]>([]);
+  const [timeAccessFilters, setTimeAccessFilters] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("popular");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [isPulling, setIsPulling] = useState(false);
@@ -92,29 +90,16 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     el: {
       title: "Ανακαλύψτε το ΦΟΜΟ",
       subtitle: "Δείτε τι συμβαίνει τώρα στην Κύπρο",
-      trending: "Δημοφιλή",
-      upcoming: "Επερχόμενα",
-      forYou: "Για 'Σένα",
-      offers: "Προσφορές",
-      map: "Χάρτης",
       loadMore: "Φόρτωση Περισσότερων",
-      loginToSeePersonalized: "Συνδεθείτε για εξατομικευμένες προτάσεις",
-      login: "Σύνδεση"
     },
     en: {
       title: "Discover ΦΟΜΟ",
       subtitle: "See what's happening now in Cyprus",
-      trending: "Trending",
-      upcoming: "Upcoming",
-      forYou: "For You",
-      offers: "Offers",
-      map: "Map",
       loadMore: "Load More",
-      loginToSeePersonalized: "Login to see personalized recommendations",
-      login: "Login"
     }
   };
   const t = translations[language];
+
   useEffect(() => {
     supabase.auth.getUser().then(({
       data: {
@@ -130,9 +115,10 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     });
     return () => subscription.unsubscribe();
   }, []);
+
   useEffect(() => {
     setPage(1);
-  }, [activeTab, selectedCategories, quickFilters, sortBy, selectedCity]);
+  }, [selectedCategories, timeAccessFilters, sortBy, selectedCity]);
 
   // Scroll to top button visibility
   useEffect(() => {
@@ -145,36 +131,82 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
   // Smooth scroll to results on filter changes
   useEffect(() => {
-    if (resultsRef.current && (selectedCategories.length > 0 || selectedCity || quickFilters.length > 0)) {
+    if (resultsRef.current && (selectedCategories.length > 0 || selectedCity || timeAccessFilters.length > 0)) {
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     }
-  }, [selectedCategories, selectedCity, quickFilters]);
-  const getQuickFilterQuery = (query: any) => {
+  }, [selectedCategories, selectedCity, timeAccessFilters]);
+
+  const getTimeAccessFilterQuery = (query: any) => {
     const now = new Date();
-    if (quickFilters.includes("tonight")) {
+    
+    // Live Now filter
+    if (timeAccessFilters.includes("liveNow")) {
+      query = query
+        .lte("start_at", now.toISOString())
+        .gte("end_at", now.toISOString());
+    }
+    
+    // Tonight filter (6PM - midnight today)
+    if (timeAccessFilters.includes("tonight")) {
       const start = new Date(now);
       start.setHours(18, 0, 0, 0);
       const end = new Date(now);
       end.setHours(23, 59, 59, 999);
       query = query.gte("start_at", start.toISOString()).lte("start_at", end.toISOString());
     }
-    if (quickFilters.includes("weekend")) {
+    
+    // Mon-Fri filter (weekdays of current week)
+    if (timeAccessFilters.includes("monFri")) {
       const day = now.getDay();
-      const daysUntilFriday = day <= 5 ? 5 - day : 7 - day + 5;
-      const friday = new Date(now);
-      friday.setDate(now.getDate() + daysUntilFriday);
-      friday.setHours(0, 0, 0, 0);
-      const sunday = new Date(friday);
-      sunday.setDate(friday.getDate() + 2);
-      sunday.setHours(23, 59, 59, 999);
-      query = query.gte("start_at", friday.toISOString()).lte("start_at", sunday.toISOString());
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+      monday.setHours(0, 0, 0, 0);
+      const friday = new Date(monday);
+      friday.setDate(monday.getDate() + 4);
+      friday.setHours(23, 59, 59, 999);
+      query = query.gte("start_at", monday.toISOString()).lte("start_at", friday.toISOString());
     }
-    if (quickFilters.includes("free")) query = query.eq("price_tier", "free");
-    if (quickFilters.includes("withReservations")) query = query.eq("accepts_reservations", true);
+    
+    // The Weekend filter (Saturday-Sunday)
+    if (timeAccessFilters.includes("theWeekend")) {
+      const day = now.getDay();
+      const daysUntilSaturday = day === 0 ? 6 : 6 - day;
+      const saturday = new Date(now);
+      saturday.setDate(now.getDate() + daysUntilSaturday);
+      saturday.setHours(0, 0, 0, 0);
+      const sunday = new Date(saturday);
+      sunday.setDate(saturday.getDate() + 1);
+      sunday.setHours(23, 59, 59, 999);
+      query = query.gte("start_at", saturday.toISOString()).lte("start_at", sunday.toISOString());
+    }
+    
+    // This Month filter
+    if (timeAccessFilters.includes("thisMonth")) {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      query = query.gte("start_at", startOfMonth.toISOString()).lte("start_at", endOfMonth.toISOString());
+    }
+    
+    // Free Entrance filter
+    if (timeAccessFilters.includes("freeEntrance")) {
+      query = query.eq("price_tier", "free");
+    }
+    
+    // With Reservations filter
+    if (timeAccessFilters.includes("withReservations")) {
+      query = query.eq("accepts_reservations", true);
+    }
+    
+    // With Tickets filter - events that have ticket tiers
+    if (timeAccessFilters.includes("withTickets")) {
+      query = query.not("external_ticket_url", "is", null);
+    }
+    
     return query;
   };
+
   const applySorting = (data: any[]) => {
     if (!data) return [];
     const priceOrder: any = {
@@ -204,23 +236,20 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         return data;
     }
   };
+
   const {
     data: events,
     isLoading: eventsLoading,
     error: eventsError,
     refetch: refetchEvents
   } = useQuery({
-    queryKey: ['events', selectedCategories, activeTab, page, quickFilters, sortBy, selectedCity],
+    queryKey: ['events', selectedCategories, page, timeAccessFilters, sortBy, selectedCity],
     queryFn: async () => {
       let query = supabase.from('events').select(`*, businesses!inner (name, logo_url, verified, city), realtime_stats (interested_count, going_count)`).eq('businesses.verified', true);
       if (selectedCategories.length > 0) query = query.overlaps('category', selectedCategories);
       if (selectedCity) query = query.eq('businesses.city', selectedCity);
-      query = getQuickFilterQuery(query);
-      if (activeTab === 'trending') query = query.order('created_at', {
-        ascending: false
-      });else if (activeTab === 'upcoming' || activeTab === 'forYou') query = query.gte('start_at', new Date().toISOString()).order('start_at', {
-        ascending: true
-      });
+      query = getTimeAccessFilterQuery(query);
+      query = query.gte('start_at', new Date().toISOString()).order('start_at', { ascending: true });
       query = query.limit(ITEMS_PER_PAGE * page);
       const {
         data,
@@ -229,8 +258,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       if (error) throw error;
       return applySorting(data || []);
     },
-    enabled: activeTab !== 'offers' && activeTab !== 'map'
   });
+
   const {
     data: personalizedData
   } = useQuery({
@@ -244,37 +273,17 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         favorites: favoritesRes.data || []
       };
     },
-    enabled: activeTab === 'forYou' && !!user
+    enabled: !!user
   });
+
   const getPersonalizedEvents = () => {
-    if (!personalizedData || !events) return [];
+    if (!personalizedData || !events) return events || [];
     return events.map(event => ({
       ...event,
       personalizedScore: getPersonalizedScore(event, personalizedData.profile, personalizedData.rsvps, personalizedData.favorites)
-    })).sort((a, b) => b.personalizedScore - a.personalizedScore).slice(0, 20);
+    })).sort((a, b) => b.personalizedScore - a.personalizedScore);
   };
-  const {
-    data: offers,
-    isLoading: offersLoading,
-    error: offersError,
-    refetch: refetchOffers
-  } = useQuery({
-    queryKey: ['offers', selectedCategories, selectedCity],
-    queryFn: async () => {
-      let query = supabase.from('discounts').select(`*, businesses!inner (name, logo_url, city, verified)`).eq('active', true).eq('businesses.verified', true).gte('end_at', new Date().toISOString()).order('created_at', {
-        ascending: false
-      });
-      if (selectedCategories.length > 0) query = query.overlaps('businesses.category', selectedCategories);
-      if (selectedCity) query = query.eq('businesses.city', selectedCity);
-      const {
-        data,
-        error
-      } = await query;
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: activeTab === 'offers'
-  });
+
   useEffect(() => {
     const eventsChannel = supabase.channel('events-feed').on('postgres_changes', {
       event: '*',
@@ -283,18 +292,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     }, () => queryClient.invalidateQueries({
       queryKey: ['events']
     })).subscribe();
-    const offersChannel = supabase.channel('offers-feed').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'discounts'
-    }, () => queryClient.invalidateQueries({
-      queryKey: ['offers']
-    })).subscribe();
     return () => {
       supabase.removeChannel(eventsChannel);
-      supabase.removeChannel(offersChannel);
     };
   }, [queryClient]);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (window.scrollY === 0) startYRef.current = e.touches[0].pageY;
   };
@@ -315,15 +317,15 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     if (isPulling) {
       hapticFeedback.medium();
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      queryClient.invalidateQueries({ queryKey: ['offers'] });
     }
     setIsPulling(false);
     setPullDistance(0);
     startYRef.current = null;
   };
+
   const handleClearFilters = () => {
     setSelectedCategories([]);
-    setQuickFilters([]);
+    setTimeAccessFilters([]);
     setSelectedCity(null);
     setPage(1);
   };
@@ -333,16 +335,14 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   };
   
   const handleRemoveQuickFilter = (filter: string) => {
-    setQuickFilters(prev => prev.filter(f => f !== filter));
+    setTimeAccessFilters(prev => prev.filter(f => f !== filter));
   };
   
   const handleRemoveCity = () => {
     setSelectedCity(null);
   };
-  
-  const handleQuickFilterToggle = (filter: string) => 
-    setQuickFilters(prev => prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]);
-  const displayedEvents = activeTab === 'forYou' ? getPersonalizedEvents() : events;
+
+  const displayedEvents = user && personalizedData ? getPersonalizedEvents() : events;
   
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -434,14 +434,13 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       </motion.div>
     );
   };
+
   const handleSmartSearch = (params: { date: Date | null; time: string | null; partySize: number | null }) => {
     setSearchParams(params);
-    // Apply time-based quick filters
-    if (params.time === "morning") {
-      setQuickFilters(prev => [...prev.filter(f => !["tonight", "weekend"].includes(f))]);
-    } else if (params.time === "evening" || params.time === "night") {
-      setQuickFilters(prev => {
-        const filtered = prev.filter(f => !["tonight", "weekend"].includes(f));
+    // Apply time-based filters
+    if (params.time === "evening" || params.time === "night") {
+      setTimeAccessFilters(prev => {
+        const filtered = prev.filter(f => !["tonight", "liveNow"].includes(f));
         return [...filtered, "tonight"];
       });
     }
@@ -475,10 +474,10 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
             </div>
             <HierarchicalCategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
-            {(selectedCategories.length > 0 || quickFilters.length > 0 || selectedCity) && (
+            {(selectedCategories.length > 0 || timeAccessFilters.length > 0 || selectedCity) && (
               <FilterChips
                 categories={selectedCategories}
-                quickFilters={quickFilters}
+                quickFilters={timeAccessFilters}
                 selectedCity={selectedCity}
                 onRemoveCategory={handleRemoveCategory}
                 onRemoveQuickFilter={handleRemoveQuickFilter}
@@ -505,7 +504,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </div>
               <FilterChips
                 categories={selectedCategories}
-                quickFilters={quickFilters}
+                quickFilters={timeAccessFilters}
                 selectedCity={selectedCity}
                 onRemoveCategory={handleRemoveCategory}
                 onRemoveQuickFilter={handleRemoveQuickFilter}
@@ -530,33 +529,27 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       )}
 
       <div className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <div className="space-y-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            <TabsList className="bg-muted">
-              <TabsTrigger value="trending" className="gap-2"><TrendingUp size={16} />{t.trending}</TabsTrigger>
-              <TabsTrigger value="upcoming" className="gap-2"><Calendar size={16} />{t.upcoming}</TabsTrigger>
-              {user && <TabsTrigger value="forYou">{t.forYou}</TabsTrigger>}
-              <TabsTrigger value="offers">{t.offers}</TabsTrigger>
-              <TabsTrigger value="map" className="gap-2"><MapPin size={16} />{t.map}</TabsTrigger>
-            </TabsList>
+            <TimeAccessFilters 
+              language={language} 
+              selectedFilters={timeAccessFilters} 
+              onFilterChange={setTimeAccessFilters} 
+            />
             <div className="flex items-center gap-2 flex-wrap">
-              {activeTab !== 'offers' && activeTab !== 'map' && (
-                <ViewModeToggle 
-                  viewMode={viewMode} 
-                  onViewModeChange={handleViewModeChange}
-                  language={language}
-                />
-              )}
+              <ViewModeToggle 
+                viewMode={viewMode} 
+                onViewModeChange={handleViewModeChange}
+                language={language}
+              />
               <SortDropdown language={language} sortBy={sortBy} onSortChange={setSortBy} />
             </div>
           </div>
 
-          {activeTab !== 'offers' && activeTab !== 'map' && <QuickFilters language={language} selectedFilters={quickFilters} onFilterToggle={handleQuickFilterToggle} />}
-
           {/* Results container ref for smooth scroll */}
           <div ref={resultsRef} />
 
-          <TabsContent value="trending" className="mt-6 animate-fade-in">
+          <div className="mt-6 animate-fade-in">
             {eventsLoading ? (
               <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
                 {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
@@ -589,107 +582,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                 language={language} 
               />
             )}
-          </TabsContent>
-
-          <TabsContent value="upcoming" className="mt-6 animate-fade-in">
-            {eventsLoading ? (
-              <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
-                {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
-              </div>
-            ) : eventsError ? (
-              <ErrorState
-                title={language === 'el' ? 'Σφάλμα φόρτωσης' : 'Failed to load events'}
-                message={language === 'el' 
-                  ? `Δεν ήταν δυνατή η φόρτωση των εκδηλώσεων: ${(eventsError as Error).message}` 
-                  : `Could not load events: ${(eventsError as Error).message}`}
-                onRetry={() => refetchEvents()}
-                showRetry
-              />
-            ) : displayedEvents && displayedEvents.length > 0 ? (
-              <>
-                {renderEvents(displayedEvents)}
-                {displayedEvents.length >= ITEMS_PER_PAGE * page && (
-                  <div className="flex justify-center mt-8">
-                    <Button onClick={() => setPage(p => p + 1)} variant="outline" size="lg">
-                      {t.loadMore}
-                    </Button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <EmptyState 
-                type="no-upcoming" 
-                filters={{ categories: selectedCategories, city: selectedCity }} 
-                onClearFilters={handleClearFilters} 
-                language={language} 
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="forYou" className="mt-6 animate-fade-in">
-            {!user ? (
-              <div className="text-center py-16">
-                <p className="text-muted-foreground mb-4">{t.loginToSeePersonalized}</p>
-                <Button asChild>
-                  <Link to="/login">{t.login}</Link>
-                </Button>
-              </div>
-            ) : eventsLoading ? (
-              <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
-                {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
-              </div>
-            ) : displayedEvents && displayedEvents.length > 0 ? (
-              renderEvents(displayedEvents)
-            ) : (
-              <EmptyState 
-                type="no-results" 
-                filters={{ categories: selectedCategories, city: selectedCity }} 
-                onClearFilters={handleClearFilters} 
-                language={language} 
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="offers" className="mt-6 animate-fade-in">
-            {offersLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Array.from({ length: 4 }).map((_, i) => <OfferCardSkeleton key={i} />)}
-              </div>
-            ) : offersError ? (
-              <ErrorState
-                title={language === 'el' ? 'Σφάλμα φόρτωσης' : 'Failed to load offers'}
-                message={language === 'el' 
-                  ? `Δεν ήταν δυνατή η φόρτωση των προσφορών: ${(offersError as Error).message}` 
-                  : `Could not load offers: ${(offersError as Error).message}`}
-                onRetry={() => refetchOffers()}
-                showRetry
-              />
-            ) : offers && offers.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {offers.map((offer: any, index: number) => (
-                  <OfferCard 
-                    key={offer.id} 
-                    offer={offer} 
-                    language={language} 
-                    style={{ animationDelay: `${Math.min(index * 50, 500)}ms` }} 
-                    className="animate-fade-in" 
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState 
-                type="no-offers" 
-                filters={{ categories: selectedCategories, city: selectedCity }} 
-                onClearFilters={handleClearFilters} 
-                language={language} 
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="map" className="mt-6 animate-fade-in">
-            <div className="h-[70vh]"><MapWrapper city={selectedCity || ""} neighborhood="" selectedCategories={selectedCategories} eventCounts={{}} /></div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
 
       {/* Floating Action Button with Quick Actions */}
@@ -706,11 +600,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                 filtersEl?.scrollIntoView({ behavior: 'smooth' });
               }
             },
-            {
-              icon: <Map size={20} />,
-              label: language === 'el' ? 'Χάρτης' : 'Map',
-              onClick: () => setActiveTab('map')
-            }
           ]}
           position="bottom-right"
           size="large"
