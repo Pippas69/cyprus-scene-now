@@ -10,6 +10,7 @@ import { User as UserIcon, Settings, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
 import LanguageToggle from '@/components/LanguageToggle';
+import Logo from '@/components/Logo';
 import type { User } from '@supabase/supabase-js';
 
 interface UserLayoutProps {
@@ -94,12 +95,9 @@ export function UserLayout({ children }: UserLayoutProps) {
         <header className="h-14 border-b flex items-center px-4 bg-background sticky top-0 z-50">
           <SidebarTrigger className="mr-4" />
           
-          {/* Logo */}
-          <button 
-            onClick={() => navigate("/")} 
-            className="font-cinzel text-2xl font-black tracking-tight text-primary mr-auto"
-          >
-            ΦΟΜΟ
+{/* Logo */}
+          <button onClick={() => navigate("/")} className="mr-auto">
+            <Logo size="md" />
           </button>
 
           {/* Search */}

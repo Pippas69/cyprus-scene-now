@@ -40,11 +40,11 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
   pdf.setFillColor(navyColor.r, navyColor.g, navyColor.b);
   pdf.rect(0, 0, 210, 45, "F");
   
-  // Brand name - ΦΟΜΟ
+  // Brand name - FOMO (using ASCII for PDF compatibility)
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(32);
   pdf.setFont("helvetica", "bold");
-  pdf.text("ΦΟΜΟ", 105, 22, { align: "center" });
+  pdf.text("FOMO", 105, 22, { align: "center" });
   
   // Subtitle
   pdf.setFontSize(12);
