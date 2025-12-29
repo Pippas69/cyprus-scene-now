@@ -249,7 +249,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       if (selectedCategories.length > 0) query = query.overlaps('category', selectedCategories);
       if (selectedCity) query = query.eq('businesses.city', selectedCity);
       query = getTimeAccessFilterQuery(query);
-      query = query.gte('start_at', new Date().toISOString()).order('start_at', { ascending: true });
+      query = query.gte('end_at', new Date().toISOString()).order('start_at', { ascending: true });
       query = query.limit(ITEMS_PER_PAGE * page);
       const {
         data,
