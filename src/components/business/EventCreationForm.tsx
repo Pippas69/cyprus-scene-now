@@ -18,7 +18,8 @@ import { ImageCropDialog } from "./ImageCropDialog";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { compressImage } from "@/lib/imageCompression";
 import { useLanguage } from "@/hooks/useLanguage";
-import { businessTranslations, eventCategories, seatingOptions } from "./translations";
+import { businessTranslations, seatingOptions } from "./translations";
+import { EventCategorySelector } from "./EventCategorySelector";
 import { Switch } from "@/components/ui/switch";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
@@ -426,36 +427,16 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               <FormField
                 control={form.control}
                 name="category"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t.categories || 'Categories'} *</FormLabel>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {eventCategories[language].map((cat, index) => {
-                        const catKey = eventCategories.el[index];
-                        return (
-                          <FormField
-                            key={catKey}
-                            control={form.control}
-                            name="category"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(catKey)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, catKey])
-                                        : field.onChange(field.value?.filter((value) => value !== catKey));
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal text-sm">{cat}</FormLabel>
-                              </FormItem>
-                            )}
-                          />
-                        );
-                      })}
-                    </div>
+                    <FormControl>
+                      <EventCategorySelector
+                        language={language}
+                        selectedCategories={field.value || []}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

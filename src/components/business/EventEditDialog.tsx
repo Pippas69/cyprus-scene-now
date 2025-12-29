@@ -16,6 +16,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { compressImage } from "@/lib/imageCompression";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations, seatingOptions } from "./translations";
+import { EventCategorySelector } from "./EventCategorySelector";
 import { Switch } from "@/components/ui/switch";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 import { Upload, X } from "lucide-react";
@@ -323,53 +324,19 @@ const EventEditDialog = ({ event, open, onOpenChange, onSuccess }: EventEditDial
               <FormField
                 control={form.control}
                 name="category"
-                render={() => {
-                  const categories = [
-                    { value: "music", label: { el: "Μουσική", en: "Music" } },
-                    { value: "sports", label: { el: "Αθλητισμός", en: "Sports" } },
-                    { value: "food", label: { el: "Φαγητό & Ποτό", en: "Food & Drink" } },
-                    { value: "art", label: { el: "Τέχνη", en: "Art" } },
-                    { value: "nightlife", label: { el: "Νυχτερινή Ζωή", en: "Nightlife" } },
-                    { value: "family", label: { el: "Οικογένεια", en: "Family" } },
-                    { value: "education", label: { el: "Εκπαίδευση", en: "Education" } },
-                  ];
-                  
-                  return (
-                    <FormItem>
-                      <FormLabel>{t.categories}</FormLabel>
-                      <div className="grid grid-cols-2 gap-2">
-                        {categories.map((category) => (
-                          <FormField
-                            key={category.value}
-                            control={form.control}
-                            name="category"
-                            render={({ field }) => (
-                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(category.value)}
-                                    onCheckedChange={(checked) => {
-                                      const current = field.value || [];
-                                      field.onChange(
-                                        checked
-                                          ? [...current, category.value]
-                                          : current.filter((val) => val !== category.value)
-                                      );
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal cursor-pointer">
-                                  {category.label[language]}
-                                </FormLabel>
-                              </FormItem>
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t.categories}</FormLabel>
+                    <FormControl>
+                      <EventCategorySelector
+                        language={language}
+                        selectedCategories={field.value || []}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
 
               <div className="space-y-2">
