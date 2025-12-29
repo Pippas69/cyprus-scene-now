@@ -29,21 +29,22 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
     color: { dark: "#000000", light: "#ffffff" },
   });
 
-  // Brand colors (Cyprus Scene)
-  const primaryColor = { r: 14, g: 165, b: 233 }; // #0ea5e9
+  // ΦΟΜΟ Brand colors (Mediterranean theme)
+  const navyColor = { r: 16, g: 43, b: 74 }; // #102b4a - Mediterranean navy
+  const tealColor = { r: 62, g: 195, b: 183 }; // #3ec3b7 - Seafoam teal
   const darkColor = { r: 15, g: 23, b: 42 }; // #0f172a
   const mutedColor = { r: 100, g: 116, b: 139 }; // #64748b
   const lightBg = { r: 248, g: 250, b: 252 }; // #f8fafc
 
   // === HEADER WITH BRAND ===
-  pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
+  pdf.setFillColor(navyColor.r, navyColor.g, navyColor.b);
   pdf.rect(0, 0, 210, 45, "F");
   
-  // Brand name
+  // Brand name - ΦΟΜΟ
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(28);
+  pdf.setFontSize(32);
   pdf.setFont("helvetica", "bold");
-  pdf.text("CYPRUS SCENE", 105, 22, { align: "center" });
+  pdf.text("FOMO", 105, 22, { align: "center" });
   
   // Subtitle
   pdf.setFontSize(12);
@@ -135,9 +136,9 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
   pdf.setFont("helvetica", "bold");
   pdf.text("SCAN FOR ENTRY", 105, 205, { align: "center" });
 
-  // QR Code with border
-  pdf.setDrawColor(primaryColor.r, primaryColor.g, primaryColor.b);
-  pdf.setLineWidth(1);
+  // QR Code with teal border
+  pdf.setDrawColor(tealColor.r, tealColor.g, tealColor.b);
+  pdf.setLineWidth(1.5);
   pdf.roundedRect(67, 210, 76, 76, 4, 4, "S");
   pdf.addImage(qrDataUrl, "PNG", 70, 213, 70, 70);
 
@@ -147,7 +148,7 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
   pdf.setFont("helvetica", "normal");
   pdf.text("Present this QR code at the event entrance for check-in", 105, 295, { align: "center" });
 
-  // Download
-  const fileName = `cyprus-scene-ticket-${ticket.eventTitle.slice(0, 20).replace(/[^a-zA-Z0-9]/g, "-")}-${ticket.ticketId.slice(0, 8)}.pdf`;
+  // Download with ΦΟΜΟ branding
+  const fileName = `fomo-ticket-${ticket.eventTitle.slice(0, 20).replace(/[^a-zA-Z0-9]/g, "-")}-${ticket.ticketId.slice(0, 8)}.pdf`;
   pdf.save(fileName);
 };
