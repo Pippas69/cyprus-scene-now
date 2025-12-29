@@ -147,6 +147,12 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
   pdf.roundedRect(67, 210, 76, 76, 4, 4, "S");
   pdf.addImage(qrDataUrl, "PNG", 70, 213, 70, 70);
 
+  // Small ΦOMO watermark in corner of QR section
+  pdf.setTextColor(tealColor.r, tealColor.g, tealColor.b);
+  pdf.setFontSize(8);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("\u03A6OMO", 145, 280);
+
   // === FOOTER ===
   pdf.setTextColor(mutedColor.r, mutedColor.g, mutedColor.b);
   pdf.setFontSize(9);
