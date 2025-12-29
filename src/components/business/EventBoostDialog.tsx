@@ -99,7 +99,7 @@ const EventBoostDialog = ({
         if (checkoutError) throw checkoutError;
 
         if (checkoutData.url) {
-          window.open(checkoutData.url, "_blank");
+          window.location.href = checkoutData.url;
           toast.success(
             language === "el" ? "Ανακατεύθυνση στην πληρωμή" : "Redirecting to payment",
             {
