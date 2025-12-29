@@ -18,6 +18,7 @@ import { RSVPAnalytics } from '@/components/business/analytics/RSVPAnalytics';
 import { FollowerGrowth } from '@/components/business/analytics/FollowerGrowth';
 import { InsightsEngine } from '@/components/business/analytics/InsightsEngine';
 import { ExportTools } from '@/components/business/analytics/ExportTools';
+import { TicketAnalytics } from '@/components/business/analytics/TicketAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
@@ -36,6 +37,7 @@ const translations = {
     audience: 'Κοινό',
     insights: 'Συστάσεις',
     timing: 'Χρονισμός',
+    tickets: 'Εισιτήρια',
   },
   en: {
     title: 'Analytics',
@@ -47,6 +49,7 @@ const translations = {
     audience: 'Audience',
     insights: 'Insights',
     timing: 'Timing',
+    tickets: 'Tickets',
   },
 };
 
@@ -176,8 +179,9 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9">
           <TabsTrigger value="overview">{t.overview}</TabsTrigger>
+          <TabsTrigger value="tickets" disabled={!showDetailedData}>{t.tickets}</TabsTrigger>
           <TabsTrigger value="traffic" disabled={!showDetailedData}>{t.traffic}</TabsTrigger>
           <TabsTrigger value="engagement" disabled={!showDetailedData}>{t.engagement}</TabsTrigger>
           <TabsTrigger value="conversion" disabled={!showDetailedData}>{t.conversion}</TabsTrigger>
@@ -193,6 +197,10 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
         {showDetailedData && (
           <>
+            <TabsContent value="tickets" className="space-y-6">
+              <TicketAnalytics businessId={businessId} dateRange={dateRange} language={language} />
+            </TabsContent>
+
             <TabsContent value="traffic" className="space-y-6">
               <TrafficSourceAnalysis data={data} language={language} />
               <DeviceAnalytics data={data} language={language} />
