@@ -36,15 +36,20 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
   const mutedColor = { r: 100, g: 116, b: 139 }; // #64748b
   const lightBg = { r: 248, g: 250, b: 252 }; // #f8fafc
 
-  // === HEADER WITH BRAND ===
-  pdf.setFillColor(navyColor.r, navyColor.g, navyColor.b);
-  pdf.rect(0, 0, 210, 45, "F");
+  // === HEADER WITH BRAND (Gradient Effect) ===
+  // Top portion - Mediterranean navy
+  pdf.setFillColor(13, 59, 102); // #0d3b66
+  pdf.rect(0, 0, 210, 32, "F");
   
-  // Brand name - FOMO (using ASCII for PDF compatibility)
+  // Bottom portion - Teal accent bar
+  pdf.setFillColor(78, 205, 196); // #4ecdc4
+  pdf.rect(0, 32, 210, 13, "F");
+  
+  // Brand name - ΦOMO (Greek Φ + Latin OMO)
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(32);
   pdf.setFont("helvetica", "bold");
-  pdf.text("FOMO", 105, 22, { align: "center" });
+  pdf.text("\u03A6OMO", 105, 22, { align: "center" });
   
   // Subtitle
   pdf.setFontSize(12);
