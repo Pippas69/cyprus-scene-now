@@ -40,19 +40,38 @@ export function DateTimePicker({
     }
   }, [value]);
 
+  // Commit the current selection to the form
+  const commitValue = React.useCallback((date: Date | undefined, h: string, m: string) => {
+    if (date) {
+      const newDate = new Date(date);
+      const hours = parseInt(h) || 0;
+      const mins = parseInt(m) || 0;
+      newDate.setHours(hours, mins, 0, 0);
+      onChange(newDate);
+    }
+  }, [onChange]);
+
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
+    // Auto-commit when date is selected (with current time values)
+    if (date) {
+      commitValue(date, hours, minutes);
+    }
   };
 
   const handleDone = () => {
     if (selectedDate) {
-      const newDate = new Date(selectedDate);
-      const h = parseInt(hours) || 0;
-      const m = parseInt(minutes) || 0;
-      newDate.setHours(h, m, 0, 0);
-      onChange(newDate);
+      commitValue(selectedDate, hours, minutes);
       setOpen(false);
     }
+  };
+
+  // Also commit when popover closes (if we have a date)
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen && selectedDate) {
+      commitValue(selectedDate, hours, minutes);
+    }
+    setOpen(isOpen);
   };
 
   const handleClear = () => {
@@ -66,7 +85,7 @@ export function DateTimePicker({
   const locale = language === 'el' ? el : enUS;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
