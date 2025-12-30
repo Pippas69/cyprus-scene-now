@@ -24,6 +24,7 @@ interface Offer {
     name: string;
     logo_url: string | null;
     city: string;
+    stripe_payouts_enabled?: boolean;
   };
 }
 
@@ -173,18 +174,22 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           isOpen={isPurchaseOpen}
           onClose={() => setIsPurchaseOpen(false)}
           offer={{
-            id: offerData.id,
-            title: offerData.title,
-            description: offerData.description,
-            original_price_cents: originalPriceCents,
-            percent_off: percentOff,
-            end_at: offerData.end_at,
-            business_id: offerData.business_id,
-            businesses: offerData.businesses,
-          }}
-          language={language}
-        />
-      )}
+          id: offerData.id,
+          title: offerData.title,
+          description: offerData.description,
+          original_price_cents: originalPriceCents,
+          percent_off: percentOff,
+          end_at: offerData.end_at,
+          business_id: offerData.business_id,
+          businesses: {
+            name: offerData.businesses.name,
+            logo_url: offerData.businesses.logo_url,
+            stripe_payouts_enabled: offerData.businesses.stripe_payouts_enabled,
+          },
+        }}
+        language={language}
+      />
+    )}
     </Card>
   );
 };

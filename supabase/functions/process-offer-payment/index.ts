@@ -140,6 +140,7 @@ serve(async (req) => {
     logStep("Discount purchase count incremented");
 
     // Create commission ledger entry if there's a commission
+    // Status is "collected" because Stripe destination charge already split the payment
     if (purchase.commission_amount_cents > 0) {
       const { error: ledgerError } = await supabaseAdmin
         .from("commission_ledger")
@@ -151,13 +152,13 @@ serve(async (req) => {
           commission_percent: purchase.commission_percent,
           commission_amount_cents: purchase.commission_amount_cents,
           redeemed_at: new Date().toISOString(),
-          status: "pending",
+          status: "collected", // Stripe already collected via application_fee
         });
 
       if (ledgerError) {
         logStep("Commission ledger error (non-fatal)", { error: ledgerError.message });
       } else {
-        logStep("Commission ledger entry created");
+        logStep("Commission ledger entry created (status: collected via Stripe Connect)");
       }
     }
 

@@ -47,12 +47,12 @@ serve(async (req) => {
     const { discountId } = await req.json();
     if (!discountId) throw new Error("Discount ID is required");
 
-    // Fetch the discount/offer details
+    // Fetch the discount/offer details WITH business Stripe account info
     const { data: discount, error: discountError } = await supabaseAdmin
       .from("discounts")
       .select(`
         *,
-        businesses!inner(id, name, user_id)
+        businesses!inner(id, name, user_id, stripe_account_id, stripe_payouts_enabled)
       `)
       .eq("id", discountId)
       .single();
@@ -61,6 +61,18 @@ serve(async (req) => {
       throw new Error("Offer not found");
     }
     logStep("Discount fetched", { discountId, title: discount.title });
+
+    // Validate business has completed Stripe Connect onboarding
+    if (!discount.businesses.stripe_account_id) {
+      throw new Error("This business has not completed payment setup. Please try again later.");
+    }
+    if (!discount.businesses.stripe_payouts_enabled) {
+      throw new Error("This business's payment account is not yet verified. Please try again later.");
+    }
+    logStep("Business Stripe account verified", { 
+      stripeAccountId: discount.businesses.stripe_account_id,
+      payoutsEnabled: discount.businesses.stripe_payouts_enabled
+    });
 
     // Validate offer is active and within date range
     if (!discount.active) {
@@ -116,7 +128,7 @@ serve(async (req) => {
       commissionPercent = boostData.commission_percent;
     }
 
-    // Commission is based on original price
+    // Commission is based on original price (as per business logic)
     const commissionAmountCents = Math.round((originalPriceCents * commissionPercent) / 100);
     const businessPayoutCents = finalPriceCents - commissionAmountCents;
 
@@ -165,9 +177,11 @@ serve(async (req) => {
     }
     logStep("Purchase record created", { purchaseId: purchaseRecord.id });
 
-    // Create Stripe checkout session
+    // Create Stripe checkout session with DESTINATION CHARGE (split payment)
     const origin = req.headers.get("origin") || "https://fomo.lovable.app";
-    const session = await stripe.checkout.sessions.create({
+    
+    // Build checkout session config
+    const checkoutConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
@@ -193,7 +207,25 @@ serve(async (req) => {
         user_id: user.id,
         business_id: discount.business_id,
       },
+    };
+
+    // Add destination charge with application fee (split payment)
+    // Platform keeps the commission, business gets the rest automatically
+    checkoutConfig.payment_intent_data = {
+      application_fee_amount: commissionAmountCents, // Platform commission
+      transfer_data: {
+        destination: discount.businesses.stripe_account_id, // Business receives the rest
+      },
+    };
+
+    logStep("Creating checkout with destination charge", {
+      applicationFee: commissionAmountCents,
+      destination: discount.businesses.stripe_account_id,
+      totalCharge: finalPriceCents,
+      businessReceives: finalPriceCents - commissionAmountCents,
     });
+
+    const session = await stripe.checkout.sessions.create(checkoutConfig);
 
     // Update purchase record with checkout session ID
     await supabaseAdmin
