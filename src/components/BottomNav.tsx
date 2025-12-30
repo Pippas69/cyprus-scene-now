@@ -54,7 +54,7 @@ const BottomNav = () => {
     { icon: Home, label: "Home", path: "/feed" },
     { icon: Calendar, label: "Events", path: "/ekdiloseis" },
     { icon: MapPin, label: "Map", path: "/xartis" },
-    { icon: Tag, label: "Offers", path: "/feed" },
+    { icon: Tag, label: "Offers", path: "/offers" },
     { 
       icon: User, 
       label: "Profile", 

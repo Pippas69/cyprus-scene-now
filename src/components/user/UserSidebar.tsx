@@ -26,10 +26,11 @@ const translations = {
     feed: 'Feed',
     map: 'Χάρτης',
     events: 'Εκδηλώσεις',
+    offers: 'Προσφορές',
     myActivities: 'Οι Δραστηριότητές Μου',
     myEvents: 'Οι Εκδηλώσεις Μου',
     reservations: 'Κρατήσεις',
-    offers: 'Προσφορές',
+    myOffers: 'Οι Προσφορές Μου',
     tickets: 'Τα Εισιτήριά μου',
     account: 'Λογαριασμός',
     profile: 'Προφίλ',
@@ -40,10 +41,11 @@ const translations = {
     feed: 'Feed',
     map: 'Map',
     events: 'Events',
+    offers: 'Offers',
     myActivities: 'My Activities',
     myEvents: 'My Events',
     reservations: 'Reservations',
-    offers: 'Offers',
+    myOffers: 'My Offers',
     tickets: 'My Tickets',
     account: 'Account',
     profile: 'Profile',
@@ -100,12 +102,13 @@ export function UserSidebar() {
     { title: t.feed, url: '/feed', icon: Home },
     { title: t.map, url: '/xartis', icon: MapPin },
     { title: t.events, url: '/ekdiloseis', icon: Calendar },
+    { title: t.offers, url: '/offers', icon: Percent },
   ];
 
   const activityItems = [
     { title: t.myEvents, url: '/dashboard-user?tab=events', icon: Calendar, tab: 'events' },
     { title: t.reservations, url: '/dashboard-user?tab=reservations', icon: CalendarCheck, tab: 'reservations' },
-    { title: t.offers, url: '/dashboard-user?tab=offers', icon: Percent, tab: 'offers' },
+    { title: t.myOffers, url: '/dashboard-user?tab=offers', icon: Percent, tab: 'offers' },
     { title: t.tickets, url: '/dashboard-user?tab=tickets', icon: Ticket, tab: 'tickets' },
   ];
 
