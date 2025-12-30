@@ -75,19 +75,64 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
   const t = translations[language];
 
   useEffect(() => {
-    fetchConnectStatus();
-    
     // Check URL params for onboarding completion
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('stripe_onboarding') === 'complete') {
-      toast.success(language === 'el' ? 'Ρύθμιση ολοκληρώθηκε!' : 'Setup complete!');
       window.history.replaceState({}, '', window.location.pathname);
-      fetchConnectStatus(); // Refresh status
+      // Sync with Stripe to get accurate status after onboarding
+      syncConnectStatus();
     } else if (urlParams.get('stripe_refresh') === 'true') {
       toast.info(language === 'el' ? 'Παρακαλώ ολοκληρώστε τη ρύθμιση' : 'Please complete setup');
       window.history.replaceState({}, '', window.location.pathname);
+      fetchConnectStatus();
+    } else {
+      fetchConnectStatus();
     }
   }, [businessId]);
+
+  // Sync with Stripe API to get accurate account status
+  const syncConnectStatus = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: syncError } = await supabase.functions.invoke('sync-connect-status');
+      
+      if (syncError) {
+        console.error('Error syncing connect status:', syncError);
+        // Fall back to database fetch
+        await fetchConnectStatus();
+        return;
+      }
+
+      if (data?.status_changed) {
+        toast.success(language === 'el' ? 'Ρύθμιση ολοκληρώθηκε!' : 'Setup complete!');
+      } else if (data?.onboarding_completed && data?.payouts_enabled) {
+        toast.success(language === 'el' ? 'Ο λογαριασμός σας είναι έτοιμος!' : 'Your account is ready!');
+      } else if (data?.onboarding_completed && !data?.payouts_enabled) {
+        toast.info(language === 'el' 
+          ? 'Η επαλήθευση είναι σε εξέλιξη' 
+          : 'Verification in progress');
+      }
+
+      // Update local state based on sync result
+      if (!data?.onboarding_completed && data?.success === false) {
+        setStatus('not_connected');
+      } else if (data?.onboarding_completed) {
+        setStatus('connected');
+      } else {
+        setStatus('pending');
+      }
+      
+      setPayoutsEnabled(data?.payouts_enabled ?? false);
+    } catch (err) {
+      console.error('Error syncing connect status:', err);
+      // Fall back to database fetch
+      await fetchConnectStatus();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchConnectStatus = async () => {
     try {
@@ -212,7 +257,7 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
               setRedirectUrl(null);
               setShowFallback(false);
               setActionLoading(false);
-              fetchConnectStatus();
+              syncConnectStatus();
             }}
           >
             {language === 'el' ? 'Ολοκλήρωσα τη ρύθμιση' : 'I completed setup'}
