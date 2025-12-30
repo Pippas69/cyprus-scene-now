@@ -130,21 +130,24 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
       if (error) throw error;
 
       if (data?.url) {
-        // Store the URL and show redirecting state
+        // Store the URL for fallback
         setRedirectUrl(data.url);
-        toast.info(t.redirecting);
         
-        // Attempt automatic redirect
-        try {
-          window.location.assign(data.url);
-        } catch (e) {
-          console.error('Automatic redirect failed:', e);
-        }
+        // Attempt to open in new tab (works outside iframe restrictions)
+        const newWindow = window.open(data.url, '_blank', 'noopener,noreferrer');
         
-        // After 900ms, show fallback button if still on page
-        setTimeout(() => {
+        if (newWindow) {
+          // Successfully opened - show "opened in new tab" state
+          toast.success(language === 'el' 
+            ? 'Η ρύθμιση άνοιξε σε νέα καρτέλα' 
+            : 'Setup opened in new tab');
+        } else {
+          // Popup was blocked - show fallback immediately
           setShowFallback(true);
-        }, 900);
+          toast.warning(language === 'el'
+            ? 'Το popup μπλοκαρίστηκε. Πατήστε το κουμπί παρακάτω.'
+            : 'Popup blocked. Click the button below.');
+        }
       } else {
         setActionLoading(false);
       }
@@ -153,7 +156,6 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
       toast.error(language === 'el' ? 'Σφάλμα κατά τη ρύθμιση' : 'Error during setup');
       setActionLoading(false);
     }
-    // Note: Don't set actionLoading to false on success - keep it true during redirect
   };
 
   const handleViewDashboard = async () => {
@@ -180,25 +182,41 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-8 space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">{t.redirecting}</p>
+          {!showFallback && <Loader2 className="h-8 w-8 animate-spin text-primary" />}
           
-          {showFallback && (
-            <div className="space-y-2 text-center">
-              <p className="text-sm text-amber-600">
-                {language === 'el' 
-                  ? 'Η αυτόματη μεταφορά απέτυχε. Πατήστε παρακάτω:' 
-                  : 'Automatic redirect failed. Click below:'}
-              </p>
-              <a
-                href={redirectUrl}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
-              >
-                <ExternalLink className="h-4 w-4" />
-                {language === 'el' ? 'Συνέχεια στη Ρύθμιση' : 'Continue to Setup'}
-              </a>
-            </div>
-          )}
+          <p className="text-sm text-muted-foreground">
+            {showFallback 
+              ? (language === 'el' 
+                  ? 'Το popup μπλοκαρίστηκε. Πατήστε παρακάτω για να ανοίξει η ρύθμιση:' 
+                  : 'Popup blocked. Click below to open setup:')
+              : (language === 'el'
+                  ? 'Η ρύθμιση άνοιξε σε νέα καρτέλα. Επιστρέψτε εδώ όταν ολοκληρώσετε.'
+                  : 'Setup opened in a new tab. Return here when done.')
+            }
+          </p>
+          
+          <a
+            href={redirectUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+          >
+            <ExternalLink className="h-4 w-4" />
+            {language === 'el' ? 'Άνοιγμα Ρύθμισης Stripe' : 'Open Stripe Setup'}
+          </a>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setRedirectUrl(null);
+              setShowFallback(false);
+              setActionLoading(false);
+              fetchConnectStatus();
+            }}
+          >
+            {language === 'el' ? 'Ολοκλήρωσα τη ρύθμιση' : 'I completed setup'}
+          </Button>
         </CardContent>
       </Card>
     );
