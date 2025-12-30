@@ -91,11 +91,17 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       title: "Ανακαλύψτε το ΦΟΜΟ",
       subtitle: "Δείτε τι συμβαίνει τώρα στην Κύπρο",
       loadMore: "Φόρτωση Περισσότερων",
+      offers: "Προσφορές",
+      offersSubtitle: "Αποκλειστικές εκπτώσεις από επιχειρήσεις",
+      events: "Εκδηλώσεις",
     },
     en: {
       title: "Discover ΦΟΜΟ",
       subtitle: "See what's happening now in Cyprus",
       loadMore: "Load More",
+      offers: "Offers",
+      offersSubtitle: "Exclusive discounts from businesses",
+      events: "Events",
     }
   };
   const t = translations[language];
@@ -298,6 +304,71 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     },
     staleTime: 60000 // Cache for 1 minute
   });
+
+  // Fetch active offers (discounts)
+  const {
+    data: offers,
+    isLoading: offersLoading
+  } = useQuery({
+    queryKey: ['feed-offers', selectedCity],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      let query = supabase
+        .from('discounts')
+        .select(`
+          id, title, description, percent_off, original_price_cents, 
+          start_at, end_at, business_id, terms, max_per_user,
+          businesses!inner (name, logo_url, city, verified, stripe_payouts_enabled)
+        `)
+        .eq('active', true)
+        .eq('businesses.verified', true)
+        .lte('start_at', now)
+        .gte('end_at', now)
+        .gt('original_price_cents', 0);
+      
+      if (selectedCity) {
+        query = query.eq('businesses.city', selectedCity);
+      }
+      
+      const { data, error } = await query.limit(6);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60000
+  });
+
+  // Fetch offer boosts for prioritization
+  const {
+    data: offerBoosts
+  } = useQuery({
+    queryKey: ['active-offer-boosts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('offer_boosts')
+        .select('discount_id, targeting_quality, commission_percent')
+        .eq('active', true);
+      
+      if (error) {
+        console.error('Error fetching offer boosts:', error);
+        return [];
+      }
+      return data || [];
+    },
+    staleTime: 60000
+  });
+
+  // Prioritize boosted offers
+  const getPersonalizedOffers = () => {
+    if (!offers) return [];
+    
+    return offers.map(offer => {
+      const boost = offerBoosts?.find(b => b.discount_id === offer.id);
+      const boostScore = boost ? boost.targeting_quality * 10 : 0;
+      return { ...offer, boostScore };
+    }).sort((a, b) => b.boostScore - a.boostScore);
+  };
+
+  const displayedOffers = getPersonalizedOffers();
 
   const getPersonalizedEvents = () => {
     if (!events) return [];
@@ -581,7 +652,51 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           {/* Results container ref for smooth scroll */}
           <div ref={resultsRef} />
 
-          <div className="mt-6 animate-fade-in">
+          {/* Offers Section */}
+          {displayedOffers && displayedOffers.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">{t.offers}</h2>
+                  <p className="text-sm text-muted-foreground">{t.offersSubtitle}</p>
+                </div>
+              </div>
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {displayedOffers.map((offer: any) => (
+                  <motion.div key={offer.id} variants={itemVariants}>
+                    <OfferCard
+                      offer={offer}
+                      language={language}
+                      user={user}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          )}
+
+          {offersLoading && (
+            <div className="mb-8">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-foreground">{t.offers}</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Array.from({ length: 3 }).map((_, i) => <OfferCardSkeleton key={i} />)}
+              </div>
+            </div>
+          )}
+
+          {/* Events Section */}
+          {(displayedOffers && displayedOffers.length > 0) && (
+            <h2 className="text-xl font-bold text-foreground mb-4">{t.events}</h2>
+          )}
+
+          <div className="animate-fade-in">
             {eventsLoading ? (
               <div className={viewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-2"}>
                 {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
