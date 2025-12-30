@@ -22,6 +22,7 @@ interface Offer {
   businesses: {
     name: string;
     logo_url: string | null;
+    stripe_payouts_enabled?: boolean;
   };
 }
 
@@ -51,9 +52,13 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferP
     processing: { el: "Επεξεργασία...", en: "Processing..." },
     errorAuth: { el: "Πρέπει να συνδεθείτε για να αγοράσετε", en: "You must be logged in to purchase" },
     errorGeneric: { el: "Κάτι πήγε στραβά", en: "Something went wrong" },
+    paymentNotSetup: { el: "Αυτή η επιχείρηση δεν έχει ολοκληρώσει τη ρύθμιση πληρωμών", en: "This business hasn't completed payment setup yet" },
   };
 
   const t = (key: keyof typeof text) => text[key][language];
+
+  // Check if business can receive payments
+  const canReceivePayments = offer?.businesses?.stripe_payouts_enabled !== false;
 
   if (!offer) return null;
 
@@ -177,6 +182,14 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferP
             </div>
           )}
 
+          {/* Payment Not Setup Warning */}
+          {!canReceivePayments && (
+            <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{t("paymentNotSetup")}</span>
+            </div>
+          )}
+
           {/* No Refund Warning */}
           <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
             <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
@@ -206,7 +219,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferP
             <Button
               onClick={handlePurchase}
               className="flex-1"
-              disabled={isLoading || !acceptedTerms}
+              disabled={isLoading || !acceptedTerms || !canReceivePayments}
             >
               {isLoading ? (
                 <>

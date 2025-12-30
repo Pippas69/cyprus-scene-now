@@ -93,13 +93,13 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     },
   });
 
-  // Fetch business verification status
+  // Fetch business verification and Stripe status
   const { data: businessData, isLoading: isLoadingBusiness } = useQuery({
     queryKey: ["business-verification", businessId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("businesses")
-        .select("verified, name")
+        .select("verified, name, stripe_account_id, stripe_payouts_enabled")
         .eq("id", businessId)
         .single();
       if (error) throw error;
@@ -109,6 +109,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   });
 
   const isBusinessVerified = businessData?.verified === true;
+  const hasStripeSetup = !!businessData?.stripe_account_id && businessData?.stripe_payouts_enabled === true;
 
   // Get default dates
   const defaultDates = getDefaultDates();
@@ -270,6 +271,21 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               {language === 'el' 
                 ? 'Δεν μπορείτε να δημοσιεύσετε προσφορές μέχρι να επαληθευτεί η επιχείρησή σας. Επικοινωνήστε με την υποστήριξη για περισσότερες πληροφορίες.' 
                 : 'You cannot publish offers until your business is verified. Contact support for more information.'}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Stripe Setup Warning */}
+        {!isLoadingBusiness && isBusinessVerified && !hasStripeSetup && (
+          <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-900/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-800 dark:text-amber-200">
+              {language === 'el' ? 'Ρύθμιση πληρωμών απαιτείται' : 'Payment setup required'}
+            </AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-300">
+              {language === 'el' 
+                ? 'Για να λαμβάνετε πληρωμές από πωλήσεις προσφορών, πρέπει να ολοκληρώσετε τη ρύθμιση Stripe στις Ρυθμίσεις > Πληρωμές.' 
+                : 'To receive payments from offer sales, you need to complete Stripe setup in Settings > Payments.'}
             </AlertDescription>
           </Alert>
         )}
