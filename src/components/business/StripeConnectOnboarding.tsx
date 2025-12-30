@@ -214,54 +214,78 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
       if (error) throw error;
 
       if (data?.url) {
+        // Don't try window.open() - just show the fallback UI with explicit links
+        // This avoids COOP blocks on iOS Safari
         setDashboardUrl(data.url);
-        const newWindow = window.open(data.url, '_blank', 'noopener,noreferrer');
-        
-        if (newWindow) {
-          toast.success(language === 'el' 
-            ? 'Ο πίνακας άνοιξε σε νέα καρτέλα' 
-            : 'Dashboard opened in new tab');
-          setActionLoading(false);
-        }
-        // If popup blocked, dashboardUrl is set and fallback UI will show
-      } else {
-        setActionLoading(false);
       }
     } catch (err) {
       console.error('Error creating login link:', err);
       toast.error(language === 'el' ? 'Σφάλμα κατά τη φόρτωση' : 'Error loading dashboard');
+    } finally {
       setActionLoading(false);
     }
   };
 
-  // Show dashboard fallback UI if popup was blocked
+  const handleCopyDashboardLink = async () => {
+    if (!dashboardUrl) return;
+    try {
+      await navigator.clipboard.writeText(dashboardUrl);
+      toast.success(language === 'el' ? 'Ο σύνδεσμος αντιγράφηκε' : 'Link copied to clipboard');
+    } catch {
+      toast.error(language === 'el' ? 'Αποτυχία αντιγραφής' : 'Failed to copy link');
+    }
+  };
+
+  // Show dashboard link options (always show explicit links, no auto-open)
   if (dashboardUrl) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-8 space-y-4">
-          <p className="text-sm text-muted-foreground text-center">
+          <ExternalLink className="h-8 w-8 text-primary" />
+          
+          <p className="text-sm text-muted-foreground text-center max-w-xs">
             {language === 'el' 
-              ? 'Ο πίνακας πληρωμών άνοιξε σε νέα καρτέλα. Αν δεν άνοιξε, πατήστε παρακάτω:' 
-              : 'Dashboard opened in a new tab. If it didn\'t open, click below:'}
+              ? 'Επιλέξτε πώς θέλετε να ανοίξετε τον πίνακα πληρωμών:' 
+              : 'Choose how to open your payment dashboard:'}
           </p>
           
+          {/* Primary: Open in same tab - most reliable on iOS */}
           <a
             href={dashboardUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors w-full max-w-xs"
           >
-            <ExternalLink className="h-4 w-4" />
-            {language === 'el' ? 'Άνοιγμα Πίνακα Πληρωμών' : 'Open Payment Dashboard'}
+            {language === 'el' ? 'Άνοιγμα Πίνακα' : 'Open Dashboard'}
           </a>
+          
+          <p className="text-xs text-muted-foreground">
+            {language === 'el' ? 'Συνιστάται για iPhone' : 'Recommended for iPhone'}
+          </p>
+          
+          {/* Secondary options */}
+          <div className="flex gap-2">
+            <a
+              href={dashboardUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1 px-4 py-2 text-sm border border-border rounded-md hover:bg-accent transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {language === 'el' ? 'Νέα καρτέλα' : 'New tab'}
+            </a>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyDashboardLink}
+            >
+              {language === 'el' ? 'Αντιγραφή' : 'Copy link'}
+            </Button>
+          </div>
           
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setDashboardUrl(null);
-              setActionLoading(false);
-            }}
+            onClick={() => setDashboardUrl(null)}
           >
             {language === 'el' ? 'Πίσω' : 'Go back'}
           </Button>
