@@ -69,6 +69,8 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
   const [status, setStatus] = useState<ConnectStatus>('not_connected');
   const [payoutsEnabled, setPayoutsEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [showFallback, setShowFallback] = useState(false);
 
   const t = translations[language];
 
@@ -120,21 +122,38 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
   const handleConnectOrContinue = async () => {
     try {
       setActionLoading(true);
+      setRedirectUrl(null);
+      setShowFallback(false);
 
       const { data, error } = await supabase.functions.invoke('create-connect-account');
 
       if (error) throw error;
 
       if (data?.url) {
+        // Store the URL and show redirecting state
+        setRedirectUrl(data.url);
         toast.info(t.redirecting);
-        window.location.href = data.url;
+        
+        // Attempt automatic redirect
+        try {
+          window.location.assign(data.url);
+        } catch (e) {
+          console.error('Automatic redirect failed:', e);
+        }
+        
+        // After 900ms, show fallback button if still on page
+        setTimeout(() => {
+          setShowFallback(true);
+        }, 900);
+      } else {
+        setActionLoading(false);
       }
     } catch (err) {
       console.error('Error creating connect account:', err);
       toast.error(language === 'el' ? 'Σφάλμα κατά τη ρύθμιση' : 'Error during setup');
-    } finally {
       setActionLoading(false);
     }
+    // Note: Don't set actionLoading to false on success - keep it true during redirect
   };
 
   const handleViewDashboard = async () => {
@@ -155,6 +174,35 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
       setActionLoading(false);
     }
   };
+
+  // Show redirect fallback UI if waiting for redirect
+  if (redirectUrl) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-8 space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">{t.redirecting}</p>
+          
+          {showFallback && (
+            <div className="space-y-2 text-center">
+              <p className="text-sm text-amber-600">
+                {language === 'el' 
+                  ? 'Η αυτόματη μεταφορά απέτυχε. Πατήστε παρακάτω:' 
+                  : 'Automatic redirect failed. Click below:'}
+              </p>
+              <a
+                href={redirectUrl}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {language === 'el' ? 'Συνέχεια στη Ρύθμιση' : 'Continue to Setup'}
+              </a>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (
