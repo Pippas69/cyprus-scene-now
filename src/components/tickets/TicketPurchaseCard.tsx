@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper } from "lucide-react";
+import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -72,10 +72,20 @@ export const TicketPurchaseCard = ({
   const { language } = useLanguage();
   const text = t[language];
   
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
+
+  // Reset checkout state when quantities change
+  useEffect(() => {
+    if (checkoutUrl) {
+      setCheckoutUrl(null);
+      setRedirectAttempted(false);
+    }
+  }, [quantities]);
 
   const updateQuantity = (tierId: string, delta: number) => {
     const tier = tiers.find(t => t.id === tierId);
@@ -159,15 +169,28 @@ export const TicketPurchaseCard = ({
         );
         onSuccess?.(data.orderId, true);
       } else {
-        // Redirect to Stripe checkout in same tab to avoid pop-up blockers
-        window.location.href = data.url;
+        // Store URL and attempt redirect - use fallback pattern for iOS/Safari
+        setCheckoutUrl(data.url);
+        setIsLoading(false);
+        
+        // Attempt automatic redirect
+        window.location.assign(data.url);
+        
+        // Show fallback button after delay if user is still on page
+        setTimeout(() => {
+          setRedirectAttempted(true);
+        }, 900);
       }
     } catch (error: any) {
       console.error('Checkout error:', error);
       toast.error(error.message || (language === 'el' ? "Αποτυχία αγοράς" : "Purchase failed"));
-    } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCancelRedirect = () => {
+    setCheckoutUrl(null);
+    setRedirectAttempted(false);
   };
 
   const total = calculateTotal();
@@ -282,29 +305,66 @@ export const TicketPurchaseCard = ({
             </span>
           </div>
           
-          <Button 
-            className="w-full" 
-            size="lg"
-            onClick={handleCheckout}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {text.processing}
-              </>
-            ) : total === 0 ? (
-              <>
-                <PartyPopper className="h-4 w-4 mr-2" />
-                {text.getTickets}
-              </>
-            ) : (
-              <>
-                <CreditCard className="h-4 w-4 mr-2" />
-                {text.checkout}
-              </>
-            )}
-          </Button>
+          {/* Checkout URL redirect state */}
+          {checkoutUrl ? (
+            <div className="w-full space-y-3">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">
+                  {language === 'el' ? 'Μεταφορά στην πληρωμή...' : 'Opening payment...'}
+                </span>
+              </div>
+              
+              {redirectAttempted && (
+                <>
+                  <a
+                    href={checkoutUrl}
+                    className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {language === 'el' ? 'Συνέχεια στην Πληρωμή' : 'Continue to Payment'}
+                  </a>
+                  <p className="text-xs text-muted-foreground text-center">
+                    {language === 'el' 
+                      ? 'Αν η σελίδα δεν άνοιξε αυτόματα, πατήστε το κουμπί παραπάνω.' 
+                      : "If the page didn't open automatically, tap the button above."}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancelRedirect}
+                    className="w-full"
+                  >
+                    {language === 'el' ? 'Ακύρωση' : 'Cancel'}
+                  </Button>
+                </>
+              )}
+            </div>
+          ) : (
+            <Button 
+              className="w-full" 
+              size="lg"
+              onClick={handleCheckout}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {text.processing}
+                </>
+              ) : total === 0 ? (
+                <>
+                  <PartyPopper className="h-4 w-4 mr-2" />
+                  {text.getTickets}
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  {text.checkout}
+                </>
+              )}
+            </Button>
+          )}
         </CardFooter>
       )}
     </Card>
