@@ -47,13 +47,14 @@ import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import TicketSuccess from "./pages/TicketSuccess";
 import OfferPurchaseSuccess from "./pages/OfferPurchaseSuccess";
+import Offers from "./pages/Offers";
 
 const queryClient = new QueryClient();
 
 // Component to conditionally render BottomNav
 function AppContent() {
   const location = useLocation();
-  const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/dashboard-user', '/messages'];
+  const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/offers', '/dashboard-user', '/messages'];
   const adminRoutes = ['/admin'];
   const hideBottomNav = userLayoutRoutes.some(route => location.pathname.startsWith(route)) || 
                         adminRoutes.some(route => location.pathname.startsWith(route));
@@ -72,6 +73,7 @@ function AppContent() {
           <Route path="/feed" element={<PageTransition><UserLayout><Feed showNavbar={false} /></UserLayout></PageTransition>} />
           <Route path="/ekdiloseis" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
           <Route path="/xartis" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />
+          <Route path="/offers" element={<PageTransition><UserLayout><Offers /></UserLayout></PageTransition>} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
