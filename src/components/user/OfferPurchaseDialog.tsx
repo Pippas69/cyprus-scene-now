@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, CreditCard, Tag, Store, Clock, AlertCircle } from "lucide-react";
+import { Loader2, CreditCard, Tag, Store, Clock, AlertCircle, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -36,6 +36,26 @@ interface OfferPurchaseDialogProps {
 export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferPurchaseDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [showFallback, setShowFallback] = useState(false);
+
+  // Reset state when dialog opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCheckoutUrl(null);
+      setShowFallback(false);
+      setIsLoading(false);
+      setAcceptedTerms(false);
+    }
+  }, [isOpen]);
+
+  // Show fallback button after delay if redirect didn't work
+  useEffect(() => {
+    if (checkoutUrl) {
+      const timer = setTimeout(() => setShowFallback(true), 900);
+      return () => clearTimeout(timer);
+    }
+  }, [checkoutUrl]);
 
   const text = {
     title: { el: "Αγορά Προσφοράς", en: "Purchase Offer" },
@@ -50,6 +70,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferP
     payWithCard: { el: "Πληρωμή με Κάρτα", en: "Pay with Card" },
     cancel: { el: "Άκυρο", en: "Cancel" },
     processing: { el: "Επεξεργασία...", en: "Processing..." },
+    redirecting: { el: "Μετάβαση στην πληρωμή...", en: "Redirecting to payment..." },
+    continueToPayment: { el: "Συνέχεια στην Πληρωμή", en: "Continue to Payment" },
     errorAuth: { el: "Πρέπει να συνδεθείτε για να αγοράσετε", en: "You must be logged in to purchase" },
     errorGeneric: { el: "Κάτι πήγε στραβά", en: "Something went wrong" },
     paymentNotSetup: { el: "Αυτή η επιχείρηση δεν έχει ολοκληρώσει τη ρύθμιση πληρωμών", en: "This business hasn't completed payment setup yet" },
@@ -82,6 +104,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferP
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error(t("errorAuth"));
+        setIsLoading(false);
         return;
       }
 
@@ -92,13 +115,13 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferP
       if (error) throw error;
 
       if (data?.url) {
-        window.open(data.url, "_blank");
-        onClose();
+        setCheckoutUrl(data.url);
+        // Try automatic redirect (same-tab to avoid popup blockers)
+        window.location.assign(data.url);
       }
     } catch (error: any) {
       console.error("Purchase error:", error);
       toast.error(error.message || t("errorGeneric"));
-    } finally {
       setIsLoading(false);
     }
   };
@@ -212,28 +235,48 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferP
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
-              {t("cancel")}
-            </Button>
-            <Button
-              onClick={handlePurchase}
-              className="flex-1"
-              disabled={isLoading || !acceptedTerms || !canReceivePayments}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("processing")}
-                </>
-              ) : (
-                <>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  {t("payWithCard")}
-                </>
+          {checkoutUrl ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t("redirecting")}</span>
+              </div>
+              {showFallback && (
+                <a
+                  href={checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md font-medium transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {t("continueToPayment")}
+                </a>
               )}
-            </Button>
-          </div>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
+                {t("cancel")}
+              </Button>
+              <Button
+                onClick={handlePurchase}
+                className="flex-1"
+                disabled={isLoading || !acceptedTerms || !canReceivePayments}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t("processing")}
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    {t("payWithCard")}
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
