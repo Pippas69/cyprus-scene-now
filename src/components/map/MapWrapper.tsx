@@ -8,9 +8,10 @@ interface MapWrapperProps {
   neighborhood: string;
   selectedCategories: string[];
   eventCounts: Record<string, number>;
+  timeAccessFilters?: string[];
 }
 
-export default function MapWrapper({ city, neighborhood, selectedCategories, eventCounts }: MapWrapperProps) {
+export default function MapWrapper({ city, neighborhood, selectedCategories, eventCounts, timeAccessFilters = [] }: MapWrapperProps) {
   const { language } = useLanguage();
   
   const translations = {
@@ -36,6 +37,7 @@ export default function MapWrapper({ city, neighborhood, selectedCategories, eve
         neighborhood={neighborhood} 
         selectedCategories={selectedCategories}
         eventCounts={eventCounts}
+        timeAccessFilters={timeAccessFilters}
       />
     </Suspense>
   );
