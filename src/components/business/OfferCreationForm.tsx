@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,6 +19,7 @@ import OfferBoostSection from "./OfferBoostSection";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const createOfferSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -49,6 +50,22 @@ interface OfferCreationFormProps {
   businessId: string;
 }
 
+// Helper to get default dates
+const getDefaultDates = () => {
+  const now = new Date();
+  const startDate = new Date(now);
+  startDate.setHours(now.getHours() + 1, 0, 0, 0); // Start in 1 hour
+  
+  const endDate = new Date(now);
+  endDate.setDate(endDate.getDate() + 30); // End in 30 days
+  endDate.setHours(23, 59, 0, 0);
+  
+  return {
+    start_at: startDate.toISOString(),
+    end_at: endDate.toISOString(),
+  };
+};
+
 const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const { toast } = useToast();
   const { language } = useLanguage();
@@ -58,6 +75,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [validationShake, setValidationShake] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
     commissionPercent: number;
@@ -91,6 +110,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
   const isBusinessVerified = businessData?.verified === true;
 
+  // Get default dates
+  const defaultDates = getDefaultDates();
+
   const form = useForm<OfferFormData>({
     resolver: zodResolver(createOfferSchema(language)),
     defaultValues: {
@@ -100,11 +122,31 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       percent_off: 20,
       max_purchases: null,
       max_per_user: 1,
-      start_at: "",
-      end_at: "",
+      start_at: defaultDates.start_at,
+      end_at: defaultDates.end_at,
       terms: "",
     },
   });
+
+  // Scroll to first error field
+  const scrollToFirstError = () => {
+    const errors = form.formState.errors;
+    const firstErrorKey = Object.keys(errors)[0];
+    if (firstErrorKey && formRef.current) {
+      const errorElement = formRef.current.querySelector(`[name="${firstErrorKey}"]`) ||
+        formRef.current.querySelector(`[data-field="${firstErrorKey}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (errorElement as HTMLElement).focus?.();
+      }
+    }
+  };
+
+  // Trigger shake animation
+  const triggerValidationShake = () => {
+    setValidationShake(true);
+    setTimeout(() => setValidationShake(false), 500);
+  };
 
   const watchedPrice = form.watch("original_price");
   const watchedDiscount = form.watch("percent_off");
@@ -233,19 +275,39 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-            console.error("Form validation errors:", errors);
-            const firstError = Object.values(errors)[0];
-            const errorMessage = firstError?.message || (language === 'el' 
-              ? "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία" 
-              : "Please fill in all required fields");
-            setSubmitError(errorMessage as string);
-            toast({
-              title: toastT.error,
-              description: errorMessage as string,
-              variant: "destructive",
-            });
-          })} className="space-y-6">
+          <form 
+            ref={formRef}
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              console.error("=== FORM VALIDATION FAILED ===");
+              console.error("Validation errors:", errors);
+              console.log("Current form values:", form.getValues());
+              
+              // Build detailed error message
+              const errorMessages = Object.entries(errors).map(([field, error]) => {
+                return `${field}: ${error?.message}`;
+              });
+              console.error("Error details:", errorMessages);
+              
+              const firstError = Object.values(errors)[0];
+              const errorMessage = firstError?.message || (language === 'el' 
+                ? "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία" 
+                : "Please fill in all required fields");
+              
+              setSubmitError(errorMessage as string);
+              triggerValidationShake();
+              
+              // Show toast with error
+              toast({
+                title: toastT.error,
+                description: errorMessage as string,
+                variant: "destructive",
+              });
+              
+              // Scroll to first error after a brief delay
+              setTimeout(scrollToFirstError, 100);
+            })} 
+            className="space-y-6"
+          >
             <FormField
               control={form.control}
               name="title"
@@ -388,7 +450,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               control={form.control}
               name="start_at"
               render={({ field }) => (
-                <FormItem>
+                <FormItem data-field="start_at">
                   <FormLabel>{t.startDate} *</FormLabel>
                   <FormControl>
                     <DateTimePicker
@@ -407,7 +469,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               control={form.control}
               name="end_at"
               render={({ field }) => (
-                <FormItem>
+                <FormItem data-field="end_at">
                   <FormLabel>{t.endDate} *</FormLabel>
                   <FormControl>
                     <DateTimePicker
@@ -462,9 +524,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               </Alert>
             )}
 
-            {/* Visible Error State */}
+            {/* Visible Error State - Placed right above button for visibility */}
             {submitError && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="animate-in fade-in-0 slide-in-from-top-2">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>{language === 'el' ? 'Σφάλμα' : 'Error'}</AlertTitle>
                 <AlertDescription>{submitError}</AlertDescription>
@@ -482,7 +544,10 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
             <Button 
               type="submit" 
-              className="w-full" 
+              className={cn(
+                "w-full transition-all",
+                validationShake && "animate-[shake_0.5s_ease-in-out] ring-2 ring-destructive"
+              )}
               disabled={isSubmitting || (!isLoadingBusiness && !isBusinessVerified) || submitSuccess}
             >
               {isSubmitting ? (
