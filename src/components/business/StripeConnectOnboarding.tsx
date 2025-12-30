@@ -71,6 +71,7 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
   const [error, setError] = useState<string | null>(null);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [showFallback, setShowFallback] = useState(false);
+  const [dashboardUrl, setDashboardUrl] = useState<string | null>(null);
 
   const t = translations[language];
 
@@ -206,21 +207,68 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
   const handleViewDashboard = async () => {
     try {
       setActionLoading(true);
+      setDashboardUrl(null);
 
       const { data, error } = await supabase.functions.invoke('create-connect-login-link');
 
       if (error) throw error;
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        setDashboardUrl(data.url);
+        const newWindow = window.open(data.url, '_blank', 'noopener,noreferrer');
+        
+        if (newWindow) {
+          toast.success(language === 'el' 
+            ? 'Ο πίνακας άνοιξε σε νέα καρτέλα' 
+            : 'Dashboard opened in new tab');
+          setActionLoading(false);
+        }
+        // If popup blocked, dashboardUrl is set and fallback UI will show
+      } else {
+        setActionLoading(false);
       }
     } catch (err) {
       console.error('Error creating login link:', err);
       toast.error(language === 'el' ? 'Σφάλμα κατά τη φόρτωση' : 'Error loading dashboard');
-    } finally {
       setActionLoading(false);
     }
   };
+
+  // Show dashboard fallback UI if popup was blocked
+  if (dashboardUrl) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-8 space-y-4">
+          <p className="text-sm text-muted-foreground text-center">
+            {language === 'el' 
+              ? 'Ο πίνακας πληρωμών άνοιξε σε νέα καρτέλα. Αν δεν άνοιξε, πατήστε παρακάτω:' 
+              : 'Dashboard opened in a new tab. If it didn\'t open, click below:'}
+          </p>
+          
+          <a
+            href={dashboardUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+          >
+            <ExternalLink className="h-4 w-4" />
+            {language === 'el' ? 'Άνοιγμα Πίνακα Πληρωμών' : 'Open Payment Dashboard'}
+          </a>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDashboardUrl(null);
+              setActionLoading(false);
+            }}
+          >
+            {language === 'el' ? 'Πίσω' : 'Go back'}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Show redirect fallback UI if waiting for redirect
   if (redirectUrl) {
