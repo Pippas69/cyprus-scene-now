@@ -52,6 +52,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
       center: MAPBOX_CONFIG.defaultCenter,
       zoom: MAPBOX_CONFIG.defaultZoom,
       pitch: MAPBOX_CONFIG.defaultPitch,
+      maxBounds: MAPBOX_CONFIG.maxBounds,
+      minZoom: MAPBOX_CONFIG.minZoom,
     });
     map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
     map.current.addControl(new mapboxgl.FullscreenControl(), 'top-left');
