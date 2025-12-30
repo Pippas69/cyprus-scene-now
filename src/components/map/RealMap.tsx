@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import ReactDOM from 'react-dom/client';
@@ -11,7 +11,6 @@ import { ClusterMarker } from './ClusterMarker';
 import { EventPopup } from './EventPopup';
 import { MapSearch } from './MapSearch';
 import { MapControls } from './MapControls';
-import { TimeFilter, type TimeFilterValue } from './TimeFilter';
 import { Loader2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
@@ -20,17 +19,17 @@ interface RealMapProps {
   neighborhood: string;
   selectedCategories: string[];
   eventCounts: Record<string, number>;
+  timeAccessFilters?: string[];
 }
 
-const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
+const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [] }: RealMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
-  const [timeFilter, setTimeFilter] = useState<TimeFilterValue>("all");
   const { language } = useLanguage();
 
-  const { events, loading } = useMapEvents(selectedCategories, timeFilter);
+  const { events, loading } = useMapEvents(selectedCategories, timeAccessFilters);
 
   const MAPBOX_TOKEN = MAPBOX_CONFIG.publicToken;
 
@@ -119,10 +118,6 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
     <div className="relative w-full h-[70vh] rounded-2xl overflow-hidden shadow-xl">
       <div className="absolute top-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)]">
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
-      </div>
-      
-      <div className="absolute top-20 left-4 z-10 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg max-w-[calc(100%-2rem)]">
-        <TimeFilter value={timeFilter} onChange={setTimeFilter} language={language} />
       </div>
       
       <MapControls 

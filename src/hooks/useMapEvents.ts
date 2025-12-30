@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { isEventHappeningNow } from "@/lib/mapUtils";
-import type { TimeFilterValue } from "@/components/map/TimeFilter";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from "date-fns";
 
 export interface EventLocation {
   id: string;
@@ -13,6 +12,8 @@ export interface EventLocation {
   category: string[];
   cover_image_url?: string;
   coordinates: [number, number];
+  price?: number;
+  accepts_reservations?: boolean;
   business?: {
     id: string;
     name: string;
@@ -23,7 +24,7 @@ export interface EventLocation {
 
 export const useMapEvents = (
   selectedCategories: string[],
-  timeFilter: TimeFilterValue = "all"
+  timeAccessFilters: string[] = []
 ) => {
   const [events, setEvents] = useState<EventLocation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,8 @@ export const useMapEvents = (
             category,
             cover_image_url,
             business_id,
+            price,
+            accepts_reservations,
             businesses (
               id,
               name,
@@ -55,36 +58,56 @@ export const useMapEvents = (
             )
           `);
 
-        // Time filtering
         const now = new Date();
-        switch (timeFilter) {
-          case "now":
-            const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-            query = query
-              .lte('start_at', oneHourLater.toISOString())
-              .gte('end_at', now.toISOString());
-            break;
-          case "today":
-            const endOfDay = new Date(now);
-            endOfDay.setHours(23, 59, 59, 999);
-            query = query
-              .gte('start_at', now.toISOString())
-              .lte('start_at', endOfDay.toISOString());
-            break;
-          case "week":
-            const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            query = query
-              .gte('start_at', now.toISOString())
-              .lte('start_at', oneWeekLater.toISOString());
-            break;
-          case "month":
-            const oneMonthLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-            query = query
-              .gte('start_at', now.toISOString())
-              .lte('start_at', oneMonthLater.toISOString());
-            break;
-          default:
-            query = query.gte('end_at', now.toISOString());
+
+        // Time filtering based on timeAccessFilters
+        const hasLiveNow = timeAccessFilters.includes("live_now");
+        const hasTonight = timeAccessFilters.includes("tonight");
+        const hasMonFri = timeAccessFilters.includes("mon_fri");
+        const hasWeekend = timeAccessFilters.includes("the_weekend");
+        const hasThisMonth = timeAccessFilters.includes("this_month");
+
+        // Determine date range based on filters
+        if (hasLiveNow) {
+          // Events happening right now
+          query = query
+            .lte('start_at', now.toISOString())
+            .gte('end_at', now.toISOString());
+        } else if (hasTonight) {
+          // Events tonight (today after 6pm until midnight)
+          const tonight6pm = new Date(now);
+          tonight6pm.setHours(18, 0, 0, 0);
+          const endOfTonight = endOfDay(now);
+          query = query
+            .gte('start_at', tonight6pm.toISOString())
+            .lte('start_at', endOfTonight.toISOString());
+        } else if (hasMonFri) {
+          // Events Monday to Friday this week
+          const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+          const friday = addDays(weekStart, 4);
+          const fridayEnd = endOfDay(friday);
+          query = query
+            .gte('start_at', now.toISOString())
+            .lte('start_at', fridayEnd.toISOString());
+        } else if (hasWeekend) {
+          // Events this weekend (Saturday & Sunday)
+          const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+          const saturday = addDays(weekStart, 5);
+          const sunday = addDays(weekStart, 6);
+          const saturdayStart = startOfDay(saturday);
+          const sundayEnd = endOfDay(sunday);
+          query = query
+            .gte('start_at', saturdayStart.toISOString())
+            .lte('start_at', sundayEnd.toISOString());
+        } else if (hasThisMonth) {
+          // Events this month
+          const monthEnd = endOfMonth(now);
+          query = query
+            .gte('start_at', now.toISOString())
+            .lte('start_at', monthEnd.toISOString());
+        } else {
+          // Default: all upcoming events
+          query = query.gte('end_at', now.toISOString());
         }
 
         const { data, error: fetchError } = await query;
@@ -125,6 +148,8 @@ export const useMapEvents = (
                 location: event.location,
                 category: event.category || [],
                 cover_image_url: event.cover_image_url,
+                price: event.price,
+                accepts_reservations: event.accepts_reservations,
                 coordinates: [coords.lng, coords.lat] as [number, number],
                 business: event.businesses ? {
                   id: event.businesses.id,
@@ -140,6 +165,20 @@ export const useMapEvents = (
             mappedEvents = mappedEvents.filter(event =>
               event.category.some(cat => selectedCategories.includes(cat))
             );
+          }
+
+          // Access filtering
+          const hasFreeEntrance = timeAccessFilters.includes("free_entrance");
+          const hasWithReservations = timeAccessFilters.includes("with_reservations");
+          const hasWithTickets = timeAccessFilters.includes("with_tickets");
+
+          if (hasFreeEntrance || hasWithReservations || hasWithTickets) {
+            mappedEvents = mappedEvents.filter(event => {
+              if (hasFreeEntrance && (!event.price || event.price === 0)) return true;
+              if (hasWithReservations && event.accepts_reservations) return true;
+              if (hasWithTickets && event.price && event.price > 0) return true;
+              return false;
+            });
           }
 
           setEvents(mappedEvents);
@@ -174,7 +213,7 @@ export const useMapEvents = (
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedCategories, timeFilter]);
+  }, [selectedCategories, timeAccessFilters]);
 
   return { events, loading, error };
 };
