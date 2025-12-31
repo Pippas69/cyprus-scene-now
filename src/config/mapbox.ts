@@ -12,6 +12,15 @@ export const MAPBOX_CONFIG = {
   defaultPitch: 45,
   mapStyle: "mapbox://styles/mapbox/light-v11",
   
+  // Mediterranean atmosphere/fog colors
+  fog: {
+    color: 'rgb(254, 250, 246)',           // Sand white for horizon
+    highColor: 'rgb(78, 205, 196)',        // Seafoam teal for upper sky
+    horizonBlend: 0.08,                    // Subtle blend
+    spaceColor: 'rgb(13, 59, 102)',        // Aegean deep blue for space
+    starIntensity: 0.15,                   // Subtle stars when tilted
+  },
+  
   // Cyprus bounding box - restricts map view to Cyprus only
   // Southwest [lng, lat] to Northeast [lng, lat]
   maxBounds: [
