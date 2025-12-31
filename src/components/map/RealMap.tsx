@@ -22,6 +22,86 @@ interface RealMapProps {
   timeAccessFilters?: string[];
 }
 
+// Dynamic ocean theme application - styles ALL road layers by matching keywords
+const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
+  const style = mapInstance.getStyle();
+  if (!style?.layers) return;
+
+  const roadKeywords = ['road', 'street', 'highway', 'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'link', 'path', 'bridge', 'tunnel'];
+  const majorRoadKeywords = ['motorway', 'trunk', 'primary', 'highway'];
+  const secondaryRoadKeywords = ['secondary', 'tertiary'];
+
+  let styledCount = 0;
+
+  style.layers.forEach((layer) => {
+    const layerId = layer.id.toLowerCase();
+
+    // Style road lines
+    if (layer.type === 'line') {
+      const isRoad = roadKeywords.some(kw => layerId.includes(kw));
+      if (isRoad) {
+        try {
+          const isMajor = majorRoadKeywords.some(kw => layerId.includes(kw));
+          const isSecondary = secondaryRoadKeywords.some(kw => layerId.includes(kw));
+
+          if (isMajor) {
+            mapInstance.setPaintProperty(layer.id, 'line-color', '#0D3B66');
+            mapInstance.setPaintProperty(layer.id, 'line-opacity', 0.95);
+          } else if (isSecondary) {
+            mapInstance.setPaintProperty(layer.id, 'line-color', '#1F5A8A');
+            mapInstance.setPaintProperty(layer.id, 'line-opacity', 0.9);
+          } else {
+            mapInstance.setPaintProperty(layer.id, 'line-color', '#3D6B99');
+            mapInstance.setPaintProperty(layer.id, 'line-opacity', 0.85);
+          }
+          styledCount++;
+        } catch (e) {
+          // Some layers may not support these properties
+        }
+      }
+    }
+
+    // Style water
+    if (layer.type === 'fill' && (layerId.includes('water') || layerId.includes('ocean') || layerId.includes('sea'))) {
+      try {
+        mapInstance.setPaintProperty(layer.id, 'fill-color', '#1a5f7a');
+      } catch (e) {}
+    }
+
+    // Style land/background
+    if (layer.type === 'fill' && (layerId.includes('land') || layerId.includes('background'))) {
+      try {
+        mapInstance.setPaintProperty(layer.id, 'fill-color', '#fef7ed');
+      } catch (e) {}
+    }
+
+    // Style buildings
+    if (layer.type === 'fill' && layerId.includes('building')) {
+      try {
+        mapInstance.setPaintProperty(layer.id, 'fill-color', '#e0f4f1');
+      } catch (e) {}
+    }
+
+    // Style parks
+    if (layer.type === 'fill' && (layerId.includes('park') || layerId.includes('green'))) {
+      try {
+        mapInstance.setPaintProperty(layer.id, 'fill-color', '#88D8B0');
+      } catch (e) {}
+    }
+
+    // Style road labels for visibility
+    if (layer.type === 'symbol' && layerId.includes('road') && layerId.includes('label')) {
+      try {
+        mapInstance.setPaintProperty(layer.id, 'text-color', '#0D3B66');
+        mapInstance.setPaintProperty(layer.id, 'text-halo-color', '#FDF6E3');
+        mapInstance.setPaintProperty(layer.id, 'text-halo-width', 1.5);
+      } catch (e) {}
+    }
+  });
+
+  console.log(`Ocean theme applied: ${styledCount} road layers styled`);
+};
+
 const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [] }: RealMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -67,40 +147,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
         'star-intensity': MAPBOX_CONFIG.fog.starIntensity,
       });
       
-      // Apply ocean colors to map layers
+      // Apply ocean theme to all map layers dynamically
       if (map.current) {
-        // Water - Deep aegean blue
-        map.current.setPaintProperty('water', 'fill-color', '#1a5f7a');
-        
-        // Land background - Sandy cream
-        try {
-          map.current.setPaintProperty('background', 'background-color', '#fef7ed');
-        } catch (e) {
-          // Background layer might not exist in all styles
-        }
-        
-        // Major roads - Aegean deep blue (high visibility)
-        try {
-          map.current.setPaintProperty('road-primary', 'line-color', '#0D3B66');
-          map.current.setPaintProperty('road-secondary-tertiary', 'line-color', '#3D6B99');
-        } catch (e) {}
-        
-        // Minor roads - Softer ocean blues
-        try {
-          map.current.setPaintProperty('road-street', 'line-color', '#5A8F9E');
-          map.current.setPaintProperty('road-minor', 'line-color', '#7BAAB8');
-        } catch (e) {}
-        
-        // Buildings - Light aegean tint
-        try {
-          map.current.setPaintProperty('building', 'fill-color', '#e0f4f1');
-        } catch (e) {}
-        
-        // Parks - Ocean-tinted green
-        try {
-          map.current.setPaintProperty('landuse-park', 'fill-color', '#88D8B0');
-          map.current.setPaintProperty('park', 'fill-color', '#88D8B0');
-        } catch (e) {}
+        applyOceanMapTheme(map.current);
       }
     });
     
