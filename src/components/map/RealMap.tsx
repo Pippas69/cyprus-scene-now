@@ -56,8 +56,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
       minZoom: MAPBOX_CONFIG.minZoom,
     });
     
-    // Apply Mediterranean fog/atmosphere on style load
+    // Apply Mediterranean styling on style load
     map.current.on('style.load', () => {
+      // Apply fog/atmosphere
       map.current?.setFog({
         color: MAPBOX_CONFIG.fog.color,
         'high-color': MAPBOX_CONFIG.fog.highColor,
@@ -65,6 +66,42 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
         'space-color': MAPBOX_CONFIG.fog.spaceColor,
         'star-intensity': MAPBOX_CONFIG.fog.starIntensity,
       });
+      
+      // Apply ocean colors to map layers
+      if (map.current) {
+        // Water - Deep aegean blue
+        map.current.setPaintProperty('water', 'fill-color', '#1a5f7a');
+        
+        // Land background - Sandy cream
+        try {
+          map.current.setPaintProperty('background', 'background-color', '#fef7ed');
+        } catch (e) {
+          // Background layer might not exist in all styles
+        }
+        
+        // Major roads - Seafoam teal
+        try {
+          map.current.setPaintProperty('road-primary', 'line-color', '#4ECDC4');
+          map.current.setPaintProperty('road-secondary-tertiary', 'line-color', '#6dd5c8');
+        } catch (e) {}
+        
+        // Minor roads - Light seafoam
+        try {
+          map.current.setPaintProperty('road-street', 'line-color', '#88D8B0');
+          map.current.setPaintProperty('road-minor', 'line-color', '#a8e6cf');
+        } catch (e) {}
+        
+        // Buildings - Light aegean tint
+        try {
+          map.current.setPaintProperty('building', 'fill-color', '#e0f4f1');
+        } catch (e) {}
+        
+        // Parks - Ocean-tinted green
+        try {
+          map.current.setPaintProperty('landuse-park', 'fill-color', '#88D8B0');
+          map.current.setPaintProperty('park', 'fill-color', '#88D8B0');
+        } catch (e) {}
+      }
     });
     
     map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
