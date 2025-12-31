@@ -1,0 +1,21 @@
+{
+  "name": "ΦΟΜΟ",
+  "short_name": "ΦΟΜΟ",
+  "description": "Discover what's happening now in Cyprus. Live events, trending places, exclusive QR discounts.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/fomo-logo-new.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/fomo-logo-new.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
