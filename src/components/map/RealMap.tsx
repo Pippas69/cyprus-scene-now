@@ -55,6 +55,18 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
       maxBounds: MAPBOX_CONFIG.maxBounds,
       minZoom: MAPBOX_CONFIG.minZoom,
     });
+    
+    // Apply Mediterranean fog/atmosphere on style load
+    map.current.on('style.load', () => {
+      map.current?.setFog({
+        color: MAPBOX_CONFIG.fog.color,
+        'high-color': MAPBOX_CONFIG.fog.highColor,
+        'horizon-blend': MAPBOX_CONFIG.fog.horizonBlend,
+        'space-color': MAPBOX_CONFIG.fog.spaceColor,
+        'star-intensity': MAPBOX_CONFIG.fog.starIntensity,
+      });
+    });
+    
     map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
     map.current.addControl(new mapboxgl.FullscreenControl(), 'top-left');
     map.current.addControl(new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true }), 'top-left');
@@ -117,7 +129,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
   };
 
   return (
-    <div className="relative w-full h-[70vh] rounded-2xl overflow-hidden shadow-xl">
+    <div className="relative w-full h-[70vh] rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20">
       <div className="absolute top-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)]">
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
       </div>
@@ -140,8 +152,11 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
       
       <div ref={mapContainer} className="absolute inset-0" />
       
+      {/* Ocean gradient overlay */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-aegean/5 via-transparent to-seafoam/5 rounded-2xl" />
+      
       {!loading && events.length > 0 && (
-        <div className="absolute bottom-4 left-4 z-10 bg-background/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
+        <div className="absolute bottom-4 left-4 z-10 bg-gradient-to-r from-aegean to-seafoam text-white px-4 py-2 rounded-lg shadow-lg">
           <p className="text-sm font-medium">
             {events.length} {language === 'el' ? (events.length === 1 ? 'εκδήλωση' : 'εκδηλώσεις') : (events.length === 1 ? 'event' : 'events')}
           </p>
