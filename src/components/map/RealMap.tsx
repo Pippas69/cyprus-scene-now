@@ -79,16 +79,16 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
           // Background layer might not exist in all styles
         }
         
-        // Major roads - Seafoam teal
+        // Major roads - Aegean deep blue (high visibility)
         try {
-          map.current.setPaintProperty('road-primary', 'line-color', '#4ECDC4');
-          map.current.setPaintProperty('road-secondary-tertiary', 'line-color', '#6dd5c8');
+          map.current.setPaintProperty('road-primary', 'line-color', '#0D3B66');
+          map.current.setPaintProperty('road-secondary-tertiary', 'line-color', '#3D6B99');
         } catch (e) {}
         
-        // Minor roads - Light seafoam
+        // Minor roads - Softer ocean blues
         try {
-          map.current.setPaintProperty('road-street', 'line-color', '#88D8B0');
-          map.current.setPaintProperty('road-minor', 'line-color', '#a8e6cf');
+          map.current.setPaintProperty('road-street', 'line-color', '#5A8F9E');
+          map.current.setPaintProperty('road-minor', 'line-color', '#7BAAB8');
         } catch (e) {}
         
         // Buildings - Light aegean tint
