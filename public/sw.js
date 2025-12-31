@@ -5,8 +5,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: 'New Notification',
     body: 'You have a new notification',
-    icon: '/fomo-logo.png',
-    badge: '/fomo-logo.png',
+    icon: '/fomo-logo-new.png',
+    badge: '/fomo-logo-new.png',
     data: { url: '/' }
   };
   
@@ -20,8 +20,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: data.body,
-    icon: data.icon || '/fomo-logo.png',
-    badge: data.badge || '/fomo-logo.png',
+    icon: data.icon || '/fomo-logo-new.png',
+    badge: data.badge || '/fomo-logo-new.png',
     vibrate: [100, 50, 100],
     data: data.data || { url: '/' },
     actions: [
