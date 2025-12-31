@@ -104,7 +104,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     typingSpeed={70}
                     deletingSpeed={40}
                     pauseDuration={2500}
-                    className="text-transparent bg-clip-text bg-gradient-ocean"
+                    className="text-gradient-ocean"
                   />
                 </h1>
                 <motion.div

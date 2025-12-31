@@ -258,6 +258,16 @@ All colors MUST be HSL.
   .bg-gradient-ocean {
     background: var(--gradient-ocean);
   }
+
+  /* Cross-browser gradient text utility - Safari compatible */
+  .text-gradient-ocean {
+    display: inline-block;
+    background-image: var(--gradient-ocean);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
   
   .shadow-card {
     box-shadow: var(--shadow-card);
