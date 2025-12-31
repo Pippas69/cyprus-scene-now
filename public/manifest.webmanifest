@@ -1,6 +1,6 @@
 {
-  "name": "ΦΟΜΟ",
-  "short_name": "ΦΟΜΟ",
+  "name": "ΦOMO",
+  "short_name": "ΦOMO",
   "description": "Discover what's happening now in Cyprus. Live events, trending places, exclusive QR discounts.",
   "start_url": "/",
   "display": "standalone",
