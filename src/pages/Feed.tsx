@@ -550,11 +550,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex max-w-full overflow-x-hidden">
       {/* Desktop Sidebar */}
       {showNavbar && <FeedSidebar language={language} user={user} />}
 
-      <div className="flex-1">
+      <div className="flex-1 overflow-x-hidden max-w-full">
         <OfflineIndicator />
       
       <div className="md:hidden">
@@ -567,8 +567,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       
       {/* Mobile header when inside UserLayout */}
       {!showNavbar && (
-        <div className="sticky top-0 z-40 bg-background border-b shadow-sm">
-          <div className="px-4 py-3 space-y-3">
+        <div className="sticky top-0 z-40 bg-background border-b shadow-sm overflow-hidden">
+          <div className="px-3 py-3 space-y-3 max-w-full">
             <div className="flex items-center justify-between">
               <h1 className="text-xl font-bold text-foreground">{t.title}</h1>
               <LanguageToggle />
@@ -595,7 +595,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
       {showNavbar && (
         <div className="sticky top-0 z-40 bg-background border-b shadow-sm">
-          <div className="container mx-auto px-4 py-3">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 overflow-hidden">
             <div className="flex flex-col gap-3">
               <div>
                 <h1 className="text-3xl font-bold mb-1 text-foreground">{t.title}</h1>
@@ -622,7 +622,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
       {/* Smart Search Bar - RSRVIN Inspired */}
       {showNavbar && (
-        <div className="container mx-auto px-4 -mt-4 mb-6 relative z-30">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 -mt-4 mb-6 relative z-30">
           <SmartSearchBar
             language={language}
             onSearch={handleSmartSearch}
@@ -631,7 +631,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-hidden">
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <TimeAccessFilters 

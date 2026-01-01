@@ -117,7 +117,7 @@ const EmptyState = ({ type, filters, onClearFilters, language }: EmptyStateProps
 
   return (
     <motion.div 
-      className="flex flex-col items-center justify-center py-16 px-4 text-center"
+      className="flex flex-col items-center justify-center py-12 sm:py-16 px-3 sm:px-4 text-center max-w-full overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -138,8 +138,8 @@ const EmptyState = ({ type, filters, onClearFilters, language }: EmptyStateProps
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.4 }}
       >
-        <h3 className="text-2xl font-bold mb-2 text-foreground">{message.title}</h3>
-        <p className="text-muted-foreground mb-8 max-w-md leading-relaxed">{message.description}</p>
+        <h3 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">{message.title}</h3>
+        <p className="text-muted-foreground mb-6 sm:mb-8 max-w-xs sm:max-w-md leading-relaxed">{message.description}</p>
       </motion.div>
       
       {/* Action buttons with gradient hover */}

@@ -83,8 +83,8 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
       )} 
       style={style}
     >
-      <CardContent className="p-4">
-        <div className="flex gap-4">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex gap-3 sm:gap-4">
           {/* Business Logo - Clickable */}
           <Link 
             to={`/business/${offerData.business_id}`}
@@ -94,11 +94,11 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               <img
                 src={offerData.businesses.logo_url}
                 alt={offerData.businesses.name}
-                className="w-16 h-16 rounded-lg object-cover"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover"
               />
             ) : (
-              <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-                <Percent className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-muted flex items-center justify-center">
+                <Percent className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" aria-hidden="true" />
               </div>
             )}
           </Link>
@@ -106,8 +106,8 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           {/* Offer Details */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-2">
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg line-clamp-1">{offerData.title}</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-base sm:text-lg line-clamp-1 break-words">{offerData.title}</h3>
                 <Link 
                   to={`/business/${offerData.business_id}`}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
@@ -140,7 +140,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               </div>
             )}
 
-            <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground mb-3">
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 <span>{offerData.businesses.city}</span>
