@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
 import { useBetaMode, validateInviteCode } from "@/hooks/useBetaMode";
 import { useLanguage } from "@/hooks/useLanguage";
-import { getMainCategories } from "@/lib/unifiedCategories";
+import { BusinessCategorySelector } from "@/components/business/BusinessCategorySelector";
 
 const cities = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 
@@ -455,22 +455,12 @@ const SignupBusiness = () => {
 
             {/* Category */}
             <div>
-              <Label>{language === 'el' ? 'Κατηγορία *' : 'Category *'}</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {getMainCategories(language).map(cat => (
-                  <div key={cat.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={cat.id} 
-                      checked={selectedCategories.includes(cat.id)} 
-                      onCheckedChange={checked => handleCategoryChange(cat.id, checked as boolean)} 
-                    />
-                    <label htmlFor={cat.id} className="text-sm cursor-pointer flex items-center gap-2">
-                      <span>{cat.icon}</span>
-                      <span>{cat.label}</span>
-                    </label>
-                  </div>
-                ))}
-              </div>
+              <Label className="mb-2 block">{language === 'el' ? 'Κατηγορία * (επιλέξτε κύριες κατηγορίες ή υποκατηγορίες)' : 'Category * (select main categories or sub-categories)'}</Label>
+              <BusinessCategorySelector
+                selectedCategories={selectedCategories}
+                onCategoryChange={handleCategoryChange}
+                language={language}
+              />
               {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
             </div>
 
