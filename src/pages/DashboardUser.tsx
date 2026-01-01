@@ -104,11 +104,11 @@ const DashboardUser = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full max-w-full px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
       {/* Welcome Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">{getSectionTitle()}</h1>
-        <p className="text-muted-foreground mt-1">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{getSectionTitle()}</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           {language === 'el' ? 'Διαχειριστείτε τα δεδομένα σας' : 'Manage your data'}
         </p>
       </div>

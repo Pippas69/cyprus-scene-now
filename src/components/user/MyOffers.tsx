@@ -290,22 +290,22 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               </Badge>
             )}
           </div>
-          <CardTitle className="text-lg mt-2">{purchase.discounts.title}</CardTitle>
+          <CardTitle className="text-base sm:text-lg mt-2 line-clamp-2">{purchase.discounts.title}</CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 p-3 sm:p-6 pt-0 sm:pt-0">
           {purchase.discounts.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">{purchase.discounts.description}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{purchase.discounts.description}</p>
           )}
 
-          <div className="flex items-center justify-between text-sm bg-muted/50 rounded-lg p-3">
+          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between text-sm bg-muted/50 rounded-lg p-2 sm:p-3 gap-2">
             <div>
               <p className="text-muted-foreground text-xs">{t.originalPrice}</p>
-              <p className="line-through">€{(purchase.original_price_cents / 100).toFixed(2)}</p>
+              <p className="line-through text-sm">€{(purchase.original_price_cents / 100).toFixed(2)}</p>
             </div>
-            <div className="text-right">
+            <div className="xs:text-right">
               <p className="text-muted-foreground text-xs">{t.youPaid}</p>
-              <p className="font-bold text-primary">€{(purchase.final_price_cents / 100).toFixed(2)}</p>
+              <p className="font-bold text-primary text-sm">€{(purchase.final_price_cents / 100).toFixed(2)}</p>
             </div>
           </div>
 
@@ -350,22 +350,22 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <ShoppingBag className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold">{t.title}</h1>
+    <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 md:px-6 overflow-hidden">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <ShoppingBag className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+        <h1 className="text-2xl sm:text-3xl font-bold truncate">{t.title}</h1>
       </div>
 
       <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="active">
+        <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm">
+          <TabsTrigger value="active" className="px-1 sm:px-3">
             {t.active}
             {activePurchases.length > 0 && (
-              <Badge variant="secondary" className="ml-2">{activePurchases.length}</Badge>
+              <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">{activePurchases.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="redeemed">{t.redeemed}</TabsTrigger>
-          <TabsTrigger value="expired">{t.expired}</TabsTrigger>
+          <TabsTrigger value="redeemed" className="px-1 sm:px-3">{t.redeemed}</TabsTrigger>
+          <TabsTrigger value="expired" className="px-1 sm:px-3">{t.expired}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="mt-6">
