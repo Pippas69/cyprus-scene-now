@@ -82,24 +82,6 @@ export const unifiedCategories: UnifiedCategory[] = [
       { id: "concerts-live-music", label: { el: "Συναυλίες/Live Μουσική", en: "Concerts/Live Music" } },
     ],
   },
-  {
-    id: "family-community",
-    label: { el: "Οικογένεια & Κοινότητα", en: "Family & Community" },
-    icon: "👨‍👩‍👧‍👦",
-    hasDropdown: false,
-  },
-  {
-    id: "business-networking",
-    label: { el: "Επιχειρηματικότητα & Networking", en: "Business & Networking" },
-    icon: "💼",
-    hasDropdown: false,
-  },
-  {
-    id: "shopping-lifestyle",
-    label: { el: "Αγορές & Lifestyle", en: "Shopping & Lifestyle" },
-    icon: "🛍️",
-    hasDropdown: false,
-  },
 ];
 
 // Helper to get all category and sub-option IDs (flat list for matching)
