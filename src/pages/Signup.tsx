@@ -20,9 +20,9 @@ import { validationTranslations, formatValidationMessage } from "@/translations/
 import { Confetti, useConfetti } from "@/components/ui/confetti";
 import { useBetaMode } from "@/hooks/useBetaMode";
 import { OceanLoader } from "@/components/ui/ocean-loader";
+import { getMainCategories } from "@/lib/unifiedCategories";
 
 const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
-const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -374,12 +374,20 @@ const Signup = () => {
                   {language === "el" ? "Τι σου αρέσει περισσότερο; (προαιρετικό)" : "What do you like most? (optional)"}
                 </FormLabel>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {categories.map(category => <div key={category} className="flex items-center space-x-2">
-                      <Checkbox id={category} checked={selectedPreferences.includes(category)} onCheckedChange={() => togglePreference(category)} className="rounded" />
-                      <label htmlFor={category} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
-                        {category}
+                  {getMainCategories(language).map(category => (
+                    <div key={category.id} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={category.id} 
+                        checked={selectedPreferences.includes(category.id)} 
+                        onCheckedChange={() => togglePreference(category.id)} 
+                        className="rounded" 
+                      />
+                      <label htmlFor={category.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2">
+                        <span>{category.icon}</span>
+                        <span>{category.label}</span>
                       </label>
-                    </div>)}
+                    </div>
+                  ))}
                 </div>
               </div>
 

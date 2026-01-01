@@ -14,8 +14,8 @@ import { useState, useEffect } from "react";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
 import { useBetaMode, validateInviteCode } from "@/hooks/useBetaMode";
 import { useLanguage } from "@/hooks/useLanguage";
+import { getMainCategories } from "@/lib/unifiedCategories";
 
-const categories = ["Καφετέριες & Εστιατόρια", "Νυχτερινή Διασκέδαση", "Τέχνη & Πολιτισμός", "Fitness & Wellness", "Οικογένεια & Κοινότητα", "Επιχειρηματικότητα & Networking", "Εξωτερικές Δραστηριότητες", "Αγορές & Lifestyle"];
 const cities = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 
 const SignupBusiness = () => {
@@ -457,15 +457,16 @@ const SignupBusiness = () => {
             <div>
               <Label>{language === 'el' ? 'Κατηγορία *' : 'Category *'}</Label>
               <div className="grid grid-cols-2 gap-3 mt-2">
-                {categories.map(cat => (
-                  <div key={cat} className="flex items-center space-x-2">
+                {getMainCategories(language).map(cat => (
+                  <div key={cat.id} className="flex items-center space-x-2">
                     <Checkbox 
-                      id={cat} 
-                      checked={selectedCategories.includes(cat)} 
-                      onCheckedChange={checked => handleCategoryChange(cat, checked as boolean)} 
+                      id={cat.id} 
+                      checked={selectedCategories.includes(cat.id)} 
+                      onCheckedChange={checked => handleCategoryChange(cat.id, checked as boolean)} 
                     />
-                    <label htmlFor={cat} className="text-sm cursor-pointer">
-                      {cat}
+                    <label htmlFor={cat.id} className="text-sm cursor-pointer flex items-center gap-2">
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
                     </label>
                   </div>
                 ))}
