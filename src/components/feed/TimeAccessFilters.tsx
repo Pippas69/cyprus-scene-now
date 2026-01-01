@@ -197,8 +197,8 @@ const TimeAccessFilters = ({ language, selectedFilters, onFilterChange }: TimeAc
             <Badge
               key={category.id}
               variant={isSelected ? "default" : "outline"}
-              className={cn(
-                "cursor-pointer transition-all hover:scale-105 font-semibold min-h-[40px] px-4 flex-shrink-0",
+                  className={cn(
+                    "cursor-pointer transition-all hover:scale-105 font-semibold text-sm min-h-[40px] px-4 flex-shrink-0",
                 isSelected 
                   ? "bg-primary text-primary-foreground border-primary" 
                   : "bg-muted text-foreground border-border hover:bg-primary/10 hover:border-primary/30"
