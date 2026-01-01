@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toastTranslations } from '@/translations/toastTranslations';
+import { getMainCategories } from '@/lib/unifiedCategories';
+import { Heart } from 'lucide-react';
 
 interface ProfileSettingsProps {
   userId: string;
@@ -45,6 +47,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
         city: profile.city,
         town: profile.town,
         gender: profile.gender,
+        preferences: profile.preferences || [],
       })
       .eq('id', userId);
 
@@ -64,6 +67,14 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
     setLoading(false);
   };
 
+  const togglePreference = (categoryId: string) => {
+    const currentPreferences = profile.preferences || [];
+    const newPreferences = currentPreferences.includes(categoryId)
+      ? currentPreferences.filter((id: string) => id !== categoryId)
+      : [...currentPreferences, categoryId];
+    setProfile({ ...profile, preferences: newPreferences });
+  };
+
   const text = {
     el: {
       title: 'Ρυθμίσεις Προφίλ',
@@ -77,6 +88,8 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
       female: 'Γυναίκα',
       other: 'Άλλο',
       save: 'Αποθήκευση',
+      interests: 'Ενδιαφέροντα',
+      interestsDescription: 'Επιλέξτε τι σας αρέσει για καλύτερες προτάσεις',
     },
     en: {
       title: 'Profile Settings',
@@ -90,10 +103,13 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
       female: 'Female',
       other: 'Other',
       save: 'Save Changes',
+      interests: 'Interests',
+      interestsDescription: 'Select what you like for better recommendations',
     },
   };
 
   const labels = text[language];
+  const categories = getMainCategories(language);
 
   if (!profile) return null;
 
@@ -154,13 +170,45 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" disabled={loading}>
+
+            {/* Category Preferences */}
+            <div className="space-y-3 pt-4 border-t">
+              <div>
+                <Label className="flex items-center gap-2 text-base">
+                  <Heart className="h-4 w-4 text-primary" />
+                  {labels.interests}
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {labels.interestsDescription}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {categories.map((category) => (
+                  <div key={category.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`pref-${category.id}`}
+                      checked={(profile.preferences || []).includes(category.id)}
+                      onCheckedChange={() => togglePreference(category.id)}
+                      className="rounded"
+                    />
+                    <label
+                      htmlFor={`pref-${category.id}`}
+                      className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
+                    >
+                      <span>{category.icon}</span>
+                      <span>{category.label}</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Button type="submit" disabled={loading} className="mt-4">
               {labels.save}
             </Button>
           </form>
         </CardContent>
       </Card>
-
     </div>
   );
 };
