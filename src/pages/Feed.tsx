@@ -10,7 +10,7 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
-import LanguageToggle from "@/components/LanguageToggle";
+
 import MapWrapper from "@/components/map/MapWrapper";
 import HeroCarousel from "@/components/feed/HeroCarousel";
 import SmartSearchBar from "@/components/feed/SmartSearchBar";
@@ -569,10 +569,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       {!showNavbar && (
         <div className="sticky top-0 z-40 bg-background border-b shadow-sm overflow-hidden">
           <div className="px-3 py-3 space-y-3 max-w-full">
-            <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-foreground">{t.title}</h1>
-              <LanguageToggle />
-            </div>
+            <h1 className="text-xl font-bold text-foreground">{t.title}</h1>
             <div className="flex gap-2 overflow-x-auto pb-1">
               <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
             </div>
