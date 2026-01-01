@@ -181,7 +181,6 @@ const DashboardUser = () => {
         position="bottom-right"
         size="large"
         variant="primary"
-        pulse={true}
       />
     </div>
   );
