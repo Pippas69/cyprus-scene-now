@@ -797,6 +797,59 @@ All colors MUST be HSL.
   .animate-shake {
     animation: shake 0.5s ease-in-out;
   }
+
+  /* Ocean wave animations for admin dashboard */
+  @keyframes wave-flow {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes wave-gentle {
+    0%, 100% { 
+      transform: translateY(0) scaleY(1);
+      opacity: 0.6;
+    }
+    50% { 
+      transform: translateY(-3px) scaleY(0.95);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes wave-shimmer {
+    0% { 
+      background-position: -200% 0;
+    }
+    100% { 
+      background-position: 200% 0;
+    }
+  }
+
+  .animate-wave-flow {
+    animation: wave-flow 8s ease-in-out infinite;
+  }
+
+  .animate-wave-gentle {
+    animation: wave-gentle 3s ease-in-out infinite;
+  }
+
+  .animate-wave-shimmer {
+    background-size: 200% 100%;
+    animation: wave-shimmer 3s ease-in-out infinite;
+  }
+
+  /* Ocean wave SVG path animation */
+  @keyframes wave-path {
+    0%, 100% {
+      d: path("M0,20 Q25,15 50,20 T100,20 V30 H0 Z");
+    }
+    50% {
+      d: path("M0,20 Q25,25 50,20 T100,20 V30 H0 Z");
+    }
+  }
+
+  .wave-path-animated {
+    animation: wave-path 4s ease-in-out infinite;
+  }
 }
 
 /* Hide scrollbar for horizontal scroll on mobile */
