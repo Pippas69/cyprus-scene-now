@@ -95,7 +95,9 @@ export const AdminSidebar = () => {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
-          <div className="h-8 w-8 rounded bg-amber-500" />
+          <div className="h-8 w-8 rounded bg-gradient-to-br from-[#0D3B66] to-[#4ECDC4] flex items-center justify-center">
+            <span className="text-xs font-bold text-white">Φ</span>
+          </div>
           <div>
             <p className="text-sm font-semibold">Admin Panel</p>
             <p className="text-xs text-muted-foreground">ΦΟΜΟ</p>

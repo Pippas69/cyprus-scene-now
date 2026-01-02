@@ -9,15 +9,16 @@ interface MetricCardProps {
   trend?: number;
   trendLabel?: string;
   sparklineData?: number[];
-  color?: 'primary' | 'green' | 'blue' | 'orange' | 'purple';
+  color?: 'primary' | 'aegean' | 'seafoam' | 'ocean' | 'softAegean' | 'teal';
 }
 
 const colorClasses = {
   primary: { bg: 'bg-primary/10', text: 'text-primary', fill: 'hsl(var(--primary))' },
-  green: { bg: 'bg-green-500/10', text: 'text-green-600', fill: '#22c55e' },
-  blue: { bg: 'bg-blue-500/10', text: 'text-blue-600', fill: '#3b82f6' },
-  orange: { bg: 'bg-orange-500/10', text: 'text-orange-600', fill: '#f97316' },
-  purple: { bg: 'bg-purple-500/10', text: 'text-purple-600', fill: '#a855f7' },
+  aegean: { bg: 'bg-[#0D3B66]/10', text: 'text-[#0D3B66] dark:text-[#7BAAB8]', fill: '#0D3B66' },
+  seafoam: { bg: 'bg-[#4ECDC4]/10', text: 'text-[#4ECDC4]', fill: '#4ECDC4' },
+  ocean: { bg: 'bg-[#3D6B99]/10', text: 'text-[#3D6B99] dark:text-[#5BA3B5]', fill: '#3D6B99' },
+  softAegean: { bg: 'bg-[#7BAAB8]/10', text: 'text-[#7BAAB8]', fill: '#7BAAB8' },
+  teal: { bg: 'bg-[#1a5f7a]/10', text: 'text-[#1a5f7a] dark:text-[#4ECDC4]', fill: '#1a5f7a' },
 };
 
 export const MetricCard = ({ 
