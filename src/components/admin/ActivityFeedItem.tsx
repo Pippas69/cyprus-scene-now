@@ -6,7 +6,7 @@ interface ActivityFeedItemProps {
   icon: LucideIcon;
   message: string;
   timestamp: string;
-  iconColor?: 'primary' | 'green' | 'blue' | 'purple' | 'orange' | 'red';
+  iconColor?: 'primary' | 'aegean' | 'seafoam' | 'ocean' | 'softAegean' | 'teal';
   badge?: {
     text: string;
     variant: 'default' | 'secondary' | 'destructive' | 'outline';
@@ -15,11 +15,11 @@ interface ActivityFeedItemProps {
 
 const iconColorClasses = {
   primary: 'bg-primary/10 text-primary',
-  green: 'bg-green-500/10 text-green-600',
-  blue: 'bg-blue-500/10 text-blue-600',
-  purple: 'bg-purple-500/10 text-purple-600',
-  orange: 'bg-orange-500/10 text-orange-600',
-  red: 'bg-red-500/10 text-red-600',
+  aegean: 'bg-[#0D3B66]/10 text-[#0D3B66] dark:text-[#7BAAB8]',
+  seafoam: 'bg-[#4ECDC4]/10 text-[#4ECDC4]',
+  ocean: 'bg-[#3D6B99]/10 text-[#3D6B99] dark:text-[#5BA3B5]',
+  softAegean: 'bg-[#7BAAB8]/10 text-[#7BAAB8]',
+  teal: 'bg-[#1a5f7a]/10 text-[#1a5f7a] dark:text-[#4ECDC4]',
 };
 
 export const ActivityFeedItem = ({ 

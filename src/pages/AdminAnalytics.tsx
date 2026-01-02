@@ -49,17 +49,16 @@ import {
   Heart,
 } from 'lucide-react';
 
+// Ocean theme chart colors
 const CHART_COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  '#8884d8',
-  '#82ca9d',
-  '#ffc658',
-  '#ff7300',
-  '#00C49F',
+  '#0D3B66',  // Aegean Deep Blue
+  '#4ECDC4',  // Seafoam Teal
+  '#3D6B99',  // Ocean Blue
+  '#7BAAB8',  // Soft Aegean
+  '#1a5f7a',  // Dark Teal
+  '#5BA3B5',  // Light Ocean
+  '#2C5282',  // Navy variant
+  '#38B2AC',  // Teal variant
 ];
 
 export const AdminAnalytics = () => {
@@ -147,41 +146,42 @@ export const AdminAnalytics = () => {
           label={t.analytics.users.total}
           value={summaryStats?.totalUsers || 0}
           loading={summaryStatsLoading}
+          color="text-[#0D3B66] dark:text-[#7BAAB8]"
         />
         <StatCard
           icon={UserPlus}
           label={language === 'el' ? 'Νέοι Χρήστες' : 'New Users'}
           value={summaryStats?.newUsers || 0}
           loading={summaryStatsLoading}
-          color="text-green-500"
+          color="text-[#4ECDC4]"
         />
         <StatCard
           icon={Building2}
           label={t.analytics.business.verified}
           value={summaryStats?.totalBusinesses || 0}
           loading={summaryStatsLoading}
-          color="text-blue-500"
+          color="text-[#3D6B99] dark:text-[#5BA3B5]"
         />
         <StatCard
           icon={CalendarDays}
           label={t.analytics.events.total}
           value={summaryStats?.totalEvents || 0}
           loading={summaryStatsLoading}
-          color="text-purple-500"
+          color="text-[#1a5f7a] dark:text-[#4ECDC4]"
         />
         <StatCard
           icon={CalendarCheck}
           label={language === 'el' ? 'Ενεργά Events' : 'Active Events'}
           value={summaryStats?.activeEvents || 0}
           loading={summaryStatsLoading}
-          color="text-orange-500"
+          color="text-[#7BAAB8]"
         />
         <StatCard
           icon={Activity}
           label={language === 'el' ? 'Συνολικά RSVPs' : 'Total RSVPs'}
           value={summaryStats?.totalRsvps || 0}
           loading={summaryStatsLoading}
-          color="text-pink-500"
+          color="text-[#5BA3B5]"
         />
       </div>
 
@@ -218,7 +218,7 @@ export const AdminAnalytics = () => {
                   type="monotone" 
                   dataKey="cumulative" 
                   name={language === 'el' ? 'Συνολικοί Χρήστες' : 'Total Users'}
-                  stroke="hsl(var(--primary))" 
+                  stroke="#0D3B66" 
                   strokeWidth={2}
                   dot={false}
                 />
@@ -226,7 +226,7 @@ export const AdminAnalytics = () => {
                   type="monotone" 
                   dataKey="users" 
                   name={language === 'el' ? 'Νέοι Χρήστες' : 'New Users'}
-                  stroke="hsl(var(--chart-2))" 
+                  stroke="#4ECDC4" 
                   strokeWidth={2}
                   dot={false}
                 />
@@ -270,7 +270,7 @@ export const AdminAnalytics = () => {
                       border: '1px solid hsl(var(--border))' 
                     }}
                   />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill="#3D6B99" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

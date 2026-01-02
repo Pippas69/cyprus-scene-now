@@ -126,19 +126,19 @@ export const AdminDashboard = () => {
           <h1 className="text-3xl font-bold tracking-tight">{t.dashboard.title}</h1>
           <p className="text-muted-foreground mt-1">{t.dashboard.welcome}</p>
         </div>
-        <Card className="sm:w-auto">
+        <Card className="sm:w-auto border-t-2 border-[#4ECDC4]">
           <CardContent className="flex items-center gap-3 py-3 px-4">
             <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-              healthScore >= 75 ? 'bg-green-500/10' : healthScore >= 50 ? 'bg-yellow-500/10' : 'bg-red-500/10'
+              healthScore >= 75 ? 'bg-[#4ECDC4]/10' : healthScore >= 50 ? 'bg-[#7BAAB8]/10' : 'bg-[#0D3B66]/10'
             }`}>
               <Activity className={`h-5 w-5 ${
-                healthScore >= 75 ? 'text-green-600' : healthScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                healthScore >= 75 ? 'text-[#4ECDC4]' : healthScore >= 50 ? 'text-[#7BAAB8]' : 'text-[#0D3B66]'
               }`} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Platform Health</p>
               <p className={`text-lg font-bold ${
-                healthScore >= 75 ? 'text-green-600' : healthScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                healthScore >= 75 ? 'text-[#4ECDC4]' : healthScore >= 50 ? 'text-[#7BAAB8]' : 'text-[#0D3B66]'
               }`}>{healthScore}%</p>
             </div>
           </CardContent>
@@ -154,26 +154,26 @@ export const AdminDashboard = () => {
           trend={stats?.userGrowth}
           trendLabel={t.dashboard.metrics.growth}
           sparklineData={userSparkline}
-          color="blue"
+          color="aegean"
         />
         <MetricCard
           title={t.dashboard.metrics.totalBusinesses}
           value={stats?.totalBusinesses || 0}
           icon={Building2}
-          color="purple"
+          color="ocean"
         />
         <MetricCard
           title={t.dashboard.metrics.activeEvents}
           value={stats?.activeEvents || 0}
           icon={Calendar}
           sparklineData={eventSparkline}
-          color="green"
+          color="seafoam"
         />
         <MetricCard
           title={t.dashboard.metrics.activeOffers}
           value={stats?.activeOffers || 0}
           icon={Tag}
-          color="orange"
+          color="softAegean"
         />
       </div>
 
@@ -190,15 +190,15 @@ export const AdminDashboard = () => {
             <Link to="/admin/verification" className="block">
               <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-yellow-600" />
+                  <div className="h-9 w-9 rounded-lg bg-[#7BAAB8]/10 flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-[#7BAAB8]" />
                   </div>
                   <span className="text-sm font-medium group-hover:text-primary transition-colors">
                     {t.dashboard.quickActions.pendingVerifications}
                   </span>
                 </div>
                 {(stats?.pendingVerifications || 0) > 0 && (
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                  <Badge variant="secondary" className="bg-[#7BAAB8]/10 text-[#0D3B66] dark:text-[#7BAAB8]">
                     {stats?.pendingVerifications}
                   </Badge>
                 )}
@@ -208,15 +208,15 @@ export const AdminDashboard = () => {
             <Link to="/admin/reports" className="block">
               <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-red-500/10 flex items-center justify-center">
-                    <Flag className="h-4 w-4 text-red-600" />
+                  <div className="h-9 w-9 rounded-lg bg-[#1a5f7a]/10 flex items-center justify-center">
+                    <Flag className="h-4 w-4 text-[#1a5f7a] dark:text-[#4ECDC4]" />
                   </div>
                   <span className="text-sm font-medium group-hover:text-primary transition-colors">
                     {t.dashboard.quickActions.unreviewedReports}
                   </span>
                 </div>
                 {(stats?.unreviewedReports || 0) > 0 && (
-                  <Badge variant="destructive">{stats?.unreviewedReports}</Badge>
+                  <Badge className="bg-[#1a5f7a] text-white">{stats?.unreviewedReports}</Badge>
                 )}
               </div>
             </Link>
@@ -224,8 +224,8 @@ export const AdminDashboard = () => {
             <Link to="/admin/users" className="block">
               <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <UserPlus className="h-4 w-4 text-blue-600" />
+                  <div className="h-9 w-9 rounded-lg bg-[#0D3B66]/10 flex items-center justify-center">
+                    <UserPlus className="h-4 w-4 text-[#0D3B66] dark:text-[#7BAAB8]" />
                   </div>
                   <span className="text-sm font-medium group-hover:text-primary transition-colors">
                     {t.dashboard.quickActions.recentSignups}
@@ -237,15 +237,15 @@ export const AdminDashboard = () => {
             <Link to="/admin/geocoding" className="block">
               <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <MapPin className="h-4 w-4 text-green-600" />
+                  <div className="h-9 w-9 rounded-lg bg-[#4ECDC4]/10 flex items-center justify-center">
+                    <MapPin className="h-4 w-4 text-[#4ECDC4]" />
                   </div>
                   <span className="text-sm font-medium group-hover:text-primary transition-colors">
                     {t.dashboard.quickActions.needsGeocoding}
                   </span>
                 </div>
                 {(stats?.needsGeocoding || 0) > 0 && (
-                  <Badge variant="secondary">{stats?.needsGeocoding}</Badge>
+                  <Badge variant="secondary" className="bg-[#4ECDC4]/10 text-[#0D3B66] dark:text-[#4ECDC4]">{stats?.needsGeocoding}</Badge>
                 )}
               </div>
             </Link>
@@ -276,7 +276,7 @@ export const AdminDashboard = () => {
                   icon={Building2}
                   message={`${t.dashboard.activity.newBusiness}: ${business.name}`}
                   timestamp={business.created_at}
-                  iconColor="purple"
+                  iconColor="ocean"
                   badge={business.verified ? undefined : { text: 'Pending', variant: 'secondary' as const }}
                 />
               ))}
@@ -286,7 +286,7 @@ export const AdminDashboard = () => {
                   icon={Calendar}
                   message={`${t.dashboard.activity.newEvent}: ${event.title}`}
                   timestamp={event.created_at}
-                  iconColor="green"
+                  iconColor="seafoam"
                 />
               ))}
               {(!recentBusinesses?.length && !recentEvents?.length) && (
