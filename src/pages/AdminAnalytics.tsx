@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { adminTranslations } from '@/translations/adminTranslations';
 import { useAdminAnalytics } from '@/hooks/useAdminPlatformAnalytics';
@@ -68,10 +68,10 @@ export const AdminAnalytics = () => {
   
   const [dateRangeKey, setDateRangeKey] = useState('30');
   
-  const dateRange = {
+  const dateRange = useMemo(() => ({
     from: subDays(new Date(), parseInt(dateRangeKey)),
     to: new Date(),
-  };
+  }), [dateRangeKey]);
 
   const {
     userGrowth,
