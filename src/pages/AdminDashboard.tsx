@@ -114,29 +114,56 @@ export const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Platform Health */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t.dashboard.title}</h1>
-          <p className="text-muted-foreground mt-1">{t.dashboard.welcome}</p>
+      {/* Header with Platform Health and Wave Animation */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0D3B66] via-[#3D6B99] to-[#4ECDC4] p-6 text-white">
+        {/* Animated wave layers */}
+        <div className="absolute inset-0 overflow-hidden">
+          <svg className="absolute bottom-0 left-0 w-[200%] h-12 opacity-20" viewBox="0 0 1200 30" preserveAspectRatio="none">
+            <path 
+              className="animate-wave-flow" 
+              fill="currentColor" 
+              d="M0,15 Q150,5 300,15 T600,15 T900,15 T1200,15 V30 H0 Z"
+            />
+          </svg>
+          <svg className="absolute bottom-0 left-0 w-[200%] h-10 opacity-15" viewBox="0 0 1200 30" preserveAspectRatio="none" style={{ animationDelay: '-2s' }}>
+            <path 
+              className="animate-wave-flow" 
+              fill="currentColor" 
+              d="M0,20 Q150,10 300,20 T600,20 T900,20 T1200,20 V30 H0 Z"
+              style={{ animationDuration: '10s' }}
+            />
+          </svg>
+          <svg className="absolute bottom-0 left-0 w-[200%] h-8 opacity-10" viewBox="0 0 1200 30" preserveAspectRatio="none" style={{ animationDelay: '-4s' }}>
+            <path 
+              className="animate-wave-flow" 
+              fill="currentColor" 
+              d="M0,22 Q150,12 300,22 T600,22 T900,22 T1200,22 V30 H0 Z"
+              style={{ animationDuration: '12s' }}
+            />
+          </svg>
         </div>
-        <Card className="sm:w-auto border-t-2 border-[#4ECDC4]">
-          <CardContent className="flex items-center gap-3 py-3 px-4">
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t.dashboard.title}</h1>
+            <p className="text-white/80 mt-1">{t.dashboard.welcome}</p>
+          </div>
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg py-3 px-4">
             <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-              healthScore >= 75 ? 'bg-[#4ECDC4]/10' : healthScore >= 50 ? 'bg-[#7BAAB8]/10' : 'bg-[#0D3B66]/10'
+              healthScore >= 75 ? 'bg-[#4ECDC4]/30' : healthScore >= 50 ? 'bg-[#7BAAB8]/30' : 'bg-white/20'
             }`}>
               <Activity className={`h-5 w-5 ${
-                healthScore >= 75 ? 'text-[#4ECDC4]' : healthScore >= 50 ? 'text-[#7BAAB8]' : 'text-[#0D3B66]'
+                healthScore >= 75 ? 'text-[#4ECDC4]' : healthScore >= 50 ? 'text-[#7BAAB8]' : 'text-white'
               }`} />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Platform Health</p>
+              <p className="text-xs text-white/70">Platform Health</p>
               <p className={`text-lg font-bold ${
-                healthScore >= 75 ? 'text-[#4ECDC4]' : healthScore >= 50 ? 'text-[#7BAAB8]' : 'text-[#0D3B66]'
+                healthScore >= 75 ? 'text-[#4ECDC4]' : healthScore >= 50 ? 'text-[#7BAAB8]' : 'text-white'
               }`}>{healthScore}%</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Metrics Grid with Sparklines */}
