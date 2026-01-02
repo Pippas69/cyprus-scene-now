@@ -35,7 +35,7 @@ interface TopBusiness {
 export const useAdminAnalytics = (dateRange: DateRange) => {
   // User growth over time
   const userGrowth = useQuery({
-    queryKey: ['admin-analytics-user-growth', dateRange.from, dateRange.to],
+    queryKey: ['admin-analytics-user-growth', dateRange.from.toISOString(), dateRange.to.toISOString()],
     queryFn: async (): Promise<UserGrowthData[]> => {
       const { data: profiles } = await supabase
         .from('profiles')
@@ -219,7 +219,7 @@ export const useAdminAnalytics = (dateRange: DateRange) => {
 
   // Summary stats
   const summaryStats = useQuery({
-    queryKey: ['admin-analytics-summary', dateRange.from, dateRange.to],
+    queryKey: ['admin-analytics-summary', dateRange.from.toISOString(), dateRange.to.toISOString()],
     queryFn: async () => {
       const [
         totalUsers,
