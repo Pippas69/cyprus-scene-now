@@ -46,50 +46,44 @@ export const AdminDashboard = () => {
     },
   });
 
-  // Fetch user signups for sparkline (last 14 days)
+  // Fetch user signups for sparkline (last 14 days) - optimized single query
   const { data: userSparkline } = useQuery({
     queryKey: ['user-sparkline'],
     queryFn: async () => {
-      const days = 14;
-      const counts: number[] = [];
+      const startDate = subDays(new Date(), 14);
+      const { data } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .gte('created_at', format(startDate, 'yyyy-MM-dd'));
       
-      for (let i = days - 1; i >= 0; i--) {
-        const date = subDays(new Date(), i);
-        const nextDate = subDays(new Date(), i - 1);
-        
-        const { count } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', format(date, 'yyyy-MM-dd'))
-          .lt('created_at', format(nextDate, 'yyyy-MM-dd'));
-        
-        counts.push(count || 0);
-      }
-      
+      const counts = new Array(14).fill(0);
+      data?.forEach(profile => {
+        const daysAgo = Math.floor((new Date().getTime() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        if (daysAgo >= 0 && daysAgo < 14) {
+          counts[13 - daysAgo]++;
+        }
+      });
       return counts;
     },
   });
 
-  // Fetch event creation sparkline
+  // Fetch event creation sparkline - optimized single query
   const { data: eventSparkline } = useQuery({
     queryKey: ['event-sparkline'],
     queryFn: async () => {
-      const days = 14;
-      const counts: number[] = [];
+      const startDate = subDays(new Date(), 14);
+      const { data } = await supabase
+        .from('events')
+        .select('created_at')
+        .gte('created_at', format(startDate, 'yyyy-MM-dd'));
       
-      for (let i = days - 1; i >= 0; i--) {
-        const date = subDays(new Date(), i);
-        const nextDate = subDays(new Date(), i - 1);
-        
-        const { count } = await supabase
-          .from('events')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', format(date, 'yyyy-MM-dd'))
-          .lt('created_at', format(nextDate, 'yyyy-MM-dd'));
-        
-        counts.push(count || 0);
-      }
-      
+      const counts = new Array(14).fill(0);
+      data?.forEach(event => {
+        const daysAgo = Math.floor((new Date().getTime() - new Date(event.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        if (daysAgo >= 0 && daysAgo < 14) {
+          counts[13 - daysAgo]++;
+        }
+      });
       return counts;
     },
   });
