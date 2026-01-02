@@ -2219,6 +2219,10 @@ export type Database = {
           name: string | null
           preferences: string[] | null
           role: Database["public"]["Enums"]["app_role"]
+          suspended: boolean | null
+          suspended_at: string | null
+          suspended_by: string | null
+          suspension_reason: string | null
           town: string | null
           updated_at: string
           user_id: string | null
@@ -2240,6 +2244,10 @@ export type Database = {
           name?: string | null
           preferences?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
+          suspended?: boolean | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_reason?: string | null
           town?: string | null
           updated_at?: string
           user_id?: string | null
@@ -2261,6 +2269,10 @@ export type Database = {
           name?: string | null
           preferences?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
+          suspended?: boolean | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_reason?: string | null
           town?: string | null
           updated_at?: string
           user_id?: string | null
@@ -3365,6 +3377,10 @@ export type Database = {
             }
             Returns: string
           }
+      admin_set_user_suspension: {
+        Args: { is_suspended: boolean; reason?: string; target_user_id: string }
+        Returns: boolean
+      }
       calculate_user_similarity: {
         Args: { user1_id: string; user2_id: string }
         Returns: number
