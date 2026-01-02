@@ -39,34 +39,36 @@ export const AdminHeader = () => {
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mr-2 h-4" />
-      <Breadcrumb>
-        <BreadcrumbList>
-          {pathSegments.map((segment, index) => {
-            const isLast = index === pathSegments.length - 1;
-            const href = '/' + pathSegments.slice(0, index + 1).join('/');
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 max-w-full overflow-x-hidden">
+      <SidebarTrigger className="-ml-1 shrink-0" />
+      <Separator orientation="vertical" className="mr-2 h-4 shrink-0" />
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <Breadcrumb>
+          <BreadcrumbList className="flex-nowrap">
+            {pathSegments.map((segment, index) => {
+              const isLast = index === pathSegments.length - 1;
+              const href = '/' + pathSegments.slice(0, index + 1).join('/');
 
-            return (
-              <div key={segment} className="flex items-center gap-2">
-                <BreadcrumbItem>
-                  {isLast ? (
-                    <BreadcrumbPage>{getBreadcrumbLabel(segment)}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink asChild>
-                      <Link to={href}>{getBreadcrumbLabel(segment)}</Link>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-                {!isLast && <BreadcrumbSeparator />}
-              </div>
-            );
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
+              return (
+                <div key={segment} className="flex items-center gap-2 min-w-0">
+                  <BreadcrumbItem className="min-w-0">
+                    {isLast ? (
+                      <BreadcrumbPage className="truncate max-w-[150px] sm:max-w-none">{getBreadcrumbLabel(segment)}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <Link to={href} className="truncate">{getBreadcrumbLabel(segment)}</Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                  {!isLast && <BreadcrumbSeparator className="shrink-0" />}
+                </div>
+              );
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-2 shrink-0">
         <NotificationBell />
         <Separator orientation="vertical" className="h-4" />
         <LanguageToggle />
