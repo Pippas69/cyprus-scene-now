@@ -146,6 +146,16 @@ const Footer = () => {
             <p>{t.rights}</p>
             <span className="hidden sm:inline">•</span>
             <p>{t.madeWith} ❤️ {t.inCyprus}</p>
+            <span className="hidden sm:inline">•</span>
+            <div className="flex items-center gap-3">
+              <Link to="/privacy" className="hover:text-primary-foreground transition-colors">
+                {language === "el" ? "Απόρρητο" : "Privacy"}
+              </Link>
+              <span>•</span>
+              <Link to="/terms" className="hover:text-primary-foreground transition-colors">
+                {language === "el" ? "Όροι" : "Terms"}
+              </Link>
+            </div>
           </div>
           <LanguageToggle />
         </div>

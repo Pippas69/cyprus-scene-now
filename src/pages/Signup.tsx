@@ -395,6 +395,14 @@ const Signup = () => {
                 {isLoading ? t.signingUp : t.signupButton}
               </Button>
 
+              <p className="text-xs text-center text-muted-foreground">
+                {language === "el" ? (
+                  <>Με την εγγραφή σας, αποδέχεστε τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a> και την <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">πολιτική απορρήτου</a>.</>
+                ) : (
+                  <>By signing up, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">privacy policy</a>.</>
+                )}
+              </p>
+
               <div className="text-center text-sm text-muted-foreground">
                 {t.alreadyHaveAccount}{" "}
                 <Link to="/login" className="text-primary hover:underline font-semibold">

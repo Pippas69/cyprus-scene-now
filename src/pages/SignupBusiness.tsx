@@ -552,8 +552,8 @@ const SignupBusiness = () => {
               <Checkbox id="terms" checked={watch("termsAccepted")} onCheckedChange={checked => setValue("termsAccepted", checked as boolean)} />
               <label htmlFor="terms" className="text-sm cursor-pointer">
                 {language === 'el' 
-                  ? 'Συμφωνώ με τους όρους χρήσης και την πολιτική απορρήτου *'
-                  : 'I agree to the terms of use and privacy policy *'
+                  ? <>Συμφωνώ με τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a> και την <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">πολιτική απορρήτου</a> *</>
+                  : <>I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">privacy policy</a> *</>
                 }
               </label>
             </div>
