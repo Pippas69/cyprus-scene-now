@@ -2215,6 +2215,7 @@ export type Database = {
           id: string
           interests: string[] | null
           is_admin: boolean | null
+          is_waitlist: boolean | null
           last_name: string | null
           name: string | null
           preferences: string[] | null
@@ -2240,6 +2241,7 @@ export type Database = {
           id: string
           interests?: string[] | null
           is_admin?: boolean | null
+          is_waitlist?: boolean | null
           last_name?: string | null
           name?: string | null
           preferences?: string[] | null
@@ -2265,6 +2267,7 @@ export type Database = {
           id?: string
           interests?: string[] | null
           is_admin?: boolean | null
+          is_waitlist?: boolean | null
           last_name?: string | null
           name?: string | null
           preferences?: string[] | null
