@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, MapPin, CheckCircle, XCircle } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
-import { toastTranslations } from "@/translations/toastTranslations";
+import { adminTranslations } from "@/translations/adminTranslations";
+import { AdminOceanHeader } from "@/components/admin/AdminOceanHeader";
 
 interface GeocodingResult {
   business: string;
@@ -26,7 +27,7 @@ const AdminGeocoding = () => {
   const [results, setResults] = useState<GeocodingResponse | null>(null);
   const { toast } = useToast();
   const { language } = useLanguage();
-  const t = toastTranslations[language];
+  const t = adminTranslations[language];
 
   const handleGeocode = async () => {
     setIsProcessing(true);
@@ -40,15 +41,15 @@ const AdminGeocoding = () => {
       setResults(data as GeocodingResponse);
       
       toast({
-        title: t.success,
+        title: t.common.success,
         description: language === 'el' 
           ? `Επιτυχής γεωκωδικοποίηση ${data.successful} από ${data.total} επιχειρήσεις`
           : `Successfully geocoded ${data.successful} out of ${data.total} businesses`,
       });
     } catch (error: any) {
       toast({
-        title: t.error,
-        description: error.message || t.failed,
+        title: t.common.error,
+        description: error.message || t.geocoding.failed,
         variant: "destructive",
       });
     } finally {
@@ -57,34 +58,40 @@ const AdminGeocoding = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <AdminOceanHeader
+        title={t.geocoding.title}
+        subtitle={t.geocoding.subtitle}
+      />
+
+      <div className="max-w-4xl mx-auto px-4 pb-8">
         <Card className="p-8">
           <div className="flex items-center gap-3 mb-6">
-            <MapPin className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-cinzel font-bold">Geocode Existing Businesses</h1>
+            <div className="p-2 rounded-lg bg-[hsl(var(--seafoam))]/10">
+              <MapPin className="h-8 w-8 text-[hsl(var(--seafoam))]" />
+            </div>
+            <h2 className="text-xl font-semibold">{t.geocoding.batchProcess}</h2>
           </div>
 
           <p className="text-muted-foreground mb-6">
-            This tool will automatically geocode all existing businesses that have an address and city but no geo coordinates.
-            This is needed for their events to appear on the map.
+            {t.geocoding.description}
           </p>
 
           <Button
             onClick={handleGeocode}
             disabled={isProcessing}
             size="lg"
-            className="w-full mb-6"
+            className="w-full mb-6 bg-[hsl(var(--ocean))] hover:bg-[hsl(var(--ocean))]/90"
           >
             {isProcessing ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Processing...
+                {t.geocoding.processing}
               </>
             ) : (
               <>
                 <MapPin className="mr-2 h-5 w-5" />
-                Start Geocoding
+                {t.geocoding.startButton}
               </>
             )}
           </Button>
@@ -92,31 +99,31 @@ const AdminGeocoding = () => {
           {results && (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <Card className="p-4 text-center">
-                  <div className="text-2xl font-bold">{results.total}</div>
-                  <div className="text-sm text-muted-foreground">Total</div>
+                <Card className="p-4 text-center border-t-2 border-[hsl(var(--aegean))]">
+                  <div className="text-2xl font-bold text-[hsl(var(--aegean))]">{results.total}</div>
+                  <div className="text-sm text-muted-foreground">{t.geocoding.total}</div>
                 </Card>
-                <Card className="p-4 text-center bg-green-50 dark:bg-green-950">
-                  <div className="text-2xl font-bold text-green-600">{results.successful}</div>
-                  <div className="text-sm text-muted-foreground">Successful</div>
+                <Card className="p-4 text-center border-t-2 border-[hsl(var(--seafoam))]">
+                  <div className="text-2xl font-bold text-[hsl(var(--seafoam))]">{results.successful}</div>
+                  <div className="text-sm text-muted-foreground">{t.geocoding.successful}</div>
                 </Card>
-                <Card className="p-4 text-center bg-red-50 dark:bg-red-950">
-                  <div className="text-2xl font-bold text-red-600">{results.failed}</div>
-                  <div className="text-sm text-muted-foreground">Failed</div>
+                <Card className="p-4 text-center border-t-2 border-destructive">
+                  <div className="text-2xl font-bold text-destructive">{results.failed}</div>
+                  <div className="text-sm text-muted-foreground">{t.geocoding.failed}</div>
                 </Card>
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold mb-3">Details:</h3>
+                <h3 className="font-semibold mb-3">{t.geocoding.details}:</h3>
                 <div className="max-h-96 overflow-y-auto space-y-2">
                   {results.results.map((result, index) => (
                     <Card key={index} className="p-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {result.status === 'success' ? (
-                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            <CheckCircle className="h-5 w-5 text-[hsl(var(--seafoam))]" />
                           ) : (
-                            <XCircle className="h-5 w-5 text-red-600" />
+                            <XCircle className="h-5 w-5 text-destructive" />
                           )}
                           <span className="font-medium">{result.business}</span>
                         </div>
@@ -127,10 +134,10 @@ const AdminGeocoding = () => {
                             </span>
                           )}
                           {result.status === 'geocoding_failed' && (
-                            <span className="text-orange-600">Could not geocode address</span>
+                            <span className="text-orange-600">{t.geocoding.couldNotGeocode}</span>
                           )}
                           {result.status === 'failed' && result.error && (
-                            <span className="text-red-600">{result.error}</span>
+                            <span className="text-destructive">{result.error}</span>
                           )}
                         </div>
                       </div>
