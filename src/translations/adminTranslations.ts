@@ -9,6 +9,7 @@ export const adminTranslations = {
       settings: "Ρυθμίσεις",
       geocoding: "Γεωγραφικός Εντοπισμός",
       database: "Παρακολούθηση Βάσης",
+      waitlist: "Λίστα Αναμονής",
     },
     dashboard: {
       welcome: "Καλώς ήρθες",
@@ -383,6 +384,29 @@ export const adminTranslations = {
       actions: "Ενέργειες",
       na: "Δ/Υ",
     },
+    waitlist: {
+      title: "Λίστα Αναμονής",
+      subtitle: "Διαχείριση χρηστών που έχουν εγγραφεί στη λίστα αναμονής",
+      users: "χρήστες",
+      stats: {
+        total: "Σύνολο Εγγραφών",
+        today: "Σήμερα",
+        thisWeek: "Αυτή την Εβδομάδα",
+      },
+      manageTitle: "Χρήστες Λίστας Αναμονής",
+      manageDescription: "Εξαγωγή λίστας ή ενεργοποίηση όλων των χρηστών για έναρξη",
+      activateAll: "Ενεργοποίηση Όλων",
+      activateConfirmTitle: "Ενεργοποίηση Όλων των Χρηστών",
+      activateConfirmDescription: "Αυτή η ενέργεια θα ενεργοποιήσει {count} χρήστες. Θα μπορούν να συνδεθούν και να χρησιμοποιήσουν την εφαρμογή κανονικά.",
+      searchPlaceholder: "Αναζήτηση με όνομα ή email...",
+      noUsers: "Δεν υπάρχουν χρήστες στη λίστα αναμονής",
+      table: {
+        name: "Όνομα",
+        email: "Email",
+        city: "Πόλη",
+        signedUp: "Εγγραφή",
+      },
+    },
   },
   en: {
     sidebar: {
@@ -394,6 +418,7 @@ export const adminTranslations = {
       settings: "Settings",
       geocoding: "Geocoding Tools",
       database: "Database Monitoring",
+      waitlist: "Waiting List",
     },
     dashboard: {
       welcome: "Welcome",
@@ -767,6 +792,29 @@ export const adminTranslations = {
       sort: "Sort",
       actions: "Actions",
       na: "N/A",
+    },
+    waitlist: {
+      title: "Waiting List",
+      subtitle: "Manage users who have signed up for the waiting list",
+      users: "users",
+      stats: {
+        total: "Total Signups",
+        today: "Today",
+        thisWeek: "This Week",
+      },
+      manageTitle: "Waitlist Users",
+      manageDescription: "Export list or activate all users when ready to launch",
+      activateAll: "Activate All",
+      activateConfirmTitle: "Activate All Users",
+      activateConfirmDescription: "This will activate {count} users. They will be able to log in and use the app normally.",
+      searchPlaceholder: "Search by name or email...",
+      noUsers: "No users in waiting list",
+      table: {
+        name: "Name",
+        email: "Email",
+        city: "City",
+        signedUp: "Signed Up",
+      },
     },
   },
 };
