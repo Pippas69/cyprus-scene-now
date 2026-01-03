@@ -52,7 +52,8 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <ScrollProgress />
       <Navbar />
-      <LaunchBanner language={language} />
+      <div className="pt-[72px]">
+        <LaunchBanner language={language} />
       <HeroSection language={language} />
       {/* Temporarily hidden for launch - uncomment when ready
       <PartnerLogoMarquee language={language} />
@@ -82,6 +83,7 @@ const Index = () => {
       <WaitlistSignup language={language} />
       <WaveDivider variant="sand" flip />
       <FAQSection language={language} />
+      </div>
       <Footer />
     </div>
   );
