@@ -230,7 +230,11 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferP
               htmlFor="terms"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              {t("acceptTerms")}
+              {language === "el" ? (
+                <>Αποδέχομαι τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a></>
+              ) : (
+                <>I accept the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a></>
+              )}
             </label>
           </div>
 
