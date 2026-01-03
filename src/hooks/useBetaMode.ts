@@ -51,28 +51,19 @@ export const useBetaMode = (): UseBetaModeReturn => {
 
 export const validateInviteCode = async (code: string): Promise<{ valid: boolean; error?: string }> => {
   try {
-    const normalizedCode = code.toUpperCase().trim();
-    
     const { data, error } = await supabase
-      .from('beta_invite_codes')
-      .select('*')
-      .eq('code', normalizedCode)
-      .single();
+      .rpc('validate_invite_code', { p_code: code });
 
-    if (error || !data) {
-      return { valid: false, error: 'invalid' };
+    if (error) {
+      console.error('Error validating invite code:', error);
+      return { valid: false, error: 'error' };
     }
 
-    if (!data.is_active) {
-      return { valid: false, error: 'inactive' };
-    }
-
-    if (data.expires_at && new Date(data.expires_at) < new Date()) {
-      return { valid: false, error: 'expired' };
-    }
-
-    if (data.current_uses >= (data.max_uses || 1)) {
-      return { valid: false, error: 'used' };
+    // RPC returns an array, get first result
+    const result = Array.isArray(data) ? data[0] : data;
+    
+    if (!result || !result.is_valid) {
+      return { valid: false, error: result?.error_message || 'invalid' };
     }
 
     return { valid: true };

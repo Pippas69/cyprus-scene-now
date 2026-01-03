@@ -4273,6 +4273,14 @@ export type Database = {
         Args: { business_id: string }
         Returns: boolean
       }
+      validate_invite_code: {
+        Args: { p_code: string }
+        Returns: {
+          code_id: string
+          error_message: string
+          is_valid: boolean
+        }[]
+      }
     }
     Enums: {
       app_role: "user" | "business" | "admin"
