@@ -8,7 +8,8 @@ import {
   Settings, 
   MapPin,
   Database,
-  Ticket
+  Ticket,
+  ClipboardList
 } from 'lucide-react';
 import {
   Sidebar,
@@ -88,6 +89,11 @@ export const AdminSidebar = () => {
       title: language === 'el' ? 'Διαχείριση Beta' : 'Beta Management',
       icon: Ticket,
       href: '/admin/beta',
+    },
+    {
+      title: t.sidebar.waitlist,
+      icon: ClipboardList,
+      href: '/admin/waitlist',
     },
   ];
 
