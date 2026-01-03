@@ -9,7 +9,6 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 // Temporarily hidden for launch - uncomment when ready
 // import StatsSection from "@/components/home/StatsSection";
 // import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
-import LaunchBanner from "@/components/home/LaunchBanner";
 import ParallaxSection from "@/components/ui/parallax-section";
 import ScrollProgress from "@/components/ui/scroll-progress";
 import WaveDivider from "@/components/ui/wave-divider";
@@ -52,8 +51,6 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <ScrollProgress />
       <Navbar />
-      <div className="pt-[72px]">
-        <LaunchBanner language={language} />
       <HeroSection language={language} />
       {/* Temporarily hidden for launch - uncomment when ready
       <PartnerLogoMarquee language={language} />
@@ -83,7 +80,6 @@ const Index = () => {
       <WaitlistSignup language={language} />
       <WaveDivider variant="sand" flip />
       <FAQSection language={language} />
-      </div>
       <Footer />
     </div>
   );
