@@ -15,7 +15,9 @@ import ScrollProgress from "@/components/ui/scroll-progress";
 import WaveDivider from "@/components/ui/wave-divider";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FAQSection from "@/components/home/FAQSection";
-import NewsletterSection from "@/components/home/NewsletterSection";
+// Temporarily hidden for launch - uncomment when ready
+// import NewsletterSection from "@/components/home/NewsletterSection";
+import WaitlistSignup from "@/components/home/WaitlistSignup";
 import UpcomingEventsPreview from "@/components/home/UpcomingEventsPreview";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -74,7 +76,10 @@ const Index = () => {
       */}
       <TestimonialsSection language={language} />
       <WaveDivider variant="aegean" />
+      {/* Temporarily hidden for launch - uncomment when ready
       <NewsletterSection language={language} />
+      */}
+      <WaitlistSignup language={language} />
       <WaveDivider variant="sand" flip />
       <FAQSection language={language} />
       <Footer />
