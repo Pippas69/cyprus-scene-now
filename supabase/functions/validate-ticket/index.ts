@@ -10,6 +10,16 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[VALIDATE-TICKET] ${step}`, details ? JSON.stringify(details) : '');
 };
 
+// Mask email for privacy - show first 3 chars + *** + @domain
+const maskEmail = (email: string | null | undefined): string | null => {
+  if (!email) return null;
+  const [localPart, domain] = email.split('@');
+  if (!domain) return email;
+  const visibleChars = Math.min(3, localPart.length);
+  const masked = localPart.substring(0, visibleChars) + '***';
+  return `${masked}@${domain}`;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -122,7 +132,7 @@ serve(async (req) => {
           tierName: ticket.ticket_tiers?.name,
           tierPrice: ticket.ticket_tiers?.price_cents,
           customerName: ticket.ticket_orders?.customer_name,
-          customerEmail: ticket.ticket_orders?.customer_email,
+          customerEmail: maskEmail(ticket.ticket_orders?.customer_email),
           eventTitle: ticket.events?.title,
           eventStartAt: ticket.events?.start_at,
           status: ticket.status,
@@ -158,7 +168,7 @@ serve(async (req) => {
           tierName: ticket.ticket_tiers?.name,
           tierPrice: ticket.ticket_tiers?.price_cents,
           customerName: ticket.ticket_orders?.customer_name,
-          customerEmail: ticket.ticket_orders?.customer_email,
+          customerEmail: maskEmail(ticket.ticket_orders?.customer_email),
           eventTitle: ticket.events?.title,
           eventStartAt: ticket.events?.start_at,
           status: "used",
