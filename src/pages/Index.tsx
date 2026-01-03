@@ -6,8 +6,10 @@ import HeroSection from "@/components/home/HeroSection";
 import MarqueeSection from "@/components/home/MarqueeSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
-import StatsSection from "@/components/home/StatsSection";
-import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
+// Temporarily hidden for launch - uncomment when ready
+// import StatsSection from "@/components/home/StatsSection";
+// import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
+import LaunchBanner from "@/components/home/LaunchBanner";
 import ParallaxSection from "@/components/ui/parallax-section";
 import ScrollProgress from "@/components/ui/scroll-progress";
 import WaveDivider from "@/components/ui/wave-divider";
@@ -48,8 +50,11 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <ScrollProgress />
       <Navbar />
+      <LaunchBanner language={language} />
       <HeroSection language={language} />
+      {/* Temporarily hidden for launch - uncomment when ready
       <PartnerLogoMarquee language={language} />
+      */}
       <WaveDivider variant="aegean" />
       <MarqueeSection />
       <WaveDivider variant="seafoam" flip />
@@ -62,9 +67,11 @@ const Index = () => {
       </ParallaxSection>
       <WaveDivider variant="aegean" flip />
       <UpcomingEventsPreview language={language} />
+      {/* Temporarily hidden for launch - uncomment when ready
       <WaveDivider variant="seafoam" />
       <StatsSection language={language} />
       <WaveDivider variant="seafoam" flip />
+      */}
       <TestimonialsSection language={language} />
       <WaveDivider variant="aegean" />
       <NewsletterSection language={language} />
