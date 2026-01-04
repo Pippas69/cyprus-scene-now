@@ -24,14 +24,14 @@ const safeTimestampToISO = (timestamp: number | null | undefined): string => {
   }
 };
 
-// Product ID to plan slug mapping (includes both monthly and annual product IDs)
+// Product ID to plan slug mapping - LIVE (includes both monthly and annual product IDs)
 const PRODUCT_TO_PLAN: Record<string, string> = {
-  'prod_TVSonedIy7XkZP': 'starter',  // Starter Monthly
-  'prod_TVSrQMBUEJcK9U': 'starter',  // Starter Annual
-  'prod_TVSrruG57XDuaf': 'growth',   // Growth Monthly
-  'prod_TVSrS3ku7sHjV8': 'growth',   // Growth Annual
-  'prod_TVSrsxDx5fVltE': 'professional',  // Professional Monthly
-  'prod_TVSrJNi9KJtRYz': 'professional',  // Professional Annual
+  'prod_TjOhhBOl8h6KSY': 'starter',       // Starter Monthly
+  'prod_TjOvLr9W7CmRrp': 'starter',       // Starter Annual
+  'prod_TjOj8tEFcsmxHJ': 'growth',        // Growth Monthly
+  'prod_TjOwPgvfysk22': 'growth',         // Growth Annual
+  'prod_TjOlA1wCzel4BC': 'professional',  // Professional Monthly
+  'prod_TjOwpvKhaDl3xS': 'professional',  // Professional Annual
 };
 
 serve(async (req) => {
