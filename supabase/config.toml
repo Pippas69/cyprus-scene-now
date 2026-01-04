@@ -95,3 +95,6 @@ verify_jwt = true
 
 [functions.send-offer-email]
 verify_jwt = false
+
+[functions.stripe-healthcheck]
+verify_jwt = false
