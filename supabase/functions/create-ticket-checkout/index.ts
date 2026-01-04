@@ -284,6 +284,7 @@ serve(async (req) => {
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email!,
+      payment_method_types: ['card'],
       line_items: lineItems,
       mode: "payment",
       success_url: `${origin}/ticket-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
