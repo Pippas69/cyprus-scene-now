@@ -300,8 +300,23 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
         throw new Error('No checkout URL received');
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error('Error creating checkout session:', error);
-      toast.error(language === 'el' ? 'Αποτυχία εκκίνησης πληρωμής. Δοκιμάστε ξανά.' : 'Failed to start checkout. Please try again.');
+
+      // Surface actionable errors (most failures are backend messages)
+      if (message.toLowerCase().includes('no business found')) {
+        toast.error(
+          language === 'el'
+            ? 'Δεν βρέθηκε επιχείρηση για τον λογαριασμό σας. Δημιουργήστε/ολοκληρώστε επιχειρηματικό προφίλ πριν την συνδρομή.'
+            : 'No business profile found for your account. Create/complete a business profile before subscribing.'
+        );
+      } else {
+        toast.error(
+          language === 'el'
+            ? `Αποτυχία εκκίνησης πληρωμής: ${message}`
+            : `Failed to start checkout: ${message}`
+        );
+      }
     } finally {
       setLoadingPlan(null);
     }
