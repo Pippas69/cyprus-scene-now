@@ -12,19 +12,19 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-SUBSCRIPTION-CHECKOUT] ${step}${detailsStr}`);
 };
 
-// Price mapping for subscription plans
+// Price mapping for subscription plans (LIVE)
 const PRICE_MAPPING: Record<string, Record<string, string>> = {
   starter: {
-    monthly: 'price_1SYRt4HwXCvHV7ZwMPvm1b9b',
-    annual: 'price_1SYRvJHwXCvHV7ZwUjiqcDTL',
+    monthly: 'price_1SlvtfHTQ1AOHDjnDcsxUMtQ',
+    annual: 'price_1Slw7rHTQ1AOHDjnihgMkZmh',
   },
   growth: {
-    monthly: 'price_1SYRvPHwXCvHV7ZwxQqFkLLk',
-    annual: 'price_1SYRvQHwXCvHV7ZwceGhkMsN',
+    monthly: 'price_1Slvw5HTQ1AOHDjnnCrH3wcW',
+    annual: 'price_1Slw8WHTQ1AOHDjnE06GFJu2',
   },
   professional: {
-    monthly: 'price_1SYRvSHwXCvHV7ZwkMM99hL8',
-    annual: 'price_1SYRvTHwXCvHV7Zw6Acco0mK',
+    monthly: 'price_1SlvxaHTQ1AOHDjnmQviVoXk',
+    annual: 'price_1Slw8zHTQ1AOHDjnFCOk69r6',
   },
 };
 

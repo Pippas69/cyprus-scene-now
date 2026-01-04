@@ -108,12 +108,12 @@ serve(async (req) => {
           // Fallback: use product ID mapping
           const productId = subscription.items.data[0].price.product as string;
           const PRODUCT_TO_PLAN: Record<string, string> = {
-            'prod_TVSonedIy7XkZP': 'starter',
-            'prod_TVSrQMBUEJcK9U': 'starter',
-            'prod_TVSrruG57XDuaf': 'growth',
-            'prod_TVSrS3ku7sHjV8': 'growth',
-            'prod_TVSrsxDx5fVltE': 'professional',
-            'prod_TVSrJNi9KJtRYz': 'professional',
+            'prod_TjOhhBOl8h6KSY': 'starter',       // Starter Monthly
+            'prod_TjOvLr9W7CmRrp': 'starter',       // Starter Annual
+            'prod_TjOj8tEFcsmxHJ': 'growth',        // Growth Monthly
+            'prod_TjOwPgvfysk22': 'growth',         // Growth Annual
+            'prod_TjOlA1wCzel4BC': 'professional',  // Professional Monthly
+            'prod_TjOwpvKhaDl3xS': 'professional',  // Professional Annual
           };
           const planSlug = PRODUCT_TO_PLAN[productId];
           if (!planSlug) throw new Error(`Unknown product ID: ${productId}`);
