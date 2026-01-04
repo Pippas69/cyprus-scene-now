@@ -38,7 +38,14 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) throw new Error('STRIPE_SECRET_KEY is not set');
-    logStep('Stripe key verified');
+    
+    // Log safe key fingerprint for debugging
+    const keyFingerprint = {
+      prefix: stripeKey.substring(0, 7),
+      suffix: stripeKey.slice(-4),
+      length: stripeKey.length,
+    };
+    logStep('Stripe key fingerprint', keyFingerprint);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
