@@ -152,6 +152,27 @@ serve(async (req) => {
     }
     logStep("Stripe customer check", { customerId: customerId || "new customer" });
 
+    // Validate the destination account exists in current Stripe mode (test vs live)
+    try {
+      await stripe.accounts.retrieve(discount.businesses.stripe_account_id);
+      logStep("Destination account validated");
+    } catch (stripeError: unknown) {
+      const errorMessage = stripeError instanceof Error ? stripeError.message : String(stripeError);
+      logStep("Destination account invalid", { error: errorMessage, accountId: discount.businesses.stripe_account_id });
+      
+      // Clear the stale account ID
+      await supabaseAdmin
+        .from("businesses")
+        .update({ 
+          stripe_account_id: null,
+          stripe_onboarding_completed: false,
+          stripe_payouts_enabled: false
+        })
+        .eq("id", discount.business_id);
+        
+      throw new Error("This business needs to re-complete payment setup. Please contact the business owner.");
+    }
+
     // Create pending purchase record
     const expiresAt = new Date(discount.end_at).toISOString();
     const { data: purchaseRecord, error: purchaseError } = await supabaseAdmin

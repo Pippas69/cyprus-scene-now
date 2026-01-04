@@ -55,25 +55,49 @@ serve(async (req) => {
 
     // Check if business already has a Stripe Connect account
     if (business.stripe_account_id) {
-      logStep("Business already has Connect account, creating new onboarding link");
+      logStep("Business has existing Connect account, validating it", { accountId: business.stripe_account_id });
       
-      // Create a new account link for existing account
-      const origin = req.headers.get("origin") || "https://lovable.dev";
-      const accountLink = await stripe.accountLinks.create({
-        account: business.stripe_account_id,
-        refresh_url: `${origin}/dashboard-business/settings?stripe_refresh=true`,
-        return_url: `${origin}/dashboard-business/settings?stripe_onboarding=complete`,
-        type: "account_onboarding",
-      });
+      try {
+        // Validate the account exists in current mode (test vs live)
+        await stripe.accounts.retrieve(business.stripe_account_id);
+        
+        // Account exists, create onboarding link
+        const origin = req.headers.get("origin") || "https://lovable.dev";
+        const accountLink = await stripe.accountLinks.create({
+          account: business.stripe_account_id,
+          refresh_url: `${origin}/dashboard-business/settings?stripe_refresh=true`,
+          return_url: `${origin}/dashboard-business/settings?stripe_onboarding=complete`,
+          type: "account_onboarding",
+        });
 
-      return new Response(JSON.stringify({ 
-        url: accountLink.url,
-        accountId: business.stripe_account_id,
-        isExisting: true
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+        return new Response(JSON.stringify({ 
+          url: accountLink.url,
+          accountId: business.stripe_account_id,
+          isExisting: true
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      } catch (stripeError: unknown) {
+        // Account doesn't exist in current mode (test vs live mismatch)
+        const errorMessage = stripeError instanceof Error ? stripeError.message : String(stripeError);
+        logStep("Existing account not found in current Stripe mode, will create new", { 
+          error: errorMessage,
+          oldAccountId: business.stripe_account_id 
+        });
+        
+        // Clear the old account ID so we can create a new one
+        await supabaseClient
+          .from("businesses")
+          .update({ 
+            stripe_account_id: null,
+            stripe_onboarding_completed: false,
+            stripe_payouts_enabled: false
+          })
+          .eq("id", business.id);
+          
+        // Fall through to create new account below
+      }
     }
 
     // Create a new Stripe Connect Express account

@@ -245,6 +245,29 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    // Validate the destination account exists in current Stripe mode (test vs live) if business has Stripe Connect
+    if (business?.stripe_account_id && business?.stripe_payouts_enabled) {
+      try {
+        await stripe.accounts.retrieve(business.stripe_account_id);
+        logStep("Destination account validated");
+      } catch (stripeError: unknown) {
+        const errorMessage = stripeError instanceof Error ? stripeError.message : String(stripeError);
+        logStep("Destination account invalid", { error: errorMessage, accountId: business.stripe_account_id });
+        
+        // Clear the stale account ID
+        await supabaseClient
+          .from("businesses")
+          .update({ 
+            stripe_account_id: null,
+            stripe_onboarding_completed: false,
+            stripe_payouts_enabled: false
+          })
+          .eq("id", business.id);
+          
+        throw new Error("This business needs to re-complete payment setup. Please contact the business owner.");
+      }
+    }
+
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
     let customerId: string | undefined;
