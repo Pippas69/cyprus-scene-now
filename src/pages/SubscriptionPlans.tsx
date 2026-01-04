@@ -295,7 +295,12 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
       if (error) throw error;
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        // Try popup first, fallback to same-tab navigation if blocked
+        const popup = window.open(data.url, '_blank');
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          // Popup blocked - navigate in same tab
+          window.location.href = data.url;
+        }
       } else {
         throw new Error('No checkout URL received');
       }
