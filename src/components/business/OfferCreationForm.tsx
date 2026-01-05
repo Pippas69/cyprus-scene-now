@@ -20,6 +20,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+import { MultiItemOfferEditor, MultiItemOfferData, PricingType } from "./offers";
 
 const createOfferSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -27,8 +29,8 @@ const createOfferSchema = (language: 'el' | 'en') => {
   return z.object({
     title: z.string().trim().min(3, formatValidationMessage(v.minLength, { min: 3 })).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
     description: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
-    original_price: z.coerce.number({ message: language === 'el' ? "Εισάγετε έγκυρη τιμή" : "Enter a valid price" })
-      .min(0.01, language === 'el' ? "Η τιμή πρέπει να είναι τουλάχιστον €0.01" : "Price must be at least €0.01"),
+    // original_price is optional for multi-item offers (bundle/itemized)
+    original_price: z.coerce.number().min(0.01, language === 'el' ? "Η τιμή πρέπει να είναι τουλάχιστον €0.01" : "Price must be at least €0.01").optional(),
     percent_off: z.coerce.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).max(99, formatValidationMessage(v.maxValue, { max: 99 })),
     max_purchases: z.coerce.number().min(1).optional().nullable(),
     max_per_user: z.coerce.number().min(1).default(1),
@@ -82,6 +84,12 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     commissionPercent: number;
     useCommissionFreeSlot: boolean;
   }>({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
+
+  // Multi-item offer state
+  const [multiItemData, setMultiItemData] = useState<MultiItemOfferData>({
+    pricing_type: "single",
+    items: [],
+  });
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -151,7 +159,25 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
   const watchedPrice = form.watch("original_price");
   const watchedDiscount = form.watch("percent_off");
-  const finalPrice = watchedPrice ? (watchedPrice * (100 - (watchedDiscount || 0)) / 100).toFixed(2) : "0.00";
+  
+  // Calculate effective price based on pricing type
+  const getEffectivePrice = () => {
+    if (multiItemData.pricing_type === "bundle" && multiItemData.bundle_price_cents) {
+      return multiItemData.bundle_price_cents / 100;
+    }
+    if (multiItemData.pricing_type === "itemized") {
+      return multiItemData.items.reduce((total, item) => {
+        if (item.is_choice_group && item.options.length > 0) {
+          return total + (item.options[0]?.price_cents || 0) / 100;
+        }
+        return total + (item.price_cents || 0) / 100;
+      }, 0);
+    }
+    return watchedPrice || 0;
+  };
+  
+  const effectivePrice = getEffectivePrice();
+  const finalPrice = effectivePrice ? (effectivePrice * (100 - (watchedDiscount || 0)) / 100).toFixed(2) : "0.00";
 
   const generateQRToken = () => {
     return `${businessId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -179,12 +205,27 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         throw new Error(language === 'el' ? "Δεν βρέθηκε επιχείρηση" : "No business found");
       }
 
+      // Determine the price based on pricing type
+      let originalPriceCents: number;
+      if (multiItemData.pricing_type === "bundle" && multiItemData.bundle_price_cents) {
+        originalPriceCents = multiItemData.bundle_price_cents;
+      } else if (multiItemData.pricing_type === "itemized") {
+        originalPriceCents = multiItemData.items.reduce((total, item) => {
+          if (item.is_choice_group && item.options.length > 0) {
+            return total + (item.options[0]?.price_cents || 0);
+          }
+          return total + (item.price_cents || 0);
+        }, 0);
+      } else {
+        originalPriceCents = Math.round(data.original_price * 100);
+      }
+
       console.log("Inserting discount...");
       const { data: discountData, error } = await supabase.from('discounts').insert({
         business_id: businessId,
         title: data.title,
         description: data.description || null,
-        original_price_cents: Math.round(data.original_price * 100),
+        original_price_cents: originalPriceCents,
         percent_off: data.percent_off,
         max_purchases: data.max_purchases || null,
         max_per_user: data.max_per_user || 1,
@@ -193,6 +234,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         terms: data.terms || null,
         qr_code_token: generateQRToken(),
         active: true,
+        pricing_type: multiItemData.pricing_type,
+        bundle_price_cents: multiItemData.pricing_type === "bundle" ? multiItemData.bundle_price_cents : null,
       }).select().single();
 
       console.log("Insert result:", { discountData, error });
@@ -206,6 +249,46 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
             : "You don't have permission to publish offers. Your business must be verified.");
         }
         throw error;
+      }
+
+      // Insert items if this is a multi-item offer
+      if (multiItemData.pricing_type !== "single" && multiItemData.items.length > 0 && discountData) {
+        console.log("Inserting discount items...");
+        
+        for (const item of multiItemData.items) {
+          const { data: itemData, error: itemError } = await supabase.from('discount_items').insert({
+            discount_id: discountData.id,
+            name: item.name,
+            description: item.description || null,
+            price_cents: item.price_cents || null,
+            image_url: item.image_url || null,
+            is_choice_group: item.is_choice_group,
+            sort_order: item.sort_order,
+          }).select().single();
+
+          if (itemError) {
+            console.error("Item insert error:", itemError);
+            continue;
+          }
+
+          // Insert options for choice groups
+          if (item.is_choice_group && item.options.length > 0 && itemData) {
+            for (const option of item.options) {
+              const { error: optionError } = await supabase.from('discount_item_options').insert({
+                discount_item_id: itemData.id,
+                name: option.name,
+                description: option.description || null,
+                price_cents: option.price_cents || null,
+                image_url: option.image_url || null,
+                sort_order: option.sort_order,
+              });
+
+              if (optionError) {
+                console.error("Option insert error:", optionError);
+              }
+            }
+          }
+        }
       }
 
       // Create boost if enabled
@@ -234,6 +317,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       form.reset();
       setBoostData({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
+      setMultiItemData({ pricing_type: "single", items: [] });
       
       // Navigate to offers list after short delay
       setTimeout(() => {
@@ -356,30 +440,44 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="original_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{language === 'el' ? 'Αρχική Τιμή (€)' : 'Original Price (€)'} *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      min="0.01"
-                      placeholder="10.00"
-                      required
-                      value={field.value || ''}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        field.onChange(isNaN(val) ? undefined : val);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <Separator />
+
+            {/* Multi-Item Offer Editor */}
+            <MultiItemOfferEditor
+              data={multiItemData}
+              onChange={setMultiItemData}
+              language={language}
             />
+
+            <Separator />
+
+            {/* Original Price - only show for single item offers */}
+            {multiItemData.pricing_type === "single" && (
+              <FormField
+                control={form.control}
+                name="original_price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'el' ? 'Αρχική Τιμή (€)' : 'Original Price (€)'} *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        step="0.01"
+                        min="0.01"
+                        placeholder="10.00"
+                        required
+                        value={field.value || ''}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          field.onChange(isNaN(val) ? undefined : val);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -402,12 +500,12 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               )}
             />
 
-            {/* Price Preview */}
-            {watchedPrice > 0 && (
+            {/* Price Preview - updated for all pricing types */}
+            {effectivePrice > 0 && (
               <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{language === 'el' ? 'Αρχική τιμή' : 'Original price'}</span>
-                  <span className="line-through">€{watchedPrice.toFixed(2)}</span>
+                  <span className="line-through">€{effectivePrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{language === 'el' ? 'Έκπτωση' : 'Discount'}</span>
@@ -417,6 +515,11 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   <span>{language === 'el' ? 'Ο πελάτης πληρώνει' : 'Customer pays'}</span>
                   <span className="text-primary">€{finalPrice}</span>
                 </div>
+                {multiItemData.pricing_type !== "single" && multiItemData.items.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {multiItemData.items.length} {language === 'el' ? 'προϊόντα' : 'items'}
+                  </p>
+                )}
               </div>
             )}
 
