@@ -2,10 +2,14 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Force cache refresh - v2
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Default platform commission percentage (applied to all offers unless commission-free)
+const DEFAULT_COMMISSION_PERCENT = 12;
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-OFFER-CHECKOUT] ${step}`, details ? JSON.stringify(details) : "");
@@ -60,7 +64,7 @@ serve(async (req) => {
     if (discountError || !discount) {
       throw new Error("Offer not found");
     }
-    logStep("Discount fetched", { discountId, title: discount.title });
+    logStep("Discount fetched", { discountId, title: discount.title, commissionFree: discount.commission_free });
 
     // Validate business has completed Stripe Connect onboarding
     if (!discount.businesses.stripe_account_id) {
@@ -115,18 +119,10 @@ serve(async (req) => {
     const discountPercent = discount.percent_off || 0;
     const finalPriceCents = Math.round(originalPriceCents * (100 - discountPercent) / 100);
 
-    // Check for commission from offer boost
-    let commissionPercent = 0;
-    const { data: boostData } = await supabaseAdmin
-      .from("offer_boosts")
-      .select("commission_percent")
-      .eq("discount_id", discountId)
-      .eq("active", true)
-      .single();
-
-    if (boostData) {
-      commissionPercent = boostData.commission_percent;
-    }
+    // Determine commission based on commission_free flag (NOT from offer_boosts)
+    // If commission_free is true, no platform fee is charged
+    // Otherwise, standard platform commission applies
+    const commissionPercent = discount.commission_free ? 0 : DEFAULT_COMMISSION_PERCENT;
 
     // Commission is based on original price (as per business logic)
     const commissionAmountCents = Math.round((originalPriceCents * commissionPercent) / 100);
@@ -136,6 +132,7 @@ serve(async (req) => {
       originalPriceCents,
       discountPercent,
       finalPriceCents,
+      commissionFree: discount.commission_free,
       commissionPercent,
       commissionAmountCents,
       businessPayoutCents
@@ -228,13 +225,15 @@ serve(async (req) => {
         discount_id: discountId,
         user_id: user.id,
         business_id: discount.business_id,
+        commission_free: discount.commission_free ? "true" : "false",
       },
     };
 
     // Add destination charge with application fee (split payment)
     // Platform keeps the commission, business gets the rest automatically
+    // If commission-free, application_fee_amount is 0
     checkoutConfig.payment_intent_data = {
-      application_fee_amount: commissionAmountCents, // Platform commission
+      application_fee_amount: commissionAmountCents, // Platform commission (0 if commission-free)
       transfer_data: {
         destination: discount.businesses.stripe_account_id, // Business receives the rest
       },
@@ -245,6 +244,7 @@ serve(async (req) => {
       destination: discount.businesses.stripe_account_id,
       totalCharge: finalPriceCents,
       businessReceives: finalPriceCents - commissionAmountCents,
+      commissionFree: discount.commission_free,
     });
 
     const session = await stripe.checkout.sessions.create(checkoutConfig);

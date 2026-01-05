@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations } from "./translations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
@@ -129,11 +130,15 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const [validationShake, setValidationShake] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [durationPreset, setDurationPreset] = useState<DurationPreset>('same_day');
+  
+  // Boost data (visibility/targeting only)
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
-    commissionPercent: number;
-    useCommissionFreeSlot: boolean;
-  }>({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
+    targetingQuality: number;
+  }>({ enabled: false, targetingQuality: 10 });
+  
+  // Commission-free toggle (separate from boost)
+  const [useCommissionFreeSlot, setUseCommissionFreeSlot] = useState(false);
 
   // Multi-item offer state
   const [multiItemData, setMultiItemData] = useState<MultiItemOfferData>({
@@ -304,14 +309,39 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         }
       }
 
-      // Create boost if enabled
+      // Handle commission-free slot (deduct from subscription if used)
+      if (useCommissionFreeSlot && discountData) {
+        console.log("Setting commission-free status...");
+        // Update the discount to be commission-free
+        const { error: updateError } = await supabase
+          .from('discounts')
+          .update({ commission_free: true })
+          .eq('id', discountData.id);
+
+        if (updateError) {
+          console.error("Commission-free update error:", updateError);
+        }
+
+        // Deduct from subscription's commission_free_offers_remaining
+        const { error: subError } = await supabase
+          .from('business_subscriptions')
+          .update({
+            commission_free_offers_remaining: Math.max(0, (subscriptionData?.commission_free_offers_remaining || 0) - 1),
+          })
+          .eq('business_id', businessId);
+
+        if (subError) {
+          console.error("Subscription update error:", subError);
+        }
+      }
+
+      // Create boost if enabled (visibility/targeting only, separate from commission)
       if (boostData.enabled && discountData) {
-        console.log("Creating boost...");
+        console.log("Creating visibility boost...");
         const { error: boostError } = await supabase.functions.invoke("create-offer-boost", {
           body: {
             discountId: discountData.id,
-            commissionPercent: boostData.commissionPercent,
-            useCommissionFreeSlot: boostData.useCommissionFreeSlot,
+            targetingQuality: boostData.targetingQuality,
           },
         });
 
@@ -329,7 +359,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       });
 
       form.reset();
-      setBoostData({ enabled: false, commissionPercent: 10, useCommissionFreeSlot: false });
+      setBoostData({ enabled: false, targetingQuality: 10 });
+      setUseCommissionFreeSlot(false);
       setMultiItemData({ pricing_type: "single", items: [] });
       
       // Navigate to offers list after short delay
@@ -688,10 +719,72 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               )}
             />
 
-            {/* Boost Section */}
+            {/* Commission-Free Section (for subscribers) */}
+            {subscriptionData?.subscribed && (subscriptionData?.commission_free_offers_remaining || 0) > 0 && (
+              <div className="p-4 border-2 border-dashed rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-semibold">
+                      {language === "el" ? "Χωρίς Προμήθεια" : "Commission-Free"}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "el"
+                        ? `Έχετε ${subscriptionData.commission_free_offers_remaining} διαθέσιμες προσφορές χωρίς προμήθεια`
+                        : `You have ${subscriptionData.commission_free_offers_remaining} commission-free offers remaining`}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={useCommissionFreeSlot}
+                    onCheckedChange={setUseCommissionFreeSlot}
+                  />
+                </div>
+                {useCommissionFreeSlot ? (
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm">
+                    <p className="font-semibold text-green-700 dark:text-green-300">
+                      ✓ {language === "el" ? "Χωρίς προμήθεια 12%" : "No 12% platform fee"}
+                    </p>
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      {language === "el"
+                        ? "Θα κρατήσετε το 100% των πωλήσεων αυτής της προσφοράς."
+                        : "You'll keep 100% of this offer's sales."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+                    <p>
+                      {language === "el"
+                        ? "Κανονικά, χρεώνεται προμήθεια 12% για κάθε πώληση. Ενεργοποιήστε για να αφαιρέσετε την προμήθεια."
+                        : "Normally, a 12% platform fee is charged on each sale. Enable to remove the fee."}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Platform Fee Notice (for non-subscribers or no remaining slots) */}
+            {(!subscriptionData?.subscribed || (subscriptionData?.commission_free_offers_remaining || 0) === 0) && (
+              <div className="p-4 border rounded-lg bg-muted/30">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">
+                    {language === "el" ? "Προμήθεια 12%" : "12% Platform Fee"}
+                  </span>
+                  {" — "}
+                  {language === "el"
+                    ? "Χρεώνεται σε κάθε πώληση αυτής της προσφοράς."
+                    : "Charged on each sale of this offer."}
+                  {!subscriptionData?.subscribed && (
+                    <span className="block mt-1 text-xs">
+                      {language === "el"
+                        ? "Αναβαθμίστε τη συνδρομή σας για προσφορές χωρίς προμήθεια."
+                        : "Upgrade your subscription for commission-free offers."}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* Boost Section (visibility only, separate from commission) */}
             <OfferBoostSection
-              hasActiveSubscription={subscriptionData?.subscribed || false}
-              remainingCommissionFreeOffers={subscriptionData?.commission_free_offers_remaining || 0}
               onBoostChange={setBoostData}
             />
 

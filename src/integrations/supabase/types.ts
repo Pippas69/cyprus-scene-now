@@ -1227,6 +1227,7 @@ export type Database = {
           active: boolean | null
           bundle_price_cents: number | null
           business_id: string
+          commission_free: boolean
           created_at: string
           description: string | null
           end_at: string
@@ -1246,6 +1247,7 @@ export type Database = {
           active?: boolean | null
           bundle_price_cents?: number | null
           business_id: string
+          commission_free?: boolean
           created_at?: string
           description?: string | null
           end_at: string
@@ -1265,6 +1267,7 @@ export type Database = {
           active?: boolean | null
           bundle_price_cents?: number | null
           business_id?: string
+          commission_free?: boolean
           created_at?: string
           description?: string | null
           end_at?: string
