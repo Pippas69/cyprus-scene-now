@@ -158,13 +158,24 @@ const OffersList = ({ businessId }: OffersListProps) => {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  // Format dates with smart display for hourly offers
+  const formatOfferDates = (startAt: string, endAt: string) => {
+    const start = new Date(startAt);
+    const end = new Date(endAt);
     const locale = language === "el" ? "el-GR" : "en-US";
-    return new Date(dateString).toLocaleDateString(locale, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
+    const isSameDay = start.toDateString() === end.toDateString();
+    
+    const timeFormat: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+    const dateFormat: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    
+    if (isSameDay) {
+      const dayStr = start.toLocaleDateString(locale, dateFormat);
+      const startTime = start.toLocaleTimeString(locale, timeFormat);
+      const endTime = end.toLocaleTimeString(locale, timeFormat);
+      return `${dayStr}, ${startTime} - ${endTime}`;
+    }
+    
+    return `${start.toLocaleDateString(locale, { ...dateFormat, year: 'numeric' })} - ${end.toLocaleDateString(locale, { ...dateFormat, year: 'numeric' })}`;
   };
 
   if (isLoading) {
@@ -241,7 +252,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      {formatDate(offer.start_at)} - {formatDate(offer.end_at)}
+                      {formatOfferDates(offer.start_at, offer.end_at)}
                     </span>
                   </div>
                 </div>

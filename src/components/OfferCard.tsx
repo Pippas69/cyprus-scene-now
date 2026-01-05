@@ -89,11 +89,42 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
     }
   }, { threshold: 0.5 });
   
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  // Format date with smart display for short offers
+  const formatOfferDates = (startAt: string, endAt: string) => {
+    const start = new Date(startAt);
+    const end = new Date(endAt);
+    const now = new Date();
+    const durationMs = end.getTime() - start.getTime();
+    const durationHours = durationMs / (1000 * 60 * 60);
+    const isSameDay = start.toDateString() === end.toDateString();
+    
+    const timeFormat: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+    const locale = language === "el" ? "el-GR" : "en-GB";
+    
+    // If offer is active and ends soon (within 24 hours)
+    if (now >= start && now <= end && durationHours <= 24) {
+      const hoursLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60));
+      if (hoursLeft <= 1) {
+        const minsLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60));
+        return language === "el" ? `Λήγει σε ${minsLeft} λεπτά` : `Ends in ${minsLeft} mins`;
+      }
+      return language === "el" ? `Λήγει σε ${hoursLeft} ώρες` : `Ends in ${hoursLeft} hours`;
+    }
+    
+    // Same day offer - show times
+    if (isSameDay) {
+      const startTime = start.toLocaleTimeString(locale, timeFormat);
+      const endTime = end.toLocaleTimeString(locale, timeFormat);
+      const dayStr = start.toLocaleDateString(locale, { day: "numeric", month: "short" });
+      return language === "el" 
+        ? `${dayStr}, ${startTime} - ${endTime}` 
+        : `${dayStr}, ${startTime} - ${endTime}`;
+    }
+    
+    // Multi-day offer - show end date
     return language === "el"
-      ? date.toLocaleDateString("el-GR", { day: "numeric", month: "short" })
-      : date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+      ? `Έως ${end.toLocaleDateString(locale, { day: "numeric", month: "short" })}`
+      : `Until ${end.toLocaleDateString(locale, { day: "numeric", month: "short" })}`;
   };
 
   if (!offerData) return null;
@@ -193,7 +224,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 <span>
-                  {language === "el" ? "Έως" : "Until"} {formatDate(offerData.end_at)}
+                  {formatOfferDates(offerData.start_at, offerData.end_at)}
                 </span>
               </div>
             </div>
