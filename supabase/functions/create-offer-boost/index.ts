@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-// Force cache refresh - v2
+// Force cache refresh - v3
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -10,6 +10,14 @@ const corsHeaders = {
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-OFFER-BOOST] ${step}${detailsStr}`);
+};
+
+// Same tiers as event boosts
+const BOOST_TIERS = {
+  basic: { dailyRateCents: 1500, quality: 50 },
+  standard: { dailyRateCents: 5000, quality: 70 },
+  premium: { dailyRateCents: 15000, quality: 85 },
+  elite: { dailyRateCents: 40000, quality: 100 },
 };
 
 serve(async (req) => {
@@ -37,9 +45,15 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Boosting is now ONLY about visibility/targeting, not commission
-    const { discountId, targetingQuality } = await req.json();
-    logStep("Request data", { discountId, targetingQuality });
+    const { discountId, tier, startDate, endDate, useSubscriptionBudget } = await req.json();
+    logStep("Request data", { discountId, tier, startDate, endDate, useSubscriptionBudget });
+
+    // Validate tier
+    if (!tier || !BOOST_TIERS[tier as keyof typeof BOOST_TIERS]) {
+      throw new Error("Invalid boost tier");
+    }
+
+    const tierData = BOOST_TIERS[tier as keyof typeof BOOST_TIERS];
 
     // Get discount and verify ownership
     const { data: discountData, error: discountError } = await supabaseClient
@@ -63,33 +77,94 @@ serve(async (req) => {
 
     logStep("Business ownership verified", { businessId });
 
-    // Validate targeting quality (5-25 range)
-    const validQualities = [5, 10, 15, 20, 25];
-    const quality = targetingQuality || 10; // Default to 10 if not specified
-    if (!validQualities.includes(quality)) {
-      throw new Error("Invalid targeting quality");
+    // Calculate duration and cost
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+    const totalCostCents = tierData.dailyRateCents * days;
+
+    logStep("Cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
+
+    // If not using subscription budget, return that payment is needed
+    if (!useSubscriptionBudget) {
+      return new Response(
+        JSON.stringify({
+          needsPayment: true,
+          totalCostCents,
+          tier,
+          days,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
     }
 
-    // Create offer boost record (visibility/targeting only, NO commission)
+    // Check subscription budget
+    const { data: subscription, error: subError } = await supabaseClient
+      .from("business_subscriptions")
+      .select("*")
+      .eq("business_id", businessId)
+      .eq("status", "active")
+      .single();
+
+    if (subError || !subscription) {
+      throw new Error("No active subscription found");
+    }
+
+    const remainingBudget = subscription.monthly_budget_remaining_cents || 0;
+    if (remainingBudget < totalCostCents) {
+      throw new Error("Insufficient subscription budget");
+    }
+
+    // Deduct from subscription budget
+    const { error: updateError } = await supabaseClient
+      .from("business_subscriptions")
+      .update({
+        monthly_budget_remaining_cents: remainingBudget - totalCostCents,
+      })
+      .eq("id", subscription.id);
+
+    if (updateError) throw updateError;
+
+    logStep("Budget deducted", { 
+      previousBudget: remainingBudget, 
+      deducted: totalCostCents, 
+      newBudget: remainingBudget - totalCostCents 
+    });
+
+    // Determine initial status based on start date
+    const now = new Date();
+    const status = start <= now ? "active" : "scheduled";
+
+    // Create offer boost record
     const { error: boostError } = await supabaseClient
       .from("offer_boosts")
       .insert({
         discount_id: discountId,
         business_id: businessId,
-        commission_percent: 0, // No longer used for commission, kept for backward compatibility
-        targeting_quality: quality,
-        active: true,
+        boost_tier: tier,
+        targeting_quality: tierData.quality,
+        daily_rate_cents: tierData.dailyRateCents,
+        total_cost_cents: totalCostCents,
+        start_date: startDate,
+        end_date: endDate,
+        status,
+        source: "subscription",
+        commission_percent: 0, // Not used anymore, kept for backward compatibility
+        active: status === "active",
       });
 
     if (boostError) throw boostError;
 
-    logStep("Offer boost created (visibility only)", { targetingQuality: quality });
+    logStep("Offer boost created", { tier, targetingQuality: tierData.quality, status });
 
     return new Response(
       JSON.stringify({
         success: true,
-        targeting_quality: quality,
-        message: "Offer boost activated for increased visibility",
+        tier,
+        targeting_quality: tierData.quality,
+        total_cost_cents: totalCostCents,
+        status,
+        message: "Offer boost activated",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );

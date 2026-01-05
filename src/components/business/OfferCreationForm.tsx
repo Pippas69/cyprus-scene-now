@@ -131,11 +131,24 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [durationPreset, setDurationPreset] = useState<DurationPreset>('same_day');
   
-  // Boost data (visibility/targeting only)
+  // Boost data (aligned with event boost tiers)
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
+    tier: "basic" | "standard" | "premium" | "elite";
+    startDate: Date;
+    endDate: Date;
+    totalCostCents: number;
+    dailyRateCents: number;
     targetingQuality: number;
-  }>({ enabled: false, targetingQuality: 10 });
+  }>({ 
+    enabled: false, 
+    tier: "basic",
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    totalCostCents: 0,
+    dailyRateCents: 1500,
+    targetingQuality: 50,
+  });
   
   // Commission-free toggle (separate from boost)
   const [useCommissionFreeSlot, setUseCommissionFreeSlot] = useState(false);
@@ -335,18 +348,44 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         }
       }
 
-      // Create boost if enabled (visibility/targeting only, separate from commission)
+      // Create boost if enabled (aligned with event boost tiers)
       if (boostData.enabled && discountData) {
         console.log("Creating visibility boost...");
-        const { error: boostError } = await supabase.functions.invoke("create-offer-boost", {
+        
+        // Check if subscription budget can be used
+        const remainingBudget = subscriptionData?.monthly_budget_remaining_cents || 0;
+        const canUseSubscriptionBudget = subscriptionData?.subscribed && remainingBudget >= boostData.totalCostCents;
+        
+        const { data: boostResult, error: boostError } = await supabase.functions.invoke("create-offer-boost", {
           body: {
             discountId: discountData.id,
-            targetingQuality: boostData.targetingQuality,
+            tier: boostData.tier,
+            startDate: boostData.startDate.toISOString().split("T")[0],
+            endDate: boostData.endDate.toISOString().split("T")[0],
+            useSubscriptionBudget: canUseSubscriptionBudget,
           },
         });
 
         if (boostError) {
           console.error("Boost creation error:", boostError);
+          toast({
+            title: language === "el" ? "Προειδοποίηση" : "Warning",
+            description: language === "el" 
+              ? "Η προσφορά δημιουργήθηκε αλλά η προώθηση απέτυχε." 
+              : "Offer created but boost activation failed.",
+            variant: "destructive",
+          });
+        } else if (boostResult?.needsPayment) {
+          // Redirect to Stripe checkout for boost payment
+          console.log("Boost requires payment, creating checkout...");
+          // For now, we'll skip payment flow and just log it
+          // In full implementation, you'd redirect to a checkout page
+          toast({
+            title: language === "el" ? "Πληρωμή απαιτείται" : "Payment required",
+            description: language === "el" 
+              ? `Η προώθηση κοστίζει €${(boostResult.totalCostCents / 100).toFixed(2)}. Μπορείτε να την ενεργοποιήσετε από τη λίστα προσφορών.` 
+              : `Boost costs €${(boostResult.totalCostCents / 100).toFixed(2)}. You can activate it from the offers list.`,
+          });
         }
       }
 
@@ -359,7 +398,15 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       });
 
       form.reset();
-      setBoostData({ enabled: false, targetingQuality: 10 });
+      setBoostData({ 
+        enabled: false, 
+        tier: "basic",
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        totalCostCents: 0,
+        dailyRateCents: 1500,
+        targetingQuality: 50,
+      });
       setUseCommissionFreeSlot(false);
       setMultiItemData({ pricing_type: "single", items: [] });
       
@@ -783,9 +830,11 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               </div>
             )}
 
-            {/* Boost Section (visibility only, separate from commission) */}
+            {/* Boost Section (aligned with event boost tiers) */}
             <OfferBoostSection
               onBoostChange={setBoostData}
+              hasActiveSubscription={subscriptionData?.subscribed || false}
+              remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
             />
 
             {/* Success State */}
