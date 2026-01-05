@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Force cache refresh - v2
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -36,8 +37,9 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { discountId, commissionPercent, useCommissionFreeSlot } = await req.json();
-    logStep("Request data", { discountId, commissionPercent, useCommissionFreeSlot });
+    // Boosting is now ONLY about visibility/targeting, not commission
+    const { discountId, targetingQuality } = await req.json();
+    logStep("Request data", { discountId, targetingQuality });
 
     // Get discount and verify ownership
     const { data: discountData, error: discountError } = await supabaseClient
@@ -61,67 +63,33 @@ serve(async (req) => {
 
     logStep("Business ownership verified", { businessId });
 
-    // Validate commission percentage
-    const validPercentages = [5, 10, 15, 20, 25];
-    if (!validPercentages.includes(commissionPercent)) {
-      throw new Error("Invalid commission percentage");
+    // Validate targeting quality (5-25 range)
+    const validQualities = [5, 10, 15, 20, 25];
+    const quality = targetingQuality || 10; // Default to 10 if not specified
+    if (!validQualities.includes(quality)) {
+      throw new Error("Invalid targeting quality");
     }
 
-    // Map commission to targeting quality
-    const targetingQuality = commissionPercent; // 5% = 5, 10% = 10, etc.
-
-    let finalCommissionPercent = commissionPercent;
-
-    if (useCommissionFreeSlot) {
-      // Check subscription for available commission-free offers
-      const { data: subscription, error: subError } = await supabaseClient
-        .from("business_subscriptions")
-        .select("commission_free_offers_remaining, status")
-        .eq("business_id", businessId)
-        .single();
-
-      if (subError || !subscription || subscription.status !== "active") {
-        throw new Error("No active subscription found");
-      }
-
-      if ((subscription.commission_free_offers_remaining || 0) <= 0) {
-        throw new Error("No commission-free offers remaining");
-      }
-
-      // Deduct commission-free slot
-      const { error: updateError } = await supabaseClient
-        .from("business_subscriptions")
-        .update({
-          commission_free_offers_remaining: (subscription.commission_free_offers_remaining || 0) - 1,
-        })
-        .eq("business_id", businessId);
-
-      if (updateError) throw updateError;
-
-      finalCommissionPercent = 0; // Commission-free
-      logStep("Used commission-free slot");
-    }
-
-    // Create offer boost record
+    // Create offer boost record (visibility/targeting only, NO commission)
     const { error: boostError } = await supabaseClient
       .from("offer_boosts")
       .insert({
         discount_id: discountId,
         business_id: businessId,
-        commission_percent: finalCommissionPercent,
-        targeting_quality: targetingQuality,
+        commission_percent: 0, // No longer used for commission, kept for backward compatibility
+        targeting_quality: quality,
         active: true,
       });
 
     if (boostError) throw boostError;
 
-    logStep("Offer boost created");
+    logStep("Offer boost created (visibility only)", { targetingQuality: quality });
 
     return new Response(
       JSON.stringify({
         success: true,
-        commission_percent: finalCommissionPercent,
-        targeting_quality: targetingQuality,
+        targeting_quality: quality,
+        message: "Offer boost activated for increased visibility",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );

@@ -3,65 +3,46 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Target, TrendingUp, Zap } from "lucide-react";
+import { Target, TrendingUp, Zap, Rocket } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 
 interface OfferBoostSectionProps {
-  hasActiveSubscription: boolean;
-  remainingCommissionFreeOffers: number;
   onBoostChange: (data: {
     enabled: boolean;
-    commissionPercent: number;
-    useCommissionFreeSlot: boolean;
+    targetingQuality: number;
   }) => void;
 }
 
 const OfferBoostSection = ({
-  hasActiveSubscription,
-  remainingCommissionFreeOffers,
   onBoostChange,
 }: OfferBoostSectionProps) => {
   const { language } = useLanguage();
   const [boostEnabled, setBoostEnabled] = useState(false);
-  const [commissionPercent, setCommissionPercent] = useState(10);
-  const [useCommissionFreeSlot, setUseCommissionFreeSlot] = useState(
-    hasActiveSubscription && remainingCommissionFreeOffers > 0
-  );
+  const [targetingQuality, setTargetingQuality] = useState(10);
 
-  const commissionTiers = [
-    { value: 5, quality: 5, icon: Zap, color: "text-gray-500" },
-    { value: 10, quality: 10, icon: Target, color: "text-blue-500" },
-    { value: 15, quality: 15, icon: TrendingUp, color: "text-purple-500" },
-    { value: 20, quality: 20, icon: TrendingUp, color: "text-amber-500" },
-    { value: 25, quality: 25, icon: TrendingUp, color: "text-rose-500" },
+  const targetingTiers = [
+    { value: 5, label: language === "el" ? "Βασική" : "Basic", icon: Zap, color: "text-gray-500" },
+    { value: 10, label: language === "el" ? "Καλή" : "Good", icon: Target, color: "text-blue-500" },
+    { value: 15, label: language === "el" ? "Δυνατή" : "Strong", icon: TrendingUp, color: "text-purple-500" },
+    { value: 20, label: language === "el" ? "Εξαιρετική" : "Excellent", icon: TrendingUp, color: "text-amber-500" },
+    { value: 25, label: language === "el" ? "Μέγιστη" : "Maximum", icon: Rocket, color: "text-rose-500" },
   ];
 
   const handleBoostToggle = (enabled: boolean) => {
     setBoostEnabled(enabled);
     onBoostChange({
       enabled,
-      commissionPercent,
-      useCommissionFreeSlot: enabled ? useCommissionFreeSlot : false,
+      targetingQuality: enabled ? targetingQuality : 0,
     });
   };
 
-  const handleCommissionChange = (value: string) => {
-    const percent = parseInt(value);
-    setCommissionPercent(percent);
+  const handleQualityChange = (value: string) => {
+    const quality = parseInt(value);
+    setTargetingQuality(quality);
     onBoostChange({
       enabled: boostEnabled,
-      commissionPercent: percent,
-      useCommissionFreeSlot,
-    });
-  };
-
-  const handleFreeSlotToggle = (checked: boolean) => {
-    setUseCommissionFreeSlot(checked);
-    onBoostChange({
-      enabled: boostEnabled,
-      commissionPercent,
-      useCommissionFreeSlot: checked,
+      targetingQuality: quality,
     });
   };
 
@@ -69,8 +50,9 @@ const OfferBoostSection = ({
     <div className="space-y-4 p-4 border-2 border-dashed rounded-lg">
       <div className="flex items-center justify-between">
         <div>
-          <Label className="text-base font-semibold">
-            {language === "el" ? "Προώθηση Προσφοράς" : "Boost Offer"}
+          <Label className="text-base font-semibold flex items-center gap-2">
+            <Rocket className="h-4 w-4 text-primary" />
+            {language === "el" ? "Προώθηση Προσφοράς" : "Boost Offer Visibility"}
           </Label>
           <p className="text-sm text-muted-foreground">
             {language === "el"
@@ -83,91 +65,55 @@ const OfferBoostSection = ({
 
       {boostEnabled && (
         <div className="space-y-4 pt-4 border-t">
-          {/* Commission-Free Option for Subscribers */}
-          {hasActiveSubscription && remainingCommissionFreeOffers > 0 && (
-            <div className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
-              <div className="flex-1">
-                <Label className="font-semibold">
-                  {language === "el" ? "Χρήση Χωρίς Προμήθεια" : "Use Commission-Free Slot"}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {remainingCommissionFreeOffers}{" "}
-                  {language === "el" ? "διαθέσιμες" : "remaining"}
-                </p>
-              </div>
-              <Switch
-                checked={useCommissionFreeSlot}
-                onCheckedChange={handleFreeSlotToggle}
-              />
-            </div>
-          )}
-
-          {!useCommissionFreeSlot && (
-            <>
-              <div className="space-y-3">
-                <Label>
-                  {language === "el"
-                    ? "Ποσοστό Προμήθειας (ανά εξαργύρωση)"
-                    : "Commission Percentage (per redemption)"}
-                </Label>
-                <RadioGroup
-                  value={commissionPercent.toString()}
-                  onValueChange={handleCommissionChange}
+          <div className="space-y-3">
+            <Label>
+              {language === "el"
+                ? "Ποιότητα Στόχευσης"
+                : "Targeting Quality"}
+            </Label>
+            <RadioGroup
+              value={targetingQuality.toString()}
+              onValueChange={handleQualityChange}
+            >
+              {targetingTiers.map(({ value, label, icon: Icon, color }) => (
+                <div
+                  key={value}
+                  className={cn(
+                    "flex items-center space-x-3 p-3 border-2 rounded-lg cursor-pointer transition-all",
+                    targetingQuality === value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  )}
+                  onClick={() => handleQualityChange(value.toString())}
                 >
-                  {commissionTiers.map(({ value, quality, icon: Icon, color }) => (
-                    <div
-                      key={value}
-                      className={cn(
-                        "flex items-center space-x-3 p-3 border-2 rounded-lg cursor-pointer transition-all",
-                        commissionPercent === value
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      )}
-                      onClick={() => handleCommissionChange(value.toString())}
+                  <RadioGroupItem value={value.toString()} id={`quality-${value}`} />
+                  <Icon className={cn("h-4 w-4", color)} />
+                  <div className="flex-1">
+                    <Label
+                      htmlFor={`quality-${value}`}
+                      className="cursor-pointer font-semibold"
                     >
-                      <RadioGroupItem value={value.toString()} id={`commission-${value}`} />
-                      <Icon className={cn("h-4 w-4", color)} />
-                      <div className="flex-1">
-                        <Label
-                          htmlFor={`commission-${value}`}
-                          className="cursor-pointer font-semibold"
-                        >
-                          {value}% {language === "el" ? "Προμήθεια" : "Commission"}
-                        </Label>
-                        <p className="text-xs text-muted-foreground">
-                          {language === "el" ? "Ποιότητα" : "Quality"}: {quality}%
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {language === "el" ? "Στόχευση" : "Targeting"}: {quality}%
-                      </Badge>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
+                      {label}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {language === "el" ? "Επίπεδο" : "Level"}: {value}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {value}%
+                  </Badge>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
 
-              <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
-                <p>
-                  {language === "el"
-                    ? "Η προμήθεια υπολογίζεται από την αρχική τιμή (όχι την τιμή με έκπτωση) κάθε εξαργύρωσης QR code."
-                    : "Commission is calculated from the original price (not discounted price) of each QR code redemption."}
-                </p>
-              </div>
-            </>
-          )}
-
-          {useCommissionFreeSlot && (
-            <div className="p-3 bg-success/10 border border-success/20 rounded-lg text-sm">
-              <p className="font-semibold text-success">
-                {language === "el" ? "✓ Χωρίς Προμήθεια" : "✓ Commission-Free"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {language === "el"
-                  ? "Αυτή η προσφορά θα προωθηθεί χωρίς προμήθεια χρησιμοποιώντας τη συνδρομή σας."
-                  : "This offer will be boosted commission-free using your subscription."}
-              </p>
-            </div>
-          )}
+          <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+            <p>
+              {language === "el"
+                ? "Η προώθηση αυξάνει την ορατότητα της προσφοράς σας στους χρήστες με βάση τις προτιμήσεις τους."
+                : "Boosting increases your offer's visibility to users based on their preferences."}
+            </p>
+          </div>
         </div>
       )}
     </div>
