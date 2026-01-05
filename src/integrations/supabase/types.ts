@@ -1937,32 +1937,53 @@ export type Database = {
       offer_boosts: {
         Row: {
           active: boolean | null
+          boost_tier: string | null
           business_id: string
           commission_percent: number
           created_at: string | null
+          daily_rate_cents: number | null
           discount_id: string
+          end_date: string | null
           id: string
+          source: string | null
+          start_date: string | null
+          status: string | null
           targeting_quality: number
+          total_cost_cents: number | null
           updated_at: string | null
         }
         Insert: {
           active?: boolean | null
+          boost_tier?: string | null
           business_id: string
           commission_percent: number
           created_at?: string | null
+          daily_rate_cents?: number | null
           discount_id: string
+          end_date?: string | null
           id?: string
+          source?: string | null
+          start_date?: string | null
+          status?: string | null
           targeting_quality: number
+          total_cost_cents?: number | null
           updated_at?: string | null
         }
         Update: {
           active?: boolean | null
+          boost_tier?: string | null
           business_id?: string
           commission_percent?: number
           created_at?: string | null
+          daily_rate_cents?: number | null
           discount_id?: string
+          end_date?: string | null
           id?: string
+          source?: string | null
+          start_date?: string | null
+          status?: string | null
           targeting_quality?: number
+          total_cost_cents?: number | null
           updated_at?: string | null
         }
         Relationships: [
