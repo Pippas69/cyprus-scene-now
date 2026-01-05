@@ -1,4 +1,4 @@
-import { MapPin, Percent, Calendar, ShoppingBag } from "lucide-react";
+import { MapPin, Percent, Calendar, ShoppingBag, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,22 @@ import { useRef, useState } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { cn } from "@/lib/utils";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface OfferItem {
+  id: string;
+  name: string;
+  description: string | null;
+  price_cents: number | null;
+  is_choice_group: boolean;
+  discount_item_options?: {
+    id: string;
+    name: string;
+    description: string | null;
+    price_cents: number | null;
+  }[];
+}
 
 interface Offer {
   id: string;
@@ -15,6 +31,8 @@ interface Offer {
   description: string | null;
   percent_off: number | null;
   original_price_cents?: number | null;
+  pricing_type?: 'single' | 'bundle' | 'itemized';
+  bundle_price_cents?: number | null;
   start_at: string;
   end_at: string;
   business_id: string;
@@ -26,6 +44,7 @@ interface Offer {
     city: string;
     stripe_payouts_enabled?: boolean;
   };
+  discount_items?: OfferItem[];
 }
 
 interface OfferCardProps {
@@ -43,12 +62,44 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   const offerData = offer || discount;
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
 
+  // Fetch items for multi-item offers
+  const { data: discountItems } = useQuery({
+    queryKey: ["discount-items", offerData?.id],
+    queryFn: async () => {
+      if (!offerData?.id) return [];
+      const { data, error } = await supabase
+        .from("discount_items")
+        .select(`
+          id,
+          name,
+          description,
+          price_cents,
+          is_choice_group,
+          sort_order,
+          discount_item_options (
+            id,
+            name,
+            description,
+            price_cents,
+            sort_order
+          )
+        `)
+        .eq("discount_id", offerData.id)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!offerData?.id && offerData?.pricing_type !== "single",
+  });
+
   // Calculate prices
   const originalPriceCents = offerData?.original_price_cents || 0;
   const percentOff = offerData?.percent_off || 0;
   const originalPrice = originalPriceCents / 100;
   const finalPrice = originalPrice * (1 - percentOff / 100);
   const hasPricing = originalPriceCents > 0;
+  const isMultiItem = offerData?.pricing_type && offerData.pricing_type !== "single";
+  const itemCount = discountItems?.length || 0;
   
   // Track discount view when card is 50% visible
   useViewTracking(cardRef, () => {
@@ -137,6 +188,12 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 <span className="text-lg font-bold text-primary">
                   €{finalPrice.toFixed(2)}
                 </span>
+                {isMultiItem && itemCount > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    <Package className="h-3 w-3 mr-1" />
+                    {itemCount} {language === "el" ? "προϊόντα" : "items"}
+                  </Badge>
+                )}
               </div>
             )}
 
@@ -174,22 +231,24 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           isOpen={isPurchaseOpen}
           onClose={() => setIsPurchaseOpen(false)}
           offer={{
-          id: offerData.id,
-          title: offerData.title,
-          description: offerData.description,
-          original_price_cents: originalPriceCents,
-          percent_off: percentOff,
-          end_at: offerData.end_at,
-          business_id: offerData.business_id,
-          businesses: {
-            name: offerData.businesses.name,
-            logo_url: offerData.businesses.logo_url,
-            stripe_payouts_enabled: offerData.businesses.stripe_payouts_enabled,
-          },
-        }}
-        language={language}
-      />
-    )}
+            id: offerData.id,
+            title: offerData.title,
+            description: offerData.description,
+            original_price_cents: originalPriceCents,
+            percent_off: percentOff,
+            pricing_type: offerData.pricing_type,
+            end_at: offerData.end_at,
+            business_id: offerData.business_id,
+            businesses: {
+              name: offerData.businesses.name,
+              logo_url: offerData.businesses.logo_url,
+              stripe_payouts_enabled: offerData.businesses.stripe_payouts_enabled,
+            },
+          }}
+          discountItems={discountItems}
+          language={language}
+        />
+      )}
     </Card>
   );
 };

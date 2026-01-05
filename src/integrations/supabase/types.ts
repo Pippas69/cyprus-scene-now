@@ -1035,6 +1035,105 @@ export type Database = {
           },
         ]
       }
+      discount_item_options: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_item_id: string
+          id: string
+          image_url: string | null
+          name: string
+          price_cents: number | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_item_id: string
+          id?: string
+          image_url?: string | null
+          name: string
+          price_cents?: number | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_item_id?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          price_cents?: number | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_item_options_discount_item_id_fkey"
+            columns: ["discount_item_id"]
+            isOneToOne: false
+            referencedRelation: "discount_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_id: string
+          id: string
+          image_url: string | null
+          is_choice_group: boolean
+          name: string
+          price_cents: number | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_id: string
+          id?: string
+          image_url?: string | null
+          is_choice_group?: boolean
+          name: string
+          price_cents?: number | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_id?: string
+          id?: string
+          image_url?: string | null
+          is_choice_group?: boolean
+          name?: string
+          price_cents?: number | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_items_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discount_scan_stats"
+            referencedColumns: ["discount_id"]
+          },
+          {
+            foreignKeyName: "discount_items_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_items_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "public_discounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discount_scans: {
         Row: {
           device_info: Json | null
@@ -1176,6 +1275,7 @@ export type Database = {
       discounts: {
         Row: {
           active: boolean | null
+          bundle_price_cents: number | null
           business_id: string
           created_at: string
           description: string | null
@@ -1185,6 +1285,7 @@ export type Database = {
           max_purchases: number | null
           original_price_cents: number | null
           percent_off: number | null
+          pricing_type: string
           qr_code_token: string
           start_at: string
           terms: string | null
@@ -1193,6 +1294,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          bundle_price_cents?: number | null
           business_id: string
           created_at?: string
           description?: string | null
@@ -1202,6 +1304,7 @@ export type Database = {
           max_purchases?: number | null
           original_price_cents?: number | null
           percent_off?: number | null
+          pricing_type?: string
           qr_code_token: string
           start_at: string
           terms?: string | null
@@ -1210,6 +1313,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          bundle_price_cents?: number | null
           business_id?: string
           created_at?: string
           description?: string | null
@@ -1219,6 +1323,7 @@ export type Database = {
           max_purchases?: number | null
           original_price_cents?: number | null
           percent_off?: number | null
+          pricing_type?: string
           qr_code_token?: string
           start_at?: string
           terms?: string | null
