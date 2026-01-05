@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/hooks/useLanguage";
 import { businessTranslations } from "./translations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
@@ -52,14 +53,62 @@ interface OfferCreationFormProps {
   businessId: string;
 }
 
-// Helper to get default dates
+// Duration presets
+type DurationPreset = '1h' | '2h' | '3h' | '6h' | 'same_day' | '1w' | '1m' | 'custom';
+
+const durationPresets: { key: DurationPreset; labelEl: string; labelEn: string }[] = [
+  { key: '1h', labelEl: '1 ώρα', labelEn: '1 hour' },
+  { key: '2h', labelEl: '2 ώρες', labelEn: '2 hours' },
+  { key: '3h', labelEl: '3 ώρες', labelEn: '3 hours' },
+  { key: '6h', labelEl: '6 ώρες', labelEn: '6 hours' },
+  { key: 'same_day', labelEl: 'Ίδια μέρα', labelEn: 'Same day' },
+  { key: '1w', labelEl: '1 εβδομάδα', labelEn: '1 week' },
+  { key: '1m', labelEl: '1 μήνας', labelEn: '1 month' },
+  { key: 'custom', labelEl: 'Προσαρμοσμένο', labelEn: 'Custom' },
+];
+
+// Calculate end date from start date and duration
+const calculateEndDate = (startDate: Date, duration: DurationPreset): Date => {
+  const endDate = new Date(startDate);
+  
+  switch (duration) {
+    case '1h':
+      endDate.setHours(endDate.getHours() + 1);
+      break;
+    case '2h':
+      endDate.setHours(endDate.getHours() + 2);
+      break;
+    case '3h':
+      endDate.setHours(endDate.getHours() + 3);
+      break;
+    case '6h':
+      endDate.setHours(endDate.getHours() + 6);
+      break;
+    case 'same_day':
+      endDate.setHours(23, 59, 0, 0);
+      break;
+    case '1w':
+      endDate.setDate(endDate.getDate() + 7);
+      break;
+    case '1m':
+      endDate.setDate(endDate.getDate() + 30);
+      break;
+    default:
+      // Custom - don't change
+      break;
+  }
+  
+  return endDate;
+};
+
+// Helper to get default dates (now defaults to same_day)
 const getDefaultDates = () => {
   const now = new Date();
   const startDate = new Date(now);
   startDate.setHours(now.getHours() + 1, 0, 0, 0); // Start in 1 hour
   
-  const endDate = new Date(now);
-  endDate.setDate(endDate.getDate() + 30); // End in 30 days
+  // Default to same day (end at 23:59)
+  const endDate = new Date(startDate);
   endDate.setHours(23, 59, 0, 0);
   
   return {
@@ -79,6 +128,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [validationShake, setValidationShake] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [durationPreset, setDurationPreset] = useState<DurationPreset>('same_day');
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
     commissionPercent: number;
@@ -528,6 +578,50 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               />
             </div>
 
+            {/* Duration Section */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                {language === 'el' ? 'Διάρκεια Προσφοράς' : 'Offer Duration'}
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {durationPresets.map((preset) => (
+                  <Button
+                    key={preset.key}
+                    type="button"
+                    variant={durationPreset === preset.key ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setDurationPreset(preset.key);
+                      if (preset.key !== 'custom') {
+                        const startAt = form.getValues('start_at');
+                        const startDate = startAt ? new Date(startAt) : new Date();
+                        const endDate = calculateEndDate(startDate, preset.key);
+                        form.setValue('end_at', endDate.toISOString(), { shouldValidate: true });
+                      }
+                    }}
+                    className="text-xs sm:text-sm"
+                  >
+                    <Clock className="h-3 w-3 mr-1" />
+                    {language === 'el' ? preset.labelEl : preset.labelEn}
+                  </Button>
+                ))}
+              </div>
+              
+              {/* Show calculated end time for non-custom */}
+              {durationPreset !== 'custom' && form.watch('end_at') && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {language === 'el' ? 'Λήγει:' : 'Ends:'}{' '}
+                  {new Date(form.watch('end_at')).toLocaleString(language === 'el' ? 'el-GR' : 'en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              )}
+            </div>
+
             <FormField
               control={form.control}
               name="start_at"
@@ -537,7 +631,14 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   <FormControl>
                     <DateTimePicker
                       value={field.value ? new Date(field.value) : undefined}
-                      onChange={(date) => field.onChange(date?.toISOString() || "")}
+                      onChange={(date) => {
+                        field.onChange(date?.toISOString() || "");
+                        // Auto-update end date if not custom
+                        if (durationPreset !== 'custom' && date) {
+                          const endDate = calculateEndDate(date, durationPreset);
+                          form.setValue('end_at', endDate.toISOString(), { shouldValidate: true });
+                        }
+                      }}
                       placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
                       minDate={new Date()}
                     />
@@ -547,24 +648,27 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="end_at"
-              render={({ field }) => (
-                <FormItem data-field="end_at">
-                  <FormLabel>{t.endDate} *</FormLabel>
-                  <FormControl>
-                    <DateTimePicker
-                      value={field.value ? new Date(field.value) : undefined}
-                      onChange={(date) => field.onChange(date?.toISOString() || "")}
-                      placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
-                      minDate={new Date()}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Only show end date picker for custom duration */}
+            {durationPreset === 'custom' && (
+              <FormField
+                control={form.control}
+                name="end_at"
+                render={({ field }) => (
+                  <FormItem data-field="end_at">
+                    <FormLabel>{t.endDate} *</FormLabel>
+                    <FormControl>
+                      <DateTimePicker
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => field.onChange(date?.toISOString() || "")}
+                        placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
+                        minDate={new Date()}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
