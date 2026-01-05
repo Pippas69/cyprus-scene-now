@@ -4,26 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, CreditCard, Tag, Store, Clock, AlertCircle, ExternalLink, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { OfferItemsDisplay } from "@/components/business/offers/OfferItemsDisplay";
 
-interface OfferItemOption {
-  id: string;
-  name: string;
-  description?: string | null;
-  price_cents?: number | null;
-}
-
 interface OfferItem {
   id: string;
   name: string;
   description?: string | null;
-  price_cents?: number | null;
-  is_choice_group: boolean;
-  discount_item_options?: OfferItemOption[];
 }
 
 interface Offer {
@@ -32,7 +21,7 @@ interface Offer {
   description: string | null;
   percent_off: number | null;
   original_price_cents: number;
-  pricing_type?: 'single' | 'bundle' | 'itemized';
+  pricing_type?: 'single' | 'bundle';
   start_at?: string;
   end_at: string;
   terms?: string | null;
@@ -58,7 +47,6 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [showFallback, setShowFallback] = useState(false);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -67,7 +55,6 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
       setShowFallback(false);
       setIsLoading(false);
       setAcceptedTerms(false);
-      setSelectedOptions({});
     }
   }, [isOpen]);
 
@@ -103,12 +90,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
 
   // Check if business can receive payments
   const canReceivePayments = offer?.businesses?.stripe_payouts_enabled !== false;
-  
-  // Check if all required choices have been made
-  const isMultiItem = offer?.pricing_type && offer.pricing_type !== "single";
-  const choiceItems = discountItems?.filter(item => item.is_choice_group) || [];
-  const allChoicesMade = choiceItems.every(item => selectedOptions[item.id]);
-  const canPurchase = isMultiItem ? allChoicesMade : true;
+  const isBundle = offer?.pricing_type === "bundle";
 
   if (!offer) return null;
 
@@ -126,10 +108,6 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
     });
   };
 
-  const handleOptionSelect = (itemId: string, optionId: string) => {
-    setSelectedOptions(prev => ({ ...prev, [itemId]: optionId }));
-  };
-
   const handlePurchase = async () => {
     setIsLoading(true);
     try {
@@ -141,10 +119,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
       }
 
       const { data, error } = await supabase.functions.invoke("create-offer-checkout", {
-        body: { 
-          discountId: offer.id,
-          selectedOptions: isMultiItem ? selectedOptions : undefined,
-        },
+        body: { discountId: offer.id },
       });
 
       if (error) throw error;
@@ -189,8 +164,16 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
                   <Store className="h-6 w-6 text-muted-foreground" />
                 </div>
               )}
-              <div>
-                <h3 className="font-semibold">{offer.title}</h3>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold">{offer.title}</h3>
+                  {isBundle && (
+                    <Badge variant="outline" className="text-xs">
+                      <Package className="h-3 w-3 mr-1" />
+                      {language === "el" ? "Πακέτο" : "Bundle"}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">{offer.businesses.name}</p>
               </div>
             </div>
@@ -201,44 +184,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
 
           <Separator />
 
-          {/* Multi-Item Selection */}
-          {isMultiItem && discountItems && discountItems.length > 0 && (
+          {/* Bundle Items Display */}
+          {isBundle && discountItems && discountItems.length > 0 && (
             <>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Package className="h-4 w-4" />
-                  <span>{language === "el" ? "Επιλέξτε τα προϊόντα σας" : "Select your items"}</span>
-                </div>
-                {!allChoicesMade && choiceItems.length > 0 && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    {language === "el" 
-                      ? `Πρέπει να επιλέξετε ${choiceItems.length - Object.keys(selectedOptions).length} ακόμα επιλογές`
-                      : `Please make ${choiceItems.length - Object.keys(selectedOptions).length} more selections`}
-                  </p>
-                )}
-                <ScrollArea className="max-h-48">
-                  <OfferItemsDisplay
-                    items={discountItems.map(item => ({
-                      id: item.id,
-                      name: item.name,
-                      description: item.description,
-                      price_cents: item.price_cents,
-                      is_choice_group: item.is_choice_group,
-                      options: item.discount_item_options?.map(opt => ({
-                        id: opt.id,
-                        name: opt.name,
-                        description: opt.description,
-                        price_cents: opt.price_cents,
-                      })),
-                    }))}
-                    showPrices={offer.pricing_type === "itemized"}
-                    selectable={true}
-                    selectedOptions={selectedOptions}
-                    onSelectionChange={handleOptionSelect}
-                    language={language}
-                  />
-                </ScrollArea>
-              </div>
+              <OfferItemsDisplay items={discountItems} language={language} />
               <Separator />
             </>
           )}
@@ -342,7 +291,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
               <Button
                 onClick={handlePurchase}
                 className="flex-1"
-                disabled={isLoading || !acceptedTerms || !canReceivePayments || !canPurchase}
+                disabled={isLoading || !acceptedTerms || !canReceivePayments}
               >
                 {isLoading ? (
                   <>

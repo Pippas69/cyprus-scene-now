@@ -165,14 +165,6 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     if (multiItemData.pricing_type === "bundle" && multiItemData.bundle_price_cents) {
       return multiItemData.bundle_price_cents / 100;
     }
-    if (multiItemData.pricing_type === "itemized") {
-      return multiItemData.items.reduce((total, item) => {
-        if (item.is_choice_group && item.options.length > 0) {
-          return total + (item.options[0]?.price_cents || 0) / 100;
-        }
-        return total + (item.price_cents || 0) / 100;
-      }, 0);
-    }
     return watchedPrice || 0;
   };
   
@@ -209,15 +201,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       let originalPriceCents: number;
       if (multiItemData.pricing_type === "bundle" && multiItemData.bundle_price_cents) {
         originalPriceCents = multiItemData.bundle_price_cents;
-      } else if (multiItemData.pricing_type === "itemized") {
-        originalPriceCents = multiItemData.items.reduce((total, item) => {
-          if (item.is_choice_group && item.options.length > 0) {
-            return total + (item.options[0]?.price_cents || 0);
-          }
-          return total + (item.price_cents || 0);
-        }, 0);
       } else {
-        originalPriceCents = Math.round(data.original_price * 100);
+        originalPriceCents = Math.round((data.original_price || 0) * 100);
       }
 
       console.log("Inserting discount...");
@@ -251,42 +236,20 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         throw error;
       }
 
-      // Insert items if this is a multi-item offer
-      if (multiItemData.pricing_type !== "single" && multiItemData.items.length > 0 && discountData) {
+      // Insert items if this is a bundle offer
+      if (multiItemData.pricing_type === "bundle" && multiItemData.items.length > 0 && discountData) {
         console.log("Inserting discount items...");
         
         for (const item of multiItemData.items) {
-          const { data: itemData, error: itemError } = await supabase.from('discount_items').insert({
+          const { error: itemError } = await supabase.from('discount_items').insert({
             discount_id: discountData.id,
             name: item.name,
             description: item.description || null,
-            price_cents: item.price_cents || null,
-            image_url: item.image_url || null,
-            is_choice_group: item.is_choice_group,
             sort_order: item.sort_order,
-          }).select().single();
+          });
 
           if (itemError) {
             console.error("Item insert error:", itemError);
-            continue;
-          }
-
-          // Insert options for choice groups
-          if (item.is_choice_group && item.options.length > 0 && itemData) {
-            for (const option of item.options) {
-              const { error: optionError } = await supabase.from('discount_item_options').insert({
-                discount_item_id: itemData.id,
-                name: option.name,
-                description: option.description || null,
-                price_cents: option.price_cents || null,
-                image_url: option.image_url || null,
-                sort_order: option.sort_order,
-              });
-
-              if (optionError) {
-                console.error("Option insert error:", optionError);
-              }
-            }
           }
         }
       }
