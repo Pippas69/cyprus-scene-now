@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Package, Layers, ShoppingBasket } from "lucide-react";
+import { Tag, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PricingType, offerItemTranslations } from "./types";
 
@@ -18,19 +18,13 @@ export function PricingTypeSelector({ value, onChange, language }: PricingTypeSe
       value: "single",
       label: t.singleItem,
       desc: t.singleItemDesc,
-      icon: <Package className="h-5 w-5" />,
+      icon: <Tag className="h-5 w-5" />,
     },
     {
       value: "bundle",
-      label: t.bundleDeal,
+      label: t.bundleOffer,
       desc: t.bundleDesc,
-      icon: <ShoppingBasket className="h-5 w-5" />,
-    },
-    {
-      value: "itemized",
-      label: t.itemizedCombo,
-      desc: t.itemizedDesc,
-      icon: <Layers className="h-5 w-5" />,
+      icon: <Package className="h-5 w-5" />,
     },
   ];
 
@@ -40,7 +34,7 @@ export function PricingTypeSelector({ value, onChange, language }: PricingTypeSe
       <RadioGroup
         value={value}
         onValueChange={(v) => onChange(v as PricingType)}
-        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+        className="grid grid-cols-2 gap-3"
       >
         {options.map((option) => (
           <Label

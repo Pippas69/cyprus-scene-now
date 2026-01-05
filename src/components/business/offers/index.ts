@@ -1,5 +1,5 @@
 export * from "./types";
-export * from "./PricingTypeSelector";
-export * from "./OfferItemEditor";
-export * from "./MultiItemOfferEditor";
-export * from "./OfferItemsDisplay";
+export { PricingTypeSelector } from "./PricingTypeSelector";
+export { OfferItemEditor } from "./OfferItemEditor";
+export { MultiItemOfferEditor } from "./MultiItemOfferEditor";
+export { OfferItemsDisplay } from "./OfferItemsDisplay";

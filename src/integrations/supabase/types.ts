@@ -1035,57 +1035,13 @@ export type Database = {
           },
         ]
       }
-      discount_item_options: {
-        Row: {
-          created_at: string
-          description: string | null
-          discount_item_id: string
-          id: string
-          image_url: string | null
-          name: string
-          price_cents: number | null
-          sort_order: number
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          discount_item_id: string
-          id?: string
-          image_url?: string | null
-          name: string
-          price_cents?: number | null
-          sort_order?: number
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          discount_item_id?: string
-          id?: string
-          image_url?: string | null
-          name?: string
-          price_cents?: number | null
-          sort_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "discount_item_options_discount_item_id_fkey"
-            columns: ["discount_item_id"]
-            isOneToOne: false
-            referencedRelation: "discount_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       discount_items: {
         Row: {
           created_at: string
           description: string | null
           discount_id: string
           id: string
-          image_url: string | null
-          is_choice_group: boolean
           name: string
-          price_cents: number | null
           sort_order: number
         }
         Insert: {
@@ -1093,10 +1049,7 @@ export type Database = {
           description?: string | null
           discount_id: string
           id?: string
-          image_url?: string | null
-          is_choice_group?: boolean
           name: string
-          price_cents?: number | null
           sort_order?: number
         }
         Update: {
@@ -1104,10 +1057,7 @@ export type Database = {
           description?: string | null
           discount_id?: string
           id?: string
-          image_url?: string | null
-          is_choice_group?: boolean
           name?: string
-          price_cents?: number | null
           sort_order?: number
         }
         Relationships: [

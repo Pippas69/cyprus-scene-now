@@ -10,19 +10,12 @@ import { cn } from "@/lib/utils";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { OfferItemsDisplay } from "@/components/business/offers/OfferItemsDisplay";
 
 interface OfferItem {
   id: string;
   name: string;
   description: string | null;
-  price_cents: number | null;
-  is_choice_group: boolean;
-  discount_item_options?: {
-    id: string;
-    name: string;
-    description: string | null;
-    price_cents: number | null;
-  }[];
 }
 
 interface Offer {
@@ -31,7 +24,7 @@ interface Offer {
   description: string | null;
   percent_off: number | null;
   original_price_cents?: number | null;
-  pricing_type?: 'single' | 'bundle' | 'itemized';
+  pricing_type?: 'single' | 'bundle';
   bundle_price_cents?: number | null;
   start_at: string;
   end_at: string;
@@ -62,34 +55,20 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   const offerData = offer || discount;
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
 
-  // Fetch items for multi-item offers
+  // Fetch items for bundle offers
   const { data: discountItems } = useQuery({
     queryKey: ["discount-items", offerData?.id],
     queryFn: async () => {
       if (!offerData?.id) return [];
       const { data, error } = await supabase
         .from("discount_items")
-        .select(`
-          id,
-          name,
-          description,
-          price_cents,
-          is_choice_group,
-          sort_order,
-          discount_item_options (
-            id,
-            name,
-            description,
-            price_cents,
-            sort_order
-          )
-        `)
+        .select("id, name, description, sort_order")
         .eq("discount_id", offerData.id)
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!offerData?.id && offerData?.pricing_type !== "single",
+    enabled: !!offerData?.id && offerData?.pricing_type === "bundle",
   });
 
   // Calculate prices
@@ -98,7 +77,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   const originalPrice = originalPriceCents / 100;
   const finalPrice = originalPrice * (1 - percentOff / 100);
   const hasPricing = originalPriceCents > 0;
-  const isMultiItem = offerData?.pricing_type && offerData.pricing_type !== "single";
+  const isBundle = offerData?.pricing_type === "bundle";
   const itemCount = discountItems?.length || 0;
   
   // Track discount view when card is 50% visible
@@ -166,17 +145,32 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                   {offerData.businesses.name}
                 </Link>
               </div>
-              {offerData.percent_off && (
-                <Badge variant="default" className="flex-shrink-0">
-                  {offerData.percent_off}% OFF
-                </Badge>
-              )}
+              <div className="flex flex-col items-end gap-1">
+                {offerData.percent_off && (
+                  <Badge variant="default" className="flex-shrink-0">
+                    {offerData.percent_off}% OFF
+                  </Badge>
+                )}
+                {isBundle && (
+                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                    <Package className="h-3 w-3 mr-1" />
+                    {language === "el" ? "Πακέτο" : "Bundle"}
+                  </Badge>
+                )}
+              </div>
             </div>
 
             {offerData.description && (
               <p className="text-sm text-foreground/80 mb-3 line-clamp-2">
                 {offerData.description}
               </p>
+            )}
+
+            {/* Bundle Items Preview */}
+            {isBundle && discountItems && itemCount > 0 && (
+              <div className="mb-3">
+                <OfferItemsDisplay items={discountItems} language={language} />
+              </div>
             )}
 
             {/* Pricing Display */}
@@ -188,12 +182,6 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 <span className="text-lg font-bold text-primary">
                   €{finalPrice.toFixed(2)}
                 </span>
-                {isMultiItem && itemCount > 0 && (
-                  <Badge variant="outline" className="text-xs">
-                    <Package className="h-3 w-3 mr-1" />
-                    {itemCount} {language === "el" ? "προϊόντα" : "items"}
-                  </Badge>
-                )}
               </div>
             )}
 
