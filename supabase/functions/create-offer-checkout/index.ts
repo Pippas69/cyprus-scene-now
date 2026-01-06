@@ -115,18 +115,31 @@ serve(async (req) => {
     }
     logStep("Validation passed", { userPurchaseCount, maxPerUser });
 
-    // Calculate pricing
-    const originalPriceCents = discount.original_price_cents || 0;
-    const discountPercent = discount.percent_off || 0;
-    const finalPriceCents = Math.round(originalPriceCents * (100 - discountPercent) / 100);
+    // Calculate pricing based on offer type
+    const isCredit = discount.offer_type === 'credit';
+    let originalPriceCents: number;
+    let discountPercent: number;
+    let finalPriceCents: number;
+    let initialBalanceCents = 0;
+
+    if (isCredit) {
+      // Credit offer: customer pays credit_amount, gets credit_amount * (1 + bonus_percent/100)
+      originalPriceCents = discount.credit_amount_cents || discount.original_price_cents || 0;
+      discountPercent = 0;
+      finalPriceCents = originalPriceCents; // They pay the credit amount
+      initialBalanceCents = Math.round(originalPriceCents * (1 + (discount.bonus_percent || 0) / 100));
+      logStep("Credit offer pricing", { originalPriceCents, bonusPercent: discount.bonus_percent, initialBalanceCents });
+    } else {
+      // Regular offer
+      originalPriceCents = discount.original_price_cents || 0;
+      discountPercent = discount.percent_off || 0;
+      finalPriceCents = Math.round(originalPriceCents * (100 - discountPercent) / 100);
+    }
 
     // COMMISSION DISABLED: All offers are commission-free
-    // Commission is always 0 regardless of commission_free flag
     const commissionPercent = 0;
-
-    // Commission is based on original price (as per business logic)
-    const commissionAmountCents = Math.round((originalPriceCents * commissionPercent) / 100);
-    const businessPayoutCents = finalPriceCents - commissionAmountCents;
+    const commissionAmountCents = 0;
+    const businessPayoutCents = finalPriceCents;
 
     logStep("Pricing calculated", {
       originalPriceCents,
@@ -172,21 +185,28 @@ serve(async (req) => {
 
     // Create pending purchase record
     const expiresAt = new Date(discount.end_at).toISOString();
+    const purchaseData: Record<string, unknown> = {
+      discount_id: discountId,
+      user_id: user.id,
+      business_id: discount.business_id,
+      original_price_cents: originalPriceCents,
+      discount_percent: discountPercent,
+      final_price_cents: finalPriceCents,
+      commission_percent: commissionPercent,
+      commission_amount_cents: commissionAmountCents,
+      business_payout_cents: businessPayoutCents,
+      status: "pending",
+      expires_at: expiresAt,
+    };
+
+    // Add balance for credit offers
+    if (isCredit) {
+      purchaseData.balance_remaining_cents = initialBalanceCents;
+    }
+
     const { data: purchaseRecord, error: purchaseError } = await supabaseAdmin
       .from("offer_purchases")
-      .insert({
-        discount_id: discountId,
-        user_id: user.id,
-        business_id: discount.business_id,
-        original_price_cents: originalPriceCents,
-        discount_percent: discountPercent,
-        final_price_cents: finalPriceCents,
-        commission_percent: commissionPercent,
-        commission_amount_cents: commissionAmountCents,
-        business_payout_cents: businessPayoutCents,
-        status: "pending",
-        expires_at: expiresAt,
-      })
+      .insert(purchaseData)
       .select()
       .single();
 
