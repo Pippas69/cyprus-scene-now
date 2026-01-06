@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2, Zap, Target, Crown, Rocket } from "lucide-react";
+import { CalendarIcon, Loader2, Target, Rocket } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ const EventBoostDialog = ({
   remainingBudgetCents,
 }: EventBoostDialogProps) => {
   const { language } = useLanguage();
-  const [tier, setTier] = useState<"basic" | "standard" | "premium" | "elite">("basic");
+  const [tier, setTier] = useState<"standard" | "premium">("standard");
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 7));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,11 +45,10 @@ const EventBoostDialog = ({
       setIsSubmitting(false);
     }
   }, [open]);
+  // 2-tier boost system
   const tiers = {
-    basic: { dailyRate: 15, icon: Zap, quality: 50, color: "text-blue-500" },
-    standard: { dailyRate: 50, icon: Target, quality: 70, color: "text-purple-500" },
-    premium: { dailyRate: 150, icon: Crown, quality: 85, color: "text-amber-500" },
-    elite: { dailyRate: 400, icon: Rocket, quality: 100, color: "text-rose-500" },
+    standard: { dailyRate: 30, icon: Target, quality: 70, color: "text-purple-500" },
+    premium: { dailyRate: 80, icon: Rocket, quality: 100, color: "text-rose-500" },
   };
 
   const selectedTier = tiers[tier];

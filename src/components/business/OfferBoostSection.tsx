@@ -5,12 +5,12 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Zap, Target, Crown, Rocket } from "lucide-react";
+import { CalendarIcon, Target, Rocket } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 
-export type BoostTier = "basic" | "standard" | "premium" | "elite";
+export type BoostTier = "standard" | "premium";
 
 interface OfferBoostSectionProps {
   onBoostChange: (data: {
@@ -33,16 +33,14 @@ const OfferBoostSection = ({
 }: OfferBoostSectionProps) => {
   const { language } = useLanguage();
   const [boostEnabled, setBoostEnabled] = useState(false);
-  const [tier, setTier] = useState<BoostTier>("basic");
+  const [tier, setTier] = useState<BoostTier>("standard");
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 7));
 
-  // Same tiers as EventBoostDialog
+  // 2-tier boost system
   const tiers = {
-    basic: { dailyRate: 15, dailyRateCents: 1500, icon: Zap, quality: 50, color: "text-blue-500" },
-    standard: { dailyRate: 50, dailyRateCents: 5000, icon: Target, quality: 70, color: "text-purple-500" },
-    premium: { dailyRate: 150, dailyRateCents: 15000, icon: Crown, quality: 85, color: "text-amber-500" },
-    elite: { dailyRate: 400, dailyRateCents: 40000, icon: Rocket, quality: 100, color: "text-rose-500" },
+    standard: { dailyRate: 30, dailyRateCents: 3000, icon: Target, quality: 70, color: "text-purple-500" },
+    premium: { dailyRate: 80, dailyRateCents: 8000, icon: Rocket, quality: 100, color: "text-rose-500" },
   };
 
   const selectedTier = tiers[tier];

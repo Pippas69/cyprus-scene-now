@@ -1371,8 +1371,10 @@ export type Database = {
           business_id: string
           created_at: string | null
           daily_rate_cents: number
+          duration_mode: string | null
           end_date: string
           event_id: string
+          hourly_rate_cents: number | null
           id: string
           source: Database["public"]["Enums"]["boost_source"]
           start_date: string
@@ -1387,8 +1389,10 @@ export type Database = {
           business_id: string
           created_at?: string | null
           daily_rate_cents: number
+          duration_mode?: string | null
           end_date: string
           event_id: string
+          hourly_rate_cents?: number | null
           id?: string
           source: Database["public"]["Enums"]["boost_source"]
           start_date: string
@@ -1403,8 +1407,10 @@ export type Database = {
           business_id?: string
           created_at?: string | null
           daily_rate_cents?: number
+          duration_mode?: string | null
           end_date?: string
           event_id?: string
+          hourly_rate_cents?: number | null
           id?: string
           source?: Database["public"]["Enums"]["boost_source"]
           start_date?: string
@@ -1943,7 +1949,9 @@ export type Database = {
           created_at: string | null
           daily_rate_cents: number | null
           discount_id: string
+          duration_mode: string | null
           end_date: string | null
+          hourly_rate_cents: number | null
           id: string
           source: string | null
           start_date: string | null
@@ -1960,7 +1968,9 @@ export type Database = {
           created_at?: string | null
           daily_rate_cents?: number | null
           discount_id: string
+          duration_mode?: string | null
           end_date?: string | null
+          hourly_rate_cents?: number | null
           id?: string
           source?: string | null
           start_date?: string | null
@@ -1977,7 +1987,9 @@ export type Database = {
           created_at?: string | null
           daily_rate_cents?: number | null
           discount_id?: string
+          duration_mode?: string | null
           end_date?: string | null
+          hourly_rate_cents?: number | null
           id?: string
           source?: string | null
           start_date?: string | null
