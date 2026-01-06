@@ -62,16 +62,14 @@ serve(async (req) => {
 
     logStep("Business ownership verified", { businessId });
 
-    // Define boost tiers (daily rate in cents)
+    // 2-tier boost system (daily rate in cents)
     const boostTiers: Record<string, number> = {
-      basic: 1500, // €15/day
-      standard: 5000, // €50/day
-      premium: 15000, // €150/day
-      elite: 40000, // €400/day
+      standard: 3000, // €30/day
+      premium: 8000,  // €80/day
     };
 
     const dailyRateCents = boostTiers[tier];
-    if (!dailyRateCents) throw new Error("Invalid tier");
+    if (!dailyRateCents) throw new Error("Invalid tier. Must be 'standard' or 'premium'");
 
     // Calculate total cost (minimum 1 day)
     const start = new Date(startDate);
@@ -95,7 +93,7 @@ serve(async (req) => {
         total_cost_cents: totalCostCents,
         source: "purchase",
         status: "pending",
-        targeting_quality: tier === "elite" ? 5 : tier === "premium" ? 4 : tier === "standard" ? 3 : 2,
+        targeting_quality: tier === "premium" ? 5 : 3.5,
       })
       .select()
       .single();

@@ -12,12 +12,10 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-OFFER-BOOST] ${step}${detailsStr}`);
 };
 
-// Same tiers as event boosts
+// 2-tier boost system
 const BOOST_TIERS = {
-  basic: { dailyRateCents: 1500, quality: 50 },
-  standard: { dailyRateCents: 5000, quality: 70 },
-  premium: { dailyRateCents: 15000, quality: 85 },
-  elite: { dailyRateCents: 40000, quality: 100 },
+  standard: { dailyRateCents: 3000, quality: 70 },  // €30/day
+  premium: { dailyRateCents: 8000, quality: 100 },   // €80/day
 };
 
 serve(async (req) => {
