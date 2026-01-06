@@ -917,6 +917,81 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_transactions: {
+        Row: {
+          amount_cents: number
+          balance_after_cents: number
+          balance_before_cents: number
+          business_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          purchase_id: string
+          redeemed_by: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount_cents: number
+          balance_after_cents: number
+          balance_before_cents: number
+          business_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          purchase_id: string
+          redeemed_by?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount_cents?: number
+          balance_after_cents?: number
+          balance_before_cents?: number
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          purchase_id?: string
+          redeemed_by?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "offer_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_analytics: {
         Row: {
           business_id: string
@@ -1225,15 +1300,18 @@ export type Database = {
       discounts: {
         Row: {
           active: boolean | null
+          bonus_percent: number | null
           bundle_price_cents: number | null
           business_id: string
           commission_free: boolean
           created_at: string
+          credit_amount_cents: number | null
           description: string | null
           end_at: string
           id: string
           max_per_user: number | null
           max_purchases: number | null
+          offer_type: string | null
           original_price_cents: number | null
           percent_off: number | null
           pricing_type: string
@@ -1245,15 +1323,18 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          bonus_percent?: number | null
           bundle_price_cents?: number | null
           business_id: string
           commission_free?: boolean
           created_at?: string
+          credit_amount_cents?: number | null
           description?: string | null
           end_at: string
           id?: string
           max_per_user?: number | null
           max_purchases?: number | null
+          offer_type?: string | null
           original_price_cents?: number | null
           percent_off?: number | null
           pricing_type?: string
@@ -1265,15 +1346,18 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          bonus_percent?: number | null
           bundle_price_cents?: number | null
           business_id?: string
           commission_free?: boolean
           created_at?: string
+          credit_amount_cents?: number | null
           description?: string | null
           end_at?: string
           id?: string
           max_per_user?: number | null
           max_purchases?: number | null
+          offer_type?: string | null
           original_price_cents?: number | null
           percent_off?: number | null
           pricing_type?: string
@@ -2044,6 +2128,7 @@ export type Database = {
       }
       offer_purchases: {
         Row: {
+          balance_remaining_cents: number | null
           business_id: string
           business_payout_cents: number
           commission_amount_cents: number
@@ -2065,6 +2150,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          balance_remaining_cents?: number | null
           business_id: string
           business_payout_cents: number
           commission_amount_cents?: number
@@ -2086,6 +2172,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          balance_remaining_cents?: number | null
           business_id?: string
           business_payout_cents?: number
           commission_amount_cents?: number

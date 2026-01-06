@@ -24,6 +24,8 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { MultiItemOfferEditor, MultiItemOfferData, PricingType } from "./offers";
+import { OfferTypeSelector, OfferType } from "./offers/OfferTypeSelector";
+import { CreditOfferFields } from "./offers/CreditOfferFields";
 
 const createOfferSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -159,6 +161,11 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     items: [],
   });
 
+  // Offer type state (regular vs credit)
+  const [offerType, setOfferType] = useState<OfferType>('regular');
+  const [creditAmountCents, setCreditAmountCents] = useState(0);
+  const [bonusPercent, setBonusPercent] = useState(25); // Default 25% bonus
+
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
     queryKey: ["subscription-status"],
@@ -265,21 +272,27 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         throw new Error(language === 'el' ? "Δεν βρέθηκε επιχείρηση" : "No business found");
       }
 
-      // Determine the price based on pricing type
+      // Determine the price based on offer type and pricing type
       let originalPriceCents: number;
-      if (multiItemData.pricing_type === "bundle" && multiItemData.bundle_price_cents) {
+      let discountPercent = data.percent_off;
+      
+      if (offerType === 'credit') {
+        // For credit offers, original_price is the credit amount
+        originalPriceCents = creditAmountCents;
+        discountPercent = 0; // Credit offers use bonus_percent instead
+      } else if (multiItemData.pricing_type === "bundle" && multiItemData.bundle_price_cents) {
         originalPriceCents = multiItemData.bundle_price_cents;
       } else {
         originalPriceCents = Math.round((data.original_price || 0) * 100);
       }
 
-      console.log("Inserting discount...");
+      console.log("Inserting discount...", { offerType, originalPriceCents, bonusPercent });
       const { data: discountData, error } = await supabase.from('discounts').insert({
         business_id: businessId,
         title: data.title,
         description: data.description || null,
         original_price_cents: originalPriceCents,
-        percent_off: data.percent_off,
+        percent_off: discountPercent,
         max_purchases: data.max_purchases || null,
         max_per_user: data.max_per_user || 1,
         start_at: data.start_at,
@@ -289,6 +302,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         active: true,
         pricing_type: multiItemData.pricing_type,
         bundle_price_cents: multiItemData.pricing_type === "bundle" ? multiItemData.bundle_price_cents : null,
+        offer_type: offerType,
+        bonus_percent: offerType === 'credit' ? bonusPercent : 0,
+        credit_amount_cents: offerType === 'credit' ? creditAmountCents : null,
       }).select().single();
 
       console.log("Insert result:", { discountData, error });
@@ -409,6 +425,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       });
       setUseCommissionFreeSlot(false);
       setMultiItemData({ pricing_type: "single", items: [] });
+      setOfferType('regular');
+      setCreditAmountCents(0);
+      setBonusPercent(25);
       
       // Navigate to offers list after short delay
       setTimeout(() => {
@@ -533,17 +552,43 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
             <Separator />
 
-            {/* Multi-Item Offer Editor */}
-            <MultiItemOfferEditor
-              data={multiItemData}
-              onChange={setMultiItemData}
+            {/* Offer Type Selector */}
+            <OfferTypeSelector
+              value={offerType}
+              onChange={setOfferType}
               language={language}
             />
 
             <Separator />
 
-            {/* Original Price - only show for single item offers */}
-            {multiItemData.pricing_type === "single" && (
+            {/* Credit Offer Fields */}
+            {offerType === 'credit' && (
+              <>
+                <CreditOfferFields
+                  creditAmountCents={creditAmountCents}
+                  bonusPercent={bonusPercent}
+                  onCreditAmountChange={setCreditAmountCents}
+                  onBonusPercentChange={setBonusPercent}
+                  language={language}
+                />
+                <Separator />
+              </>
+            )}
+
+            {/* Multi-Item Offer Editor - only for regular offers */}
+            {offerType === 'regular' && (
+              <>
+                <MultiItemOfferEditor
+                  data={multiItemData}
+                  onChange={setMultiItemData}
+                  language={language}
+                />
+                <Separator />
+              </>
+            )}
+
+            {/* Original Price - only show for single item regular offers */}
+            {offerType === 'regular' && multiItemData.pricing_type === "single" && (
               <FormField
                 control={form.control}
                 name="original_price"
@@ -570,26 +615,29 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="percent_off"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.discountPercent} *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min="1"
-                      max="99"
-                      placeholder="20"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Discount Percent - only for regular offers */}
+            {offerType === 'regular' && (
+              <FormField
+                control={form.control}
+                name="percent_off"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t.discountPercent} *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="1"
+                        max="99"
+                        placeholder="20"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Price Preview - updated for all pricing types */}
             {effectivePrice > 0 && (
