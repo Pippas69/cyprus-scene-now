@@ -1371,6 +1371,7 @@ export type Database = {
           business_id: string
           created_at: string | null
           daily_rate_cents: number
+          duration_hours: number | null
           duration_mode: string | null
           end_date: string
           event_id: string
@@ -1389,6 +1390,7 @@ export type Database = {
           business_id: string
           created_at?: string | null
           daily_rate_cents: number
+          duration_hours?: number | null
           duration_mode?: string | null
           end_date: string
           event_id: string
@@ -1407,6 +1409,7 @@ export type Database = {
           business_id?: string
           created_at?: string | null
           daily_rate_cents?: number
+          duration_hours?: number | null
           duration_mode?: string | null
           end_date?: string
           event_id?: string
@@ -1949,6 +1952,7 @@ export type Database = {
           created_at: string | null
           daily_rate_cents: number | null
           discount_id: string
+          duration_hours: number | null
           duration_mode: string | null
           end_date: string | null
           hourly_rate_cents: number | null
@@ -1968,6 +1972,7 @@ export type Database = {
           created_at?: string | null
           daily_rate_cents?: number | null
           discount_id: string
+          duration_hours?: number | null
           duration_mode?: string | null
           end_date?: string | null
           hourly_rate_cents?: number | null
@@ -1987,6 +1992,7 @@ export type Database = {
           created_at?: string | null
           daily_rate_cents?: number | null
           discount_id?: string
+          duration_hours?: number | null
           duration_mode?: string | null
           end_date?: string | null
           hourly_rate_cents?: number | null

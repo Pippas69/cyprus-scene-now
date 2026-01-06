@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Force cache refresh - v3
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -37,8 +38,8 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, tier, startDate, endDate } = await req.json();
-    logStep("Request data", { eventId, tier, startDate, endDate });
+    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours } = await req.json();
+    logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours });
 
     // Get business ID for this event
     const { data: eventData, error: eventError } = await supabaseClient
@@ -62,23 +63,38 @@ serve(async (req) => {
 
     logStep("Business ownership verified", { businessId });
 
-    // 2-tier boost system (daily rate in cents)
-    const boostTiers: Record<string, number> = {
-      standard: 3000, // €30/day
-      premium: 8000,  // €80/day
+    // 2-tier boost system with hourly and daily rates (in cents)
+    const boostTiers = {
+      standard: { dailyRateCents: 3000, hourlyRateCents: 500, quality: 3.5 },  // €30/day, €5/hour
+      premium: { dailyRateCents: 8000, hourlyRateCents: 1200, quality: 5 },     // €80/day, €12/hour
     };
 
-    const dailyRateCents = boostTiers[tier];
-    if (!dailyRateCents) throw new Error("Invalid tier. Must be 'standard' or 'premium'");
+    const tierData = boostTiers[tier as keyof typeof boostTiers];
+    if (!tierData) throw new Error("Invalid tier. Must be 'standard' or 'premium'");
 
-    // Calculate total cost (minimum 1 day)
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffMs = end.getTime() - start.getTime();
-    const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1); // Include both start and end day
-    const totalCostCents = dailyRateCents * days;
+    // Calculate total cost based on duration mode
+    let totalCostCents: number;
+    let durationDescription: string;
+    let calculatedDurationHours: number | null = null;
+    let days = 1;
 
-    logStep("Cost calculated", { days, dailyRateCents, totalCostCents });
+    if (durationMode === "hourly") {
+      if (!durationHours || durationHours < 1) {
+        throw new Error("Duration hours is required for hourly mode");
+      }
+      calculatedDurationHours = durationHours;
+      totalCostCents = tierData.hourlyRateCents * durationHours;
+      durationDescription = `${durationHours} hour${durationHours > 1 ? 's' : ''}`;
+      logStep("Hourly cost calculated", { durationHours, hourlyRateCents: tierData.hourlyRateCents, totalCostCents });
+    } else {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffMs = end.getTime() - start.getTime();
+      days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1); // Include both start and end day
+      totalCostCents = tierData.dailyRateCents * days;
+      durationDescription = `${days} day${days > 1 ? 's' : ''}`;
+      logStep("Daily cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
+    }
 
     // Create boost record FIRST with pending status
     const { data: boostData, error: boostError } = await supabaseClient
@@ -89,11 +105,14 @@ serve(async (req) => {
         boost_tier: tier,
         start_date: startDate,
         end_date: endDate,
-        daily_rate_cents: dailyRateCents,
+        daily_rate_cents: tierData.dailyRateCents,
+        hourly_rate_cents: durationMode === "hourly" ? tierData.hourlyRateCents : null,
+        duration_mode: durationMode,
+        duration_hours: calculatedDurationHours,
         total_cost_cents: totalCostCents,
         source: "purchase",
         status: "pending",
-        targeting_quality: tier === "premium" ? 5 : 3.5,
+        targeting_quality: tierData.quality,
       })
       .select()
       .single();
@@ -101,7 +120,7 @@ serve(async (req) => {
     if (boostError) throw boostError;
     
     const boostId = boostData.id;
-    logStep("Boost record created with pending status", { boostId });
+    logStep("Boost record created with pending status", { boostId, durationMode });
 
     // Create Stripe checkout session
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -125,7 +144,7 @@ serve(async (req) => {
             unit_amount: totalCostCents,
             product_data: {
               name: `Event Boost: ${eventData.title}`,
-              description: `${tier.toUpperCase()} tier boost for ${days} day${days > 1 ? 's' : ''}`,
+              description: `${tier.toUpperCase()} tier boost for ${durationDescription}`,
             },
           },
           quantity: 1,
@@ -140,9 +159,11 @@ serve(async (req) => {
         event_id: eventId,
         business_id: businessId,
         tier,
+        duration_mode: durationMode,
+        duration_hours: calculatedDurationHours?.toString() || "",
         start_date: startDate,
         end_date: endDate,
-        daily_rate_cents: dailyRateCents.toString(),
+        daily_rate_cents: tierData.dailyRateCents.toString(),
         days: days.toString(),
       },
     });

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Force cache refresh - v2
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -36,8 +37,8 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, tier, startDate, endDate, useSubscriptionBudget } = await req.json();
-    logStep("Request data", { eventId, tier, startDate, endDate, useSubscriptionBudget });
+    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget } = await req.json();
+    logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget });
 
     // Get business ID for this event
     const { data: eventData, error: eventError } = await supabaseClient
@@ -61,22 +62,33 @@ serve(async (req) => {
 
     logStep("Business ownership verified", { businessId });
 
-    // 2-tier boost system (daily rate in cents)
+    // 2-tier boost system with hourly and daily rates (in cents)
     const boostTiers = {
-      standard: 3000, // €30/day
-      premium: 8000,  // €80/day
+      standard: { dailyRateCents: 3000, hourlyRateCents: 500, quality: 3.5 },  // €30/day, €5/hour
+      premium: { dailyRateCents: 8000, hourlyRateCents: 1200, quality: 5 },     // €80/day, €12/hour
     };
 
-    const dailyRateCents = boostTiers[tier as keyof typeof boostTiers];
-    if (!dailyRateCents) throw new Error("Invalid tier. Must be 'standard' or 'premium'");
+    const tierData = boostTiers[tier as keyof typeof boostTiers];
+    if (!tierData) throw new Error("Invalid tier. Must be 'standard' or 'premium'");
 
-    // Calculate total cost
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const totalCostCents = dailyRateCents * days;
+    // Calculate total cost based on duration mode
+    let totalCostCents: number;
+    let calculatedDurationHours: number | null = null;
 
-    logStep("Cost calculated", { days, dailyRateCents, totalCostCents });
+    if (durationMode === "hourly") {
+      if (!durationHours || durationHours < 1) {
+        throw new Error("Duration hours is required for hourly mode");
+      }
+      calculatedDurationHours = durationHours;
+      totalCostCents = tierData.hourlyRateCents * durationHours;
+      logStep("Hourly cost calculated", { durationHours, hourlyRateCents: tierData.hourlyRateCents, totalCostCents });
+    } else {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      totalCostCents = tierData.dailyRateCents * days;
+      logStep("Daily cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
+    }
 
     // ONLY handle subscription budget payments here
     // For Stripe payments, the frontend calls create-boost-checkout directly
@@ -86,7 +98,8 @@ serve(async (req) => {
         JSON.stringify({ 
           needsPayment: true, 
           totalCostCents,
-          days,
+          durationMode,
+          durationHours: calculatedDurationHours,
           tier 
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
@@ -127,19 +140,22 @@ serve(async (req) => {
         boost_tier: tier,
         start_date: startDate,
         end_date: endDate,
-        daily_rate_cents: dailyRateCents,
+        daily_rate_cents: tierData.dailyRateCents,
+        hourly_rate_cents: durationMode === "hourly" ? tierData.hourlyRateCents : null,
+        duration_mode: durationMode,
+        duration_hours: calculatedDurationHours,
         total_cost_cents: totalCostCents,
         source: "subscription_budget",
         status: "scheduled",
-        targeting_quality: tier === "premium" ? 5 : 3.5,
+        targeting_quality: tierData.quality,
       });
 
     if (boostError) throw boostError;
 
-    logStep("Boost created from subscription budget");
+    logStep("Boost created from subscription budget", { durationMode, totalCostCents });
 
     return new Response(
-      JSON.stringify({ success: true, source: "subscription" }),
+      JSON.stringify({ success: true, source: "subscription", durationMode }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
