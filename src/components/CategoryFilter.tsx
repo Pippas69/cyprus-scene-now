@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface CategoryFilterProps {
   selectedCategories: string[];
@@ -12,30 +11,19 @@ const CategoryFilter = ({
   onCategoryChange,
   language,
 }: CategoryFilterProps) => {
-const categories = {
+  // 4 core categories for student-focused audience
+  const categories = {
     el: [
-      { id: "cafe", label: "Καφέ & Εστιατόρια", icon: "☕" },
+      { id: "cafe", label: "Καφέ", icon: "☕" },
+      { id: "restaurant", label: "Εστιατόρια", icon: "🍽️" },
       { id: "nightlife", label: "Νυχτερινή Ζωή", icon: "🍸" },
-      { id: "art", label: "Τέχνη & Πολιτισμός", icon: "🎭" },
-      { id: "music", label: "Μουσική", icon: "🎵" },
-      { id: "fitness", label: "Γυμναστική", icon: "💪" },
-      { id: "family", label: "Οικογένεια", icon: "👨‍👩‍👧" },
-      { id: "business", label: "Business", icon: "💼" },
-      { id: "travel", label: "Beach & Ταξίδια", icon: "🏖️" },
-      { id: "food", label: "Φαγητό & Ποτό", icon: "🍴" },
-      { id: "sports", label: "Αθλητισμός", icon: "⚽" },
+      { id: "beach-summer", label: "Παραλία/Καλοκαίρι", icon: "🏖️" },
     ],
     en: [
-      { id: "cafe", label: "Cafés & Restaurants", icon: "☕" },
+      { id: "cafe", label: "Café", icon: "☕" },
+      { id: "restaurant", label: "Restaurant", icon: "🍽️" },
       { id: "nightlife", label: "Nightlife", icon: "🍸" },
-      { id: "art", label: "Art & Culture", icon: "🎭" },
-      { id: "music", label: "Music", icon: "🎵" },
-      { id: "fitness", label: "Fitness", icon: "💪" },
-      { id: "family", label: "Family", icon: "👨‍👩‍👧" },
-      { id: "business", label: "Business", icon: "💼" },
-      { id: "travel", label: "Beach & Travel", icon: "🏖️" },
-      { id: "food", label: "Food & Drinks", icon: "🍴" },
-      { id: "sports", label: "Sports", icon: "⚽" },
+      { id: "beach-summer", label: "Beach/Summer", icon: "🏖️" },
     ],
   };
 
