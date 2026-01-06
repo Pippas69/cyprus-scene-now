@@ -9,7 +9,10 @@ import {
   MapPin,
   Database,
   Ticket,
-  ClipboardList
+  ClipboardList,
+  GraduationCap,
+  Handshake,
+  FileText
 } from 'lucide-react';
 import {
   Sidebar,
@@ -94,6 +97,21 @@ export const AdminSidebar = () => {
       title: t.sidebar.waitlist,
       icon: ClipboardList,
       href: '/admin/waitlist',
+    },
+    {
+      title: language === 'el' ? 'Επαλήθευση Φοιτητών' : 'Student Verification',
+      icon: GraduationCap,
+      href: '/admin/student-verification',
+    },
+    {
+      title: language === 'el' ? 'Συνεργάτες Φοιτητών' : 'Student Partners',
+      icon: Handshake,
+      href: '/admin/student-partners',
+    },
+    {
+      title: language === 'el' ? 'Επιδοτήσεις Φοιτητών' : 'Student Subsidies',
+      icon: FileText,
+      href: '/admin/student-subsidies',
     },
   ];
 

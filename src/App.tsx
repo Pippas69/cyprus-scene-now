@@ -35,6 +35,9 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminDatabaseMonitoring from "./pages/AdminDatabaseMonitoring";
 import AdminBetaManagement from "./pages/AdminBetaManagement";
 import AdminWaitlist from "./pages/AdminWaitlist";
+import AdminStudentVerification from "./pages/AdminStudentVerification";
+import AdminStudentPartners from "./pages/AdminStudentPartners";
+import AdminStudentSubsidies from "./pages/AdminStudentSubsidies";
 import AdminForbidden from "./pages/AdminForbidden";
 import BusinessProfile from "./pages/BusinessProfile";
 import EventDetail from "./pages/EventDetail";
@@ -103,6 +106,9 @@ function AppContent() {
             <Route path="database" element={<AdminDatabaseMonitoring />} />
             <Route path="beta" element={<AdminBetaManagement />} />
             <Route path="waitlist" element={<AdminWaitlist />} />
+            <Route path="student-verification" element={<AdminStudentVerification />} />
+            <Route path="student-partners" element={<AdminStudentPartners />} />
+            <Route path="student-subsidies" element={<AdminStudentSubsidies />} />
           </Route>
           <Route path="/admin/forbidden" element={<AdminForbidden />} />
           

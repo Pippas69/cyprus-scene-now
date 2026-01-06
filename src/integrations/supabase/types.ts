@@ -2312,11 +2312,13 @@ export type Database = {
           id: string
           interests: string[] | null
           is_admin: boolean | null
+          is_student_verified: boolean | null
           is_waitlist: boolean | null
           last_name: string | null
           name: string | null
           preferences: string[] | null
           role: Database["public"]["Enums"]["app_role"]
+          student_qr_token: string | null
           suspended: boolean | null
           suspended_at: string | null
           suspended_by: string | null
@@ -2338,11 +2340,13 @@ export type Database = {
           id: string
           interests?: string[] | null
           is_admin?: boolean | null
+          is_student_verified?: boolean | null
           is_waitlist?: boolean | null
           last_name?: string | null
           name?: string | null
           preferences?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
+          student_qr_token?: string | null
           suspended?: boolean | null
           suspended_at?: string | null
           suspended_by?: string | null
@@ -2364,11 +2368,13 @@ export type Database = {
           id?: string
           interests?: string[] | null
           is_admin?: boolean | null
+          is_student_verified?: boolean | null
           is_waitlist?: boolean | null
           last_name?: string | null
           name?: string | null
           preferences?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
+          student_qr_token?: string | null
           suspended?: boolean | null
           suspended_at?: string | null
           suspended_by?: string | null
@@ -2704,6 +2710,260 @@ export type Database = {
           srtext?: string | null
         }
         Relationships: []
+      }
+      student_discount_partners: {
+        Row: {
+          business_id: string
+          created_at: string
+          discount_percent: number
+          id: string
+          is_active: boolean
+          joined_at: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_discount_partners_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_discount_partners_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_discount_redemptions: {
+        Row: {
+          business_id: string
+          created_at: string
+          discount_amount_cents: number
+          discounted_price_cents: number
+          id: string
+          item_description: string | null
+          original_price_cents: number
+          scanned_by: string | null
+          student_verification_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          discount_amount_cents: number
+          discounted_price_cents: number
+          id?: string
+          item_description?: string | null
+          original_price_cents: number
+          scanned_by?: string | null
+          student_verification_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          discount_amount_cents?: number
+          discounted_price_cents?: number
+          id?: string
+          item_description?: string | null
+          original_price_cents?: number
+          scanned_by?: string | null
+          student_verification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_discount_redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_discount_redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_discount_redemptions_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_discount_redemptions_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_discount_redemptions_student_verification_id_fkey"
+            columns: ["student_verification_id"]
+            isOneToOne: false
+            referencedRelation: "student_verifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_subsidy_invoices: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          paid_at: string | null
+          period_end: string
+          period_start: string
+          status: string
+          total_redemptions: number
+          total_subsidy_cents: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+          total_redemptions?: number
+          total_subsidy_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          total_redemptions?: number
+          total_subsidy_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_subsidy_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subsidy_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_verifications: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          qr_code_token: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          university_domain: string
+          university_email: string
+          university_name: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          qr_code_token?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          university_domain: string
+          university_email: string
+          university_name: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          qr_code_token?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          university_domain?: string
+          university_email?: string
+          university_name?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_verifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_verifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_plans: {
         Row: {
