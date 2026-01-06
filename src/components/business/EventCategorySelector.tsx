@@ -17,7 +17,22 @@ interface Category {
   subOptions?: SubOption[];
 }
 
+// Order: Nightlife → Café → Restaurant → Beach/Summer (4 core categories only)
 const eventCategoryHierarchy: Category[] = [
+  {
+    id: "nightlife",
+    label: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
+    icon: "🍸",
+    hasDropdown: true,
+    subOptions: [
+      { id: "bars", label: { el: "Μπαρ", en: "Bars" } },
+      { id: "clubs", label: { el: "Κλαμπ", en: "Clubs" } },
+      { id: "wine-cocktail-bars", label: { el: "Κρασί/Κοκτέιλ Μπαρ", en: "Wine/Cocktail Bars" } },
+      { id: "shisha-lounges", label: { el: "Shisha Lounges", en: "Shisha Lounges" } },
+      { id: "rooftop-bars", label: { el: "Rooftop Bars", en: "Rooftop Bars" } },
+      { id: "concerts-live-music", label: { el: "Συναυλίες/Live Μουσική", en: "Concerts/Live Music" } },
+    ],
+  },
   { id: "cafe", label: { el: "Καφέ", en: "Café" }, icon: "☕", hasDropdown: false },
   {
     id: "restaurant",
@@ -32,19 +47,6 @@ const eventCategoryHierarchy: Category[] = [
     ],
   },
   {
-    id: "nightlife",
-    label: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
-    icon: "🍸",
-    hasDropdown: true,
-    subOptions: [
-      { id: "bars", label: { el: "Μπαρ", en: "Bars" } },
-      { id: "clubs", label: { el: "Κλαμπ", en: "Clubs" } },
-      { id: "wine-cocktail-bars", label: { el: "Κρασί/Κοκτέιλ Μπαρ", en: "Wine/Cocktail Bars" } },
-      { id: "shisha-lounges", label: { el: "Shisha Lounges", en: "Shisha Lounges" } },
-      { id: "rooftop-bars", label: { el: "Rooftop Bars", en: "Rooftop Bars" } },
-    ],
-  },
-  {
     id: "beach-summer",
     label: { el: "Παραλία/Καλοκαίρι", en: "Beach/Summer" },
     icon: "🏖️",
@@ -53,30 +55,6 @@ const eventCategoryHierarchy: Category[] = [
       { id: "beach-bars", label: { el: "Beach Bars", en: "Beach Bars" } },
       { id: "summer-events", label: { el: "Καλοκαιρινές Εκδηλώσεις", en: "Summer Events" } },
       { id: "seaside-restaurants", label: { el: "Παραθαλάσσια Εστιατόρια", en: "Seaside Restaurants" } },
-    ],
-  },
-  {
-    id: "fitness-wellness",
-    label: { el: "Γυμναστική/Ευεξία", en: "Fitness/Wellness" },
-    icon: "💪",
-    hasDropdown: true,
-    subOptions: [
-      { id: "yoga-pilates", label: { el: "Yoga/Pilates", en: "Yoga/Pilates" } },
-      { id: "outdoor-activities", label: { el: "Υπαίθριες Δραστηριότητες", en: "Outdoor Activities" } },
-      { id: "wellness-retreats", label: { el: "Wellness Retreats", en: "Wellness Retreats" } },
-      { id: "sports", label: { el: "Αθλητισμός", en: "Sports" } },
-    ],
-  },
-  {
-    id: "art-culture",
-    label: { el: "Τέχνη & Πολιτισμός", en: "Art & Culture" },
-    icon: "🎭",
-    hasDropdown: true,
-    subOptions: [
-      { id: "museums", label: { el: "Μουσεία", en: "Museums" } },
-      { id: "theaters", label: { el: "Θέατρα", en: "Theaters" } },
-      { id: "cinema", label: { el: "Κινηματογράφος", en: "Cinema" } },
-      { id: "concerts-live-music", label: { el: "Συναυλίες/Live Μουσική", en: "Concerts/Live Music" } },
     ],
   },
 ];
