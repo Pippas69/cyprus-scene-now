@@ -63,6 +63,9 @@ serve(async (req) => {
           title,
           terms,
           business_id,
+          offer_type,
+          bonus_percent,
+          credit_amount_cents,
           businesses:business_id (
             name,
             logo_url
@@ -110,20 +113,34 @@ serve(async (req) => {
     // Generate unique QR code token
     const qrCodeToken = generateQRToken();
 
+    // Check if this is a credit offer
+    const discount = purchase.discounts;
+    const isCredit = discount?.offer_type === 'credit';
+    const initialBalance = isCredit && discount?.credit_amount_cents && discount?.bonus_percent !== null
+      ? Math.round(discount.credit_amount_cents * (1 + (discount.bonus_percent || 0) / 100))
+      : 0;
+
     // Update purchase record to paid status
+    const updateData: Record<string, unknown> = {
+      status: "paid",
+      qr_code_token: qrCodeToken,
+      stripe_payment_intent_id: session.payment_intent as string,
+    };
+
+    // Set initial balance for credit offers
+    if (isCredit) {
+      updateData.balance_remaining_cents = initialBalance;
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from("offer_purchases")
-      .update({
-        status: "paid",
-        qr_code_token: qrCodeToken,
-        stripe_payment_intent_id: session.payment_intent as string,
-      })
+      .update(updateData)
       .eq("id", purchaseId);
 
     if (updateError) {
       throw new Error(`Failed to update purchase: ${updateError.message}`);
     }
-    logStep("Purchase updated to paid", { purchaseId, qrCodeToken });
+    logStep("Purchase updated to paid", { purchaseId, qrCodeToken, isCredit, initialBalance });
 
     // Increment total_purchased on discounts table
     const { error: incrementError } = await supabaseAdmin.rpc("increment_discount_purchased", {
@@ -139,31 +156,28 @@ serve(async (req) => {
     }
     logStep("Discount purchase count incremented");
 
-    // COMMISSION DISABLED: All offers are commission-free
-    // Skip commission ledger creation since commission is always 0
-    // Keeping code commented for future re-enablement:
-    /*
-    if (purchase.commission_amount_cents > 0) {
-      const { error: ledgerError } = await supabaseAdmin
-        .from("commission_ledger")
+    // Create initial credit transaction for credit offers
+    if (isCredit && initialBalance > 0) {
+      const { error: txnError } = await supabaseAdmin
+        .from("credit_transactions")
         .insert({
+          purchase_id: purchaseId,
           business_id: purchase.business_id,
-          discount_id: purchase.discount_id,
-          redemption_id: purchaseId,
-          original_price_cents: purchase.original_price_cents,
-          commission_percent: purchase.commission_percent,
-          commission_amount_cents: purchase.commission_amount_cents,
-          redeemed_at: new Date().toISOString(),
-          status: "collected",
+          amount_cents: initialBalance,
+          transaction_type: "purchase",
+          balance_before_cents: 0,
+          balance_after_cents: initialBalance,
+          notes: `Initial credit purchase: €${(initialBalance / 100).toFixed(2)}`,
         });
 
-      if (ledgerError) {
-        logStep("Commission ledger error (non-fatal)", { error: ledgerError.message });
+      if (txnError) {
+        logStep("Credit transaction error (non-fatal)", { error: txnError.message });
       } else {
-        logStep("Commission ledger entry created (status: collected via Stripe Connect)");
+        logStep("Initial credit transaction created", { initialBalance });
       }
     }
-    */
+
+    // COMMISSION DISABLED: All offers are commission-free
     logStep("Commission ledger skipped - all offers are commission-free");
 
     // Fetch user profile for email
@@ -174,7 +188,6 @@ serve(async (req) => {
       .single();
 
     // Send confirmation email with QR code
-    const discount = purchase.discounts;
     const business = discount?.businesses;
     
     if (user.email && discount && business) {
