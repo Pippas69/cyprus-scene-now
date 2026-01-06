@@ -15,7 +15,22 @@ export interface UnifiedCategory {
 }
 
 // Main unified categories with bilingual labels (4 core categories for student-focused audience)
+// Order: Nightlife → Café → Restaurant → Beach/Summer
 export const unifiedCategories: UnifiedCategory[] = [
+  {
+    id: "nightlife",
+    label: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
+    icon: "🍸",
+    hasDropdown: true,
+    subOptions: [
+      { id: "bars", label: { el: "Μπαρ", en: "Bars" } },
+      { id: "clubs", label: { el: "Κλαμπ", en: "Clubs" } },
+      { id: "wine-cocktail-bars", label: { el: "Κρασί/Κοκτέιλ Μπαρ", en: "Wine/Cocktail Bars" } },
+      { id: "shisha-lounges", label: { el: "Shisha Lounges", en: "Shisha Lounges" } },
+      { id: "rooftop-bars", label: { el: "Rooftop Bars", en: "Rooftop Bars" } },
+      { id: "concerts-live-music", label: { el: "Συναυλίες/Live Μουσική", en: "Concerts/Live Music" } },
+    ],
+  },
   { 
     id: "cafe", 
     label: { el: "Καφέ", en: "Café" }, 
@@ -32,20 +47,6 @@ export const unifiedCategories: UnifiedCategory[] = [
       { id: "breakfast", label: { el: "Πρωινό", en: "Breakfast" } },
       { id: "lunch", label: { el: "Μεσημεριανό", en: "Lunch" } },
       { id: "dinner", label: { el: "Δείπνο", en: "Dinner" } },
-    ],
-  },
-  {
-    id: "nightlife",
-    label: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
-    icon: "🍸",
-    hasDropdown: true,
-    subOptions: [
-      { id: "bars", label: { el: "Μπαρ", en: "Bars" } },
-      { id: "clubs", label: { el: "Κλαμπ", en: "Clubs" } },
-      { id: "wine-cocktail-bars", label: { el: "Κρασί/Κοκτέιλ Μπαρ", en: "Wine/Cocktail Bars" } },
-      { id: "shisha-lounges", label: { el: "Shisha Lounges", en: "Shisha Lounges" } },
-      { id: "rooftop-bars", label: { el: "Rooftop Bars", en: "Rooftop Bars" } },
-      { id: "concerts-live-music", label: { el: "Συναυλίες/Live Μουσική", en: "Concerts/Live Music" } },
     ],
   },
   {

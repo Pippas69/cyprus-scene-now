@@ -12,17 +12,18 @@ const CategoryFilter = ({
   language,
 }: CategoryFilterProps) => {
   // 4 core categories for student-focused audience
+  // Order: Nightlife → Café → Restaurant → Beach/Summer
   const categories = {
     el: [
+      { id: "nightlife", label: "Νυχτερινή Ζωή", icon: "🍸" },
       { id: "cafe", label: "Καφέ", icon: "☕" },
       { id: "restaurant", label: "Εστιατόρια", icon: "🍽️" },
-      { id: "nightlife", label: "Νυχτερινή Ζωή", icon: "🍸" },
       { id: "beach-summer", label: "Παραλία/Καλοκαίρι", icon: "🏖️" },
     ],
     en: [
+      { id: "nightlife", label: "Nightlife", icon: "🍸" },
       { id: "cafe", label: "Café", icon: "☕" },
       { id: "restaurant", label: "Restaurant", icon: "🍽️" },
-      { id: "nightlife", label: "Nightlife", icon: "🍸" },
       { id: "beach-summer", label: "Beach/Summer", icon: "🏖️" },
     ],
   };

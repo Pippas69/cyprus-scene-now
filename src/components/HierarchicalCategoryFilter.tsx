@@ -35,21 +35,9 @@ const HierarchicalCategoryFilter = ({
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   // 4 core categories for student-focused audience
+  // Order: Nightlife → Café → Restaurant → Beach/Summer
   const categories: { el: Category[]; en: Category[] } = {
     el: [
-      { id: "cafe", label: "Καφέ", icon: "☕", hasDropdown: false },
-      {
-        id: "restaurant",
-        label: "Εστιατόρια",
-        icon: "🍽️",
-        hasDropdown: true,
-        subOptions: [
-          { id: "brunch", label: "Brunch" },
-          { id: "breakfast", label: "Πρωινό" },
-          { id: "lunch", label: "Μεσημεριανό" },
-          { id: "dinner", label: "Δείπνο" },
-        ],
-      },
       {
         id: "nightlife",
         label: "Νυχτερινή Ζωή",
@@ -62,6 +50,19 @@ const HierarchicalCategoryFilter = ({
           { id: "shisha-lounges", label: "Shisha Lounges" },
           { id: "rooftop-bars", label: "Rooftop Bars" },
           { id: "concerts-live-music", label: "Συναυλίες/Live Μουσική" },
+        ],
+      },
+      { id: "cafe", label: "Καφέ", icon: "☕", hasDropdown: false },
+      {
+        id: "restaurant",
+        label: "Εστιατόρια",
+        icon: "🍽️",
+        hasDropdown: true,
+        subOptions: [
+          { id: "brunch", label: "Brunch" },
+          { id: "breakfast", label: "Πρωινό" },
+          { id: "lunch", label: "Μεσημεριανό" },
+          { id: "dinner", label: "Δείπνο" },
         ],
       },
       {
@@ -77,19 +78,6 @@ const HierarchicalCategoryFilter = ({
       },
     ],
     en: [
-      { id: "cafe", label: "Café", icon: "☕", hasDropdown: false },
-      {
-        id: "restaurant",
-        label: "Restaurant",
-        icon: "🍽️",
-        hasDropdown: true,
-        subOptions: [
-          { id: "brunch", label: "Brunch" },
-          { id: "breakfast", label: "Breakfast" },
-          { id: "lunch", label: "Lunch" },
-          { id: "dinner", label: "Dinner" },
-        ],
-      },
       {
         id: "nightlife",
         label: "Nightlife",
@@ -102,6 +90,19 @@ const HierarchicalCategoryFilter = ({
           { id: "shisha-lounges", label: "Shisha Lounges" },
           { id: "rooftop-bars", label: "Rooftop Bars" },
           { id: "concerts-live-music", label: "Concerts/Live Music" },
+        ],
+      },
+      { id: "cafe", label: "Café", icon: "☕", hasDropdown: false },
+      {
+        id: "restaurant",
+        label: "Restaurant",
+        icon: "🍽️",
+        hasDropdown: true,
+        subOptions: [
+          { id: "brunch", label: "Brunch" },
+          { id: "breakfast", label: "Breakfast" },
+          { id: "lunch", label: "Lunch" },
+          { id: "dinner", label: "Dinner" },
         ],
       },
       {
