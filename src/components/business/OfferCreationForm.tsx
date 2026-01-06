@@ -766,69 +766,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               )}
             />
 
-            {/* Commission-Free Section (for subscribers) */}
-            {subscriptionData?.subscribed && (subscriptionData?.commission_free_offers_remaining || 0) > 0 && (
-              <div className="p-4 border-2 border-dashed rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base font-semibold">
-                      {language === "el" ? "Χωρίς Προμήθεια" : "Commission-Free"}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {language === "el"
-                        ? `Έχετε ${subscriptionData.commission_free_offers_remaining} διαθέσιμες προσφορές χωρίς προμήθεια`
-                        : `You have ${subscriptionData.commission_free_offers_remaining} commission-free offers remaining`}
-                    </p>
-                  </div>
-                  <Switch
-                    checked={useCommissionFreeSlot}
-                    onCheckedChange={setUseCommissionFreeSlot}
-                  />
-                </div>
-                {useCommissionFreeSlot ? (
-                  <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm">
-                    <p className="font-semibold text-green-700 dark:text-green-300">
-                      ✓ {language === "el" ? "Χωρίς προμήθεια 12%" : "No 12% platform fee"}
-                    </p>
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      {language === "el"
-                        ? "Θα κρατήσετε το 100% των πωλήσεων αυτής της προσφοράς."
-                        : "You'll keep 100% of this offer's sales."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
-                    <p>
-                      {language === "el"
-                        ? "Κανονικά, χρεώνεται προμήθεια 12% για κάθε πώληση. Ενεργοποιήστε για να αφαιρέσετε την προμήθεια."
-                        : "Normally, a 12% platform fee is charged on each sale. Enable to remove the fee."}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Platform Fee Notice (for non-subscribers or no remaining slots) */}
-            {(!subscriptionData?.subscribed || (subscriptionData?.commission_free_offers_remaining || 0) === 0) && (
-              <div className="p-4 border rounded-lg bg-muted/30">
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium">
-                    {language === "el" ? "Προμήθεια 12%" : "12% Platform Fee"}
-                  </span>
-                  {" — "}
-                  {language === "el"
-                    ? "Χρεώνεται σε κάθε πώληση αυτής της προσφοράς."
-                    : "Charged on each sale of this offer."}
-                  {!subscriptionData?.subscribed && (
-                    <span className="block mt-1 text-xs">
-                      {language === "el"
-                        ? "Αναβαθμίστε τη συνδρομή σας για προσφορές χωρίς προμήθεια."
-                        : "Upgrade your subscription for commission-free offers."}
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
+            {/* COMMISSION DISABLED: All offers are commission-free
+            Commission-Free Section and Platform Fee Notice hidden until commission is re-enabled */}
 
             {/* Boost Section (aligned with event boost tiers) */}
             <OfferBoostSection

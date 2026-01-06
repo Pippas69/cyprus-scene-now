@@ -8,8 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Default platform commission percentage (applied to all offers unless commission-free)
-const DEFAULT_COMMISSION_PERCENT = 12;
+// COMMISSION DISABLED: All offers are commission-free
+// Default platform commission percentage - set to 0 for all offers
+const DEFAULT_COMMISSION_PERCENT = 0;
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-OFFER-CHECKOUT] ${step}`, details ? JSON.stringify(details) : "");
@@ -119,10 +120,9 @@ serve(async (req) => {
     const discountPercent = discount.percent_off || 0;
     const finalPriceCents = Math.round(originalPriceCents * (100 - discountPercent) / 100);
 
-    // Determine commission based on commission_free flag (NOT from offer_boosts)
-    // If commission_free is true, no platform fee is charged
-    // Otherwise, standard platform commission applies
-    const commissionPercent = discount.commission_free ? 0 : DEFAULT_COMMISSION_PERCENT;
+    // COMMISSION DISABLED: All offers are commission-free
+    // Commission is always 0 regardless of commission_free flag
+    const commissionPercent = 0;
 
     // Commission is based on original price (as per business logic)
     const commissionAmountCents = Math.round((originalPriceCents * commissionPercent) / 100);

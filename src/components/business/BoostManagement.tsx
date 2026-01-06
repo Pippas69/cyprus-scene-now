@@ -265,15 +265,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                       <CardTitle className="text-lg">
                         {boost.discounts?.title || "Offer"}
                       </CardTitle>
+                      {/* COMMISSION DISABLED: All offers are commission-free */}
                       <p className="text-sm text-muted-foreground">
-                        {boost.commission_percent === 0 ? (
-                          <Badge variant="default" className="bg-green-500 text-white">
-                            {language === "el" ? "Χωρίς Προμήθεια" : "Commission-Free"}
-                          </Badge>
-                        ) : (
+                        {boost.boost_tier && (
                           <>
-                            {language === "el" ? "Προμήθεια:" : "Commission:"}{" "}
-                            <span className="font-semibold">{boost.commission_percent}%</span>
+                            {language === "el" ? "Tier:" : "Tier:"}{" "}
+                            <span className="font-semibold capitalize">{boost.boost_tier}</span>
                           </>
                         )}
                       </p>

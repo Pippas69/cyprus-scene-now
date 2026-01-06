@@ -232,11 +232,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                       <Badge variant={offer.active ? "default" : "secondary"}>
                         {offer.active ? t.active : t.inactive}
                       </Badge>
-                      {offer.commission_free && (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
-                          {language === "el" ? "Χωρίς Προμήθεια" : "Commission-Free"}
-                        </Badge>
-                      )}
+                      {/* COMMISSION DISABLED: All offers are commission-free - badge hidden */}
                     </div>
                     {offer.description && (
                       <p className="text-sm text-muted-foreground mb-3">
