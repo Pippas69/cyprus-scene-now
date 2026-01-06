@@ -34,6 +34,7 @@ const HierarchicalCategoryFilter = ({
   const badgeRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+  // 4 core categories for student-focused audience
   const categories: { el: Category[]; en: Category[] } = {
     el: [
       { id: "cafe", label: "Καφέ", icon: "☕", hasDropdown: false },
@@ -60,6 +61,7 @@ const HierarchicalCategoryFilter = ({
           { id: "wine-cocktail-bars", label: "Κρασί/Κοκτέιλ Μπαρ" },
           { id: "shisha-lounges", label: "Shisha Lounges" },
           { id: "rooftop-bars", label: "Rooftop Bars" },
+          { id: "concerts-live-music", label: "Συναυλίες/Live Μουσική" },
         ],
       },
       {
@@ -71,30 +73,6 @@ const HierarchicalCategoryFilter = ({
           { id: "beach-bars", label: "Beach Bars" },
           { id: "summer-events", label: "Καλοκαιρινές Εκδηλώσεις" },
           { id: "seaside-restaurants", label: "Παραθαλάσσια Εστιατόρια" },
-        ],
-      },
-      {
-        id: "fitness-wellness",
-        label: "Γυμναστική/Ευεξία",
-        icon: "💪",
-        hasDropdown: true,
-        subOptions: [
-          { id: "yoga-pilates", label: "Yoga/Pilates" },
-          { id: "outdoor-activities", label: "Υπαίθριες Δραστηριότητες" },
-          { id: "wellness-retreats", label: "Wellness Retreats" },
-          { id: "sports", label: "Αθλητισμός" },
-        ],
-      },
-      {
-        id: "art-culture",
-        label: "Τέχνη & Πολιτισμός",
-        icon: "🎭",
-        hasDropdown: true,
-        subOptions: [
-          { id: "museums", label: "Μουσεία" },
-          { id: "theaters", label: "Θέατρα" },
-          { id: "cinema", label: "Κινηματογράφος" },
-          { id: "concerts-live-music", label: "Συναυλίες/Live Μουσική" },
         ],
       },
     ],
@@ -123,6 +101,7 @@ const HierarchicalCategoryFilter = ({
           { id: "wine-cocktail-bars", label: "Wine/Cocktail Bars" },
           { id: "shisha-lounges", label: "Shisha Lounges" },
           { id: "rooftop-bars", label: "Rooftop Bars" },
+          { id: "concerts-live-music", label: "Concerts/Live Music" },
         ],
       },
       {
@@ -134,30 +113,6 @@ const HierarchicalCategoryFilter = ({
           { id: "beach-bars", label: "Beach Bars" },
           { id: "summer-events", label: "Summer Events" },
           { id: "seaside-restaurants", label: "Seaside Restaurants" },
-        ],
-      },
-      {
-        id: "fitness-wellness",
-        label: "Fitness/Wellness",
-        icon: "💪",
-        hasDropdown: true,
-        subOptions: [
-          { id: "yoga-pilates", label: "Yoga/Pilates" },
-          { id: "outdoor-activities", label: "Outdoor Activities" },
-          { id: "wellness-retreats", label: "Wellness Retreats" },
-          { id: "sports", label: "Sports" },
-        ],
-      },
-      {
-        id: "art-culture",
-        label: "Art & Culture",
-        icon: "🎭",
-        hasDropdown: true,
-        subOptions: [
-          { id: "museums", label: "Museums" },
-          { id: "theaters", label: "Theaters" },
-          { id: "cinema", label: "Cinema" },
-          { id: "concerts-live-music", label: "Concerts/Live Music" },
         ],
       },
     ],

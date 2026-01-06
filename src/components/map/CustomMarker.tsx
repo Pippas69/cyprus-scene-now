@@ -1,5 +1,5 @@
 import { getCategoryColor, isEventHappeningNow } from "@/lib/mapUtils";
-import { Coffee, Moon, Palette, Dumbbell, Users, Briefcase, Sparkles, Plane } from "lucide-react";
+import { Coffee, Moon, Utensils, Umbrella } from "lucide-react";
 
 interface CustomMarkerProps {
   category: string[];
@@ -7,16 +7,13 @@ interface CustomMarkerProps {
   onClick: () => void;
 }
 
+// 4 core categories for student-focused audience
 const getCategoryIcon = (category: string) => {
   const icons: Record<string, any> = {
     cafe: Coffee,
+    restaurant: Utensils,
     nightlife: Moon,
-    art: Palette,
-    fitness: Dumbbell,
-    family: Users,
-    business: Briefcase,
-    lifestyle: Sparkles,
-    travel: Plane,
+    'beach-summer': Umbrella,
   };
   return icons[category] || Coffee;
 };
