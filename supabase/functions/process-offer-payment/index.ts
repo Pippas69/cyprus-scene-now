@@ -139,8 +139,10 @@ serve(async (req) => {
     }
     logStep("Discount purchase count incremented");
 
-    // Create commission ledger entry if there's a commission
-    // Status is "collected" because Stripe destination charge already split the payment
+    // COMMISSION DISABLED: All offers are commission-free
+    // Skip commission ledger creation since commission is always 0
+    // Keeping code commented for future re-enablement:
+    /*
     if (purchase.commission_amount_cents > 0) {
       const { error: ledgerError } = await supabaseAdmin
         .from("commission_ledger")
@@ -152,7 +154,7 @@ serve(async (req) => {
           commission_percent: purchase.commission_percent,
           commission_amount_cents: purchase.commission_amount_cents,
           redeemed_at: new Date().toISOString(),
-          status: "collected", // Stripe already collected via application_fee
+          status: "collected",
         });
 
       if (ledgerError) {
@@ -161,6 +163,8 @@ serve(async (req) => {
         logStep("Commission ledger entry created (status: collected via Stripe Connect)");
       }
     }
+    */
+    logStep("Commission ledger skipped - all offers are commission-free");
 
     // Fetch user profile for email
     const { data: profile } = await supabaseAdmin

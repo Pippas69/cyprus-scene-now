@@ -202,26 +202,7 @@ export default function SubscriptionStatus() {
         </CardContent>
       </Card>
 
-      {/* Commission-Free Offers Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Commission-Free Offers</CardTitle>
-          <CardDescription>Monthly allocation for 0% commission offers</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Remaining this month</span>
-            <span className="font-semibold">
-              {subscriptionData.commission_free_offers_remaining} of{' '}
-              {subscriptionData.commission_free_offers_count}
-            </span>
-          </div>
-          <Progress value={offersUsedPercent} className="h-2" />
-          <p className="text-xs text-muted-foreground">
-            Allocation resets on {formatDate(subscriptionData.subscription_end)}
-          </p>
-        </CardContent>
-      </Card>
+      {/* COMMISSION DISABLED: All offers are commission-free - Card hidden */}
     </div>
   );
 }

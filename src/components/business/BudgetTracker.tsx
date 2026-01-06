@@ -100,6 +100,7 @@ export const BudgetTracker = ({ businessId }: BudgetTrackerProps) => {
             <Progress value={100 - budgetUsedPercent} className="h-2" />
           </div>
 
+          {/* COMMISSION DISABLED: All offers are commission-free
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
@@ -111,39 +112,11 @@ export const BudgetTracker = ({ businessId }: BudgetTrackerProps) => {
             </div>
             <Progress value={100 - offersUsedPercent} className="h-2" />
           </div>
+          */}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <CardTitle>
-              {language === 'el' ? 'Προμήθεια Αυτόν τον Μήνα' : 'Commission This Month'}
-            </CardTitle>
-          </div>
-          <CardDescription>
-            {language === 'el' 
-              ? 'Εκκρεμής προμήθεια από εξαργυρώσεις προσφορών'
-              : 'Pending commission from offer redemptions'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-primary">€{pendingCommissionEuros}</span>
-              <span className="text-sm text-muted-foreground">
-                {language === 'el' ? 'Εκκρεμεί' : 'Pending'}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {language === 'el'
-                ? 'Η προμήθεια θα τιμολογηθεί στις αρχές του επόμενου μήνα'
-                : 'Commission will be invoiced at the start of next month'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* COMMISSION DISABLED: Commission tracking hidden - All offers are commission-free */}
     </>
   );
 };

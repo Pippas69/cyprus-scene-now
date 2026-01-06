@@ -595,27 +595,7 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
                       </div>
                     </div>
 
-                    {/* Commission-Free Offers */}
-                    <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="p-1.5 rounded-lg bg-green-500/10">
-                          <Gift className="w-4 h-4 text-green-600" />
-                        </div>
-                        <span className="font-medium text-sm">{t.commissionFreeOffers}</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">{t.remainingThisMonth}</span>
-                          <span className="font-semibold">
-                            {currentSubscription.commission_free_offers_remaining} {t.offersRemaining}
-                          </span>
-                        </div>
-                        <Progress value={100 - offersUsedPercent} className="h-2" />
-                        <p className="text-xs text-muted-foreground">
-                          {t.of} {currentSubscription.commission_free_offers_count} • {t.usageReset} {formatDate(currentSubscription.subscription_end)}
-                        </p>
-                      </div>
-                    </div>
+                    {/* COMMISSION DISABLED: All offers are commission-free - Card hidden */}
                   </div>
                 </div>
               </CardContent>
