@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Ticket, TrendingUp, MapPin, User, Settings, Users, Home, QrCode, CreditCard, Zap, PenSquare } from "lucide-react";
+import { Calendar, Ticket, TrendingUp, MapPin, User, Settings, Users, Home, QrCode, CreditCard, Zap, PenSquare, GraduationCap } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +28,7 @@ const translations = {
     offers: "Προσφορές",
     customers: "Πελάτες",
     reservations: "Κρατήσεις",
+    studentDiscounts: "Φοιτητικές Εκπτώσεις",
     business: "Επιχείρηση",
     subscription: "Συνδρομή",
     boosts: "Προωθήσεις",
@@ -47,6 +48,7 @@ const translations = {
     offers: "Offers",
     customers: "Customers",
     reservations: "Reservations",
+    studentDiscounts: "Student Discounts",
     business: "Business",
     subscription: "Subscription",
     boosts: "Boosts",
@@ -80,6 +82,7 @@ export function BusinessSidebar() {
 
   const customerItems = [
     { title: t.reservations, url: "/dashboard-business/reservations", icon: Users },
+    { title: t.studentDiscounts, url: "/dashboard-business/student-discounts", icon: GraduationCap },
   ];
 
   const businessItems = [

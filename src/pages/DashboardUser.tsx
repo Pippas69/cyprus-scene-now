@@ -6,11 +6,15 @@ import { MyEvents } from '@/components/user/MyEvents';
 import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
 import { ProfileSettings } from '@/components/user/ProfileSettings';
-import { Compass, Map, Ticket, Percent } from 'lucide-react';
+import { Compass, Map, Ticket, Percent, GraduationCap } from 'lucide-react';
 import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { useLanguage } from '@/hooks/useLanguage';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { MyTickets } from '@/components/tickets/MyTickets';
+import { StudentVerificationForm } from '@/components/user/StudentVerificationForm';
+import { StudentVerificationStatus } from '@/components/user/StudentVerificationStatus';
+import { StudentQRCard } from '@/components/user/StudentQRCard';
+import { useStudentVerification } from '@/hooks/useStudentVerification';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -65,6 +69,7 @@ const DashboardUser = () => {
       settings: 'Ρυθμίσεις',
       browseEvents: 'Ανακάλυψε Εκδηλώσεις',
       exploreMap: 'Εξερεύνησε Χάρτη',
+      studentDiscount: 'Φοιτητική Έκπτωση',
     },
     en: {
       welcome: 'Welcome',
@@ -77,6 +82,7 @@ const DashboardUser = () => {
       settings: 'Settings',
       browseEvents: 'Browse Events',
       exploreMap: 'Explore Map',
+      studentDiscount: 'Student Discount',
     },
   };
 
@@ -99,6 +105,7 @@ const DashboardUser = () => {
       tickets: t.tickets,
       profile: t.profile,
       settings: t.settings,
+      student: t.studentDiscount,
     };
     return titles[activeTab] || t.dashboard;
   };
@@ -144,6 +151,10 @@ const DashboardUser = () => {
                 <TabsContent value="settings" className="mt-6 animate-fade-in">
                   <UserAccountSettings userId={user.id} language={language} />
                 </TabsContent>
+
+                <TabsContent value="student" className="mt-6 animate-fade-in">
+                  <StudentDashboard userId={user.id} language={language} />
+                </TabsContent>
       </Tabs>
 
       {/* Quick Actions FAB */}
@@ -185,5 +196,31 @@ const DashboardUser = () => {
     </div>
   );
 };
+
+// Student Dashboard Component
+function StudentDashboard({ userId, language }: { userId: string; language: 'el' | 'en' }) {
+  const { data: verification, isLoading } = useStudentVerification(userId);
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  // No verification yet - show form
+  if (!verification) {
+    return <StudentVerificationForm userId={userId} language={language} />;
+  }
+  
+  // Pending or rejected - show status
+  if (verification.status === 'pending' || verification.status === 'rejected') {
+    return <StudentVerificationStatus verification={verification} language={language} />;
+  }
+  
+  // Approved - show QR card
+  return <StudentQRCard verification={verification} language={language} />;
+}
 
 export default DashboardUser;
