@@ -5,26 +5,32 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Target, Rocket } from "lucide-react";
-import { format, addDays } from "date-fns";
+import { CalendarIcon, Target, Rocket, Clock } from "lucide-react";
+import { format, addDays, addHours } from "date-fns";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 
 export type BoostTier = "standard" | "premium";
+export type DurationMode = "hourly" | "daily";
 
 interface OfferBoostSectionProps {
   onBoostChange: (data: {
     enabled: boolean;
     tier: BoostTier;
+    durationMode: DurationMode;
     startDate: Date;
     endDate: Date;
+    durationHours?: number;
     totalCostCents: number;
     dailyRateCents: number;
+    hourlyRateCents?: number;
     targetingQuality: number;
   }) => void;
   hasActiveSubscription?: boolean;
   remainingBudgetCents?: number;
 }
+
+const HOUR_PRESETS = [1, 2, 3, 6, 12];
 
 const OfferBoostSection = ({
   onBoostChange,
@@ -34,62 +40,104 @@ const OfferBoostSection = ({
   const { language } = useLanguage();
   const [boostEnabled, setBoostEnabled] = useState(false);
   const [tier, setTier] = useState<BoostTier>("standard");
+  const [durationMode, setDurationMode] = useState<DurationMode>("daily");
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 7));
+  const [durationHours, setDurationHours] = useState<number>(3);
 
-  // 2-tier boost system
+  // 2-tier boost system with hourly and daily rates
   const tiers = {
-    standard: { dailyRate: 30, dailyRateCents: 3000, icon: Target, quality: 70, color: "text-purple-500" },
-    premium: { dailyRate: 80, dailyRateCents: 8000, icon: Rocket, quality: 100, color: "text-rose-500" },
+    standard: { 
+      dailyRate: 30, 
+      dailyRateCents: 3000, 
+      hourlyRate: 5, 
+      hourlyRateCents: 500, 
+      icon: Target, 
+      quality: 70, 
+      color: "text-purple-500" 
+    },
+    premium: { 
+      dailyRate: 80, 
+      dailyRateCents: 8000, 
+      hourlyRate: 12, 
+      hourlyRateCents: 1200, 
+      icon: Rocket, 
+      quality: 100, 
+      color: "text-rose-500" 
+    },
   };
 
   const selectedTier = tiers[tier];
+  
+  // Calculate cost based on duration mode
   const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-  const totalCost = selectedTier.dailyRate * days;
-  const totalCostCents = selectedTier.dailyRateCents * days;
+  const totalCost = durationMode === "hourly" 
+    ? selectedTier.hourlyRate * durationHours 
+    : selectedTier.dailyRate * days;
+  const totalCostCents = durationMode === "hourly" 
+    ? selectedTier.hourlyRateCents * durationHours 
+    : selectedTier.dailyRateCents * days;
 
   const canUseSubscriptionBudget = hasActiveSubscription && remainingBudgetCents >= totalCostCents;
 
   const notifyChange = (
     enabled: boolean,
     newTier: BoostTier,
+    newDurationMode: DurationMode,
     newStartDate: Date,
-    newEndDate: Date
+    newEndDate: Date,
+    newDurationHours: number
   ) => {
     const tierData = tiers[newTier];
     const newDays = Math.max(1, Math.ceil((newEndDate.getTime() - newStartDate.getTime()) / (1000 * 60 * 60 * 24)));
+    const cost = newDurationMode === "hourly" 
+      ? tierData.hourlyRateCents * newDurationHours 
+      : tierData.dailyRateCents * newDays;
+    
     onBoostChange({
       enabled,
       tier: newTier,
+      durationMode: newDurationMode,
       startDate: newStartDate,
-      endDate: newEndDate,
-      totalCostCents: tierData.dailyRateCents * newDays,
+      endDate: newDurationMode === "hourly" ? addHours(newStartDate, newDurationHours) : newEndDate,
+      durationHours: newDurationMode === "hourly" ? newDurationHours : undefined,
+      totalCostCents: cost,
       dailyRateCents: tierData.dailyRateCents,
+      hourlyRateCents: newDurationMode === "hourly" ? tierData.hourlyRateCents : undefined,
       targetingQuality: tierData.quality,
     });
   };
 
   const handleBoostToggle = (enabled: boolean) => {
     setBoostEnabled(enabled);
-    notifyChange(enabled, tier, startDate, endDate);
+    notifyChange(enabled, tier, durationMode, startDate, endDate, durationHours);
   };
 
   const handleTierChange = (value: string) => {
     const newTier = value as BoostTier;
     setTier(newTier);
-    notifyChange(boostEnabled, newTier, startDate, endDate);
+    notifyChange(boostEnabled, newTier, durationMode, startDate, endDate, durationHours);
+  };
+
+  const handleDurationModeChange = (mode: DurationMode) => {
+    setDurationMode(mode);
+    notifyChange(boostEnabled, tier, mode, startDate, endDate, durationHours);
+  };
+
+  const handleDurationHoursChange = (hours: number) => {
+    setDurationHours(hours);
+    notifyChange(boostEnabled, tier, durationMode, startDate, endDate, hours);
   };
 
   const handleStartDateChange = (date: Date | undefined) => {
     if (date) {
       setStartDate(date);
-      // Ensure end date is after start date
-      if (date >= endDate) {
+      if (durationMode === "daily" && date >= endDate) {
         const newEndDate = addDays(date, 7);
         setEndDate(newEndDate);
-        notifyChange(boostEnabled, tier, date, newEndDate);
+        notifyChange(boostEnabled, tier, durationMode, date, newEndDate, durationHours);
       } else {
-        notifyChange(boostEnabled, tier, date, endDate);
+        notifyChange(boostEnabled, tier, durationMode, date, endDate, durationHours);
       }
     }
   };
@@ -97,7 +145,7 @@ const OfferBoostSection = ({
   const handleEndDateChange = (date: Date | undefined) => {
     if (date) {
       setEndDate(date);
-      notifyChange(boostEnabled, tier, startDate, date);
+      notifyChange(boostEnabled, tier, durationMode, startDate, date, durationHours);
     }
   };
 
@@ -120,11 +168,36 @@ const OfferBoostSection = ({
 
       {boostEnabled && (
         <div className="space-y-6 pt-4 border-t">
+          {/* Duration Mode Toggle */}
+          <div className="space-y-3">
+            <Label>{language === "el" ? "Λειτουργία Διάρκειας" : "Duration Mode"}</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={durationMode === "hourly" ? "default" : "outline"}
+                className="flex-1"
+                onClick={() => handleDurationModeChange("hourly")}
+              >
+                <Clock className="mr-2 h-4 w-4" />
+                {language === "el" ? "Ωριαία" : "Hourly"}
+              </Button>
+              <Button
+                type="button"
+                variant={durationMode === "daily" ? "default" : "outline"}
+                className="flex-1"
+                onClick={() => handleDurationModeChange("daily")}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {language === "el" ? "Ημερήσια" : "Daily"}
+              </Button>
+            </div>
+          </div>
+
           {/* Boost Tiers */}
           <div className="space-y-3">
             <Label>{language === "el" ? "Επιλέξτε Tier" : "Select Tier"}</Label>
             <RadioGroup value={tier} onValueChange={handleTierChange}>
-              {Object.entries(tiers).map(([key, { dailyRate, icon: Icon, quality, color }]) => (
+              {Object.entries(tiers).map(([key, { dailyRate, hourlyRate, icon: Icon, quality, color }]) => (
                 <div
                   key={key}
                   className={cn(
@@ -144,67 +217,122 @@ const OfferBoostSection = ({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">€{dailyRate}/{language === "el" ? "ημέρα" : "day"}</p>
+                    <p className="font-bold">
+                      €{durationMode === "hourly" ? hourlyRate : dailyRate}/{durationMode === "hourly" 
+                        ? (language === "el" ? "ώρα" : "hour") 
+                        : (language === "el" ? "ημέρα" : "day")}
+                    </p>
                   </div>
                 </div>
               ))}
             </RadioGroup>
           </div>
 
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(startDate, "PPP")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={handleStartDateChange}
-                    disabled={(date) => date < new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
+          {/* Hourly Duration Presets */}
+          {durationMode === "hourly" && (
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(startDate, "PPP")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={handleStartDateChange}
+                      disabled={(date) => date < new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>{language === "el" ? "Διάρκεια" : "Duration"}</Label>
+                <div className="flex flex-wrap gap-2">
+                  {HOUR_PRESETS.map((hours) => (
+                    <Button
+                      key={hours}
+                      type="button"
+                      variant={durationHours === hours ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleDurationHoursChange(hours)}
+                    >
+                      {hours}{language === "el" ? "ω" : "h"}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label>{language === "el" ? "Ημερομηνία Λήξης" : "End Date"}</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(endDate, "PPP")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={handleEndDateChange}
-                    disabled={(date) => date <= startDate}
-                  />
-                </PopoverContent>
-              </Popover>
+          {/* Daily Date Range */}
+          {durationMode === "daily" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(startDate, "PPP")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={handleStartDateChange}
+                      disabled={(date) => date < new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{language === "el" ? "Ημερομηνία Λήξης" : "End Date"}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(endDate, "PPP")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={handleEndDateChange}
+                      disabled={(date) => date <= startDate}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Cost Summary */}
           <div className="p-4 bg-muted rounded-lg space-y-2">
             <div className="flex justify-between text-sm">
               <span>{language === "el" ? "Διάρκεια" : "Duration"}:</span>
               <span className="font-semibold">
-                {days} {language === "el" ? "ημέρες" : "days"}
+                {durationMode === "hourly" 
+                  ? `${durationHours} ${language === "el" ? "ώρες" : "hours"}`
+                  : `${days} ${language === "el" ? "ημέρες" : "days"}`
+                }
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>{language === "el" ? "Ημερήσια Τιμή" : "Daily Rate"}:</span>
-              <span className="font-semibold">€{selectedTier.dailyRate}</span>
+              <span>{durationMode === "hourly" 
+                ? (language === "el" ? "Ωριαία Τιμή" : "Hourly Rate") 
+                : (language === "el" ? "Ημερήσια Τιμή" : "Daily Rate")}:</span>
+              <span className="font-semibold">
+                €{durationMode === "hourly" ? selectedTier.hourlyRate : selectedTier.dailyRate}
+              </span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t">
               <span>{language === "el" ? "Συνολικό Κόστος" : "Total Cost"}:</span>

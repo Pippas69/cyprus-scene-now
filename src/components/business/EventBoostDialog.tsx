@@ -5,12 +5,17 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2, Target, Rocket } from "lucide-react";
-import { format, addDays } from "date-fns";
+import { CalendarIcon, Loader2, Target, Rocket, Clock } from "lucide-react";
+import { format, addDays, addHours } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
+
+type BoostTier = "standard" | "premium";
+type DurationMode = "hourly" | "daily";
+
+const HOUR_PRESETS = [1, 2, 3, 6, 12];
 
 interface EventBoostDialogProps {
   open: boolean;
@@ -30,9 +35,11 @@ const EventBoostDialog = ({
   remainingBudgetCents,
 }: EventBoostDialogProps) => {
   const { language } = useLanguage();
-  const [tier, setTier] = useState<"standard" | "premium">("standard");
+  const [tier, setTier] = useState<BoostTier>("standard");
+  const [durationMode, setDurationMode] = useState<DurationMode>("daily");
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 7));
+  const [durationHours, setDurationHours] = useState<number>(3);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -45,15 +52,33 @@ const EventBoostDialog = ({
       setIsSubmitting(false);
     }
   }, [open]);
-  // 2-tier boost system
+
+  // 2-tier boost system with hourly and daily rates
   const tiers = {
-    standard: { dailyRate: 30, icon: Target, quality: 70, color: "text-purple-500" },
-    premium: { dailyRate: 80, icon: Rocket, quality: 100, color: "text-rose-500" },
+    standard: { 
+      dailyRate: 30, 
+      hourlyRate: 5, 
+      hourlyRateCents: 500, 
+      icon: Target, 
+      quality: 70, 
+      color: "text-purple-500" 
+    },
+    premium: { 
+      dailyRate: 80, 
+      hourlyRate: 12, 
+      hourlyRateCents: 1200, 
+      icon: Rocket, 
+      quality: 100, 
+      color: "text-rose-500" 
+    },
   };
 
   const selectedTier = tiers[tier];
   const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  const totalCost = selectedTier.dailyRate * days;
+  
+  const totalCost = durationMode === "hourly" 
+    ? selectedTier.hourlyRate * durationHours 
+    : selectedTier.dailyRate * days;
   const totalCostCents = totalCost * 100;
 
   const canUseSubscriptionBudget =
@@ -63,16 +88,20 @@ const EventBoostDialog = ({
     setIsSubmitting(true);
     try {
       const formattedStartDate = startDate.toISOString().split("T")[0];
-      const formattedEndDate = endDate.toISOString().split("T")[0];
+      const calculatedEndDate = durationMode === "hourly" 
+        ? addHours(startDate, durationHours) 
+        : endDate;
+      const formattedEndDate = calculatedEndDate.toISOString().split("T")[0];
 
       if (canUseSubscriptionBudget) {
-        // Use subscription budget - call create-event-boost
         const { data, error } = await supabase.functions.invoke("create-event-boost", {
           body: {
             eventId,
             tier,
+            durationMode,
             startDate: formattedStartDate,
             endDate: formattedEndDate,
+            durationHours: durationMode === "hourly" ? durationHours : undefined,
             useSubscriptionBudget: true,
           },
         });
@@ -92,15 +121,16 @@ const EventBoostDialog = ({
           onOpenChange(false);
         }
       } else {
-        // No subscription budget - go directly to Stripe checkout
         const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
           "create-boost-checkout",
           {
             body: {
               eventId,
               tier,
+              durationMode,
               startDate: formattedStartDate,
               endDate: formattedEndDate,
+              durationHours: durationMode === "hourly" ? durationHours : undefined,
             },
           }
         );
@@ -115,8 +145,6 @@ const EventBoostDialog = ({
         setCheckoutUrl(url);
         setRedirectAttempted(false);
 
-        // iOS/Safari can silently drop programmatic navigation after async work; attempt redirect,
-        // but keep a visible in-dialog fallback button if it doesn't happen.
         try {
           (document.activeElement as HTMLElement | null)?.blur?.();
           window.location.assign(url);
@@ -171,7 +199,7 @@ const EventBoostDialog = ({
                       {redirectAttempted
                         ? language === "el"
                           ? "Αν δεν έγινε αυτόματη ανακατεύθυνση, πατήστε Συνέχεια." 
-                          : "If you weren’t redirected automatically, tap Continue."
+                          : "If you weren't redirected automatically, tap Continue."
                         : language === "el"
                           ? "Περιμένετε ένα δευτερόλεπτο…" 
                           : "One moment…"}
@@ -204,11 +232,36 @@ const EventBoostDialog = ({
             </div>
           ) : (
             <>
+              {/* Duration Mode Toggle */}
+              <div className="space-y-3">
+                <Label>{language === "el" ? "Λειτουργία Διάρκειας" : "Duration Mode"}</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={durationMode === "hourly" ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => setDurationMode("hourly")}
+                  >
+                    <Clock className="mr-2 h-4 w-4" />
+                    {language === "el" ? "Ωριαία" : "Hourly"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={durationMode === "daily" ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => setDurationMode("daily")}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {language === "el" ? "Ημερήσια" : "Daily"}
+                  </Button>
+                </div>
+              </div>
+
               {/* Boost Tiers */}
               <div className="space-y-3">
                 <Label>{language === "el" ? "Επιλέξτε Tier" : "Select Tier"}</Label>
                 <RadioGroup value={tier} onValueChange={(v: any) => setTier(v)}>
-                  {Object.entries(tiers).map(([key, { dailyRate, icon: Icon, quality, color }]) => (
+                  {Object.entries(tiers).map(([key, { dailyRate, hourlyRate, icon: Icon, quality, color }]) => (
                     <div
                       key={key}
                       className={cn(
@@ -228,67 +281,122 @@ const EventBoostDialog = ({
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">€{dailyRate}/day</p>
+                        <p className="font-bold">
+                          €{durationMode === "hourly" ? hourlyRate : dailyRate}/{durationMode === "hourly" 
+                            ? (language === "el" ? "ώρα" : "hour") 
+                            : (language === "el" ? "ημέρα" : "day")}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </RadioGroup>
               </div>
 
-              {/* Date Range */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(startDate, "PPP")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={(date) => date && setStartDate(date)}
-                        disabled={(date) => date < new Date()}
-                      />
-                    </PopoverContent>
-                  </Popover>
+              {/* Hourly Duration Presets */}
+              {durationMode === "hourly" && (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {format(startDate, "PPP")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={(date) => date && setStartDate(date)}
+                          disabled={(date) => date < new Date()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>{language === "el" ? "Διάρκεια" : "Duration"}</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {HOUR_PRESETS.map((hours) => (
+                        <Button
+                          key={hours}
+                          type="button"
+                          variant={durationHours === hours ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setDurationHours(hours)}
+                        >
+                          {hours}{language === "el" ? "ω" : "h"}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
+              )}
 
-                <div className="space-y-2">
-                  <Label>{language === "el" ? "Ημερομηνία Λήξης" : "End Date"}</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(endDate, "PPP")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={(date) => date && setEndDate(date)}
-                        disabled={(date) => date <= startDate}
-                      />
-                    </PopoverContent>
-                  </Popover>
+              {/* Daily Date Range */}
+              {durationMode === "daily" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {format(startDate, "PPP")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={(date) => date && setStartDate(date)}
+                          disabled={(date) => date < new Date()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{language === "el" ? "Ημερομηνία Λήξης" : "End Date"}</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {format(endDate, "PPP")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={(date) => date && setEndDate(date)}
+                          disabled={(date) => date <= startDate}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Cost Summary */}
               <div className="p-4 bg-muted rounded-lg space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>{language === "el" ? "Διάρκεια" : "Duration"}:</span>
                   <span className="font-semibold">
-                    {days} {language === "el" ? "ημέρες" : "days"}
+                    {durationMode === "hourly" 
+                      ? `${durationHours} ${language === "el" ? "ώρες" : "hours"}`
+                      : `${days} ${language === "el" ? "ημέρες" : "days"}`
+                    }
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>{language === "el" ? "Ημερήσια Τιμή" : "Daily Rate"}:</span>
-                  <span className="font-semibold">€{selectedTier.dailyRate}</span>
+                  <span>{durationMode === "hourly" 
+                    ? (language === "el" ? "Ωριαία Τιμή" : "Hourly Rate") 
+                    : (language === "el" ? "Ημερήσια Τιμή" : "Daily Rate")}:</span>
+                  <span className="font-semibold">
+                    €{durationMode === "hourly" ? selectedTier.hourlyRate : selectedTier.dailyRate}
+                  </span>
                 </div>
                 <div className="flex justify-between text-lg font-bold pt-2 border-t">
                   <span>{language === "el" ? "Συνολικό Κόστος" : "Total Cost"}:</span>
@@ -319,7 +427,12 @@ const EventBoostDialog = ({
                 >
                   {language === "el" ? "Ακύρωση" : "Cancel"}
                 </Button>
-                <Button type="button" className="flex-1" onClick={handleBoost} disabled={isSubmitting || days < 1}>
+                <Button 
+                  type="button" 
+                  className="flex-1" 
+                  onClick={handleBoost} 
+                  disabled={isSubmitting || (durationMode === "daily" && days < 1)}
+                >
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {language === "el" ? "Προώθηση Εκδήλωσης" : "Boost Event"}
                 </Button>

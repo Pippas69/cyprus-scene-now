@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-// Force cache refresh - v3
+// Force cache refresh - v4
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -12,10 +12,10 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-OFFER-BOOST] ${step}${detailsStr}`);
 };
 
-// 2-tier boost system
+// 2-tier boost system with hourly and daily rates
 const BOOST_TIERS = {
-  standard: { dailyRateCents: 3000, quality: 70 },  // €30/day
-  premium: { dailyRateCents: 8000, quality: 100 },   // €80/day
+  standard: { dailyRateCents: 3000, hourlyRateCents: 500, quality: 70 },  // €30/day, €5/hour
+  premium: { dailyRateCents: 8000, hourlyRateCents: 1200, quality: 100 },  // €80/day, €12/hour
 };
 
 serve(async (req) => {
@@ -43,8 +43,8 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { discountId, tier, startDate, endDate, useSubscriptionBudget } = await req.json();
-    logStep("Request data", { discountId, tier, startDate, endDate, useSubscriptionBudget });
+    const { discountId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget } = await req.json();
+    logStep("Request data", { discountId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget });
 
     // Validate tier
     if (!tier || !BOOST_TIERS[tier as keyof typeof BOOST_TIERS]) {
@@ -75,13 +75,24 @@ serve(async (req) => {
 
     logStep("Business ownership verified", { businessId });
 
-    // Calculate duration and cost
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-    const totalCostCents = tierData.dailyRateCents * days;
+    // Calculate duration and cost based on mode
+    let totalCostCents: number;
+    let calculatedDurationHours: number | null = null;
 
-    logStep("Cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
+    if (durationMode === "hourly") {
+      if (!durationHours || durationHours < 1) {
+        throw new Error("Duration hours is required for hourly mode");
+      }
+      calculatedDurationHours = durationHours;
+      totalCostCents = tierData.hourlyRateCents * durationHours;
+      logStep("Hourly cost calculated", { durationHours, hourlyRateCents: tierData.hourlyRateCents, totalCostCents });
+    } else {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+      totalCostCents = tierData.dailyRateCents * days;
+      logStep("Daily cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
+    }
 
     // If not using subscription budget, return that payment is needed
     if (!useSubscriptionBudget) {
@@ -90,7 +101,8 @@ serve(async (req) => {
           needsPayment: true,
           totalCostCents,
           tier,
-          days,
+          durationMode,
+          durationHours: calculatedDurationHours,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
@@ -131,6 +143,7 @@ serve(async (req) => {
 
     // Determine initial status based on start date
     const now = new Date();
+    const start = new Date(startDate);
     const status = start <= now ? "active" : "scheduled";
 
     // Create offer boost record
@@ -142,6 +155,9 @@ serve(async (req) => {
         boost_tier: tier,
         targeting_quality: tierData.quality,
         daily_rate_cents: tierData.dailyRateCents,
+        hourly_rate_cents: durationMode === "hourly" ? tierData.hourlyRateCents : null,
+        duration_mode: durationMode,
+        duration_hours: calculatedDurationHours,
         total_cost_cents: totalCostCents,
         start_date: startDate,
         end_date: endDate,
@@ -153,7 +169,7 @@ serve(async (req) => {
 
     if (boostError) throw boostError;
 
-    logStep("Offer boost created", { tier, targetingQuality: tierData.quality, status });
+    logStep("Offer boost created", { tier, targetingQuality: tierData.quality, status, durationMode });
 
     return new Response(
       JSON.stringify({
@@ -161,6 +177,7 @@ serve(async (req) => {
         tier,
         targeting_quality: tierData.quality,
         total_cost_cents: totalCostCents,
+        duration_mode: durationMode,
         status,
         message: "Offer boost activated",
       }),
