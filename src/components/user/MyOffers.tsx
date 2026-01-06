@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Percent, Store, CheckCircle, Calendar, Clock, QrCode, Download, ShoppingBag, AlertCircle } from "lucide-react";
+import { Loader2, Percent, Store, CheckCircle, Calendar, Clock, QrCode, Download, ShoppingBag, AlertCircle, Wallet, History, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import QRCodeLib from "qrcode";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
+import { CreditTransactionHistory } from "./CreditTransactionHistory";
 
 interface MyOffersProps {
   userId: string;
@@ -26,11 +28,15 @@ interface OfferPurchase {
   created_at: string;
   expires_at: string;
   redeemed_at: string | null;
+  balance_remaining_cents: number | null;
   discounts: {
     id: string;
     title: string;
     description: string | null;
     percent_off: number | null;
+    offer_type: string | null;
+    bonus_percent: number | null;
+    credit_amount_cents: number | null;
     businesses: {
       name: string;
       logo_url: string | null;
@@ -44,6 +50,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
+
+  const [showHistory, setShowHistory] = useState<string | null>(null);
 
   const text = {
     title: { el: "Οι Αγορές Μου", en: "My Purchases" },
@@ -72,6 +80,12 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     qrError: { el: "Αποτυχία δημιουργίας QR", en: "Failed to generate QR" },
     retry: { el: "Επανάληψη", en: "Retry" },
     browseOffers: { el: "Δείτε Προσφορές", en: "Browse Offers" },
+    balance: { el: "Υπόλοιπο", en: "Balance" },
+    storeCredit: { el: "Πίστωση Καταστήματος", en: "Store Credit" },
+    viewHistory: { el: "Ιστορικό", en: "History" },
+    depleted: { el: "Εξαντλημένο", en: "Depleted" },
+    totalCredit: { el: "Συνολική Πίστωση", en: "Total Credit" },
+    used: { el: "Χρησιμοποιημένα", en: "Used" },
   };
 
   const t = language === "el" ? {
@@ -101,6 +115,12 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     qrError: text.qrError.el,
     retry: text.retry.el,
     browseOffers: text.browseOffers.el,
+    balance: text.balance.el,
+    storeCredit: text.storeCredit.el,
+    viewHistory: text.viewHistory.el,
+    depleted: text.depleted.el,
+    totalCredit: text.totalCredit.el,
+    used: text.used.el,
   } : {
     title: text.title.en,
     active: text.active.en,
@@ -128,6 +148,12 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     qrError: text.qrError.en,
     retry: text.retry.en,
     browseOffers: text.browseOffers.en,
+    balance: text.balance.en,
+    storeCredit: text.storeCredit.en,
+    viewHistory: text.viewHistory.en,
+    depleted: text.depleted.en,
+    totalCredit: text.totalCredit.en,
+    used: text.used.en,
   };
 
   const getTimeRemaining = (endDate: string) => {
@@ -171,6 +197,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             title,
             description,
             percent_off,
+            offer_type,
+            bonus_percent,
+            credit_amount_cents,
             businesses (
               name,
               logo_url,
@@ -186,10 +215,37 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     },
   });
 
+  // Helper to check if credit offer is depleted
+  const isCreditDepleted = (purchase: OfferPurchase) => {
+    return purchase.discounts?.offer_type === 'credit' && 
+           (purchase.balance_remaining_cents === 0 || purchase.balance_remaining_cents === null);
+  };
+
   // Separate purchases by status
-  const activePurchases = purchases?.filter(p => p.status === 'paid' && new Date(p.expires_at) > new Date()) || [];
-  const redeemedPurchases = purchases?.filter(p => p.status === 'redeemed') || [];
-  const expiredPurchases = purchases?.filter(p => p.status === 'expired' || (p.status === 'paid' && new Date(p.expires_at) <= new Date())) || [];
+  const activePurchases = purchases?.filter(p => {
+    const isExpired = new Date(p.expires_at) <= new Date();
+    const isCredit = p.discounts?.offer_type === 'credit';
+    // Credit offers are active if they have balance and aren't expired
+    if (isCredit) {
+      return p.status === 'paid' && !isExpired && (p.balance_remaining_cents ?? 0) > 0;
+    }
+    // Regular offers are active if paid and not expired
+    return p.status === 'paid' && !isExpired;
+  }) || [];
+  
+  const redeemedPurchases = purchases?.filter(p => {
+    const isCredit = p.discounts?.offer_type === 'credit';
+    // Credit offers are "redeemed" (depleted) when balance is 0
+    if (isCredit && p.status === 'paid') {
+      return (p.balance_remaining_cents ?? 0) === 0;
+    }
+    return p.status === 'redeemed';
+  }) || [];
+  
+  const expiredPurchases = purchases?.filter(p => {
+    const isExpired = new Date(p.expires_at) <= new Date();
+    return p.status === 'expired' || (p.status === 'paid' && isExpired);
+  }) || [];
 
   // Generate QR code when purchase is selected
   useEffect(() => {
@@ -253,6 +309,13 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       expired: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950'
     };
 
+    const isCredit = purchase.discounts?.offer_type === 'credit';
+    const balanceRemaining = purchase.balance_remaining_cents ?? 0;
+    const totalCredit = purchase.original_price_cents * (1 + (purchase.discounts?.bonus_percent || 0) / 100);
+    const usedAmount = totalCredit - balanceRemaining;
+    const usagePercent = totalCredit > 0 ? (usedAmount / totalCredit) * 100 : 0;
+    const isDepleted = isCredit && balanceRemaining === 0;
+
     return (
       <Card className="overflow-hidden">
         <CardHeader className="pb-3">
@@ -274,7 +337,18 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 <p className="text-xs text-muted-foreground">{purchase.discounts.businesses.city}</p>
               </div>
             </div>
-            {purchase.status === 'redeemed' ? (
+            {/* Badge logic */}
+            {isDepleted ? (
+              <Badge variant="secondary" className="shrink-0">
+                <TrendingDown className="h-3 w-3 mr-1" />
+                {t.depleted}
+              </Badge>
+            ) : isCredit ? (
+              <Badge variant="default" className="shrink-0 bg-emerald-600">
+                <Wallet className="h-3 w-3 mr-1" />
+                {t.storeCredit}
+              </Badge>
+            ) : purchase.status === 'redeemed' ? (
               <Badge variant="secondary" className="shrink-0">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 {language === "el" ? "Χρησιμοποιήθηκε" : "Used"}
@@ -298,16 +372,31 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{purchase.discounts.description}</p>
           )}
 
-          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between text-sm bg-muted/50 rounded-lg p-2 sm:p-3 gap-2">
-            <div>
-              <p className="text-muted-foreground text-xs">{t.originalPrice}</p>
-              <p className="line-through text-sm">€{(purchase.original_price_cents / 100).toFixed(2)}</p>
+          {/* Credit balance display */}
+          {isCredit ? (
+            <div className="space-y-2 bg-muted/50 rounded-lg p-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">{t.balance}</span>
+                <span className="text-xl font-bold text-primary">€{(balanceRemaining / 100).toFixed(2)}</span>
+              </div>
+              <Progress value={100 - usagePercent} className="h-2" />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{t.used}: €{(usedAmount / 100).toFixed(2)}</span>
+                <span>{t.totalCredit}: €{(totalCredit / 100).toFixed(2)}</span>
+              </div>
             </div>
-            <div className="xs:text-right">
-              <p className="text-muted-foreground text-xs">{t.youPaid}</p>
-              <p className="font-bold text-primary text-sm">€{(purchase.final_price_cents / 100).toFixed(2)}</p>
+          ) : (
+            <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between text-sm bg-muted/50 rounded-lg p-2 sm:p-3 gap-2">
+              <div>
+                <p className="text-muted-foreground text-xs">{t.originalPrice}</p>
+                <p className="line-through text-sm">€{(purchase.original_price_cents / 100).toFixed(2)}</p>
+              </div>
+              <div className="xs:text-right">
+                <p className="text-muted-foreground text-xs">{t.youPaid}</p>
+                <p className="font-bold text-primary text-sm">€{(purchase.final_price_cents / 100).toFixed(2)}</p>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -316,7 +405,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </span>
           </div>
 
-          {purchase.redeemed_at && (
+          {purchase.redeemed_at && !isCredit && (
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <span className="text-muted-foreground">
@@ -325,7 +414,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </div>
           )}
 
-          {showQR && purchase.status === 'paid' && new Date(purchase.expires_at) > new Date() && (
+          {showQR && purchase.status === 'paid' && new Date(purchase.expires_at) > new Date() && !isDepleted && (
             <>
               <div className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full w-fit ${urgencyColors[timeRemaining.urgency]}`}>
                 <Clock className="h-4 w-4" />
@@ -334,15 +423,38 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 </span>
               </div>
 
-              <Button
-                onClick={() => setSelectedPurchase(purchase)}
-                className="w-full"
-                variant="default"
-              >
-                <QrCode className="h-4 w-4 mr-2" />
-                {t.viewQR}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setSelectedPurchase(purchase)}
+                  className="flex-1"
+                  variant="default"
+                >
+                  <QrCode className="h-4 w-4 mr-2" />
+                  {t.viewQR}
+                </Button>
+                {isCredit && (
+                  <Button
+                    onClick={() => setShowHistory(purchase.id)}
+                    variant="outline"
+                    size="icon"
+                  >
+                    <History className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </>
+          )}
+
+          {/* History button for depleted credits */}
+          {isCredit && isDepleted && (
+            <Button
+              onClick={() => setShowHistory(purchase.id)}
+              variant="outline"
+              className="w-full"
+            >
+              <History className="h-4 w-4 mr-2" />
+              {t.viewHistory}
+            </Button>
           )}
         </CardContent>
       </Card>
@@ -423,6 +535,16 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         </TabsContent>
       </Tabs>
 
+      {/* Transaction History Dialog */}
+      {showHistory && (
+        <CreditTransactionHistory
+          isOpen={!!showHistory}
+          purchaseId={showHistory}
+          language={language}
+          onClose={() => setShowHistory(null)}
+        />
+      )}
+
       <Dialog open={!!selectedPurchase} onOpenChange={() => setSelectedPurchase(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -434,9 +556,22 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 <div className="text-center">
                   <p className="font-semibold text-lg">{selectedPurchase.discounts.title}</p>
                   <p className="text-sm text-muted-foreground">{selectedPurchase.discounts.businesses.name}</p>
-                  <Badge variant="default" className="text-xl font-bold mt-2">
-                    -{selectedPurchase.discount_percent}%
-                  </Badge>
+                  {selectedPurchase.discounts?.offer_type === 'credit' ? (
+                    <div className="mt-2 space-y-1">
+                      <Badge variant="default" className="bg-emerald-600">
+                        <Wallet className="h-3 w-3 mr-1" />
+                        {t.storeCredit}
+                      </Badge>
+                      <p className="text-2xl font-bold text-primary mt-2">
+                        €{((selectedPurchase.balance_remaining_cents ?? 0) / 100).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{t.balance}</p>
+                    </div>
+                  ) : (
+                    <Badge variant="default" className="text-xl font-bold mt-2">
+                      -{selectedPurchase.discount_percent}%
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="bg-white p-4 rounded-lg shadow-lg">

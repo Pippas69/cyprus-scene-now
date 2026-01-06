@@ -1,4 +1,4 @@
-import { MapPin, Percent, Calendar, ShoppingBag, Package } from "lucide-react";
+import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,9 @@ interface Offer {
   original_price_cents?: number | null;
   pricing_type?: 'single' | 'bundle';
   bundle_price_cents?: number | null;
+  offer_type?: 'regular' | 'credit' | null;
+  bonus_percent?: number | null;
+  credit_amount_cents?: number | null;
   start_at: string;
   end_at: string;
   business_id: string;
@@ -72,10 +75,14 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   });
 
   // Calculate prices
-  const originalPriceCents = offerData?.original_price_cents || 0;
+  const isCredit = offerData?.offer_type === 'credit';
+  const creditAmountCents = offerData?.credit_amount_cents || 0;
+  const bonusPercent = offerData?.bonus_percent || 0;
+  const originalPriceCents = isCredit ? creditAmountCents : (offerData?.original_price_cents || 0);
   const percentOff = offerData?.percent_off || 0;
   const originalPrice = originalPriceCents / 100;
-  const finalPrice = originalPrice * (1 - percentOff / 100);
+  const finalPrice = isCredit ? originalPrice : originalPrice * (1 - percentOff / 100);
+  const creditValue = isCredit ? (creditAmountCents / 100) * (1 + bonusPercent / 100) : 0;
   const hasPricing = originalPriceCents > 0;
   const isBundle = offerData?.pricing_type === "bundle";
   const itemCount = discountItems?.length || 0;
@@ -177,11 +184,16 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 </Link>
               </div>
               <div className="flex flex-col items-end gap-1">
-                {offerData.percent_off && (
+                {isCredit ? (
+                  <Badge variant="default" className="flex-shrink-0 bg-emerald-600">
+                    <Wallet className="h-3 w-3 mr-1" />
+                    {bonusPercent > 0 ? `+${bonusPercent}%` : (language === "el" ? "Πίστωση" : "Credit")}
+                  </Badge>
+                ) : offerData.percent_off ? (
                   <Badge variant="default" className="flex-shrink-0">
                     {offerData.percent_off}% OFF
                   </Badge>
-                )}
+                ) : null}
                 {isBundle && (
                   <Badge variant="outline" className="text-xs flex-shrink-0">
                     <Package className="h-3 w-3 mr-1" />
@@ -207,12 +219,25 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             {/* Pricing Display */}
             {hasPricing && (
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm line-through text-muted-foreground">
-                  €{originalPrice.toFixed(2)}
-                </span>
-                <span className="text-lg font-bold text-primary">
-                  €{finalPrice.toFixed(2)}
-                </span>
+                {isCredit ? (
+                  <>
+                    <span className="text-sm text-muted-foreground">
+                      {language === "el" ? "Πληρώνεις" : "Pay"} €{originalPrice.toFixed(2)}
+                    </span>
+                    <span className="text-lg font-bold text-primary">
+                      → €{creditValue.toFixed(2)} {language === "el" ? "αξία" : "value"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm line-through text-muted-foreground">
+                      €{originalPrice.toFixed(2)}
+                    </span>
+                    <span className="text-lg font-bold text-primary">
+                      €{finalPrice.toFixed(2)}
+                    </span>
+                  </>
+                )}
               </div>
             )}
 
