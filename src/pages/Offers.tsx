@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/useDebounce";
+import { 
+  getOfferBoostScore, 
+  getRotationSeed, 
+  DISPLAY_CAPS,
+  type OfferBoost 
+} from "@/lib/personalization";
 
 const Offers = () => {
   const navigate = useNavigate();
@@ -306,6 +312,23 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
     },
   });
 
+  // Fetch user profile for personalization
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile-offers', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('city, interests')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) return null;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Fetch active boosts for prioritization
   const { data: boosts } = useQuery({
     queryKey: ['offer-boosts-active'],
@@ -320,18 +343,30 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
     },
   });
 
-  // Sort offers with boosted ones first
-  const sortedOffers = offers?.sort((a: any, b: any) => {
-    const aBoost = boosts?.find((boost: any) => boost.discount_id === a.id);
-    const bBoost = boosts?.find((boost: any) => boost.discount_id === b.id);
+  // Calculate rotation seed for fair distribution
+  const rotationSeed = getRotationSeed(user?.id);
+
+  // Sort offers with personalization, rotation, and fair distribution
+  const sortedOffers = offers?.map((offer: any) => {
+    const offerBoosts: OfferBoost[] = (boosts || []).map((b: any) => ({
+      discount_id: b.discount_id,
+      targeting_quality: b.targeting_quality,
+      boost_tier: b.targeting_quality >= 5 ? 'premium' : 'standard'
+    }));
     
-    if (aBoost && !bBoost) return -1;
-    if (!aBoost && bBoost) return 1;
-    if (aBoost && bBoost) {
-      return (bBoost.targeting_quality || 0) - (aBoost.targeting_quality || 0);
-    }
-    return 0;
-  });
+    const boostScore = getOfferBoostScore(
+      { 
+        id: offer.id, 
+        business_id: offer.business_id,
+        businesses: offer.businesses 
+      },
+      userProfile || null,
+      offerBoosts,
+      rotationSeed
+    );
+    
+    return { ...offer, boostScore };
+  }).sort((a: any, b: any) => b.boostScore - a.boostScore);
 
   const hasActiveFilters = selectedCity || discountFilter || timeFilter || debouncedSearch;
 

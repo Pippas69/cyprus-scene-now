@@ -1,37 +1,54 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Star, BadgeCheck, ChevronRight } from "lucide-react";
+import { Star, BadgeCheck, ChevronRight, Sparkles } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { ActiveProfileBoost } from "@/hooks/useActiveProfileBoosts";
+import { DISPLAY_CAPS } from "@/lib/personalization";
 
 interface BoostedProfilesScrollerProps {
   profiles: ActiveProfileBoost[];
   language: "el" | "en";
+  totalCount?: number; // Total boosts before display cap
 }
 
 const translations = {
   el: {
     featuredBusinesses: "Επιλεγμένες Επιχειρήσεις",
     verified: "Επαληθευμένο",
+    seeAll: "Δείτε όλες",
   },
   en: {
     featuredBusinesses: "Featured Businesses",
     verified: "Verified",
+    seeAll: "See all",
   },
 };
 
-export const BoostedProfilesScroller = ({ profiles, language }: BoostedProfilesScrollerProps) => {
+export const BoostedProfilesScroller = ({ 
+  profiles, 
+  language,
+  totalCount 
+}: BoostedProfilesScrollerProps) => {
   const t = translations[language];
 
   if (!profiles || profiles.length === 0) return null;
 
+  const hasMoreProfiles = totalCount && totalCount > DISPLAY_CAPS.PROFILES;
+
   return (
     <div className="w-full">
-      <div className="flex items-center gap-2 mb-3 px-1">
-        <Star className="h-4 w-4 text-primary fill-primary" />
-        <h3 className="text-sm font-semibold text-foreground">{t.featuredBusinesses}</h3>
+      <div className="flex items-center justify-between gap-2 mb-3 px-1">
+        <div className="flex items-center gap-2">
+          <Star className="h-4 w-4 text-primary fill-primary" />
+          <h3 className="text-sm font-semibold text-foreground">{t.featuredBusinesses}</h3>
+          {hasMoreProfiles && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+              +{totalCount - profiles.length}
+            </Badge>
+          )}
+        </div>
       </div>
       
       <ScrollArea className="w-full whitespace-nowrap">
@@ -64,6 +81,13 @@ export const BoostedProfilesScroller = ({ profiles, language }: BoostedProfilesS
                     </div>
                   )}
                 </div>
+
+                {/* Premium indicator */}
+                {profile.boost_tier === 'premium' && (
+                  <div className="absolute -top-1 -right-1">
+                    <Sparkles className="h-3 w-3 text-accent" />
+                  </div>
+                )}
 
                 {/* Business name */}
                 <span className="text-xs font-medium text-center line-clamp-1 max-w-[80px] group-hover:text-primary transition-colors">
