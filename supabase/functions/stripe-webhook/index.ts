@@ -165,7 +165,7 @@ serve(async (req) => {
         
         if (metadata?.type === "event_boost" && metadata?.boost_id) {
           const boostId = metadata.boost_id;
-          logStep("Updating boost after payment", { boostId });
+          logStep("Updating event boost after payment", { boostId });
           
           // Get the boost to check start_date
           const { data: boostData, error: fetchError } = await supabaseClient
@@ -202,9 +202,49 @@ serve(async (req) => {
             logStep("Error updating boost", { error: boostError.message });
             throw boostError;
           }
-          logStep(`Boost status updated to ${newStatus} successfully`);
+          logStep(`Event boost status updated to ${newStatus} successfully`);
+        } else if (metadata?.type === "profile_boost" && metadata?.boost_id) {
+          const boostId = metadata.boost_id;
+          logStep("Updating profile boost after payment", { boostId });
+          
+          // Get the boost to check start_date
+          const { data: boostData, error: fetchError } = await supabaseClient
+            .from('profile_boosts')
+            .select('start_date')
+            .eq('id', boostId)
+            .single();
+          
+          if (fetchError) {
+            logStep("Error fetching profile boost", { error: fetchError.message });
+            throw fetchError;
+          }
+          
+          // Determine status: active if start_date is today or past, otherwise scheduled
+          const startDate = new Date(boostData.start_date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          startDate.setHours(0, 0, 0, 0);
+          
+          const newStatus = startDate <= today ? 'active' : 'scheduled';
+          logStep("Determined profile boost status", { startDate: boostData.start_date, newStatus });
+          
+          // Update profile_boost status from pending
+          const { error: boostError } = await supabaseClient
+            .from('profile_boosts')
+            .update({
+              status: newStatus,
+              stripe_payment_intent_id: session.payment_intent as string
+            })
+            .eq('id', boostId)
+            .eq('status', 'pending'); // Only update if still pending
+
+          if (boostError) {
+            logStep("Error updating profile boost", { error: boostError.message });
+            throw boostError;
+          }
+          logStep(`Profile boost status updated to ${newStatus} successfully`);
         } else {
-          logStep("Payment completed but no boost_id in metadata - skipping boost update");
+          logStep("Payment completed but no recognized boost type in metadata - skipping boost update");
         }
       }
     }

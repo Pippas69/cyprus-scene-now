@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Ticket, Calendar, TrendingUp, Pause, Play, BarChart3, Eye, MousePointer, Users } from "lucide-react";
+import { Loader2, Zap, Ticket, Calendar, TrendingUp, Pause, Play, BarChart3, Eye, MousePointer, Users, Building2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const [loading, setLoading] = useState(true);
   const [eventBoosts, setEventBoosts] = useState<any[]>([]);
   const [offerBoosts, setOfferBoosts] = useState<any[]>([]);
+  const [profileBoosts, setProfileBoosts] = useState<any[]>([]);
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
   const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
 
@@ -75,6 +76,16 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (offerError) throw offerError;
       setOfferBoosts(offerData || []);
+
+      // Fetch profile boosts
+      const { data: profileData, error: profileError } = await supabase
+        .from("profile_boosts")
+        .select("*")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false });
+
+      if (profileError) throw profileError;
+      setProfileBoosts(profileData || []);
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
         description: error.message,
@@ -124,7 +135,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
       </div>
 
       <Tabs defaultValue="events">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="events">
             <Zap className="h-4 w-4 mr-2" />
             {language === "el" ? "Εκδηλώσεις" : "Events"} ({eventBoosts.length})
@@ -132,6 +143,10 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           <TabsTrigger value="offers">
             <Ticket className="h-4 w-4 mr-2" />
             {language === "el" ? "Προσφορές" : "Offers"} ({offerBoosts.length})
+          </TabsTrigger>
+          <TabsTrigger value="profile">
+            <Building2 className="h-4 w-4 mr-2" />
+            {language === "el" ? "Προφίλ" : "Profile"} ({profileBoosts.length})
           </TabsTrigger>
         </TabsList>
 
@@ -316,6 +331,80 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                         ? "Ενεργοποίηση"
                         : "Activate"}
                     </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="profile" className="space-y-4">
+          {profileBoosts.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                {language === "el"
+                  ? "Δεν υπάρχουν προωθήσεις προφίλ"
+                  : "No profile boosts"}
+              </CardContent>
+            </Card>
+          ) : (
+            profileBoosts.map((boost) => (
+              <Card key={boost.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Building2 className="h-5 w-5" />
+                        {language === "el" ? "Προώθηση Προφίλ" : "Profile Boost"}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "el" ? "Tier:" : "Tier:"}{" "}
+                        <span className="font-semibold capitalize">{boost.boost_tier}</span>
+                      </p>
+                    </div>
+                    {getStatusBadge(boost.status)}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {format(new Date(boost.start_date), "PP")} -{" "}
+                        {format(new Date(boost.end_date), "PP")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {language === "el" ? "Ποιότητα:" : "Quality:"} {getQualityPercentage(boost.targeting_quality)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "el" ? "Συνολικό Κόστος" : "Total Cost"}
+                      </p>
+                      <p className="text-lg font-bold">
+                        €{(boost.total_cost_cents / 100).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      {boost.status === "active" && (
+                        <Button size="sm" variant="outline">
+                          <Pause className="h-4 w-4 mr-1" />
+                          {language === "el" ? "Παύση" : "Pause"}
+                        </Button>
+                      )}
+                      {boost.status === "paused" && (
+                        <Button size="sm" variant="outline">
+                          <Play className="h-4 w-4 mr-1" />
+                          {language === "el" ? "Συνέχεια" : "Resume"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

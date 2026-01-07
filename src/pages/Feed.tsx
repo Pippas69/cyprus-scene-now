@@ -21,6 +21,7 @@ import ViewModeToggle from "@/components/feed/ViewModeToggle";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import EmptyState from "@/components/feed/EmptyState";
 import { FilterChips } from "@/components/feed/FilterChips";
+import { BoostedProfilesScroller } from "@/components/feed/BoostedProfilesScroller";
 import { ErrorState } from "@/components/ErrorState";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { PullIndicator } from "@/components/ui/pull-indicator";
@@ -30,6 +31,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useScrollMemory } from "@/hooks/useScrollMemory";
 import { useStaggeredAnimation } from "@/hooks/useStaggeredAnimation";
+import { useActiveProfileBoosts } from "@/hooks/useActiveProfileBoosts";
 import { hapticFeedback } from "@/lib/haptics";
 import { getPersonalizedScore, type ActiveBoost } from "@/lib/personalization";
 import type { User } from "@supabase/supabase-js";
@@ -357,6 +359,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000
   });
 
+  // Fetch active profile boosts for Featured Businesses scroller
+  const { data: profileBoosts } = useActiveProfileBoosts(selectedCity);
+
   // Prioritize boosted offers
   const getPersonalizedOffers = () => {
     if (!offers) return [];
@@ -630,6 +635,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-hidden">
         <div className="space-y-6">
+          {/* Boosted Profiles Scroller - Featured Businesses */}
+          {profileBoosts && profileBoosts.length > 0 && (
+            <BoostedProfilesScroller profiles={profileBoosts} language={language} />
+          )}
+
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <TimeAccessFilters 
               language={language} 
