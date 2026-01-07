@@ -1,5 +1,4 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
-import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -60,7 +59,7 @@ interface TicketSaleNotificationRequest {
   businessName: string;
 }
 
-Deno.Deno.serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
