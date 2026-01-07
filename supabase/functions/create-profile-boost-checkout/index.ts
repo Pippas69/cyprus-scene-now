@@ -54,8 +54,8 @@ serve(async (req) => {
 
     // 2-tier boost system with hourly and daily rates (in cents)
     const boostTiers = {
-      standard: { dailyRateCents: 3000, hourlyRateCents: 500, quality: 3.5 },  // €30/day, €5/hour
-      premium: { dailyRateCents: 8000, hourlyRateCents: 1200, quality: 5 },     // €80/day, €12/hour
+      standard: { dailyRateCents: 3000, hourlyRateCents: 500, quality: 4 },   // €30/day, €5/hour
+      premium: { dailyRateCents: 8000, hourlyRateCents: 1200, quality: 5 },   // €80/day, €12/hour
     };
 
     const tierData = boostTiers[tier as keyof typeof boostTiers];
