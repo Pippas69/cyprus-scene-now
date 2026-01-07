@@ -2385,6 +2385,78 @@ export type Database = {
           },
         ]
       }
+      profile_boosts: {
+        Row: {
+          boost_tier: Database["public"]["Enums"]["boost_tier"]
+          business_id: string
+          created_at: string | null
+          daily_rate_cents: number
+          duration_hours: number | null
+          duration_mode: string | null
+          end_date: string
+          hourly_rate_cents: number | null
+          id: string
+          source: Database["public"]["Enums"]["boost_source"]
+          start_date: string
+          status: Database["public"]["Enums"]["boost_status"] | null
+          stripe_payment_intent_id: string | null
+          targeting_quality: number | null
+          total_cost_cents: number
+          updated_at: string | null
+        }
+        Insert: {
+          boost_tier: Database["public"]["Enums"]["boost_tier"]
+          business_id: string
+          created_at?: string | null
+          daily_rate_cents: number
+          duration_hours?: number | null
+          duration_mode?: string | null
+          end_date: string
+          hourly_rate_cents?: number | null
+          id?: string
+          source: Database["public"]["Enums"]["boost_source"]
+          start_date: string
+          status?: Database["public"]["Enums"]["boost_status"] | null
+          stripe_payment_intent_id?: string | null
+          targeting_quality?: number | null
+          total_cost_cents: number
+          updated_at?: string | null
+        }
+        Update: {
+          boost_tier?: Database["public"]["Enums"]["boost_tier"]
+          business_id?: string
+          created_at?: string | null
+          daily_rate_cents?: number
+          duration_hours?: number | null
+          duration_mode?: string | null
+          end_date?: string
+          hourly_rate_cents?: number | null
+          id?: string
+          source?: Database["public"]["Enums"]["boost_source"]
+          start_date?: string
+          status?: Database["public"]["Enums"]["boost_status"] | null
+          stripe_payment_intent_id?: string | null
+          targeting_quality?: number | null
+          total_cost_cents?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null
