@@ -33,7 +33,14 @@ import { useScrollMemory } from "@/hooks/useScrollMemory";
 import { useStaggeredAnimation } from "@/hooks/useStaggeredAnimation";
 import { useActiveProfileBoosts } from "@/hooks/useActiveProfileBoosts";
 import { hapticFeedback } from "@/lib/haptics";
-import { getPersonalizedScore, type ActiveBoost } from "@/lib/personalization";
+import { 
+  getPersonalizedScore, 
+  getRotationSeed,
+  getOfferBoostScore,
+  DISPLAY_CAPS,
+  type ActiveBoost, 
+  type OfferBoost 
+} from "@/lib/personalization";
 import type { User } from "@supabase/supabase-js";
 
 interface FeedProps {
@@ -360,25 +367,43 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   // Fetch active profile boosts for Featured Businesses scroller
-  const { data: profileBoosts } = useActiveProfileBoosts(selectedCity);
+  // Pass user context for personalized sorting
+  const { data: profileBoosts } = useActiveProfileBoosts({
+    selectedCity,
+    userProfile: personalizedData?.profile || null,
+    userId: user?.id || null
+  });
 
-  // Prioritize boosted offers
-  const getPersonalizedOffers = () => {
+  // Calculate rotation seed for fair distribution
+  const rotationSeed = getRotationSeed(user?.id);
+
+  // Prioritize boosted offers with personalization and fair rotation
+  const getPersonalizedOffersWithScoring = () => {
     if (!offers) return [];
     
+    const boosts: OfferBoost[] = (offerBoosts || []).map(b => ({
+      discount_id: b.discount_id,
+      targeting_quality: b.targeting_quality,
+      boost_tier: b.targeting_quality >= 5 ? 'premium' : 'standard'
+    }));
+    
     return offers.map(offer => {
-      const boost = offerBoosts?.find(b => b.discount_id === offer.id);
-      const boostScore = boost ? boost.targeting_quality * 10 : 0;
+      const boostScore = getOfferBoostScore(
+        offer,
+        personalizedData?.profile || null,
+        boosts,
+        rotationSeed
+      );
       return { ...offer, boostScore };
-    }).sort((a, b) => b.boostScore - a.boostScore);
+    }).sort((a, b) => b.boostScore - a.boostScore).slice(0, DISPLAY_CAPS.OFFERS);
   };
 
-  const displayedOffers = getPersonalizedOffers();
+  const displayedOffers = getPersonalizedOffersWithScoring();
 
   const getPersonalizedEvents = () => {
     if (!events) return [];
     
-    // Apply personalization with boosts (works for all users, not just logged in)
+    // Apply personalization with boosts and rotation (works for all users, not just logged in)
     return events.map(event => ({
       ...event,
       personalizedScore: getPersonalizedScore(
@@ -386,7 +411,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         personalizedData?.profile || null, 
         personalizedData?.rsvps || [], 
         personalizedData?.favorites || [],
-        activeBoosts || []
+        activeBoosts || [],
+        rotationSeed // Pass rotation seed for fair distribution
       )
     })).sort((a, b) => b.personalizedScore - a.personalizedScore);
   };

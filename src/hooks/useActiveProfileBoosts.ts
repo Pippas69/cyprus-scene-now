@@ -1,24 +1,50 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  getPersonalizedProfileBoosts, 
+  getRotationSeed,
+  type ProfileBoostData 
+} from "@/lib/personalization";
 
-export interface ActiveProfileBoost {
-  id: string;
-  business_id: string;
-  boost_tier: string;
-  targeting_quality: number | null;
-  businesses: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-    city: string;
-    category: string[];
-    verified: boolean | null;
-  };
+export interface ActiveProfileBoost extends ProfileBoostData {
+  boostScore?: number;
 }
 
-export const useActiveProfileBoosts = (selectedCity?: string | null) => {
+interface UserProfile {
+  city?: string;
+  interests?: string[];
+}
+
+interface UseActiveProfileBoostsOptions {
+  selectedCity?: string | null;
+  userProfile?: UserProfile | null;
+  userId?: string | null;
+}
+
+export const useActiveProfileBoosts = (
+  selectedCityOrOptions?: string | null | UseActiveProfileBoostsOptions,
+  userProfile?: UserProfile | null,
+  userId?: string | null
+) => {
+  // Handle both old and new API for backwards compatibility
+  let selectedCity: string | null | undefined;
+  let profile: UserProfile | null | undefined;
+  let uid: string | null | undefined;
+
+  if (typeof selectedCityOrOptions === 'object' && selectedCityOrOptions !== null && 'selectedCity' in selectedCityOrOptions) {
+    // New API: options object
+    selectedCity = selectedCityOrOptions.selectedCity;
+    profile = selectedCityOrOptions.userProfile;
+    uid = selectedCityOrOptions.userId;
+  } else {
+    // Old API: individual parameters
+    selectedCity = selectedCityOrOptions as string | null | undefined;
+    profile = userProfile;
+    uid = userId;
+  }
+
   return useQuery({
-    queryKey: ['active-profile-boosts', selectedCity],
+    queryKey: ['active-profile-boosts', selectedCity, profile?.city, profile?.interests?.join(','), uid],
     queryFn: async () => {
       const now = new Date().toISOString().split('T')[0];
       
@@ -53,10 +79,18 @@ export const useActiveProfileBoosts = (selectedCity?: string | null) => {
         return [];
       }
 
-      // Sort by targeting quality (premium first)
-      return (data as unknown as ActiveProfileBoost[]).sort((a, b) => 
-        (b.targeting_quality || 0) - (a.targeting_quality || 0)
+      // Cast to ProfileBoostData
+      const profiles = data as unknown as ProfileBoostData[];
+
+      // Apply personalization, rotation, and display cap
+      const rotationSeed = getRotationSeed(uid);
+      const personalizedProfiles = getPersonalizedProfileBoosts(
+        profiles,
+        profile || null,
+        rotationSeed
       );
+
+      return personalizedProfiles as ActiveProfileBoost[];
     },
     staleTime: 60000, // Cache for 1 minute
   });
