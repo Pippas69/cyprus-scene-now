@@ -7,10 +7,8 @@ import { useFOMOImpact } from '@/hooks/useFOMOImpact';
 import { DateRangePicker } from '@/components/business/analytics/DateRangePicker';
 import { FOMOImpactCard } from '@/components/business/analytics/FOMOImpactCard';
 import { EventPerformanceTable } from '@/components/business/analytics/EventPerformanceTable';
-import { AudienceInsights } from '@/components/business/analytics/AudienceInsights';
 import { AnalyticsEmptyState } from '@/components/business/analytics/AnalyticsEmptyState';
-import { TrafficSourceAnalysis } from '@/components/business/analytics/TrafficSourceAnalysis';
-import { FollowerGrowth } from '@/components/business/analytics/FollowerGrowth';
+import { SimpleCustomerOverview } from '@/components/business/analytics/SimpleCustomerOverview';
 import { InsightsEngine } from '@/components/business/analytics/InsightsEngine';
 import { ExportTools } from '@/components/business/analytics/ExportTools';
 import { TicketAnalytics } from '@/components/business/analytics/TicketAnalytics';
@@ -184,9 +182,7 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
             </TabsContent>
 
             <TabsContent value="customers" className="space-y-6">
-              <TrafficSourceAnalysis data={data} language={language} />
-              <FollowerGrowth data={data} language={language} />
-              <AudienceInsights data={data} language={language} />
+              <SimpleCustomerOverview businessId={businessId} language={language} dateRange={dateRange} />
             </TabsContent>
 
             <TabsContent value="tips" className="space-y-6">
