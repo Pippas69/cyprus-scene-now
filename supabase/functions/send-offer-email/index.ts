@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 
 const corsHeaders = {
@@ -25,7 +25,7 @@ interface OfferEmailRequest {
   qrCodeToken: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
