@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Ticket, Calendar, TrendingUp, Pause, Play, BarChart3, Eye, MousePointer, Users, Building2 } from "lucide-react";
+import { Loader2, Zap, Ticket, Calendar, TrendingUp, Pause, Play, BarChart3, Eye, MousePointer, Users, Building2, Plus } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useBoostsQuickStats } from "@/hooks/useBoostAnalytics";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
+import { ProfileBoostDialog } from "./ProfileBoostDialog";
 
 interface BoostManagementProps {
   businessId: string;
@@ -30,6 +31,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const [profileBoosts, setProfileBoosts] = useState<any[]>([]);
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
   const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
+  const [profileBoostDialogOpen, setProfileBoostDialogOpen] = useState(false);
+  const [businessName, setBusinessName] = useState("");
 
   // Get quick stats for all boosts
   const boostIds = eventBoosts.map(b => b.id);
@@ -86,6 +89,17 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (profileError) throw profileError;
       setProfileBoosts(profileData || []);
+
+      // Fetch business name for dialog
+      const { data: businessData } = await supabase
+        .from("businesses")
+        .select("name")
+        .eq("id", businessId)
+        .single();
+
+      if (businessData) {
+        setBusinessName(businessData.name);
+      }
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
         description: error.message,
@@ -339,12 +353,21 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         </TabsContent>
 
         <TabsContent value="profile" className="space-y-4">
+          {/* Boost Your Profile Button */}
+          <Button 
+            onClick={() => setProfileBoostDialogOpen(true)}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {language === "el" ? "Προώθηση Προφίλ" : "Boost Your Profile"}
+          </Button>
+
           {profileBoosts.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 {language === "el"
-                  ? "Δεν υπάρχουν προωθήσεις προφίλ"
-                  : "No profile boosts"}
+                  ? "Δεν υπάρχουν προωθήσεις προφίλ ακόμα"
+                  : "No profile boosts yet"}
               </CardContent>
             </Card>
           ) : (
@@ -418,6 +441,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         boostId={selectedBoostId}
         open={performanceDialogOpen}
         onOpenChange={setPerformanceDialogOpen}
+      />
+
+      {/* Profile Boost Dialog */}
+      <ProfileBoostDialog
+        open={profileBoostDialogOpen}
+        onOpenChange={setProfileBoostDialogOpen}
+        businessId={businessId}
+        businessName={businessName}
       />
     </div>
   );
