@@ -1,5 +1,4 @@
-// Force cache refresh - v2
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -29,7 +28,7 @@ const PRICE_MAPPING: Record<string, Record<string, string>> = {
   },
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
