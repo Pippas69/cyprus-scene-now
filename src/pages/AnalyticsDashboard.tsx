@@ -1,20 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAdvancedAnalytics } from '@/hooks/useAdvancedAnalytics';
+import { useFOMOImpact } from '@/hooks/useFOMOImpact';
 import { DateRangePicker } from '@/components/business/analytics/DateRangePicker';
-import { AnalyticsOverview } from '@/components/business/analytics/AnalyticsOverview';
+import { FOMOImpactCard } from '@/components/business/analytics/FOMOImpactCard';
 import { EventPerformanceTable } from '@/components/business/analytics/EventPerformanceTable';
 import { AudienceInsights } from '@/components/business/analytics/AudienceInsights';
-import { TimeAnalytics } from '@/components/business/analytics/TimeAnalytics';
 import { AnalyticsEmptyState } from '@/components/business/analytics/AnalyticsEmptyState';
 import { TrafficSourceAnalysis } from '@/components/business/analytics/TrafficSourceAnalysis';
-import { DeviceAnalytics } from '@/components/business/analytics/DeviceAnalytics';
-import { ConversionFunnel } from '@/components/business/analytics/ConversionFunnel';
-import { EngagementAnalysis } from '@/components/business/analytics/EngagementAnalysis';
-import { RSVPAnalytics } from '@/components/business/analytics/RSVPAnalytics';
 import { FollowerGrowth } from '@/components/business/analytics/FollowerGrowth';
 import { InsightsEngine } from '@/components/business/analytics/InsightsEngine';
 import { ExportTools } from '@/components/business/analytics/ExportTools';
@@ -28,28 +23,18 @@ import { Loader2 } from 'lucide-react';
 
 const translations = {
   el: {
-    title: 'Αναλυτικά Στοιχεία',
-    overview: 'Επισκόπηση',
-    traffic: 'Επισκεψιμότητα',
-    engagement: 'Αλληλεπίδραση',
-    conversion: 'Μετατροπές',
+    title: 'Τα Αποτελέσματά σου',
+    results: 'Αποτελέσματα',
     events: 'Εκδηλώσεις',
-    audience: 'Κοινό',
-    insights: 'Συστάσεις',
-    timing: 'Χρονισμός',
-    tickets: 'Εισιτήρια',
+    customers: 'Πελάτες',
+    tips: 'Συμβουλές',
   },
   en: {
-    title: 'Analytics',
-    overview: 'Overview',
-    traffic: 'Traffic',
-    engagement: 'Engagement',
-    conversion: 'Conversion',
+    title: 'Your Results',
+    results: 'Results',
     events: 'Events',
-    audience: 'Audience',
-    insights: 'Insights',
-    timing: 'Timing',
-    tickets: 'Tickets',
+    customers: 'Customers',
+    tips: 'Tips',
   },
 };
 
@@ -68,7 +53,7 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     to: new Date(),
   });
 
-  const { data, isLoading, refetch, isRefetching } = useAdvancedAnalytics(
+  const { data, isLoading, refetch } = useAdvancedAnalytics(
     businessId,
     dateRange
       ? {
@@ -78,10 +63,11 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       : undefined
   );
 
+  const { data: impactData, isLoading: impactLoading } = useFOMOImpact(businessId, dateRange);
+
   // Progressive loading: show overview first, then detailed data
   useEffect(() => {
     if (data && !showDetailedData && !isLoading) {
-      // Slight delay to show overview before detailed tabs
       const timer = setTimeout(() => setShowDetailedData(true), 300);
       return () => clearTimeout(timer);
     }
@@ -101,9 +87,9 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       );
       
       setTimeout(() => refetch(), 1000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating test data:', error);
-      const errorMessage = error?.message || 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast.error(
         language === 'el' 
           ? `Σφάλμα κατά τη δημιουργία δεδομένων δοκιμής: ${errorMessage}` 
@@ -122,12 +108,12 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-10 w-64" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton className="h-64" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
-        <Skeleton className="h-96" />
       </div>
     );
   }
@@ -178,59 +164,34 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
         <DateRangePicker value={dateRange} onChange={setDateRange} language={language} />
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9">
-          <TabsTrigger value="overview">{t.overview}</TabsTrigger>
-          <TabsTrigger value="tickets" disabled={!showDetailedData}>{t.tickets}</TabsTrigger>
-          <TabsTrigger value="traffic" disabled={!showDetailedData}>{t.traffic}</TabsTrigger>
-          <TabsTrigger value="engagement" disabled={!showDetailedData}>{t.engagement}</TabsTrigger>
-          <TabsTrigger value="conversion" disabled={!showDetailedData}>{t.conversion}</TabsTrigger>
+      <Tabs defaultValue="results" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="results">{t.results}</TabsTrigger>
           <TabsTrigger value="events" disabled={!showDetailedData}>{t.events}</TabsTrigger>
-          <TabsTrigger value="audience" disabled={!showDetailedData}>{t.audience}</TabsTrigger>
-          <TabsTrigger value="insights" disabled={!showDetailedData}>{t.insights}</TabsTrigger>
-          <TabsTrigger value="timing" disabled={!showDetailedData}>{t.timing}</TabsTrigger>
+          <TabsTrigger value="customers" disabled={!showDetailedData}>{t.customers}</TabsTrigger>
+          <TabsTrigger value="tips" disabled={!showDetailedData}>{t.tips}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <AnalyticsOverview data={data} language={language} />
+        <TabsContent value="results" className="space-y-6">
+          <FOMOImpactCard data={impactData} isLoading={impactLoading} language={language} />
         </TabsContent>
 
         {showDetailedData && (
           <>
-            <TabsContent value="tickets" className="space-y-6">
-              <TicketAnalytics businessId={businessId} dateRange={dateRange} language={language} />
-            </TabsContent>
-
-            <TabsContent value="traffic" className="space-y-6">
-              <TrafficSourceAnalysis data={data} language={language} />
-              <DeviceAnalytics data={data} language={language} />
-            </TabsContent>
-
-            <TabsContent value="engagement" className="space-y-6">
-              <EngagementAnalysis data={data} language={language} />
-              <FollowerGrowth data={data} language={language} />
-            </TabsContent>
-
-            <TabsContent value="conversion" className="space-y-6">
-              <ConversionFunnel data={data} language={language} />
-              <RSVPAnalytics data={data} language={language} />
-            </TabsContent>
-
             <TabsContent value="events" className="space-y-6">
+              <TicketAnalytics businessId={businessId} dateRange={dateRange} language={language} />
               <EventPerformanceTable data={data} language={language} />
             </TabsContent>
 
-            <TabsContent value="audience" className="space-y-6">
+            <TabsContent value="customers" className="space-y-6">
+              <TrafficSourceAnalysis data={data} language={language} />
+              <FollowerGrowth data={data} language={language} />
               <AudienceInsights data={data} language={language} />
             </TabsContent>
 
-            <TabsContent value="insights" className="space-y-6">
+            <TabsContent value="tips" className="space-y-6">
               <InsightsEngine data={data} language={language} />
               <ExportTools data={data} language={language} businessId={businessId} />
-            </TabsContent>
-
-            <TabsContent value="timing" className="space-y-6">
-              <TimeAnalytics data={data} language={language} />
             </TabsContent>
           </>
         )}
