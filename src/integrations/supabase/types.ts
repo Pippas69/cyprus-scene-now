@@ -2762,10 +2762,64 @@ export type Database = {
           },
         ]
       }
+      reservation_scans: {
+        Row: {
+          device_info: Json | null
+          id: string
+          reservation_id: string
+          scan_type: string
+          scanned_at: string
+          scanned_by: string | null
+          success: boolean
+        }
+        Insert: {
+          device_info?: Json | null
+          id?: string
+          reservation_id: string
+          scan_type?: string
+          scanned_at?: string
+          scanned_by?: string | null
+          success?: boolean
+        }
+        Update: {
+          device_info?: Json | null
+          id?: string
+          reservation_id?: string
+          scan_type?: string
+          scanned_at?: string
+          scanned_by?: string | null
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_scans_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_scans_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_scans_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           business_id: string | null
           business_notes: string | null
+          checked_in_at: string | null
+          checked_in_by: string | null
           confirmation_code: string | null
           created_at: string
           event_id: string | null
@@ -2784,6 +2838,8 @@ export type Database = {
         Insert: {
           business_id?: string | null
           business_notes?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
           confirmation_code?: string | null
           created_at?: string
           event_id?: string | null
@@ -2802,6 +2858,8 @@ export type Database = {
         Update: {
           business_id?: string | null
           business_notes?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
           confirmation_code?: string | null
           created_at?: string
           event_id?: string | null
@@ -2830,6 +2888,20 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_checked_in_by_fkey"
+            columns: ["checked_in_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_checked_in_by_fkey"
+            columns: ["checked_in_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
