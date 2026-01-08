@@ -63,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch reservation with event and business details
+    // Fetch reservation with event AND/OR business details
     const { data: reservation, error: reservationError } = await supabase
       .from('reservations')
       .select(`
@@ -77,11 +77,14 @@ const handler = async (req: Request): Promise<Response> => {
             id,
             name,
             user_id,
-            profiles (
-              email,
-              name
-            )
+            address
           )
+        ),
+        businesses (
+          id,
+          name,
+          user_id,
+          address
         )
       `)
       .eq('id', reservationId)
@@ -104,45 +107,88 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('User email not found');
     }
 
-    const event = reservation.events;
-    const business = event.businesses;
-    const businessEmail = business.profiles?.email;
-    const businessName = business.name;
-    const eventTitle = event.title;
-    const eventDate = new Date(event.start_at).toLocaleDateString('el-GR', {
+    // Determine if this is an event or direct reservation
+    const isDirectReservation = !reservation.event_id && reservation.business_id;
+    console.log(`Reservation type: ${isDirectReservation ? 'Direct' : 'Event-based'}`);
+
+    // Get business info from either source
+    let businessData: { id: string; name: string; user_id: string; address?: string } | null = null;
+    let reservationContext: string; // Event title or "Table Reservation"
+    let reservationDateTime: string;
+    let locationInfo: string | null;
+
+    if (isDirectReservation) {
+      // Direct business reservation
+      businessData = reservation.businesses;
+      reservationContext = 'Κράτηση Τραπεζιού';
+      reservationDateTime = reservation.preferred_time || reservation.reservation_date;
+      locationInfo = businessData?.address || null;
+    } else {
+      // Event-based reservation
+      const event = reservation.events;
+      if (!event) {
+        throw new Error('Event not found for event-based reservation');
+      }
+      businessData = event.businesses;
+      reservationContext = event.title;
+      reservationDateTime = event.start_at;
+      locationInfo = event.location;
+    }
+
+    if (!businessData) {
+      throw new Error('Business data not found');
+    }
+
+    // Fetch business owner's email
+    const { data: businessProfile } = await supabase
+      .from('profiles')
+      .select('email, name')
+      .eq('id', businessData.user_id)
+      .single();
+
+    const businessEmail = businessProfile?.email;
+    const businessName = businessData.name;
+
+    // Format the date/time for display
+    const formattedDateTime = reservationDateTime ? new Date(reservationDateTime).toLocaleDateString('el-GR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    });
+    }) : 'Δεν καθορίστηκε';
 
     let userSubject = '';
     let userHtml = '';
     let businessSubject = '';
     let businessHtml = '';
 
+    const reservationTypeLabel = isDirectReservation ? 'Κράτηση Τραπεζιού' : 'Κράτηση Εκδήλωσης';
+    const reservationTypeEmoji = isDirectReservation ? '🪑' : '🎉';
+
     if (type === 'new') {
       // User confirmation email
-      userSubject = `Επιβεβαίωση Κράτησης - ${eventTitle}`;
+      userSubject = `Επιβεβαίωση Κράτησης - ${reservationContext}`;
       userHtml = wrapEmailContent(`
-        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Επιβεβαίωση Κράτησης 🎉</h2>
+        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Επιβεβαίωση Κράτησης ${reservationTypeEmoji}</h2>
         <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
           Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
           Η κράτησή σου έχει καταχωρηθεί επιτυχώς!
         </p>
         
         <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
-          <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${eventTitle}</h3>
+          <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
+          <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
           <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> <span style="font-size: 20px; color: #0d3b66; font-weight: bold;">${reservation.confirmation_code}</span></p>
-          <p style="color: #475569; margin: 4px 0;">📅 ${eventDate}</p>
-          <p style="color: #475569; margin: 4px 0;">📍 ${event.location}</p>
           <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+          <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
+          ${locationInfo ? `<p style="color: #475569; margin: 4px 0;">📍 ${locationInfo}</p>` : ''}
           <p style="color: #475569; margin: 12px 0 0 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
           <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
           ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
-          ${reservation.preferred_time ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
+          ${reservation.preferred_time && !isDirectReservation ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
+          ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικά Αιτήματα:</strong> ${reservation.special_requests}</p>` : ''}
           <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: #f59e0b;">Εκκρεμεί</span></p>
         </div>
         
@@ -158,22 +204,24 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Business notification email
       if (businessEmail) {
-        businessSubject = `Νέα Κράτηση - ${eventTitle}`;
+        businessSubject = `Νέα Κράτηση - ${reservationContext}`;
         businessHtml = wrapEmailContent(`
           <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Νέα Κράτηση! 📋</h2>
           <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-            Έχετε μια νέα κράτηση για την εκδήλωσή σας.
+            Έχετε μια νέα κράτηση${isDirectReservation ? ' τραπεζιού' : ' για την εκδήλωσή σας'}.
           </p>
           
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 24px 0;">
-            <h3 style="color: #0d3b66; margin: 0 0 16px 0;">${eventTitle}</h3>
+            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
+            <h3 style="color: #0d3b66; margin: 0 0 16px 0;">${reservationContext}</h3>
             <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός:</strong> ${reservation.confirmation_code}</p>
             <p style="color: #475569; margin: 4px 0;"><strong>Πελάτης:</strong> ${reservation.reservation_name}</p>
             <p style="color: #475569; margin: 4px 0;"><strong>Email:</strong> ${userProfile.email}</p>
             ${reservation.phone_number ? `<p style="color: #475569; margin: 4px 0;"><strong>Τηλέφωνο:</strong> ${reservation.phone_number}</p>` : ''}
+            <p style="color: #475569; margin: 4px 0;"><strong>Ημ/νία:</strong> ${formattedDateTime}</p>
             <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
             ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
-            ${reservation.preferred_time ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
+            ${reservation.preferred_time && !isDirectReservation ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
             ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικές Απαιτήσεις:</strong> ${reservation.special_requests}</p>` : ''}
           </div>
           
@@ -196,9 +244,16 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
         
         <div style="background: ${isAccepted ? 'linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%)' : '#fef2f2'}; border-left: 4px solid ${isAccepted ? '#4ecdc4' : '#ef4444'}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-          <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> ${reservation.confirmation_code}</p>
-          <p style="color: #475569; margin: 4px 0;"><strong>Εκδήλωση:</strong> ${eventTitle}</p>
-          <p style="color: #475569; margin: 4px 0;">📅 ${eventDate}</p>
+          <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
+          <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
+          <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> <span style="font-size: 18px; color: #0d3b66; font-weight: bold;">${reservation.confirmation_code}</span></p>
+          <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+          <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
+          ${locationInfo ? `<p style="color: #475569; margin: 4px 0;">📍 ${locationInfo}</p>` : ''}
+          <p style="color: #475569; margin: 12px 0 4px 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
+          <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
+          ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
+          ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικά Αιτήματα:</strong> ${reservation.special_requests}</p>` : ''}
           <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: ${isAccepted ? '#059669' : '#dc2626'}; font-weight: bold;">${statusText}</span></p>
         </div>
         
@@ -208,7 +263,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
       `);
     } else if (type === 'cancellation') {
-      userSubject = `Ακύρωση Κράτησης - ${eventTitle}`;
+      userSubject = `Ακύρωση Κράτησης - ${reservationContext}`;
       userHtml = wrapEmailContent(`
         <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Κράτηση Ακυρώθηκε</h2>
         <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
@@ -217,19 +272,21 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
         
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
           <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός:</strong> ${reservation.confirmation_code}</p>
-          <p style="color: #475569; margin: 4px 0;"><strong>Εκδήλωση:</strong> ${eventTitle}</p>
-          <p style="color: #475569; margin: 4px 0;">📅 ${eventDate}</p>
+          <p style="color: #475569; margin: 4px 0;"><strong>${isDirectReservation ? 'Επιχείρηση' : 'Εκδήλωση'}:</strong> ${reservationContext}</p>
+          <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+          <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
         </div>
         
         <p style="color: #64748b; font-size: 14px;">
-          Ελπίζουμε να σας δούμε σύντομα σε μια άλλη εκδήλωση!
+          Ελπίζουμε να σας δούμε σύντομα${isDirectReservation ? '!' : ' σε μια άλλη εκδήλωση!'}
         </p>
       `);
 
       // Notify business about cancellation
       if (businessEmail) {
-        businessSubject = `Ακύρωση Κράτησης - ${eventTitle}`;
+        businessSubject = `Ακύρωση Κράτησης - ${reservationContext}`;
         businessHtml = wrapEmailContent(`
           <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Ακύρωση Κράτησης</h2>
           <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
@@ -237,9 +294,11 @@ const handler = async (req: Request): Promise<Response> => {
           </p>
           
           <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
             <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός:</strong> ${reservation.confirmation_code}</p>
-            <p style="color: #475569; margin: 4px 0;"><strong>Εκδήλωση:</strong> ${eventTitle}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>${isDirectReservation ? 'Επιχείρηση' : 'Εκδήλωση'}:</strong> ${reservationContext}</p>
             <p style="color: #475569; margin: 4px 0;"><strong>Πελάτης:</strong> ${reservation.reservation_name}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Ημ/νία:</strong> ${formattedDateTime}</p>
             <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
           </div>
         `);
