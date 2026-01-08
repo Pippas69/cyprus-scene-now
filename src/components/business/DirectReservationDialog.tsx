@@ -48,7 +48,7 @@ export const DirectReservationDialog = ({
   const [formData, setFormData] = useState({
     reservation_name: '',
     party_size: 2,
-    seating_preference: '',
+    seating_preference: 'none',
     preferred_date: new Date(),
     preferred_time: '19:00',
     phone_number: '',
@@ -257,7 +257,7 @@ export const DirectReservationDialog = ({
           user_id: userId,
           reservation_name: formData.reservation_name,
           party_size: formData.party_size,
-          seating_preference: formData.seating_preference || null,
+          seating_preference: formData.seating_preference && formData.seating_preference !== 'none' ? formData.seating_preference : null,
           preferred_time: preferredDateTime.toISOString(),
           phone_number: formData.phone_number,
           special_requests: formData.special_requests || null,
@@ -287,7 +287,7 @@ export const DirectReservationDialog = ({
       setFormData({
         reservation_name: '',
         party_size: 2,
-        seating_preference: '',
+        seating_preference: 'none',
         preferred_date: new Date(),
         preferred_time: settings?.reservation_opens_at?.substring(0, 5) || '19:00',
         phone_number: '',
@@ -409,7 +409,7 @@ export const DirectReservationDialog = ({
                 <SelectValue placeholder={t.selectTime} />
               </SelectTrigger>
               <SelectContent>
-                {timeSlots.map((time) => (
+                {timeSlots.filter(time => time && time.trim() !== '').map((time) => (
                   <SelectItem key={time} value={time}>
                     {time}
                   </SelectItem>
@@ -449,7 +449,7 @@ export const DirectReservationDialog = ({
                   <SelectValue placeholder={t.noPreference} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t.noPreference}</SelectItem>
+                  <SelectItem value="none">{t.noPreference}</SelectItem>
                   {settings.reservation_seating_options.includes('indoor') && (
                     <SelectItem value="indoor">{t.indoor}</SelectItem>
                   )}
