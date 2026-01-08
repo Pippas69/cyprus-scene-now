@@ -635,12 +635,14 @@ export type Database = {
       }
       businesses: {
         Row: {
+          accepts_direct_reservations: boolean | null
           address: string | null
           category: string[]
           city: string
           closes_at: string | null
           cover_url: string | null
           created_at: string
+          daily_reservation_limit: number | null
           description: string | null
           geo: unknown
           id: string
@@ -649,6 +651,13 @@ export type Database = {
           onboarding_completed: boolean | null
           opens_at: string | null
           phone: string | null
+          reservation_capacity_type: string | null
+          reservation_closes_at: string | null
+          reservation_days: string[] | null
+          reservation_opens_at: string | null
+          reservation_requires_approval: boolean | null
+          reservation_seating_options: string[] | null
+          reservation_time_slots: Json | null
           stripe_account_id: string | null
           stripe_onboarding_completed: boolean | null
           stripe_payouts_enabled: boolean | null
@@ -660,12 +669,14 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          accepts_direct_reservations?: boolean | null
           address?: string | null
           category: string[]
           city: string
           closes_at?: string | null
           cover_url?: string | null
           created_at?: string
+          daily_reservation_limit?: number | null
           description?: string | null
           geo?: unknown
           id?: string
@@ -674,6 +685,13 @@ export type Database = {
           onboarding_completed?: boolean | null
           opens_at?: string | null
           phone?: string | null
+          reservation_capacity_type?: string | null
+          reservation_closes_at?: string | null
+          reservation_days?: string[] | null
+          reservation_opens_at?: string | null
+          reservation_requires_approval?: boolean | null
+          reservation_seating_options?: string[] | null
+          reservation_time_slots?: Json | null
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
@@ -685,12 +703,14 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          accepts_direct_reservations?: boolean | null
           address?: string | null
           category?: string[]
           city?: string
           closes_at?: string | null
           cover_url?: string | null
           created_at?: string
+          daily_reservation_limit?: number | null
           description?: string | null
           geo?: unknown
           id?: string
@@ -699,6 +719,13 @@ export type Database = {
           onboarding_completed?: boolean | null
           opens_at?: string | null
           phone?: string | null
+          reservation_capacity_type?: string | null
+          reservation_closes_at?: string | null
+          reservation_days?: string[] | null
+          reservation_opens_at?: string | null
+          reservation_requires_approval?: boolean | null
+          reservation_seating_options?: string[] | null
+          reservation_time_slots?: Json | null
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
@@ -2737,10 +2764,11 @@ export type Database = {
       }
       reservations: {
         Row: {
+          business_id: string | null
           business_notes: string | null
           confirmation_code: string | null
           created_at: string
-          event_id: string
+          event_id: string | null
           id: string
           party_size: number
           phone_number: string | null
@@ -2754,10 +2782,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          business_id?: string | null
           business_notes?: string | null
           confirmation_code?: string | null
           created_at?: string
-          event_id: string
+          event_id?: string | null
           id?: string
           party_size: number
           phone_number?: string | null
@@ -2771,10 +2800,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          business_id?: string | null
           business_notes?: string | null
           confirmation_code?: string | null
           created_at?: string
-          event_id?: string
+          event_id?: string | null
           id?: string
           party_size?: number
           phone_number?: string | null
@@ -2788,6 +2818,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reservations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservations_event_id_fkey"
             columns: ["event_id"]
@@ -4061,6 +4105,10 @@ export type Database = {
           p_end_date: string
           p_start_date: string
         }
+        Returns: Json
+      }
+      get_business_available_capacity: {
+        Args: { p_business_id: string; p_date: string }
         Returns: Json
       }
       get_business_coordinates: {
