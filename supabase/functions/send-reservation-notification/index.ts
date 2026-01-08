@@ -159,6 +159,12 @@ const handler = async (req: Request): Promise<Response> => {
       minute: '2-digit'
     }) : 'Δεν καθορίστηκε';
 
+    // Generate QR code URL using the qr_code_token
+    const qrCodeToken = reservation.qr_code_token || reservation.confirmation_code;
+    const qrCodeUrl = qrCodeToken 
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCodeToken)}&color=102b4a`
+      : null;
+
     let userSubject = '';
     let userHtml = '';
     let businessSubject = '';
@@ -236,32 +242,95 @@ const handler = async (req: Request): Promise<Response> => {
       const statusEmoji = isAccepted ? '✅' : '❌';
       
       userSubject = `Ενημέρωση Κράτησης - ${statusText}`;
-      userHtml = wrapEmailContent(`
-        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Ενημέρωση Κράτησης ${statusEmoji}</h2>
-        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-          Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
-          Η κατάσταση της κράτησής σου έχει ενημερωθεί.
-        </p>
-        
-        <div style="background: ${isAccepted ? 'linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%)' : '#fef2f2'}; border-left: 4px solid ${isAccepted ? '#4ecdc4' : '#ef4444'}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-          <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
-          <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
-          <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> <span style="font-size: 18px; color: #0d3b66; font-weight: bold;">${reservation.confirmation_code}</span></p>
-          <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
-          <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
-          ${locationInfo ? `<p style="color: #475569; margin: 4px 0;">📍 ${locationInfo}</p>` : ''}
-          <p style="color: #475569; margin: 12px 0 4px 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
-          <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
-          ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
-          ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικά Αιτήματα:</strong> ${reservation.special_requests}</p>` : ''}
-          <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: ${isAccepted ? '#059669' : '#dc2626'}; font-weight: bold;">${statusText}</span></p>
-        </div>
-        
-        ${isAccepted 
-          ? `<p style="color: #059669; font-weight: 600;">🎉 Ανυπομονούμε να σας δούμε! Παρουσιάστε τον κωδικό επιβεβαίωσης κατά την άφιξή σας.</p>` 
-          : `<p style="color: #64748b; font-size: 14px;">Λυπούμαστε που δεν μπορούμε να σας εξυπηρετήσουμε αυτή τη φορά. Ελπίζουμε να σας δούμε σύντομα!</p>`
-        }
-      `);
+      
+      if (isAccepted && qrCodeUrl) {
+        // Accepted reservation with QR code
+        userHtml = wrapEmailContent(`
+          <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Η Κράτησή σου Επιβεβαιώθηκε! ✅</h2>
+          <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+            Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
+            Υπέροχα νέα! Η κράτησή σου έχει εγκριθεί.
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
+            <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
+            <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+            <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
+            ${locationInfo ? `<p style="color: #475569; margin: 4px 0;">📍 ${locationInfo}</p>` : ''}
+            <p style="color: #475569; margin: 12px 0 4px 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
+            ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
+            ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικά Αιτήματα:</strong> ${reservation.special_requests}</p>` : ''}
+          </div>
+          
+          <!-- QR Code Section -->
+          <div style="text-align: center; margin: 28px 0;">
+            <h3 style="color: #102b4a; margin: 0 0 8px 0; font-size: 18px; font-weight: bold;">Ο Κωδικός σου</h3>
+            <p style="color: #64748b; margin: 0 0 20px 0; font-size: 14px;">Παρουσίασε αυτόν τον κωδικό QR κατά την άφιξή σου</p>
+            
+            <div style="background: #ffffff; border: 3px solid #3ec3b7; border-radius: 16px; padding: 20px; display: inline-block; box-shadow: 0 4px 12px rgba(16, 43, 74, 0.08);">
+              <img src="${qrCodeUrl}" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
+            </div>
+            
+            <p style="color: #102b4a; font-size: 24px; font-weight: bold; margin: 16px 0 4px 0; letter-spacing: 2px;">${reservation.confirmation_code}</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0;">Κωδικός Επιβεβαίωσης</p>
+          </div>
+          
+          <p style="color: #059669; font-weight: 600; text-align: center; font-size: 16px;">
+            🎉 Ανυπομονούμε να σας δούμε!
+          </p>
+          
+          <p style="color: #64748b; font-size: 14px; text-align: center; margin-top: 24px;">
+            Μπορείτε επίσης να δείτε την κράτησή σας στο <strong>ΦΟΜΟ dashboard</strong> σας.
+          </p>
+        `);
+      } else if (isAccepted) {
+        // Accepted but no QR code
+        userHtml = wrapEmailContent(`
+          <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Η Κράτησή σου Επιβεβαιώθηκε! ✅</h2>
+          <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+            Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
+            Υπέροχα νέα! Η κράτησή σου έχει εγκριθεί.
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
+            <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
+            <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> <span style="font-size: 18px; color: #0d3b66; font-weight: bold;">${reservation.confirmation_code}</span></p>
+            <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+            <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
+            ${locationInfo ? `<p style="color: #475569; margin: 4px 0;">📍 ${locationInfo}</p>` : ''}
+            <p style="color: #475569; margin: 12px 0 4px 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
+            ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
+            ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικά Αιτήματα:</strong> ${reservation.special_requests}</p>` : ''}
+            <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: #059669; font-weight: bold;">${statusText}</span></p>
+          </div>
+          
+          <p style="color: #059669; font-weight: 600;">🎉 Ανυπομονούμε να σας δούμε! Παρουσιάστε τον κωδικό επιβεβαίωσης κατά την άφιξή σας.</p>
+        `);
+      } else {
+        // Declined
+        userHtml = wrapEmailContent(`
+          <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Ενημέρωση Κράτησης ${statusEmoji}</h2>
+          <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+            Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
+            Η κατάσταση της κράτησής σου έχει ενημερωθεί.
+          </p>
+          
+          <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
+            <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
+            <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> ${reservation.confirmation_code}</p>
+            <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+            <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
+            <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: #dc2626; font-weight: bold;">${statusText}</span></p>
+          </div>
+          
+          <p style="color: #64748b; font-size: 14px;">Λυπούμαστε που δεν μπορούμε να σας εξυπηρετήσουμε αυτή τη φορά. Ελπίζουμε να σας δούμε σύντομα!</p>
+        `);
+      }
     } else if (type === 'cancellation') {
       userSubject = `Ακύρωση Κράτησης - ${reservationContext}`;
       userHtml = wrapEmailContent(`

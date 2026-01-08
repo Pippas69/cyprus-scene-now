@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, X, CheckCircle, XCircle } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, UserCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { toastTranslations } from '@/translations/toastTranslations';
 
 interface QRScannerProps {
@@ -21,6 +22,8 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
     success: boolean;
     reservation?: any;
     message: string;
+    isDirectReservation?: boolean;
+    alreadyCheckedIn?: boolean;
   } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
@@ -31,40 +34,56 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       scanning: 'Σάρωση...',
       verifying: 'Επαλήθευση...',
       verified: 'Επαληθεύτηκε!',
+      checkedIn: 'Check-in ολοκληρώθηκε!',
       invalid: 'Μη έγκυρο',
       notFound: 'Η κράτηση δεν βρέθηκε',
       wrongBusiness: 'Αυτή η κράτηση ανήκει σε άλλη επιχείρηση',
-      alreadyVerified: 'Ήδη επαληθευμένη',
+      alreadyCheckedIn: 'Ήδη έχει γίνει check-in',
       cancelled: 'Η κράτηση έχει ακυρωθεί',
       declined: 'Η κράτηση απορρίφθηκε',
+      pending: 'Η κράτηση εκκρεμεί έγκριση',
       reservationDetails: 'Στοιχεία Κράτησης',
       name: 'Όνομα',
       partySize: 'Άτομα',
       time: 'Ώρα',
+      date: 'Ημερομηνία',
       status: 'Κατάσταση',
       close: 'Κλείσιμο',
       scanAnother: 'Σάρωση Άλλου',
+      checkIn: 'Check-in',
       cameraError: 'Σφάλμα πρόσβασης στην κάμερα',
+      directReservation: 'Απευθείας Κράτηση',
+      eventReservation: 'Κράτηση Εκδήλωσης',
+      seating: 'Θέση',
+      specialRequests: 'Ειδικά Αιτήματα',
     },
     en: {
       scanQR: 'Scan QR',
       scanning: 'Scanning...',
       verifying: 'Verifying...',
       verified: 'Verified!',
+      checkedIn: 'Check-in complete!',
       invalid: 'Invalid',
       notFound: 'Reservation not found',
       wrongBusiness: 'This reservation belongs to another business',
-      alreadyVerified: 'Already verified',
+      alreadyCheckedIn: 'Already checked in',
       cancelled: 'Reservation has been cancelled',
       declined: 'Reservation was declined',
+      pending: 'Reservation is pending approval',
       reservationDetails: 'Reservation Details',
       name: 'Name',
       partySize: 'Party Size',
       time: 'Time',
+      date: 'Date',
       status: 'Status',
       close: 'Close',
       scanAnother: 'Scan Another',
+      checkIn: 'Check-in',
       cameraError: 'Camera access error',
+      directReservation: 'Direct Reservation',
+      eventReservation: 'Event Reservation',
+      seating: 'Seating',
+      specialRequests: 'Special Requests',
     },
   };
 
@@ -146,15 +165,20 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
 
     try {
       // Query reservation by QR token or confirmation code
+      // Support both event-based and direct reservations
       const { data: reservation, error } = await supabase
         .from('reservations')
         .select(`
           *,
-          events!inner(
+          events (
             id,
             title,
             start_at,
             business_id
+          ),
+          businesses (
+            id,
+            name
           )
         `)
         .or(`qr_code_token.eq.${data},confirmation_code.eq.${data}`)
@@ -169,8 +193,15 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
         return;
       }
 
+      // Determine if this is a direct reservation
+      const isDirectReservation: boolean = !reservation.event_id && !!reservation.business_id;
+
       // Verify reservation belongs to this business
-      if (reservation.events.business_id !== businessId) {
+      const reservationBusinessId = isDirectReservation 
+        ? reservation.business_id 
+        : reservation.events?.business_id;
+      
+      if (reservationBusinessId !== businessId) {
         setVerificationResult({
           success: false,
           message: t.wrongBusiness,
@@ -185,6 +216,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           success: false,
           reservation,
           message: t.cancelled,
+          isDirectReservation: isDirectReservation,
         });
         toast.error(toastTranslations[language].reservationCancelledStatus);
         return;
@@ -195,16 +227,69 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           success: false,
           reservation,
           message: t.declined,
+          isDirectReservation: isDirectReservation,
         });
         toast.error(toastTranslations[language].reservationDeclined);
         return;
       }
 
-      // Success
+      if (reservation.status === 'pending') {
+        setVerificationResult({
+          success: false,
+          reservation,
+          message: t.pending,
+          isDirectReservation: isDirectReservation,
+        });
+        toast.error(language === 'el' ? 'Η κράτηση εκκρεμεί έγκριση' : 'Reservation is pending approval');
+        return;
+      }
+
+      // Check if already checked in
+      if (reservation.checked_in_at) {
+        setVerificationResult({
+          success: true,
+          reservation,
+          message: t.alreadyCheckedIn,
+          isDirectReservation: isDirectReservation,
+          alreadyCheckedIn: true,
+        });
+        toast.info(language === 'el' ? 'Ήδη έχει γίνει check-in' : 'Already checked in');
+        return;
+      }
+
+      // Success - perform check-in
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Update reservation with check-in info
+      const { error: updateError } = await supabase
+        .from('reservations')
+        .update({
+          checked_in_at: new Date().toISOString(),
+          checked_in_by: user?.id,
+        })
+        .eq('id', reservation.id);
+
+      if (updateError) {
+        console.error('Error updating reservation:', updateError);
+      }
+
+      // Record the scan for analytics
+      await supabase.from('reservation_scans').insert({
+        reservation_id: reservation.id,
+        scanned_by: user?.id,
+        scan_type: 'check_in',
+        device_info: {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+        },
+        success: true,
+      });
+
       setVerificationResult({
         success: true,
-        reservation,
-        message: t.verified,
+        reservation: { ...reservation, checked_in_at: new Date().toISOString() },
+        message: t.checkedIn,
+        isDirectReservation: isDirectReservation,
       });
       toast.success(toastTranslations[language].reservationVerified);
 
@@ -235,6 +320,17 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
     } else {
       initScanner();
     }
+  };
+
+  const formatDateTime = (dateString: string | null) => {
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   return (
@@ -274,18 +370,44 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center gap-4">
                     {verificationResult.success ? (
-                      <CheckCircle className="h-16 w-16 text-green-500" />
+                      verificationResult.alreadyCheckedIn ? (
+                        <UserCheck className="h-16 w-16 text-amber-500" />
+                      ) : (
+                        <CheckCircle className="h-16 w-16 text-green-500" />
+                      )
                     ) : (
                       <XCircle className="h-16 w-16 text-destructive" />
                     )}
                     
-                    <div className="text-center">
+                    <div className="text-center w-full">
                       <h3 className="text-xl font-semibold mb-2">
                         {verificationResult.message}
                       </h3>
                       
                       {verificationResult.reservation && (
-                        <div className="mt-4 space-y-2 text-sm">
+                        <div className="mt-4 space-y-3 text-sm text-left">
+                          <div className="flex justify-center mb-3">
+                            <Badge variant={verificationResult.isDirectReservation ? "secondary" : "outline"}>
+                              {verificationResult.isDirectReservation ? t.directReservation : t.eventReservation}
+                            </Badge>
+                          </div>
+                          
+                          {!verificationResult.isDirectReservation && verificationResult.reservation.events && (
+                            <div className="bg-muted/50 p-3 rounded-lg mb-3">
+                              <p className="font-medium text-foreground">
+                                {verificationResult.reservation.events.title}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {verificationResult.isDirectReservation && verificationResult.reservation.businesses && (
+                            <div className="bg-muted/50 p-3 rounded-lg mb-3">
+                              <p className="font-medium text-foreground">
+                                {verificationResult.reservation.businesses.name}
+                              </p>
+                            </div>
+                          )}
+                          
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">{t.name}:</span>
                             <span className="font-medium">{verificationResult.reservation.reservation_name}</span>
@@ -296,18 +418,40 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
                           </div>
                           {verificationResult.reservation.preferred_time && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">{t.time}:</span>
+                              <span className="text-muted-foreground">{t.date}:</span>
                               <span className="font-medium">
-                                {new Date(verificationResult.reservation.preferred_time).toLocaleTimeString(language, {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                                {formatDateTime(verificationResult.reservation.preferred_time)}
                               </span>
                             </div>
                           )}
-                          <div className="flex justify-between">
+                          {verificationResult.reservation.seating_preference && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{t.seating}:</span>
+                              <span className="font-medium">{verificationResult.reservation.seating_preference}</span>
+                            </div>
+                          )}
+                          {verificationResult.reservation.special_requests && (
+                            <div className="mt-2 pt-2 border-t">
+                              <span className="text-muted-foreground text-xs">{t.specialRequests}:</span>
+                              <p className="font-medium text-xs mt-1">{verificationResult.reservation.special_requests}</p>
+                            </div>
+                          )}
+                          <div className="flex justify-between pt-2 border-t">
                             <span className="text-muted-foreground">{t.status}:</span>
-                            <span className="font-medium capitalize">{verificationResult.reservation.status}</span>
+                            <Badge 
+                              variant={
+                                verificationResult.reservation.checked_in_at 
+                                  ? "default" 
+                                  : verificationResult.reservation.status === 'accepted' 
+                                    ? "secondary" 
+                                    : "destructive"
+                              }
+                            >
+                              {verificationResult.reservation.checked_in_at 
+                                ? (language === 'el' ? 'Checked-in' : 'Checked-in')
+                                : verificationResult.reservation.status
+                              }
+                            </Badge>
                           </div>
                         </div>
                       )}
