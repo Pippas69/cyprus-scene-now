@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Check, X, Users, Phone, MapPin, Calendar, MessageSquare } from 'lucide-react';
+import { Download, Check, X, Users, Phone, MapPin, Calendar, MessageSquare, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -17,7 +17,8 @@ import { toastTranslations } from '@/translations/toastTranslations';
 
 interface ReservationWithEvent {
   id: string;
-  event_id: string;
+  event_id: string | null;
+  business_id: string | null;
   user_id: string;
   reservation_name: string;
   party_size: number;
@@ -30,7 +31,8 @@ interface ReservationWithEvent {
   business_notes: string | null;
   confirmation_code: string | null;
   qr_code_token: string | null;
-  events: { id: string; title: string; start_at: string };
+  checked_in_at: string | null;
+  events: { id: string; title: string; start_at: string } | null;
   profiles?: { name: string; email: string };
 }
 
@@ -79,33 +81,71 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
 
     if (eventsData) {
       setEvents(eventsData);
-      const eventIds = eventsData.map((e) => e.id);
+    }
 
-      if (eventIds.length > 0) {
-        const { data: reservationsData, error: reservationsError } = await supabase
-          .from('reservations')
-          .select(`
-            *,
-            events!inner(id, title, start_at)
-          `)
-          .in('event_id', eventIds)
-          .order('created_at', { ascending: false });
+    const eventIds = eventsData?.map((e) => e.id) || [];
+    let allReservations: ReservationWithEvent[] = [];
 
-        if (reservationsError) {
-          console.error('Error fetching reservations:', reservationsError);
-        }
+    // 1. Event-based reservations
+    if (eventIds.length > 0) {
+      const { data: eventReservations, error: eventError } = await supabase
+        .from('reservations')
+        .select(`
+          *,
+          events!inner(id, title, start_at),
+          profiles(name, email)
+        `)
+        .in('event_id', eventIds)
+        .order('created_at', { ascending: false });
 
-        if (reservationsData) {
-          setReservations(reservationsData as any);
-        }
+      if (eventError) {
+        console.error('Error fetching event reservations:', eventError);
+      }
+
+      if (eventReservations) {
+        allReservations = [...allReservations, ...(eventReservations as ReservationWithEvent[])];
       }
     }
 
+    // 2. Direct business reservations (event_id is null)
+    const { data: directReservations, error: directError } = await supabase
+      .from('reservations')
+      .select(`
+        *,
+        profiles(name, email)
+      `)
+      .eq('business_id', businessId)
+      .is('event_id', null)
+      .order('created_at', { ascending: false });
+
+    if (directError) {
+      console.error('Error fetching direct reservations:', directError);
+    }
+
+    if (directReservations) {
+      // Map direct reservations with null events
+      const mappedDirect = directReservations.map(r => ({
+        ...r,
+        events: null
+      })) as ReservationWithEvent[];
+      allReservations = [...allReservations, ...mappedDirect];
+    }
+
+    // Sort all reservations by created_at descending
+    allReservations.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    setReservations(allReservations);
     setLoading(false);
   };
 
   const filteredReservations = reservations.filter((r) => {
-    if (selectedEvent !== 'all' && r.event_id !== selectedEvent) return false;
+    if (selectedEvent === 'direct') {
+      if (r.event_id !== null) return false;
+    } else if (selectedEvent !== 'all' && r.event_id !== selectedEvent) {
+      return false;
+    }
     if (selectedStatus !== 'all' && r.status !== selectedStatus) return false;
     return true;
   });
@@ -170,7 +210,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
   const exportToCSV = () => {
     const headers = [t.event, t.name, 'Email', t.contact, t.details, t.status];
     const rows = filteredReservations.map((r) => [
-      r.events?.title || t.unknownEvent,
+      r.events?.title || t.tableReservation,
       r.reservation_name,
       r.profiles?.email || '',
       r.phone_number || '',
@@ -196,7 +236,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       accepted: 'Εγκεκριμένες',
       declined: 'Απορριφθείσες',
       confirmationCode: 'Κωδικός',
-      allEvents: 'Όλες οι Εκδηλώσεις',
+      allEvents: 'Όλες οι Κρατήσεις',
+      directReservations: 'Άμεσες Κρατήσεις',
       allStatuses: 'Όλες οι Καταστάσεις',
       export: 'Εξαγωγή CSV',
       event: 'Εκδήλωση',
@@ -224,6 +265,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       specialRequests: 'Ειδικές Απαιτήσεις',
       unknownEvent: 'Άγνωστη Εκδήλωση',
       anonymous: 'Ανώνυμος',
+      tableReservation: 'Κράτηση Τραπεζιού',
+      direct: 'Άμεση',
     },
     en: {
       title: 'Reservation Management',
@@ -233,7 +276,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       accepted: 'Accepted',
       declined: 'Declined',
       confirmationCode: 'Code',
-      allEvents: 'All Events',
+      allEvents: 'All Reservations',
+      directReservations: 'Direct Reservations',
       allStatuses: 'All Statuses',
       export: 'Export CSV',
       event: 'Event',
@@ -261,6 +305,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       specialRequests: 'Special Requests',
       unknownEvent: 'Unknown Event',
       anonymous: 'Anonymous',
+      tableReservation: 'Table Reservation',
+      direct: 'Direct',
     },
   };
 
@@ -273,7 +319,24 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       declined: 'destructive',
       cancelled: 'outline',
     };
-    return <Badge variant={variants[status] || 'outline'}>{t[status] || status}</Badge>;
+    return <Badge variant={variants[status] || 'outline'}>{t[status as keyof typeof t] || status}</Badge>;
+  };
+
+  const getReservationLabel = (reservation: ReservationWithEvent) => {
+    if (reservation.events) {
+      return reservation.events.title;
+    }
+    return t.tableReservation;
+  };
+
+  const getReservationDateTime = (reservation: ReservationWithEvent) => {
+    if (reservation.events) {
+      return format(new Date(reservation.events.start_at), 'MMM dd, HH:mm');
+    }
+    if (reservation.preferred_time) {
+      return format(new Date(reservation.preferred_time), 'MMM dd, HH:mm');
+    }
+    return '-';
   };
 
   return (
@@ -332,6 +395,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t.allEvents}</SelectItem>
+              <SelectItem value="direct">{t.directReservations}</SelectItem>
               {events.map((event) => (
                 <SelectItem key={event.id} value={event.id}>
                   {event.title}
@@ -367,7 +431,15 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base truncate">{reservation.events?.title || t.unknownEvent}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-base truncate">{getReservationLabel(reservation)}</CardTitle>
+                      {!reservation.events && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 text-xs">
+                          <Building2 className="h-3 w-3 mr-1" />
+                          {t.direct}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.reservation_name}</p>
                   </div>
                   {getStatusBadge(reservation.status)}
@@ -394,15 +466,13 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                   {reservation.seating_preference && reservation.seating_preference !== 'no_preference' && (
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span>{t[reservation.seating_preference]}</span>
+                      <span>{t[reservation.seating_preference as keyof typeof t]}</span>
                     </div>
                   )}
-                  {reservation.preferred_time && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span>{format(new Date(reservation.preferred_time), 'MMM dd, HH:mm')}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span>{getReservationDateTime(reservation)}</span>
+                  </div>
                   {reservation.special_requests && (
                     <div className="p-2 bg-muted rounded text-xs">
                       <strong>{t.specialRequests}:</strong> {reservation.special_requests}
@@ -467,7 +537,17 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
             <TableBody>
               {filteredReservations.map((reservation) => (
                 <TableRow key={reservation.id}>
-                  <TableCell className="font-medium">{reservation.events?.title || t.unknownEvent}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>{getReservationLabel(reservation)}</span>
+                      {!reservation.events && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 text-xs">
+                          <Building2 className="h-3 w-3 mr-1" />
+                          {t.direct}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{reservation.reservation_name}</div>
@@ -494,15 +574,13 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                       {reservation.seating_preference && reservation.seating_preference !== 'no_preference' && (
                         <div className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {t[reservation.seating_preference]}
+                          {t[reservation.seating_preference as keyof typeof t]}
                         </div>
                       )}
-                      {reservation.preferred_time && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(reservation.preferred_time), 'MMM dd, HH:mm')}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {getReservationDateTime(reservation)}
+                      </div>
                       {reservation.special_requests && (
                         <div className="text-xs text-muted-foreground max-w-xs truncate">
                           {reservation.special_requests}
