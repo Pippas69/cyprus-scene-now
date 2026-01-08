@@ -13,6 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -24,6 +25,9 @@ interface Business {
   city: string;
   verified: boolean | null;
   description: string | null;
+  hasEventBoost?: boolean;
+  hasOfferBoost?: boolean;
+  hasProfileBoost?: boolean;
 }
 
 interface AllBusinessesDialogProps {
@@ -60,6 +64,8 @@ export const AllBusinessesDialog = ({
   const { data: businesses, isLoading } = useQuery({
     queryKey: ['all-businesses-dialog', selectedCity],
     queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      
       let query = supabase
         .from('businesses')
         .select('id, name, logo_url, category, city, verified, description')
@@ -70,9 +76,45 @@ export const AllBusinessesDialog = ({
         query = query.eq('city', selectedCity);
       }
       
-      const { data, error } = await query.limit(100);
+      const { data: businessList, error } = await query.limit(100);
       if (error) throw error;
-      return (data || []) as Business[];
+      if (!businessList?.length) return [];
+
+      const businessIds = businessList.map(b => b.id);
+
+      // Fetch active boosts in parallel
+      const [eventBoostsRes, offerBoostsRes, profileBoostsRes] = await Promise.all([
+        supabase
+          .from('event_boosts')
+          .select('business_id')
+          .in('business_id', businessIds)
+          .eq('status', 'active')
+          .lte('start_date', today)
+          .gte('end_date', today),
+        supabase
+          .from('offer_boosts')
+          .select('business_id')
+          .in('business_id', businessIds)
+          .eq('active', true),
+        supabase
+          .from('profile_boosts')
+          .select('business_id')
+          .in('business_id', businessIds)
+          .eq('status', 'active')
+          .lte('start_date', today)
+          .gte('end_date', today),
+      ]);
+
+      const hasEventBoost = new Set(eventBoostsRes.data?.map(b => b.business_id) || []);
+      const hasOfferBoost = new Set(offerBoostsRes.data?.map(b => b.business_id) || []);
+      const hasProfileBoost = new Set(profileBoostsRes.data?.map(b => b.business_id) || []);
+
+      return businessList.map(business => ({
+        ...business,
+        hasEventBoost: hasEventBoost.has(business.id),
+        hasOfferBoost: hasOfferBoost.has(business.id),
+        hasProfileBoost: hasProfileBoost.has(business.id),
+      })) as Business[];
     },
     enabled: open,
     staleTime: 60000
@@ -158,6 +200,13 @@ export const AllBusinessesDialog = ({
                           {business.name.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
+                      <BusinessBoostBadges
+                        hasEventBoost={business.hasEventBoost}
+                        hasOfferBoost={business.hasOfferBoost}
+                        hasProfileBoost={business.hasProfileBoost}
+                        showProfileBadge={true}
+                        language={language}
+                      />
                       {business.verified && (
                         <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
                           <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />

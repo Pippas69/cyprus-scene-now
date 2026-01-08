@@ -100,7 +100,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       const now = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('event_boosts')
-        .select('event_id, targeting_quality, boost_tier')
+        .select('event_id, targeting_quality, boost_tier, business_id')
         .eq('status', 'active')
         .lte('start_date', now)
         .gte('end_date', now);
@@ -109,10 +109,13 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         console.error('Error fetching active boosts:', error);
         return [];
       }
-      return data as ActiveBoost[];
+      return data as (ActiveBoost & { business_id: string })[];
     },
     staleTime: 60000
   });
+
+  // Derive business IDs with active event boosts
+  const eventBoostBusinessIds = new Set(activeBoosts?.map(b => b.business_id) || []);
 
   // Fetch boosted events only (events that have active boosts)
   const { data: boostedEvents } = useQuery({
@@ -168,7 +171,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('offer_boosts')
-        .select('discount_id, targeting_quality, commission_percent')
+        .select('discount_id, targeting_quality, commission_percent, business_id')
         .eq('active', true);
       
       if (error) {
@@ -179,6 +182,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     },
     staleTime: 60000
   });
+
+  // Derive business IDs with active offer boosts
+  const offerBoostBusinessIds = new Set(offerBoosts?.map(b => b.business_id) || []);
 
   const { data: boostedOffers } = useQuery({
     queryKey: ['boosted-offers', selectedCity, offerBoosts?.map(b => b.discount_id).join(',')],
@@ -390,7 +396,12 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
             {/* Boosted Profiles Scroller - Featured Businesses */}
             {profileBoosts && profileBoosts.length > 0 && (
-              <BoostedProfilesScroller profiles={profileBoosts} language={language} />
+              <BoostedProfilesScroller 
+                profiles={profileBoosts} 
+                language={language}
+                eventBoostBusinessIds={eventBoostBusinessIds}
+                offerBoostBusinessIds={offerBoostBusinessIds}
+              />
             )}
 
             {/* All Businesses Directory */}
