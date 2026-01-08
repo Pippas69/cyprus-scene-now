@@ -150,9 +150,10 @@ export const DirectReservationDialog = ({
       if (error) throw error;
       setSettings(data as BusinessSettings);
 
-      // Set default time if opens_at is available
+      // Set default time if opens_at is available (normalize to HH:mm format)
       if (data.reservation_opens_at) {
-        setFormData((prev) => ({ ...prev, preferred_time: data.reservation_opens_at }));
+        const normalizedTime = data.reservation_opens_at.substring(0, 5);
+        setFormData((prev) => ({ ...prev, preferred_time: normalizedTime }));
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -192,24 +193,36 @@ export const DirectReservationDialog = ({
     return isBeforeToday || !settings.reservation_days.includes(dayName);
   };
 
+  // Helper to normalize time string (handles both "HH:mm" and "HH:mm:ss" formats)
+  const normalizeTime = (time: string | null): string => {
+    if (!time) return '12:00';
+    return time.substring(0, 5);
+  };
+
   const getAvailableTimeSlots = () => {
     if (!settings) return [];
 
     if (settings.reservation_capacity_type === 'time_slots' && settings.reservation_time_slots) {
-      return settings.reservation_time_slots.map((slot) => slot.time);
+      return settings.reservation_time_slots.map((slot) => normalizeTime(slot.time));
     }
 
     // Generate time slots based on opens/closes
     const slots: string[] = [];
-    const opens = settings.reservation_opens_at || '12:00';
-    const closes = settings.reservation_closes_at || '22:00';
+    const opens = normalizeTime(settings.reservation_opens_at);
+    const closes = normalizeTime(settings.reservation_closes_at) || '22:00';
 
     let current = parse(opens, 'HH:mm', new Date());
     const end = parse(closes, 'HH:mm', new Date());
 
+    // Safety check for invalid dates
+    if (isNaN(current.getTime()) || isNaN(end.getTime())) {
+      console.error('Invalid time values:', { opens, closes });
+      return ['12:00', '12:30', '13:00', '13:30', '14:00'];
+    }
+
     while (isBefore(current, end) || format(current, 'HH:mm') === format(end, 'HH:mm')) {
       slots.push(format(current, 'HH:mm'));
-      current = new Date(current.getTime() + 30 * 60 * 1000); // 30 min intervals
+      current = new Date(current.getTime() + 30 * 60 * 1000);
     }
 
     return slots;
@@ -276,7 +289,7 @@ export const DirectReservationDialog = ({
         party_size: 2,
         seating_preference: '',
         preferred_date: new Date(),
-        preferred_time: settings?.reservation_opens_at || '19:00',
+        preferred_time: settings?.reservation_opens_at?.substring(0, 5) || '19:00',
         phone_number: '',
         special_requests: '',
       });
