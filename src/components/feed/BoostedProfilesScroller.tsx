@@ -4,13 +4,16 @@ import { Star, BadgeCheck, ChevronRight, Sparkles } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import type { ActiveProfileBoost } from "@/hooks/useActiveProfileBoosts";
 import { DISPLAY_CAPS } from "@/lib/personalization";
 
 interface BoostedProfilesScrollerProps {
   profiles: ActiveProfileBoost[];
   language: "el" | "en";
-  totalCount?: number; // Total boosts before display cap
+  totalCount?: number;
+  eventBoostBusinessIds?: Set<string>;
+  offerBoostBusinessIds?: Set<string>;
 }
 
 const translations = {
@@ -29,7 +32,9 @@ const translations = {
 export const BoostedProfilesScroller = ({ 
   profiles, 
   language,
-  totalCount 
+  totalCount,
+  eventBoostBusinessIds,
+  offerBoostBusinessIds,
 }: BoostedProfilesScrollerProps) => {
   const t = translations[language];
 
@@ -75,6 +80,12 @@ export const BoostedProfilesScroller = ({
                       {profile.businesses.name.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
+                  <BusinessBoostBadges
+                    hasEventBoost={eventBoostBusinessIds?.has(profile.business_id)}
+                    hasOfferBoost={offerBoostBusinessIds?.has(profile.business_id)}
+                    showProfileBadge={false}
+                    language={language}
+                  />
                   {profile.businesses.verified && (
                     <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
                       <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
@@ -84,7 +95,7 @@ export const BoostedProfilesScroller = ({
 
                 {/* Premium indicator */}
                 {profile.boost_tier === 'premium' && (
-                  <div className="absolute -top-1 -right-1">
+                  <div className="absolute top-1 right-1">
                     <Sparkles className="h-3 w-3 text-accent" />
                   </div>
                 )}
