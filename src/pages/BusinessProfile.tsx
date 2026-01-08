@@ -9,10 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RippleButton } from "@/components/ui/ripple-button";
-import { CheckCircle, MapPin, Phone, Globe, ArrowLeft } from "lucide-react";
+import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import OfferCard from "@/components/OfferCard";
 import { FollowButton } from "@/components/business/FollowButton";
+import { DirectReservationDialog } from "@/components/business/DirectReservationDialog";
 import { useLanguage } from "@/hooks/useLanguage";
 
 interface Business {
@@ -27,6 +28,7 @@ interface Business {
   city: string;
   category: string[];
   verified: boolean;
+  accepts_direct_reservations: boolean;
 }
 
 interface Event {
@@ -97,6 +99,7 @@ const BusinessProfile = () => {
   const [offers, setOffers] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id: string } | null>(null);
+  const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
 
   const translations = {
     el: {
@@ -110,7 +113,9 @@ const BusinessProfile = () => {
       events: "Εκδηλώσεις",
       offers: "Προσφορές",
       noEventsScheduled: "Δεν υπάρχουν προγραμματισμένες εκδηλώσεις αυτή τη στιγμή",
-      noActiveOffers: "Δεν υπάρχουν ενεργές προσφορές αυτή τη στιγμή"
+      noActiveOffers: "Δεν υπάρχουν ενεργές προσφορές αυτή τη στιγμή",
+      reserveTable: "Κράτηση Τραπεζιού",
+      loginToReserve: "Συνδεθείτε για κράτηση"
     },
     en: {
       businessNotFound: "Business not found or not verified",
@@ -123,7 +128,9 @@ const BusinessProfile = () => {
       events: "Events",
       offers: "Offers",
       noEventsScheduled: "No scheduled events at this time",
-      noActiveOffers: "No active offers at this time"
+      noActiveOffers: "No active offers at this time",
+      reserveTable: "Reserve a Table",
+      loginToReserve: "Login to reserve"
     }
   };
 
@@ -148,10 +155,10 @@ const BusinessProfile = () => {
 
   const fetchBusinessData = async () => {
     try {
-      // Fetch business details
+      // Fetch business details including direct reservation settings
       const { data: businessData, error: businessError } = await supabase
         .from("businesses")
-        .select("*")
+        .select("*, accepts_direct_reservations")
         .eq("id", businessId)
         .eq("verified", true)
         .maybeSingle();
@@ -282,10 +289,27 @@ const BusinessProfile = () => {
             ))}
           </div>
 
-          {/* Follow Button */}
+          {/* Follow Button and Reserve Button */}
           {business.id && (
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3 flex-wrap">
               <FollowButton businessId={business.id} language={language} />
+              
+              {/* Direct Reservation Button */}
+              {business.accepts_direct_reservations && (
+                <RippleButton
+                  onClick={() => {
+                    if (!user) {
+                      toast.error(t.loginToReserve);
+                      return;
+                    }
+                    setReservationDialogOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <CalendarCheck className="h-4 w-4" />
+                  {t.reserveTable}
+                </RippleButton>
+              )}
             </div>
           )}
         </motion.div>
@@ -445,6 +469,21 @@ const BusinessProfile = () => {
           </Tabs>
         </motion.div>
       </div>
+
+      {/* Direct Reservation Dialog */}
+      {business.accepts_direct_reservations && user && (
+        <DirectReservationDialog
+          open={reservationDialogOpen}
+          onOpenChange={setReservationDialogOpen}
+          businessId={business.id}
+          businessName={business.name}
+          language={language}
+          userId={user.id}
+          onSuccess={() => {
+            // Reservation tracked via the dialog
+          }}
+        />
+      )}
     </div>
   );
 };
