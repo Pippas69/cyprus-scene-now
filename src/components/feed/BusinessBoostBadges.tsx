@@ -1,11 +1,9 @@
-import { CalendarHeart, Tag, Star } from "lucide-react";
+import { CalendarHeart, Tag } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BusinessBoostBadgesProps {
   hasEventBoost?: boolean;
   hasOfferBoost?: boolean;
-  hasProfileBoost?: boolean;
-  showProfileBadge?: boolean;
   language?: "el" | "en";
 }
 
@@ -13,20 +11,16 @@ const tooltips = {
   el: {
     event: "Έχει ενεργό event",
     offer: "Έχει ενεργή προσφορά",
-    profile: "Προβεβλημένη επιχείρηση",
   },
   en: {
     event: "Has active event",
     offer: "Has active offer",
-    profile: "Featured business",
   },
 };
 
 export const BusinessBoostBadges = ({
   hasEventBoost,
   hasOfferBoost,
-  hasProfileBoost,
-  showProfileBadge = true,
   language = "en",
 }: BusinessBoostBadgesProps) => {
   const t = tooltips[language];
@@ -57,20 +51,6 @@ export const BusinessBoostBadges = ({
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
             {t.offer}
-          </TooltipContent>
-        </Tooltip>
-      )}
-
-      {/* Profile boost - bottom left */}
-      {showProfileBadge && hasProfileBoost && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="absolute -bottom-1 -left-1 bg-primary rounded-full p-0.5 ring-2 ring-background shadow-sm z-10">
-              <Star className="h-3 w-3 text-white fill-white" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">
-            {t.profile}
           </TooltipContent>
         </Tooltip>
       )}

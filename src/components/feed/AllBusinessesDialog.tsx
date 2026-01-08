@@ -203,8 +203,6 @@ export const AllBusinessesDialog = ({
                       <BusinessBoostBadges
                         hasEventBoost={business.hasEventBoost}
                         hasOfferBoost={business.hasOfferBoost}
-                        hasProfileBoost={business.hasProfileBoost}
-                        showProfileBadge={true}
                         language={language}
                       />
                       {business.verified && (
