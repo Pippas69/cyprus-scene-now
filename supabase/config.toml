@@ -102,5 +102,8 @@ verify_jwt = true
 [functions.create-offer-checkout-with-reservation]
 verify_jwt = true
 
+[functions.handle-reservation-decline-refund]
+verify_jwt = true
+
 [functions.stripe-healthcheck]
 verify_jwt = false

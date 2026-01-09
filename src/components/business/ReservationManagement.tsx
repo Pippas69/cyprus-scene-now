@@ -159,6 +159,35 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
 
   const handleStatusUpdate = async (reservationId: string, newStatus: string) => {
     try {
+      // If declining, check for linked offer purchases that need refunding
+      if (newStatus === 'declined') {
+        const { data: linkedPurchase } = await supabase
+          .from('offer_purchases')
+          .select('id, status')
+          .eq('reservation_id', reservationId)
+          .eq('status', 'paid')
+          .maybeSingle();
+
+        if (linkedPurchase) {
+          // Trigger refund process before updating status
+          const { error: refundError } = await supabase.functions.invoke('handle-reservation-decline-refund', {
+            body: { reservationId }
+          });
+
+          if (refundError) {
+            console.error('Error triggering refund:', refundError);
+            toast.error(language === 'el' 
+              ? 'Σφάλμα κατά την επιστροφή χρημάτων' 
+              : 'Error processing refund');
+            return;
+          }
+
+          toast.info(language === 'el'
+            ? 'Η κράτηση απορρίφθηκε. Ο πελάτης θα λάβει αυτόματη επιστροφή χρημάτων.'
+            : 'Reservation declined. Customer will be refunded automatically.');
+        }
+      }
+
       const { error } = await supabase
         .from('reservations')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
