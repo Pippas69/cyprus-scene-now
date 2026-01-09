@@ -1,46 +1,82 @@
-import { Eye, Users, Repeat, CalendarCheck, Ticket, QrCode } from "lucide-react";
+import { useState } from "react";
+import { Eye, Users, Repeat, CalendarCheck, Ticket, QrCode, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOverviewMetrics } from "@/hooks/useOverviewMetrics";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const translations = {
   el: {
     title: "Σύνοψη Απόδοσης",
     subtitle: "Τα παρακάτω δεδομένα δείχνουν πώς η παρουσία σου στο FOMO αποδίδει αυτόν τον μήνα.",
     footer: "Τα δεδομένα ενημερώνονται σε πραγματικό χρόνο. Χρησιμοποίησε το φίλτρο για παρελθόντες μήνες.",
+    tapForDetails: "Πάτα για λεπτομέρειες",
+    dataSource: "Πηγή δεδομένων",
     metrics: {
       views: "Προβολές",
-      viewsTooltip: "Οι προβολές περιλαμβάνουν εμφανίσεις στην εφαρμογή, τον χάρτη και μέσω events ή προσφορών",
+      viewsExplanation: "Πόσο συχνά είδαν το προφίλ σου",
+      viewsDetails: "Οι προβολές περιλαμβάνουν εμφανίσεις στο feed της εφαρμογής, σημεία στον χάρτη, και μέσω των events ή προσφορών σου. Υψηλότερες προβολές σημαίνουν περισσότερη ορατότητα στην κοινότητα του FOMO.",
+      viewsSource: "Feed εφαρμογής, χάρτης, σελίδες events/προσφορών",
       customers: "Πελάτες",
-      customersTooltip: "Αυτό είναι το βασικό σου επιχειρηματικό αποτέλεσμα",
+      customersExplanation: "Μοναδικοί πελάτες που έκαναν ενέργεια",
+      customersDetails: "Πελάτες που έκαναν κράτηση ή αγόρασαν εισιτήριο μέσω FOMO. Αυτό είναι το βασικό επιχειρηματικό σου αποτέλεσμα από την πλατφόρμα.",
+      customersSource: "Κρατήσεις, αγορές εισιτηρίων",
       recurring: "Επαναλαμβανόμενοι",
-      recurringTooltip: "Οι επαναλαμβανόμενοι πελάτες δείχνουν αφοσίωση και πραγματική αξία",
+      recurringExplanation: "Πελάτες που επέστρεψαν ξανά",
+      recurringDetails: "Πελάτες που επισκέφθηκαν την επιχείρησή σου περισσότερες από μία φορές. Οι επαναλαμβανόμενοι πελάτες δείχνουν αφοσίωση και είναι συνήθως πιο πολύτιμοι μακροπρόθεσμα.",
+      recurringSource: "Ιστορικό κρατήσεων και αγορών",
       reservations: "Κρατήσεις",
-      reservationsTooltip: "Περιλαμβάνει κρατήσεις για τραπέζια, εμπειρίες ή προσφορές",
+      reservationsExplanation: "Συνολικές κρατήσεις μέσω FOMO",
+      reservationsDetails: "Όλες οι επιβεβαιωμένες κρατήσεις που έγιναν μέσω FOMO, συμπεριλαμβανομένων τραπεζιών, εμπειριών και εξαργυρώσεων προσφορών.",
+      reservationsSource: "Σύστημα κρατήσεων FOMO",
       tickets: "Εισιτήρια",
-      ticketsTooltip: "Τα εισιτήρια είναι αποκλειστικά για events",
+      ticketsExplanation: "Εισιτήρια events που εκδόθηκαν",
+      ticketsDetails: "Συνολικά εισιτήρια που πουλήθηκαν για τα events σου μέσω FOMO. Αυτό μετράει μόνο events με εισιτήριο, όχι δωρεάν RSVPs.",
+      ticketsSource: "Σύστημα πώλησης εισιτηρίων FOMO",
       visits: "Επισκέψεις μέσω FOMO",
-      visitsTooltip: "Αυτός ο αριθμός δείχνει πραγματικές επισκέψεις στον χώρο σου",
+      visitsExplanation: "Επαληθευμένες επισκέψεις στον χώρο σου",
+      visitsDetails: "Πραγματικά check-ins που επαληθεύτηκαν με σάρωση QR κωδικού στον χώρο σου. Αυτός ο αριθμός αποδεικνύει την πραγματική κίνηση που δημιουργεί το FOMO.",
+      visitsSource: "Σαρώσεις QR κωδικών στον χώρο",
     },
   },
   en: {
     title: "Performance Summary",
     subtitle: "The following data shows how your presence at FOMO pays off this month.",
     footer: "Data is updated in real time. Use the filter to view past months and days.",
+    tapForDetails: "Tap for details",
+    dataSource: "Data source",
     metrics: {
       views: "Views",
-      viewsTooltip: "Views include appearances on the app, map and via events or offers",
+      viewsExplanation: "How often your profile was seen",
+      viewsDetails: "Views include appearances on the app feed, map markers, and via your events or offers. Higher views mean more visibility in the FOMO community.",
+      viewsSource: "App feed, map, event/offer pages",
       customers: "Customers",
-      customersTooltip: "This is your basic business result",
+      customersExplanation: "Unique customers who took action",
+      customersDetails: "Customers who made a booking or purchased a ticket through FOMO. This is your core business outcome from the platform.",
+      customersSource: "Reservations, ticket purchases",
       recurring: "Recurring",
-      recurringTooltip: "Repeat customers demonstrate loyalty and real value",
+      recurringExplanation: "Repeat customers showing loyalty",
+      recurringDetails: "Customers who visited your business more than once. Repeat customers demonstrate loyalty and are typically more valuable over time.",
+      recurringSource: "Reservation and purchase history",
       reservations: "Reservations",
-      reservationsTooltip: "Includes reservations for tables, experiences or offers",
+      reservationsExplanation: "Total bookings through FOMO",
+      reservationsDetails: "All confirmed reservations made through FOMO, including tables, experiences, and offer redemptions.",
+      reservationsSource: "FOMO reservation system",
       tickets: "Tickets",
-      ticketsTooltip: "Tickets are exclusively for events",
+      ticketsExplanation: "Event tickets issued",
+      ticketsDetails: "Total tickets sold for your events through FOMO. This only counts ticketed events, not free RSVPs.",
+      ticketsSource: "FOMO ticketing system",
       visits: "Visits through FOMO",
-      visitsTooltip: "This number shows real visits to your area",
+      visitsExplanation: "Verified real-world visits",
+      visitsDetails: "Actual check-ins verified by QR code scan at your venue. This number proves real foot traffic generated by FOMO.",
+      visitsSource: "On-site QR code scans",
     },
   },
 };
@@ -56,12 +92,60 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
   const t = translations[language];
 
   const metrics = [
-    { key: "views", icon: Eye, value: data?.profileViews || 0, label: t.metrics.views, tooltip: t.metrics.viewsTooltip },
-    { key: "customers", icon: Users, value: data?.customersThruFomo || 0, label: t.metrics.customers, tooltip: t.metrics.customersTooltip },
-    { key: "recurring", icon: Repeat, value: data?.repeatCustomers || 0, label: t.metrics.recurring, tooltip: t.metrics.recurringTooltip },
-    { key: "reservations", icon: CalendarCheck, value: data?.bookings || 0, label: t.metrics.reservations, tooltip: t.metrics.reservationsTooltip },
-    { key: "tickets", icon: Ticket, value: data?.tickets || 0, label: t.metrics.tickets, tooltip: t.metrics.ticketsTooltip },
-    { key: "visits", icon: QrCode, value: data?.visitsViaQR || 0, label: t.metrics.visits, tooltip: t.metrics.visitsTooltip },
+    { 
+      key: "views", 
+      icon: Eye, 
+      value: data?.profileViews || 0, 
+      label: t.metrics.views, 
+      explanation: t.metrics.viewsExplanation,
+      details: t.metrics.viewsDetails,
+      source: t.metrics.viewsSource,
+    },
+    { 
+      key: "customers", 
+      icon: Users, 
+      value: data?.customersThruFomo || 0, 
+      label: t.metrics.customers, 
+      explanation: t.metrics.customersExplanation,
+      details: t.metrics.customersDetails,
+      source: t.metrics.customersSource,
+    },
+    { 
+      key: "recurring", 
+      icon: Repeat, 
+      value: data?.repeatCustomers || 0, 
+      label: t.metrics.recurring, 
+      explanation: t.metrics.recurringExplanation,
+      details: t.metrics.recurringDetails,
+      source: t.metrics.recurringSource,
+    },
+    { 
+      key: "reservations", 
+      icon: CalendarCheck, 
+      value: data?.bookings || 0, 
+      label: t.metrics.reservations, 
+      explanation: t.metrics.reservationsExplanation,
+      details: t.metrics.reservationsDetails,
+      source: t.metrics.reservationsSource,
+    },
+    { 
+      key: "tickets", 
+      icon: Ticket, 
+      value: data?.tickets || 0, 
+      label: t.metrics.tickets, 
+      explanation: t.metrics.ticketsExplanation,
+      details: t.metrics.ticketsDetails,
+      source: t.metrics.ticketsSource,
+    },
+    { 
+      key: "visits", 
+      icon: QrCode, 
+      value: data?.visitsViaQR || 0, 
+      label: t.metrics.visits, 
+      explanation: t.metrics.visitsExplanation,
+      details: t.metrics.visitsDetails,
+      source: t.metrics.visitsSource,
+    },
   ];
 
   if (isLoading) {
@@ -81,40 +165,62 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
   }
 
   return (
-    <TooltipProvider>
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-          <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-        </div>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
+        <p className="text-sm text-muted-foreground">{t.subtitle}</p>
+      </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {metrics.map(({ key, icon: Icon, value, label, tooltip }) => (
-            <Tooltip key={key}>
-              <TooltipTrigger asChild>
-                <Card className="hover:shadow-md transition-shadow cursor-help">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">{label}</p>
-                        <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
-                      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {metrics.map(({ key, icon: Icon, value, label, explanation, details, source }) => (
+          <Dialog key={key}>
+            <DialogTrigger asChild>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer group">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">{label}</p>
+                      <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
                       <div className="p-2 bg-primary/10 rounded-lg">
                         <Icon className="h-5 w-5 text-primary" />
                       </div>
+                      <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                  </CardContent>
-                </Card>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p className="text-sm">{tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-        </div>
-
-        <p className="text-xs text-muted-foreground text-center">{t.footer}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <DialogTitle>{label}</DialogTitle>
+                    <DialogDescription>{explanation}</DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="text-3xl font-bold text-foreground">{value.toLocaleString()}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">{details}</p>
+                <div className="pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium">{t.dataSource}:</span> {source}
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        ))}
       </div>
-    </TooltipProvider>
+
+      <p className="text-xs text-muted-foreground text-center">{t.footer}</p>
+    </div>
   );
 };
