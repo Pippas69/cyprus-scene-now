@@ -11,7 +11,6 @@ import OffersList from "@/components/business/OffersList";
 import BusinessProfileForm from "@/components/business/BusinessProfileForm";
 import { ReservationManagement } from "@/components/business/ReservationManagement";
 import { EventAnalytics } from "@/components/business/EventAnalytics";
-import { QRScanAnalytics } from "@/components/business/QRScanAnalytics";
 import { QuickStats } from "@/components/business/QuickStats";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -313,7 +312,6 @@ const DashboardBusiness = () => {
               <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />
               <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
-              <Route path="qr-analytics" element={businessId ? <QRScanAnalytics businessId={businessId} language={language} /> : null} />
               {/* Posts feature hidden but kept in code
               <Route path="posts" element={businessId ? <BusinessPostsList businessId={businessId} language={language} /> : null} />
               <Route path="posts/new" element={businessId ? <BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /> : null} />
