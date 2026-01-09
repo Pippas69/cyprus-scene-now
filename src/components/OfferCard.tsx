@@ -30,6 +30,7 @@ interface Offer {
   bonus_percent?: number | null;
   credit_amount_cents?: number | null;
   requires_reservation?: boolean;
+  start_at?: string;
   end_at: string;
   business_id: string;
   terms?: string | null;
