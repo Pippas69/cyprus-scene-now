@@ -26,7 +26,6 @@ import {
   Heart,
   CheckCircle,
   MessageSquare,
-  ExternalLink,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import EventCard from '@/components/EventCard';
@@ -303,9 +302,8 @@ export default function EventDetail() {
 
   const text = t[language];
 
-  // Check if event has native tickets or external URL
+  // Check if event has native tickets
   const hasNativeTickets = ticketTiers.length > 0;
-  const hasExternalTickets = event?.external_ticket_url;
 
   if (loading) {
     return (
@@ -527,17 +525,6 @@ export default function EventDetail() {
                   }
                 }}
               />
-            )}
-
-            {/* External Ticket Link */}
-            {!hasNativeTickets && hasExternalTickets && (
-              <RippleButton
-                className="w-full gap-2"
-                onClick={() => window.open(event.external_ticket_url, '_blank')}
-              >
-                <ExternalLink className="h-4 w-4" />
-                {text.buyTickets}
-              </RippleButton>
             )}
 
             {/* Reservation Button */}

@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, X, Music, Car, Accessibility, Link, ImagePlus, Tag, MapPin, Ticket, Users } from "lucide-react";
+import { Loader2, Plus, X, Music, Car, Accessibility, ImagePlus, Tag, MapPin, Ticket, Users } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
 import { ImageCropDialog } from "./ImageCropDialog";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -56,7 +56,6 @@ const createEventSchema = (language: 'el' | 'en') => {
     dress_code: z.string().optional(),
     parking_info: z.string().optional(),
     accessibility_info: z.array(z.string()).optional(),
-    external_ticket_url: z.string().url().optional().or(z.literal("")),
     tags: z.array(z.string()).optional(),
   }).refine((data) => new Date(data.end_at) > new Date(data.start_at), {
     message: language === 'el' ? "Η ημερομηνία λήξης πρέπει να είναι μετά την ημερομηνία έναρξης" : "End date must be after start date",
@@ -136,7 +135,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       dress_code: "",
       parking_info: "",
       accessibility_info: [],
-      external_ticket_url: "",
       tags: [],
     },
   });
@@ -261,7 +259,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         dress_code: data.dress_code || null,
         parking_info: data.parking_info || null,
         accessibility_info: data.accessibility_info || [],
-        external_ticket_url: data.external_ticket_url || null,
         tags: data.tags || [],
       }).select().single();
 
@@ -667,31 +664,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                   />
                 </div>
 
-                {ticketTiers.length === 0 && (
-                  <FormField
-                    control={form.control}
-                    name="external_ticket_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Link className="h-4 w-4" />
-                          {t.externalTicketUrl || "External Ticket URL"}
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="url" 
-                            placeholder={t.externalTicketUrlPlaceholder || "https://tickets.example.com/..."} 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {language === 'el' ? "Χρησιμοποιήστε αν πουλάτε εισιτήρια εκτός πλατφόρμας" : "Use if selling tickets outside the platform"}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
 
                 <FormField
                   control={form.control}
