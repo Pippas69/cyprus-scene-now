@@ -1,7 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTimingOptimization, DAYS_EL } from "@/hooks/useTimingOptimization";
-import { Clock, CalendarCheck, Ticket, Megaphone, Zap } from "lucide-react";
+import { Clock, CalendarCheck, Ticket, Megaphone, Zap, Info } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const translations = {
   el: {
@@ -23,6 +31,16 @@ const translations = {
     evening: "βράδυ",
     night: "νύχτα",
     days: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"],
+    explanations: {
+      reservations: "Αναλύθηκε από τις χρονοσφραγίδες κρατήσεων για να βρεθεί πότε οι πελάτες κάνουν συχνότερα κρατήσεις.",
+      reservationsDetails: "Χρησιμοποίησε αυτή την πληροφορία για να βελτιστοποιήσεις τη διαθεσιμότητα και την επικοινωνία σου.",
+      tickets: "Βασίζεται στις χρονοσφραγίδες αγοράς εισιτηρίων για να εντοπιστούν οι περίοδοι αιχμής αγορών.",
+      ticketsDetails: "Σκέψου να κυκλοφορήσεις νέα εισιτήρια ή προσφορές κατά τις ώρες αιχμής.",
+      events: "Αναλύθηκαν τα μοτίβα προβολών events για να καθοριστεί πότε τα δημοσιευμένα events έχουν τη μεγαλύτερη αλληλεπίδραση.",
+      eventsDetails: "Δημοσίευσε νέα events γύρω από αυτές τις ώρες για μέγιστη ορατότητα.",
+      peak: "Συνολική δραστηριότητα πλατφόρμας για την επιχείρησή σου σε όλα τα μετρικά.",
+      peakDetails: "Αυτό αντιπροσωπεύει πότε το κοινό σου είναι πιο ενεργό στο FOMO.",
+    },
   },
   en: {
     title: "Best Times for Your Business",
@@ -43,6 +61,16 @@ const translations = {
     evening: "evening",
     night: "night",
     days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    explanations: {
+      reservations: "Analyzed from booking timestamps to find when customers most frequently make reservations.",
+      reservationsDetails: "Use this insight to optimize your availability and communications.",
+      tickets: "Based on ticket purchase timestamps to identify peak buying periods.",
+      ticketsDetails: "Consider releasing new tickets or promotions during peak hours.",
+      events: "Analyzed event view patterns to determine when posted events get the most engagement.",
+      eventsDetails: "Post new events around these times for maximum visibility.",
+      peak: "Overall platform activity for your business across all metrics combined.",
+      peakDetails: "This represents when your audience is most active on FOMO.",
+    },
   },
 };
 
@@ -71,38 +99,97 @@ interface InsightCardProps {
   bestDayLabel: string;
   bestTimeLabel: string;
   noDataLabel: string;
+  explanation: string;
+  details: string;
 }
 
-const InsightCard = ({ icon: Icon, title, description, bestDay, bestTime, bestDayLabel, bestTimeLabel, noDataLabel }: InsightCardProps) => (
-  <Card>
-    <CardHeader className="pb-3">
-      <div className="flex items-center gap-2">
-        <div className="p-2 bg-primary/10 rounded-lg">
-          <Icon className="h-4 w-4 text-primary" />
+const InsightCard = ({ 
+  icon: Icon, 
+  title, 
+  description, 
+  bestDay, 
+  bestTime, 
+  bestDayLabel, 
+  bestTimeLabel, 
+  noDataLabel,
+  explanation,
+  details,
+}: InsightCardProps) => (
+  <Dialog>
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Icon className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">{title}</CardTitle>
+              <CardDescription className="text-xs">{description}</CardDescription>
+            </div>
+          </div>
+          <DialogTrigger asChild>
+            <button className="p-1 hover:bg-muted rounded-full transition-colors">
+              <Info className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            </button>
+          </DialogTrigger>
         </div>
-        <div>
-          <CardTitle className="text-base">{title}</CardTitle>
-          <CardDescription className="text-xs">{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {bestDay || bestTime ? (
+          <div className="space-y-2">
+            {bestDay && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">{bestDayLabel}</span>
+                <span className="text-sm font-semibold text-foreground">{bestDay}</span>
+              </div>
+            )}
+            {bestTime && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">{bestTimeLabel}</span>
+                <span className="text-sm font-semibold text-foreground">{bestTime}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">{noDataLabel}</p>
+        )}
+      </CardContent>
+    </Card>
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Icon className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </div>
         </div>
+      </DialogHeader>
+      <div className="space-y-4 pt-2">
+        {(bestDay || bestTime) && (
+          <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+            {bestDay && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">{bestDayLabel}</span>
+                <span className="text-sm font-bold text-foreground">{bestDay}</span>
+              </div>
+            )}
+            {bestTime && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">{bestTimeLabel}</span>
+                <span className="text-sm font-bold text-foreground">{bestTime}</span>
+              </div>
+            )}
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground">{explanation}</p>
+        <p className="text-sm text-muted-foreground">{details}</p>
       </div>
-    </CardHeader>
-    <CardContent>
-      {bestDay && bestTime ? (
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">{bestDayLabel}</span>
-            <span className="text-sm font-semibold text-foreground">{bestDay}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">{bestTimeLabel}</span>
-            <span className="text-sm font-semibold text-foreground">{bestTime}</span>
-          </div>
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">{noDataLabel}</p>
-      )}
-    </CardContent>
-  </Card>
+    </DialogContent>
+  </Dialog>
 );
 
 export const TimingInsights = ({ businessId, language }: TimingInsightsProps) => {
@@ -154,6 +241,8 @@ export const TimingInsights = ({ businessId, language }: TimingInsightsProps) =>
           bestDayLabel={t.bestDay}
           bestTimeLabel={t.bestTime}
           noDataLabel={t.noData}
+          explanation={t.explanations.reservations}
+          details={t.explanations.reservationsDetails}
         />
 
         <InsightCard
@@ -165,6 +254,8 @@ export const TimingInsights = ({ businessId, language }: TimingInsightsProps) =>
           bestDayLabel={t.bestDay}
           bestTimeLabel={t.bestTime}
           noDataLabel={t.noData}
+          explanation={t.explanations.tickets}
+          details={t.explanations.ticketsDetails}
         />
 
         <InsightCard
@@ -176,6 +267,8 @@ export const TimingInsights = ({ businessId, language }: TimingInsightsProps) =>
           bestDayLabel={t.bestDay}
           bestTimeLabel={t.bestTime}
           noDataLabel={t.noData}
+          explanation={t.explanations.events}
+          details={t.explanations.eventsDetails}
         />
 
         <InsightCard
@@ -187,6 +280,8 @@ export const TimingInsights = ({ businessId, language }: TimingInsightsProps) =>
           bestDayLabel={t.bestDay}
           bestTimeLabel={t.bestTime}
           noDataLabel={t.noData}
+          explanation={t.explanations.peak}
+          details={t.explanations.peakDetails}
         />
       </div>
     </div>
