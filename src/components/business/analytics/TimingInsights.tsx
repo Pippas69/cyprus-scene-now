@@ -39,7 +39,7 @@ const translations = {
       events: "Αναλύθηκαν τα μοτίβα προβολών events για να καθοριστεί πότε τα δημοσιευμένα events έχουν τη μεγαλύτερη αλληλεπίδραση.",
       eventsDetails: "Δημοσίευσε νέα events γύρω από αυτές τις ώρες για μέγιστη ορατότητα.",
       peak: "Συνολική δραστηριότητα πλατφόρμας για την επιχείρησή σου σε όλα τα μετρικά.",
-      peakDetails: "Αυτό αντιπροσωπεύει πότε το κοινό σου είναι πιο ενεργό στο FOMO.",
+      peakDetails: "Αυτό αντιπροσωπεύει πότε το κοινό σου είναι πιο ενεργό στο ΦΟΜΟ.",
     },
   },
   en: {
@@ -69,7 +69,7 @@ const translations = {
       events: "Analyzed event view patterns to determine when posted events get the most engagement.",
       eventsDetails: "Post new events around these times for maximum visibility.",
       peak: "Overall platform activity for your business across all metrics combined.",
-      peakDetails: "This represents when your audience is most active on FOMO.",
+      peakDetails: "This represents when your audience is most active on ΦΟΜΟ.",
     },
   },
 };
