@@ -16,14 +16,14 @@ const translations = {
   el: {
     title: 'Τα Αναλυτικά σου',
     overview: 'Επισκόπηση',
-    boostBenefits: 'Boost',
+    boostBenefits: 'Boost Benefits',
     audience: 'Κοινό',
     tips: 'Συμβουλές',
   },
   en: {
     title: 'Your Analytics',
     overview: 'Overview',
-    boostBenefits: 'Boost',
+    boostBenefits: 'Boost Benefits',
     audience: 'Audience',
     tips: 'Tips',
   },
