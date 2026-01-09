@@ -101,13 +101,22 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Create the refund
+    // Calculate 97% refund (3% retention fee for processing)
+    const REFUND_PERCENTAGE = 0.97;
+    const originalAmountCents = purchase.amount_cents;
+    const refundAmountCents = Math.floor(originalAmountCents * REFUND_PERCENTAGE);
+    const feeRetainedCents = originalAmountCents - refundAmountCents;
+
+    console.log(`Processing partial refund: Original €${(originalAmountCents / 100).toFixed(2)}, Refund €${(refundAmountCents / 100).toFixed(2)}, Fee €${(feeRetainedCents / 100).toFixed(2)}`);
+
+    // Create the partial refund (97% of original amount)
     const refund = await stripe.refunds.create({
       payment_intent: purchase.stripe_payment_intent_id,
+      amount: refundAmountCents,
       reason: "requested_by_customer",
     });
 
-    console.log("Stripe refund created:", refund.id);
+    console.log("Stripe partial refund created:", refund.id);
 
     // Update purchase status to refunded
     const { error: updateError } = await supabase
@@ -126,29 +135,46 @@ serve(async (req) => {
       .eq("id", purchase.user_id)
       .single();
 
-    // Send refund notification email
+    // Send refund notification email with fee breakdown
     if (resendApiKey && userProfile?.email) {
       try {
         const resend = new Resend(resendApiKey);
         const discountData = purchase.discounts as any;
         const businessName = discountData?.businesses?.name || "The business";
         const offerTitle = discountData?.title || "your offer";
-        const amountRefunded = (purchase.amount_cents / 100).toFixed(2);
+        const originalAmount = (originalAmountCents / 100).toFixed(2);
+        const refundAmount = (refundAmountCents / 100).toFixed(2);
+        const feeRetained = (feeRetainedCents / 100).toFixed(2);
 
         await resend.emails.send({
           from: "FOMO <noreply@fomo.cy>",
           to: [userProfile.email],
-          subject: "Your reservation was declined - Refund processed",
+          subject: "Your reservation was declined - Partial refund processed",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #333;">Reservation Declined</h1>
               <p>Hi ${userProfile.name || "there"},</p>
               <p>Unfortunately, <strong>${businessName}</strong> was unable to accommodate your reservation.</p>
-              <p>Your purchase for "<strong>${offerTitle}</strong>" has been automatically refunded.</p>
+              <p>Your purchase for "<strong>${offerTitle}</strong>" has been refunded with a 3% processing fee retained.</p>
+              
               <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 0;"><strong>Refund Amount:</strong> €${amountRefunded}</p>
-                <p style="margin: 10px 0 0;"><strong>Refund ID:</strong> ${refund.id}</p>
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #ddd;"><strong>Original Payment</strong></td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #ddd; text-align: right;">€${originalAmount}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #ddd;"><strong>Processing Fee (3%)</strong></td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #ddd; text-align: right; color: #666;">-€${feeRetained}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;"><strong>Refund Amount</strong></td>
+                    <td style="padding: 8px 0; text-align: right; color: #22c55e; font-size: 18px;"><strong>€${refundAmount}</strong></td>
+                  </tr>
+                </table>
+                <p style="margin: 15px 0 0; font-size: 12px; color: #888;">Refund ID: ${refund.id}</p>
               </div>
+              
               <p style="color: #666;">The refund will appear on your payment method within 5-10 business days, depending on your bank.</p>
               <p>We apologize for any inconvenience. Please feel free to browse other offers on FOMO!</p>
               <p style="margin-top: 30px;">Best regards,<br>The FOMO Team</p>
