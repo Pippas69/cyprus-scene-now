@@ -1343,6 +1343,7 @@ export type Database = {
           percent_off: number | null
           pricing_type: string
           qr_code_token: string
+          requires_reservation: boolean | null
           start_at: string
           terms: string | null
           title: string
@@ -1366,6 +1367,7 @@ export type Database = {
           percent_off?: number | null
           pricing_type?: string
           qr_code_token: string
+          requires_reservation?: boolean | null
           start_at: string
           terms?: string | null
           title: string
@@ -1389,6 +1391,7 @@ export type Database = {
           percent_off?: number | null
           pricing_type?: string
           qr_code_token?: string
+          requires_reservation?: boolean | null
           start_at?: string
           terms?: string | null
           title?: string
@@ -2170,6 +2173,7 @@ export type Database = {
           qr_code_token: string | null
           redeemed_at: string | null
           redeemed_by: string | null
+          reservation_id: string | null
           status: string
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
@@ -2192,6 +2196,7 @@ export type Database = {
           qr_code_token?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
+          reservation_id?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -2214,6 +2219,7 @@ export type Database = {
           qr_code_token?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
+          reservation_id?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -2254,6 +2260,13 @@ export type Database = {
             columns: ["discount_id"]
             isOneToOne: false
             referencedRelation: "public_discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_purchases_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
             referencedColumns: ["id"]
           },
         ]

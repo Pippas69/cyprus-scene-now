@@ -1,4 +1,4 @@
-import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet } from "lucide-react";
+import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ interface Offer {
   offer_type?: 'regular' | 'credit' | null;
   bonus_percent?: number | null;
   credit_amount_cents?: number | null;
-  start_at: string;
+  requires_reservation?: boolean;
   end_at: string;
   business_id: string;
   terms?: string | null;
@@ -200,6 +200,12 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                     {language === "el" ? "Πακέτο" : "Bundle"}
                   </Badge>
                 )}
+                {offerData.requires_reservation && (
+                  <Badge variant="secondary" className="text-xs flex-shrink-0">
+                    <CalendarCheck className="h-3 w-3 mr-1" />
+                    {language === "el" ? "Κράτηση" : "Reservation"}
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -283,6 +289,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             pricing_type: offerData.pricing_type,
             end_at: offerData.end_at,
             business_id: offerData.business_id,
+            requires_reservation: offerData.requires_reservation,
             businesses: {
               name: offerData.businesses.name,
               logo_url: offerData.businesses.logo_url,

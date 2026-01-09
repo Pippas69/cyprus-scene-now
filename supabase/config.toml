@@ -99,5 +99,8 @@ verify_jwt = false
 [functions.create-profile-boost-checkout]
 verify_jwt = true
 
+[functions.create-offer-checkout-with-reservation]
+verify_jwt = true
+
 [functions.stripe-healthcheck]
 verify_jwt = false
