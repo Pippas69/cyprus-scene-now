@@ -44,11 +44,13 @@ const MetricItem = ({ label, value, total }: MetricItemProps) => {
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
   
   return (
-    <div className="flex items-center justify-between py-2">
-      <span className="text-sm text-foreground">{label}</span>
-      <div className="flex items-center gap-3">
+    <div className="py-3 border-b border-border last:border-0">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium text-foreground">{label}</span>
         <span className="text-sm font-semibold text-foreground">{value}</span>
-        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
           <div 
             className="h-full bg-primary rounded-full transition-all duration-500"
             style={{ width: `${percentage}%` }}
@@ -120,7 +122,7 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
               <CardTitle className="text-base">{t.genderTitle}</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-1">
+          <CardContent className="pt-0">
             <MetricItem label={t.male} value={data?.gender.male || 0} total={genderTotal} />
             <MetricItem label={t.female} value={data?.gender.female || 0} total={genderTotal} />
             <MetricItem label={t.other} value={data?.gender.other || 0} total={genderTotal} />
@@ -135,7 +137,7 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
               <CardTitle className="text-base">{t.ageTitle}</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-1">
+          <CardContent className="pt-0">
             {Object.entries(data?.age || {}).map(([range, count]) => (
               <MetricItem key={range} label={range} value={count} total={ageTotal} />
             ))}
@@ -150,7 +152,7 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
               <CardTitle className="text-base">{t.regionTitle}</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-1">
+          <CardContent className="pt-0">
             {regionEntries.slice(0, 5).map(([city, count]) => (
               <MetricItem key={city} label={city} value={count} total={regionTotal} />
             ))}
