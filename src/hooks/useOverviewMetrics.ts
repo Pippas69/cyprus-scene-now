@@ -84,13 +84,13 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         .lte("created_at", endDate.toISOString());
 
       // 6. Visits via QR (reservation scans + ticket check-ins)
-      const { data: scanData } = await supabase
-        .from("reservation_scans")
-        .select("id")
+      // Type assertion to avoid TS2589 deep instantiation error
+      const { count: reservationScans } = await (supabase
+        .from("reservation_scans") as any)
+        .select("*", { count: "exact", head: true })
         .eq("business_id", businessId)
         .gte("scanned_at", startDate.toISOString())
         .lte("scanned_at", endDate.toISOString());
-      const reservationScans = scanData?.length || 0;
 
       let ticketCheckIns = 0;
       if (eventIds.length > 0) {
