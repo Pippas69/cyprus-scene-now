@@ -159,32 +159,50 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
 
   const handleStatusUpdate = async (reservationId: string, newStatus: string) => {
     try {
-      // If declining, check for linked offer purchases that need refunding
+      // If accepting, check for linked offer purchases that need payment links sent
+      if (newStatus === 'accepted') {
+        const { data: linkedPurchase } = await supabase
+          .from('offer_purchases')
+          .select('id, status')
+          .eq('reservation_id', reservationId)
+          .eq('status', 'awaiting_payment')
+          .maybeSingle();
+
+        if (linkedPurchase) {
+          // Send payment link to customer
+          const { error: paymentLinkError } = await supabase.functions.invoke('send-offer-payment-link', {
+            body: { reservationId }
+          });
+
+          if (paymentLinkError) {
+            console.error('Error sending payment link:', paymentLinkError);
+            toast.error(language === 'el' 
+              ? 'Σφάλμα κατά την αποστολή συνδέσμου πληρωμής' 
+              : 'Error sending payment link');
+            return;
+          }
+
+          toast.success(language === 'el'
+            ? 'Κράτηση αποδεκτή! Ο πελάτης θα λάβει σύνδεσμο πληρωμής.'
+            : 'Reservation accepted! Customer will receive a payment link.');
+        }
+      }
+
+      // If declining, check for linked offer purchases to cancel
       if (newStatus === 'declined') {
         const { data: linkedPurchase } = await supabase
           .from('offer_purchases')
           .select('id, status')
           .eq('reservation_id', reservationId)
-          .eq('status', 'paid')
+          .in('status', ['awaiting_payment', 'pending'])
           .maybeSingle();
 
         if (linkedPurchase) {
-          // Trigger refund process before updating status
-          const { error: refundError } = await supabase.functions.invoke('handle-reservation-decline-refund', {
-            body: { reservationId }
-          });
-
-          if (refundError) {
-            console.error('Error triggering refund:', refundError);
-            toast.error(language === 'el' 
-              ? 'Σφάλμα κατά την επιστροφή χρημάτων' 
-              : 'Error processing refund');
-            return;
-          }
-
-          toast.info(language === 'el'
-            ? 'Η κράτηση απορρίφθηκε. Ο πελάτης θα λάβει αυτόματη επιστροφή χρημάτων.'
-            : 'Reservation declined. Customer will be refunded automatically.');
+          // Just mark the purchase as cancelled (no payment was made)
+          await supabase
+            .from('offer_purchases')
+            .update({ status: 'cancelled' })
+            .eq('id', linkedPurchase.id);
         }
       }
 

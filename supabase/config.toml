@@ -107,3 +107,15 @@ verify_jwt = true
 
 [functions.stripe-healthcheck]
 verify_jwt = false
+
+[functions.create-reservation-offer-pending]
+verify_jwt = true
+
+[functions.send-offer-payment-link]
+verify_jwt = false
+
+[functions.expire-unpaid-reservations]
+verify_jwt = false
+
+[functions.expire-unpaid-reservations.schedule]
+cron = "0 * * * *"

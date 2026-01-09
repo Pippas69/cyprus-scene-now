@@ -2170,6 +2170,8 @@ export type Database = {
           final_price_cents: number
           id: string
           original_price_cents: number
+          payment_link_expires_at: string | null
+          payment_link_url: string | null
           qr_code_token: string | null
           redeemed_at: string | null
           redeemed_by: string | null
@@ -2193,6 +2195,8 @@ export type Database = {
           final_price_cents: number
           id?: string
           original_price_cents: number
+          payment_link_expires_at?: string | null
+          payment_link_url?: string | null
           qr_code_token?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
@@ -2216,6 +2220,8 @@ export type Database = {
           final_price_cents?: number
           id?: string
           original_price_cents?: number
+          payment_link_expires_at?: string | null
+          payment_link_url?: string | null
           qr_code_token?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null

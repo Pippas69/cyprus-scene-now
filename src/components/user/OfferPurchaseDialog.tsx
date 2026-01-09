@@ -181,18 +181,18 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
 
   const text = {
     title: { el: "Αγορά Προσφοράς", en: "Purchase Offer" },
-    titleWithReservation: { el: "Αγορά Προσφοράς & Κράτηση", en: "Purchase Offer & Reserve" },
+    titleWithReservation: { el: "Κράτηση Τραπεζιού & Προσφορά", en: "Reserve Table & Offer" },
     originalPrice: { el: "Αρχική τιμή", en: "Original price" },
     discount: { el: "Έκπτωση", en: "Discount" },
-    youPay: { el: "Πληρώνετε", en: "You pay" },
+    youPay: { el: "Θα πληρώσετε", en: "You'll pay" },
     youSave: { el: "Εξοικονομείτε", en: "You save" },
     validUntil: { el: "Ισχύει μέχρι", en: "Valid until" },
     terms: { el: "Όροι & Προϋποθέσεις", en: "Terms & Conditions" },
     acceptTerms: { el: "Αποδέχομαι τους όρους χρήσης", en: "I accept the terms of use" },
     noRefund: { el: "Σημείωση: Δεν γίνονται επιστροφές χρημάτων", en: "Note: No refunds available" },
-    refundOnDecline: { el: "Εάν η κράτηση απορριφθεί, θα επιστραφούν τα χρήματα", en: "If reservation is declined, you will be refunded" },
+    reservationInfo: { el: "Θα λάβετε σύνδεσμο πληρωμής όταν γίνει αποδεκτή η κράτηση", en: "You'll receive a payment link when your reservation is accepted" },
     payWithCard: { el: "Πληρωμή με Κάρτα", en: "Pay with Card" },
-    payAndReserve: { el: "Πληρωμή & Κράτηση", en: "Pay & Reserve" },
+    reserveNow: { el: "Κράτηση Τώρα", en: "Reserve Now" },
     cancel: { el: "Άκυρο", en: "Cancel" },
     processing: { el: "Επεξεργασία...", en: "Processing..." },
     redirecting: { el: "Μετάβαση στην πληρωμή...", en: "Redirecting to payment..." },
@@ -320,8 +320,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
       let error;
 
       if (requiresReservation) {
-        // Use the reservation checkout flow
-        const result = await supabase.functions.invoke("create-offer-checkout-with-reservation", {
+        // NEW: Use the pending reservation flow (no immediate payment)
+        const result = await supabase.functions.invoke("create-reservation-offer-pending", {
           body: { 
             discountId: offer.id,
             reservationData: {
@@ -337,8 +337,20 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
         });
         data = result.data;
         error = result.error;
+
+        if (error) throw error;
+
+        // Show success message and close dialog (no redirect for reservation flow)
+        toast.success(
+          language === 'el' 
+            ? 'Η κράτηση υποβλήθηκε! Θα λάβετε σύνδεσμο πληρωμής όταν γίνει αποδεκτή.' 
+            : 'Reservation submitted! You\'ll receive a payment link when accepted.'
+        );
+        setIsLoading(false);
+        onClose();
+        return;
       } else {
-        // Use the regular checkout flow
+        // Use the regular checkout flow for non-reservation offers
         const result = await supabase.functions.invoke("create-offer-checkout", {
           body: { discountId: offer.id },
         });
@@ -652,11 +664,11 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
             </div>
           )}
 
-          {/* Refund Policy - Different messaging for reservation offers */}
+          {/* Info message - Different for reservation offers */}
           {requiresReservation ? (
             <div className="flex items-start gap-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>{t("refundOnDecline")}</span>
+              <span>{t("reservationInfo")}</span>
             </div>
           ) : (
             <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
@@ -721,7 +733,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language, discount
                 ) : (
                   <>
                     <CreditCard className="mr-2 h-4 w-4" />
-                    {requiresReservation ? t("payAndReserve") : t("payWithCard")}
+                    {requiresReservation ? t("reserveNow") : t("payWithCard")}
                   </>
                 )}
               </Button>
