@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle2, Clock, CalendarCheck, Info } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -133,6 +133,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [durationPreset, setDurationPreset] = useState<DurationPreset>('same_day');
   
+  // Requires reservation toggle
+  const [requiresReservation, setRequiresReservation] = useState(false);
+
   // Boost data (aligned with event boost tiers)
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
@@ -182,7 +185,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("businesses")
-        .select("verified, name, stripe_account_id, stripe_payouts_enabled")
+        .select("verified, name, stripe_account_id, stripe_payouts_enabled, accepts_direct_reservations")
         .eq("id", businessId)
         .single();
       if (error) throw error;
@@ -193,6 +196,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
   const isBusinessVerified = businessData?.verified === true;
   const hasStripeSetup = !!businessData?.stripe_account_id && businessData?.stripe_payouts_enabled === true;
+  const hasDirectReservations = businessData?.accepts_direct_reservations === true;
 
   // Get default dates
   const defaultDates = getDefaultDates();
@@ -286,7 +290,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         originalPriceCents = Math.round((data.original_price || 0) * 100);
       }
 
-      console.log("Inserting discount...", { offerType, originalPriceCents, bonusPercent });
+      console.log("Inserting discount...", { offerType, originalPriceCents, bonusPercent, requiresReservation });
       const { data: discountData, error } = await supabase.from('discounts').insert({
         business_id: businessId,
         title: data.title,
@@ -305,6 +309,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         offer_type: offerType,
         bonus_percent: offerType === 'credit' ? bonusPercent : 0,
         credit_amount_cents: offerType === 'credit' ? creditAmountCents : null,
+        requires_reservation: requiresReservation && hasDirectReservations,
       }).select().single();
 
       console.log("Insert result:", { discountData, error });
@@ -428,6 +433,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       setOfferType('regular');
       setCreditAmountCents(0);
       setBonusPercent(25);
+      setRequiresReservation(false);
       
       // Navigate to offers list after short delay
       setTimeout(() => {
@@ -813,6 +819,51 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                 </FormItem>
               )}
             />
+
+            {/* Requires Reservation Toggle */}
+            <Separator />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarCheck className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-medium">
+                    {language === 'el' ? 'Απαιτείται Κράτηση' : 'Require Reservation'}
+                  </Label>
+                </div>
+                <Switch
+                  checked={requiresReservation}
+                  onCheckedChange={setRequiresReservation}
+                  disabled={!hasDirectReservations}
+                />
+              </div>
+              
+              {hasDirectReservations ? (
+                <p className="text-sm text-muted-foreground">
+                  {language === 'el'
+                    ? 'Οι πελάτες θα πρέπει να κάνουν κράτηση τραπεζιού κατά την αγορά αυτής της προσφοράς'
+                    : 'Customers must book a table when purchasing this offer'}
+                </p>
+              ) : (
+                <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
+                  <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'el'
+                      ? 'Ενεργοποιήστε τις άμεσες κρατήσεις στις Ρυθμίσεις Προφίλ για να χρησιμοποιήσετε αυτή τη λειτουργία'
+                      : 'Enable direct reservations in Profile Settings to use this feature'}
+                  </p>
+                </div>
+              )}
+              
+              {requiresReservation && hasDirectReservations && (
+                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <p className="text-sm text-primary/90">
+                    {language === 'el'
+                      ? '📅 Οι κρατήσεις θα χρεώνονται από τη διαθέσιμη χωρητικότητά σας'
+                      : '📅 Reservations will count against your available capacity'}
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* COMMISSION DISABLED: All offers are commission-free
             Commission-Free Section and Platform Fee Notice hidden until commission is re-enabled */}
