@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,7 +106,7 @@ export const TicketTierEditor = ({
   const [ticketsEnabled, setTicketsEnabled] = useState(tiers.length > 0);
   const [touchedTiers, setTouchedTiers] = useState<Set<number>>(new Set());
 
-  const addTier = () => {
+  const addTier = useCallback(() => {
     const defaultName = language === 'el' ? 'Γενική Είσοδος' : 'General Admission';
     const newTier: TicketTier = {
       name: tiers.length === 0 ? defaultName : "",
@@ -117,9 +117,10 @@ export const TicketTierEditor = ({
       max_per_order: 10,
       sort_order: tiers.length,
     };
-    onTiersChange([...tiers, newTier]);
+    // Defer update to avoid commit-phase conflicts
+    queueMicrotask(() => onTiersChange([...tiers, newTier]));
     setTicketsEnabled(true);
-  };
+  }, [tiers, language, onTiersChange]);
 
   const markTierTouched = (index: number) => {
     setTouchedTiers(prev => new Set(prev).add(index));
@@ -129,18 +130,27 @@ export const TicketTierEditor = ({
     return !tiers[index]?.name.trim();
   };
 
-  const updateTier = (index: number, updates: Partial<TicketTier>) => {
+  const updateTier = useCallback((index: number, updates: Partial<TicketTier>) => {
+    const currentTier = tiers[index];
+    // Check if anything actually changed
+    const hasChanges = Object.entries(updates).some(
+      ([key, value]) => currentTier[key as keyof TicketTier] !== value
+    );
+    if (!hasChanges) return;
+    
     const updated = [...tiers];
     updated[index] = { ...updated[index], ...updates };
-    onTiersChange(updated);
-  };
+    // Defer update to avoid commit-phase conflicts
+    queueMicrotask(() => onTiersChange(updated));
+  }, [tiers, onTiersChange]);
 
-  const removeTier = (index: number) => {
-    onTiersChange(tiers.filter((_, i) => i !== index));
+  const removeTier = useCallback((index: number) => {
+    // Defer update to avoid commit-phase conflicts
+    queueMicrotask(() => onTiersChange(tiers.filter((_, i) => i !== index)));
     if (tiers.length === 1) {
       setTicketsEnabled(false);
     }
-  };
+  }, [tiers, onTiersChange]);
 
   const calculateNetRevenue = (priceCents: number) => {
     if (priceCents === 0) return 0;
@@ -152,14 +162,14 @@ export const TicketTierEditor = ({
     return (cents / 100).toFixed(2);
   };
 
-  const handleToggleTickets = (enabled: boolean) => {
+  const handleToggleTickets = useCallback((enabled: boolean) => {
     setTicketsEnabled(enabled);
     if (!enabled) {
-      onTiersChange([]);
+      queueMicrotask(() => onTiersChange([]));
     } else if (tiers.length === 0) {
       addTier();
     }
-  };
+  }, [tiers.length, onTiersChange, addTier]);
 
   return (
     <div className="space-y-4">
@@ -315,13 +325,20 @@ export const TicketTierEditor = ({
                       {text.dressCode}
                     </Label>
                     <Select
-                      value={tier.dress_code || ""}
-                      onValueChange={(value) => updateTier(index, { dress_code: value })}
+                      value={tier.dress_code || "none"}
+                      onValueChange={(value) => {
+                        const newDressCode = value === "none" ? undefined : value;
+                        // Only update if actually changed
+                        if (tier.dress_code !== newDressCode) {
+                          updateTier(index, { dress_code: newDressCode });
+                        }
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={text.selectDressCode} />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">{language === 'el' ? 'Χωρίς' : 'None'}</SelectItem>
                         <SelectItem value="casual">{text.casual}</SelectItem>
                         <SelectItem value="smart_casual">{text.smartCasual}</SelectItem>
                         <SelectItem value="semi_formal">{text.semiFormal}</SelectItem>

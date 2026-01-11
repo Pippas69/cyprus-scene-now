@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { safeSelectChange } from "@/lib/formSafeUpdate";
 import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
@@ -328,7 +329,10 @@ const Signup = () => {
                       <MapPin className="h-4 w-4 text-primary" />
                       {language === "el" ? "Πόλη" : "Town"}
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
+                      value={field.value || ""}
+                    >
                       <FormControl>
                         <SelectTrigger className="rounded-xl">
                           <SelectValue placeholder={language === "el" ? "Επιλέξτε πόλη" : "Select town"} />
@@ -347,7 +351,10 @@ const Signup = () => {
               field
             }) => <FormItem>
                     <FormLabel>{language === "el" ? "Φύλο" : "Gender"}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
+                      value={field.value || ""}
+                    >
                       <FormControl>
                         <SelectTrigger className="rounded-xl">
                           <SelectValue placeholder={language === "el" ? "Επιλέξτε φύλο (προαιρετικό)" : "Select gender (optional)"} />

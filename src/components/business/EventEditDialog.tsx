@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { safeSelectChange, safeBooleanChange, safeArrayChange } from "@/lib/formSafeUpdate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -285,7 +286,10 @@ const EventEditDialog = ({ event, open, onOpenChange, onSuccess }: EventEditDial
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t.priceTier}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -422,7 +426,7 @@ const EventEditDialog = ({ event, open, onOpenChange, onSuccess }: EventEditDial
                     <FormControl>
                       <Switch
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(v) => safeBooleanChange(field.value, v, field.onChange)}
                       />
                     </FormControl>
                   </FormItem>
@@ -461,7 +465,7 @@ const EventEditDialog = ({ event, open, onOpenChange, onSuccess }: EventEditDial
                         <FormControl>
                           <Switch
                             checked={field.value}
-                            onCheckedChange={field.onChange}
+                            onCheckedChange={(v) => safeBooleanChange(field.value, v, field.onChange)}
                           />
                         </FormControl>
                       </FormItem>
@@ -496,11 +500,10 @@ const EventEditDialog = ({ event, open, onOpenChange, onSuccess }: EventEditDial
                                         checked={field.value?.includes(option.value)}
                                         onCheckedChange={(checked) => {
                                           const current = field.value || [];
-                                          field.onChange(
-                                            checked
-                                              ? [...current, option.value]
-                                              : current.filter((val) => val !== option.value)
-                                          );
+                                          const nextValue = checked
+                                            ? [...current, option.value]
+                                            : current.filter((val) => val !== option.value);
+                                          safeArrayChange(current, nextValue, field.onChange);
                                         }}
                                       />
                                     </FormControl>

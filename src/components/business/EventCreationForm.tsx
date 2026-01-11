@@ -3,6 +3,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { safeSelectChange, safeBooleanChange } from "@/lib/formSafeUpdate";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -785,7 +786,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch 
+                            checked={field.value} 
+                            onCheckedChange={(v) => safeBooleanChange(field.value, v, field.onChange)} 
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -800,7 +804,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                           <Car className="h-4 w-4" />
                           {t.parkingInfo || "Parking Info"}
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
+                          value={field.value || "none"}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder={t.selectParking || "Select parking option"} />
@@ -934,7 +941,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>{t.priceTier || 'Price Indicator'}</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select 
+                                  onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
+                                  value={field.value}
+                                >
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue />
@@ -978,7 +988,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>{t.dressCode || "Dress Code"}</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select 
+                                onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
+                                value={field.value || "casual"}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder={t.selectDressCode || "Select dress code"} />
