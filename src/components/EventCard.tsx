@@ -24,7 +24,7 @@ import { useViewTracking, trackEventView } from "@/lib/analyticsTracking";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Confetti, useConfetti } from "@/components/ui/confetti";
-import { useScrollReveal } from "@/hooks/useScrollReveal";
+
 import { ShareDialog } from "@/components/sharing/ShareDialog";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { motion } from "framer-motion";
@@ -64,7 +64,7 @@ interface EventCardProps {
 const EventCard = ({ language, event, user, style, className }: EventCardProps) => {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
-  const { ref: revealRef, isInView } = useScrollReveal({ threshold: 0.1 });
+  // Removed scroll reveal for stable layout
   const [status, setStatus] = useState<string | null>(event.user_status || null);
   const [interestedCount, setInterestedCount] = useState(event.interested_count || 0);
   const [goingCount, setGoingCount] = useState(event.going_count || 0);
@@ -334,10 +334,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
       <Confetti isActive={confetti.isActive} onComplete={confetti.reset} />
       
       <Card
-        ref={(node) => {
-          (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-          (revealRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-        }}
+        ref={cardRef}
         variant="default"
         interactive
         className={cn(
@@ -345,7 +342,6 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           "transition-all duration-200 ease-out will-change-transform",
           "hover:shadow-hover",
           "active:scale-[0.98]",
-          isInView ? "animate-fade-in" : "opacity-0",
           badgeType && "card-glow",
           className
         )} 
