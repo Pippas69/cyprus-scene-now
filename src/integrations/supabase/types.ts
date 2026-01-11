@@ -644,6 +644,9 @@ export type Database = {
           created_at: string
           daily_reservation_limit: number | null
           description: string | null
+          free_entry_boost_banned: boolean | null
+          free_entry_creation_banned: boolean | null
+          free_entry_strikes: number | null
           geo: unknown
           id: string
           logo_url: string | null
@@ -678,6 +681,9 @@ export type Database = {
           created_at?: string
           daily_reservation_limit?: number | null
           description?: string | null
+          free_entry_boost_banned?: boolean | null
+          free_entry_creation_banned?: boolean | null
+          free_entry_strikes?: number | null
           geo?: unknown
           id?: string
           logo_url?: string | null
@@ -712,6 +718,9 @@ export type Database = {
           created_at?: string
           daily_reservation_limit?: number | null
           description?: string | null
+          free_entry_boost_banned?: boolean | null
+          free_entry_creation_banned?: boolean | null
+          free_entry_strikes?: number | null
           geo?: unknown
           id?: string
           logo_url?: string | null
@@ -1669,6 +1678,9 @@ export type Database = {
         Row: {
           accepts_reservations: boolean | null
           accessibility_info: string[] | null
+          appearance_end_at: string | null
+          appearance_mode: string | null
+          appearance_start_at: string | null
           business_id: string
           category: string[]
           cover_image_url: string | null
@@ -1676,18 +1688,25 @@ export type Database = {
           description: string | null
           dress_code: string | null
           end_at: string
+          event_type: string | null
           external_ticket_url: string | null
+          free_entry_declaration: boolean | null
           gallery_urls: string[] | null
           id: string
           is_indoor: boolean | null
           location: string
+          max_party_size: number | null
           max_reservations: number | null
+          max_total_reservations: number | null
           min_age_hint: number | null
+          min_party_size: number | null
           parking_info: string | null
           performers: string[] | null
           price: number | null
           price_tier: Database["public"]["Enums"]["price_tier"] | null
           requires_approval: boolean | null
+          reservation_hours_from: string | null
+          reservation_hours_to: string | null
           seating_options: string[] | null
           start_at: string
           tags: string[] | null
@@ -1698,6 +1717,9 @@ export type Database = {
         Insert: {
           accepts_reservations?: boolean | null
           accessibility_info?: string[] | null
+          appearance_end_at?: string | null
+          appearance_mode?: string | null
+          appearance_start_at?: string | null
           business_id: string
           category: string[]
           cover_image_url?: string | null
@@ -1705,18 +1727,25 @@ export type Database = {
           description?: string | null
           dress_code?: string | null
           end_at: string
+          event_type?: string | null
           external_ticket_url?: string | null
+          free_entry_declaration?: boolean | null
           gallery_urls?: string[] | null
           id?: string
           is_indoor?: boolean | null
           location: string
+          max_party_size?: number | null
           max_reservations?: number | null
+          max_total_reservations?: number | null
           min_age_hint?: number | null
+          min_party_size?: number | null
           parking_info?: string | null
           performers?: string[] | null
           price?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
           requires_approval?: boolean | null
+          reservation_hours_from?: string | null
+          reservation_hours_to?: string | null
           seating_options?: string[] | null
           start_at: string
           tags?: string[] | null
@@ -1727,6 +1756,9 @@ export type Database = {
         Update: {
           accepts_reservations?: boolean | null
           accessibility_info?: string[] | null
+          appearance_end_at?: string | null
+          appearance_mode?: string | null
+          appearance_start_at?: string | null
           business_id?: string
           category?: string[]
           cover_image_url?: string | null
@@ -1734,18 +1766,25 @@ export type Database = {
           description?: string | null
           dress_code?: string | null
           end_at?: string
+          event_type?: string | null
           external_ticket_url?: string | null
+          free_entry_declaration?: boolean | null
           gallery_urls?: string[] | null
           id?: string
           is_indoor?: boolean | null
           location?: string
+          max_party_size?: number | null
           max_reservations?: number | null
+          max_total_reservations?: number | null
           min_age_hint?: number | null
+          min_party_size?: number | null
           parking_info?: string | null
           performers?: string[] | null
           price?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
           requires_approval?: boolean | null
+          reservation_hours_from?: string | null
+          reservation_hours_to?: string | null
           seating_options?: string[] | null
           start_at?: string
           tags?: string[] | null
@@ -1932,6 +1971,81 @@ export type Database = {
           weight?: number | null
         }
         Relationships: []
+      }
+      free_entry_reports: {
+        Row: {
+          created_at: string | null
+          details: string | null
+          event_id: string
+          id: string
+          report_reason: string
+          reporter_user_id: string
+          resolution_notes: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: string | null
+          event_id: string
+          id?: string
+          report_reason: string
+          reporter_user_id: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: string | null
+          event_id?: string
+          id?: string
+          report_reason?: string
+          reporter_user_id?: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "free_entry_reports_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "free_entry_reports_reporter_user_id_fkey"
+            columns: ["reporter_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "free_entry_reports_reporter_user_id_fkey"
+            columns: ["reporter_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "free_entry_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "free_entry_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -2833,6 +2947,53 @@ export type Database = {
           },
         ]
       }
+      reservation_seating_types: {
+        Row: {
+          available_slots: number
+          cancellation_policy: string | null
+          created_at: string | null
+          dress_code: string | null
+          event_id: string
+          id: string
+          no_show_policy: string | null
+          seating_type: string
+          slots_booked: number
+          updated_at: string | null
+        }
+        Insert: {
+          available_slots?: number
+          cancellation_policy?: string | null
+          created_at?: string | null
+          dress_code?: string | null
+          event_id: string
+          id?: string
+          no_show_policy?: string | null
+          seating_type: string
+          slots_booked?: number
+          updated_at?: string | null
+        }
+        Update: {
+          available_slots?: number
+          cancellation_policy?: string | null
+          created_at?: string | null
+          dress_code?: string | null
+          event_id?: string
+          id?: string
+          no_show_policy?: string | null
+          seating_type?: string
+          slots_booked?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_seating_types_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           business_id: string | null
@@ -2846,11 +3007,15 @@ export type Database = {
           party_size: number
           phone_number: string | null
           preferred_time: string | null
+          prepaid_charge_status: string | null
+          prepaid_min_charge_cents: number | null
           qr_code_token: string | null
           reservation_name: string
           seating_preference: string | null
+          seating_type_id: string | null
           special_requests: string | null
           status: string
+          stripe_payment_intent_id: string | null
           updated_at: string
           user_id: string
         }
@@ -2866,11 +3031,15 @@ export type Database = {
           party_size: number
           phone_number?: string | null
           preferred_time?: string | null
+          prepaid_charge_status?: string | null
+          prepaid_min_charge_cents?: number | null
           qr_code_token?: string | null
           reservation_name: string
           seating_preference?: string | null
+          seating_type_id?: string | null
           special_requests?: string | null
           status?: string
+          stripe_payment_intent_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -2886,11 +3055,15 @@ export type Database = {
           party_size?: number
           phone_number?: string | null
           preferred_time?: string | null
+          prepaid_charge_status?: string | null
+          prepaid_min_charge_cents?: number | null
           qr_code_token?: string | null
           reservation_name?: string
           seating_preference?: string | null
+          seating_type_id?: string | null
           special_requests?: string | null
           status?: string
+          stripe_payment_intent_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2928,6 +3101,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_seating_type_id_fkey"
+            columns: ["seating_type_id"]
+            isOneToOne: false
+            referencedRelation: "reservation_seating_types"
             referencedColumns: ["id"]
           },
         ]
@@ -2977,6 +3157,44 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seating_type_tiers: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          id: string
+          max_people: number
+          min_people: number
+          prepaid_min_charge_cents: number
+          seating_type_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          max_people: number
+          min_people: number
+          prepaid_min_charge_cents: number
+          seating_type_id: string
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          max_people?: number
+          min_people?: number
+          prepaid_min_charge_cents?: number
+          seating_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seating_type_tiers_seating_type_id_fkey"
+            columns: ["seating_type_id"]
+            isOneToOne: false
+            referencedRelation: "reservation_seating_types"
             referencedColumns: ["id"]
           },
         ]
@@ -3407,6 +3625,7 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
+          dress_code: string | null
           event_id: string
           id: string
           max_per_order: number
@@ -3424,6 +3643,7 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          dress_code?: string | null
           event_id: string
           id?: string
           max_per_order?: number
@@ -3441,6 +3661,7 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          dress_code?: string | null
           event_id?: string
           id?: string
           max_per_order?: number
@@ -4056,6 +4277,10 @@ export type Database = {
         Returns: string
       }
       create_preferences_for_existing_users: { Args: never; Returns: undefined }
+      decrement_seating_slots: {
+        Args: { p_seating_type_id: string }
+        Returns: boolean
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -4228,9 +4453,25 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_event_seating_availability: {
+        Args: { p_event_id: string }
+        Returns: {
+          available_slots: number
+          dress_code: string
+          min_price_cents: number
+          remaining_slots: number
+          seating_type: string
+          seating_type_id: string
+          slots_booked: number
+        }[]
+      }
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
+      }
+      get_seating_price_for_party: {
+        Args: { p_party_size: number; p_seating_type_id: string }
+        Returns: number
       }
       get_similar_users: {
         Args: { limit_count?: number; target_user_id: string }
