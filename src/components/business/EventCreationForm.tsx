@@ -223,6 +223,11 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   // Memoize "now" date to prevent new Date() on every render for minDate
   const minDateNow = useMemo(() => new Date(), []);
   
+  // CRITICAL: Memoize schema and resolver to prevent re-creation on every render
+  // This prevents RHF from re-validating and triggering state updates in a loop
+  const eventSchema = useMemo(() => createEventSchema(language), [language]);
+  const formResolver = useMemo(() => zodResolver(eventSchema), [eventSchema]);
+  
   // Get commission rate for ticket pricing
   const { data: commissionData } = useCommissionRate(businessId);
   const commissionPercent = commissionData?.commissionPercent ?? 12;
@@ -238,7 +243,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   });
 
   const form = useForm<EventFormData>({
-    resolver: zodResolver(createEventSchema(language)),
+    resolver: formResolver,
     defaultValues: {
       title: "",
       description: "",
