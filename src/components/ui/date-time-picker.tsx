@@ -31,17 +31,19 @@ export function DateTimePicker({
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(value);
   const [hours, setHours] = React.useState(value ? value.getHours().toString().padStart(2, '0') : '12');
   const [minutes, setMinutes] = React.useState(value ? value.getMinutes().toString().padStart(2, '0') : '00');
+  
+  // Use ref to track previous value and prevent infinite loops
+  const prevValueRef = React.useRef<Date | undefined>(value);
 
   React.useEffect(() => {
-    if (value) {
-      // Only update if value actually changed to prevent infinite loops
-      if (!selectedDate || value.getTime() !== selectedDate.getTime()) {
-        setSelectedDate(value);
-        setHours(value.getHours().toString().padStart(2, '0'));
-        setMinutes(value.getMinutes().toString().padStart(2, '0'));
-      }
+    // Only sync when the external value actually changes
+    if (value && (!prevValueRef.current || value.getTime() !== prevValueRef.current.getTime())) {
+      setSelectedDate(value);
+      setHours(value.getHours().toString().padStart(2, '0'));
+      setMinutes(value.getMinutes().toString().padStart(2, '0'));
     }
-  }, [value, selectedDate]);
+    prevValueRef.current = value;
+  }, [value]);
 
   // Commit the current selection to the form
   const commitValue = React.useCallback((date: Date | undefined, h: string, m: string) => {
