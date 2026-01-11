@@ -23,10 +23,14 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
+    // Always log error to console for debugging (even in production)
+    // eslint-disable-next-line no-console
+    console.error('ErrorBoundary caught an error:', error);
+    // eslint-disable-next-line no-console
+    console.error('Component stack:', errorInfo.componentStack);
+    if (error.stack) {
       // eslint-disable-next-line no-console
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+      console.error('Error stack:', error.stack);
     }
   }
 
