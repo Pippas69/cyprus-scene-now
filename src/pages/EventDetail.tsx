@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { trackEventView, trackEngagement } from '@/lib/analyticsTracking';
 import { ReservationDialog } from '@/components/business/ReservationDialog';
+import { ReservationEventCheckout } from '@/components/user/ReservationEventCheckout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RippleButton } from '@/components/ui/ripple-button';
@@ -26,6 +27,8 @@ import {
   Heart,
   CheckCircle,
   MessageSquare,
+  Ticket,
+  PartyPopper,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import EventCard from '@/components/EventCard';
@@ -76,6 +79,7 @@ export default function EventDetail() {
   const [goingCount, setGoingCount] = useState(0);
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [showReservationCheckout, setShowReservationCheckout] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   
@@ -285,6 +289,9 @@ export default function EventDetail() {
       liveFeed: 'Live Feed',
       makeReservation: 'Κράτηση',
       buyTickets: 'Αγοράστε εισιτήρια',
+      ticketEvent: 'Εκδήλωση με Εισιτήρια',
+      reservationEvent: 'Εκδήλωση με Κράτηση',
+      freeEntry: 'Ελεύθερη Είσοδος',
     },
     en: {
       backToEvents: 'Back to Events',
@@ -297,6 +304,9 @@ export default function EventDetail() {
       liveFeed: 'Live Feed',
       makeReservation: 'Make Reservation',
       buyTickets: 'Buy tickets',
+      ticketEvent: 'Ticket Event',
+      reservationEvent: 'Reservation Event',
+      freeEntry: 'Free Entry',
     },
   };
 
@@ -304,6 +314,37 @@ export default function EventDetail() {
 
   // Check if event has native tickets
   const hasNativeTickets = ticketTiers.length > 0;
+
+  // Determine event type
+  const eventType = event?.event_type || (hasNativeTickets ? 'ticket' : (event?.accepts_reservations ? 'reservation' : 'free_entry'));
+  
+  const getEventTypeBadge = () => {
+    switch (eventType) {
+      case 'ticket':
+        return (
+          <Badge variant="default" className="gap-1">
+            <Ticket className="h-3 w-3" />
+            {text.ticketEvent}
+          </Badge>
+        );
+      case 'reservation':
+        return (
+          <Badge variant="secondary" className="gap-1">
+            <Calendar className="h-3 w-3" />
+            {text.reservationEvent}
+          </Badge>
+        );
+      case 'free_entry':
+        return (
+          <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
+            <PartyPopper className="h-3 w-3" />
+            {text.freeEntry}
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
 
   if (loading) {
     return (
@@ -379,7 +420,8 @@ export default function EventDetail() {
               transition={{ delay: 0.2 }}
             >
               <h1 className="text-4xl font-bold mb-4">{event.title}</h1>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
+                {getEventTypeBadge()}
                 {event.category?.map((cat: string) => (
                   <Badge key={cat} variant="secondary">
                     {cat}
@@ -527,8 +569,19 @@ export default function EventDetail() {
               />
             )}
 
-            {/* Reservation Button */}
-            {user && event.accepts_reservations && (
+            {/* Reservation Checkout for Reservation Events with Seating Types */}
+            {eventType === 'reservation' && event.event_type === 'reservation' && user && (
+              <RippleButton
+                className="w-full gap-2"
+                onClick={() => setShowReservationCheckout(true)}
+              >
+                <Calendar className="h-4 w-4" />
+                {text.makeReservation}
+              </RippleButton>
+            )}
+
+            {/* Legacy Reservation Button (for events without new event_type) */}
+            {user && event.accepts_reservations && event.event_type !== 'reservation' && (
               <RippleButton
                 className="w-full gap-2"
                 onClick={() => setShowReservationDialog(true)}
@@ -624,6 +677,28 @@ export default function EventDetail() {
           onSuccess={() => {
             setShowReservationDialog(false);
             toast.success(language === 'el' ? 'Η κράτησή σας υποβλήθηκε!' : 'Reservation submitted!');
+          }}
+        />
+      )}
+
+      {/* Reservation Event Checkout Dialog (for new reservation events) */}
+      {user && event.event_type === 'reservation' && (
+        <ReservationEventCheckout
+          open={showReservationCheckout}
+          onOpenChange={setShowReservationCheckout}
+          eventId={event.id}
+          eventTitle={event.title}
+          eventDate={event.start_at}
+          eventLocation={event.location}
+          minPartySize={event.min_party_size || 1}
+          maxPartySize={event.max_party_size || 10}
+          reservationHoursFrom={event.reservation_hours_from}
+          reservationHoursTo={event.reservation_hours_to}
+          userId={user.id}
+          language={language}
+          onSuccess={() => {
+            setShowReservationCheckout(false);
+            toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
           }}
         />
       )}

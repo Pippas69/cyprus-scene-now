@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Plus, X, Ticket, Euro, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, X, Ticket, Euro, Users, Shirt } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export interface TicketTier {
@@ -16,6 +17,7 @@ export interface TicketTier {
   quantity_total: number;
   max_per_order: number;
   sort_order: number;
+  dress_code?: string;
 }
 
 interface TicketTierEditorProps {
@@ -43,6 +45,13 @@ const t = {
     noTickets: "Χωρίς εισιτήρια (μόνο RSVP/Κράτηση)",
     enableTickets: "Ενεργοποίηση Πώλησης Εισιτηρίων",
     tierNameRequired: "Το όνομα κατηγορίας είναι υποχρεωτικό",
+    dressCode: "Dress Code",
+    selectDressCode: "Επιλέξτε dress code",
+    casual: "Casual",
+    smartCasual: "Smart Casual",
+    semiFormal: "Semi-Formal",
+    formal: "Formal",
+    themed: "Θεματικό / Costume",
   },
   en: {
     addTier: "Add Ticket Tier",
@@ -61,6 +70,13 @@ const t = {
     noTickets: "No tickets (RSVP/Reservation only)",
     enableTickets: "Enable Ticket Sales",
     tierNameRequired: "Tier name is required",
+    dressCode: "Dress Code",
+    selectDressCode: "Select dress code",
+    casual: "Casual",
+    smartCasual: "Smart Casual",
+    semiFormal: "Semi-Formal",
+    formal: "Formal",
+    themed: "Themed / Costume",
   },
 };
 
@@ -290,6 +306,29 @@ export const TicketTierEditor = ({
                         })}
                       />
                     </div>
+                  </div>
+
+                  {/* Dress Code Selector */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      <Shirt className="h-3 w-3" />
+                      {text.dressCode}
+                    </Label>
+                    <Select
+                      value={tier.dress_code || ""}
+                      onValueChange={(value) => updateTier(index, { dress_code: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={text.selectDressCode} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="casual">{text.casual}</SelectItem>
+                        <SelectItem value="smart_casual">{text.smartCasual}</SelectItem>
+                        <SelectItem value="semi_formal">{text.semiFormal}</SelectItem>
+                        <SelectItem value="formal">{text.formal}</SelectItem>
+                        <SelectItem value="themed">{text.themed}</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
