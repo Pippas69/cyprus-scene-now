@@ -48,7 +48,7 @@ const translations = {
   },
 };
 
-export const SeatingTierEditor: React.FC<SeatingTierEditorProps> = ({
+const SeatingTierEditorInner: React.FC<SeatingTierEditorProps> = ({
   value,
   onChange,
   language,
@@ -57,7 +57,7 @@ export const SeatingTierEditor: React.FC<SeatingTierEditorProps> = ({
 }) => {
   const t = translations[language];
 
-  const addTier = () => {
+  const addTier = React.useCallback(() => {
     const lastTier = value[value.length - 1];
     const newMinPeople = lastTier ? lastTier.max_people + 1 : minPartySize;
     const newMaxPeople = Math.min(newMinPeople + 2, maxPartySize);
@@ -70,8 +70,9 @@ export const SeatingTierEditor: React.FC<SeatingTierEditorProps> = ({
       prepaid_min_charge_cents: lastTier ? lastTier.prepaid_min_charge_cents + 2500 : 5000,
     };
 
-    onChange([...value, newTier]);
-  };
+    // Defer to avoid commit-phase conflicts
+    queueMicrotask(() => onChange([...value, newTier]));
+  }, [value, onChange, minPartySize, maxPartySize]);
 
   const updateTier = React.useCallback((index: number, updates: Partial<SeatingTier>) => {
     const existingTier = value[index];
@@ -91,13 +92,15 @@ export const SeatingTierEditor: React.FC<SeatingTierEditorProps> = ({
     const newTiers = value.map((tier, i) =>
       i === index ? { ...tier, ...updates } : tier
     );
-    onChange(newTiers);
+    // Defer to avoid commit-phase conflicts
+    queueMicrotask(() => onChange(newTiers));
   }, [value, onChange]);
 
-  const removeTier = (index: number) => {
+  const removeTier = React.useCallback((index: number) => {
     if (value.length <= 1) return;
-    onChange(value.filter((_, i) => i !== index));
-  };
+    // Defer to avoid commit-phase conflicts
+    queueMicrotask(() => onChange(value.filter((_, i) => i !== index)));
+  }, [value, onChange]);
 
   // Validation
   const getValidationErrors = (): string[] => {
@@ -137,7 +140,7 @@ export const SeatingTierEditor: React.FC<SeatingTierEditorProps> = ({
       {/* Tiers */}
       {value.map((tier, index) => (
         <div
-          key={index}
+          key={`tier-${index}-${tier.min_people}-${tier.max_people}`}
           className="flex flex-wrap items-end gap-3 p-3 bg-muted/50 rounded-lg"
         >
           <div className="flex-1 min-w-[100px]">
@@ -237,5 +240,16 @@ export const SeatingTierEditor: React.FC<SeatingTierEditorProps> = ({
     </div>
   );
 };
+
+// Memoize with deep equality comparison to prevent unnecessary re-renders
+export const SeatingTierEditor = React.memo(SeatingTierEditorInner, (prev, next) => {
+  return (
+    JSON.stringify(prev.value) === JSON.stringify(next.value) &&
+    prev.language === next.language &&
+    prev.minPartySize === next.minPartySize &&
+    prev.maxPartySize === next.maxPartySize &&
+    prev.onChange === next.onChange
+  );
+});
 
 export default SeatingTierEditor;

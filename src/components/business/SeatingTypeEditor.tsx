@@ -109,7 +109,7 @@ const seatingTypeColors: Record<SeatingType, { bg: string; text: string; border:
   sofa: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800' },
 };
 
-export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
+const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
   value,
   onChange,
   language,
@@ -126,7 +126,8 @@ export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
       const filtered = value.filter(v => v.seating_type !== type);
       // Only call onChange if actually different
       if (filtered.length !== value.length) {
-        onChange(filtered);
+        // Defer to avoid commit-phase conflicts
+        queueMicrotask(() => onChange(filtered));
       }
     } else {
       const newConfig: SeatingTypeConfig = {
@@ -143,7 +144,8 @@ export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
           },
         ],
       };
-      onChange([...value, newConfig]);
+      // Defer to avoid commit-phase conflicts
+      queueMicrotask(() => onChange([...value, newConfig]));
     }
   }, [selectedTypes, value, onChange, minPartySize, maxPartySize]);
 
@@ -175,7 +177,8 @@ export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
     const newValue = value.map(config =>
       config.seating_type === type ? { ...config, ...updates } : config
     );
-    onChange(newValue);
+    // Defer to avoid commit-phase conflicts
+    queueMicrotask(() => onChange(newValue));
   }, [value, onChange]);
 
   return (
@@ -344,5 +347,16 @@ export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
     </div>
   );
 };
+
+// Memoize with deep equality comparison to prevent unnecessary re-renders
+export const SeatingTypeEditor = React.memo(SeatingTypeEditorInner, (prev, next) => {
+  return (
+    JSON.stringify(prev.value) === JSON.stringify(next.value) &&
+    prev.language === next.language &&
+    prev.minPartySize === next.minPartySize &&
+    prev.maxPartySize === next.maxPartySize &&
+    prev.onChange === next.onChange
+  );
+});
 
 export default SeatingTypeEditor;
