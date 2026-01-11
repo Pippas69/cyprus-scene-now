@@ -238,7 +238,7 @@ const DashboardBusiness = () => {
         language={language}
       />
       <SidebarProvider>
-      <div className="min-h-screen w-full flex">
+      <div className="min-h-screen w-full flex overscroll-none touch-pan-y">
         <BusinessSidebar />
         
         <div className="flex-1 flex flex-col">
@@ -307,7 +307,7 @@ const DashboardBusiness = () => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto overscroll-none">
             <Routes>
               <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />
