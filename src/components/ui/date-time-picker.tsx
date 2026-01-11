@@ -34,11 +34,14 @@ export function DateTimePicker({
 
   React.useEffect(() => {
     if (value) {
-      setSelectedDate(value);
-      setHours(value.getHours().toString().padStart(2, '0'));
-      setMinutes(value.getMinutes().toString().padStart(2, '0'));
+      // Only update if value actually changed to prevent infinite loops
+      if (!selectedDate || value.getTime() !== selectedDate.getTime()) {
+        setSelectedDate(value);
+        setHours(value.getHours().toString().padStart(2, '0'));
+        setMinutes(value.getMinutes().toString().padStart(2, '0'));
+      }
     }
-  }, [value]);
+  }, [value, selectedDate]);
 
   // Commit the current selection to the form
   const commitValue = React.useCallback((date: Date | undefined, h: string, m: string) => {

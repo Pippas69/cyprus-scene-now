@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -206,6 +206,11 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       reservation_hours_to: "",
     },
   });
+
+  // Use useWatch to avoid infinite re-render loops from inline form.watch() calls
+  const watchedTitle = useWatch({ control: form.control, name: 'title' });
+  const watchedDescription = useWatch({ control: form.control, name: 'description' });
+  const watchedLocation = useWatch({ control: form.control, name: 'location' });
 
   const handleFileSelect = (file: File) => {
     const reader = new FileReader();
@@ -525,7 +530,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 isOpen={expandedSections.basic}
                 onToggle={() => toggleSection('basic')}
                 required
-                completed={!!form.watch('title') && !!form.watch('description')}
+                completed={!!watchedTitle && !!watchedDescription}
               />
               {expandedSections.basic && (
                 <div className="space-y-4 p-4 border rounded-lg">
@@ -668,7 +673,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 title={ft.step3}
                 isOpen={expandedSections.venue}
                 onToggle={() => toggleSection('venue')}
-                completed={!!form.watch('location')}
+                completed={!!watchedLocation}
               />
               {expandedSections.venue && (
                 <div className="space-y-4 p-4 border rounded-lg">
