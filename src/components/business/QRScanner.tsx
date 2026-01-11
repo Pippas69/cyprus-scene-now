@@ -56,6 +56,9 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       eventReservation: 'Κράτηση Εκδήλωσης',
       seating: 'Θέση',
       specialRequests: 'Ειδικά Αιτήματα',
+      prepaidCredit: 'Προπληρωμένη Πίστωση',
+      paid: 'ΠΛΗΡΩΜΕΝΟ',
+      seatingType: 'Τύπος Θέσης',
     },
     en: {
       scanQR: 'Scan QR',
@@ -84,6 +87,9 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       eventReservation: 'Event Reservation',
       seating: 'Seating',
       specialRequests: 'Special Requests',
+      prepaidCredit: 'Prepaid Credit',
+      paid: 'PAID',
+      seatingType: 'Seating Type',
     },
   };
 
@@ -174,11 +180,16 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
             id,
             title,
             start_at,
-            business_id
+            business_id,
+            event_type
           ),
           businesses (
             id,
             name
+          ),
+          reservation_seating_types (
+            id,
+            seating_type
           )
         `)
         .or(`qr_code_token.eq.${data},confirmation_code.eq.${data}`)
@@ -386,10 +397,16 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
                       
                       {verificationResult.reservation && (
                         <div className="mt-4 space-y-3 text-sm text-left">
-                          <div className="flex justify-center mb-3">
+                          <div className="flex justify-center gap-2 mb-3 flex-wrap">
                             <Badge variant={verificationResult.isDirectReservation ? "secondary" : "outline"}>
                               {verificationResult.isDirectReservation ? t.directReservation : t.eventReservation}
                             </Badge>
+                            {verificationResult.reservation.prepaid_min_charge_cents > 0 && 
+                             verificationResult.reservation.prepaid_charge_status === 'paid' && (
+                              <Badge className="bg-green-600 text-white">
+                                {t.paid}
+                              </Badge>
+                            )}
                           </div>
                           
                           {!verificationResult.isDirectReservation && verificationResult.reservation.events && (
@@ -421,6 +438,22 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
                               <span className="text-muted-foreground">{t.date}:</span>
                               <span className="font-medium">
                                 {formatDateTime(verificationResult.reservation.preferred_time)}
+                              </span>
+                            </div>
+                          )}
+                          {verificationResult.reservation.reservation_seating_types && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{t.seatingType}:</span>
+                              <span className="font-medium capitalize">
+                                {verificationResult.reservation.reservation_seating_types.seating_type}
+                              </span>
+                            </div>
+                          )}
+                          {verificationResult.reservation.prepaid_min_charge_cents > 0 && (
+                            <div className="flex justify-between bg-green-50 dark:bg-green-950/30 p-2 rounded-lg">
+                              <span className="text-green-700 dark:text-green-300 font-medium">{t.prepaidCredit}:</span>
+                              <span className="font-bold text-green-700 dark:text-green-300">
+                                €{(verificationResult.reservation.prepaid_min_charge_cents / 100).toFixed(2)}
                               </span>
                             </div>
                           )}

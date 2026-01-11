@@ -138,8 +138,8 @@ export const AppearanceDurationPicker: React.FC<AppearanceDurationPickerProps> =
             {mode === 'date_range' ? t.dateRange.startLabel : t.hourly.startLabel}
           </Label>
           <DateTimePicker
-            date={startDate}
-            setDate={onStartDateChange}
+            value={startDate}
+            onChange={onStartDateChange}
             placeholder={language === 'el' ? 'Επιλέξτε...' : 'Select...'}
           />
         </div>
@@ -149,8 +149,8 @@ export const AppearanceDurationPicker: React.FC<AppearanceDurationPickerProps> =
             {mode === 'date_range' ? t.dateRange.endLabel : t.hourly.endLabel}
           </Label>
           <DateTimePicker
-            date={endDate}
-            setDate={onEndDateChange}
+            value={endDate}
+            onChange={onEndDateChange}
             placeholder={language === 'el' ? 'Επιλέξτε...' : 'Select...'}
           />
         </div>
