@@ -206,6 +206,7 @@ export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
                   {t.seatingTypes[config.seating_type]}
                 </CardTitle>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   className="text-destructive hover:text-destructive"
