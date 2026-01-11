@@ -151,17 +151,15 @@ All colors MUST be HSL.
 
   html {
     scroll-behavior: smooth;
-    min-height: 100%;
+    height: 100%;
     overflow-x: hidden;
-    overscroll-behavior-y: none;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
-    min-height: 100%;
+    height: 100%;
     overflow-x: hidden;
-    overscroll-behavior-y: none;
   }
 
   *:focus-visible {

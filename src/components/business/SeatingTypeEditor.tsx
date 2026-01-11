@@ -198,22 +198,10 @@ const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
     };
   }, []);
 
-  // Single-flight update scheduler using macrotask (setTimeout)
+  // Direct update - no deferral to avoid visual glitch/pop
   const scheduleUpdate = useCallback((nextValue: SeatingTypeConfig[]) => {
-    // Store latest value (last-write-wins)
-    pendingValueRef.current = nextValue;
-    
-    // If no timer scheduled, schedule one
-    if (timerRef.current === null) {
-      timerRef.current = window.setTimeout(() => {
-        timerRef.current = null;
-        const valueToSend = pendingValueRef.current;
-        pendingValueRef.current = null;
-        if (valueToSend !== null) {
-          onChangeRef.current(valueToSend);
-        }
-      }, 0); // Macrotask - yields to browser
-    }
+    // Call onChange directly - guards in updateConfig/toggleSeatingType prevent no-ops
+    onChangeRef.current(nextValue);
   }, []);
 
   const toggleSeatingType = useCallback((type: SeatingType) => {
