@@ -59,6 +59,45 @@ export function DateTimePicker({
   // Using timestamp instead of Date avoids reference comparison issues
   const prevTimestampRef = React.useRef<number | undefined>(getSafeTimestamp(value));
 
+  // Track if user made changes during this session (dirty tracking)
+  const dirtyRef = React.useRef(false);
+
+  // Single-flight scheduler for onChange using MACROTASK (setTimeout)
+  // This prevents browser freeze by yielding to the event loop
+  const pendingOnChangeRef = React.useRef<Date | undefined | null>(null);
+  const timerRef = React.useRef<number | null>(null);
+  const onChangeRef = React.useRef(onChange);
+  
+  // Keep onChange ref current
+  React.useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Schedule an onChange call with macrotask deferral (single-flight)
+  const scheduleOnChange = React.useCallback((date: Date | undefined) => {
+    pendingOnChangeRef.current = date;
+    
+    if (timerRef.current === null) {
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        const valueToSend = pendingOnChangeRef.current;
+        pendingOnChangeRef.current = null;
+        if (valueToSend !== null) {
+          onChangeRef.current(valueToSend);
+        }
+      }, 0); // Macrotask - yields to browser
+    }
+  }, []);
+
   React.useEffect(() => {
     const incomingTs = getSafeTimestamp(value);
     const prevTs = prevTimestampRef.current;
@@ -77,9 +116,6 @@ export function DateTimePicker({
     }
   }, [value]);
 
-  // Track if user made changes during this session (dirty tracking)
-  const dirtyRef = React.useRef(false);
-
   // Commit the current selection to the form - with no-op prevention
   const commitValue = React.useCallback((date: Date | undefined, h: string, m: string, force = false) => {
     if (date) {
@@ -93,14 +129,12 @@ export function DateTimePicker({
       
       // Only call onChange if the timestamp actually changed (or force is true)
       if (force || newTs !== currentTs) {
-        // Defer to avoid commit-phase conflicts with RHF
-        queueMicrotask(() => {
-          onChange(newDate);
-          prevTimestampRef.current = newTs;
-        });
+        prevTimestampRef.current = newTs;
+        // Use macrotask deferral to avoid commit-phase conflicts
+        scheduleOnChange(newDate);
       }
     }
-  }, [onChange, value]);
+  }, [value, scheduleOnChange]);
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -132,7 +166,8 @@ export function DateTimePicker({
     setSelectedDate(undefined);
     setHours('12');
     setMinutes('00');
-    onChange(undefined);
+    // Use macrotask deferral for clear as well
+    scheduleOnChange(undefined);
     setOpen(false);
   };
 

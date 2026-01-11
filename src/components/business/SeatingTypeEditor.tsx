@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -109,6 +109,64 @@ const seatingTypeColors: Record<SeatingType, { bg: string; text: string; border:
   sofa: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800' },
 };
 
+// Structural equality check for SeatingTypeConfig arrays (avoids JSON.stringify in hot paths)
+function areConfigsEqual(a: SeatingTypeConfig[], b: SeatingTypeConfig[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const configA = a[i];
+    const configB = b[i];
+    if (
+      configA.seating_type !== configB.seating_type ||
+      configA.available_slots !== configB.available_slots ||
+      configA.dress_code !== configB.dress_code ||
+      configA.cancellation_policy !== configB.cancellation_policy ||
+      configA.no_show_policy !== configB.no_show_policy ||
+      configA.tiers.length !== configB.tiers.length
+    ) {
+      return false;
+    }
+    // Check tiers
+    for (let j = 0; j < configA.tiers.length; j++) {
+      const tierA = configA.tiers[j];
+      const tierB = configB.tiers[j];
+      if (
+        tierA.min_people !== tierB.min_people ||
+        tierA.max_people !== tierB.max_people ||
+        tierA.prepaid_min_charge_cents !== tierB.prepaid_min_charge_cents
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Check if a single config update has actual changes
+function hasConfigChanges(existing: SeatingTypeConfig, updates: Partial<SeatingTypeConfig>): boolean {
+  for (const key of Object.keys(updates) as Array<keyof SeatingTypeConfig>) {
+    const newVal = updates[key];
+    const oldVal = existing[key];
+    
+    if (key === 'tiers') {
+      const oldTiers = oldVal as SeatingTier[];
+      const newTiers = newVal as SeatingTier[];
+      if (oldTiers.length !== newTiers.length) return true;
+      for (let i = 0; i < oldTiers.length; i++) {
+        if (
+          oldTiers[i].min_people !== newTiers[i].min_people ||
+          oldTiers[i].max_people !== newTiers[i].max_people ||
+          oldTiers[i].prepaid_min_charge_cents !== newTiers[i].prepaid_min_charge_cents
+        ) {
+          return true;
+        }
+      }
+    } else if (newVal !== oldVal) {
+      return true;
+    }
+  }
+  return false;
+}
+
 const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
   value,
   onChange,
@@ -121,13 +179,49 @@ const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
   
   const selectedTypes = value.map(v => v.seating_type);
 
-  const toggleSeatingType = React.useCallback((type: SeatingType) => {
+  // Single-flight scheduler: store pending value and timer ref
+  const pendingValueRef = useRef<SeatingTypeConfig[] | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const onChangeRef = useRef(onChange);
+  
+  // Keep onChange ref current
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Single-flight update scheduler using macrotask (setTimeout)
+  const scheduleUpdate = useCallback((nextValue: SeatingTypeConfig[]) => {
+    // Store latest value (last-write-wins)
+    pendingValueRef.current = nextValue;
+    
+    // If no timer scheduled, schedule one
+    if (timerRef.current === null) {
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        const valueToSend = pendingValueRef.current;
+        pendingValueRef.current = null;
+        if (valueToSend !== null) {
+          onChangeRef.current(valueToSend);
+        }
+      }, 0); // Macrotask - yields to browser
+    }
+  }, []);
+
+  const toggleSeatingType = useCallback((type: SeatingType) => {
     if (selectedTypes.includes(type)) {
       const filtered = value.filter(v => v.seating_type !== type);
-      // Only call onChange if actually different
+      // Only schedule if actually different
       if (filtered.length !== value.length) {
-        // Defer to avoid commit-phase conflicts
-        queueMicrotask(() => onChange(filtered));
+        scheduleUpdate(filtered);
       }
     } else {
       const newConfig: SeatingTypeConfig = {
@@ -144,42 +238,25 @@ const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
           },
         ],
       };
-      // Defer to avoid commit-phase conflicts
-      queueMicrotask(() => onChange([...value, newConfig]));
+      scheduleUpdate([...value, newConfig]);
     }
-  }, [selectedTypes, value, onChange, minPartySize, maxPartySize]);
+  }, [selectedTypes, value, scheduleUpdate, minPartySize, maxPartySize]);
 
-  const updateConfig = React.useCallback((type: SeatingType, updates: Partial<SeatingTypeConfig>) => {
+  const updateConfig = useCallback((type: SeatingType, updates: Partial<SeatingTypeConfig>) => {
     // Find the config to update and check if values actually changed
     const existingConfig = value.find(c => c.seating_type === type);
     if (!existingConfig) return;
     
-    // Check if any update value is actually different (deep value check)
-    let hasActualChange = false;
-    for (const key of Object.keys(updates) as Array<keyof SeatingTypeConfig>) {
-      const newVal = updates[key];
-      const oldVal = existingConfig[key];
-      
-      // For tiers array, do JSON comparison
-      if (key === 'tiers') {
-        if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
-          hasActualChange = true;
-          break;
-        }
-      } else if (newVal !== oldVal) {
-        hasActualChange = true;
-        break;
-      }
+    // Check if any update value is actually different
+    if (!hasConfigChanges(existingConfig, updates)) {
+      return; // Bail out - nothing changed
     }
-    
-    if (!hasActualChange) return; // Bail out - nothing changed
     
     const newValue = value.map(config =>
       config.seating_type === type ? { ...config, ...updates } : config
     );
-    // Defer to avoid commit-phase conflicts
-    queueMicrotask(() => onChange(newValue));
-  }, [value, onChange]);
+    scheduleUpdate(newValue);
+  }, [value, scheduleUpdate]);
 
   return (
     <div className="space-y-6">
@@ -356,10 +433,10 @@ const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
   );
 };
 
-// Memoize with deep equality comparison to prevent unnecessary re-renders
+// Memoize with structural equality comparison (no JSON.stringify in hot path)
 export const SeatingTypeEditor = React.memo(SeatingTypeEditorInner, (prev, next) => {
   return (
-    JSON.stringify(prev.value) === JSON.stringify(next.value) &&
+    areConfigsEqual(prev.value, next.value) &&
     prev.language === next.language &&
     prev.minPartySize === next.minPartySize &&
     prev.maxPartySize === next.maxPartySize &&

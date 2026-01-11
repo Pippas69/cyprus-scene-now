@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +48,21 @@ const translations = {
   },
 };
 
+// Structural equality check for SeatingTier arrays (avoids JSON.stringify)
+function areTiersEqual(a: SeatingTier[], b: SeatingTier[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (
+      a[i].min_people !== b[i].min_people ||
+      a[i].max_people !== b[i].max_people ||
+      a[i].prepaid_min_charge_cents !== b[i].prepaid_min_charge_cents
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const SeatingTierEditorInner: React.FC<SeatingTierEditorProps> = ({
   value,
   onChange,
@@ -57,7 +72,42 @@ const SeatingTierEditorInner: React.FC<SeatingTierEditorProps> = ({
 }) => {
   const t = translations[language];
 
-  const addTier = React.useCallback(() => {
+  // Single-flight scheduler using macrotask (setTimeout)
+  const pendingValueRef = useRef<SeatingTier[] | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const onChangeRef = useRef(onChange);
+  
+  // Keep onChange ref current
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Schedule update with macrotask deferral
+  const scheduleUpdate = useCallback((nextValue: SeatingTier[]) => {
+    pendingValueRef.current = nextValue;
+    
+    if (timerRef.current === null) {
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        const valueToSend = pendingValueRef.current;
+        pendingValueRef.current = null;
+        if (valueToSend !== null) {
+          onChangeRef.current(valueToSend);
+        }
+      }, 0);
+    }
+  }, []);
+
+  const addTier = useCallback(() => {
     const lastTier = value[value.length - 1];
     const newMinPeople = lastTier ? lastTier.max_people + 1 : minPartySize;
     const newMaxPeople = Math.min(newMinPeople + 2, maxPartySize);
@@ -70,11 +120,10 @@ const SeatingTierEditorInner: React.FC<SeatingTierEditorProps> = ({
       prepaid_min_charge_cents: lastTier ? lastTier.prepaid_min_charge_cents + 2500 : 5000,
     };
 
-    // Defer to avoid commit-phase conflicts
-    queueMicrotask(() => onChange([...value, newTier]));
-  }, [value, onChange, minPartySize, maxPartySize]);
+    scheduleUpdate([...value, newTier]);
+  }, [value, scheduleUpdate, minPartySize, maxPartySize]);
 
-  const updateTier = React.useCallback((index: number, updates: Partial<SeatingTier>) => {
+  const updateTier = useCallback((index: number, updates: Partial<SeatingTier>) => {
     const existingTier = value[index];
     if (!existingTier) return;
     
@@ -92,15 +141,13 @@ const SeatingTierEditorInner: React.FC<SeatingTierEditorProps> = ({
     const newTiers = value.map((tier, i) =>
       i === index ? { ...tier, ...updates } : tier
     );
-    // Defer to avoid commit-phase conflicts
-    queueMicrotask(() => onChange(newTiers));
-  }, [value, onChange]);
+    scheduleUpdate(newTiers);
+  }, [value, scheduleUpdate]);
 
-  const removeTier = React.useCallback((index: number) => {
+  const removeTier = useCallback((index: number) => {
     if (value.length <= 1) return;
-    // Defer to avoid commit-phase conflicts
-    queueMicrotask(() => onChange(value.filter((_, i) => i !== index)));
-  }, [value, onChange]);
+    scheduleUpdate(value.filter((_, i) => i !== index));
+  }, [value, scheduleUpdate]);
 
   // Validation
   const getValidationErrors = (): string[] => {
@@ -241,10 +288,10 @@ const SeatingTierEditorInner: React.FC<SeatingTierEditorProps> = ({
   );
 };
 
-// Memoize with deep equality comparison to prevent unnecessary re-renders
+// Memoize with structural equality comparison (no JSON.stringify in hot path)
 export const SeatingTierEditor = React.memo(SeatingTierEditorInner, (prev, next) => {
   return (
-    JSON.stringify(prev.value) === JSON.stringify(next.value) &&
+    areTiersEqual(prev.value, next.value) &&
     prev.language === next.language &&
     prev.minPartySize === next.minPartySize &&
     prev.maxPartySize === next.maxPartySize &&
