@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,6 +34,45 @@ import { AppearanceDurationPicker, type AppearanceMode } from "./AppearanceDurat
 import { FreeEntryDeclaration } from "./FreeEntryDeclaration";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+
+// Helper to safely parse ISO string to Date (returns undefined for invalid)
+function parseIsoToDate(isoString: string | undefined | null): Date | undefined {
+  if (!isoString) return undefined;
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date;
+}
+
+// Deep equality check for SeatingTypeConfig arrays to prevent no-op updates
+function areSeatingTypesEqual(a: SeatingTypeConfig[], b: SeatingTypeConfig[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const configA = a[i];
+    const configB = b[i];
+    if (
+      configA.seating_type !== configB.seating_type ||
+      configA.available_slots !== configB.available_slots ||
+      configA.dress_code !== configB.dress_code ||
+      configA.no_show_policy !== configB.no_show_policy ||
+      configA.tiers.length !== configB.tiers.length
+    ) {
+      return false;
+    }
+    // Compare tiers
+    for (let j = 0; j < configA.tiers.length; j++) {
+      const tierA = configA.tiers[j];
+      const tierB = configB.tiers[j];
+      if (
+        tierA.min_people !== tierB.min_people ||
+        tierA.max_people !== tierB.max_people ||
+        tierA.prepaid_min_charge_cents !== tierB.prepaid_min_charge_cents
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 const createEventSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -156,7 +195,21 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const [ticketTierErrors, setTicketTierErrors] = useState<string[]>([]);
   
   // Seating types state (for reservation events)
-  const [seatingTypes, setSeatingTypes] = useState<SeatingTypeConfig[]>([]);
+  const [seatingTypes, setSeatingTypesInternal] = useState<SeatingTypeConfig[]>([]);
+  const seatingTypesRef = useRef<SeatingTypeConfig[]>([]);
+  
+  // Guarded setter to prevent no-op updates that cause re-render loops
+  const setSeatingTypes = useCallback((next: SeatingTypeConfig[] | ((prev: SeatingTypeConfig[]) => SeatingTypeConfig[])) => {
+    setSeatingTypesInternal(prev => {
+      const nextValue = typeof next === 'function' ? next(prev) : next;
+      // Only update if actually different
+      if (areSeatingTypesEqual(prev, nextValue)) {
+        return prev;
+      }
+      seatingTypesRef.current = nextValue;
+      return nextValue;
+    });
+  }, []);
   
   // Collapsible sections state
   const [expandedSections, setExpandedSections] = useState({
@@ -166,6 +219,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
     eventType: true,
     typeConfig: false,
   });
+  
+  // Memoize "now" date to prevent new Date() on every render for minDate
+  const minDateNow = useMemo(() => new Date(), []);
   
   // Get commission rate for ticket pricing
   const { data: commissionData } = useCommissionRate(businessId);
@@ -572,39 +628,47 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                     <FormField
                       control={form.control}
                       name="start_at"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
-                          <FormControl>
-                            <DateTimePicker
-                              value={field.value ? new Date(field.value) : undefined}
-                              onChange={(date) => field.onChange(date?.toISOString() || "")}
-                              placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
-                              minDate={new Date()}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        // Memoize date conversion to prevent new Date on every render
+                        const dateValue = useMemo(() => parseIsoToDate(field.value), [field.value]);
+                        return (
+                          <FormItem>
+                            <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
+                            <FormControl>
+                              <DateTimePicker
+                                value={dateValue}
+                                onChange={(date) => field.onChange(date?.toISOString() || "")}
+                                placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
+                                minDate={minDateNow}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
 
                     <FormField
                       control={form.control}
                       name="end_at"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
-                          <FormControl>
-                            <DateTimePicker
-                              value={field.value ? new Date(field.value) : undefined}
-                              onChange={(date) => field.onChange(date?.toISOString() || "")}
-                              placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
-                              minDate={new Date()}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        // Memoize date conversion to prevent new Date on every render
+                        const dateValue = useMemo(() => parseIsoToDate(field.value), [field.value]);
+                        return (
+                          <FormItem>
+                            <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
+                            <FormControl>
+                              <DateTimePicker
+                                value={dateValue}
+                                onChange={(date) => field.onChange(date?.toISOString() || "")}
+                                placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
+                                minDate={minDateNow}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
 

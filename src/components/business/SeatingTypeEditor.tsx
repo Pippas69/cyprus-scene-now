@@ -121,9 +121,13 @@ export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
   
   const selectedTypes = value.map(v => v.seating_type);
 
-  const toggleSeatingType = (type: SeatingType) => {
+  const toggleSeatingType = React.useCallback((type: SeatingType) => {
     if (selectedTypes.includes(type)) {
-      onChange(value.filter(v => v.seating_type !== type));
+      const filtered = value.filter(v => v.seating_type !== type);
+      // Only call onChange if actually different
+      if (filtered.length !== value.length) {
+        onChange(filtered);
+      }
     } else {
       const newConfig: SeatingTypeConfig = {
         seating_type: type,
@@ -141,15 +145,22 @@ export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
       };
       onChange([...value, newConfig]);
     }
-  };
+  }, [selectedTypes, value, onChange, minPartySize, maxPartySize]);
 
-  const updateConfig = (type: SeatingType, updates: Partial<SeatingTypeConfig>) => {
-    onChange(
-      value.map(config =>
-        config.seating_type === type ? { ...config, ...updates } : config
-      )
+  const updateConfig = React.useCallback((type: SeatingType, updates: Partial<SeatingTypeConfig>) => {
+    const newValue = value.map(config =>
+      config.seating_type === type ? { ...config, ...updates } : config
     );
-  };
+    // Only call onChange if something actually changed
+    const changed = newValue.some((config, idx) => {
+      const original = value[idx];
+      if (!original) return true;
+      return config !== original;
+    });
+    if (changed) {
+      onChange(newValue);
+    }
+  }, [value, onChange]);
 
   return (
     <div className="space-y-6">

@@ -18,6 +18,15 @@ interface DateTimePickerProps {
   maxDate?: Date;
 }
 
+// Helper to get a safe timestamp, treating invalid dates as undefined
+function getSafeTimestamp(date: Date | undefined): number | undefined {
+  if (!date) return undefined;
+  const ts = date.getTime();
+  // NaN check: NaN !== NaN is always true
+  if (Number.isNaN(ts)) return undefined;
+  return ts;
+}
+
 export function DateTimePicker({
   value,
   onChange,
@@ -28,30 +37,53 @@ export function DateTimePicker({
 }: DateTimePickerProps) {
   const { language } = useLanguage();
   const [open, setOpen] = React.useState(false);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(value);
-  const [hours, setHours] = React.useState(value ? value.getHours().toString().padStart(2, '0') : '12');
-  const [minutes, setMinutes] = React.useState(value ? value.getMinutes().toString().padStart(2, '0') : '00');
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(() => {
+    // Initialize only if value is a valid date
+    if (value && !Number.isNaN(value.getTime())) return value;
+    return undefined;
+  });
+  const [hours, setHours] = React.useState(() => {
+    if (value && !Number.isNaN(value.getTime())) {
+      return value.getHours().toString().padStart(2, '0');
+    }
+    return '12';
+  });
+  const [minutes, setMinutes] = React.useState(() => {
+    if (value && !Number.isNaN(value.getTime())) {
+      return value.getMinutes().toString().padStart(2, '0');
+    }
+    return '00';
+  });
   
-  // Use ref to track previous value and prevent infinite loops
-  const prevValueRef = React.useRef<Date | undefined>(value);
+  // Use ref to track previous timestamp (number | undefined) to prevent infinite loops
+  // Using timestamp instead of Date avoids reference comparison issues
+  const prevTimestampRef = React.useRef<number | undefined>(getSafeTimestamp(value));
 
   React.useEffect(() => {
-    // Only sync when the external value actually changes
-    if (value && (!prevValueRef.current || value.getTime() !== prevValueRef.current.getTime())) {
-      setSelectedDate(value);
-      setHours(value.getHours().toString().padStart(2, '0'));
-      setMinutes(value.getMinutes().toString().padStart(2, '0'));
+    const incomingTs = getSafeTimestamp(value);
+    const prevTs = prevTimestampRef.current;
+    
+    // Only sync when the timestamp actually changed
+    if (incomingTs !== prevTs) {
+      prevTimestampRef.current = incomingTs;
+      
+      if (incomingTs !== undefined && value) {
+        setSelectedDate(value);
+        setHours(value.getHours().toString().padStart(2, '0'));
+        setMinutes(value.getMinutes().toString().padStart(2, '0'));
+      }
+      // Note: We don't clear state when incomingTs becomes undefined
+      // to preserve user's in-progress selection
     }
-    prevValueRef.current = value;
   }, [value]);
 
   // Commit the current selection to the form
   const commitValue = React.useCallback((date: Date | undefined, h: string, m: string) => {
     if (date) {
       const newDate = new Date(date);
-      const hours = parseInt(h) || 0;
-      const mins = parseInt(m) || 0;
-      newDate.setHours(hours, mins, 0, 0);
+      const hoursNum = parseInt(h) || 0;
+      const minsNum = parseInt(m) || 0;
+      newDate.setHours(hoursNum, minsNum, 0, 0);
       onChange(newDate);
     }
   }, [onChange]);
@@ -89,6 +121,9 @@ export function DateTimePicker({
 
   const locale = language === 'el' ? el : enUS;
 
+  // Safe display value - only show if valid
+  const displayValue = value && !Number.isNaN(value.getTime()) ? value : undefined;
+
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
@@ -96,13 +131,13 @@ export function DateTimePicker({
           variant="outline"
           className={cn(
             "w-full justify-start text-left font-normal",
-            !value && "text-muted-foreground"
+            !displayValue && "text-muted-foreground"
           )}
           disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? (
-            format(value, "PPP, HH:mm", { locale })
+          {displayValue ? (
+            format(displayValue, "PPP, HH:mm", { locale })
           ) : (
             <span>{placeholder || (language === 'el' ? 'Επιλέξτε ημερομηνία' : 'Select date')}</span>
           )}
