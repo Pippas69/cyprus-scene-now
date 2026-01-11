@@ -238,7 +238,7 @@ const DashboardBusiness = () => {
         language={language}
       />
       <SidebarProvider>
-      <div className="min-h-screen w-full flex overscroll-none touch-pan-y">
+      <div className="min-h-screen w-full flex overscroll-none">
         <BusinessSidebar />
         
         <div className="flex-1 flex flex-col">
