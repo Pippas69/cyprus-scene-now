@@ -73,12 +73,26 @@ export const SeatingTierEditor: React.FC<SeatingTierEditorProps> = ({
     onChange([...value, newTier]);
   };
 
-  const updateTier = (index: number, updates: Partial<SeatingTier>) => {
+  const updateTier = React.useCallback((index: number, updates: Partial<SeatingTier>) => {
+    const existingTier = value[index];
+    if (!existingTier) return;
+    
+    // Check if any update value is actually different
+    let hasActualChange = false;
+    for (const key of Object.keys(updates) as Array<keyof SeatingTier>) {
+      if (updates[key] !== existingTier[key]) {
+        hasActualChange = true;
+        break;
+      }
+    }
+    
+    if (!hasActualChange) return; // Bail out - nothing changed
+    
     const newTiers = value.map((tier, i) =>
       i === index ? { ...tier, ...updates } : tier
     );
     onChange(newTiers);
-  };
+  }, [value, onChange]);
 
   const removeTier = (index: number) => {
     if (value.length <= 1) return;

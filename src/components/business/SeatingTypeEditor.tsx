@@ -148,18 +148,34 @@ export const SeatingTypeEditor: React.FC<SeatingTypeEditorProps> = ({
   }, [selectedTypes, value, onChange, minPartySize, maxPartySize]);
 
   const updateConfig = React.useCallback((type: SeatingType, updates: Partial<SeatingTypeConfig>) => {
+    // Find the config to update and check if values actually changed
+    const existingConfig = value.find(c => c.seating_type === type);
+    if (!existingConfig) return;
+    
+    // Check if any update value is actually different (deep value check)
+    let hasActualChange = false;
+    for (const key of Object.keys(updates) as Array<keyof SeatingTypeConfig>) {
+      const newVal = updates[key];
+      const oldVal = existingConfig[key];
+      
+      // For tiers array, do JSON comparison
+      if (key === 'tiers') {
+        if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
+          hasActualChange = true;
+          break;
+        }
+      } else if (newVal !== oldVal) {
+        hasActualChange = true;
+        break;
+      }
+    }
+    
+    if (!hasActualChange) return; // Bail out - nothing changed
+    
     const newValue = value.map(config =>
       config.seating_type === type ? { ...config, ...updates } : config
     );
-    // Only call onChange if something actually changed
-    const changed = newValue.some((config, idx) => {
-      const original = value[idx];
-      if (!original) return true;
-      return config !== original;
-    });
-    if (changed) {
-      onChange(newValue);
-    }
+    onChange(newValue);
   }, [value, onChange]);
 
   return (
