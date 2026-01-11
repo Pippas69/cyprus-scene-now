@@ -628,47 +628,39 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                     <FormField
                       control={form.control}
                       name="start_at"
-                      render={({ field }) => {
-                        // Memoize date conversion to prevent new Date on every render
-                        const dateValue = useMemo(() => parseIsoToDate(field.value), [field.value]);
-                        return (
-                          <FormItem>
-                            <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
-                            <FormControl>
-                              <DateTimePicker
-                                value={dateValue}
-                                onChange={(date) => field.onChange(date?.toISOString() || "")}
-                                placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
-                                minDate={minDateNow}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
+                          <FormControl>
+                            <DateTimePicker
+                              value={parseIsoToDate(field.value)}
+                              onChange={(date) => field.onChange(date?.toISOString() || "")}
+                              placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
+                              minDate={minDateNow}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
 
                     <FormField
                       control={form.control}
                       name="end_at"
-                      render={({ field }) => {
-                        // Memoize date conversion to prevent new Date on every render
-                        const dateValue = useMemo(() => parseIsoToDate(field.value), [field.value]);
-                        return (
-                          <FormItem>
-                            <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
-                            <FormControl>
-                              <DateTimePicker
-                                value={dateValue}
-                                onChange={(date) => field.onChange(date?.toISOString() || "")}
-                                placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
-                                minDate={minDateNow}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
+                          <FormControl>
+                            <DateTimePicker
+                              value={parseIsoToDate(field.value)}
+                              onChange={(date) => field.onChange(date?.toISOString() || "")}
+                              placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
+                              minDate={minDateNow}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
 
