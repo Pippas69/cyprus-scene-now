@@ -36,19 +36,24 @@ export const useSwipeGesture = <T extends HTMLElement>(
   const startY = useRef(0);
   const currentX = useRef(0);
   const currentY = useRef(0);
+  const isSwipingRef = useRef(false);
 
   useEffect(() => {
     const element = elementRef.current;
     if (!element) return;
 
     const handleTouchStart = (e: TouchEvent) => {
+      // Passive listener: never block native scrolling
       startX.current = e.touches[0].clientX;
       startY.current = e.touches[0].clientY;
+      currentX.current = startX.current;
+      currentY.current = startY.current;
+      isSwipingRef.current = true;
       setSwipeState({ isSwiping: true, direction: null, distance: 0 });
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!swipeState.isSwiping) return;
+      if (!isSwipingRef.current) return;
 
       currentX.current = e.touches[0].clientX;
       currentY.current = e.touches[0].clientY;
@@ -73,38 +78,39 @@ export const useSwipeGesture = <T extends HTMLElement>(
     };
 
     const handleTouchEnd = () => {
+      if (!isSwipingRef.current) return;
+
       const deltaX = currentX.current - startX.current;
       const deltaY = currentY.current - startY.current;
       const absDeltaX = Math.abs(deltaX);
       const absDeltaY = Math.abs(deltaY);
 
       if (absDeltaX > absDeltaY && absDeltaX > minDistance) {
-        if (deltaX > 0 && onSwipeRight) {
-          onSwipeRight();
-        } else if (deltaX < 0 && onSwipeLeft) {
-          onSwipeLeft();
-        }
+        if (deltaX > 0 && onSwipeRight) onSwipeRight();
+        else if (deltaX < 0 && onSwipeLeft) onSwipeLeft();
       } else if (absDeltaY > absDeltaX && absDeltaY > minDistance) {
-        if (deltaY > 0 && onSwipeDown) {
-          onSwipeDown();
-        } else if (deltaY < 0 && onSwipeUp) {
-          onSwipeUp();
-        }
+        if (deltaY > 0 && onSwipeDown) onSwipeDown();
+        else if (deltaY < 0 && onSwipeUp) onSwipeUp();
       }
 
+      isSwipingRef.current = false;
       setSwipeState({ isSwiping: false, direction: null, distance: 0 });
     };
 
-    element.addEventListener('touchstart', handleTouchStart);
-    element.addEventListener('touchmove', handleTouchMove);
-    element.addEventListener('touchend', handleTouchEnd);
+    // Passive listeners prevent iOS from waiting on JS before allowing scroll
+    const passive = { passive: true } as const;
+    element.addEventListener('touchstart', handleTouchStart, passive);
+    element.addEventListener('touchmove', handleTouchMove, passive);
+    element.addEventListener('touchend', handleTouchEnd, passive);
+    element.addEventListener('touchcancel', handleTouchEnd, passive);
 
     return () => {
       element.removeEventListener('touchstart', handleTouchStart);
       element.removeEventListener('touchmove', handleTouchMove);
       element.removeEventListener('touchend', handleTouchEnd);
+      element.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [swipeState.isSwiping, minDistance, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown]);
+  }, [minDistance, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown]);
 
   return [elementRef, swipeState];
 };

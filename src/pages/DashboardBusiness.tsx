@@ -307,7 +307,7 @@ const DashboardBusiness = () => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-none [-webkit-overflow-scrolling:touch]">
+          <main className="flex-1 overflow-x-hidden">
             <Routes>
               <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />

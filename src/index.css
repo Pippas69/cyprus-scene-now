@@ -151,14 +151,19 @@ All colors MUST be HSL.
 
   html {
     scroll-behavior: smooth;
+    min-height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
+    min-height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
-  /* Focus ring animations */
   *:focus-visible {
     @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
     transition: ring 0.15s ease-out, box-shadow 0.15s ease-out;
