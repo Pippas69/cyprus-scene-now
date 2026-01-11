@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useViewTracking, trackDiscountView } from "@/lib/analyticsTracking";
 import { useRef, useState } from "react";
-import { useScrollReveal } from "@/hooks/useScrollReveal";
+
 import { cn } from "@/lib/utils";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 import { useQuery } from "@tanstack/react-query";
@@ -55,7 +55,7 @@ interface OfferCardProps {
 
 const OfferCard = ({ offer, discount, language, style, className }: OfferCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const { ref: revealRef, isInView } = useScrollReveal({ threshold: 0.1 });
+  // Removed scroll reveal for stable layout
   const offerData = offer || discount;
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
 
@@ -139,15 +139,11 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
 
   return (
     <Card 
-      ref={(node) => {
-        (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-        (revealRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      }}
+      ref={cardRef}
       variant="glass"
       interactive
       className={cn(
         "overflow-hidden transition-all duration-300",
-        isInView ? "animate-fade-in" : "opacity-0",
         className
       )} 
       style={style}
