@@ -71,7 +71,6 @@ export const FavoriteButton = ({
       className={cn(
         "transition-all duration-300 ease-out",
         "hover:scale-110 hover:bg-red-50 dark:hover:bg-red-950/20",
-        "active:scale-95",
         isAnimating && "animate-heart-pop",
         className
       )}

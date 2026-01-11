@@ -106,7 +106,7 @@ const BottomNav = () => {
               }`}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
-              whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
+              whileTap={{}}
             >
               <motion.div
                 animate={prefersReducedMotion ? {} : {

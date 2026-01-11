@@ -134,7 +134,7 @@ const FloatingActionButton = React.forwardRef<HTMLButtonElement, FloatingActionB
           initial={prefersReducedMotion ? false : { scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
-          whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
+          whileTap={{}}
           transition={{
             type: "spring",
             stiffness: 400,
