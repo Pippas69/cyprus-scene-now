@@ -189,19 +189,31 @@ const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount - reset refs
   useEffect(() => {
     return () => {
-      if (timerRef.current !== null) {
-        window.clearTimeout(timerRef.current);
-      }
+      timerRef.current = null;
+      pendingValueRef.current = null;
     };
   }, []);
 
-  // Direct update - no deferral to avoid visual glitch/pop
+  // Use microtask deferral - breaks React's sync update chain without visual delay
   const scheduleUpdate = useCallback((nextValue: SeatingTypeConfig[]) => {
-    // Call onChange directly - guards in updateConfig/toggleSeatingType prevent no-ops
-    onChangeRef.current(nextValue);
+    // Store latest value (last-write-wins)
+    pendingValueRef.current = nextValue;
+    
+    // If no update scheduled, schedule one via microtask
+    if (timerRef.current === null) {
+      timerRef.current = 1; // Mark as scheduled (flag, not timer ID)
+      queueMicrotask(() => {
+        timerRef.current = null;
+        const valueToSend = pendingValueRef.current;
+        pendingValueRef.current = null;
+        if (valueToSend !== null) {
+          onChangeRef.current(valueToSend);
+        }
+      });
+    }
   }, []);
 
   const toggleSeatingType = useCallback((type: SeatingType) => {
