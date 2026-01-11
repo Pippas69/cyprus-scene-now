@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Check, X, Users, Phone, MapPin, Calendar, MessageSquare, Building2 } from 'lucide-react';
+import { Download, Check, X, Users, Phone, MapPin, Calendar, MessageSquare, Building2, CreditCard, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -32,7 +32,12 @@ interface ReservationWithEvent {
   confirmation_code: string | null;
   qr_code_token: string | null;
   checked_in_at: string | null;
-  events: { id: string; title: string; start_at: string } | null;
+  // Prepaid reservation fields
+  seating_type: string | null;
+  prepaid_min_charge_cents: number | null;
+  payment_status: string | null;
+  stripe_payment_intent_id: string | null;
+  events: { id: string; title: string; start_at: string; event_type: string | null } | null;
   profiles?: { name: string; email: string };
 }
 
@@ -91,8 +96,11 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       const { data: eventReservations, error: eventError } = await supabase
         .from('reservations')
         .select(`
-          *,
-          events!inner(id, title, start_at),
+          id, event_id, business_id, user_id, reservation_name, party_size, status,
+          created_at, phone_number, preferred_time, seating_preference, special_requests,
+          business_notes, confirmation_code, qr_code_token, checked_in_at,
+          seating_type, prepaid_min_charge_cents, payment_status, stripe_payment_intent_id,
+          events!inner(id, title, start_at, event_type),
           profiles(name, email)
         `)
         .in('event_id', eventIds)
@@ -103,7 +111,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       }
 
       if (eventReservations) {
-        allReservations = [...allReservations, ...(eventReservations as ReservationWithEvent[])];
+        allReservations = [...allReservations, ...eventReservations as unknown as ReservationWithEvent[]];
       }
     }
 
@@ -111,7 +119,10 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
     const { data: directReservations, error: directError } = await supabase
       .from('reservations')
       .select(`
-        *,
+        id, event_id, business_id, user_id, reservation_name, party_size, status,
+        created_at, phone_number, preferred_time, seating_preference, special_requests,
+        business_notes, confirmation_code, qr_code_token, checked_in_at,
+        seating_type, prepaid_min_charge_cents, payment_status, stripe_payment_intent_id,
         profiles(name, email)
       `)
       .eq('business_id', businessId)
@@ -124,10 +135,10 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
 
     if (directReservations) {
       // Map direct reservations with null events
-      const mappedDirect = directReservations.map(r => ({
+      const mappedDirect = (directReservations as unknown as ReservationWithEvent[]).map(r => ({
         ...r,
         events: null
-      })) as ReservationWithEvent[];
+      }));
       allReservations = [...allReservations, ...mappedDirect];
     }
 
@@ -314,6 +325,15 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       anonymous: 'Ανώνυμος',
       tableReservation: 'Κράτηση Τραπεζιού',
       direct: 'Άμεση',
+      // Prepaid fields
+      seatingType: 'Τύπος Θέσης',
+      prepaidCredit: 'Προπληρωμένη Πίστωση',
+      paymentPending: 'Εκκρεμής Πληρωμή',
+      paymentCompleted: 'Πληρώθηκε',
+      bar: 'Μπάρα',
+      table: 'Τραπέζι',
+      vip: 'VIP',
+      sofa: 'Καναπές',
     },
     en: {
       title: 'Reservation Management',
@@ -354,6 +374,15 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       anonymous: 'Anonymous',
       tableReservation: 'Table Reservation',
       direct: 'Direct',
+      // Prepaid fields
+      seatingType: 'Seating Type',
+      prepaidCredit: 'Prepaid Credit',
+      paymentPending: 'Payment Pending',
+      paymentCompleted: 'Paid',
+      bar: 'Bar',
+      table: 'Table',
+      vip: 'VIP',
+      sofa: 'Sofa',
     },
   };
 
@@ -530,6 +559,27 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                       <strong>{t.confirmationCode}:</strong> {reservation.confirmation_code}
                     </div>
                   )}
+                  {/* Prepaid reservation info */}
+                  {reservation.seating_type && (
+                    <div className="p-2 bg-accent/50 rounded text-xs flex items-center gap-2">
+                      <Wallet className="h-3 w-3 text-primary" />
+                      <span>{t.seatingType}: <strong className="capitalize">{t[reservation.seating_type as keyof typeof t] || reservation.seating_type}</strong></span>
+                    </div>
+                  )}
+                  {reservation.prepaid_min_charge_cents !== null && reservation.prepaid_min_charge_cents > 0 && (
+                    <div className="p-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded text-xs flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-3 w-3 text-green-600" />
+                        <span>{t.prepaidCredit}:</span>
+                        <strong className="text-green-700 dark:text-green-400">€{(reservation.prepaid_min_charge_cents / 100).toFixed(2)}</strong>
+                      </div>
+                      {reservation.payment_status === 'completed' ? (
+                        <Badge variant="default" className="bg-green-600 text-xs">{t.paymentCompleted}</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">{t.paymentPending}</Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 {reservation.status === 'pending' && (
@@ -576,6 +626,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                 <TableHead>{t.name}</TableHead>
                 <TableHead>{t.contact}</TableHead>
                 <TableHead>{t.details}</TableHead>
+                <TableHead>{t.prepaidCredit}</TableHead>
                 <TableHead>{t.confirmationCode}</TableHead>
                 <TableHead>{t.status}</TableHead>
                 <TableHead>{t.actions}</TableHead>
@@ -634,6 +685,30 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                         </div>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {reservation.prepaid_min_charge_cents !== null && reservation.prepaid_min_charge_cents > 0 ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1">
+                          <CreditCard className="h-3 w-3 text-green-600" />
+                          <span className="font-semibold text-green-700 dark:text-green-400">
+                            €{(reservation.prepaid_min_charge_cents / 100).toFixed(2)}
+                          </span>
+                        </div>
+                        {reservation.seating_type && (
+                          <div className="text-xs text-muted-foreground capitalize">
+                            {t[reservation.seating_type as keyof typeof t] || reservation.seating_type}
+                          </div>
+                        )}
+                        {reservation.payment_status === 'completed' ? (
+                          <Badge variant="default" className="bg-green-600 text-xs">{t.paymentCompleted}</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">{t.paymentPending}</Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {reservation.confirmation_code && (

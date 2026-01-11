@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, Phone, X, QrCode, Clock, ChevronDown, Building2 } from 'lucide-react';
+import { Calendar, MapPin, Users, Phone, X, QrCode, Clock, ChevronDown, Building2, CreditCard, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
@@ -41,12 +41,17 @@ interface ReservationData {
   business_notes: string | null;
   confirmation_code: string | null;
   qr_code_token: string | null;
+  // Prepaid reservation fields
+  seating_type: string | null;
+  prepaid_min_charge_cents: number | null;
+  payment_status: string | null;
   events?: {
     id: string;
     title: string;
     start_at: string;
     end_at: string;
     location: string;
+    event_type: string | null;
     businesses: { name: string; logo_url: string | null };
   } | null;
   businesses?: {
@@ -92,17 +97,26 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     let allUpcoming: ReservationData[] = [];
     let allPast: ReservationData[] = [];
 
+    // Define the reservation fields to select
+    const reservationFields = `
+      id, event_id, business_id, user_id, reservation_name, party_size, status,
+      created_at, phone_number, preferred_time, seating_preference, special_requests,
+      business_notes, confirmation_code, qr_code_token,
+      seating_type, prepaid_min_charge_cents, payment_status
+    `;
+
     // 1. Event-based reservations (upcoming)
     const { data: upcomingEventRes } = await supabase
       .from('reservations')
       .select(`
-        *,
+        ${reservationFields},
         events!inner(
           id,
           title,
           start_at,
           end_at,
           location,
+          event_type,
           businesses(name, logo_url)
         )
       `)
@@ -114,13 +128,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const { data: pastEventRes } = await supabase
       .from('reservations')
       .select(`
-        *,
+        ${reservationFields},
         events!inner(
           id,
           title,
           start_at,
           end_at,
           location,
+          event_type,
           businesses(name, logo_url)
         )
       `)
@@ -132,7 +147,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const { data: upcomingDirectRes } = await supabase
       .from('reservations')
       .select(`
-        *,
+        ${reservationFields},
         businesses(id, name, logo_url, address)
       `)
       .eq('user_id', userId)
@@ -144,7 +159,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const { data: pastDirectRes } = await supabase
       .from('reservations')
       .select(`
-        *,
+        ${reservationFields},
         businesses(id, name, logo_url, address)
       `)
       .eq('user_id', userId)
@@ -154,8 +169,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     // Merge and sort upcoming
     allUpcoming = [
-      ...((upcomingEventRes as ReservationData[]) || []),
-      ...((upcomingDirectRes as ReservationData[]) || [])
+      ...(upcomingEventRes as unknown as ReservationData[] || []),
+      ...(upcomingDirectRes as unknown as ReservationData[] || [])
     ].sort((a, b) => {
       const dateA = a.events?.start_at || a.preferred_time || '';
       const dateB = b.events?.start_at || b.preferred_time || '';
@@ -164,8 +179,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     // Merge and sort past
     allPast = [
-      ...((pastEventRes as ReservationData[]) || []),
-      ...((pastDirectRes as ReservationData[]) || [])
+      ...(pastEventRes as unknown as ReservationData[] || []),
+      ...(pastDirectRes as unknown as ReservationData[] || [])
     ].sort((a, b) => {
       const dateA = a.events?.end_at || a.preferred_time || '';
       const dateB = b.events?.end_at || b.preferred_time || '';
@@ -260,6 +275,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       hideHistory: 'Απόκρυψη Ιστορικού',
       tableReservation: 'Κράτηση Τραπεζιού',
       directReservation: 'Άμεση Κράτηση',
+      // Prepaid fields
+      seatingType: 'Τύπος Θέσης',
+      prepaidCredit: 'Προπληρωμένη Πίστωση',
+      paymentPending: 'Εκκρεμής Πληρωμή',
+      paymentCompleted: 'Πληρώθηκε',
+      bar: 'Μπάρα',
+      table: 'Τραπέζι',
+      vip: 'VIP',
+      sofa: 'Καναπές',
+      creditInfo: 'Αυτό το ποσό μπορεί να χρησιμοποιηθεί για κατανάλωση στον χώρο',
     },
     en: {
       title: 'My Reservations',
@@ -288,6 +313,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       hideHistory: 'Hide History',
       tableReservation: 'Table Reservation',
       directReservation: 'Direct Reservation',
+      // Prepaid fields
+      seatingType: 'Seating Type',
+      prepaidCredit: 'Prepaid Credit',
+      paymentPending: 'Payment Pending',
+      paymentCompleted: 'Paid',
+      bar: 'Bar',
+      table: 'Table',
+      vip: 'VIP',
+      sofa: 'Sofa',
+      creditInfo: 'This amount can be used for consumption at the venue',
     },
   };
 
@@ -419,6 +454,33 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               </div>
             )}
           </div>
+
+          {/* Prepaid reservation info */}
+          {reservation.seating_type && reservation.prepaid_min_charge_cents && reservation.prepaid_min_charge_cents > 0 && !isPast && (
+            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-green-600" />
+                  <span className="font-medium text-green-800 dark:text-green-300">{t.prepaidCredit}</span>
+                </div>
+                {reservation.payment_status === 'completed' ? (
+                  <Badge variant="default" className="bg-green-600">{t.paymentCompleted}</Badge>
+                ) : (
+                  <Badge variant="secondary">{t.paymentPending}</Badge>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Wallet className="h-3 w-3" />
+                  <span>{t.seatingType}: <span className="capitalize font-medium">{t[reservation.seating_type as keyof typeof t] || reservation.seating_type}</span></span>
+                </div>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">
+                  €{(reservation.prepaid_min_charge_cents / 100).toFixed(2)}
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">{t.creditInfo}</p>
+            </div>
+          )}
 
           {reservation.special_requests && (
             <div className="bg-muted p-3 rounded-lg">
