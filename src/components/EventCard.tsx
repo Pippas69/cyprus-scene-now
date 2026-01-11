@@ -341,10 +341,9 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           "overflow-hidden group relative cursor-pointer",
           "transition-all duration-200 ease-out will-change-transform",
           "hover:shadow-hover",
-          "active:scale-[0.98]",
           badgeType && "card-glow",
           className
-        )} 
+        )}
         style={{ ...style, ...tiltStyle }}
         onClick={() => navigate(`/event/${event.id}`)}
         onMouseMove={handleMouseMove}
