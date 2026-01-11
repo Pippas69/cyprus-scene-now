@@ -211,6 +211,8 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const watchedTitle = useWatch({ control: form.control, name: 'title' });
   const watchedDescription = useWatch({ control: form.control, name: 'description' });
   const watchedLocation = useWatch({ control: form.control, name: 'location' });
+  const watchedMinPartySize = useWatch({ control: form.control, name: 'min_party_size' });
+  const watchedMaxPartySize = useWatch({ control: form.control, name: 'max_party_size' });
 
   const handleFileSelect = (file: File) => {
     const reader = new FileReader();
@@ -1120,8 +1122,8 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                           value={seatingTypes}
                           onChange={setSeatingTypes}
                           language={language}
-                          minPartySize={form.watch('min_party_size') || 2}
-                          maxPartySize={form.watch('max_party_size') || 10}
+                          minPartySize={Math.max(1, watchedMinPartySize ?? 2)}
+                          maxPartySize={Math.max(watchedMinPartySize ?? 2, watchedMaxPartySize ?? 10)}
                         />
                       </>
                     )}
