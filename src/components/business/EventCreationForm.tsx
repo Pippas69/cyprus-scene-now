@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, X, Music, Car, Accessibility, ImagePlus, Tag, MapPin, Ticket, Users, Clock, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Plus, X, Music, Car, Accessibility, ImagePlus, Tag, MapPin, Ticket, Users, Clock, AlertTriangle, Check } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
 import { ImageCropDialog } from "./ImageCropDialog";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -212,15 +212,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
     });
   }, []);
   
-  // Collapsible sections state
-  const [expandedSections, setExpandedSections] = useState({
-    basic: true,
-    appearance: true,
-    venue: false,
-    eventType: true,
-    typeConfig: false,
-  });
-  
   // Memoize "now" date to prevent new Date() on every render for minDate
   const minDateNow = useMemo(() => new Date(), []);
   
@@ -326,15 +317,11 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
     form.setValue("tags", current.filter((_, i) => i !== index));
   };
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
 
   const onSubmit = async (data: EventFormData) => {
     // Validate event type is selected
     if (!eventType) {
       toast.error(ft.eventTypeRequired);
-      setExpandedSections(prev => ({ ...prev, eventType: true }));
       return;
     }
 
@@ -343,7 +330,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       const tierErrors = validateTicketTiers(ticketTiers, language);
       setTicketTierErrors(tierErrors);
       if (tierErrors.length > 0) {
-        setExpandedSections(prev => ({ ...prev, typeConfig: true }));
         toast.error(
           language === 'el' ? 'Σφάλμα επικύρωσης εισιτηρίων' : 'Ticket validation error',
           { description: language === 'el' ? 'Παρακαλώ συμπληρώστε τα ονόματα κατηγοριών εισιτηρίων' : 'Please fill in all ticket tier names' }
@@ -357,14 +343,12 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         seatingTypes.every(st => st.tiers.length > 0);
       if (!hasValidSeating) {
         toast.error(ft.seatingTypeRequired);
-        setExpandedSections(prev => ({ ...prev, typeConfig: true }));
         return;
       }
     }
 
     if (eventType === 'free_entry' && !freeEntryDeclaration) {
       toast.error(ft.freeEntryDeclarationRequired);
-      setExpandedSections(prev => ({ ...prev, typeConfig: true }));
       return;
     }
     
@@ -550,29 +534,25 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
   const SectionHeader = ({ 
     title, 
-    isOpen, 
-    onToggle,
     required = false,
     completed = false,
   }: { 
     title: string; 
-    isOpen: boolean; 
-    onToggle: () => void;
     required?: boolean;
     completed?: boolean;
   }) => (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="flex items-center justify-between w-full p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-left"
-    >
+    <div className="flex items-center justify-between w-full p-4 bg-muted/50 rounded-lg">
       <div className="flex items-center gap-3">
         <span className="font-semibold">{title}</span>
-        {required && <Badge variant="outline" className="text-xs">Required</Badge>}
-        {completed && <Badge variant="default" className="text-xs bg-green-500">✓</Badge>}
+        {required && <Badge variant="outline" className="text-xs">{language === 'el' ? 'Απαιτείται' : 'Required'}</Badge>}
       </div>
-      {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-    </button>
+      {completed && (
+        <div className="flex items-center gap-1.5 text-green-600">
+          <Check className="h-4 w-4" />
+          <span className="text-xs font-medium">{language === 'el' ? 'Ολοκληρώθηκε' : 'Complete'}</span>
+        </div>
+      )}
+    </div>
   );
 
   return (
@@ -591,38 +571,55 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             <div className="space-y-4">
               <SectionHeader 
                 title={ft.step1}
-                isOpen={expandedSections.basic}
-                onToggle={() => toggleSection('basic')}
                 required
                 completed={!!watchedTitle && !!watchedDescription}
               />
-              {expandedSections.basic && (
-                <div className="space-y-4 p-4 border rounded-lg">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.eventTitle} *</FormLabel>
-                        <FormControl>
-                          <Input placeholder={language === 'el' ? "π.χ. Live Music Night" : "e.g. Live Music Night"} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <div className="space-y-4 p-4 border rounded-lg">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.eventTitle} *</FormLabel>
+                      <FormControl>
+                        <Input placeholder={language === 'el' ? "π.χ. Live Music Night" : "e.g. Live Music Night"} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.eventDescription} *</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder={language === 'el' ? "Περιγράψτε την εκδήλωσή σας..." : "Describe your event..."}
+                          rows={4}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="description"
+                    name="start_at"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.eventDescription} *</FormLabel>
+                        <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder={language === 'el' ? "Περιγράψτε την εκδήλωσή σας..." : "Describe your event..."}
-                            rows={4}
-                            {...field}
+                          <DateTimePicker
+                            value={parseIsoToDate(field.value)}
+                            onChange={(date) => field.onChange(date?.toISOString() || "")}
+                            placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
+                            minDate={minDateNow}
                           />
                         </FormControl>
                         <FormMessage />
@@ -630,196 +627,99 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                     )}
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="start_at"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
-                          <FormControl>
-                            <DateTimePicker
-                              value={parseIsoToDate(field.value)}
-                              onChange={(date) => field.onChange(date?.toISOString() || "")}
-                              placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
-                              minDate={minDateNow}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="end_at"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
-                          <FormControl>
-                            <DateTimePicker
-                              value={parseIsoToDate(field.value)}
-                              onChange={(date) => field.onChange(date?.toISOString() || "")}
-                              placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
-                              minDate={minDateNow}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
                   <FormField
                     control={form.control}
-                    name="category"
+                    name="end_at"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.categories || 'Categories'} *</FormLabel>
+                        <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
                         <FormControl>
-                          <EventCategorySelector
-                            language={language}
-                            selectedCategories={field.value || []}
-                            onChange={field.onChange}
+                          <DateTimePicker
+                            value={parseIsoToDate(field.value)}
+                            onChange={(date) => field.onChange(date?.toISOString() || "")}
+                            placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
+                            minDate={minDateNow}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {/* Cover Image */}
-                  <div className="pt-2">
-                    <ImageUploadField
-                      label={language === 'el' ? "Εικόνα Κάλυψης Εκδήλωσης" : "Event Cover Image"}
-                      language={language}
-                      onFileSelect={handleFileSelect}
-                      aspectRatio="16/9"
-                      maxSizeMB={5}
-                    />
-                    {isCompressing && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>{t.compressingImage}</span>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              )}
+
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.categories || 'Categories'} *</FormLabel>
+                      <FormControl>
+                        <EventCategorySelector
+                          language={language}
+                          selectedCategories={field.value || []}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Cover Image */}
+                <div className="pt-2">
+                  <ImageUploadField
+                    label={language === 'el' ? "Εικόνα Κάλυψης Εκδήλωσης" : "Event Cover Image"}
+                    language={language}
+                    onFileSelect={handleFileSelect}
+                    aspectRatio="16/9"
+                    maxSizeMB={5}
+                  />
+                  {isCompressing && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>{t.compressingImage}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* STEP 2: Appearance Duration */}
             <div className="space-y-4">
               <SectionHeader 
                 title={ft.step2}
-                isOpen={expandedSections.appearance}
-                onToggle={() => toggleSection('appearance')}
                 completed={!!appearanceStartAt && !!appearanceEndAt}
               />
-              {expandedSections.appearance && (
-                <div className="p-4 border rounded-lg">
-                  <AppearanceDurationPicker
-                    mode={appearanceMode}
-                    onModeChange={setAppearanceMode}
-                    startDate={appearanceStartAt}
-                    endDate={appearanceEndAt}
-                    onStartDateChange={setAppearanceStartAt}
-                    onEndDateChange={setAppearanceEndAt}
-                    language={language}
-                  />
-                </div>
-              )}
+              <div className="p-4 border rounded-lg">
+                <AppearanceDurationPicker
+                  mode={appearanceMode}
+                  onModeChange={setAppearanceMode}
+                  startDate={appearanceStartAt}
+                  endDate={appearanceEndAt}
+                  onStartDateChange={setAppearanceStartAt}
+                  onEndDateChange={setAppearanceEndAt}
+                  language={language}
+                />
+              </div>
             </div>
 
             {/* STEP 3: Venue & Location */}
             <div className="space-y-4">
               <SectionHeader 
                 title={ft.step3}
-                isOpen={expandedSections.venue}
-                onToggle={() => toggleSection('venue')}
                 completed={!!watchedLocation}
               />
-              {expandedSections.venue && (
-                <div className="space-y-4 p-4 border rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="venue_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t.venueName || "Venue Name"}</FormLabel>
-                          <FormControl>
-                            <Input placeholder={t.venueNamePlaceholder || "e.g. Club XYZ"} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t.location || 'Location'} *</FormLabel>
-                          <FormControl>
-                            <Input placeholder={language === 'el' ? "π.χ. Λευκωσία" : "e.g. Nicosia"} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+              <div className="space-y-4 p-4 border rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="is_indoor"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">{t.isIndoor || "Indoor"} / {t.isOutdoor || "Outdoor"}</FormLabel>
-                          <FormDescription>
-                            {field.value 
-                              ? (language === 'el' ? "Η εκδήλωση είναι σε εσωτερικό χώρο" : "Event is indoors")
-                              : (language === 'el' ? "Η εκδήλωση είναι σε εξωτερικό χώρο" : "Event is outdoors")
-                            }
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch 
-                            checked={field.value} 
-                            onCheckedChange={(v) => safeBooleanChange(field.value, v, field.onChange)} 
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="parking_info"
+                    name="venue_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Car className="h-4 w-4" />
-                          {t.parkingInfo || "Parking Info"}
-                        </FormLabel>
-                        <Select 
-                          onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
-                          value={field.value || "none"}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t.selectParking || "Select parking option"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="onsite">{t.parkingOnsite || "On-site"}</SelectItem>
-                            <SelectItem value="street">{t.parkingStreet || "Street"}</SelectItem>
-                            <SelectItem value="nearby">{t.parkingNearby || "Nearby Lot"}</SelectItem>
-                            <SelectItem value="none">{t.parkingNone || "Public Transport"}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>{t.venueName || "Venue Name"}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t.venueNamePlaceholder || "e.g. Club XYZ"} {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -827,78 +727,139 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
                   <FormField
                     control={form.control}
-                    name="accessibility_info"
-                    render={() => (
+                    name="location"
+                    render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Accessibility className="h-4 w-4" />
-                          {t.accessibility || "Accessibility"}
-                        </FormLabel>
-                        <div className="grid grid-cols-2 gap-3">
-                          {accessibilityOptions.map((option) => (
-                            <FormField
-                              key={option.id}
-                              control={form.control}
-                              name="accessibility_info"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(option.id)}
-                                      onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        return checked
-                                          ? field.onChange([...current, option.id])
-                                          : field.onChange(current.filter((value) => value !== option.id));
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal text-sm">{option.label}</FormLabel>
-                                </FormItem>
-                              )}
-                            />
-                          ))}
-                        </div>
+                        <FormLabel>{t.location || 'Location'} *</FormLabel>
+                        <FormControl>
+                          <Input placeholder={language === 'el' ? "π.χ. Λευκωσία" : "e.g. Nicosia"} {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-              )}
+
+                <FormField
+                  control={form.control}
+                  name="is_indoor"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">{t.isIndoor || "Indoor"} / {t.isOutdoor || "Outdoor"}</FormLabel>
+                        <FormDescription>
+                          {field.value 
+                            ? (language === 'el' ? "Η εκδήλωση είναι σε εσωτερικό χώρο" : "Event is indoors")
+                            : (language === 'el' ? "Η εκδήλωση είναι σε εξωτερικό χώρο" : "Event is outdoors")
+                          }
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch 
+                          checked={field.value} 
+                          onCheckedChange={(v) => safeBooleanChange(field.value, v, field.onChange)} 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="parking_info"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Car className="h-4 w-4" />
+                        {t.parkingInfo || "Parking Info"}
+                      </FormLabel>
+                      <Select 
+                        onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
+                        value={field.value || "none"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t.selectParking || "Select parking option"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="onsite">{t.parkingOnsite || "On-site"}</SelectItem>
+                          <SelectItem value="street">{t.parkingStreet || "Street"}</SelectItem>
+                          <SelectItem value="nearby">{t.parkingNearby || "Nearby Lot"}</SelectItem>
+                          <SelectItem value="none">{t.parkingNone || "Public Transport"}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="accessibility_info"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Accessibility className="h-4 w-4" />
+                        {t.accessibility || "Accessibility"}
+                      </FormLabel>
+                      <div className="grid grid-cols-2 gap-3">
+                        {accessibilityOptions.map((option) => (
+                          <FormField
+                            key={option.id}
+                            control={form.control}
+                            name="accessibility_info"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(option.id)}
+                                    onCheckedChange={(checked) => {
+                                      const current = field.value || [];
+                                      return checked
+                                        ? field.onChange([...current, option.id])
+                                        : field.onChange(current.filter((value) => value !== option.id));
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal text-sm">{option.label}</FormLabel>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* STEP 4: Event Type Selection */}
             <div className="space-y-4">
               <SectionHeader 
                 title={ft.step4}
-                isOpen={expandedSections.eventType}
-                onToggle={() => toggleSection('eventType')}
                 required
                 completed={!!eventType}
               />
-              {expandedSections.eventType && (
-                <div className="p-4 border rounded-lg">
-                  <EventTypeSelector
-                    value={eventType}
-                    onChange={(type) => {
-                      setEventType(type);
-                      setExpandedSections(prev => ({ ...prev, typeConfig: true }));
-                    }}
-                    language={language}
-                  />
-                  
-                  {!eventType && (
-                    <div className="flex items-center gap-2 mt-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-                      <AlertTriangle className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm text-amber-700 dark:text-amber-400">
-                        {language === 'el' 
-                          ? 'Πρέπει να επιλέξετε τύπο εκδήλωσης για να συνεχίσετε' 
-                          : 'You must select an event type to continue'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="p-4 border rounded-lg">
+                <EventTypeSelector
+                  value={eventType}
+                  onChange={setEventType}
+                  language={language}
+                />
+                
+                {!eventType && (
+                  <div className="flex items-center gap-2 mt-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm text-amber-700 dark:text-amber-400">
+                      {language === 'el' 
+                        ? 'Πρέπει να επιλέξετε τύπο εκδήλωσης για να συνεχίσετε' 
+                        : 'You must select an event type to continue'}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* STEP 5: Type-Specific Configuration */}
@@ -910,12 +871,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                     eventType === 'reservation' ? ft.step5Reservation :
                     ft.step5FreeEntry
                   }
-                  isOpen={expandedSections.typeConfig}
-                  onToggle={() => toggleSection('typeConfig')}
                   required
                 />
-                {expandedSections.typeConfig && (
-                  <div className="p-4 border rounded-lg space-y-6">
+                <div className="p-4 border rounded-lg space-y-6">
                     
                     {/* TICKET EVENT CONFIG */}
                     {eventType === 'ticket' && (
@@ -1214,7 +1172,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                       />
                     )}
                   </div>
-                )}
               </div>
             )}
 
