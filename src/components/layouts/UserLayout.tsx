@@ -90,7 +90,7 @@ export function UserLayout({ children }: UserLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-col w-full bg-background">
+      <div className="min-h-screen flex flex-col w-full bg-background overscroll-none touch-pan-y">
         {/* Fixed Header spanning full width */}
         <header className="h-14 border-b flex items-center px-2 sm:px-4 bg-background sticky top-0 z-50 overflow-hidden">
           <SidebarTrigger className="mr-2 sm:mr-4 shrink-0" />
@@ -150,7 +150,7 @@ export function UserLayout({ children }: UserLayoutProps) {
         <div className="flex flex-1 w-full">
           <UserSidebar />
           
-        <main className="flex-1 overflow-auto overflow-x-hidden min-h-0 bg-background relative z-10 max-w-full">
+        <main className="flex-1 overflow-auto overflow-x-hidden min-h-0 bg-background relative z-10 max-w-full overscroll-none">
           {children}
         </main>
         </div>
