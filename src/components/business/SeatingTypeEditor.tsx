@@ -274,9 +274,13 @@ const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
                   </Label>
                   <Select
                     value={config.dress_code || 'none'}
-                    onValueChange={(val) => updateConfig(config.seating_type, {
-                      dress_code: val === 'none' ? null : val as DressCode
-                    })}
+                    onValueChange={(val) => {
+                      const newDressCode = val === 'none' ? null : val as DressCode;
+                      // Only update if actually changed
+                      if (config.dress_code !== newDressCode) {
+                        updateConfig(config.seating_type, { dress_code: newDressCode });
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -296,9 +300,13 @@ const SeatingTypeEditorInner: React.FC<SeatingTypeEditorProps> = ({
                   <Label>{t.noShowPolicy}</Label>
                   <Select
                     value={config.no_show_policy}
-                    onValueChange={(val) => updateConfig(config.seating_type, {
-                      no_show_policy: val as NoShowPolicy
-                    })}
+                    onValueChange={(val) => {
+                      const newPolicy = val as NoShowPolicy;
+                      // Only update if actually changed
+                      if (config.no_show_policy !== newPolicy) {
+                        updateConfig(config.seating_type, { no_show_policy: newPolicy });
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />

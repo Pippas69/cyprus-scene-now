@@ -77,19 +77,34 @@ export function DateTimePicker({
     }
   }, [value]);
 
-  // Commit the current selection to the form
-  const commitValue = React.useCallback((date: Date | undefined, h: string, m: string) => {
+  // Track if user made changes during this session (dirty tracking)
+  const dirtyRef = React.useRef(false);
+
+  // Commit the current selection to the form - with no-op prevention
+  const commitValue = React.useCallback((date: Date | undefined, h: string, m: string, force = false) => {
     if (date) {
       const newDate = new Date(date);
       const hoursNum = parseInt(h) || 0;
       const minsNum = parseInt(m) || 0;
       newDate.setHours(hoursNum, minsNum, 0, 0);
-      onChange(newDate);
+      
+      const newTs = newDate.getTime();
+      const currentTs = getSafeTimestamp(value);
+      
+      // Only call onChange if the timestamp actually changed (or force is true)
+      if (force || newTs !== currentTs) {
+        // Defer to avoid commit-phase conflicts with RHF
+        queueMicrotask(() => {
+          onChange(newDate);
+          prevTimestampRef.current = newTs;
+        });
+      }
     }
-  }, [onChange]);
+  }, [onChange, value]);
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
+    dirtyRef.current = true;
     // Auto-commit when date is selected (with current time values)
     if (date) {
       commitValue(date, hours, minutes);
@@ -98,15 +113,17 @@ export function DateTimePicker({
 
   const handleDone = () => {
     if (selectedDate) {
-      commitValue(selectedDate, hours, minutes);
+      commitValue(selectedDate, hours, minutes, true);
       setOpen(false);
+      dirtyRef.current = false;
     }
   };
 
-  // Also commit when popover closes (if we have a date)
+  // Also commit when popover closes (if we have a date AND user made changes)
   const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen && selectedDate) {
+    if (!isOpen && selectedDate && dirtyRef.current) {
       commitValue(selectedDate, hours, minutes);
+      dirtyRef.current = false;
     }
     setOpen(isOpen);
   };
