@@ -2308,6 +2308,7 @@ export type Database = {
           balance_remaining_cents: number | null
           business_id: string
           business_payout_cents: number
+          claim_type: string | null
           commission_amount_cents: number
           commission_percent: number
           created_at: string | null
@@ -2317,6 +2318,7 @@ export type Database = {
           final_price_cents: number
           id: string
           original_price_cents: number
+          party_size: number | null
           payment_link_expires_at: string | null
           payment_link_url: string | null
           qr_code_token: string | null
@@ -2333,6 +2335,7 @@ export type Database = {
           balance_remaining_cents?: number | null
           business_id: string
           business_payout_cents: number
+          claim_type?: string | null
           commission_amount_cents?: number
           commission_percent?: number
           created_at?: string | null
@@ -2342,6 +2345,7 @@ export type Database = {
           final_price_cents: number
           id?: string
           original_price_cents: number
+          party_size?: number | null
           payment_link_expires_at?: string | null
           payment_link_url?: string | null
           qr_code_token?: string | null
@@ -2358,6 +2362,7 @@ export type Database = {
           balance_remaining_cents?: number | null
           business_id?: string
           business_payout_cents?: number
+          claim_type?: string | null
           commission_amount_cents?: number
           commission_percent?: number
           created_at?: string | null
@@ -2367,6 +2372,7 @@ export type Database = {
           final_price_cents?: number
           id?: string
           original_price_cents?: number
+          party_size?: number | null
           payment_link_expires_at?: string | null
           payment_link_url?: string | null
           qr_code_token?: string | null
