@@ -50,7 +50,10 @@ interface FormData {
   // Step 6: Availability
   maxPurchases: number | null;
   maxPerUser: number;
-  // Step 7: Redemption
+  // Step 7: Offer Validity (after claim)
+  validityDuration: number; // in hours: 24, 48, 72, 168, 336, or -1 for custom
+  validityCustomDays: number;
+  // Step 8: Redemption
   requiresReservation: boolean;
   terms: string;
 }
@@ -68,7 +71,8 @@ const translations = {
     step4: "4. Λεπτομέρειες Προσφοράς",
     step5: "5. Διάρκεια Εμφάνισης στο ΦΟΜΟ",
     step6: "6. Διαθεσιμότητα",
-    step7: "7. Ρυθμίσεις Εξαργύρωσης",
+    step7: "7. Ισχύς Προσφοράς",
+    step8: "8. Ρυθμίσεις Εξαργύρωσης",
     required: "Υποχρεωτικό",
     titlePlaceholder: "Δώστε ένα όνομα στην προσφορά σας",
     descriptionPlaceholder: "Περιγράψτε την προσφορά σας...",
@@ -99,6 +103,16 @@ const translations = {
     maxPerUser: "Μέγ. ανά Χρήστη",
     unlimited: "Απεριόριστα",
     availabilityDesc: "Περιορισμοί στον αριθμό των αξιώσεων",
+    // Offer Validity
+    validityDesc: "Πόσο καιρό έχει ο χρήστης για να εξαργυρώσει την προσφορά μετά την απόκτηση",
+    validFor: "Ισχύει για",
+    day1: "1 Ημέρα",
+    days2: "2 Ημέρες",
+    days3: "3 Ημέρες",
+    week1: "1 Εβδομάδα",
+    weeks2: "2 Εβδομάδες",
+    customDays: "Προσαρμοσμένο",
+    days: "ημέρες",
     // Redemption
     requiresReservation: "Απαιτεί Κράτηση",
     requiresReservationDesc: "Οι χρήστες πρέπει να κάνουν κράτηση για να λάβουν την προσφορά",
@@ -121,7 +135,8 @@ const translations = {
     step4: "4. Offer Details",
     step5: "5. ΦΟΜΟ Appearance Duration",
     step6: "6. Availability",
-    step7: "7. Redemption Settings",
+    step7: "7. Offer Validity",
+    step8: "8. Redemption Settings",
     required: "Required",
     titlePlaceholder: "Give your offer a name",
     descriptionPlaceholder: "Describe your offer...",
@@ -152,6 +167,16 @@ const translations = {
     maxPerUser: "Max Per User",
     unlimited: "Unlimited",
     availabilityDesc: "Limits on how many times this offer can be claimed",
+    // Offer Validity
+    validityDesc: "How long users have to redeem the offer after claiming",
+    validFor: "Valid for",
+    day1: "1 Day",
+    days2: "2 Days",
+    days3: "3 Days",
+    week1: "1 Week",
+    weeks2: "2 Weeks",
+    customDays: "Custom",
+    days: "days",
     // Redemption
     requiresReservation: "Requires Reservation",
     requiresReservationDesc: "Users must make a reservation to claim this offer",
@@ -219,6 +244,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     // Availability
     maxPurchases: null,
     maxPerUser: 1,
+    // Offer Validity
+    validityDuration: 48, // default 2 days
+    validityCustomDays: 7,
     // Redemption
     requiresReservation: false,
     terms: '',
@@ -470,6 +498,15 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
   // Appearance hour presets
   const hourPresets = [3, 6, 12, 24];
+
+  // Validity duration presets (in hours)
+  const validityPresets = [
+    { hours: 24, label: t.day1 },
+    { hours: 48, label: t.days2 },
+    { hours: 72, label: t.days3 },
+    { hours: 168, label: t.week1 },
+    { hours: 336, label: t.weeks2 },
+  ];
 
   // ============================================
   // RENDER
@@ -838,8 +875,51 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           </div>
         </SectionCard>
 
-        {/* Step 7: Redemption Settings */}
+        {/* Step 7: Offer Validity */}
         <SectionCard title={t.step7}>
+          <p className="text-sm text-muted-foreground -mt-2 mb-4">{t.validityDesc}</p>
+          
+          {/* Validity Presets */}
+          <div className="flex flex-wrap gap-2">
+            {validityPresets.map(({ hours, label }) => (
+              <Button
+                key={hours}
+                type="button"
+                variant={formData.validityDuration === hours ? "default" : "outline"}
+                size="sm"
+                onClick={() => updateField('validityDuration', hours)}
+              >
+                {label}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              variant={formData.validityDuration === -1 ? "default" : "outline"}
+              size="sm"
+              onClick={() => updateField('validityDuration', -1)}
+            >
+              {t.customDays}
+            </Button>
+          </div>
+          
+          {/* Custom Days Input */}
+          {formData.validityDuration === -1 && (
+            <div className="flex items-center gap-3 mt-4">
+              <Input
+                type="number"
+                min="1"
+                max="90"
+                value={formData.validityCustomDays}
+                onChange={(e) => updateField('validityCustomDays', parseInt(e.target.value) || 1)}
+                className="max-w-[100px]"
+              />
+              <span className="text-muted-foreground">{t.days}</span>
+            </div>
+          )}
+        </SectionCard>
+
+        {/* Step 8: Redemption Settings */}
+        <SectionCard title={t.step8}>
           <div className="space-y-4">
             {/* Requires Reservation Toggle */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
