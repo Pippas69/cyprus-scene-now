@@ -1,191 +1,261 @@
-import { useState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, AlertTriangle, CheckCircle2, Clock, CalendarCheck, Info } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useLanguage } from "@/hooks/useLanguage";
-import { businessTranslations } from "./translations";
-import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
-import { toastTranslations } from "@/translations/toastTranslations";
+import { Loader2, Tag, Package, Clock, Calendar, AlertTriangle, Check, Info, Sparkles, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import OfferBoostSection from "./OfferBoostSection";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import { MultiItemOfferEditor, MultiItemOfferData, PricingType } from "./offers";
-import { OfferTypeSelector, OfferType } from "./offers/OfferTypeSelector";
-import { CreditOfferFields } from "./offers/CreditOfferFields";
+import OfferBoostSection from "./OfferBoostSection";
 
-const createOfferSchema = (language: 'el' | 'en') => {
-  const v = validationTranslations[language];
-  
-  return z.object({
-    title: z.string().trim().min(3, formatValidationMessage(v.minLength, { min: 3 })).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
-    description: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
-    // original_price is optional for multi-item offers (bundle/itemized)
-    original_price: z.coerce.number().min(0.01, language === 'el' ? "Η τιμή πρέπει να είναι τουλάχιστον €0.01" : "Price must be at least €0.01").optional(),
-    percent_off: z.coerce.number().min(1, formatValidationMessage(v.minValue, { min: 1 })).max(99, formatValidationMessage(v.maxValue, { max: 99 })),
-    max_purchases: z.coerce.number().min(1).optional().nullable(),
-    max_per_user: z.coerce.number().min(1).default(1),
-    start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required")
-      .refine((val) => new Date(val) >= new Date(new Date().setHours(0, 0, 0, 0)), {
-        message: language === 'el' ? "Η ημερομηνία έναρξης δεν μπορεί να είναι στο παρελθόν" : "Start date cannot be in the past"
-      }),
-    end_at: z.string().min(1, language === 'el' ? "Η ημερομηνία λήξης είναι υποχρεωτική" : "End date is required"),
-    terms: z.string().trim().max(500, formatValidationMessage(v.maxLength, { max: 500 })).optional(),
-  }).refine((data) => new Date(data.end_at) > new Date(data.start_at), {
-    message: language === 'el' ? "Η ημερομηνία λήξης πρέπει να είναι μετά την ημερομηνία έναρξης" : "End date must be after start date",
-    path: ["end_at"],
-  });
+// ============================================
+// TYPES
+// ============================================
+
+type OfferType = 'single' | 'bundle';
+type DurationPreset = '1h' | '2h' | '3h' | '6h' | 'same_day' | '1w' | '1m' | 'custom';
+
+interface BundleItem {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface FormData {
+  // Step 1: Title
+  title: string;
+  // Step 2: Description
+  description: string;
+  // Step 3: Offer Type
+  offerType: OfferType;
+  // Step 4: Offer Details
+  originalPriceCents: number;
+  discountPercent: number;
+  bundlePriceCents: number;
+  bundleItems: BundleItem[];
+  // Step 5: Duration
+  durationPreset: DurationPreset;
+  startAt: Date | null;
+  endAt: Date | null;
+  maxPurchases: number | null;
+  maxPerUser: number;
+  // Step 6: Redemption
+  requiresReservation: boolean;
+  terms: string;
+}
+
+// ============================================
+// TRANSLATIONS
+// ============================================
+
+const translations = {
+  el: {
+    createOffer: "Δημιουργία Προσφοράς",
+    step1: "1. Τίτλος Προσφοράς",
+    step2: "2. Περιγραφή Προσφοράς",
+    step3: "3. Τύπος Προσφοράς",
+    step4: "4. Λεπτομέρειες Προσφοράς",
+    step5: "5. Διάρκεια & Διαθεσιμότητα",
+    step6: "6. Ρυθμίσεις Εξαργύρωσης",
+    required: "Υποχρεωτικό",
+    titlePlaceholder: "Δώστε ένα όνομα στην προσφορά σας",
+    descriptionPlaceholder: "Περιγράψτε την προσφορά σας...",
+    wordsRemaining: "λέξεις απομένουν",
+    wordsOver: "λέξεις πάνω από το όριο",
+    singleItem: "Μεμονωμένο Προϊόν",
+    singleItemDesc: "Ένα προϊόν ή υπηρεσία με έκπτωση",
+    bundleOffer: "Πακέτο Προσφοράς",
+    bundleDesc: "Πολλαπλά προϊόντα για μία τιμή",
+    originalPrice: "Αρχική Τιμή (€)",
+    discountPercent: "Ποσοστό Έκπτωσης (%)",
+    bundlePrice: "Τιμή Πακέτου (€)",
+    bundleItems: "Προϊόντα στο Πακέτο",
+    addItem: "Προσθήκη Προϊόντος",
+    itemName: "Όνομα προϊόντος",
+    itemDescription: "Περιγραφή (προαιρετικό)",
+    customerPays: "Ο πελάτης πληρώνει",
+    youSave: "Εξοικονόμηση",
+    duration: "Διάρκεια",
+    startDate: "Ημερομηνία Έναρξης",
+    endDate: "Ημερομηνία Λήξης",
+    maxTotal: "Μέγ. Συνολικά",
+    maxPerUser: "Μέγ. ανά Χρήστη",
+    unlimited: "Απεριόριστα",
+    requiresReservation: "Απαιτεί Κράτηση",
+    requiresReservationDesc: "Οι χρήστες πρέπει να κάνουν κράτηση για να λάβουν την προσφορά",
+    termsConditions: "Όροι & Προϋποθέσεις",
+    termsPlaceholder: "Προσθέστε τυχόν όρους ή περιορισμούς...",
+    publishOffer: "Δημοσίευση Προσφοράς",
+    publishing: "Δημοσίευση...",
+    allFieldsRequired: "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία",
+    offerCreated: "Η προσφορά δημιουργήθηκε επιτυχώς!",
+    offerCreateFailed: "Αποτυχία δημιουργίας προσφοράς",
+    addAtLeastOneItem: "Προσθέστε τουλάχιστον ένα προϊόν στο πακέτο",
+    noReservationsEnabled: "Οι άμεσες κρατήσεις δεν είναι ενεργοποιημένες για την επιχείρησή σας",
+    hour: "ώρα",
+    hours: "ώρες",
+    sameDay: "Ίδια μέρα",
+    week: "εβδομάδα",
+    month: "μήνας",
+    custom: "Προσαρμοσμένο",
+  },
+  en: {
+    createOffer: "Create Offer",
+    step1: "1. Offer Title",
+    step2: "2. Offer Description",
+    step3: "3. Offer Type",
+    step4: "4. Offer Details",
+    step5: "5. Duration & Availability",
+    step6: "6. Redemption Settings",
+    required: "Required",
+    titlePlaceholder: "Give your offer a name",
+    descriptionPlaceholder: "Describe your offer...",
+    wordsRemaining: "words remaining",
+    wordsOver: "words over limit",
+    singleItem: "Single Item",
+    singleItemDesc: "One product or service with a discount",
+    bundleOffer: "Bundle Offer",
+    bundleDesc: "Multiple items for one price",
+    originalPrice: "Original Price (€)",
+    discountPercent: "Discount Percentage (%)",
+    bundlePrice: "Bundle Price (€)",
+    bundleItems: "Items in Bundle",
+    addItem: "Add Item",
+    itemName: "Item name",
+    itemDescription: "Description (optional)",
+    customerPays: "Customer pays",
+    youSave: "You save",
+    duration: "Duration",
+    startDate: "Start Date",
+    endDate: "End Date",
+    maxTotal: "Max Total",
+    maxPerUser: "Max Per User",
+    unlimited: "Unlimited",
+    requiresReservation: "Requires Reservation",
+    requiresReservationDesc: "Users must make a reservation to claim this offer",
+    termsConditions: "Terms & Conditions",
+    termsPlaceholder: "Add any terms or restrictions...",
+    publishOffer: "Publish Offer",
+    publishing: "Publishing...",
+    allFieldsRequired: "Please fill in all required fields",
+    offerCreated: "Offer created successfully!",
+    offerCreateFailed: "Failed to create offer",
+    addAtLeastOneItem: "Add at least one item to the bundle",
+    noReservationsEnabled: "Direct reservations are not enabled for your business",
+    hour: "hour",
+    hours: "hours",
+    sameDay: "Same day",
+    week: "week",
+    month: "month",
+    custom: "Custom",
+  },
 };
 
-type OfferFormData = z.infer<ReturnType<typeof createOfferSchema>>;
+// ============================================
+// HELPERS
+// ============================================
+
+const countWords = (text: string): number => {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+};
+
+const generateId = () => `item-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+const calculateEndDate = (startDate: Date, preset: DurationPreset): Date => {
+  const end = new Date(startDate);
+  switch (preset) {
+    case '1h': end.setHours(end.getHours() + 1); break;
+    case '2h': end.setHours(end.getHours() + 2); break;
+    case '3h': end.setHours(end.getHours() + 3); break;
+    case '6h': end.setHours(end.getHours() + 6); break;
+    case 'same_day': end.setHours(23, 59, 0, 0); break;
+    case '1w': end.setDate(end.getDate() + 7); break;
+    case '1m': end.setDate(end.getDate() + 30); break;
+    default: break;
+  }
+  return end;
+};
+
+const generateQRToken = (businessId: string) => {
+  return `${businessId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+};
+
+// ============================================
+// COMPONENT
+// ============================================
 
 interface OfferCreationFormProps {
   businessId: string;
 }
 
-// Duration presets
-type DurationPreset = '1h' | '2h' | '3h' | '6h' | 'same_day' | '1w' | '1m' | 'custom';
-
-const durationPresets: { key: DurationPreset; labelEl: string; labelEn: string }[] = [
-  { key: '1h', labelEl: '1 ώρα', labelEn: '1 hour' },
-  { key: '2h', labelEl: '2 ώρες', labelEn: '2 hours' },
-  { key: '3h', labelEl: '3 ώρες', labelEn: '3 hours' },
-  { key: '6h', labelEl: '6 ώρες', labelEn: '6 hours' },
-  { key: 'same_day', labelEl: 'Ίδια μέρα', labelEn: 'Same day' },
-  { key: '1w', labelEl: '1 εβδομάδα', labelEn: '1 week' },
-  { key: '1m', labelEl: '1 μήνας', labelEn: '1 month' },
-  { key: 'custom', labelEl: 'Προσαρμοσμένο', labelEn: 'Custom' },
-];
-
-// Calculate end date from start date and duration
-const calculateEndDate = (startDate: Date, duration: DurationPreset): Date => {
-  const endDate = new Date(startDate);
-  
-  switch (duration) {
-    case '1h':
-      endDate.setHours(endDate.getHours() + 1);
-      break;
-    case '2h':
-      endDate.setHours(endDate.getHours() + 2);
-      break;
-    case '3h':
-      endDate.setHours(endDate.getHours() + 3);
-      break;
-    case '6h':
-      endDate.setHours(endDate.getHours() + 6);
-      break;
-    case 'same_day':
-      endDate.setHours(23, 59, 0, 0);
-      break;
-    case '1w':
-      endDate.setDate(endDate.getDate() + 7);
-      break;
-    case '1m':
-      endDate.setDate(endDate.getDate() + 30);
-      break;
-    default:
-      // Custom - don't change
-      break;
-  }
-  
-  return endDate;
-};
-
-// Helper to get default dates (now defaults to same_day)
-const getDefaultDates = () => {
-  const now = new Date();
-  const startDate = new Date(now);
-  startDate.setHours(now.getHours() + 1, 0, 0, 0); // Start in 1 hour
-  
-  // Default to same day (end at 23:59)
-  const endDate = new Date(startDate);
-  endDate.setHours(23, 59, 0, 0);
-  
-  return {
-    start_at: startDate.toISOString(),
-    end_at: endDate.toISOString(),
-  };
-};
-
 const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
-  const { toast } = useToast();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  const t = businessTranslations[language];
-  const toastT = toastTranslations[language];
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [validationShake, setValidationShake] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
-  const [durationPreset, setDurationPreset] = useState<DurationPreset>('same_day');
-  
-  // Requires reservation toggle
-  const [requiresReservation, setRequiresReservation] = useState(false);
+  const t = translations[language];
 
-  // Boost data (aligned with event boost tiers)
+  // Form state
+  const [formData, setFormData] = useState<FormData>({
+    title: '',
+    description: '',
+    offerType: 'single',
+    originalPriceCents: 0,
+    discountPercent: 20,
+    bundlePriceCents: 0,
+    bundleItems: [],
+    durationPreset: 'same_day',
+    startAt: new Date(),
+    endAt: (() => {
+      const d = new Date();
+      d.setHours(23, 59, 0, 0);
+      return d;
+    })(),
+    maxPurchases: null,
+    maxPerUser: 1,
+    requiresReservation: false,
+    terms: '',
+  });
+
+  // UI state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Boost data - uses OfferBoostSection's expected format
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
-    tier: "basic" | "standard" | "premium" | "elite";
+    tier: "standard" | "premium";
+    durationMode: "hourly" | "daily";
     startDate: Date;
     endDate: Date;
+    durationHours?: number;
     totalCostCents: number;
     dailyRateCents: number;
+    hourlyRateCents?: number;
     targetingQuality: number;
-  }>({ 
-    enabled: false, 
-    tier: "basic",
+  }>({
+    enabled: false,
+    tier: "standard",
+    durationMode: "daily",
     startDate: new Date(),
     endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     totalCostCents: 0,
-    dailyRateCents: 1500,
-    targetingQuality: 50,
-  });
-  
-  // Commission-free toggle (separate from boost)
-  const [useCommissionFreeSlot, setUseCommissionFreeSlot] = useState(false);
-
-  // Multi-item offer state
-  const [multiItemData, setMultiItemData] = useState<MultiItemOfferData>({
-    pricing_type: "single",
-    items: [],
+    dailyRateCents: 3000,
+    targetingQuality: 70,
   });
 
-  // Offer type state (regular vs credit)
-  const [offerType, setOfferType] = useState<OfferType>('regular');
-  const [creditAmountCents, setCreditAmountCents] = useState(0);
-  const [bonusPercent, setBonusPercent] = useState(25); // Default 25% bonus
-
-  // Fetch subscription status
-  const { data: subscriptionData } = useQuery({
-    queryKey: ["subscription-status"],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("check-subscription");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch business verification and Stripe status
+  // Fetch business data
   const { data: businessData, isLoading: isLoadingBusiness } = useQuery({
     queryKey: ["business-verification", businessId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("businesses")
-        .select("verified, name, stripe_account_id, stripe_payouts_enabled, accepts_direct_reservations")
+        .select("verified, name, accepts_direct_reservations")
         .eq("id", businessId)
         .single();
       if (error) throw error;
@@ -195,743 +265,567 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   });
 
   const isBusinessVerified = businessData?.verified === true;
-  const hasStripeSetup = !!businessData?.stripe_account_id && businessData?.stripe_payouts_enabled === true;
   const hasDirectReservations = businessData?.accepts_direct_reservations === true;
 
-  // Get default dates
-  const defaultDates = getDefaultDates();
+  // Word count
+  const wordCount = countWords(formData.description);
+  const maxWords = 60;
+  const wordsRemaining = maxWords - wordCount;
 
-  const form = useForm<OfferFormData>({
-    resolver: zodResolver(createOfferSchema(language)),
-    defaultValues: {
-      title: "",
-      description: "",
-      original_price: undefined as unknown as number,
-      percent_off: 20,
-      max_purchases: null,
-      max_per_user: 1,
-      start_at: defaultDates.start_at,
-      end_at: defaultDates.end_at,
-      terms: "",
-    },
-  });
-
-  // Scroll to first error field
-  const scrollToFirstError = () => {
-    const errors = form.formState.errors;
-    const firstErrorKey = Object.keys(errors)[0];
-    if (firstErrorKey && formRef.current) {
-      const errorElement = formRef.current.querySelector(`[name="${firstErrorKey}"]`) ||
-        formRef.current.querySelector(`[data-field="${firstErrorKey}"]`);
-      if (errorElement) {
-        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        (errorElement as HTMLElement).focus?.();
-      }
-    }
-  };
-
-  // Trigger shake animation
-  const triggerValidationShake = () => {
-    setValidationShake(true);
-    setTimeout(() => setValidationShake(false), 500);
-  };
-
-  const watchedPrice = form.watch("original_price");
-  const watchedDiscount = form.watch("percent_off");
-  
-  // Calculate effective price based on pricing type
+  // Price calculations
   const getEffectivePrice = () => {
-    if (multiItemData.pricing_type === "bundle" && multiItemData.bundle_price_cents) {
-      return multiItemData.bundle_price_cents / 100;
+    if (formData.offerType === 'bundle') {
+      return formData.bundlePriceCents / 100;
     }
-    return watchedPrice || 0;
+    return formData.originalPriceCents / 100;
   };
-  
+
   const effectivePrice = getEffectivePrice();
-  const finalPrice = effectivePrice ? (effectivePrice * (100 - (watchedDiscount || 0)) / 100).toFixed(2) : "0.00";
+  const discountAmount = effectivePrice * (formData.discountPercent / 100);
+  const finalPrice = effectivePrice - discountAmount;
 
-  const generateQRToken = () => {
-    return `${businessId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  // Field updater
+  const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
+    setFormData(prev => {
+      const next = { ...prev, [field]: value };
+      
+      // Auto-calculate end date when start or preset changes
+      if ((field === 'startAt' || field === 'durationPreset') && next.durationPreset !== 'custom' && next.startAt) {
+        next.endAt = calculateEndDate(next.startAt, next.durationPreset);
+      }
+      
+      return next;
+    });
   };
 
-  const onSubmit = async (data: OfferFormData) => {
-    console.log("=== OFFER SUBMIT START ===");
-    console.log("Data:", data);
-    console.log("BusinessId:", businessId);
+  // Bundle item handlers
+  const addBundleItem = () => {
+    const newItem: BundleItem = { id: generateId(), name: '', description: '' };
+    updateField('bundleItems', [...formData.bundleItems, newItem]);
+  };
+
+  const updateBundleItem = (id: string, updates: Partial<BundleItem>) => {
+    const items = formData.bundleItems.map(item =>
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateField('bundleItems', items);
+  };
+
+  const removeBundleItem = (id: string) => {
+    updateField('bundleItems', formData.bundleItems.filter(item => item.id !== id));
+  };
+
+  const moveBundleItem = (index: number, direction: 'up' | 'down') => {
+    const items = [...formData.bundleItems];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= items.length) return;
+    [items[index], items[newIndex]] = [items[newIndex], items[index]];
+    updateField('bundleItems', items);
+  };
+
+  // Validation
+  const validate = (): string | null => {
+    if (!formData.title.trim()) return t.allFieldsRequired;
+    if (wordsRemaining < 0) return language === 'el' ? 'Η περιγραφή υπερβαίνει τις 60 λέξεις' : 'Description exceeds 60 words';
+    if (!formData.startAt || !formData.endAt) return t.allFieldsRequired;
     
-    setSubmitError(null);
-    setSubmitSuccess(false);
+    if (formData.offerType === 'single') {
+      if (formData.originalPriceCents <= 0) return t.allFieldsRequired;
+    } else {
+      if (formData.bundlePriceCents <= 0) return t.allFieldsRequired;
+      if (formData.bundleItems.length === 0) return t.addAtLeastOneItem;
+      if (formData.bundleItems.some(item => !item.name.trim())) return t.allFieldsRequired;
+    }
+    
+    if (formData.discountPercent < 1 || formData.discountPercent > 99) return t.allFieldsRequired;
+    
+    return null;
+  };
+
+  // Submit handler
+  const handleSubmit = async () => {
+    const error = validate();
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
     setIsSubmitting(true);
-    
+
     try {
-      // Check authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log("Auth check:", { user: user?.id, authError });
-      
-      if (!user) {
-        throw new Error(language === 'el' ? "Παρακαλώ συνδεθείτε ξανά" : "Please log in again");
-      }
-
-      if (!businessId) {
-        throw new Error(language === 'el' ? "Δεν βρέθηκε επιχείρηση" : "No business found");
-      }
-
-      // Determine the price based on offer type and pricing type
-      let originalPriceCents: number;
-      let discountPercent = data.percent_off;
-      
-      if (offerType === 'credit') {
-        // For credit offers, original_price is the credit amount
-        originalPriceCents = creditAmountCents;
-        discountPercent = 0; // Credit offers use bonus_percent instead
-      } else if (multiItemData.pricing_type === "bundle" && multiItemData.bundle_price_cents) {
-        originalPriceCents = multiItemData.bundle_price_cents;
-      } else {
-        originalPriceCents = Math.round((data.original_price || 0) * 100);
-      }
-
-      console.log("Inserting discount...", { offerType, originalPriceCents, bonusPercent, requiresReservation });
-      const { data: discountData, error } = await supabase.from('discounts').insert({
+      // Insert the offer
+      const { data: offerData, error: insertError } = await supabase.from('discounts').insert({
         business_id: businessId,
-        title: data.title,
-        description: data.description || null,
-        original_price_cents: originalPriceCents,
-        percent_off: discountPercent,
-        max_purchases: data.max_purchases || null,
-        max_per_user: data.max_per_user || 1,
-        start_at: data.start_at,
-        end_at: data.end_at,
-        terms: data.terms || null,
-        qr_code_token: generateQRToken(),
+        title: formData.title,
+        description: formData.description || null,
+        original_price_cents: formData.offerType === 'single' ? formData.originalPriceCents : null,
+        bundle_price_cents: formData.offerType === 'bundle' ? formData.bundlePriceCents : null,
+        percent_off: formData.discountPercent,
+        pricing_type: formData.offerType,
+        offer_type: 'regular',
+        start_at: formData.startAt!.toISOString(),
+        end_at: formData.endAt!.toISOString(),
+        max_purchases: formData.maxPurchases,
+        max_per_user: formData.maxPerUser,
+        requires_reservation: formData.requiresReservation && hasDirectReservations,
+        terms: formData.terms || null,
+        qr_code_token: generateQRToken(businessId),
         active: true,
-        pricing_type: multiItemData.pricing_type,
-        bundle_price_cents: multiItemData.pricing_type === "bundle" ? multiItemData.bundle_price_cents : null,
-        offer_type: offerType,
-        bonus_percent: offerType === 'credit' ? bonusPercent : 0,
-        credit_amount_cents: offerType === 'credit' ? creditAmountCents : null,
-        requires_reservation: requiresReservation && hasDirectReservations,
       }).select().single();
 
-      console.log("Insert result:", { discountData, error });
+      if (insertError) throw insertError;
 
-      if (error) {
-        console.error("Supabase insert error:", error);
-        // Check for RLS/permission errors
-        if (error.code === '42501' || error.message?.includes('policy') || error.message?.includes('permission')) {
-          throw new Error(language === 'el' 
-            ? "Δεν έχετε δικαίωμα δημοσίευσης προσφορών. Η επιχείρησή σας πρέπει να είναι επαληθευμένη." 
-            : "You don't have permission to publish offers. Your business must be verified.");
-        }
-        throw error;
-      }
-
-      // Insert items if this is a bundle offer
-      if (multiItemData.pricing_type === "bundle" && multiItemData.items.length > 0 && discountData) {
-        console.log("Inserting discount items...");
-        
-        for (const item of multiItemData.items) {
-          const { error: itemError } = await supabase.from('discount_items').insert({
-            discount_id: discountData.id,
+      // Insert bundle items if applicable
+      if (formData.offerType === 'bundle' && formData.bundleItems.length > 0 && offerData) {
+        for (let i = 0; i < formData.bundleItems.length; i++) {
+          const item = formData.bundleItems[i];
+          await supabase.from('discount_items').insert({
+            discount_id: offerData.id,
             name: item.name,
             description: item.description || null,
-            sort_order: item.sort_order,
+            sort_order: i,
           });
-
-          if (itemError) {
-            console.error("Item insert error:", itemError);
-          }
         }
       }
 
-      // Handle commission-free slot (deduct from subscription if used)
-      if (useCommissionFreeSlot && discountData) {
-        console.log("Setting commission-free status...");
-        // Update the discount to be commission-free
-        const { error: updateError } = await supabase
-          .from('discounts')
-          .update({ commission_free: true })
-          .eq('id', discountData.id);
-
-        if (updateError) {
-          console.error("Commission-free update error:", updateError);
-        }
-
-        // Deduct from subscription's commission_free_offers_remaining
-        const { error: subError } = await supabase
-          .from('business_subscriptions')
-          .update({
-            commission_free_offers_remaining: Math.max(0, (subscriptionData?.commission_free_offers_remaining || 0) - 1),
-          })
-          .eq('business_id', businessId);
-
-        if (subError) {
-          console.error("Subscription update error:", subError);
-        }
-      }
-
-      // Create boost if enabled (aligned with event boost tiers)
-      if (boostData.enabled && discountData) {
-        console.log("Creating visibility boost...");
-        
-        // Check if subscription budget can be used
-        const remainingBudget = subscriptionData?.monthly_budget_remaining_cents || 0;
-        const canUseSubscriptionBudget = subscriptionData?.subscribed && remainingBudget >= boostData.totalCostCents;
-        
-        const { data: boostResult, error: boostError } = await supabase.functions.invoke("create-offer-boost", {
+      // Handle boost if enabled
+      if (boostData.enabled && offerData) {
+        await supabase.functions.invoke("create-offer-boost", {
           body: {
-            discountId: discountData.id,
+            discountId: offerData.id,
             tier: boostData.tier,
             startDate: boostData.startDate.toISOString().split("T")[0],
             endDate: boostData.endDate.toISOString().split("T")[0],
-            useSubscriptionBudget: canUseSubscriptionBudget,
           },
         });
-
-        if (boostError) {
-          console.error("Boost creation error:", boostError);
-          toast({
-            title: language === "el" ? "Προειδοποίηση" : "Warning",
-            description: language === "el" 
-              ? "Η προσφορά δημιουργήθηκε αλλά η προώθηση απέτυχε." 
-              : "Offer created but boost activation failed.",
-            variant: "destructive",
-          });
-        } else if (boostResult?.needsPayment) {
-          // Redirect to Stripe checkout for boost payment
-          console.log("Boost requires payment, creating checkout...");
-          // For now, we'll skip payment flow and just log it
-          // In full implementation, you'd redirect to a checkout page
-          toast({
-            title: language === "el" ? "Πληρωμή απαιτείται" : "Payment required",
-            description: language === "el" 
-              ? `Η προώθηση κοστίζει €${(boostResult.totalCostCents / 100).toFixed(2)}. Μπορείτε να την ενεργοποιήσετε από τη λίστα προσφορών.` 
-              : `Boost costs €${(boostResult.totalCostCents / 100).toFixed(2)}. You can activate it from the offers list.`,
-          });
-        }
       }
 
-      console.log("=== OFFER SUBMIT SUCCESS ===");
-      setSubmitSuccess(true);
-      
-      toast({
-        title: toastT.success,
-        description: toastT.offerCreated,
-      });
+      toast.success(t.offerCreated);
+      navigate('/dashboard-business/offers');
 
-      form.reset();
-      setBoostData({ 
-        enabled: false, 
-        tier: "basic",
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        totalCostCents: 0,
-        dailyRateCents: 1500,
-        targetingQuality: 50,
-      });
-      setUseCommissionFreeSlot(false);
-      setMultiItemData({ pricing_type: "single", items: [] });
-      setOfferType('regular');
-      setCreditAmountCents(0);
-      setBonusPercent(25);
-      setRequiresReservation(false);
-      
-      // Navigate to offers list after short delay
-      setTimeout(() => {
-        navigate('/dashboard-business/offers');
-      }, 1500);
-      
-    } catch (error: unknown) {
-      console.error("=== OFFER SUBMIT ERROR ===", error);
-      const errorMessage = error instanceof Error ? error.message : toastT.createFailed;
-      setSubmitError(errorMessage);
-      toast({
-        title: toastT.error,
-        description: errorMessage,
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error("Offer creation error:", err);
+      toast.error(t.offerCreateFailed);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ============================================
+  // RENDER HELPERS
+  // ============================================
+
+  const SectionCard = ({
+    title,
+    required = false,
+    children,
+  }: {
+    title: string;
+    required?: boolean;
+    children: React.ReactNode;
+  }) => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 pb-2 border-b">
+        <h3 className="font-semibold text-lg">{title}</h3>
+        {required && (
+          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+            {t.required}
+          </span>
+        )}
+      </div>
+      <div className="space-y-4">
+        {children}
+      </div>
+    </div>
+  );
+
+  const durationPresets: { key: DurationPreset; label: string }[] = [
+    { key: '1h', label: `1 ${t.hour}` },
+    { key: '2h', label: `2 ${t.hours}` },
+    { key: '3h', label: `3 ${t.hours}` },
+    { key: '6h', label: `6 ${t.hours}` },
+    { key: 'same_day', label: t.sameDay },
+    { key: '1w', label: `1 ${t.week}` },
+    { key: '1m', label: `1 ${t.month}` },
+    { key: 'custom', label: t.custom },
+  ];
+
+  // ============================================
+  // RENDER
+  // ============================================
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.createOffer}</CardTitle>
+    <Card className="max-w-3xl mx-auto">
+      <CardHeader className="border-b">
+        <CardTitle className="flex items-center gap-2 text-2xl">
+          <Sparkles className="h-6 w-6 text-primary" />
+          {t.createOffer}
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+
+      <CardContent className="p-6 space-y-8">
         {/* Verification Warning */}
         {!isLoadingBusiness && !isBusinessVerified && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>
               {language === 'el' ? 'Η επιχείρησή σας δεν έχει επαληθευτεί' : 'Your business is not verified'}
             </AlertTitle>
             <AlertDescription>
-              {language === 'el' 
-                ? 'Δεν μπορείτε να δημοσιεύσετε προσφορές μέχρι να επαληθευτεί η επιχείρησή σας. Επικοινωνήστε με την υποστήριξη για περισσότερες πληροφορίες.' 
-                : 'You cannot publish offers until your business is verified. Contact support for more information.'}
+              {language === 'el'
+                ? 'Δεν μπορείτε να δημοσιεύσετε προσφορές μέχρι να επαληθευτεί η επιχείρησή σας.'
+                : 'You cannot publish offers until your business is verified.'}
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Stripe Setup Warning */}
-        {!isLoadingBusiness && isBusinessVerified && !hasStripeSetup && (
-          <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-900/20">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="text-amber-800 dark:text-amber-200">
-              {language === 'el' ? 'Ρύθμιση πληρωμών απαιτείται' : 'Payment setup required'}
-            </AlertTitle>
-            <AlertDescription className="text-amber-700 dark:text-amber-300">
-              {language === 'el' 
-                ? 'Για να λαμβάνετε πληρωμές από πωλήσεις προσφορών, πρέπει να ολοκληρώσετε τη ρύθμιση Stripe στις Ρυθμίσεις > Πληρωμές.' 
-                : 'To receive payments from offer sales, you need to complete Stripe setup in Settings > Payments.'}
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Step 1: Title */}
+        <SectionCard title={t.step1} required>
+          <Input
+            value={formData.title}
+            onChange={(e) => updateField('title', e.target.value)}
+            placeholder={t.titlePlaceholder}
+            maxLength={100}
+          />
+        </SectionCard>
 
-        <Form {...form}>
-          <form 
-            ref={formRef}
-            onSubmit={form.handleSubmit(onSubmit, (errors) => {
-              console.error("=== FORM VALIDATION FAILED ===");
-              console.error("Validation errors:", errors);
-              console.log("Current form values:", form.getValues());
-              
-              // Build detailed error message
-              const errorMessages = Object.entries(errors).map(([field, error]) => {
-                return `${field}: ${error?.message}`;
-              });
-              console.error("Error details:", errorMessages);
-              
-              const firstError = Object.values(errors)[0];
-              const errorMessage = firstError?.message || (language === 'el' 
-                ? "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία" 
-                : "Please fill in all required fields");
-              
-              setSubmitError(errorMessage as string);
-              triggerValidationShake();
-              
-              // Show toast with error
-              toast({
-                title: toastT.error,
-                description: errorMessage as string,
-                variant: "destructive",
-              });
-              
-              // Scroll to first error after a brief delay
-              setTimeout(scrollToFirstError, 100);
-            })} 
-            className="space-y-6"
-          >
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.offerTitle} *</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t.offerTitlePlaceholder} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+        {/* Step 2: Description */}
+        <SectionCard title={t.step2}>
+          <Textarea
+            value={formData.description}
+            onChange={(e) => updateField('description', e.target.value)}
+            placeholder={t.descriptionPlaceholder}
+            rows={4}
+          />
+          <p className={cn(
+            "text-sm",
+            wordsRemaining >= 0 ? "text-muted-foreground" : "text-destructive font-medium"
+          )}>
+            {wordsRemaining >= 0
+              ? `${wordsRemaining} ${t.wordsRemaining}`
+              : `${Math.abs(wordsRemaining)} ${t.wordsOver}`
+            }
+          </p>
+        </SectionCard>
+
+        {/* Step 3: Offer Type */}
+        <SectionCard title={t.step3} required>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Single Item */}
+            <button
+              type="button"
+              onClick={() => updateField('offerType', 'single')}
+              className={cn(
+                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
+                formData.offerType === 'single'
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-primary/50"
               )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.description}</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder={t.offerDescPlaceholder}
-                      rows={3}
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Separator />
-
-            {/* Offer Type Selector */}
-            <OfferTypeSelector
-              value={offerType}
-              onChange={setOfferType}
-              language={language}
-            />
-
-            <Separator />
-
-            {/* Credit Offer Fields */}
-            {offerType === 'credit' && (
-              <>
-                <CreditOfferFields
-                  creditAmountCents={creditAmountCents}
-                  bonusPercent={bonusPercent}
-                  onCreditAmountChange={setCreditAmountCents}
-                  onBonusPercentChange={setBonusPercent}
-                  language={language}
-                />
-                <Separator />
-              </>
-            )}
-
-            {/* Multi-Item Offer Editor - only for regular offers */}
-            {offerType === 'regular' && (
-              <>
-                <MultiItemOfferEditor
-                  data={multiItemData}
-                  onChange={setMultiItemData}
-                  language={language}
-                />
-                <Separator />
-              </>
-            )}
-
-            {/* Original Price - only show for single item regular offers */}
-            {offerType === 'regular' && multiItemData.pricing_type === "single" && (
-              <FormField
-                control={form.control}
-                name="original_price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'el' ? 'Αρχική Τιμή (€)' : 'Original Price (€)'} *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01"
-                        min="0.01"
-                        placeholder="10.00"
-                        required
-                        value={field.value || ''}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value);
-                          field.onChange(isNaN(val) ? undefined : val);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Discount Percent - only for regular offers */}
-            {offerType === 'regular' && (
-              <FormField
-                control={form.control}
-                name="percent_off"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t.discountPercent} *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1"
-                        max="99"
-                        placeholder="20"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Price Preview - updated for all pricing types */}
-            {effectivePrice > 0 && (
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{language === 'el' ? 'Αρχική τιμή' : 'Original price'}</span>
-                  <span className="line-through">€{effectivePrice.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{language === 'el' ? 'Έκπτωση' : 'Discount'}</span>
-                  <span className="text-green-600">-{watchedDiscount}%</span>
-                </div>
-                <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                  <span>{language === 'el' ? 'Ο πελάτης πληρώνει' : 'Customer pays'}</span>
-                  <span className="text-primary">€{finalPrice}</span>
-                </div>
-                {multiItemData.pricing_type !== "single" && multiItemData.items.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {multiItemData.items.length} {language === 'el' ? 'προϊόντα' : 'items'}
-                  </p>
-                )}
+            >
+              <Tag className="h-8 w-8 mx-auto text-primary" />
+              <div>
+                <p className="font-medium">{t.singleItem}</p>
+                <p className="text-sm text-muted-foreground">{t.singleItemDesc}</p>
               </div>
-            )}
+            </button>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="max_purchases"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'el' ? 'Μέγ. Αγορές (προαιρετικό)' : 'Max Purchases (optional)'}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1"
-                        placeholder={language === 'el' ? 'Απεριόριστες' : 'Unlimited'}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Bundle */}
+            <button
+              type="button"
+              onClick={() => updateField('offerType', 'bundle')}
+              className={cn(
+                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
+                formData.offerType === 'bundle'
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-primary/50"
+              )}
+            >
+              <Package className="h-8 w-8 mx-auto text-primary" />
+              <div>
+                <p className="font-medium">{t.bundleOffer}</p>
+                <p className="text-sm text-muted-foreground">{t.bundleDesc}</p>
+              </div>
+            </button>
+          </div>
+        </SectionCard>
 
-              <FormField
-                control={form.control}
-                name="max_per_user"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'el' ? 'Μέγ. ανά Χρήστη' : 'Max Per User'}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1"
-                        placeholder="1"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        {/* Step 4: Offer Details */}
+        <SectionCard title={t.step4} required>
+          {formData.offerType === 'single' ? (
+            // Single Item Fields
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{t.originalPrice} *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="10.00"
+                    value={formData.originalPriceCents ? (formData.originalPriceCents / 100).toFixed(2) : ''}
+                    onChange={(e) => updateField('originalPriceCents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t.discountPercent} *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="99"
+                    placeholder="20"
+                    value={formData.discountPercent || ''}
+                    onChange={(e) => updateField('discountPercent', parseInt(e.target.value) || 0)}
+                  />
+                </div>
+              </div>
             </div>
+          ) : (
+            // Bundle Fields
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{t.bundlePrice} *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="25.00"
+                    value={formData.bundlePriceCents ? (formData.bundlePriceCents / 100).toFixed(2) : ''}
+                    onChange={(e) => updateField('bundlePriceCents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t.discountPercent} *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="99"
+                    placeholder="20"
+                    value={formData.discountPercent || ''}
+                    onChange={(e) => updateField('discountPercent', parseInt(e.target.value) || 0)}
+                  />
+                </div>
+              </div>
 
-            {/* Duration Section */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">
-                {language === 'el' ? 'Διάρκεια Προσφοράς' : 'Offer Duration'}
-              </Label>
+              {/* Bundle Items */}
+              <div className="space-y-3">
+                <Label>{t.bundleItems}</Label>
+                {formData.bundleItems.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="p-4 border rounded-lg bg-muted/30 space-y-3"
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 space-y-3">
+                        <Input
+                          placeholder={t.itemName}
+                          value={item.name}
+                          onChange={(e) => updateBundleItem(item.id, { name: e.target.value })}
+                        />
+                        <Input
+                          placeholder={t.itemDescription}
+                          value={item.description}
+                          onChange={(e) => updateBundleItem(item.id, { description: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => moveBundleItem(index, 'up')}
+                          disabled={index === 0}
+                          className="h-8 w-8"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => moveBundleItem(index, 'down')}
+                          disabled={index === formData.bundleItems.length - 1}
+                          className="h-8 w-8"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeBundleItem(item.id)}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addBundleItem}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t.addItem}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Price Preview */}
+          {effectivePrice > 0 && formData.discountPercent > 0 && (
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2 mt-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{formData.offerType === 'single' ? t.originalPrice : t.bundlePrice}</span>
+                <span className="line-through">€{effectivePrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{t.youSave}</span>
+                <span className="text-green-600">-{formData.discountPercent}% (€{discountAmount.toFixed(2)})</span>
+              </div>
+              <div className="flex justify-between font-semibold text-lg border-t pt-2">
+                <span>{t.customerPays}</span>
+                <span className="text-primary">€{finalPrice.toFixed(2)}</span>
+              </div>
+              {formData.offerType === 'bundle' && formData.bundleItems.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {formData.bundleItems.length} {language === 'el' ? 'προϊόντα' : 'items'}
+                </p>
+              )}
+            </div>
+          )}
+        </SectionCard>
+
+        {/* Step 5: Duration & Availability */}
+        <SectionCard title={t.step5} required>
+          <div className="space-y-4">
+            {/* Duration Presets */}
+            <div className="space-y-2">
+              <Label>{t.duration}</Label>
               <div className="flex flex-wrap gap-2">
                 {durationPresets.map((preset) => (
                   <Button
                     key={preset.key}
                     type="button"
-                    variant={durationPreset === preset.key ? "default" : "outline"}
+                    variant={formData.durationPreset === preset.key ? "default" : "outline"}
                     size="sm"
-                    onClick={() => {
-                      setDurationPreset(preset.key);
-                      if (preset.key !== 'custom') {
-                        const startAt = form.getValues('start_at');
-                        const startDate = startAt ? new Date(startAt) : new Date();
-                        const endDate = calculateEndDate(startDate, preset.key);
-                        form.setValue('end_at', endDate.toISOString(), { shouldValidate: true });
-                      }
-                    }}
-                    className="text-xs sm:text-sm"
+                    onClick={() => updateField('durationPreset', preset.key)}
                   >
-                    <Clock className="h-3 w-3 mr-1" />
-                    {language === 'el' ? preset.labelEl : preset.labelEn}
+                    {preset.label}
                   </Button>
                 ))}
               </div>
-              
-              {/* Show calculated end time for non-custom */}
-              {durationPreset !== 'custom' && form.watch('end_at') && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {language === 'el' ? 'Λήγει:' : 'Ends:'}{' '}
-                  {new Date(form.watch('end_at')).toLocaleString(language === 'el' ? 'el-GR' : 'en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              )}
             </div>
 
-            <FormField
-              control={form.control}
-              name="start_at"
-              render={({ field }) => (
-                <FormItem data-field="start_at">
-                  <FormLabel>{t.startDate} *</FormLabel>
-                  <FormControl>
-                    <DateTimePicker
-                      value={field.value ? new Date(field.value) : undefined}
-                      onChange={(date) => {
-                        field.onChange(date?.toISOString() || "");
-                        // Auto-update end date if not custom
-                        if (durationPreset !== 'custom' && date) {
-                          const endDate = calculateEndDate(date, durationPreset);
-                          form.setValue('end_at', endDate.toISOString(), { shouldValidate: true });
-                        }
-                      }}
-                      placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
-                      minDate={new Date()}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Only show end date picker for custom duration */}
-            {durationPreset === 'custom' && (
-              <FormField
-                control={form.control}
-                name="end_at"
-                render={({ field }) => (
-                  <FormItem data-field="end_at">
-                    <FormLabel>{t.endDate} *</FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) => field.onChange(date?.toISOString() || "")}
-                        placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
-                        minDate={new Date()}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="terms"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.termsConditions}</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder={t.termsPlaceholder}
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Requires Reservation Toggle */}
-            <Separator />
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CalendarCheck className="h-4 w-4 text-primary" />
-                  <Label className="text-sm font-medium">
-                    {language === 'el' ? 'Απαιτείται Κράτηση' : 'Require Reservation'}
-                  </Label>
-                </div>
-                <Switch
-                  checked={requiresReservation}
-                  onCheckedChange={setRequiresReservation}
-                  disabled={!hasDirectReservations}
+            {/* Date Pickers */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t.startDate}</Label>
+                <DateTimePicker
+                  value={formData.startAt || undefined}
+                  onChange={(date) => updateField('startAt', date || null)}
+                  minDate={new Date()}
                 />
               </div>
-              
-              {hasDirectReservations ? (
-                <p className="text-sm text-muted-foreground">
-                  {language === 'el'
-                    ? 'Οι πελάτες θα πρέπει να κάνουν κράτηση τραπεζιού κατά την αγορά αυτής της προσφοράς'
-                    : 'Customers must book a table when purchasing this offer'}
-                </p>
-              ) : (
-                <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
-                  <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <p className="text-sm text-muted-foreground">
-                    {language === 'el'
-                      ? 'Ενεργοποιήστε τις άμεσες κρατήσεις στις Ρυθμίσεις Προφίλ για να χρησιμοποιήσετε αυτή τη λειτουργία'
-                      : 'Enable direct reservations in Profile Settings to use this feature'}
-                  </p>
-                </div>
-              )}
-              
-              {requiresReservation && hasDirectReservations && (
-                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                  <p className="text-sm text-primary/90">
-                    {language === 'el'
-                      ? '📅 Οι κρατήσεις θα χρεώνονται από τη διαθέσιμη χωρητικότητά σας'
-                      : '📅 Reservations will count against your available capacity'}
-                  </p>
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label>{t.endDate}</Label>
+                <DateTimePicker
+                  value={formData.endAt || undefined}
+                  onChange={(date) => {
+                    updateField('endAt', date || null);
+                    if (date && formData.startAt && date.getTime() !== calculateEndDate(formData.startAt, formData.durationPreset).getTime()) {
+                      updateField('durationPreset', 'custom');
+                    }
+                  }}
+                  minDate={formData.startAt || new Date()}
+                />
+              </div>
             </div>
 
-            {/* COMMISSION DISABLED: All offers are commission-free
-            Commission-Free Section and Platform Fee Notice hidden until commission is re-enabled */}
+            {/* Max Purchases */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t.maxTotal}</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder={t.unlimited}
+                  value={formData.maxPurchases ?? ''}
+                  onChange={(e) => updateField('maxPurchases', e.target.value ? parseInt(e.target.value) : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t.maxPerUser}</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={formData.maxPerUser}
+                  onChange={(e) => updateField('maxPerUser', parseInt(e.target.value) || 1)}
+                />
+              </div>
+            </div>
+          </div>
+        </SectionCard>
 
-            {/* Boost Section (aligned with event boost tiers) */}
-            <OfferBoostSection
-              onBoostChange={setBoostData}
-              hasActiveSubscription={subscriptionData?.subscribed || false}
-              remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
-            />
+        {/* Step 6: Redemption Settings */}
+        <SectionCard title={t.step6}>
+          <div className="space-y-4">
+            {/* Requires Reservation Toggle */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium">{t.requiresReservation}</Label>
+                <p className="text-sm text-muted-foreground">{t.requiresReservationDesc}</p>
+                {!hasDirectReservations && (
+                  <p className="text-xs text-amber-600">{t.noReservationsEnabled}</p>
+                )}
+              </div>
+              <Switch
+                checked={formData.requiresReservation}
+                onCheckedChange={(checked) => updateField('requiresReservation', checked)}
+                disabled={!hasDirectReservations}
+              />
+            </div>
 
-            {/* Success State */}
-            {submitSuccess && (
-              <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertTitle className="text-green-800 dark:text-green-200">
-                  {language === 'el' ? 'Επιτυχία!' : 'Success!'}
-                </AlertTitle>
-                <AlertDescription className="text-green-700 dark:text-green-300">
-                  {language === 'el' 
-                    ? 'Η προσφορά δημοσιεύτηκε. Ανακατεύθυνση στη λίστα προσφορών...' 
-                    : 'Offer published. Redirecting to offers list...'}
-                </AlertDescription>
-              </Alert>
-            )}
+            {/* Terms */}
+            <div className="space-y-2">
+              <Label>{t.termsConditions}</Label>
+              <Textarea
+                value={formData.terms}
+                onChange={(e) => updateField('terms', e.target.value)}
+                placeholder={t.termsPlaceholder}
+                rows={3}
+              />
+            </div>
+          </div>
+        </SectionCard>
 
-            {/* Visible Error State - Placed right above button for visibility */}
-            {submitError && (
-              <Alert variant="destructive" className="animate-in fade-in-0 slide-in-from-top-2">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>{language === 'el' ? 'Σφάλμα' : 'Error'}</AlertTitle>
-                <AlertDescription>{submitError}</AlertDescription>
-              </Alert>
-            )}
+        {/* Boost Section */}
+        <OfferBoostSection
+          onBoostChange={setBoostData}
+        />
 
-            {/* Disabled Reason */}
-            {!isLoadingBusiness && !isBusinessVerified && (
-              <p className="text-sm text-destructive text-center font-medium">
-                {language === 'el' 
-                  ? '⚠️ Το κουμπί είναι απενεργοποιημένο επειδή η επιχείρησή σας δεν έχει επαληθευτεί' 
-                  : '⚠️ Button is disabled because your business is not verified'}
-              </p>
-            )}
-
-            <Button 
-              type="submit" 
-              className={cn(
-                "w-full transition-all",
-                validationShake && "animate-[shake_0.5s_ease-in-out] ring-2 ring-destructive"
-              )}
-              disabled={isSubmitting || (!isLoadingBusiness && !isBusinessVerified) || submitSuccess}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t.publishing}
-                </>
-              ) : submitSuccess ? (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  {language === 'el' ? 'Δημοσιεύτηκε!' : 'Published!'}
-                </>
-              ) : (
-                t.publishOffer
-              )}
-            </Button>
-          </form>
-        </Form>
+        {/* Submit Button */}
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting || (!isLoadingBusiness && !isBusinessVerified)}
+          className="w-full h-12 text-lg"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              {t.publishing}
+            </>
+          ) : (
+            <>
+              <Check className="mr-2 h-5 w-5" />
+              {t.publishOffer}
+            </>
+          )}
+        </Button>
       </CardContent>
     </Card>
   );
