@@ -8,54 +8,58 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Tag, Package, Clock, Calendar, AlertTriangle, Check, Info, Sparkles, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Tag, Clock, Calendar, AlertTriangle, Check, Info, Percent, Users, QrCode, CalendarCheck } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import OfferBoostSection from "./OfferBoostSection";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // ============================================
 // TYPES
 // ============================================
 
-type OfferType = 'single' | 'bundle';
+type OfferCategory = 'drink' | 'food' | 'account_total';
+type DiscountType = 'percentage' | 'special_deal';
 type AppearanceMode = 'hours' | 'days';
 
-interface BundleItem {
-  id: string;
-  name: string;
-  description: string;
-}
-
 interface FormData {
-  // Step 1: Title
+  // Section 1: Title
   title: string;
-  // Step 2: Description
+  // Section 2: Description
   description: string;
-  // Step 3: Offer Type
-  offerType: OfferType;
-  // Step 4: Offer Details
-  originalPriceCents: number;
-  discountPercent: number;
-  bundlePriceCents: number;
-  bundleItems: BundleItem[];
-  // Step 5: ΦΟΜΟ Appearance Duration
+  // Section 3: Category
+  category: OfferCategory;
+  // Section 4: Discount/Benefit
+  discountType: DiscountType;
+  percentOff: number;
+  specialDealText: string;
+  // Section 5: When Discount Applies
+  validDays: string[];
+  allDays: boolean;
+  validStartTime: string;
+  validEndTime: string;
+  allDay: boolean;
+  // Section 6: Appearance Duration
   appearanceMode: AppearanceMode;
-  appearanceHours: number; // preset: 3, 6, 12, 24, or -1 for custom
+  appearanceHours: number; // -1 for custom
   appearanceCustomHours: number;
   appearanceStartDate: Date | null;
   appearanceEndDate: Date | null;
-  // Step 6: Availability
-  maxPurchases: number | null;
-  maxPerUser: number;
-  // Step 7: Offer Validity (after claim)
-  validityDuration: number; // in hours: 24, 48, 72, 168, 336, or -1 for custom
-  validityCustomDays: number;
-  // Step 8: Redemption
-  requiresReservation: boolean;
-  terms: string;
+  // Section 7: Availability (People-Based)
+  totalPeople: number;
+  maxPeoplePerRedemption: number;
+  onePerUser: boolean;
+  // Section 9: Optional Booking CTA
+  showReservationCta: boolean;
 }
 
 // ============================================
@@ -67,130 +71,166 @@ const translations = {
     createOffer: "Δημιουργία Προσφοράς",
     step1: "1. Τίτλος Προσφοράς",
     step2: "2. Περιγραφή Προσφοράς",
-    step3: "3. Τύπος Προσφοράς",
-    step4: "4. Λεπτομέρειες Προσφοράς",
-    step5: "5. Διάρκεια Εμφάνισης στο ΦΟΜΟ",
-    step6: "6. Διαθεσιμότητα",
-    step7: "7. Ισχύς Προσφοράς",
-    step8: "8. Ρυθμίσεις Εξαργύρωσης",
+    step3: "3. Εφαρμογή Προσφοράς",
+    step4: "4. Έκπτωση / Όφελος",
+    step5: "5. Πότε Ισχύει η Έκπτωση",
+    step6: "6. Διάρκεια Εμφάνισης στο ΦΟΜΟ",
+    step7: "7. Διαθεσιμότητα (Άτομα)",
+    step8: "8. Τρόπος Εξαργύρωσης",
+    step9: "9. Προαιρετική Κράτηση",
     required: "Υποχρεωτικό",
-    titlePlaceholder: "Δώστε ένα όνομα στην προσφορά σας",
-    descriptionPlaceholder: "Περιγράψτε την προσφορά σας...",
+    titlePlaceholder: "π.χ. -10% στο λογαριασμό, 2 Cocktails στην τιμή του 1",
+    descriptionPlaceholder: "Περιγράψτε τι λαμβάνει ο χρήστης και πώς χρησιμοποιείται η προσφορά...",
     wordsRemaining: "λέξεις απομένουν",
     wordsOver: "λέξεις πάνω από το όριο",
-    singleItem: "Μεμονωμένο Προϊόν",
-    singleItemDesc: "Ένα προϊόν ή υπηρεσία με έκπτωση",
-    bundleOffer: "Πακέτο Προσφοράς",
-    bundleDesc: "Πολλαπλά προϊόντα για μία τιμή",
-    originalPrice: "Αρχική Τιμή (€)",
-    discountPercent: "Ποσοστό Έκπτωσης (%)",
-    bundlePrice: "Τιμή Πακέτου (€)",
-    bundleItems: "Προϊόντα στο Πακέτο",
-    addItem: "Προσθήκη Προϊόντος",
-    itemName: "Όνομα προϊόντος",
-    itemDescription: "Περιγραφή (προαιρετικό)",
-    customerPays: "Ο πελάτης πληρώνει",
-    youSave: "Εξοικονόμηση",
-    // Appearance Duration
+    // Category
+    categoryLabel: "Η προσφορά αφορά",
+    drink: "Ποτό",
+    food: "Φαγητό",
+    accountTotal: "Σύνολο Λογαριασμού",
+    // Discount
+    discountTypeLabel: "Τύπος Έκπτωσης",
+    percentageDiscount: "Ποσοστό Έκπτωσης",
+    specialDeal: "Ειδική Προσφορά",
+    percentOffLabel: "Ποσοστό (%)",
+    specialDealLabel: "Περιγραφή Προσφοράς",
+    specialDealPlaceholder: "π.χ. 2-for-1, Δωρεάν επιδόρπιο",
+    // When applies
+    validDaysLabel: "Ημέρες Ισχύος",
+    monday: "Δευτέρα",
+    tuesday: "Τρίτη",
+    wednesday: "Τετάρτη",
+    thursday: "Πέμπτη",
+    friday: "Παρασκευή",
+    saturday: "Σάββατο",
+    sunday: "Κυριακή",
+    allDays: "Κάθε μέρα",
+    validHoursLabel: "Ώρες Λειτουργίας",
+    allDay: "Όλη την ημέρα",
+    fromTime: "Από",
+    toTime: "Έως",
+    // Appearance
     byHours: "Με Ώρες",
     byDays: "Με Ημερομηνίες",
-    appearanceDesc: "Πόσο καιρό θα εμφανίζεται η προσφορά στην εφαρμογή",
+    appearanceDesc: "Πόσο καιρό θα εμφανίζεται η προσφορά στο FOMO",
     customHours: "Προσαρμοσμένες ώρες",
     startDate: "Ημερομηνία Έναρξης",
     endDate: "Ημερομηνία Λήξης",
+    hours: "ώρες",
     // Availability
-    maxTotal: "Μέγ. Συνολικά",
-    maxPerUser: "Μέγ. ανά Χρήστη",
-    unlimited: "Απεριόριστα",
-    availabilityDesc: "Περιορισμοί στον αριθμό των αξιώσεων",
-    // Offer Validity
-    validityDesc: "Πόσο καιρό έχει ο χρήστης για να εξαργυρώσει την προσφορά μετά την απόκτηση",
-    validFor: "Ισχύει για",
-    day1: "1 Ημέρα",
-    days2: "2 Ημέρες",
-    days3: "3 Ημέρες",
-    week1: "1 Εβδομάδα",
-    weeks2: "2 Εβδομάδες",
-    customDays: "Προσαρμοσμένο",
-    days: "ημέρες",
+    totalPeople: "Συνολικά Διαθέσιμα Άτομα",
+    totalPeopleDesc: "Όταν φτάσει το 0, η προσφορά κλείνει αυτόματα",
+    maxPerRedemption: "Μέγιστα Άτομα ανά Εξαργύρωση",
+    maxPerRedemptionDesc: "Πόσα άτομα μπορούν να δηλωθούν σε μία εξαργύρωση",
+    onePerUser: "Μία Εξαργύρωση ανά Χρήστη",
     // Redemption
-    requiresReservation: "Απαιτεί Κράτηση",
-    requiresReservationDesc: "Οι χρήστες πρέπει να κάνουν κράτηση για να λάβουν την προσφορά",
-    termsConditions: "Όροι & Προϋποθέσεις",
-    termsPlaceholder: "Προσθέστε τυχόν όρους ή περιορισμούς...",
+    redemptionTitle: "Show & Redeem (QR)",
+    redemptionDesc: "Ο χρήστης πατάει 'Εξαργύρωση' → Δηλώνει αριθμό ατόμων → Λαμβάνει QR Code → Το δείχνει στο κατάστημα",
+    noPayment: "Χωρίς πληρωμή",
+    noHold: "Χωρίς κράτηση θέσης",
+    noCommission: "Χωρίς προμήθεια",
+    walkInNote: "Η προσφορά ισχύει για walk-in πελάτες και δεν εγγυάται θέση",
+    // Reservation CTA
+    reservationCtaLabel: "Εμφάνιση επιλογής κράτησης μετά το QR",
+    reservationCtaDesc: "Μετά την εμφάνιση του QR Code, εμφανίζεται η επιλογή: 'Θέλετε να κάνετε κράτηση;'",
+    // Submit
     publishOffer: "Δημοσίευση Προσφοράς",
     publishing: "Δημοσίευση...",
     allFieldsRequired: "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία",
     offerCreated: "Η προσφορά δημιουργήθηκε επιτυχώς!",
     offerCreateFailed: "Αποτυχία δημιουργίας προσφοράς",
-    addAtLeastOneItem: "Προσθέστε τουλάχιστον ένα προϊόν στο πακέτο",
-    noReservationsEnabled: "Οι άμεσες κρατήσεις δεν είναι ενεργοποιημένες για την επιχείρησή σας",
-    hours: "ώρες",
+    selectAtLeastOneDay: "Επιλέξτε τουλάχιστον μία ημέρα",
+    verificationWarning: "Η επιχείρησή σας πρέπει να επαληθευτεί πριν δημοσιεύσετε προσφορές",
   },
   en: {
     createOffer: "Create Offer",
     step1: "1. Offer Title",
     step2: "2. Offer Description",
-    step3: "3. Offer Type",
-    step4: "4. Offer Details",
-    step5: "5. ΦΟΜΟ Appearance Duration",
-    step6: "6. Availability",
-    step7: "7. Offer Validity",
-    step8: "8. Redemption Settings",
+    step3: "3. Offer Category",
+    step4: "4. Discount / Benefit",
+    step5: "5. When Discount Applies",
+    step6: "6. ΦΟΜΟ Appearance Duration",
+    step7: "7. Availability (People)",
+    step8: "8. Redemption Method",
+    step9: "9. Optional Booking",
     required: "Required",
-    titlePlaceholder: "Give your offer a name",
-    descriptionPlaceholder: "Describe your offer...",
+    titlePlaceholder: "e.g. -10% off total, 2 Cocktails for the price of 1",
+    descriptionPlaceholder: "Describe what the user receives and how the offer is used...",
     wordsRemaining: "words remaining",
     wordsOver: "words over limit",
-    singleItem: "Single Item",
-    singleItemDesc: "One product or service with a discount",
-    bundleOffer: "Bundle Offer",
-    bundleDesc: "Multiple items for one price",
-    originalPrice: "Original Price (€)",
-    discountPercent: "Discount Percentage (%)",
-    bundlePrice: "Bundle Price (€)",
-    bundleItems: "Items in Bundle",
-    addItem: "Add Item",
-    itemName: "Item name",
-    itemDescription: "Description (optional)",
-    customerPays: "Customer pays",
-    youSave: "You save",
-    // Appearance Duration
+    // Category
+    categoryLabel: "This offer applies to",
+    drink: "Drink",
+    food: "Food",
+    accountTotal: "Account Total",
+    // Discount
+    discountTypeLabel: "Discount Type",
+    percentageDiscount: "Percentage Discount",
+    specialDeal: "Special Deal",
+    percentOffLabel: "Percentage (%)",
+    specialDealLabel: "Deal Description",
+    specialDealPlaceholder: "e.g. 2-for-1, Free dessert",
+    // When applies
+    validDaysLabel: "Valid Days",
+    monday: "Monday",
+    tuesday: "Tuesday",
+    wednesday: "Wednesday",
+    thursday: "Thursday",
+    friday: "Friday",
+    saturday: "Saturday",
+    sunday: "Sunday",
+    allDays: "Every day",
+    validHoursLabel: "Operating Hours",
+    allDay: "All day",
+    fromTime: "From",
+    toTime: "To",
+    // Appearance
     byHours: "By Hours",
     byDays: "By Days",
-    appearanceDesc: "How long the offer will be visible in the app",
+    appearanceDesc: "How long the offer will appear in FOMO",
     customHours: "Custom hours",
     startDate: "Start Date",
     endDate: "End Date",
+    hours: "hours",
     // Availability
-    maxTotal: "Max Total Claims",
-    maxPerUser: "Max Per User",
-    unlimited: "Unlimited",
-    availabilityDesc: "Limits on how many times this offer can be claimed",
-    // Offer Validity
-    validityDesc: "How long users have to redeem the offer after claiming",
-    validFor: "Valid for",
-    day1: "1 Day",
-    days2: "2 Days",
-    days3: "3 Days",
-    week1: "1 Week",
-    weeks2: "2 Weeks",
-    customDays: "Custom",
-    days: "days",
+    totalPeople: "Total Available People",
+    totalPeopleDesc: "When it reaches 0, the offer closes automatically",
+    maxPerRedemption: "Max People Per Redemption",
+    maxPerRedemptionDesc: "How many people can be claimed in one group",
+    onePerUser: "One Redemption Per User",
     // Redemption
-    requiresReservation: "Requires Reservation",
-    requiresReservationDesc: "Users must make a reservation to claim this offer",
-    termsConditions: "Terms & Conditions",
-    termsPlaceholder: "Add any terms or restrictions...",
+    redemptionTitle: "Show & Redeem (QR)",
+    redemptionDesc: "User taps 'Redeem' → States number of people → Gets QR Code → Shows it at venue",
+    noPayment: "No payment",
+    noHold: "No hold",
+    noCommission: "No commission",
+    walkInNote: "This offer is for walk-in customers and does not guarantee a seat",
+    // Reservation CTA
+    reservationCtaLabel: "Show reservation option after QR",
+    reservationCtaDesc: "After the QR Code appears, show option: 'Would you like to make a reservation?'",
+    // Submit
     publishOffer: "Publish Offer",
     publishing: "Publishing...",
     allFieldsRequired: "Please fill in all required fields",
     offerCreated: "Offer created successfully!",
     offerCreateFailed: "Failed to create offer",
-    addAtLeastOneItem: "Add at least one item to the bundle",
-    noReservationsEnabled: "Direct reservations are not enabled for your business",
-    hours: "hours",
+    selectAtLeastOneDay: "Select at least one day",
+    verificationWarning: "Your business must be verified before publishing offers",
   },
+};
+
+// ============================================
+// CONSTANTS
+// ============================================
+
+const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+
+const HOUR_PRESETS = [3, 6, 12, 24, 48];
+
+const CATEGORY_ICONS: Record<OfferCategory, string> = {
+  drink: '🍹',
+  food: '🍽️',
+  account_total: '💳',
 };
 
 // ============================================
@@ -200,8 +240,6 @@ const translations = {
 const countWords = (text: string): number => {
   return text.trim().split(/\s+/).filter(Boolean).length;
 };
-
-const generateId = () => `item-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
 const generateQRToken = (businessId: string) => {
   return `${businessId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -214,7 +252,37 @@ const calculateAppearanceEndDate = (startDate: Date, hours: number): Date => {
 };
 
 // ============================================
-// COMPONENT
+// SECTION CARD COMPONENT
+// ============================================
+
+const SectionCard = ({ 
+  title, 
+  required = false, 
+  children 
+}: { 
+  title: string; 
+  required?: boolean; 
+  children: React.ReactNode;
+}) => (
+  <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+    <CardHeader className="pb-4">
+      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+        {title}
+        {required && (
+          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            {translations.en.required}
+          </span>
+        )}
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {children}
+    </CardContent>
+  </Card>
+);
+
+// ============================================
+// MAIN COMPONENT
 // ============================================
 
 interface OfferCreationFormProps {
@@ -230,32 +298,30 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
-    offerType: 'single',
-    originalPriceCents: 0,
-    discountPercent: 20,
-    bundlePriceCents: 0,
-    bundleItems: [],
-    // Appearance Duration
+    category: 'account_total',
+    discountType: 'percentage',
+    percentOff: 10,
+    specialDealText: '',
+    validDays: [...DAYS_OF_WEEK],
+    allDays: true,
+    validStartTime: '00:00',
+    validEndTime: '23:59',
+    allDay: true,
     appearanceMode: 'hours',
-    appearanceHours: 6, // default 6 hours
+    appearanceHours: 6,
     appearanceCustomHours: 12,
     appearanceStartDate: new Date(),
     appearanceEndDate: calculateAppearanceEndDate(new Date(), 6),
-    // Availability
-    maxPurchases: null,
-    maxPerUser: 1,
-    // Offer Validity
-    validityDuration: 48, // default 2 days
-    validityCustomDays: 7,
-    // Redemption
-    requiresReservation: false,
-    terms: '',
+    totalPeople: 30,
+    maxPeoplePerRedemption: 5,
+    onePerUser: true,
+    showReservationCta: false,
   });
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Boost data - uses OfferBoostSection's expected format
+  // Boost data
   const [boostData, setBoostData] = useState<{
     enabled: boolean;
     tier: "standard" | "premium";
@@ -279,7 +345,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   });
 
   // Fetch business data
-  const { data: businessData, isLoading: isLoadingBusiness } = useQuery({
+  const { data: businessData } = useQuery({
     queryKey: ["business-verification", businessId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -294,24 +360,11 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   });
 
   const isBusinessVerified = businessData?.verified === true;
-  const hasDirectReservations = businessData?.accepts_direct_reservations === true;
 
   // Word count
   const wordCount = countWords(formData.description);
   const maxWords = 60;
   const wordsRemaining = maxWords - wordCount;
-
-  // Price calculations
-  const getEffectivePrice = () => {
-    if (formData.offerType === 'bundle') {
-      return formData.bundlePriceCents / 100;
-    }
-    return formData.originalPriceCents / 100;
-  };
-
-  const effectivePrice = getEffectivePrice();
-  const discountAmount = effectivePrice * (formData.discountPercent / 100);
-  const finalPrice = effectivePrice - discountAmount;
 
   // Field updater
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
@@ -331,34 +384,35 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         const hours = next.appearanceHours === -1 ? next.appearanceCustomHours : next.appearanceHours;
         next.appearanceEndDate = calculateAppearanceEndDate(next.appearanceStartDate, hours);
       }
+
+      // Handle allDays toggle
+      if (field === 'allDays') {
+        if (value === true) {
+          next.validDays = [...DAYS_OF_WEEK];
+        }
+      }
+
+      // Handle allDay toggle
+      if (field === 'allDay') {
+        if (value === true) {
+          next.validStartTime = '00:00';
+          next.validEndTime = '23:59';
+        }
+      }
       
       return next;
     });
   };
 
-  // Bundle item handlers
-  const addBundleItem = () => {
-    const newItem: BundleItem = { id: generateId(), name: '', description: '' };
-    updateField('bundleItems', [...formData.bundleItems, newItem]);
-  };
-
-  const updateBundleItem = (id: string, updates: Partial<BundleItem>) => {
-    const items = formData.bundleItems.map(item =>
-      item.id === id ? { ...item, ...updates } : item
-    );
-    updateField('bundleItems', items);
-  };
-
-  const removeBundleItem = (id: string) => {
-    updateField('bundleItems', formData.bundleItems.filter(item => item.id !== id));
-  };
-
-  const moveBundleItem = (index: number, direction: 'up' | 'down') => {
-    const items = [...formData.bundleItems];
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= items.length) return;
-    [items[index], items[newIndex]] = [items[newIndex], items[index]];
-    updateField('bundleItems', items);
+  // Toggle day selection
+  const toggleDay = (day: string) => {
+    const newDays = formData.validDays.includes(day)
+      ? formData.validDays.filter(d => d !== day)
+      : [...formData.validDays, day];
+    updateField('validDays', newDays);
+    if (newDays.length !== 7) {
+      updateField('allDays', false);
+    }
   };
 
   // Calculate final appearance dates for submission
@@ -380,18 +434,23 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     if (!formData.title.trim()) return t.allFieldsRequired;
     if (wordsRemaining < 0) return language === 'el' ? 'Η περιγραφή υπερβαίνει τις 60 λέξεις' : 'Description exceeds 60 words';
     
+    if (formData.discountType === 'percentage' && (formData.percentOff < 1 || formData.percentOff > 99)) {
+      return t.allFieldsRequired;
+    }
+    
+    if (formData.discountType === 'special_deal' && !formData.specialDealText.trim()) {
+      return t.allFieldsRequired;
+    }
+    
+    if (formData.validDays.length === 0) {
+      return t.selectAtLeastOneDay;
+    }
+    
     const { start, end } = getAppearanceDates();
     if (!start || !end) return t.allFieldsRequired;
     
-    if (formData.offerType === 'single') {
-      if (formData.originalPriceCents <= 0) return t.allFieldsRequired;
-    } else {
-      if (formData.bundlePriceCents <= 0) return t.allFieldsRequired;
-      if (formData.bundleItems.length === 0) return t.addAtLeastOneItem;
-      if (formData.bundleItems.some(item => !item.name.trim())) return t.allFieldsRequired;
-    }
-    
-    if (formData.discountPercent < 1 || formData.discountPercent > 99) return t.allFieldsRequired;
+    if (formData.totalPeople < 1) return t.allFieldsRequired;
+    if (formData.maxPeoplePerRedemption < 1) return t.allFieldsRequired;
     
     return null;
   };
@@ -407,43 +466,32 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     setIsSubmitting(true);
 
     try {
-      // Calculate appearance dates
       const appearance = getAppearanceDates();
 
-      // Insert the offer
       const { data: offerData, error: insertError } = await supabase.from('discounts').insert({
         business_id: businessId,
         title: formData.title,
         description: formData.description || null,
-        original_price_cents: formData.offerType === 'single' ? formData.originalPriceCents : null,
-        bundle_price_cents: formData.offerType === 'bundle' ? formData.bundlePriceCents : null,
-        percent_off: formData.discountPercent,
-        pricing_type: formData.offerType,
-        offer_type: 'regular',
+        category: formData.category,
+        discount_type: formData.discountType,
+        percent_off: formData.discountType === 'percentage' ? formData.percentOff : null,
+        special_deal_text: formData.discountType === 'special_deal' ? formData.specialDealText : null,
+        valid_days: formData.validDays,
+        valid_start_time: formData.validStartTime,
+        valid_end_time: formData.validEndTime,
         start_at: appearance.start.toISOString(),
         end_at: appearance.end.toISOString(),
-        max_purchases: formData.maxPurchases,
-        max_per_user: formData.maxPerUser,
-        requires_reservation: formData.requiresReservation && hasDirectReservations,
-        terms: formData.terms || null,
+        total_people: formData.totalPeople,
+        people_remaining: formData.totalPeople,
+        max_people_per_redemption: formData.maxPeoplePerRedemption,
+        one_per_user: formData.onePerUser,
+        show_reservation_cta: formData.showReservationCta,
+        pricing_type: 'single',
         qr_code_token: generateQRToken(businessId),
         active: true,
       }).select().single();
 
       if (insertError) throw insertError;
-
-      // Insert bundle items if applicable
-      if (formData.offerType === 'bundle' && formData.bundleItems.length > 0 && offerData) {
-        for (let i = 0; i < formData.bundleItems.length; i++) {
-          const item = formData.bundleItems[i];
-          await supabase.from('discount_items').insert({
-            discount_id: offerData.id,
-            name: item.name,
-            description: item.description || null,
-            sort_order: i,
-          });
-        }
-      }
 
       // Handle boost if enabled
       if (boostData.enabled && offerData) {
@@ -468,367 +516,320 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     }
   };
 
-  // ============================================
-  // RENDER HELPERS
-  // ============================================
-
-  const SectionCard = ({
-    title,
-    required = false,
-    children,
-  }: {
-    title: string;
-    required?: boolean;
-    children: React.ReactNode;
-  }) => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 pb-2 border-b">
-        <h3 className="font-semibold text-lg">{title}</h3>
-        {required && (
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-            {t.required}
-          </span>
-        )}
-      </div>
-      <div className="space-y-4">
-        {children}
-      </div>
-    </div>
-  );
-
-  // Appearance hour presets
-  const hourPresets = [3, 6, 12, 24];
-
-  // Validity duration presets (in hours)
-  const validityPresets = [
-    { hours: 24, label: t.day1 },
-    { hours: 48, label: t.days2 },
-    { hours: 72, label: t.days3 },
-    { hours: 168, label: t.week1 },
-    { hours: 336, label: t.weeks2 },
-  ];
-
-  // ============================================
-  // RENDER
-  // ============================================
-
   return (
-    <Card className="max-w-3xl mx-auto">
-      <CardHeader className="border-b">
-        <CardTitle className="flex items-center gap-2 text-2xl">
-          <Sparkles className="h-6 w-6 text-primary" />
-          {t.createOffer}
-        </CardTitle>
-      </CardHeader>
+    <div className="max-w-2xl mx-auto space-y-6 pb-10">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold text-foreground">{t.createOffer}</h1>
+      </div>
 
-      <CardContent className="p-6 space-y-8">
-        {/* Verification Warning */}
-        {!isLoadingBusiness && !isBusinessVerified && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>
-              {language === 'el' ? 'Η επιχείρησή σας δεν έχει επαληθευτεί' : 'Your business is not verified'}
-            </AlertTitle>
-            <AlertDescription>
-              {language === 'el'
-                ? 'Δεν μπορείτε να δημοσιεύσετε προσφορές μέχρι να επαληθευτεί η επιχείρησή σας.'
-                : 'You cannot publish offers until your business is verified.'}
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Verification Warning */}
+      {!isBusinessVerified && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{language === 'el' ? 'Επιχείρηση Μη Επαληθευμένη' : 'Business Not Verified'}</AlertTitle>
+          <AlertDescription>{t.verificationWarning}</AlertDescription>
+        </Alert>
+      )}
 
-        {/* Step 1: Title */}
-        <SectionCard title={t.step1} required>
-          <Input
-            value={formData.title}
-            onChange={(e) => updateField('title', e.target.value)}
-            placeholder={t.titlePlaceholder}
-            maxLength={100}
-          />
-        </SectionCard>
+      {/* Section 1: Offer Title */}
+      <SectionCard title={t.step1} required>
+        <Input
+          value={formData.title}
+          onChange={(e) => updateField('title', e.target.value)}
+          placeholder={t.titlePlaceholder}
+          maxLength={100}
+          className="text-base"
+        />
+      </SectionCard>
 
-        {/* Step 2: Description */}
-        <SectionCard title={t.step2}>
+      {/* Section 2: Offer Description */}
+      <SectionCard title={t.step2} required>
+        <div className="space-y-2">
           <Textarea
             value={formData.description}
             onChange={(e) => updateField('description', e.target.value)}
             placeholder={t.descriptionPlaceholder}
-            rows={4}
+            rows={3}
+            className="resize-none"
           />
           <p className={cn(
-            "text-sm",
-            wordsRemaining >= 0 ? "text-muted-foreground" : "text-destructive font-medium"
+            "text-xs text-right",
+            wordsRemaining < 0 ? "text-destructive" : "text-muted-foreground"
           )}>
-            {wordsRemaining >= 0
+            {wordsRemaining >= 0 
               ? `${wordsRemaining} ${t.wordsRemaining}`
               : `${Math.abs(wordsRemaining)} ${t.wordsOver}`
             }
           </p>
-        </SectionCard>
+        </div>
+      </SectionCard>
 
-        {/* Step 3: Offer Type */}
-        <SectionCard title={t.step3} required>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Single Item */}
+      {/* Section 3: Offer Category */}
+      <SectionCard title={t.step3} required>
+        <div className="space-y-2">
+          <Label>{t.categoryLabel}</Label>
+          <Select
+            value={formData.category}
+            onValueChange={(value: OfferCategory) => updateField('category', value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="drink">
+                <span className="flex items-center gap-2">
+                  {CATEGORY_ICONS.drink} {t.drink}
+                </span>
+              </SelectItem>
+              <SelectItem value="food">
+                <span className="flex items-center gap-2">
+                  {CATEGORY_ICONS.food} {t.food}
+                </span>
+              </SelectItem>
+              <SelectItem value="account_total">
+                <span className="flex items-center gap-2">
+                  {CATEGORY_ICONS.account_total} {t.accountTotal}
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </SectionCard>
+
+      {/* Section 4: Discount / Benefit */}
+      <SectionCard title={t.step4} required>
+        <div className="space-y-4">
+          {/* Discount Type Selection */}
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => updateField('offerType', 'single')}
+              onClick={() => updateField('discountType', 'percentage')}
               className={cn(
-                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
-                formData.offerType === 'single'
+                "p-4 rounded-xl border-2 transition-all text-left",
+                formData.discountType === 'percentage'
                   ? "border-primary bg-primary/5"
-                  : "border-muted hover:border-primary/50"
+                  : "border-border hover:border-primary/50"
               )}
             >
-              <Tag className="h-8 w-8 mx-auto text-primary" />
-              <div>
-                <p className="font-medium">{t.singleItem}</p>
-                <p className="text-sm text-muted-foreground">{t.singleItemDesc}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Percent className="w-5 h-5 text-primary" />
+                <span className="font-medium">{t.percentageDiscount}</span>
               </div>
             </button>
-
-            {/* Bundle */}
             <button
               type="button"
-              onClick={() => updateField('offerType', 'bundle')}
+              onClick={() => updateField('discountType', 'special_deal')}
               className={cn(
-                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
-                formData.offerType === 'bundle'
+                "p-4 rounded-xl border-2 transition-all text-left",
+                formData.discountType === 'special_deal'
                   ? "border-primary bg-primary/5"
-                  : "border-muted hover:border-primary/50"
+                  : "border-border hover:border-primary/50"
               )}
             >
-              <Package className="h-8 w-8 mx-auto text-primary" />
-              <div>
-                <p className="font-medium">{t.bundleOffer}</p>
-                <p className="text-sm text-muted-foreground">{t.bundleDesc}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Tag className="w-5 h-5 text-primary" />
+                <span className="font-medium">{t.specialDeal}</span>
               </div>
             </button>
           </div>
-        </SectionCard>
 
-        {/* Step 4: Offer Details */}
-        <SectionCard title={t.step4} required>
-          {formData.offerType === 'single' ? (
-            // Single Item Fields
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t.originalPrice} *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    placeholder="10.00"
-                    value={formData.originalPriceCents ? (formData.originalPriceCents / 100).toFixed(2) : ''}
-                    onChange={(e) => updateField('originalPriceCents', Math.round(parseFloat(e.target.value || '0') * 100))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t.discountPercent} *</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="99"
-                    placeholder="20"
-                    value={formData.discountPercent || ''}
-                    onChange={(e) => updateField('discountPercent', parseInt(e.target.value) || 0)}
-                  />
-                </div>
+          {/* Discount Value Input */}
+          {formData.discountType === 'percentage' ? (
+            <div className="space-y-2">
+              <Label>{t.percentOffLabel}</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={formData.percentOff}
+                  onChange={(e) => updateField('percentOff', Math.max(1, Math.min(99, parseInt(e.target.value) || 0)))}
+                  min={1}
+                  max={99}
+                  className="w-24"
+                />
+                <span className="text-2xl font-bold text-primary">%</span>
+                <span className="text-muted-foreground ml-2">off</span>
               </div>
             </div>
           ) : (
-            // Bundle Fields
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t.bundlePrice} *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    placeholder="25.00"
-                    value={formData.bundlePriceCents ? (formData.bundlePriceCents / 100).toFixed(2) : ''}
-                    onChange={(e) => updateField('bundlePriceCents', Math.round(parseFloat(e.target.value || '0') * 100))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t.discountPercent} *</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="99"
-                    placeholder="20"
-                    value={formData.discountPercent || ''}
-                    onChange={(e) => updateField('discountPercent', parseInt(e.target.value) || 0)}
-                  />
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label>{t.specialDealLabel}</Label>
+              <Input
+                value={formData.specialDealText}
+                onChange={(e) => updateField('specialDealText', e.target.value)}
+                placeholder={t.specialDealPlaceholder}
+              />
+            </div>
+          )}
+        </div>
+      </SectionCard>
 
-              {/* Bundle Items */}
-              <div className="space-y-3">
-                <Label>{t.bundleItems}</Label>
-                {formData.bundleItems.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="p-4 border rounded-lg bg-muted/30 space-y-3"
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 space-y-3">
-                        <Input
-                          placeholder={t.itemName}
-                          value={item.name}
-                          onChange={(e) => updateBundleItem(item.id, { name: e.target.value })}
-                        />
-                        <Input
-                          placeholder={t.itemDescription}
-                          value={item.description}
-                          onChange={(e) => updateBundleItem(item.id, { description: e.target.value })}
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => moveBundleItem(index, 'up')}
-                          disabled={index === 0}
-                          className="h-8 w-8"
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => moveBundleItem(index, 'down')}
-                          disabled={index === formData.bundleItems.length - 1}
-                          className="h-8 w-8"
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeBundleItem(item.id)}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <Button
+      {/* Section 5: When Discount Applies */}
+      <SectionCard title={t.step5} required>
+        <div className="space-y-6">
+          {/* Valid Days */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>{t.validDaysLabel}</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="all-days" className="text-sm text-muted-foreground">{t.allDays}</Label>
+                <Switch
+                  id="all-days"
+                  checked={formData.allDays}
+                  onCheckedChange={(checked) => updateField('allDays', checked)}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-2">
+              {DAYS_OF_WEEK.map((day) => (
+                <button
+                  key={day}
                   type="button"
-                  variant="outline"
-                  onClick={addBundleItem}
-                  className="w-full"
+                  onClick={() => toggleDay(day)}
+                  disabled={formData.allDays}
+                  className={cn(
+                    "py-2 px-3 rounded-lg text-sm font-medium transition-all",
+                    formData.validDays.includes(day)
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80",
+                    formData.allDays && "opacity-50 cursor-not-allowed"
+                  )}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t.addItem}
-                </Button>
+                  {t[day as keyof typeof t]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Valid Hours */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>{t.validHoursLabel}</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="all-day" className="text-sm text-muted-foreground">{t.allDay}</Label>
+                <Switch
+                  id="all-day"
+                  checked={formData.allDay}
+                  onCheckedChange={(checked) => updateField('allDay', checked)}
+                />
               </div>
             </div>
-          )}
+            
+            {!formData.allDay && (
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground mb-1">{t.fromTime}</Label>
+                  <Input
+                    type="time"
+                    value={formData.validStartTime}
+                    onChange={(e) => updateField('validStartTime', e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <span className="text-muted-foreground mt-5">→</span>
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground mb-1">{t.toTime}</Label>
+                  <Input
+                    type="time"
+                    value={formData.validEndTime}
+                    onChange={(e) => updateField('validEndTime', e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </SectionCard>
 
-          {/* Price Preview */}
-          {effectivePrice > 0 && formData.discountPercent > 0 && (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2 mt-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{formData.offerType === 'single' ? t.originalPrice : t.bundlePrice}</span>
-                <span className="line-through">€{effectivePrice.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t.youSave}</span>
-                <span className="text-green-600">-{formData.discountPercent}% (€{discountAmount.toFixed(2)})</span>
-              </div>
-              <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                <span>{t.customerPays}</span>
-                <span className="text-primary">€{finalPrice.toFixed(2)}</span>
-              </div>
-              {formData.offerType === 'bundle' && formData.bundleItems.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {formData.bundleItems.length} {language === 'el' ? 'προϊόντα' : 'items'}
-                </p>
-              )}
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Step 5: ΦΟΜΟ Appearance Duration */}
-        <SectionCard title={t.step5} required>
-          <p className="text-sm text-muted-foreground -mt-2 mb-4">{t.appearanceDesc}</p>
+      {/* Section 6: Appearance Duration */}
+      <SectionCard title={t.step6} required>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">{t.appearanceDesc}</p>
           
           {/* Mode Toggle */}
-          <div className="flex gap-2 mb-4">
-            <Button
+          <div className="grid grid-cols-2 gap-3">
+            <button
               type="button"
-              variant={formData.appearanceMode === 'hours' ? "default" : "outline"}
-              size="sm"
               onClick={() => updateField('appearanceMode', 'hours')}
-              className="flex items-center gap-2"
+              className={cn(
+                "p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2",
+                formData.appearanceMode === 'hours'
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+              )}
             >
-              <Clock className="h-4 w-4" />
-              {t.byHours}
-            </Button>
-            <Button
+              <Clock className="w-4 h-4" />
+              <span className="font-medium">{t.byHours}</span>
+            </button>
+            <button
               type="button"
-              variant={formData.appearanceMode === 'days' ? "default" : "outline"}
-              size="sm"
               onClick={() => updateField('appearanceMode', 'days')}
-              className="flex items-center gap-2"
+              className={cn(
+                "p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2",
+                formData.appearanceMode === 'days'
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+              )}
             >
-              <Calendar className="h-4 w-4" />
-              {t.byDays}
-            </Button>
+              <Calendar className="w-4 h-4" />
+              <span className="font-medium">{t.byDays}</span>
+            </button>
           </div>
 
-          {formData.appearanceMode === 'hours' ? (
-            // Hours Mode
+          {/* Hours Mode */}
+          {formData.appearanceMode === 'hours' && (
             <div className="space-y-4">
-              {/* Hour Presets */}
               <div className="flex flex-wrap gap-2">
-                {hourPresets.map((hours) => (
-                  <Button
+                {HOUR_PRESETS.map((hours) => (
+                  <button
                     key={hours}
                     type="button"
-                    variant={formData.appearanceHours === hours ? "default" : "outline"}
-                    size="sm"
                     onClick={() => updateField('appearanceHours', hours)}
+                    className={cn(
+                      "px-4 py-2 rounded-full font-medium transition-all",
+                      formData.appearanceHours === hours
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
                   >
-                    {hours} {t.hours}
-                  </Button>
+                    {hours}h
+                  </button>
                 ))}
-                <Button
+                <button
                   type="button"
-                  variant={formData.appearanceHours === -1 ? "default" : "outline"}
-                  size="sm"
                   onClick={() => updateField('appearanceHours', -1)}
+                  className={cn(
+                    "px-4 py-2 rounded-full font-medium transition-all",
+                    formData.appearanceHours === -1
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
                 >
                   {t.customHours}
-                </Button>
+                </button>
               </div>
               
-              {/* Custom Hours Input */}
               {formData.appearanceHours === -1 && (
-                <div className="space-y-2">
-                  <Label>{t.customHours}</Label>
+                <div className="flex items-center gap-2">
                   <Input
                     type="number"
-                    min="1"
-                    max="168"
                     value={formData.appearanceCustomHours}
-                    onChange={(e) => updateField('appearanceCustomHours', parseInt(e.target.value) || 1)}
-                    className="max-w-[200px]"
+                    onChange={(e) => updateField('appearanceCustomHours', Math.max(1, parseInt(e.target.value) || 1))}
+                    min={1}
+                    max={168}
+                    className="w-24"
                   />
+                  <span className="text-muted-foreground">{t.hours}</span>
                 </div>
               )}
             </div>
-          ) : (
-            // Days Mode
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          )}
+
+          {/* Days Mode */}
+          {formData.appearanceMode === 'days' && (
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t.startDate}</Label>
                 <DateTimePicker
@@ -847,135 +848,126 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               </div>
             </div>
           )}
-        </SectionCard>
+        </div>
+      </SectionCard>
 
-        {/* Step 6: Availability */}
-        <SectionCard title={t.step6}>
-          <p className="text-sm text-muted-foreground -mt-2 mb-4">{t.availabilityDesc}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t.maxTotal}</Label>
-              <Input
-                type="number"
-                min="1"
-                placeholder={t.unlimited}
-                value={formData.maxPurchases ?? ''}
-                onChange={(e) => updateField('maxPurchases', e.target.value ? parseInt(e.target.value) : null)}
-              />
+      {/* Section 7: Availability (People-Based) */}
+      <SectionCard title={t.step7} required>
+        <div className="space-y-6">
+          {/* Total People */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              <Label>{t.totalPeople}</Label>
             </div>
-            <div className="space-y-2">
-              <Label>{t.maxPerUser}</Label>
-              <Input
-                type="number"
-                min="1"
-                value={formData.maxPerUser}
-                onChange={(e) => updateField('maxPerUser', parseInt(e.target.value) || 1)}
-              />
-            </div>
+            <Input
+              type="number"
+              value={formData.totalPeople}
+              onChange={(e) => updateField('totalPeople', Math.max(1, parseInt(e.target.value) || 1))}
+              min={1}
+              className="w-32"
+            />
+            <p className="text-xs text-muted-foreground">{t.totalPeopleDesc}</p>
           </div>
-        </SectionCard>
 
-        {/* Step 7: Offer Validity */}
-        <SectionCard title={t.step7}>
-          <p className="text-sm text-muted-foreground -mt-2 mb-4">{t.validityDesc}</p>
+          {/* Max Per Redemption */}
+          <div className="space-y-2">
+            <Label>{t.maxPerRedemption}</Label>
+            <Input
+              type="number"
+              value={formData.maxPeoplePerRedemption}
+              onChange={(e) => updateField('maxPeoplePerRedemption', Math.max(1, parseInt(e.target.value) || 1))}
+              min={1}
+              max={formData.totalPeople}
+              className="w-32"
+            />
+            <p className="text-xs text-muted-foreground">{t.maxPerRedemptionDesc}</p>
+          </div>
+
+          {/* One Per User */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <Label htmlFor="one-per-user" className="cursor-pointer">{t.onePerUser}</Label>
+            <Switch
+              id="one-per-user"
+              checked={formData.onePerUser}
+              onCheckedChange={(checked) => updateField('onePerUser', checked)}
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Section 8: Redemption Method (Informational) */}
+      <SectionCard title={t.step8}>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <QrCode className="w-5 h-5 text-primary" />
+            </div>
+            <span className="font-semibold text-lg">{t.redemptionTitle}</span>
+          </div>
           
-          {/* Validity Presets */}
-          <div className="flex flex-wrap gap-2">
-            {validityPresets.map(({ hours, label }) => (
-              <Button
-                key={hours}
-                type="button"
-                variant={formData.validityDuration === hours ? "default" : "outline"}
-                size="sm"
-                onClick={() => updateField('validityDuration', hours)}
-              >
-                {label}
-              </Button>
-            ))}
-            <Button
-              type="button"
-              variant={formData.validityDuration === -1 ? "default" : "outline"}
-              size="sm"
-              onClick={() => updateField('validityDuration', -1)}
-            >
-              {t.customDays}
-            </Button>
+          <p className="text-sm text-muted-foreground">{t.redemptionDesc}</p>
+          
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <Check className="w-4 h-4" />
+              <span>{t.noPayment}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <Check className="w-4 h-4" />
+              <span>{t.noHold}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <Check className="w-4 h-4" />
+              <span>{t.noCommission}</span>
+            </div>
           </div>
           
-          {/* Custom Days Input */}
-          {formData.validityDuration === -1 && (
-            <div className="flex items-center gap-3 mt-4">
-              <Input
-                type="number"
-                min="1"
-                max="90"
-                value={formData.validityCustomDays}
-                onChange={(e) => updateField('validityCustomDays', parseInt(e.target.value) || 1)}
-                className="max-w-[100px]"
-              />
-              <span className="text-muted-foreground">{t.days}</span>
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Step 8: Redemption Settings */}
-        <SectionCard title={t.step8}>
-          <div className="space-y-4">
-            {/* Requires Reservation Toggle */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="space-y-0.5">
-                <Label className="text-base font-medium">{t.requiresReservation}</Label>
-                <p className="text-sm text-muted-foreground">{t.requiresReservationDesc}</p>
-                {!hasDirectReservations && (
-                  <p className="text-xs text-amber-600">{t.noReservationsEnabled}</p>
-                )}
-              </div>
-              <Switch
-                checked={formData.requiresReservation}
-                onCheckedChange={(checked) => updateField('requiresReservation', checked)}
-                disabled={!hasDirectReservations}
-              />
-            </div>
-
-            {/* Terms */}
-            <div className="space-y-2">
-              <Label>{t.termsConditions}</Label>
-              <Textarea
-                value={formData.terms}
-                onChange={(e) => updateField('terms', e.target.value)}
-                placeholder={t.termsPlaceholder}
-                rows={3}
-              />
-            </div>
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 text-sm">
+            <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{t.walkInNote}</span>
           </div>
-        </SectionCard>
+        </div>
+      </SectionCard>
 
-        {/* Boost Section */}
-        <OfferBoostSection
-          onBoostChange={setBoostData}
-        />
+      {/* Section 9: Optional Booking CTA */}
+      <SectionCard title={t.step9}>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-2">
+              <CalendarCheck className="w-4 h-4 text-primary" />
+              <Label htmlFor="show-cta" className="cursor-pointer">{t.reservationCtaLabel}</Label>
+            </div>
+            <Switch
+              id="show-cta"
+              checked={formData.showReservationCta}
+              onCheckedChange={(checked) => updateField('showReservationCta', checked)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">{t.reservationCtaDesc}</p>
+        </div>
+      </SectionCard>
 
-        {/* Submit Button */}
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting || (!isLoadingBusiness && !isBusinessVerified)}
-          className="w-full h-12 text-lg"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              {t.publishing}
-            </>
-          ) : (
-            <>
-              <Check className="mr-2 h-5 w-5" />
-              {t.publishOffer}
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+      {/* Boost Section */}
+      <OfferBoostSection onBoostChange={setBoostData} />
+
+      {/* Submit Button */}
+      <Button
+        onClick={handleSubmit}
+        disabled={isSubmitting || !isBusinessVerified}
+        className="w-full py-6 text-lg font-semibold"
+        size="lg"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            {t.publishing}
+          </>
+        ) : (
+          t.publishOffer
+        )}
+      </Button>
+    </div>
   );
 };
 

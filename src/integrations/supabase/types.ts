@@ -1339,72 +1339,105 @@ export type Database = {
           bonus_percent: number | null
           bundle_price_cents: number | null
           business_id: string
+          category: string | null
           commission_free: boolean
           created_at: string
           credit_amount_cents: number | null
           description: string | null
+          discount_type: string | null
           end_at: string
           id: string
+          max_people_per_redemption: number | null
           max_per_user: number | null
           max_purchases: number | null
           offer_type: string | null
+          one_per_user: boolean | null
           original_price_cents: number | null
+          people_remaining: number | null
           percent_off: number | null
           pricing_type: string
           qr_code_token: string
           requires_reservation: boolean | null
+          show_reservation_cta: boolean | null
+          special_deal_text: string | null
           start_at: string
           terms: string | null
           title: string
+          total_people: number | null
           total_purchased: number | null
+          valid_days: string[] | null
+          valid_end_time: string | null
+          valid_start_time: string | null
         }
         Insert: {
           active?: boolean | null
           bonus_percent?: number | null
           bundle_price_cents?: number | null
           business_id: string
+          category?: string | null
           commission_free?: boolean
           created_at?: string
           credit_amount_cents?: number | null
           description?: string | null
+          discount_type?: string | null
           end_at: string
           id?: string
+          max_people_per_redemption?: number | null
           max_per_user?: number | null
           max_purchases?: number | null
           offer_type?: string | null
+          one_per_user?: boolean | null
           original_price_cents?: number | null
+          people_remaining?: number | null
           percent_off?: number | null
           pricing_type?: string
           qr_code_token: string
           requires_reservation?: boolean | null
+          show_reservation_cta?: boolean | null
+          special_deal_text?: string | null
           start_at: string
           terms?: string | null
           title: string
+          total_people?: number | null
           total_purchased?: number | null
+          valid_days?: string[] | null
+          valid_end_time?: string | null
+          valid_start_time?: string | null
         }
         Update: {
           active?: boolean | null
           bonus_percent?: number | null
           bundle_price_cents?: number | null
           business_id?: string
+          category?: string | null
           commission_free?: boolean
           created_at?: string
           credit_amount_cents?: number | null
           description?: string | null
+          discount_type?: string | null
           end_at?: string
           id?: string
+          max_people_per_redemption?: number | null
           max_per_user?: number | null
           max_purchases?: number | null
           offer_type?: string | null
+          one_per_user?: boolean | null
           original_price_cents?: number | null
+          people_remaining?: number | null
           percent_off?: number | null
           pricing_type?: string
           qr_code_token?: string
           requires_reservation?: boolean | null
+          show_reservation_cta?: boolean | null
+          special_deal_text?: string | null
           start_at?: string
           terms?: string | null
           title?: string
+          total_people?: number | null
           total_purchased?: number | null
+          valid_days?: string[] | null
+          valid_end_time?: string | null
+          valid_start_time?: string | null
         }
         Relationships: [
           {
