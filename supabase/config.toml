@@ -119,3 +119,12 @@ verify_jwt = false
 
 [functions.expire-unpaid-reservations.schedule]
 cron = "0 * * * *"
+
+[functions.claim-offer]
+verify_jwt = true
+
+[functions.send-offer-claim-email]
+verify_jwt = false
+
+[functions.send-offer-claim-business-notification]
+verify_jwt = false
