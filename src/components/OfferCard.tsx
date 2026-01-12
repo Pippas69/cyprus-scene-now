@@ -39,7 +39,7 @@ interface Offer {
     name: string;
     logo_url: string | null;
     city: string;
-    stripe_payouts_enabled?: boolean;
+    accepts_direct_reservations?: boolean;
   };
   discount_items?: OfferItem[];
 }
@@ -273,7 +273,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
       </CardContent>
 
       {/* Purchase Dialog */}
-      {offerData && hasPricing && (
+      {offerData && (
         <OfferPurchaseDialog
           isOpen={isPurchaseOpen}
           onClose={() => setIsPurchaseOpen(false)}
@@ -281,19 +281,16 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             id: offerData.id,
             title: offerData.title,
             description: offerData.description,
-            original_price_cents: originalPriceCents,
             percent_off: percentOff,
-            pricing_type: offerData.pricing_type,
             end_at: offerData.end_at,
             business_id: offerData.business_id,
-            requires_reservation: offerData.requires_reservation,
             businesses: {
               name: offerData.businesses.name,
               logo_url: offerData.businesses.logo_url,
-              stripe_payouts_enabled: offerData.businesses.stripe_payouts_enabled,
+              city: offerData.businesses.city,
+              accepts_direct_reservations: offerData.businesses.accepts_direct_reservations,
             },
           }}
-          discountItems={discountItems}
           language={language}
         />
       )}

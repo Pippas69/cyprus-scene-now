@@ -33,9 +33,14 @@ interface Offer {
   end_at: string;
   terms?: string | null;
   business_id?: string;
+  // Legacy fields from OfferCard - kept for compatibility
+  original_price_cents?: number | null;
+  pricing_type?: string;
+  requires_reservation?: boolean;
   businesses: {
     name: string;
     logo_url: string | null;
+    city?: string;
     accepts_direct_reservations?: boolean;
   };
 }
