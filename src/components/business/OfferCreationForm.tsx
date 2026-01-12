@@ -21,7 +21,7 @@ import OfferBoostSection from "./OfferBoostSection";
 // ============================================
 
 type OfferType = 'single' | 'bundle';
-type DurationPreset = '1h' | '2h' | '3h' | '6h' | 'same_day' | '1w' | '1m' | 'custom';
+type AppearanceMode = 'hours' | 'days';
 
 interface BundleItem {
   id: string;
@@ -41,13 +41,16 @@ interface FormData {
   discountPercent: number;
   bundlePriceCents: number;
   bundleItems: BundleItem[];
-  // Step 5: Duration
-  durationPreset: DurationPreset;
-  startAt: Date | null;
-  endAt: Date | null;
+  // Step 5: ΦΟΜΟ Appearance Duration
+  appearanceMode: AppearanceMode;
+  appearanceHours: number; // preset: 3, 6, 12, 24, or -1 for custom
+  appearanceCustomHours: number;
+  appearanceStartDate: Date | null;
+  appearanceEndDate: Date | null;
+  // Step 6: Availability
   maxPurchases: number | null;
   maxPerUser: number;
-  // Step 6: Redemption
+  // Step 7: Redemption
   requiresReservation: boolean;
   terms: string;
 }
@@ -63,8 +66,9 @@ const translations = {
     step2: "2. Περιγραφή Προσφοράς",
     step3: "3. Τύπος Προσφοράς",
     step4: "4. Λεπτομέρειες Προσφοράς",
-    step5: "5. Διάρκεια & Διαθεσιμότητα",
-    step6: "6. Ρυθμίσεις Εξαργύρωσης",
+    step5: "5. Διάρκεια Εμφάνισης στο ΦΟΜΟ",
+    step6: "6. Διαθεσιμότητα",
+    step7: "7. Ρυθμίσεις Εξαργύρωσης",
     required: "Υποχρεωτικό",
     titlePlaceholder: "Δώστε ένα όνομα στην προσφορά σας",
     descriptionPlaceholder: "Περιγράψτε την προσφορά σας...",
@@ -83,12 +87,19 @@ const translations = {
     itemDescription: "Περιγραφή (προαιρετικό)",
     customerPays: "Ο πελάτης πληρώνει",
     youSave: "Εξοικονόμηση",
-    duration: "Διάρκεια",
+    // Appearance Duration
+    byHours: "Με Ώρες",
+    byDays: "Με Ημερομηνίες",
+    appearanceDesc: "Πόσο καιρό θα εμφανίζεται η προσφορά στην εφαρμογή",
+    customHours: "Προσαρμοσμένες ώρες",
     startDate: "Ημερομηνία Έναρξης",
     endDate: "Ημερομηνία Λήξης",
+    // Availability
     maxTotal: "Μέγ. Συνολικά",
     maxPerUser: "Μέγ. ανά Χρήστη",
     unlimited: "Απεριόριστα",
+    availabilityDesc: "Περιορισμοί στον αριθμό των αξιώσεων",
+    // Redemption
     requiresReservation: "Απαιτεί Κράτηση",
     requiresReservationDesc: "Οι χρήστες πρέπει να κάνουν κράτηση για να λάβουν την προσφορά",
     termsConditions: "Όροι & Προϋποθέσεις",
@@ -100,12 +111,7 @@ const translations = {
     offerCreateFailed: "Αποτυχία δημιουργίας προσφοράς",
     addAtLeastOneItem: "Προσθέστε τουλάχιστον ένα προϊόν στο πακέτο",
     noReservationsEnabled: "Οι άμεσες κρατήσεις δεν είναι ενεργοποιημένες για την επιχείρησή σας",
-    hour: "ώρα",
     hours: "ώρες",
-    sameDay: "Ίδια μέρα",
-    week: "εβδομάδα",
-    month: "μήνας",
-    custom: "Προσαρμοσμένο",
   },
   en: {
     createOffer: "Create Offer",
@@ -113,8 +119,9 @@ const translations = {
     step2: "2. Offer Description",
     step3: "3. Offer Type",
     step4: "4. Offer Details",
-    step5: "5. Duration & Availability",
-    step6: "6. Redemption Settings",
+    step5: "5. ΦΟΜΟ Appearance Duration",
+    step6: "6. Availability",
+    step7: "7. Redemption Settings",
     required: "Required",
     titlePlaceholder: "Give your offer a name",
     descriptionPlaceholder: "Describe your offer...",
@@ -133,12 +140,19 @@ const translations = {
     itemDescription: "Description (optional)",
     customerPays: "Customer pays",
     youSave: "You save",
-    duration: "Duration",
+    // Appearance Duration
+    byHours: "By Hours",
+    byDays: "By Days",
+    appearanceDesc: "How long the offer will be visible in the app",
+    customHours: "Custom hours",
     startDate: "Start Date",
     endDate: "End Date",
-    maxTotal: "Max Total",
+    // Availability
+    maxTotal: "Max Total Claims",
     maxPerUser: "Max Per User",
     unlimited: "Unlimited",
+    availabilityDesc: "Limits on how many times this offer can be claimed",
+    // Redemption
     requiresReservation: "Requires Reservation",
     requiresReservationDesc: "Users must make a reservation to claim this offer",
     termsConditions: "Terms & Conditions",
@@ -150,12 +164,7 @@ const translations = {
     offerCreateFailed: "Failed to create offer",
     addAtLeastOneItem: "Add at least one item to the bundle",
     noReservationsEnabled: "Direct reservations are not enabled for your business",
-    hour: "hour",
     hours: "hours",
-    sameDay: "Same day",
-    week: "week",
-    month: "month",
-    custom: "Custom",
   },
 };
 
@@ -169,23 +178,14 @@ const countWords = (text: string): number => {
 
 const generateId = () => `item-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-const calculateEndDate = (startDate: Date, preset: DurationPreset): Date => {
-  const end = new Date(startDate);
-  switch (preset) {
-    case '1h': end.setHours(end.getHours() + 1); break;
-    case '2h': end.setHours(end.getHours() + 2); break;
-    case '3h': end.setHours(end.getHours() + 3); break;
-    case '6h': end.setHours(end.getHours() + 6); break;
-    case 'same_day': end.setHours(23, 59, 0, 0); break;
-    case '1w': end.setDate(end.getDate() + 7); break;
-    case '1m': end.setDate(end.getDate() + 30); break;
-    default: break;
-  }
-  return end;
-};
-
 const generateQRToken = (businessId: string) => {
   return `${businessId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+};
+
+const calculateAppearanceEndDate = (startDate: Date, hours: number): Date => {
+  const end = new Date(startDate);
+  end.setTime(end.getTime() + hours * 60 * 60 * 1000);
+  return end;
 };
 
 // ============================================
@@ -210,15 +210,16 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     discountPercent: 20,
     bundlePriceCents: 0,
     bundleItems: [],
-    durationPreset: 'same_day',
-    startAt: new Date(),
-    endAt: (() => {
-      const d = new Date();
-      d.setHours(23, 59, 0, 0);
-      return d;
-    })(),
+    // Appearance Duration
+    appearanceMode: 'hours',
+    appearanceHours: 6, // default 6 hours
+    appearanceCustomHours: 12,
+    appearanceStartDate: new Date(),
+    appearanceEndDate: calculateAppearanceEndDate(new Date(), 6),
+    // Availability
     maxPurchases: null,
     maxPerUser: 1,
+    // Redemption
     requiresReservation: false,
     terms: '',
   });
@@ -289,9 +290,18 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     setFormData(prev => {
       const next = { ...prev, [field]: value };
       
-      // Auto-calculate end date when start or preset changes
-      if ((field === 'startAt' || field === 'durationPreset') && next.durationPreset !== 'custom' && next.startAt) {
-        next.endAt = calculateEndDate(next.startAt, next.durationPreset);
+      // Auto-calculate end date when appearance settings change
+      if (field === 'appearanceHours' || field === 'appearanceCustomHours' || field === 'appearanceStartDate') {
+        if (next.appearanceMode === 'hours' && next.appearanceStartDate) {
+          const hours = next.appearanceHours === -1 ? next.appearanceCustomHours : next.appearanceHours;
+          next.appearanceEndDate = calculateAppearanceEndDate(next.appearanceStartDate, hours);
+        }
+      }
+      
+      // When switching to hours mode, recalculate end date
+      if (field === 'appearanceMode' && value === 'hours' && next.appearanceStartDate) {
+        const hours = next.appearanceHours === -1 ? next.appearanceCustomHours : next.appearanceHours;
+        next.appearanceEndDate = calculateAppearanceEndDate(next.appearanceStartDate, hours);
       }
       
       return next;
@@ -323,11 +333,27 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     updateField('bundleItems', items);
   };
 
+  // Calculate final appearance dates for submission
+  const getAppearanceDates = () => {
+    if (formData.appearanceMode === 'hours') {
+      const hours = formData.appearanceHours === -1 ? formData.appearanceCustomHours : formData.appearanceHours;
+      const start = formData.appearanceStartDate || new Date();
+      const end = calculateAppearanceEndDate(start, hours);
+      return { start, end };
+    }
+    return {
+      start: formData.appearanceStartDate || new Date(),
+      end: formData.appearanceEndDate || new Date(),
+    };
+  };
+
   // Validation
   const validate = (): string | null => {
     if (!formData.title.trim()) return t.allFieldsRequired;
     if (wordsRemaining < 0) return language === 'el' ? 'Η περιγραφή υπερβαίνει τις 60 λέξεις' : 'Description exceeds 60 words';
-    if (!formData.startAt || !formData.endAt) return t.allFieldsRequired;
+    
+    const { start, end } = getAppearanceDates();
+    if (!start || !end) return t.allFieldsRequired;
     
     if (formData.offerType === 'single') {
       if (formData.originalPriceCents <= 0) return t.allFieldsRequired;
@@ -353,6 +379,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     setIsSubmitting(true);
 
     try {
+      // Calculate appearance dates
+      const appearance = getAppearanceDates();
+
       // Insert the offer
       const { data: offerData, error: insertError } = await supabase.from('discounts').insert({
         business_id: businessId,
@@ -363,8 +392,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         percent_off: formData.discountPercent,
         pricing_type: formData.offerType,
         offer_type: 'regular',
-        start_at: formData.startAt!.toISOString(),
-        end_at: formData.endAt!.toISOString(),
+        start_at: appearance.start.toISOString(),
+        end_at: appearance.end.toISOString(),
         max_purchases: formData.maxPurchases,
         max_per_user: formData.maxPerUser,
         requires_reservation: formData.requiresReservation && hasDirectReservations,
@@ -439,16 +468,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     </div>
   );
 
-  const durationPresets: { key: DurationPreset; label: string }[] = [
-    { key: '1h', label: `1 ${t.hour}` },
-    { key: '2h', label: `2 ${t.hours}` },
-    { key: '3h', label: `3 ${t.hours}` },
-    { key: '6h', label: `6 ${t.hours}` },
-    { key: 'same_day', label: t.sameDay },
-    { key: '1w', label: `1 ${t.week}` },
-    { key: '1m', label: `1 ${t.month}` },
-    { key: 'custom', label: t.custom },
-  ];
+  // Appearance hour presets
+  const hourPresets = [3, 6, 12, 24];
 
   // ============================================
   // RENDER
@@ -699,79 +720,126 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           )}
         </SectionCard>
 
-        {/* Step 5: Duration & Availability */}
+        {/* Step 5: ΦΟΜΟ Appearance Duration */}
         <SectionCard title={t.step5} required>
-          <div className="space-y-4">
-            {/* Duration Presets */}
-            <div className="space-y-2">
-              <Label>{t.duration}</Label>
+          <p className="text-sm text-muted-foreground -mt-2 mb-4">{t.appearanceDesc}</p>
+          
+          {/* Mode Toggle */}
+          <div className="flex gap-2 mb-4">
+            <Button
+              type="button"
+              variant={formData.appearanceMode === 'hours' ? "default" : "outline"}
+              size="sm"
+              onClick={() => updateField('appearanceMode', 'hours')}
+              className="flex items-center gap-2"
+            >
+              <Clock className="h-4 w-4" />
+              {t.byHours}
+            </Button>
+            <Button
+              type="button"
+              variant={formData.appearanceMode === 'days' ? "default" : "outline"}
+              size="sm"
+              onClick={() => updateField('appearanceMode', 'days')}
+              className="flex items-center gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              {t.byDays}
+            </Button>
+          </div>
+
+          {formData.appearanceMode === 'hours' ? (
+            // Hours Mode
+            <div className="space-y-4">
+              {/* Hour Presets */}
               <div className="flex flex-wrap gap-2">
-                {durationPresets.map((preset) => (
+                {hourPresets.map((hours) => (
                   <Button
-                    key={preset.key}
+                    key={hours}
                     type="button"
-                    variant={formData.durationPreset === preset.key ? "default" : "outline"}
+                    variant={formData.appearanceHours === hours ? "default" : "outline"}
                     size="sm"
-                    onClick={() => updateField('durationPreset', preset.key)}
+                    onClick={() => updateField('appearanceHours', hours)}
                   >
-                    {preset.label}
+                    {hours} {t.hours}
                   </Button>
                 ))}
+                <Button
+                  type="button"
+                  variant={formData.appearanceHours === -1 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateField('appearanceHours', -1)}
+                >
+                  {t.customHours}
+                </Button>
               </div>
+              
+              {/* Custom Hours Input */}
+              {formData.appearanceHours === -1 && (
+                <div className="space-y-2">
+                  <Label>{t.customHours}</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="168"
+                    value={formData.appearanceCustomHours}
+                    onChange={(e) => updateField('appearanceCustomHours', parseInt(e.target.value) || 1)}
+                    className="max-w-[200px]"
+                  />
+                </div>
+              )}
             </div>
-
-            {/* Date Pickers */}
+          ) : (
+            // Days Mode
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t.startDate}</Label>
                 <DateTimePicker
-                  value={formData.startAt || undefined}
-                  onChange={(date) => updateField('startAt', date || null)}
+                  value={formData.appearanceStartDate || undefined}
+                  onChange={(date) => updateField('appearanceStartDate', date || null)}
                   minDate={new Date()}
                 />
               </div>
               <div className="space-y-2">
                 <Label>{t.endDate}</Label>
                 <DateTimePicker
-                  value={formData.endAt || undefined}
-                  onChange={(date) => {
-                    updateField('endAt', date || null);
-                    if (date && formData.startAt && date.getTime() !== calculateEndDate(formData.startAt, formData.durationPreset).getTime()) {
-                      updateField('durationPreset', 'custom');
-                    }
-                  }}
-                  minDate={formData.startAt || new Date()}
+                  value={formData.appearanceEndDate || undefined}
+                  onChange={(date) => updateField('appearanceEndDate', date || null)}
+                  minDate={formData.appearanceStartDate || new Date()}
                 />
               </div>
             </div>
+          )}
+        </SectionCard>
 
-            {/* Max Purchases */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t.maxTotal}</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  placeholder={t.unlimited}
-                  value={formData.maxPurchases ?? ''}
-                  onChange={(e) => updateField('maxPurchases', e.target.value ? parseInt(e.target.value) : null)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t.maxPerUser}</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={formData.maxPerUser}
-                  onChange={(e) => updateField('maxPerUser', parseInt(e.target.value) || 1)}
-                />
-              </div>
+        {/* Step 6: Availability */}
+        <SectionCard title={t.step6}>
+          <p className="text-sm text-muted-foreground -mt-2 mb-4">{t.availabilityDesc}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{t.maxTotal}</Label>
+              <Input
+                type="number"
+                min="1"
+                placeholder={t.unlimited}
+                value={formData.maxPurchases ?? ''}
+                onChange={(e) => updateField('maxPurchases', e.target.value ? parseInt(e.target.value) : null)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t.maxPerUser}</Label>
+              <Input
+                type="number"
+                min="1"
+                value={formData.maxPerUser}
+                onChange={(e) => updateField('maxPerUser', parseInt(e.target.value) || 1)}
+              />
             </div>
           </div>
         </SectionCard>
 
-        {/* Step 6: Redemption Settings */}
-        <SectionCard title={t.step6}>
+        {/* Step 7: Redemption Settings */}
+        <SectionCard title={t.step7}>
           <div className="space-y-4">
             {/* Requires Reservation Toggle */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
