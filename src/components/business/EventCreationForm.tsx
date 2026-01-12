@@ -1,273 +1,346 @@
-import { useState, useMemo, useCallback, useRef } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { safeSelectChange, safeBooleanChange } from "@/lib/formSafeUpdate";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, X, Music, Car, Accessibility, ImagePlus, Tag, MapPin, Ticket, Users, Clock, AlertTriangle, Check } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Loader2, Calendar, Clock, MapPin, Image, Ticket, Users, Gift, Plus, Trash2, AlertTriangle, Check, Info, Sparkles } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
 import { ImageCropDialog } from "./ImageCropDialog";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { compressImage } from "@/lib/imageCompression";
 import { useLanguage } from "@/hooks/useLanguage";
-import { businessTranslations, seatingOptions } from "./translations";
-import { EventCategorySelector } from "./EventCategorySelector";
-import { Switch } from "@/components/ui/switch";
-import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
-import { toastTranslations } from "@/translations/toastTranslations";
-import EventBoostDialog from "./EventBoostDialog";
-import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
-import { TicketTierEditor, type TicketTier, validateTicketTiers } from "@/components/tickets/TicketTierEditor";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
-import { EventTypeSelector, type EventType } from "./EventTypeSelector";
-import { SeatingTypeEditor, type SeatingTypeConfig } from "./SeatingTypeEditor";
-import { AppearanceDurationPicker, type AppearanceMode } from "./AppearanceDurationPicker";
-import { FreeEntryDeclaration } from "./FreeEntryDeclaration";
-import { Separator } from "@/components/ui/separator";
+import EventBoostDialog from "./EventBoostDialog";
 import { cn } from "@/lib/utils";
 
-// Helper to safely parse ISO string to Date (returns undefined for invalid)
-function parseIsoToDate(isoString: string | undefined | null): Date | undefined {
-  if (!isoString) return undefined;
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return date;
+// ============================================
+// TYPES
+// ============================================
+
+type EventType = 'ticket' | 'reservation' | 'free_entry';
+type AppearanceMode = 'hours' | 'days';
+type SeatingType = 'bar' | 'table' | 'vip' | 'sofa';
+
+interface PersonTier {
+  minPeople: number;
+  maxPeople: number;
+  prepaidChargeCents: number;
 }
 
-// Deep equality check for SeatingTypeConfig arrays to prevent no-op updates
-function areSeatingTypesEqual(a: SeatingTypeConfig[], b: SeatingTypeConfig[]): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    const configA = a[i];
-    const configB = b[i];
-    if (
-      configA.seating_type !== configB.seating_type ||
-      configA.available_slots !== configB.available_slots ||
-      configA.dress_code !== configB.dress_code ||
-      configA.no_show_policy !== configB.no_show_policy ||
-      configA.tiers.length !== configB.tiers.length
-    ) {
-      return false;
-    }
-    // Compare tiers
-    for (let j = 0; j < configA.tiers.length; j++) {
-      const tierA = configA.tiers[j];
-      const tierB = configB.tiers[j];
-      if (
-        tierA.min_people !== tierB.min_people ||
-        tierA.max_people !== tierB.max_people ||
-        tierA.prepaid_min_charge_cents !== tierB.prepaid_min_charge_cents
-      ) {
-        return false;
-      }
-    }
-  }
-  return true;
+interface SeatingConfig {
+  type: SeatingType;
+  availableSlots: number;
+  tiers: PersonTier[];
 }
 
-const createEventSchema = (language: 'el' | 'en') => {
-  const v = validationTranslations[language];
-  
-  return z.object({
-    title: z.string().trim().min(3, v.titleRequired).max(100, formatValidationMessage(v.maxLength, { max: 100 })),
-    description: z.string().trim().min(10, formatValidationMessage(v.minLength, { min: 10 })).max(1000, formatValidationMessage(v.maxLength, { max: 1000 })),
-    location: z.string().trim().min(3, v.locationRequired),
-    start_at: z.string().min(1, language === 'el' ? "Η ημερομηνία έναρξης είναι υποχρεωτική" : "Start date is required")
-      .refine((val) => new Date(val) >= new Date(new Date().setHours(0, 0, 0, 0)), {
-        message: language === 'el' ? "Η ημερομηνία έναρξης δεν μπορεί να είναι στο παρελθόν" : "Start date cannot be in the past"
-      }),
-    end_at: z.string().min(1, language === 'el' ? "Η ημερομηνία λήξης είναι υποχρεωτική" : "End date is required"),
-    category: z.array(z.string()).min(1, v.categoryRequired),
-    price_tier: z.enum(["free", "low", "medium", "high"]),
-    min_age_hint: z.number().min(0).max(100).optional(),
-    // Venue fields
-    venue_name: z.string().optional(),
-    is_indoor: z.boolean().default(true),
-    parking_info: z.string().optional(),
-    accessibility_info: z.array(z.string()).optional(),
-    // Ticket event fields
-    performers: z.array(z.string()).optional(),
-    dress_code: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    // Reservation fields
-    min_party_size: z.number().min(1).max(20).optional(),
-    max_party_size: z.number().min(1).max(50).optional(),
-    max_total_reservations: z.number().min(1).optional(),
-    reservation_hours_from: z.string().optional(),
-    reservation_hours_to: z.string().optional(),
-  }).refine((data) => new Date(data.end_at) > new Date(data.start_at), {
-    message: language === 'el' ? "Η ημερομηνία λήξης πρέπει να είναι μετά την ημερομηνία έναρξης" : "End date must be after start date",
-    path: ["end_at"],
-  });
+interface FormData {
+  // Step 1: Title
+  title: string;
+  // Step 2: Description
+  description: string;
+  // Step 3: Start Date/Time
+  startAt: Date | null;
+  // Step 4: Appearance
+  appearanceMode: AppearanceMode;
+  appearanceHours: number;
+  appearanceCustomHours: number;
+  appearanceStartDate: Date | null;
+  appearanceEndDate: Date | null;
+  // Step 5: Venue
+  venueName: string;
+  address: string;
+  // Step 6: Cover Image (handled separately)
+  // Step 7: Event Type
+  eventType: EventType | null;
+  // Ticket fields
+  ticketName: string;
+  ticketDescription: string;
+  ticketPriceCents: number;
+  ticketQuantity: number;
+  ticketMaxPerOrder: number;
+  ticketDressCode: string;
+  // Reservation fields
+  reservationFromTime: string;
+  reservationToTime: string;
+  selectedSeatingTypes: SeatingType[];
+  seatingConfigs: Record<SeatingType, SeatingConfig>;
+  cancellationHours: number;
+  // Free Entry fields
+  freeEntryAccepted: {
+    noTicket: boolean;
+    noMinSpend: boolean;
+    noReservation: boolean;
+  };
+}
+
+// ============================================
+// TRANSLATIONS
+// ============================================
+
+const translations = {
+  el: {
+    createEvent: "Δημιουργία Εκδήλωσης",
+    step1: "1. Τίτλος Εκδήλωσης",
+    step2: "2. Περιγραφή Εκδήλωσης",
+    step3: "3. Ημερομηνία & Ώρα Έναρξης",
+    step4: "4. Διάρκεια Εμφάνισης στο FOMO",
+    step5: "5. Τοποθεσία / Χώρος",
+    step6: "6. Εικόνα Εκδήλωσης",
+    step7: "7. Τύπος Εκδήλωσης",
+    required: "Υποχρεωτικό",
+    titlePlaceholder: "Δώστε έναν σύντομο και καθαρό τίτλο",
+    descriptionPlaceholder: "Περιγράψτε την εκδήλωση (π.χ. party, DJ night, θεματικό βράδυ)...",
+    wordsRemaining: "λέξεις απομένουν",
+    wordsOver: "λέξεις πάνω από το όριο",
+    selectDateTime: "Επιλέξτε ημερομηνία και ώρα",
+    byHours: "Εμφάνιση με ώρες",
+    byDays: "Εμφάνιση με ημέρες",
+    hours: "ώρες",
+    custom: "Προσαρμοσμένο",
+    fromDate: "Από ημερομηνία",
+    toDate: "Έως ημερομηνία",
+    venueName: "Όνομα χώρου",
+    venueNamePlaceholder: "π.χ. Club XYZ",
+    location: "Τοποθεσία / Διεύθυνση",
+    locationPlaceholder: "π.χ. Λεωφόρος Μακαρίου 45, Λευκωσία",
+    coverImage: "Εικόνα Εκδήλωσης",
+    chooseEventType: "Επιλέξτε τύπο εκδήλωσης",
+    withTicket: "Με Εισιτήριο",
+    withReservation: "Με Κράτηση",
+    freeEntry: "Ελεύθερη Είσοδος",
+    ticketConfig: "Ρυθμίσεις Εισιτηρίου",
+    reservationConfig: "Ρυθμίσεις Κράτησης",
+    freeEntryConfig: "Δήλωση Ελεύθερης Εισόδου",
+    platformFee: "Προμήθεια πλατφόρμας:",
+    upgradeHint: "Αναβαθμίστε το πλάνο σας για μικρότερη προμήθεια.",
+    ticketNameLabel: "Όνομα εισιτηρίου",
+    ticketDescLabel: "Σύντομη περιγραφή (προαιρετικό)",
+    priceLabel: "Τιμή (€)",
+    ticketsAvailable: "Διαθέσιμα εισιτήρια",
+    maxPerOrder: "Μέγιστο ανά παραγγελία",
+    dressCode: "Dress Code (προαιρετικό)",
+    casual: "Casual",
+    smartCasual: "Smart Casual",
+    semiFormal: "Semi-Formal",
+    formal: "Formal",
+    costume: "Costume",
+    reservationHours: "Ώρες αποδοχής κρατήσεων",
+    from: "Από",
+    to: "Έως",
+    seatingTypes: "Τύποι Θέσεων",
+    selectSeatingTypes: "Επιλέξτε από 1 έως 4 τύπους:",
+    bar: "Bar",
+    table: "Τραπέζι",
+    vip: "VIP",
+    sofa: "Καναπές",
+    availableBookings: "Διαθέσιμες κρατήσεις",
+    personRanges: "Εύρος ατόμων & Prepaid Minimum Charge",
+    rangeHint: "Έως 3 εύρη ανά τύπο. Το ποσό αφορά όλη την παρέα.",
+    fromPersons: "Από άτομα",
+    toPersons: "Έως άτομα",
+    prepaidCharge: "Prepaid Charge (€)",
+    addRange: "Προσθήκη εύρους",
+    cancellationPolicy: "Πολιτική Ακύρωσης",
+    freeCancellationUpTo: "Δωρεάν ακύρωση έως",
+    hoursBeforeEvent: "ώρες πριν",
+    cancellationNote: "Αργές ακυρώσεις και no-shows δεν επιστρέφουν το ποσό.",
+    freeEntryDeclarations: "Δηλώνω ότι:",
+    noTicketRequired: "Δεν απαιτείται εισιτήριο στην είσοδο",
+    noMinSpend: "Δεν υπάρχει υποχρεωτικό minimum spend",
+    noReservationRequired: "Δεν απαιτείται κράτηση για είσοδο",
+    freeEntryWarning: "Τα Free Entry events εμφανίζονται μόνο όταν γίνει boost. Υπάρχει σύστημα strike αν αποδειχθεί ότι ζητήθηκε πληρωμή στην είσοδο.",
+    boostEvent: "Boost αυτή την εκδήλωση",
+    publishEvent: "Δημοσίευση Εκδήλωσης",
+    publishing: "Δημοσίευση...",
+    allFieldsRequired: "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία",
+    eventCreated: "Η εκδήλωση δημιουργήθηκε επιτυχώς!",
+    eventCreateFailed: "Αποτυχία δημιουργίας εκδήλωσης",
+    acceptAllDeclarations: "Πρέπει να αποδεχτείτε όλες τις δηλώσεις",
+    addAtLeastOneSeating: "Προσθέστε τουλάχιστον έναν τύπο θέσης",
+    addAtLeastOneRange: "Κάθε τύπος θέσης χρειάζεται τουλάχιστον ένα εύρος ατόμων",
+  },
+  en: {
+    createEvent: "Create Event",
+    step1: "1. Event Title",
+    step2: "2. Event Description",
+    step3: "3. Start Date & Time",
+    step4: "4. Duration of Appearance in FOMO",
+    step5: "5. Venue / Location",
+    step6: "6. Event Picture",
+    step7: "7. Event Type",
+    required: "Required",
+    titlePlaceholder: "Give your event a short, clear title",
+    descriptionPlaceholder: "Describe the event (e.g. party, DJ night, themed night)...",
+    wordsRemaining: "words remaining",
+    wordsOver: "words over limit",
+    selectDateTime: "Select date and time",
+    byHours: "Appearance by hours",
+    byDays: "Appearance by days",
+    hours: "hours",
+    custom: "Custom",
+    fromDate: "From date",
+    toDate: "To date",
+    venueName: "Venue name",
+    venueNamePlaceholder: "e.g. Club XYZ",
+    location: "Location / Address",
+    locationPlaceholder: "e.g. 45 Makarios Avenue, Nicosia",
+    coverImage: "Event Picture",
+    chooseEventType: "Choose event type",
+    withTicket: "With Ticket",
+    withReservation: "With Reservation",
+    freeEntry: "Free Entry",
+    ticketConfig: "Ticket Settings",
+    reservationConfig: "Reservation Settings",
+    freeEntryConfig: "Free Entry Declaration",
+    platformFee: "Platform fee:",
+    upgradeHint: "Upgrade your plan for reduced commission.",
+    ticketNameLabel: "Ticket name",
+    ticketDescLabel: "Short description (optional)",
+    priceLabel: "Price (€)",
+    ticketsAvailable: "Tickets available",
+    maxPerOrder: "Max per order",
+    dressCode: "Dress Code (optional)",
+    casual: "Casual",
+    smartCasual: "Smart Casual",
+    semiFormal: "Semi-Formal",
+    formal: "Formal",
+    costume: "Costume",
+    reservationHours: "Reservation acceptance hours",
+    from: "From",
+    to: "To",
+    seatingTypes: "Seating Types",
+    selectSeatingTypes: "Select from 1 to 4 types:",
+    bar: "Bar",
+    table: "Table",
+    vip: "VIP",
+    sofa: "Sofa",
+    availableBookings: "Available bookings",
+    personRanges: "Person Range & Prepaid Minimum Charge",
+    rangeHint: "Up to 3 ranges per type. The amount is for the entire group.",
+    fromPersons: "From persons",
+    toPersons: "To persons",
+    prepaidCharge: "Prepaid Charge (€)",
+    addRange: "Add range",
+    cancellationPolicy: "Cancellation Policy",
+    freeCancellationUpTo: "Free cancellation up to",
+    hoursBeforeEvent: "hours before",
+    cancellationNote: "Late cancellations and no-shows forfeit the prepaid amount.",
+    freeEntryDeclarations: "I declare that:",
+    noTicketRequired: "No ticket required at the entrance",
+    noMinSpend: "No mandatory minimum spend",
+    noReservationRequired: "No reservation required for entry",
+    freeEntryWarning: "Free Entry events only appear when boosted. A strike system applies if users report payment was required at the door.",
+    boostEvent: "Boost this event",
+    publishEvent: "Publish Event",
+    publishing: "Publishing...",
+    allFieldsRequired: "Please fill in all required fields",
+    eventCreated: "Event created successfully!",
+    eventCreateFailed: "Failed to create event",
+    acceptAllDeclarations: "You must accept all declarations",
+    addAtLeastOneSeating: "Add at least one seating type",
+    addAtLeastOneRange: "Each seating type needs at least one person range",
+  },
 };
 
-type EventFormData = z.infer<ReturnType<typeof createEventSchema>>;
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+const countWords = (text: string): number => {
+  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+};
+
+const getDefaultSeatingConfig = (type: SeatingType): SeatingConfig => ({
+  type,
+  availableSlots: 10,
+  tiers: [{ minPeople: 2, maxPeople: 6, prepaidChargeCents: 10000 }],
+});
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 interface EventCreationFormProps {
   businessId: string;
 }
 
-const formTranslations = {
-  el: {
-    step1: "1. Βασικές Πληροφορίες",
-    step2: "2. Εμφάνιση στο FOMO",
-    step3: "3. Τοποθεσία",
-    step4: "4. Τύπος Εκδήλωσης",
-    step5Ticket: "5. Εισιτήρια & Τιμές",
-    step5Reservation: "5. Ρυθμίσεις Κρατήσεων",
-    step5FreeEntry: "5. Δήλωση Ελεύθερης Εισόδου",
-    eventTypeRequired: "Πρέπει να επιλέξετε τύπο εκδήλωσης",
-    freeEntryDeclarationRequired: "Πρέπει να αποδεχτείτε τη δήλωση ελεύθερης εισόδου",
-    seatingTypeRequired: "Πρέπει να προσθέσετε τουλάχιστον έναν τύπο θέσης με τιμολόγηση",
-    publishEvent: "Δημοσίευση Εκδήλωσης",
-    reservationHours: "Ώρες Κρατήσεων",
-    partySize: "Μέγεθος Παρέας",
-    minPartySize: "Ελάχιστο",
-    maxPartySize: "Μέγιστο",
-    maxTotalReservations: "Μέγιστες Συνολικές Κρατήσεις",
-    from: "Από",
-    to: "Έως",
-  },
-  en: {
-    step1: "1. Basic Information",
-    step2: "2. FOMO Appearance",
-    step3: "3. Location",
-    step4: "4. Event Type",
-    step5Ticket: "5. Tickets & Pricing",
-    step5Reservation: "5. Reservation Settings",
-    step5FreeEntry: "5. Free Entry Declaration",
-    eventTypeRequired: "You must select an event type",
-    freeEntryDeclarationRequired: "You must accept the free entry declaration",
-    seatingTypeRequired: "You must add at least one seating type with pricing",
-    publishEvent: "Publish Event",
-    reservationHours: "Reservation Hours",
-    partySize: "Party Size",
-    minPartySize: "Minimum",
-    maxPartySize: "Maximum",
-    maxTotalReservations: "Max Total Reservations",
-    from: "From",
-    to: "To",
-  },
-};
-
 const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   const navigate = useNavigate();
   const { language } = useLanguage();
-  const t = businessTranslations[language];
-  const ft = formTranslations[language];
-  const toastT = toastTranslations[language];
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCompressing, setIsCompressing] = useState(false);
+  const t = translations[language];
+  
+  // Commission rate
+  const { data: commissionData } = useCommissionRate(businessId);
+  const commissionPercent = commissionData?.commissionPercent ?? 12;
+  
+  // Form state
+  const [formData, setFormData] = useState<FormData>({
+    title: '',
+    description: '',
+    startAt: null,
+    appearanceMode: 'hours',
+    appearanceHours: 24,
+    appearanceCustomHours: 48,
+    appearanceStartDate: null,
+    appearanceEndDate: null,
+    venueName: '',
+    address: '',
+    eventType: null,
+    ticketName: '',
+    ticketDescription: '',
+    ticketPriceCents: 1500,
+    ticketQuantity: 100,
+    ticketMaxPerOrder: 4,
+    ticketDressCode: '',
+    reservationFromTime: '20:00',
+    reservationToTime: '02:00',
+    selectedSeatingTypes: [],
+    seatingConfigs: {
+      bar: getDefaultSeatingConfig('bar'),
+      table: getDefaultSeatingConfig('table'),
+      vip: getDefaultSeatingConfig('vip'),
+      sofa: getDefaultSeatingConfig('sofa'),
+    },
+    cancellationHours: 12,
+    freeEntryAccepted: {
+      noTicket: false,
+      noMinSpend: false,
+      noReservation: false,
+    },
+  });
+  
+  // Image state
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState<string>("");
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
+  
+  // UI state
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
   const [boostDialogOpen, setBoostDialogOpen] = useState(false);
-  
-  // New state for dynamic fields
-  const [newPerformer, setNewPerformer] = useState("");
-  const [newTag, setNewTag] = useState("");
-  
-  // Event type state
-  const [eventType, setEventType] = useState<EventType | null>(null);
-  
-  // Appearance duration state
-  const [appearanceMode, setAppearanceMode] = useState<AppearanceMode>('date_range');
-  const [appearanceStartAt, setAppearanceStartAt] = useState<Date | undefined>();
-  const [appearanceEndAt, setAppearanceEndAt] = useState<Date | undefined>();
-  
-  // Free entry state
-  const [freeEntryDeclaration, setFreeEntryDeclaration] = useState(false);
   const [wantsBoost, setWantsBoost] = useState(false);
   
-  // Ticket tiers state
-  const [ticketTiers, setTicketTiers] = useState<TicketTier[]>([]);
-  const [ticketTierErrors, setTicketTierErrors] = useState<string[]>([]);
+  // Simple field updater
+  const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
   
-  // Seating types state (for reservation events)
-  const [seatingTypes, setSeatingTypesInternal] = useState<SeatingTypeConfig[]>([]);
-  const seatingTypesRef = useRef<SeatingTypeConfig[]>([]);
+  // Word count for description
+  const descriptionWordCount = countWords(formData.description);
+  const maxWords = 60;
+  const wordsRemaining = maxWords - descriptionWordCount;
   
-  // Guarded setter to prevent no-op updates that cause re-render loops
-  const setSeatingTypes = useCallback((next: SeatingTypeConfig[] | ((prev: SeatingTypeConfig[]) => SeatingTypeConfig[])) => {
-    setSeatingTypesInternal(prev => {
-      const nextValue = typeof next === 'function' ? next(prev) : next;
-      // Only update if actually different
-      if (areSeatingTypesEqual(prev, nextValue)) {
-        return prev;
-      }
-      seatingTypesRef.current = nextValue;
-      return nextValue;
-    });
-  }, []);
-  
-  // Memoize "now" date to prevent new Date() on every render for minDate
-  const minDateNow = useMemo(() => new Date(), []);
-  
-  // CRITICAL: Memoize schema and resolver to prevent re-creation on every render
-  // This prevents RHF from re-validating and triggering state updates in a loop
-  const eventSchema = useMemo(() => createEventSchema(language), [language]);
-  const formResolver = useMemo(() => zodResolver(eventSchema), [eventSchema]);
-  
-  // Get commission rate for ticket pricing
-  const { data: commissionData } = useCommissionRate(businessId);
-  const commissionPercent = commissionData?.commissionPercent ?? 12;
-
-  // Fetch subscription status
-  const { data: subscriptionData } = useQuery({
-    queryKey: ["subscription-status"],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("check-subscription");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const form = useForm<EventFormData>({
-    resolver: formResolver,
-    defaultValues: {
-      title: "",
-      description: "",
-      location: "",
-      start_at: "",
-      end_at: "",
-      category: [],
-      price_tier: "free",
-      min_age_hint: 0,
-      venue_name: "",
-      is_indoor: true,
-      performers: [],
-      dress_code: "",
-      parking_info: "",
-      accessibility_info: [],
-      tags: [],
-      min_party_size: 2,
-      max_party_size: 10,
-      max_total_reservations: undefined,
-      reservation_hours_from: "",
-      reservation_hours_to: "",
-    },
-  });
-
-  // Use useWatch to avoid infinite re-render loops from inline form.watch() calls
-  const watchedTitle = useWatch({ control: form.control, name: 'title' });
-  const watchedDescription = useWatch({ control: form.control, name: 'description' });
-  const watchedLocation = useWatch({ control: form.control, name: 'location' });
-  const watchedMinPartySize = useWatch({ control: form.control, name: 'min_party_size' });
-  const watchedMaxPartySize = useWatch({ control: form.control, name: 'max_party_size' });
-
-  const handleFileSelect = (file: File) => {
+  // Image handling
+  const handleFileSelect = (file: File | null) => {
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       setTempImageSrc(reader.result as string);
@@ -276,7 +349,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
     };
     reader.readAsDataURL(file);
   };
-
+  
   const handleCropComplete = async (croppedBlob: Blob) => {
     const croppedFile = new File(
       [croppedBlob],
@@ -288,925 +361,868 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
     setTempImageSrc("");
     setTempImageFile(null);
   };
-
-  const addPerformer = () => {
-    if (newPerformer.trim()) {
-      const current = form.getValues("performers") || [];
-      form.setValue("performers", [...current, newPerformer.trim()]);
-      setNewPerformer("");
+  
+  // Seating type toggle
+  const toggleSeatingType = (type: SeatingType) => {
+    const current = formData.selectedSeatingTypes;
+    if (current.includes(type)) {
+      updateField('selectedSeatingTypes', current.filter(t => t !== type));
+    } else if (current.length < 4) {
+      updateField('selectedSeatingTypes', [...current, type]);
     }
   };
-
-  const removePerformer = (index: number) => {
-    const current = form.getValues("performers") || [];
-    form.setValue("performers", current.filter((_, i) => i !== index));
+  
+  // Update seating config
+  const updateSeatingConfig = (type: SeatingType, updates: Partial<SeatingConfig>) => {
+    setFormData(prev => ({
+      ...prev,
+      seatingConfigs: {
+        ...prev.seatingConfigs,
+        [type]: { ...prev.seatingConfigs[type], ...updates },
+      },
+    }));
   };
-
-  const addTag = () => {
-    if (newTag.trim()) {
-      const current = form.getValues("tags") || [];
-      if (!current.includes(newTag.trim())) {
-        form.setValue("tags", [...current, newTag.trim()]);
+  
+  // Add/remove person tiers
+  const addTier = (type: SeatingType) => {
+    const config = formData.seatingConfigs[type];
+    if (config.tiers.length >= 3) return;
+    const lastTier = config.tiers[config.tiers.length - 1];
+    const newTier: PersonTier = {
+      minPeople: lastTier ? lastTier.maxPeople + 1 : 1,
+      maxPeople: lastTier ? lastTier.maxPeople + 4 : 6,
+      prepaidChargeCents: lastTier ? lastTier.prepaidChargeCents + 5000 : 10000,
+    };
+    updateSeatingConfig(type, { tiers: [...config.tiers, newTier] });
+  };
+  
+  const removeTier = (type: SeatingType, index: number) => {
+    const config = formData.seatingConfigs[type];
+    if (config.tiers.length <= 1) return;
+    updateSeatingConfig(type, { tiers: config.tiers.filter((_, i) => i !== index) });
+  };
+  
+  const updateTier = (type: SeatingType, index: number, updates: Partial<PersonTier>) => {
+    const config = formData.seatingConfigs[type];
+    const newTiers = config.tiers.map((tier, i) => 
+      i === index ? { ...tier, ...updates } : tier
+    );
+    updateSeatingConfig(type, { tiers: newTiers });
+  };
+  
+  // Calculate appearance dates
+  const calculateAppearanceDates = (): { start: Date | null; end: Date | null } => {
+    if (formData.appearanceMode === 'hours') {
+      const hours = formData.appearanceHours === -1 
+        ? formData.appearanceCustomHours 
+        : formData.appearanceHours;
+      const now = new Date();
+      const end = new Date(now.getTime() + hours * 60 * 60 * 1000);
+      return { start: now, end };
+    } else {
+      return { 
+        start: formData.appearanceStartDate, 
+        end: formData.appearanceEndDate 
+      };
+    }
+  };
+  
+  // Validation
+  const validate = (): string | null => {
+    if (!formData.title.trim()) return t.allFieldsRequired;
+    if (!formData.description.trim()) return t.allFieldsRequired;
+    if (wordsRemaining < 0) return language === 'el' ? 'Η περιγραφή υπερβαίνει τις 60 λέξεις' : 'Description exceeds 60 words';
+    if (!formData.startAt) return t.allFieldsRequired;
+    if (formData.appearanceMode === 'days' && (!formData.appearanceStartDate || !formData.appearanceEndDate)) {
+      return t.allFieldsRequired;
+    }
+    if (!formData.venueName.trim() || !formData.address.trim()) return t.allFieldsRequired;
+    if (!coverImage) return t.allFieldsRequired;
+    if (!formData.eventType) return t.allFieldsRequired;
+    
+    // Type-specific validation
+    if (formData.eventType === 'ticket') {
+      if (!formData.ticketName.trim()) return t.allFieldsRequired;
+      if (formData.ticketPriceCents <= 0) return t.allFieldsRequired;
+      if (formData.ticketQuantity <= 0) return t.allFieldsRequired;
+    }
+    
+    if (formData.eventType === 'reservation') {
+      if (formData.selectedSeatingTypes.length === 0) return t.addAtLeastOneSeating;
+      for (const type of formData.selectedSeatingTypes) {
+        const config = formData.seatingConfigs[type];
+        if (config.tiers.length === 0) return t.addAtLeastOneRange;
       }
-      setNewTag("");
     }
+    
+    if (formData.eventType === 'free_entry') {
+      const { noTicket, noMinSpend, noReservation } = formData.freeEntryAccepted;
+      if (!noTicket || !noMinSpend || !noReservation) return t.acceptAllDeclarations;
+    }
+    
+    return null;
   };
-
-  const removeTag = (index: number) => {
-    const current = form.getValues("tags") || [];
-    form.setValue("tags", current.filter((_, i) => i !== index));
-  };
-
-
-  const onSubmit = async (data: EventFormData) => {
-    // Validate event type is selected
-    if (!eventType) {
-      toast.error(ft.eventTypeRequired);
-      return;
-    }
-
-    // Validate based on event type
-    if (eventType === 'ticket' && ticketTiers.length > 0) {
-      const tierErrors = validateTicketTiers(ticketTiers, language);
-      setTicketTierErrors(tierErrors);
-      if (tierErrors.length > 0) {
-        toast.error(
-          language === 'el' ? 'Σφάλμα επικύρωσης εισιτηρίων' : 'Ticket validation error',
-          { description: language === 'el' ? 'Παρακαλώ συμπληρώστε τα ονόματα κατηγοριών εισιτηρίων' : 'Please fill in all ticket tier names' }
-        );
-        return;
-      }
-    }
-
-    if (eventType === 'reservation') {
-      const hasValidSeating = seatingTypes.length > 0 && 
-        seatingTypes.every(st => st.tiers.length > 0);
-      if (!hasValidSeating) {
-        toast.error(ft.seatingTypeRequired);
-        return;
-      }
-    }
-
-    if (eventType === 'free_entry' && !freeEntryDeclaration) {
-      toast.error(ft.freeEntryDeclarationRequired);
+  
+  // Submit handler
+  const handleSubmit = async () => {
+    const error = validate();
+    if (error) {
+      toast.error(error);
       return;
     }
     
     setIsSubmitting(true);
+    
     try {
+      // Upload cover image
       let coverImageUrl = null;
-
       if (coverImage) {
-        try {
-          setIsCompressing(true);
-          const compressedBlob = await compressImage(coverImage, 1920, 1080, 0.85);
-          const fileName = `${businessId}-${Date.now()}.jpg`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('event-covers')
-            .upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
-
-          if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('event-covers')
-            .getPublicUrl(fileName);
-
-          coverImageUrl = publicUrl;
-          setIsCompressing(false);
-        } catch (compressionError) {
-          console.error('Error compressing image:', compressionError);
-          setIsCompressing(false);
-          toast.error(toastT.error, {
-            description: language === 'el' ? "Αποτυχία συμπίεσης εικόνας" : "Failed to compress image"
-          });
-          setIsSubmitting(false);
-          return;
-        }
+        const compressedBlob = await compressImage(coverImage, 1920, 1080, 0.85);
+        const fileName = `${businessId}-${Date.now()}.jpg`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('event-covers')
+          .upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('event-covers')
+          .getPublicUrl(fileName);
+        
+        coverImageUrl = publicUrl;
       }
-
+      
+      // Calculate appearance dates
+      const appearance = calculateAppearanceDates();
+      
+      // Calculate end_at (3 hours after start by default)
+      const endAt = formData.startAt 
+        ? new Date(formData.startAt.getTime() + 3 * 60 * 60 * 1000) 
+        : new Date();
+      
       // Build event data
-      const eventInsertData = {
+      const eventData = {
         business_id: businessId,
-        title: data.title,
-        description: data.description,
-        location: data.location,
-        start_at: data.start_at,
-        end_at: data.end_at,
-        category: data.category,
-        price_tier: (eventType === 'free_entry' ? 'free' : data.price_tier) as 'free' | 'low' | 'medium' | 'high',
-        min_age_hint: data.min_age_hint || null,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        location: formData.address.trim(),
+        venue_name: formData.venueName.trim(),
+        start_at: formData.startAt?.toISOString() || new Date().toISOString(),
+        end_at: endAt.toISOString(),
         cover_image_url: coverImageUrl,
-        venue_name: data.venue_name || null,
-        is_indoor: data.is_indoor,
-        parking_info: data.parking_info || null,
-        accessibility_info: data.accessibility_info || [],
-        // New fields
-        event_type: eventType,
-        appearance_mode: appearanceMode,
-        appearance_start_at: appearanceStartAt?.toISOString() || null,
-        appearance_end_at: appearanceEndAt?.toISOString() || null,
-        free_entry_declaration: eventType === 'free_entry' ? freeEntryDeclaration : null,
-        // Type-specific fields with defaults
-        performers: eventType === 'ticket' ? (data.performers || []) : [],
-        dress_code: eventType === 'ticket' ? (data.dress_code || null) : null,
-        tags: eventType === 'ticket' ? (data.tags || []) : [],
-        accepts_reservations: eventType === 'reservation',
-        min_party_size: eventType === 'reservation' ? (data.min_party_size || 2) : null,
-        max_party_size: eventType === 'reservation' ? (data.max_party_size || 10) : null,
-        max_total_reservations: eventType === 'reservation' ? (data.max_total_reservations || null) : null,
-        reservation_hours_from: eventType === 'reservation' ? (data.reservation_hours_from || null) : null,
-        reservation_hours_to: eventType === 'reservation' ? (data.reservation_hours_to || null) : null,
-        requires_approval: eventType === 'reservation',
+        category: ['event'],
+        price_tier: (formData.eventType === 'free_entry' ? 'free' : 'medium') as 'free' | 'low' | 'medium' | 'high',
+        event_type: formData.eventType,
+        appearance_mode: formData.appearanceMode === 'hours' ? 'hourly' : 'date_range',
+        appearance_start_at: appearance.start?.toISOString() || null,
+        appearance_end_at: appearance.end?.toISOString() || null,
+        free_entry_declaration: formData.eventType === 'free_entry',
+        accepts_reservations: formData.eventType === 'reservation',
+        requires_approval: formData.eventType === 'reservation',
+        dress_code: formData.eventType === 'ticket' ? formData.ticketDressCode : null,
+        reservation_hours_from: formData.eventType === 'reservation' ? formData.reservationFromTime : null,
+        reservation_hours_to: formData.eventType === 'reservation' ? formData.reservationToTime : null,
       };
-
-      const { data: eventData, error } = await supabase.from('events').insert(eventInsertData).select().single();
-
-      if (error) throw error;
-
-      // Save ticket tiers for ticket events
-      if (eventType === 'ticket' && ticketTiers.length > 0) {
-        const tiersToInsert = ticketTiers.map((tier, index) => ({
-          event_id: eventData.id,
-          name: tier.name,
-          description: tier.description || null,
-          price_cents: tier.price_cents,
-          currency: tier.currency,
-          quantity_total: tier.quantity_total,
-          max_per_order: tier.max_per_order,
-          sort_order: index,
-          dress_code: tier.dress_code || null,
-        }));
-
-        const { error: tiersError } = await supabase
-          .from('ticket_tiers')
-          .insert(tiersToInsert);
-
-        if (tiersError) {
-          console.error('Error saving ticket tiers:', tiersError);
-          toast.error(language === 'el' ? 'Σφάλμα αποθήκευσης εισιτηρίων' : 'Error saving ticket tiers');
-        }
+      
+      const { data: createdEvent, error: insertError } = await supabase
+        .from('events')
+        .insert(eventData)
+        .select()
+        .single();
+      
+      if (insertError) throw insertError;
+      
+      // Save ticket tier for ticket events
+      if (formData.eventType === 'ticket') {
+        await supabase.from('ticket_tiers').insert({
+          event_id: createdEvent.id,
+          name: formData.ticketName,
+          description: formData.ticketDescription || null,
+          price_cents: formData.ticketPriceCents,
+          currency: 'EUR',
+          quantity_total: formData.ticketQuantity,
+          max_per_order: formData.ticketMaxPerOrder,
+          sort_order: 0,
+          dress_code: formData.ticketDressCode || null,
+        });
       }
-
-      // Save seating types for reservation events
-      if (eventType === 'reservation' && seatingTypes.length > 0) {
-        for (const seatingConfig of seatingTypes) {
-          // Insert seating type
+      
+      // Save seating types and tiers for reservation events
+      if (formData.eventType === 'reservation') {
+        for (const seatingType of formData.selectedSeatingTypes) {
+          const config = formData.seatingConfigs[seatingType];
+          
           const { data: seatingData, error: seatingError } = await supabase
             .from('reservation_seating_types')
             .insert({
-              event_id: eventData.id,
-              seating_type: seatingConfig.seating_type,
-              available_slots: seatingConfig.available_slots,
-              dress_code: seatingConfig.dress_code,
-              no_show_policy: seatingConfig.no_show_policy,
+              event_id: createdEvent.id,
+              seating_type: seatingType,
+              available_slots: config.availableSlots,
+              dress_code: null,
+              no_show_policy: `${formData.cancellationHours}h`,
             })
             .select()
             .single();
-
-          if (seatingError) {
-            console.error('Error saving seating type:', seatingError);
-            continue;
-          }
-
-          // Insert price tiers for this seating type
-          if (seatingData && seatingConfig.tiers.length > 0) {
-            const tiersToInsert = seatingConfig.tiers.map((tier, index) => ({
-              seating_type_id: seatingData.id,
-              min_people: tier.min_people,
-              max_people: tier.max_people,
-              prepaid_min_charge_cents: tier.prepaid_min_charge_cents,
-              sort_order: index,
-            }));
-
-            const { error: tierError } = await supabase
-              .from('seating_type_tiers')
-              .insert(tiersToInsert);
-
-            if (tierError) {
-              console.error('Error saving seating tiers:', tierError);
-            }
-          }
+          
+          if (seatingError || !seatingData) continue;
+          
+          // Insert price tiers
+          const tiersToInsert = config.tiers.map((tier, index) => ({
+            seating_type_id: seatingData.id,
+            min_people: tier.minPeople,
+            max_people: tier.maxPeople,
+            prepaid_min_charge_cents: tier.prepaidChargeCents,
+            sort_order: index,
+          }));
+          
+          await supabase.from('seating_type_tiers').insert(tiersToInsert);
         }
       }
-
-      toast.success(toastT.success, {
-        description: toastT.eventCreated,
-        action: eventType !== 'free_entry' ? {
-          label: language === 'el' ? 'Προώθηση' : 'Boost',
-          onClick: () => {
-            setCreatedEventId(eventData.id);
-            setBoostDialogOpen(true);
-          },
-        } : undefined,
-      });
-
-      form.reset();
-      setCoverImage(null);
-      setTicketTiers([]);
-      setSeatingTypes([]);
-      setEventType(null);
-      setFreeEntryDeclaration(false);
-      setCreatedEventId(eventData.id);
       
-      // Auto-open boost dialog for free entry events that want boost
-      if (eventType === 'free_entry' && wantsBoost) {
+      toast.success(t.eventCreated);
+      setCreatedEventId(createdEvent.id);
+      
+      // Open boost dialog if free entry and wants boost, or for other types
+      if (formData.eventType === 'free_entry' && wantsBoost) {
         setBoostDialogOpen(true);
-      } else if (eventType !== 'free_entry') {
+      } else if (formData.eventType !== 'free_entry') {
         setBoostDialogOpen(true);
+      } else {
+        navigate('/dashboard');
       }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : toastT.eventCreateFailed;
-      toast.error(toastT.error, {
-        description: errorMessage
-      });
+      
+    } catch (err) {
+      console.error('Error creating event:', err);
+      toast.error(t.eventCreateFailed);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const accessibilityOptions = [
-    { id: "wheelchair", label: t.wheelchairAccessible || "Wheelchair Accessible" },
-    { id: "elevator", label: t.elevator || "Elevator" },
-    { id: "restroom", label: t.accessibleRestroom || "Accessible Restroom" },
-    { id: "hearing", label: t.hearingLoop || "Hearing Loop" },
-  ];
+  // ============================================
+  // RENDER
+  // ============================================
 
-  const SectionHeader = ({ 
+  const SectionCard = ({ 
     title, 
-    required = false,
-    completed = false,
+    required = false, 
+    children 
   }: { 
     title: string; 
-    required?: boolean;
-    completed?: boolean;
+    required?: boolean; 
+    children: React.ReactNode;
   }) => (
-    <div className="flex items-center justify-between w-full p-4 bg-muted/50 rounded-lg">
-      <div className="flex items-center gap-3">
-        <span className="font-semibold">{title}</span>
-        {required && <Badge variant="outline" className="text-xs">{language === 'el' ? 'Απαιτείται' : 'Required'}</Badge>}
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 pb-2 border-b">
+        <h3 className="font-semibold text-lg">{title}</h3>
+        {required && (
+          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+            {t.required}
+          </span>
+        )}
       </div>
-      {completed && (
-        <div className="flex items-center gap-1.5 text-green-600">
-          <Check className="h-4 w-4" />
-          <span className="text-xs font-medium">{language === 'el' ? 'Ολοκληρώθηκε' : 'Complete'}</span>
+      <div className="space-y-4">
+        {children}
+      </div>
+    </div>
+  );
+
+  const CommissionBanner = () => (
+    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+        <div>
+          <p className="font-medium text-amber-900 dark:text-amber-100">
+            {t.platformFee} {commissionPercent}%
+          </p>
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            {t.upgradeHint}
+          </p>
         </div>
-      )}
+      </div>
     </div>
   );
 
   return (
-    <Card className="max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Music className="h-6 w-6 text-primary" />
+    <Card className="max-w-3xl mx-auto">
+      <CardHeader className="border-b">
+        <CardTitle className="flex items-center gap-2 text-2xl">
+          <Sparkles className="h-6 w-6 text-primary" />
           {t.createEvent}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            
-            {/* STEP 1: Basic Info */}
-            <div className="space-y-4">
-              <SectionHeader 
-                title={ft.step1}
-                required
-                completed={!!watchedTitle && !!watchedDescription}
+      
+      <CardContent className="p-6 space-y-8">
+        {/* Step 1: Title */}
+        <SectionCard title={t.step1} required>
+          <Input
+            value={formData.title}
+            onChange={(e) => updateField('title', e.target.value)}
+            placeholder={t.titlePlaceholder}
+            maxLength={100}
+          />
+        </SectionCard>
+
+        {/* Step 2: Description */}
+        <SectionCard title={t.step2} required>
+          <Textarea
+            value={formData.description}
+            onChange={(e) => updateField('description', e.target.value)}
+            placeholder={t.descriptionPlaceholder}
+            rows={4}
+          />
+          <p className={cn(
+            "text-sm",
+            wordsRemaining >= 0 ? "text-muted-foreground" : "text-destructive font-medium"
+          )}>
+            {wordsRemaining >= 0 
+              ? `${wordsRemaining} ${t.wordsRemaining}`
+              : `${Math.abs(wordsRemaining)} ${t.wordsOver}`
+            }
+          </p>
+        </SectionCard>
+
+        {/* Step 3: Start Date & Time */}
+        <SectionCard title={t.step3} required>
+          <DateTimePicker
+            value={formData.startAt || undefined}
+            onChange={(date) => updateField('startAt', date || null)}
+            placeholder={t.selectDateTime}
+            minDate={new Date()}
+          />
+        </SectionCard>
+
+        {/* Step 4: Appearance Duration */}
+        <SectionCard title={t.step4} required>
+          <RadioGroup
+            value={formData.appearanceMode}
+            onValueChange={(v) => updateField('appearanceMode', v as AppearanceMode)}
+            className="flex gap-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="hours" id="hours" />
+              <Label htmlFor="hours" className="flex items-center gap-2 cursor-pointer">
+                <Clock className="h-4 w-4" />
+                {t.byHours}
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="days" id="days" />
+              <Label htmlFor="days" className="flex items-center gap-2 cursor-pointer">
+                <Calendar className="h-4 w-4" />
+                {t.byDays}
+              </Label>
+            </div>
+          </RadioGroup>
+
+          {formData.appearanceMode === 'hours' && (
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 6, 12, 24].map((h) => (
+                <Button
+                  key={h}
+                  type="button"
+                  variant={formData.appearanceHours === h ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateField('appearanceHours', h)}
+                >
+                  {h} {t.hours}
+                </Button>
+              ))}
+              <Button
+                type="button"
+                variant={formData.appearanceHours === -1 ? "default" : "outline"}
+                size="sm"
+                onClick={() => updateField('appearanceHours', -1)}
+              >
+                {t.custom}
+              </Button>
+            </div>
+          )}
+
+          {formData.appearanceMode === 'hours' && formData.appearanceHours === -1 && (
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={formData.appearanceCustomHours}
+                onChange={(e) => updateField('appearanceCustomHours', parseInt(e.target.value) || 1)}
+                min={1}
+                max={168}
+                className="w-24"
               />
-              <div className="space-y-4 p-4 border rounded-lg">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.eventTitle} *</FormLabel>
-                      <FormControl>
-                        <Input placeholder={language === 'el' ? "π.χ. Live Music Night" : "e.g. Live Music Night"} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              <span className="text-muted-foreground">{t.hours}</span>
+            </div>
+          )}
+
+          {formData.appearanceMode === 'days' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t.fromDate}</Label>
+                <DateTimePicker
+                  value={formData.appearanceStartDate || undefined}
+                  onChange={(date) => updateField('appearanceStartDate', date || null)}
+                  minDate={new Date()}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.eventDescription} *</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder={language === 'el' ? "Περιγράψτε την εκδήλωσή σας..." : "Describe your event..."}
-                          rows={4}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div className="space-y-2">
+                <Label>{t.toDate}</Label>
+                <DateTimePicker
+                  value={formData.appearanceEndDate || undefined}
+                  onChange={(date) => updateField('appearanceEndDate', date || null)}
+                  minDate={formData.appearanceStartDate || new Date()}
                 />
+              </div>
+            </div>
+          )}
+        </SectionCard>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="start_at"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.startDate || 'Start Date'} *</FormLabel>
-                        <FormControl>
-                          <DateTimePicker
-                            value={parseIsoToDate(field.value)}
-                            onChange={(date) => field.onChange(date?.toISOString() || "")}
-                            placeholder={language === 'el' ? "Επιλέξτε ημερομηνία έναρξης" : "Select start date"}
-                            minDate={minDateNow}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        {/* Step 5: Venue */}
+        <SectionCard title={t.step5} required>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t.venueName}</Label>
+              <Input
+                value={formData.venueName}
+                onChange={(e) => updateField('venueName', e.target.value)}
+                placeholder={t.venueNamePlaceholder}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                {t.location}
+              </Label>
+              <Input
+                value={formData.address}
+                onChange={(e) => updateField('address', e.target.value)}
+                placeholder={t.locationPlaceholder}
+              />
+            </div>
+          </div>
+        </SectionCard>
 
-                  <FormField
-                    control={form.control}
-                    name="end_at"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.endDate || 'End Date'} *</FormLabel>
-                        <FormControl>
-                          <DateTimePicker
-                            value={parseIsoToDate(field.value)}
-                            onChange={(date) => field.onChange(date?.toISOString() || "")}
-                            placeholder={language === 'el' ? "Επιλέξτε ημερομηνία λήξης" : "Select end date"}
-                            minDate={minDateNow}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+        {/* Step 6: Cover Image */}
+        <SectionCard title={t.step6} required>
+          <ImageUploadField
+            label={t.coverImage}
+            language={language}
+            onFileSelect={handleFileSelect}
+            aspectRatio="16/9"
+            maxSizeMB={5}
+          />
+        </SectionCard>
+
+        {/* Step 7: Event Type */}
+        <SectionCard title={t.step7} required>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Ticket */}
+            <button
+              type="button"
+              onClick={() => updateField('eventType', 'ticket')}
+              className={cn(
+                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
+                formData.eventType === 'ticket'
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-primary/50"
+              )}
+            >
+              <Ticket className="h-8 w-8 mx-auto text-primary" />
+              <p className="font-medium">{t.withTicket}</p>
+            </button>
+
+            {/* Reservation */}
+            <button
+              type="button"
+              onClick={() => updateField('eventType', 'reservation')}
+              className={cn(
+                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
+                formData.eventType === 'reservation'
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-primary/50"
+              )}
+            >
+              <Users className="h-8 w-8 mx-auto text-primary" />
+              <p className="font-medium">{t.withReservation}</p>
+            </button>
+
+            {/* Free Entry */}
+            <button
+              type="button"
+              onClick={() => updateField('eventType', 'free_entry')}
+              className={cn(
+                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
+                formData.eventType === 'free_entry'
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-primary/50"
+              )}
+            >
+              <Gift className="h-8 w-8 mx-auto text-primary" />
+              <p className="font-medium">{t.freeEntry}</p>
+            </button>
+          </div>
+
+          {/* TICKET CONFIG */}
+          {formData.eventType === 'ticket' && (
+            <div className="mt-6 space-y-4 p-4 bg-muted/30 rounded-lg">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Ticket className="h-4 w-4" />
+                {t.ticketConfig}
+              </h4>
+              
+              <CommissionBanner />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{t.ticketNameLabel} *</Label>
+                  <Input
+                    value={formData.ticketName}
+                    onChange={(e) => updateField('ticketName', e.target.value)}
+                    placeholder="General Admission"
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.categories || 'Categories'} *</FormLabel>
-                      <FormControl>
-                        <EventCategorySelector
-                          language={language}
-                          selectedCategories={field.value || []}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Cover Image */}
-                <div className="pt-2">
-                  <ImageUploadField
-                    label={language === 'el' ? "Εικόνα Κάλυψης Εκδήλωσης" : "Event Cover Image"}
-                    language={language}
-                    onFileSelect={handleFileSelect}
-                    aspectRatio="16/9"
-                    maxSizeMB={5}
+                <div className="space-y-2">
+                  <Label>{t.ticketDescLabel}</Label>
+                  <Input
+                    value={formData.ticketDescription}
+                    onChange={(e) => updateField('ticketDescription', e.target.value)}
                   />
-                  {isCompressing && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{t.compressingImage}</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>{t.priceLabel} *</Label>
+                  <Input
+                    type="number"
+                    value={formData.ticketPriceCents / 100}
+                    onChange={(e) => updateField('ticketPriceCents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                    min={0.5}
+                    step={0.5}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t.ticketsAvailable} *</Label>
+                  <Input
+                    type="number"
+                    value={formData.ticketQuantity}
+                    onChange={(e) => updateField('ticketQuantity', parseInt(e.target.value) || 0)}
+                    min={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t.maxPerOrder}</Label>
+                  <Input
+                    type="number"
+                    value={formData.ticketMaxPerOrder}
+                    onChange={(e) => updateField('ticketMaxPerOrder', parseInt(e.target.value) || 1)}
+                    min={1}
+                    max={10}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>{t.dressCode}</Label>
+                <Select
+                  value={formData.ticketDressCode}
+                  onValueChange={(v) => updateField('ticketDressCode', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="-" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="casual">{t.casual}</SelectItem>
+                    <SelectItem value="smart_casual">{t.smartCasual}</SelectItem>
+                    <SelectItem value="semi_formal">{t.semiFormal}</SelectItem>
+                    <SelectItem value="formal">{t.formal}</SelectItem>
+                    <SelectItem value="costume">{t.costume}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* RESERVATION CONFIG */}
+          {formData.eventType === 'reservation' && (
+            <div className="mt-6 space-y-6 p-4 bg-muted/30 rounded-lg">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {t.reservationConfig}
+              </h4>
+              
+              <CommissionBanner />
+              
+              {/* Reservation Hours */}
+              <div className="space-y-2">
+                <Label>{t.reservationHours}</Label>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">{t.from}</span>
+                    <Input
+                      type="time"
+                      value={formData.reservationFromTime}
+                      onChange={(e) => updateField('reservationFromTime', e.target.value)}
+                      className="w-32"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">{t.to}</span>
+                    <Input
+                      type="time"
+                      value={formData.reservationToTime}
+                      onChange={(e) => updateField('reservationToTime', e.target.value)}
+                      className="w-32"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Seating Types Selection */}
+              <div className="space-y-3">
+                <Label>{t.seatingTypes}</Label>
+                <p className="text-sm text-muted-foreground">{t.selectSeatingTypes}</p>
+                <div className="flex flex-wrap gap-2">
+                  {(['bar', 'table', 'vip', 'sofa'] as SeatingType[]).map((type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant={formData.selectedSeatingTypes.includes(type) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleSeatingType(type)}
+                    >
+                      {formData.selectedSeatingTypes.includes(type) && <Check className="h-3 w-3 mr-1" />}
+                      {t[type]}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Config for each selected type */}
+              {formData.selectedSeatingTypes.map((type) => {
+                const config = formData.seatingConfigs[type];
+                return (
+                  <div key={type} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h5 className="font-medium capitalize">{t[type]}</h5>
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* STEP 2: Appearance Duration */}
-            <div className="space-y-4">
-              <SectionHeader 
-                title={ft.step2}
-                completed={!!appearanceStartAt && !!appearanceEndAt}
-              />
-              <div className="p-4 border rounded-lg">
-                <AppearanceDurationPicker
-                  mode={appearanceMode}
-                  onModeChange={setAppearanceMode}
-                  startDate={appearanceStartAt}
-                  endDate={appearanceEndAt}
-                  onStartDateChange={setAppearanceStartAt}
-                  onEndDateChange={setAppearanceEndAt}
-                  language={language}
-                />
-              </div>
-            </div>
-
-            {/* STEP 3: Venue & Location */}
-            <div className="space-y-4">
-              <SectionHeader 
-                title={ft.step3}
-                completed={!!watchedLocation}
-              />
-              <div className="space-y-4 p-4 border rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="venue_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.venueName || "Venue Name"}</FormLabel>
-                        <FormControl>
-                          <Input placeholder={t.venueNamePlaceholder || "e.g. Club XYZ"} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t.location || 'Location'} *</FormLabel>
-                        <FormControl>
-                          <Input placeholder={language === 'el' ? "π.χ. Λευκωσία" : "e.g. Nicosia"} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="is_indoor"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">{t.isIndoor || "Indoor"} / {t.isOutdoor || "Outdoor"}</FormLabel>
-                        <FormDescription>
-                          {field.value 
-                            ? (language === 'el' ? "Η εκδήλωση είναι σε εσωτερικό χώρο" : "Event is indoors")
-                            : (language === 'el' ? "Η εκδήλωση είναι σε εξωτερικό χώρο" : "Event is outdoors")
-                          }
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch 
-                          checked={field.value} 
-                          onCheckedChange={(v) => safeBooleanChange(field.value, v, field.onChange)} 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="parking_info"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Car className="h-4 w-4" />
-                        {t.parkingInfo || "Parking Info"}
-                      </FormLabel>
-                      <Select 
-                        onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
-                        value={field.value || "none"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t.selectParking || "Select parking option"} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="onsite">{t.parkingOnsite || "On-site"}</SelectItem>
-                          <SelectItem value="street">{t.parkingStreet || "Street"}</SelectItem>
-                          <SelectItem value="nearby">{t.parkingNearby || "Nearby Lot"}</SelectItem>
-                          <SelectItem value="none">{t.parkingNone || "Public Transport"}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="accessibility_info"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Accessibility className="h-4 w-4" />
-                        {t.accessibility || "Accessibility"}
-                      </FormLabel>
-                      <div className="grid grid-cols-2 gap-3">
-                        {accessibilityOptions.map((option) => (
-                          <FormField
-                            key={option.id}
-                            control={form.control}
-                            name="accessibility_info"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(option.id)}
-                                    onCheckedChange={(checked) => {
-                                      const current = field.value || [];
-                                      return checked
-                                        ? field.onChange([...current, option.id])
-                                        : field.onChange(current.filter((value) => value !== option.id));
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal text-sm">{option.label}</FormLabel>
-                              </FormItem>
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* STEP 4: Event Type Selection */}
-            <div className="space-y-4">
-              <SectionHeader 
-                title={ft.step4}
-                required
-                completed={!!eventType}
-              />
-              <div className="p-4 border rounded-lg">
-                <EventTypeSelector
-                  value={eventType}
-                  onChange={setEventType}
-                  language={language}
-                />
-                
-                {!eventType && (
-                  <div className="flex items-center gap-2 mt-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <span className="text-sm text-amber-700 dark:text-amber-400">
-                      {language === 'el' 
-                        ? 'Πρέπει να επιλέξετε τύπο εκδήλωσης για να συνεχίσετε' 
-                        : 'You must select an event type to continue'}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* STEP 5: Type-Specific Configuration */}
-            {eventType && (
-              <div className="space-y-4">
-                <SectionHeader 
-                  title={
-                    eventType === 'ticket' ? ft.step5Ticket :
-                    eventType === 'reservation' ? ft.step5Reservation :
-                    ft.step5FreeEntry
-                  }
-                  required
-                />
-                <div className="p-4 border rounded-lg space-y-6">
                     
-                    {/* TICKET EVENT CONFIG */}
-                    {eventType === 'ticket' && (
-                      <>
-                        <TicketTierEditor
-                          tiers={ticketTiers}
-                          onTiersChange={(tiers) => {
-                            setTicketTiers(tiers);
-                            if (ticketTierErrors.length > 0) {
-                              setTicketTierErrors([]);
-                            }
-                          }}
-                          commissionPercent={commissionPercent}
-                          validationErrors={ticketTierErrors}
-                        />
-
-                        <Separator />
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="price_tier"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t.priceTier || 'Price Indicator'}</FormLabel>
-                                <Select 
-                                  onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
-                                  value={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="free">{t.free || 'Free'}</SelectItem>
-                                    <SelectItem value="low">{t.low || 'Low'} (€)</SelectItem>
-                                    <SelectItem value="medium">{t.medium || 'Medium'} (€€)</SelectItem>
-                                    <SelectItem value="high">{t.high || 'High'} (€€€)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name="min_age_hint"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t.minAge || 'Minimum Age (optional)'}</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    placeholder="18"
-                                    {...field}
-                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={form.control}
-                          name="dress_code"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t.dressCode || "Dress Code"}</FormLabel>
-                              <Select 
-                                onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
-                                value={field.value || "casual"}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder={t.selectDressCode || "Select dress code"} />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="casual">{t.casual || "Casual"}</SelectItem>
-                                  <SelectItem value="smart_casual">{t.smartCasual || "Smart Casual"}</SelectItem>
-                                  <SelectItem value="semi_formal">{t.semiFormal || "Semi-Formal"}</SelectItem>
-                                  <SelectItem value="formal">{t.formal || "Formal"}</SelectItem>
-                                  <SelectItem value="themed">{t.themed || "Themed / Costume"}</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Performers */}
-                        <FormField
-                          control={form.control}
-                          name="performers"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center gap-2">
-                                <Music className="h-4 w-4" />
-                                {t.performers || "Performers / Artists"}
-                              </FormLabel>
-                              <div className="flex gap-2">
-                                <Input 
-                                  value={newPerformer}
-                                  onChange={(e) => setNewPerformer(e.target.value)}
-                                  placeholder={t.performersPlaceholder || "Add performers..."}
-                                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addPerformer())}
-                                />
-                                <Button type="button" variant="outline" size="icon" onClick={addPerformer}>
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {field.value?.map((performer, index) => (
-                                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                                    {performer}
-                                    <X 
-                                      className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                                      onClick={() => removePerformer(index)} 
-                                    />
-                                  </Badge>
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Tags */}
-                        <FormField
-                          control={form.control}
-                          name="tags"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center gap-2">
-                                <Tag className="h-4 w-4" />
-                                {t.tags || "Tags"}
-                              </FormLabel>
-                              <div className="flex gap-2">
-                                <Input 
-                                  value={newTag}
-                                  onChange={(e) => setNewTag(e.target.value)}
-                                  placeholder={t.tagsPlaceholder || "Add tags..."}
-                                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                                />
-                                <Button type="button" variant="outline" size="icon" onClick={addTag}>
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {field.value?.map((tag, index) => (
-                                  <Badge key={index} variant="outline" className="flex items-center gap-1">
-                                    #{tag}
-                                    <X 
-                                      className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                                      onClick={() => removeTag(index)} 
-                                    />
-                                  </Badge>
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
-
-                    {/* RESERVATION EVENT CONFIG */}
-                    {eventType === 'reservation' && (
-                      <>
-                        {/* Reservation Hours */}
-                        <div className="space-y-3">
-                          <h4 className="font-medium flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            {ft.reservationHours}
-                          </h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="reservation_hours_from"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{ft.from}</FormLabel>
-                                  <FormControl>
-                                    <Input type="time" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="reservation_hours_to"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{ft.to}</FormLabel>
-                                  <FormControl>
-                                    <Input type="time" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
-
-                        <Separator />
-
-                        {/* Party Size */}
-                        <div className="space-y-3">
-                          <h4 className="font-medium flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            {ft.partySize}
-                          </h4>
-                          <div className="grid grid-cols-3 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="min_party_size"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{ft.minPartySize}</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      min={1}
-                                      max={20}
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="max_party_size"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{ft.maxPartySize}</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      min={1}
-                                      max={50}
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseInt(e.target.value) || 10)}
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="max_total_reservations"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{ft.maxTotalReservations}</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      min={1}
-                                      placeholder="∞"
-                                      {...field}
-                                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
-
-                        <Separator />
-
-                        {/* Seating Types */}
-                        <SeatingTypeEditor
-                          value={seatingTypes}
-                          onChange={setSeatingTypes}
-                          language={language}
-                          minPartySize={Math.max(1, watchedMinPartySize ?? 2)}
-                          maxPartySize={Math.max(watchedMinPartySize ?? 2, watchedMaxPartySize ?? 10)}
-                        />
-                      </>
-                    )}
-
-                    {/* FREE ENTRY CONFIG */}
-                    {eventType === 'free_entry' && (
-                      <FreeEntryDeclaration
-                        checked={freeEntryDeclaration}
-                        onChange={setFreeEntryDeclaration}
-                        canBoost={true}
-                        onBoostChange={setWantsBoost}
-                        boostEnabled={wantsBoost}
-                        language={language}
+                    {/* Available Slots */}
+                    <div className="space-y-2">
+                      <Label>{t.availableBookings}</Label>
+                      <Input
+                        type="number"
+                        value={config.availableSlots}
+                        onChange={(e) => updateSeatingConfig(type, { availableSlots: parseInt(e.target.value) || 1 })}
+                        min={1}
+                        className="w-32"
                       />
-                    )}
+                    </div>
+                    
+                    {/* Person Tiers */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>{t.personRanges}</Label>
+                        {config.tiers.length < 3 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => addTier(type)}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            {t.addRange}
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{t.rangeHint}</p>
+                      
+                      {config.tiers.map((tier, index) => (
+                        <div key={index} className="flex items-center gap-3 bg-background p-3 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={tier.minPeople}
+                              onChange={(e) => updateTier(type, index, { minPeople: parseInt(e.target.value) || 1 })}
+                              min={1}
+                              className="w-16"
+                              placeholder={t.fromPersons}
+                            />
+                            <span className="text-muted-foreground">-</span>
+                            <Input
+                              type="number"
+                              value={tier.maxPeople}
+                              onChange={(e) => updateTier(type, index, { maxPeople: parseInt(e.target.value) || 1 })}
+                              min={tier.minPeople}
+                              className="w-16"
+                              placeholder={t.toPersons}
+                            />
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">
+                              {language === 'el' ? 'άτομα' : 'people'}
+                            </span>
+                          </div>
+                          <span className="text-muted-foreground">→</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">€</span>
+                            <Input
+                              type="number"
+                              value={tier.prepaidChargeCents / 100}
+                              onChange={(e) => updateTier(type, index, { prepaidChargeCents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                              min={0}
+                              step={5}
+                              className="w-24"
+                            />
+                          </div>
+                          {config.tiers.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeTier(type, index)}
+                              className="h-8 w-8 text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-              </div>
-            )}
+                );
+              })}
 
-            <Button type="submit" className="w-full" disabled={isSubmitting || !eventType} size="lg">
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {ft.publishEvent}
-            </Button>
-          </form>
-        </Form>
+              {/* Cancellation Policy */}
+              <div className="space-y-3 pt-4 border-t">
+                <Label>{t.cancellationPolicy}</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{t.freeCancellationUpTo}</span>
+                  <Select
+                    value={String(formData.cancellationHours)}
+                    onValueChange={(v) => updateField('cancellationHours', parseInt(v))}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6</SelectItem>
+                      <SelectItem value="12">12</SelectItem>
+                      <SelectItem value="24">24</SelectItem>
+                      <SelectItem value="48">48</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground">{t.hoursBeforeEvent}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{t.cancellationNote}</p>
+              </div>
+            </div>
+          )}
+
+          {/* FREE ENTRY CONFIG */}
+          {formData.eventType === 'free_entry' && (
+            <div className="mt-6 space-y-4 p-4 bg-muted/30 rounded-lg">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Gift className="h-4 w-4" />
+                {t.freeEntryConfig}
+              </h4>
+              
+              <p className="text-sm font-medium">{t.freeEntryDeclarations}</p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="noTicket"
+                    checked={formData.freeEntryAccepted.noTicket}
+                    onCheckedChange={(checked) => 
+                      updateField('freeEntryAccepted', { ...formData.freeEntryAccepted, noTicket: !!checked })
+                    }
+                  />
+                  <Label htmlFor="noTicket" className="cursor-pointer">{t.noTicketRequired}</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="noMinSpend"
+                    checked={formData.freeEntryAccepted.noMinSpend}
+                    onCheckedChange={(checked) => 
+                      updateField('freeEntryAccepted', { ...formData.freeEntryAccepted, noMinSpend: !!checked })
+                    }
+                  />
+                  <Label htmlFor="noMinSpend" className="cursor-pointer">{t.noMinSpend}</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="noReservation"
+                    checked={formData.freeEntryAccepted.noReservation}
+                    onCheckedChange={(checked) => 
+                      updateField('freeEntryAccepted', { ...formData.freeEntryAccepted, noReservation: !!checked })
+                    }
+                  />
+                  <Label htmlFor="noReservation" className="cursor-pointer">{t.noReservationRequired}</Label>
+                </div>
+              </div>
+              
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    {t.freeEntryWarning}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 pt-2">
+                <Checkbox
+                  id="wantsBoost"
+                  checked={wantsBoost}
+                  onCheckedChange={(checked) => setWantsBoost(!!checked)}
+                />
+                <Label htmlFor="wantsBoost" className="cursor-pointer font-medium">
+                  {t.boostEvent}
+                </Label>
+              </div>
+            </div>
+          )}
+        </SectionCard>
+
+        {/* Submit Button */}
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="w-full h-12 text-lg"
+          size="lg"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              {t.publishing}
+            </>
+          ) : (
+            t.publishEvent
+          )}
+        </Button>
       </CardContent>
 
+      {/* Crop Dialog */}
       <ImageCropDialog
         open={cropDialogOpen}
-        onClose={() => {
-          setCropDialogOpen(false);
-          setTempImageSrc("");
-          setTempImageFile(null);
-        }}
+        onClose={() => setCropDialogOpen(false)}
         imageSrc={tempImageSrc}
         onCropComplete={handleCropComplete}
       />
 
+      {/* Boost Dialog */}
       {createdEventId && (
         <EventBoostDialog
+          eventId={createdEventId}
+          eventTitle={formData.title}
+          hasActiveSubscription={false}
+          remainingBudgetCents={0}
           open={boostDialogOpen}
           onOpenChange={(open) => {
             setBoostDialogOpen(open);
             if (!open) {
-              navigate('/dashboard-business/events');
+              navigate('/dashboard');
             }
           }}
-          eventId={createdEventId}
-          eventTitle={form.getValues("title")}
-          hasActiveSubscription={subscriptionData?.subscribed || false}
-          remainingBudgetCents={subscriptionData?.subscribed ? 100000 : 0}
         />
       )}
     </Card>
