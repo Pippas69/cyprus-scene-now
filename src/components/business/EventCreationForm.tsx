@@ -1159,25 +1159,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 </div>
               </div>
               
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-amber-600 mt-0.5" />
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                    {t.freeEntryWarning}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 pt-2">
-                <Checkbox
-                  id="wantsBoost"
-                  checked={wantsBoost}
-                  onCheckedChange={(checked) => setWantsBoost(!!checked)}
-                />
-                <Label htmlFor="wantsBoost" className="cursor-pointer font-medium">
-                  {t.boostEvent}
-                </Label>
-              </div>
             </div>
           )}
         </SectionCard>
