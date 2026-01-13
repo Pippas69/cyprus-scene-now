@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Tag, Calendar, Eye, MousePointer, MapPin, Users } from 'lucide-react';
+import { User, Tag, Calendar, Eye, MousePointer, MapPin, Users, Info } from 'lucide-react';
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
 import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
 import { Progress } from '@/components/ui/progress';
@@ -26,12 +26,40 @@ const translations = {
     profileDesc: 'Συνολικές προβολές, αλληλεπιδράσεις και επισκέψεις στο προφίλ της επιχείρησης.',
     offersDesc: 'Απόδοση όλων των προσφορών (free + προωθημένες μαζί).',
     eventsDesc: 'Απόδοση εκδηλώσεων. Οι επισκέψεις περιλαμβάνουν check-ins, κρατήσεις και εισιτήρια.',
-    viewsExplanation: 'Αριθμός φορών που χρήστες είδαν το στοιχείο.',
-    interactionsExplanation: 'Αποθηκεύσεις, ενδιαφέρον, follows και shares.',
-    visitsExplanation: 'Check-ins, κρατήσεις και σκαναρισμένα εισιτήρια.',
     genderExplanation: 'Κατανομή του κοινού σας ανά φύλο.',
     ageExplanation: 'Κατανομή του κοινού σας ανά ηλικιακή ομάδα.',
     regionExplanation: 'Οι κορυφαίες περιοχές από όπου προέρχεται το κοινό σας.',
+    dataSource: 'Πηγή δεδομένων',
+    // Profile explanations
+    profileViewsExplanation: 'Πόσο συχνά εμφανίστηκε το προφίλ σας',
+    profileViewsDetails: 'Οι προβολές προφίλ περιλαμβάνουν εμφανίσεις στο feed, στον χάρτη, και σε αναζητήσεις. Δείχνει πόσοι χρήστες είδαν την επιχείρησή σας.',
+    profileViewsSource: 'Feed, χάρτης, αναζητήσεις',
+    profileInteractionsExplanation: 'Ενέργειες που δείχνουν ενδιαφέρον για την επιχείρησή σας',
+    profileInteractionsDetails: 'Περιλαμβάνει αποθηκεύσεις, follows, shares και κλικ στο προφίλ σας. Δείχνει πόσοι χρήστες έδειξαν ενδιαφέρον.',
+    profileInteractionsSource: 'Αποθηκεύσεις, follows, shares',
+    profileVisitsExplanation: 'Επαληθευμένες επισκέψεις στον χώρο σας',
+    profileVisitsDetails: 'Check-ins μέσω QR code και ολοκληρωμένες κρατήσεις. Δείχνει πόσοι ήρθαν πραγματικά στην επιχείρησή σας μέσω ΦΟΜΟ.',
+    profileVisitsSource: 'QR check-ins, κρατήσεις',
+    // Offers explanations
+    offersViewsExplanation: 'Εμφανίσεις των προσφορών σας',
+    offersViewsDetails: 'Πόσες φορές εμφανίστηκαν οι προσφορές σας στο feed, στις αναζητήσεις και στη σελίδα της επιχείρησής σας.',
+    offersViewsSource: 'Feed προσφορών, αναζητήσεις, σελίδα επιχείρησης',
+    offersInteractionsExplanation: 'Ενδιαφέρον για τις προσφορές σας',
+    offersInteractionsDetails: 'Αποθηκεύσεις, shares και κλικ για λεπτομέρειες στις προσφορές σας. Δείχνει πόσοι σκέφτονται να επωφεληθούν.',
+    offersInteractionsSource: 'Αποθηκεύσεις, shares, κλικ',
+    offersVisitsExplanation: 'Εξαργυρώσεις προσφορών',
+    offersVisitsDetails: 'Επισκέψεις που προήλθαν από εξαργύρωση προσφοράς μέσω QR code ή κράτηση με προσφορά.',
+    offersVisitsSource: 'QR εξαργυρώσεις, κρατήσεις με προσφορά',
+    // Events explanations
+    eventsViewsExplanation: 'Εμφανίσεις των εκδηλώσεών σας',
+    eventsViewsDetails: 'Πόσες φορές εμφανίστηκαν οι εκδηλώσεις σας στο feed, στον χάρτη και στις αναζητήσεις.',
+    eventsViewsSource: 'Feed εκδηλώσεων, χάρτης, αναζητήσεις',
+    eventsInteractionsExplanation: 'RSVPs για τις εκδηλώσεις σας',
+    eventsInteractionsDetails: 'Πόσοι δήλωσαν "Ενδιαφέρομαι" ή "Θα πάω" στις εκδηλώσεις σας. Δείχνει την πρόθεση συμμετοχής.',
+    eventsInteractionsSource: 'Ενδιαφερόμενοι, Θα πάω RSVPs',
+    eventsVisitsExplanation: 'Check-ins στις εκδηλώσεις σας',
+    eventsVisitsDetails: 'Επαληθευμένα check-ins μέσω QR code από εισιτήρια ή κρατήσεις. Δείχνει πόσοι παρευρέθηκαν πραγματικά.',
+    eventsVisitsSource: 'QR check-ins (εισιτήρια, κρατήσεις)',
   },
   en: {
     performanceTitle: 'Element Performance',
@@ -51,12 +79,40 @@ const translations = {
     profileDesc: 'Total views, interactions and visits to your business profile.',
     offersDesc: 'Performance of all offers (free + boosted combined).',
     eventsDesc: 'Event performance. Visits include check-ins, reservations and tickets.',
-    viewsExplanation: 'Number of times users viewed the element.',
-    interactionsExplanation: 'Saves, interests, follows and shares.',
-    visitsExplanation: 'Check-ins, reservations and scanned tickets.',
     genderExplanation: 'Distribution of your audience by gender.',
     ageExplanation: 'Distribution of your audience by age group.',
     regionExplanation: 'Top regions where your audience comes from.',
+    dataSource: 'Data source',
+    // Profile explanations
+    profileViewsExplanation: 'How often your profile was displayed',
+    profileViewsDetails: 'Profile views include appearances in feed, map, and search results. Shows how many users saw your business.',
+    profileViewsSource: 'Feed, map, searches',
+    profileInteractionsExplanation: 'Actions showing interest in your business',
+    profileInteractionsDetails: 'Includes saves, follows, shares and clicks on your profile. Shows how many users showed interest.',
+    profileInteractionsSource: 'Saves, follows, shares',
+    profileVisitsExplanation: 'Verified visits to your venue',
+    profileVisitsDetails: 'Check-ins via QR code and completed reservations. Shows how many actually came to your business via FOMO.',
+    profileVisitsSource: 'QR check-ins, reservations',
+    // Offers explanations
+    offersViewsExplanation: 'How often your offers were displayed',
+    offersViewsDetails: 'How many times your offers appeared in feed, searches and on your business page.',
+    offersViewsSource: 'Offers feed, searches, business page',
+    offersInteractionsExplanation: 'Interest in your offers',
+    offersInteractionsDetails: 'Saves, shares and detail clicks on your offers. Shows how many are considering claiming them.',
+    offersInteractionsSource: 'Saves, shares, clicks',
+    offersVisitsExplanation: 'Offer redemptions',
+    offersVisitsDetails: 'Visits from offer redemption via QR code or reservation with offer.',
+    offersVisitsSource: 'QR redemptions, offer reservations',
+    // Events explanations
+    eventsViewsExplanation: 'How often your events were displayed',
+    eventsViewsDetails: 'How many times your events appeared in feed, map and searches.',
+    eventsViewsSource: 'Events feed, map, searches',
+    eventsInteractionsExplanation: 'RSVPs for your events',
+    eventsInteractionsDetails: 'How many marked "Interested" or "Going" on your events. Shows participation intent.',
+    eventsInteractionsSource: 'Interested, Going RSVPs',
+    eventsVisitsExplanation: 'Check-ins at your events',
+    eventsVisitsDetails: 'Verified check-ins via QR code from tickets or reservations. Shows actual attendance.',
+    eventsVisitsSource: 'QR check-ins (tickets, reservations)',
   },
 };
 
@@ -64,6 +120,14 @@ interface PerformanceTabProps {
   businessId: string;
   dateRange?: { from: Date; to: Date };
   language: 'el' | 'en';
+}
+
+type MetricType = 'profile' | 'offers' | 'events';
+
+interface MetricExplanation {
+  explanation: string;
+  details: string;
+  source: string;
 }
 
 interface MetricCardProps {
@@ -74,7 +138,78 @@ interface MetricCardProps {
   interactions: number;
   visits: number;
   language: 'el' | 'en';
+  metricType: MetricType;
 }
+
+const getMetricExplanations = (language: 'el' | 'en', metricType: MetricType): { views: MetricExplanation; interactions: MetricExplanation; visits: MetricExplanation } => {
+  const t = translations[language];
+  const explanations = {
+    profile: {
+      views: { explanation: t.profileViewsExplanation, details: t.profileViewsDetails, source: t.profileViewsSource },
+      interactions: { explanation: t.profileInteractionsExplanation, details: t.profileInteractionsDetails, source: t.profileInteractionsSource },
+      visits: { explanation: t.profileVisitsExplanation, details: t.profileVisitsDetails, source: t.profileVisitsSource },
+    },
+    offers: {
+      views: { explanation: t.offersViewsExplanation, details: t.offersViewsDetails, source: t.offersViewsSource },
+      interactions: { explanation: t.offersInteractionsExplanation, details: t.offersInteractionsDetails, source: t.offersInteractionsSource },
+      visits: { explanation: t.offersVisitsExplanation, details: t.offersVisitsDetails, source: t.offersVisitsSource },
+    },
+    events: {
+      views: { explanation: t.eventsViewsExplanation, details: t.eventsViewsDetails, source: t.eventsViewsSource },
+      interactions: { explanation: t.eventsInteractionsExplanation, details: t.eventsInteractionsDetails, source: t.eventsInteractionsSource },
+      visits: { explanation: t.eventsVisitsExplanation, details: t.eventsVisitsDetails, source: t.eventsVisitsSource },
+    },
+  };
+  return explanations[metricType];
+};
+
+interface ClickableMetricProps {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  explanation: MetricExplanation;
+  dataSourceLabel: string;
+}
+
+const ClickableMetric: React.FC<ClickableMetricProps> = ({ label, value, icon: Icon, explanation, dataSourceLabel }) => {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <div className="flex justify-between items-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors group">
+          <span className="text-sm text-muted-foreground flex items-center gap-1">
+            {label}
+            <Info className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </span>
+          <span className="font-semibold">{value.toLocaleString()}</span>
+        </div>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle>{label}</DialogTitle>
+              <DialogDescription>{explanation.explanation}</DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <p className="text-3xl font-bold text-foreground">{value.toLocaleString()}</p>
+          </div>
+          <p className="text-sm text-muted-foreground">{explanation.details}</p>
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">{dataSourceLabel}:</span> {explanation.source}
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const MetricCard: React.FC<MetricCardProps> = ({
   icon: Icon,
@@ -84,75 +219,44 @@ const MetricCard: React.FC<MetricCardProps> = ({
   interactions,
   visits,
   language,
+  metricType,
 }) => {
   const t = translations[language];
+  const explanations = getMetricExplanations(language, metricType);
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <Icon className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">{title}</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t.views}</span>
-              <span className="font-semibold">{views.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t.interactions}</span>
-              <span className="font-semibold">{interactions.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t.visits}</span>
-              <span className="font-semibold">{visits.toLocaleString()}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Icon className="h-5 w-5 text-primary" />
-            {title}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">{description}</p>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4 text-primary" />
-                <span>{t.views}</span>
-              </div>
-              <span className="text-xl font-bold">{views.toLocaleString()}</span>
-            </div>
-            <p className="text-xs text-muted-foreground pl-2">{t.viewsExplanation}</p>
-            
-            <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <MousePointer className="h-4 w-4 text-primary" />
-                <span>{t.interactions}</span>
-              </div>
-              <span className="text-xl font-bold">{interactions.toLocaleString()}</span>
-            </div>
-            <p className="text-xs text-muted-foreground pl-2">{t.interactionsExplanation}</p>
-            
-            <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span>{t.visits}</span>
-              </div>
-              <span className="text-xl font-bold">{visits.toLocaleString()}</span>
-            </div>
-            <p className="text-xs text-muted-foreground pl-2">{t.visitsExplanation}</p>
-          </div>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <Icon className="h-5 w-5 text-primary" />
+          <CardTitle className="text-base">{title}</CardTitle>
         </div>
-      </DialogContent>
-    </Dialog>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </CardHeader>
+      <CardContent className="space-y-1">
+        <ClickableMetric
+          label={t.views}
+          value={views}
+          icon={Eye}
+          explanation={explanations.views}
+          dataSourceLabel={t.dataSource}
+        />
+        <ClickableMetric
+          label={t.interactions}
+          value={interactions}
+          icon={MousePointer}
+          explanation={explanations.interactions}
+          dataSourceLabel={t.dataSource}
+        />
+        <ClickableMetric
+          label={t.visits}
+          value={visits}
+          icon={MapPin}
+          explanation={explanations.visits}
+          dataSourceLabel={t.dataSource}
+        />
+      </CardContent>
+    </Card>
   );
 };
 
@@ -268,6 +372,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
             interactions={metrics?.profile.interactions || 0}
             visits={metrics?.profile.visits || 0}
             language={language}
+            metricType="profile"
           />
           <MetricCard
             icon={Tag}
@@ -277,6 +382,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
             interactions={metrics?.offers.interactions || 0}
             visits={metrics?.offers.visits || 0}
             language={language}
+            metricType="offers"
           />
           <MetricCard
             icon={Calendar}
@@ -286,6 +392,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
             interactions={metrics?.events.interactions || 0}
             visits={metrics?.events.visits || 0}
             language={language}
+            metricType="events"
           />
         </div>
       </div>
