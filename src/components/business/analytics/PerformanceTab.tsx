@@ -247,7 +247,12 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   const genderTotal = (audience?.gender?.male || 0) + (audience?.gender?.female || 0) + (audience?.gender?.other || 0);
   const ageValues = Object.values(audience?.age || {}) as number[];
   const ageTotal = ageValues.reduce((a, b) => a + b, 0);
-  const regionTotal = (audience?.region || []).reduce((sum, r) => sum + r.count, 0);
+  
+  // Convert region object to array and sort by count
+  const regionArray = Object.entries(audience?.region || {})
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+  const regionTotal = regionArray.reduce((sum, r) => sum + r.count, 0);
 
   return (
     <div className="space-y-8">
@@ -307,7 +312,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
 
           <AudienceCard icon={MapPin} title={t.region} explanation={t.regionExplanation}>
             <div className="space-y-3">
-              {(audience?.region || []).slice(0, 5).map(r => (
+              {regionArray.slice(0, 5).map(r => (
                 <MetricBar key={r.name} label={r.name} value={r.count} total={regionTotal} />
               ))}
             </div>
