@@ -3,12 +3,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/hooks/useLanguage';
 import { DateRangePicker } from '@/components/business/analytics/DateRangePicker';
 import { OverviewTab } from '@/components/business/analytics/OverviewTab';
-import { BoostBenefitsTab } from '@/components/business/analytics/BoostBenefitsTab';
-import { AudienceTab } from '@/components/business/analytics/AudienceTab';
-import { TimingInsights } from '@/components/business/analytics/TimingInsights';
-import { InsightsEngine } from '@/components/business/analytics/InsightsEngine';
-import { ExportTools } from '@/components/business/analytics/ExportTools';
-import { useAdvancedAnalytics } from '@/hooks/useAdvancedAnalytics';
+import { PerformanceTab } from '@/components/business/analytics/PerformanceTab';
+import { BoostValueTab } from '@/components/business/analytics/BoostValueTab';
+import { GuidanceTab } from '@/components/business/analytics/GuidanceTab';
+import { LockedSection } from '@/components/business/analytics/LockedSection';
+import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from '@/hooks/useSubscriptionPlan';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
@@ -16,16 +15,16 @@ const translations = {
   el: {
     title: 'Τα Αναλυτικά σου',
     overview: 'Επισκόπηση',
-    boostBenefits: 'Boost Benefits',
-    audience: 'Κοινό',
-    tips: 'Συμβουλές',
+    performance: 'Απόδοση',
+    boostValue: 'Αξία Προώθησης',
+    guidance: 'Καθοδήγηση',
   },
   en: {
     title: 'Your Analytics',
     overview: 'Overview',
-    boostBenefits: 'Boost Benefits',
-    audience: 'Audience',
-    tips: 'Tips',
+    performance: 'Performance',
+    boostValue: 'Boost Value',
+    guidance: 'Guidance',
   },
 };
 
@@ -46,11 +45,14 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     ? { from: dateRange.from, to: dateRange.to }
     : undefined;
 
-  // Fetch for InsightsEngine and ExportTools (existing functionality)
-  const { data: advancedData } = useAdvancedAnalytics(
-    businessId,
-    dateRange ? { startDate: dateRange.from || subDays(new Date(), 30), endDate: dateRange.to || new Date() } : undefined
-  );
+  // Get current subscription plan
+  const { data: planData } = useSubscriptionPlan(businessId);
+  const currentPlan = planData?.plan || 'free';
+
+  // Check access for each section
+  const hasPerformanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('performance'));
+  const hasBoostValueAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('boostValue'));
+  const hasGuidanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('guidance'));
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -62,27 +64,43 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">{t.overview}</TabsTrigger>
-          <TabsTrigger value="boost">{t.boostBenefits}</TabsTrigger>
-          <TabsTrigger value="audience">{t.audience}</TabsTrigger>
-          <TabsTrigger value="tips">{t.tips}</TabsTrigger>
+          <TabsTrigger value="performance">{t.performance}</TabsTrigger>
+          <TabsTrigger value="boostValue">{t.boostValue}</TabsTrigger>
+          <TabsTrigger value="guidance">{t.guidance}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
           <OverviewTab businessId={businessId} dateRange={convertedDateRange} language={language} />
         </TabsContent>
 
-        <TabsContent value="boost">
-          <BoostBenefitsTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+        <TabsContent value="performance">
+          {hasPerformanceAccess ? (
+            <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+          ) : (
+            <LockedSection requiredPlan="basic" language={language}>
+              <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+            </LockedSection>
+          )}
         </TabsContent>
 
-        <TabsContent value="audience">
-          <AudienceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+        <TabsContent value="boostValue">
+          {hasBoostValueAccess ? (
+            <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+          ) : (
+            <LockedSection requiredPlan="pro" language={language}>
+              <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+            </LockedSection>
+          )}
         </TabsContent>
 
-        <TabsContent value="tips" className="space-y-6">
-          <TimingInsights businessId={businessId} language={language} />
-          {advancedData && <InsightsEngine data={advancedData} language={language} />}
-          {advancedData && <ExportTools data={advancedData} language={language} businessId={businessId} />}
+        <TabsContent value="guidance">
+          {hasGuidanceAccess ? (
+            <GuidanceTab businessId={businessId} language={language} />
+          ) : (
+            <LockedSection requiredPlan="elite" language={language}>
+              <GuidanceTab businessId={businessId} language={language} />
+            </LockedSection>
+          )}
         </TabsContent>
       </Tabs>
     </div>
