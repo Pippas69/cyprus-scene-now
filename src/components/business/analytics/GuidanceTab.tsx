@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Crown, Gift, Ticket, Eye, MousePointer, MapPin, Star, CheckCircle, XCircle, FileText, Mail } from 'lucide-react';
+import { Crown, Gift, Ticket, Star, CheckCircle, XCircle, FileText, Mail, Lightbulb } from 'lucide-react';
 import { useGuidanceData } from '@/hooks/useGuidanceData';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 const translations = {
   el: {
@@ -14,21 +13,21 @@ const translations = {
     featuredProfile: 'Επιλεγμένο Προφίλ',
     boostedOffers: 'Boosted Offers',
     boostedEvents: 'Boosted Events',
+    metric: 'Μετρική',
     views: 'Προβολές',
     interactions: 'Αλληλεπιδράσεις',
     visits: 'Επισκέψεις',
-    viewsDesc: 'Ώρες & μέρες που οι χρήστες βλέπουν περισσότερο',
-    interactionsDesc: 'Ώρες & μέρες που οι χρήστες δείχνουν ενδιαφέρον',
-    visitsDesc: 'Ώρες & μέρες που το ενδιαφέρον μετατρέπεται σε επίσκεψη',
-    profileViewsGuidance: 'Αυτές τις ώρες το προφίλ σου έχει τις περισσότερες προβολές. Δημοσίευσε προσφορές ή εκδηλώσεις λίγο πριν από αυτά τα διαστήματα.',
-    profileInteractionsGuidance: 'Εδώ ο κόσμος αποθηκεύει και δηλώνει πρόθεση. Φρόντισε το περιεχόμενο που οδηγεί σε επίσκεψη να είναι ενεργό.',
-    profileVisitsGuidance: 'Αυτές οι ώρες δείχνουν πότε έρχεται πραγματικά ο κόσμος. Χρησιμοποίησέ τες ως στόχο για offers και events.',
-    offerViewsGuidance: 'Κάνε προβολή της προσφοράς σε αυτά τα διαστήματα για περισσότερες προβολές.',
-    offerInteractionsGuidance: 'Σε αυτές τις ώρες ο κόσμος αποφασίζει αν θα έρθει.',
-    offerVisitsGuidance: 'Η προβολή αποδίδει περισσότερο εδώ. Εκτός αυτών των ωρών, η διαφορά είναι περιορισμένη.',
-    eventViewsGuidance: 'Ανέβασε και προώθησε το event σε αυτά τα διαστήματα.',
-    eventInteractionsGuidance: 'Εδώ ο κόσμος δηλώνει ότι θα πάει.',
-    eventVisitsGuidance: 'Η προβολή έχει ουσιαστικό αποτέλεσμα σε αυτά τα διαστήματα.',
+    bestTimes: 'Καλύτερες Ώρες',
+    tips: 'Συμβουλές',
+    profileViewsTip: 'Δημοσίευσε προσφορές ή εκδηλώσεις λίγο πριν από αυτά τα διαστήματα για μέγιστη έκθεση.',
+    profileInteractionsTip: 'Εδώ ο κόσμος αποθηκεύει και δηλώνει πρόθεση. Φρόντισε το περιεχόμενο να είναι ενεργό.',
+    profileVisitsTip: 'Αυτές οι ώρες δείχνουν πότε έρχεται πραγματικά ο κόσμος. Χρησιμοποίησέ τες ως στόχο.',
+    offerViewsTip: 'Κάνε προβολή της προσφοράς σε αυτά τα διαστήματα για περισσότερες προβολές.',
+    offerInteractionsTip: 'Σε αυτές τις ώρες ο κόσμος αποφασίζει αν θα έρθει.',
+    offerVisitsTip: 'Η προβολή αποδίδει περισσότερο εδώ. Εκτός αυτών των ωρών, η διαφορά είναι περιορισμένη.',
+    eventViewsTip: 'Ανέβασε και προώθησε το event σε αυτά τα διαστήματα.',
+    eventInteractionsTip: 'Εδώ ο κόσμος δηλώνει ότι θα πάει.',
+    eventVisitsTip: 'Η προβολή έχει ουσιαστικό αποτέλεσμα σε αυτά τα διαστήματα.',
     recommendedPlan: 'Προτεινόμενο Πλάνο',
     publish: 'Δημοσίευση / Προβολή',
     targetInteractions: 'Στόχευση Αλληλεπιδράσεων',
@@ -50,21 +49,21 @@ const translations = {
     featuredProfile: 'Featured Profile',
     boostedOffers: 'Boosted Offers',
     boostedEvents: 'Boosted Events',
+    metric: 'Metric',
     views: 'Views',
     interactions: 'Interactions',
     visits: 'Visits',
-    viewsDesc: 'Times & days when users view the most',
-    interactionsDesc: 'Times & days when users show interest',
-    visitsDesc: 'Times & days when interest converts to visits',
-    profileViewsGuidance: 'Your profile gets the most views at these times. Post offers or events just before these windows.',
-    profileInteractionsGuidance: 'This is when people save and express intent. Make sure conversion content is active.',
-    profileVisitsGuidance: 'These times show when people actually come. Use them as targets for offers and events.',
-    offerViewsGuidance: 'Boost your offer during these windows for more views.',
-    offerInteractionsGuidance: 'During these hours, people decide whether to visit.',
-    offerVisitsGuidance: 'Boost performs best here. Outside these times, the difference is limited.',
-    eventViewsGuidance: 'Upload and promote your event during these windows.',
-    eventInteractionsGuidance: 'This is when people RSVP.',
-    eventVisitsGuidance: 'Boost has the most impact during these windows.',
+    bestTimes: 'Best Times',
+    tips: 'Tips',
+    profileViewsTip: 'Post offers or events just before these windows for maximum exposure.',
+    profileInteractionsTip: 'This is when people save and express intent. Make sure content is active.',
+    profileVisitsTip: 'These times show when people actually come. Use them as your target.',
+    offerViewsTip: 'Boost your offer during these windows for more views.',
+    offerInteractionsTip: 'During these hours, people decide whether to visit.',
+    offerVisitsTip: 'Boost performs best here. Outside these times, the difference is limited.',
+    eventViewsTip: 'Upload and promote your event during these windows.',
+    eventInteractionsTip: 'This is when people RSVP.',
+    eventVisitsTip: 'Boost has the most impact during these windows.',
     recommendedPlan: 'Recommended Plan',
     publish: 'Publish / Boost',
     targetInteractions: 'Target Interactions',
@@ -87,45 +86,93 @@ interface GuidanceTabProps {
   language: 'el' | 'en';
 }
 
-interface TimeWindowCardProps {
-  icon: React.ElementType;
+interface GuidanceTableProps {
   title: string;
-  description: string;
-  windows: Array<{ day: string; hours: string; count: number }>;
-  guidance: string;
+  icon: React.ElementType;
+  iconColor: string;
+  data: {
+    views: Array<{ day: string; hours: string; count: number }>;
+    interactions: Array<{ day: string; hours: string; count: number }>;
+    visits: Array<{ day: string; hours: string; count: number }>;
+  };
+  tips: {
+    views: string;
+    interactions: string;
+    visits: string;
+  };
   language: 'el' | 'en';
 }
 
-const TimeWindowCard: React.FC<TimeWindowCardProps> = ({
-  icon: Icon,
+const GuidanceTable: React.FC<GuidanceTableProps> = ({
   title,
-  description,
-  windows,
-  guidance,
+  icon: Icon,
+  iconColor,
+  data,
+  tips,
+  language,
 }) => {
+  const t = translations[language];
+
+  const formatWindows = (windows: Array<{ day: string; hours: string; count: number }>) => {
+    if (!windows || windows.length === 0) return '—';
+    return windows.map(w => `${w.day} ${w.hours}`).join(' / ');
+  };
+
   return (
-    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-primary" />
-        <span className="font-medium">{title}</span>
-      </div>
-      <p className="text-xs text-muted-foreground">{description}</p>
-      <div className="space-y-2">
-        {windows.map((w, i) => (
-          <div key={i} className="flex items-center justify-between text-sm">
-            <span>
-              {w.day} {w.hours}
-            </span>
-            <span className="text-muted-foreground">
-              {w.count > 0 ? `${w.count.toLocaleString()}` : '—'}
-            </span>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Icon className={`h-5 w-5 ${iconColor}`} />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2 font-medium text-muted-foreground">{t.metric}</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">{t.bestTimes}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b">
+                <td className="py-3">{t.views}</td>
+                <td className="text-right py-3 font-medium">{formatWindows(data.views)}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="py-3">{t.interactions}</td>
+                <td className="text-right py-3 font-medium">{formatWindows(data.interactions)}</td>
+              </tr>
+              <tr>
+                <td className="py-3">{t.visits}</td>
+                <td className="text-right py-3 font-medium">{formatWindows(data.visits)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Tips */}
+        <div className="border-t pt-4 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Lightbulb className="h-4 w-4" />
+            {t.tips}
           </div>
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground italic border-t pt-2">
-        📝 {guidance}
-      </p>
-    </div>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground pl-6">
+              <span className="font-medium">{t.views}:</span> {tips.views}
+            </p>
+            <p className="text-sm text-muted-foreground pl-6">
+              <span className="font-medium">{t.interactions}:</span> {tips.interactions}
+            </p>
+            <p className="text-sm text-muted-foreground pl-6">
+              <span className="font-medium">{t.visits}:</span> {tips.visits}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -140,15 +187,12 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
 
   const handleFeedback = async (applied: boolean) => {
     setFeedbackGiven(applied);
-    
-    // Just show toast for now - table will be created later
     toast({
       title: t.feedbackSaved,
     });
   };
 
   const handleDownloadPdf = () => {
-    // For now, just show a toast - PDF generation would require jspdf integration
     toast({
       title: 'PDF',
       description: language === 'el' ? 'Η δυνατότητα PDF έρχεται σύντομα!' : 'PDF feature coming soon!',
@@ -164,8 +208,8 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
   if (isLoading) {
     return (
       <div className="space-y-6">
-        {[1, 2, 3, 4].map(i => (
-          <Skeleton key={i} className="h-48" />
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-64" />
         ))}
       </div>
     );
@@ -180,119 +224,50 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">{t.title}</h2>
         <p className="text-muted-foreground">{t.subtitle}</p>
       </div>
 
-      {/* Featured Profile Section */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-yellow-500" />
-            {t.featuredProfile}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <TimeWindowCard
-            icon={Eye}
-            title={t.views}
-            description={t.viewsDesc}
-            windows={data.profile.views}
-            guidance={t.profileViewsGuidance}
-            language={language}
-          />
-          <TimeWindowCard
-            icon={MousePointer}
-            title={t.interactions}
-            description={t.interactionsDesc}
-            windows={data.profile.interactions}
-            guidance={t.profileInteractionsGuidance}
-            language={language}
-          />
-          <TimeWindowCard
-            icon={MapPin}
-            title={t.visits}
-            description={t.visitsDesc}
-            windows={data.profile.visits}
-            guidance={t.profileVisitsGuidance}
-            language={language}
-          />
-        </CardContent>
-      </Card>
+      <GuidanceTable
+        title={t.featuredProfile}
+        icon={Crown}
+        iconColor="text-yellow-500"
+        data={data.profile}
+        tips={{
+          views: t.profileViewsTip,
+          interactions: t.profileInteractionsTip,
+          visits: t.profileVisitsTip,
+        }}
+        language={language}
+      />
 
-      {/* Boosted Offers Section */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-orange-500" />
-            {t.boostedOffers}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <TimeWindowCard
-            icon={Eye}
-            title={t.views}
-            description={t.viewsDesc}
-            windows={data.offers.views}
-            guidance={t.offerViewsGuidance}
-            language={language}
-          />
-          <TimeWindowCard
-            icon={MousePointer}
-            title={t.interactions}
-            description={t.interactionsDesc}
-            windows={data.offers.interactions}
-            guidance={t.offerInteractionsGuidance}
-            language={language}
-          />
-          <TimeWindowCard
-            icon={MapPin}
-            title={t.visits}
-            description={t.visitsDesc}
-            windows={data.offers.visits}
-            guidance={t.offerVisitsGuidance}
-            language={language}
-          />
-        </CardContent>
-      </Card>
+      <GuidanceTable
+        title={t.boostedOffers}
+        icon={Gift}
+        iconColor="text-orange-500"
+        data={data.offers}
+        tips={{
+          views: t.offerViewsTip,
+          interactions: t.offerInteractionsTip,
+          visits: t.offerVisitsTip,
+        }}
+        language={language}
+      />
 
-      {/* Boosted Events Section */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Ticket className="h-5 w-5 text-purple-500" />
-            {t.boostedEvents}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <TimeWindowCard
-            icon={Eye}
-            title={t.views}
-            description={t.viewsDesc}
-            windows={data.events.views}
-            guidance={t.eventViewsGuidance}
-            language={language}
-          />
-          <TimeWindowCard
-            icon={MousePointer}
-            title={t.interactions}
-            description={t.interactionsDesc}
-            windows={data.events.interactions}
-            guidance={t.eventInteractionsGuidance}
-            language={language}
-          />
-          <TimeWindowCard
-            icon={MapPin}
-            title={t.visits}
-            description={t.visitsDesc}
-            windows={data.events.visits}
-            guidance={t.eventVisitsGuidance}
-            language={language}
-          />
-        </CardContent>
-      </Card>
+      <GuidanceTable
+        title={t.boostedEvents}
+        icon={Ticket}
+        iconColor="text-purple-500"
+        data={data.events}
+        tips={{
+          views: t.eventViewsTip,
+          interactions: t.eventInteractionsTip,
+          visits: t.eventVisitsTip,
+        }}
+        language={language}
+      />
 
       {/* Recommended Plan */}
       <Card className="border-primary/50 bg-primary/5">

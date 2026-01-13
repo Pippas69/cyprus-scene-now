@@ -6,8 +6,6 @@ import { OverviewTab } from '@/components/business/analytics/OverviewTab';
 import { PerformanceTab } from '@/components/business/analytics/PerformanceTab';
 import { BoostValueTab } from '@/components/business/analytics/BoostValueTab';
 import { GuidanceTab } from '@/components/business/analytics/GuidanceTab';
-import { LockedSection } from '@/components/business/analytics/LockedSection';
-import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from '@/hooks/useSubscriptionPlan';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
@@ -45,15 +43,6 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     ? { from: dateRange.from, to: dateRange.to }
     : undefined;
 
-  // Get current subscription plan
-  const { data: planData } = useSubscriptionPlan(businessId);
-  const currentPlan = planData?.plan || 'free';
-
-  // Check access for each section
-  const hasPerformanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('performance'));
-  const hasBoostValueAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('boostValue'));
-  const hasGuidanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('guidance'));
-
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -74,33 +63,15 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
         </TabsContent>
 
         <TabsContent value="performance">
-          {hasPerformanceAccess ? (
-            <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
-          ) : (
-            <LockedSection requiredPlan="basic" language={language}>
-              <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
-            </LockedSection>
-          )}
+          <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
         </TabsContent>
 
         <TabsContent value="boostValue">
-          {hasBoostValueAccess ? (
-            <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
-          ) : (
-            <LockedSection requiredPlan="pro" language={language}>
-              <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
-            </LockedSection>
-          )}
+          <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
         </TabsContent>
 
         <TabsContent value="guidance">
-          {hasGuidanceAccess ? (
-            <GuidanceTab businessId={businessId} language={language} />
-          ) : (
-            <LockedSection requiredPlan="elite" language={language}>
-              <GuidanceTab businessId={businessId} language={language} />
-            </LockedSection>
-          )}
+          <GuidanceTab businessId={businessId} language={language} />
         </TabsContent>
       </Tabs>
     </div>
