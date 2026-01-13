@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Crown, Gift, Ticket, Star, CheckCircle, XCircle, FileText, Mail, Lightbulb } from 'lucide-react';
+import { Crown, Gift, Ticket, Star, CheckCircle, XCircle, FileText, Mail, Lightbulb, Eye, MousePointer, MapPin, Info } from 'lucide-react';
 import { useGuidanceData } from '@/hooks/useGuidanceData';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,6 +43,35 @@ const translations = {
     feedbackSaved: 'Η επιλογή σου αποθηκεύτηκε!',
     emailSent: 'Η αναφορά στάλθηκε στο email σου!',
     noData: 'Χρειάζονται περισσότερα δεδομένα για ασφαλή καθοδήγηση.',
+    dataSource: 'Πηγή δεδομένων',
+    // Metric explanations
+    profileViewsExplanation: 'Βέλτιστες ώρες για προβολές προφίλ',
+    profileViewsDetails: 'Οι ώρες που οι περισσότεροι χρήστες βλέπουν επιλεγμένα προφίλ στο feed. Δημοσίευσε προσφορές/εκδηλώσεις λίγο πριν.',
+    profileViewsSource: 'Ιστορικό προβολών feed',
+    profileInteractionsExplanation: 'Βέλτιστες ώρες για αλληλεπιδράσεις',
+    profileInteractionsDetails: 'Οι ώρες που ο κόσμος αποθηκεύει, κάνει follow και shares. Φρόντισε το περιεχόμενο να είναι ενεργό.',
+    profileInteractionsSource: 'Ιστορικό αλληλεπιδράσεων',
+    profileVisitsExplanation: 'Βέλτιστες ώρες για επισκέψεις',
+    profileVisitsDetails: 'Οι ώρες που ο κόσμος έρχεται πραγματικά. Στόχευσε αυτές τις ώρες για μέγιστη απόδοση.',
+    profileVisitsSource: 'Ιστορικό check-ins',
+    offersViewsExplanation: 'Βέλτιστες ώρες για προβολές προσφορών',
+    offersViewsDetails: 'Οι ώρες που οι προσφορές λαμβάνουν περισσότερες προβολές. Προγραμμάτισε boost σε αυτά τα διαστήματα.',
+    offersViewsSource: 'Ιστορικό προβολών προσφορών',
+    offersInteractionsExplanation: 'Βέλτιστες ώρες για ενδιαφέρον',
+    offersInteractionsDetails: 'Οι ώρες που ο κόσμος αποφασίζει αν θα εξαργυρώσει την προσφορά.',
+    offersInteractionsSource: 'Ιστορικό αλληλεπιδράσεων',
+    offersVisitsExplanation: 'Βέλτιστες ώρες για εξαργυρώσεις',
+    offersVisitsDetails: 'Οι ώρες που οι περισσότεροι έρχονται για εξαργύρωση. Η προβολή αποδίδει περισσότερο εδώ.',
+    offersVisitsSource: 'Ιστορικό εξαργυρώσεων',
+    eventsViewsExplanation: 'Βέλτιστες ώρες για προβολές events',
+    eventsViewsDetails: 'Οι ώρες που τα events λαμβάνουν περισσότερες προβολές. Ανέβασε και προώθησε σε αυτά τα διαστήματα.',
+    eventsViewsSource: 'Ιστορικό προβολών events',
+    eventsInteractionsExplanation: 'Βέλτιστες ώρες για RSVPs',
+    eventsInteractionsDetails: 'Οι ώρες που ο κόσμος δηλώνει "Ενδιαφέρομαι" ή "Θα πάω".',
+    eventsInteractionsSource: 'Ιστορικό RSVPs',
+    eventsVisitsExplanation: 'Βέλτιστες ώρες για check-ins',
+    eventsVisitsDetails: 'Οι ώρες με τα περισσότερα check-ins. Η προβολή έχει ουσιαστικό αποτέλεσμα εδώ.',
+    eventsVisitsSource: 'Ιστορικό check-ins events',
   },
   en: {
     title: 'Guidance',
@@ -78,6 +108,35 @@ const translations = {
     feedbackSaved: 'Your choice was saved!',
     emailSent: 'Report sent to your email!',
     noData: 'More data needed for reliable guidance.',
+    dataSource: 'Data source',
+    // Metric explanations
+    profileViewsExplanation: 'Best times for profile views',
+    profileViewsDetails: 'Hours when most users see featured profiles in feed. Post offers/events just before these times.',
+    profileViewsSource: 'Feed views history',
+    profileInteractionsExplanation: 'Best times for interactions',
+    profileInteractionsDetails: 'Hours when people save, follow and share. Make sure content is active during these times.',
+    profileInteractionsSource: 'Interactions history',
+    profileVisitsExplanation: 'Best times for visits',
+    profileVisitsDetails: 'Hours when people actually come. Target these times for maximum results.',
+    profileVisitsSource: 'Check-ins history',
+    offersViewsExplanation: 'Best times for offer views',
+    offersViewsDetails: 'Hours when offers get the most views. Schedule boosts during these windows.',
+    offersViewsSource: 'Offer views history',
+    offersInteractionsExplanation: 'Best times for interest',
+    offersInteractionsDetails: 'Hours when people decide whether to redeem the offer.',
+    offersInteractionsSource: 'Interactions history',
+    offersVisitsExplanation: 'Best times for redemptions',
+    offersVisitsDetails: 'Hours when most people come to redeem. Boost performs best here.',
+    offersVisitsSource: 'Redemptions history',
+    eventsViewsExplanation: 'Best times for event views',
+    eventsViewsDetails: 'Hours when events get the most views. Upload and promote during these windows.',
+    eventsViewsSource: 'Event views history',
+    eventsInteractionsExplanation: 'Best times for RSVPs',
+    eventsInteractionsDetails: 'Hours when people mark "Interested" or "Going".',
+    eventsInteractionsSource: 'RSVPs history',
+    eventsVisitsExplanation: 'Best times for check-ins',
+    eventsVisitsDetails: 'Hours with the most check-ins. Boost has the most impact here.',
+    eventsVisitsSource: 'Event check-ins history',
   },
 };
 
@@ -85,6 +144,36 @@ interface GuidanceTabProps {
   businessId: string;
   language: 'el' | 'en';
 }
+
+type BlockType = 'profile' | 'offers' | 'events';
+
+interface MetricExplanation {
+  explanation: string;
+  details: string;
+  source: string;
+}
+
+const getGuidanceExplanations = (language: 'el' | 'en', blockType: BlockType): { views: MetricExplanation; interactions: MetricExplanation; visits: MetricExplanation } => {
+  const t = translations[language];
+  const explanations = {
+    profile: {
+      views: { explanation: t.profileViewsExplanation, details: t.profileViewsDetails, source: t.profileViewsSource },
+      interactions: { explanation: t.profileInteractionsExplanation, details: t.profileInteractionsDetails, source: t.profileInteractionsSource },
+      visits: { explanation: t.profileVisitsExplanation, details: t.profileVisitsDetails, source: t.profileVisitsSource },
+    },
+    offers: {
+      views: { explanation: t.offersViewsExplanation, details: t.offersViewsDetails, source: t.offersViewsSource },
+      interactions: { explanation: t.offersInteractionsExplanation, details: t.offersInteractionsDetails, source: t.offersInteractionsSource },
+      visits: { explanation: t.offersVisitsExplanation, details: t.offersVisitsDetails, source: t.offersVisitsSource },
+    },
+    events: {
+      views: { explanation: t.eventsViewsExplanation, details: t.eventsViewsDetails, source: t.eventsViewsSource },
+      interactions: { explanation: t.eventsInteractionsExplanation, details: t.eventsInteractionsDetails, source: t.eventsInteractionsSource },
+      visits: { explanation: t.eventsVisitsExplanation, details: t.eventsVisitsDetails, source: t.eventsVisitsSource },
+    },
+  };
+  return explanations[blockType];
+};
 
 interface GuidanceTableProps {
   title: string;
@@ -101,7 +190,75 @@ interface GuidanceTableProps {
     visits: string;
   };
   language: 'el' | 'en';
+  blockType: BlockType;
 }
+
+interface ClickableGuidanceRowProps {
+  label: string;
+  icon: React.ElementType;
+  windows: Array<{ day: string; hours: string; count: number }>;
+  explanation: MetricExplanation;
+  tip: string;
+  dataSourceLabel: string;
+}
+
+const ClickableGuidanceRow: React.FC<ClickableGuidanceRowProps> = ({
+  label,
+  icon: Icon,
+  windows,
+  explanation,
+  tip,
+  dataSourceLabel,
+}) => {
+  const formatWindows = (wins: Array<{ day: string; hours: string; count: number }>) => {
+    if (!wins || wins.length === 0) return '—';
+    return wins.map(w => `${w.day} ${w.hours}`).join(' / ');
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <tr className="border-b cursor-pointer hover:bg-muted/50 transition-colors group">
+          <td className="py-3">
+            <span className="flex items-center gap-1">
+              {label}
+              <Info className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+            </span>
+          </td>
+          <td className="text-right py-3 font-medium">{formatWindows(windows)}</td>
+        </tr>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle>{label}</DialogTitle>
+              <DialogDescription>{explanation.explanation}</DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <p className="text-lg font-semibold text-foreground">{formatWindows(windows)}</p>
+          </div>
+          <p className="text-sm text-muted-foreground">{explanation.details}</p>
+          <div className="p-3 bg-yellow-500/10 rounded-lg flex items-start gap-2">
+            <Lightbulb className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground">{tip}</p>
+          </div>
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">{dataSourceLabel}:</span> {explanation.source}
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const GuidanceTable: React.FC<GuidanceTableProps> = ({
   title,
@@ -110,13 +267,10 @@ const GuidanceTable: React.FC<GuidanceTableProps> = ({
   data,
   tips,
   language,
+  blockType,
 }) => {
   const t = translations[language];
-
-  const formatWindows = (windows: Array<{ day: string; hours: string; count: number }>) => {
-    if (!windows || windows.length === 0) return '—';
-    return windows.map(w => `${w.day} ${w.hours}`).join(' / ');
-  };
+  const explanations = getGuidanceExplanations(language, blockType);
 
   return (
     <Card>
@@ -137,23 +291,35 @@ const GuidanceTable: React.FC<GuidanceTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b">
-                <td className="py-3">{t.views}</td>
-                <td className="text-right py-3 font-medium">{formatWindows(data.views)}</td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-3">{t.interactions}</td>
-                <td className="text-right py-3 font-medium">{formatWindows(data.interactions)}</td>
-              </tr>
-              <tr>
-                <td className="py-3">{t.visits}</td>
-                <td className="text-right py-3 font-medium">{formatWindows(data.visits)}</td>
-              </tr>
+              <ClickableGuidanceRow
+                label={t.views}
+                icon={Eye}
+                windows={data.views}
+                explanation={explanations.views}
+                tip={tips.views}
+                dataSourceLabel={t.dataSource}
+              />
+              <ClickableGuidanceRow
+                label={t.interactions}
+                icon={MousePointer}
+                windows={data.interactions}
+                explanation={explanations.interactions}
+                tip={tips.interactions}
+                dataSourceLabel={t.dataSource}
+              />
+              <ClickableGuidanceRow
+                label={t.visits}
+                icon={MapPin}
+                windows={data.visits}
+                explanation={explanations.visits}
+                tip={tips.visits}
+                dataSourceLabel={t.dataSource}
+              />
             </tbody>
           </table>
         </div>
 
-        {/* Tips */}
+        {/* Tips summary */}
         <div className="border-t pt-4 space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Lightbulb className="h-4 w-4" />
@@ -241,6 +407,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
           visits: t.profileVisitsTip,
         }}
         language={language}
+        blockType="profile"
       />
 
       <GuidanceTable
@@ -254,6 +421,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
           visits: t.offerVisitsTip,
         }}
         language={language}
+        blockType="offers"
       />
 
       <GuidanceTable
@@ -267,6 +435,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
           visits: t.eventVisitsTip,
         }}
         language={language}
+        blockType="events"
       />
 
       {/* Recommended Plan */}
