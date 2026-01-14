@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, MapPin, Calendar, User, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
+import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
@@ -16,7 +16,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
 
@@ -33,7 +32,6 @@ const translations = {
     myOffers: 'Οι Προσφορές Μου',
     tickets: 'Τα Εισιτήριά μου',
     account: 'Λογαριασμός',
-    profile: 'Προφίλ',
     settings: 'Ρυθμίσεις',
   },
   en: {
@@ -48,7 +46,6 @@ const translations = {
     myOffers: 'My Offers',
     tickets: 'My Tickets',
     account: 'Account',
-    profile: 'Profile',
     settings: 'Settings',
   },
 };
@@ -113,7 +110,6 @@ export function UserSidebar() {
   ];
 
   const accountItems = [
-    { title: t.profile, url: '/dashboard-user?tab=profile', icon: User, tab: 'profile' },
     { title: t.settings, url: '/dashboard-user?tab=settings', icon: Settings, tab: 'settings' },
   ];
 
