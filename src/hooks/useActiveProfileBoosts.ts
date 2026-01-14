@@ -61,7 +61,9 @@ export const useActiveProfileBoosts = (
             logo_url,
             city,
             category,
-            verified
+            verified,
+            student_discount_percent,
+            student_discount_mode
           )
         `)
         .eq('status', 'active')

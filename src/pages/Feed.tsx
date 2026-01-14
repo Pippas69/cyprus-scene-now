@@ -345,6 +345,18 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               <h1 className="text-xl font-bold text-foreground">{t.title}</h1>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 <LocationSwitcher language={language} selectedCity={selectedCity} onCityChange={setSelectedCity} />
+                <Badge
+                  variant={showStudentDiscounts ? "default" : "outline"}
+                  className={`cursor-pointer whitespace-nowrap transition-all font-semibold text-sm min-h-[40px] px-4 flex items-center gap-2 ${
+                    showStudentDiscounts
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted text-foreground border-border hover:bg-primary/10 hover:border-primary/30"
+                  }`}
+                  onClick={() => setShowStudentDiscounts(!showStudentDiscounts)}
+                >
+                  <GraduationCap size={16} />
+                  {language === 'el' ? 'Φοιτητική Έκπτωση' : 'Student Discount'}
+                </Badge>
               </div>
               <HierarchicalCategoryFilter language={language} selectedCategories={selectedCategories} onCategoryChange={setSelectedCategories} />
               {(selectedCategories.length > 0 || selectedCity) && (
