@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeSelectChange } from "@/lib/formSafeUpdate";
-import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock } from "lucide-react";
+import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock, GraduationCap, Mail, CheckCircle, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -22,6 +22,8 @@ import { Confetti, useConfetti } from "@/components/ui/confetti";
 import { useBetaMode } from "@/hooks/useBetaMode";
 import { OceanLoader } from "@/components/ui/ocean-loader";
 import { getMainCategories } from "@/lib/unifiedCategories";
+import { CYPRUS_UNIVERSITIES, getUniversityByDomain, isValidUniversityEmail } from "@/lib/cyprusUniversities";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 
@@ -58,7 +60,10 @@ const Signup = () => {
       message: vt.selectOption
     }),
     gender: z.enum(['male', 'female', 'other']).optional(),
-    preferences: z.array(z.string()).optional()
+    preferences: z.array(z.string()).optional(),
+    isStudent: z.boolean().optional(),
+    universityEmail: z.string().email().optional().or(z.literal('')),
+    selectedUniversity: z.string().optional()
   });
 
   type SignupFormValues = z.infer<typeof signupSchema>;
@@ -72,14 +77,60 @@ const Signup = () => {
       password: "",
       town: "",
       gender: undefined,
-      preferences: []
+      preferences: [],
+      isStudent: false,
+      universityEmail: "",
+      selectedUniversity: ""
     }
   });
+  
+  const [isStudent, setIsStudent] = useState(false);
+  const [universityEmail, setUniversityEmail] = useState("");
+  const [selectedUniversity, setSelectedUniversity] = useState("");
+  const [studentEmailError, setStudentEmailError] = useState("");
+  const [studentVerificationSent, setStudentVerificationSent] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
+
+  // Validate university email when it changes
+  useEffect(() => {
+    if (universityEmail && isStudent) {
+      const domain = universityEmail.split('@')[1]?.toLowerCase();
+      if (domain && selectedUniversity) {
+        const matchingUni = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
+        if (matchingUni && domain !== matchingUni.domain) {
+          setStudentEmailError(
+            language === 'el' 
+              ? `Το email πρέπει να είναι @${matchingUni.domain}`
+              : `Email must be @${matchingUni.domain}`
+          );
+        } else if (!isValidUniversityEmail(universityEmail)) {
+          setStudentEmailError(
+            language === 'el' 
+              ? 'Παρακαλώ χρησιμοποιήστε ακαδημαϊκό email'
+              : 'Please use a valid university email'
+          );
+        } else {
+          setStudentEmailError('');
+        }
+      }
+    } else {
+      setStudentEmailError('');
+    }
+  }, [universityEmail, selectedUniversity, isStudent, language]);
 
   const onSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     try {
       const redirectUrl = searchParams.get('redirect') || '/feed';
+      
+      // Validate student email if they selected student option
+      if (isStudent && universityEmail && selectedUniversity) {
+        if (!isValidUniversityEmail(universityEmail)) {
+          toast.error(language === 'el' ? 'Μη έγκυρο ακαδημαϊκό email' : 'Invalid university email');
+          setIsLoading(false);
+          return;
+        }
+      }
       
       const {
         data,
@@ -95,7 +146,10 @@ const Signup = () => {
             age: values.age,
             town: values.town,
             gender: values.gender,
-            preferences: selectedPreferences
+            preferences: selectedPreferences,
+            is_student: isStudent,
+            university_email: isStudent ? universityEmail : null,
+            selected_university: isStudent ? selectedUniversity : null
           }
         }
       });
@@ -108,6 +162,34 @@ const Signup = () => {
         return;
       }
       if (data.user) {
+        // If student verification is needed, create the verification record and send email
+        if (isStudent && universityEmail && selectedUniversity) {
+          const universityData = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
+          if (universityData) {
+            const { error: verificationError } = await supabase
+              .from('student_verifications')
+              .insert({
+                user_id: data.user.id,
+                university_email: universityEmail,
+                university_name: universityData.name,
+                university_domain: universityData.domain,
+                status: 'pending'
+              } as any);
+            
+            if (!verificationError) {
+              // Send verification email
+              await supabase.functions.invoke('send-student-verification-email', {
+                body: {
+                  userId: data.user.id,
+                  email: universityEmail,
+                  userName: `${values.firstName} ${values.lastName}`,
+                  language
+                }
+              });
+            }
+          }
+        }
+        
         confetti.trigger();
         toast.success(tt.created);
         setTimeout(() => navigate(redirectUrl), 1500);
@@ -396,6 +478,82 @@ const Signup = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Student Verification Section */}
+              <div className="space-y-4 p-4 border border-border rounded-xl bg-muted/30">
+                <div className="flex items-center space-x-3">
+                  <Checkbox 
+                    id="isStudent" 
+                    checked={isStudent} 
+                    onCheckedChange={(checked) => setIsStudent(checked === true)}
+                    className="rounded" 
+                  />
+                  <label htmlFor="isStudent" className="flex items-center gap-2 text-sm font-medium leading-none cursor-pointer">
+                    <GraduationCap className="h-4 w-4 text-primary" />
+                    {language === "el" ? "Είμαι φοιτητής/τρια" : "I am a student"}
+                  </label>
+                </div>
+                
+                {isStudent && (
+                  <div className="space-y-4 pt-2 animate-in slide-in-from-top-2">
+                    <p className="text-sm text-muted-foreground">
+                      {language === "el" 
+                        ? "Επαληθεύστε τη φοιτητική σας ιδιότητα για να λαμβάνετε εκπτώσεις σε επιχειρήσεις."
+                        : "Verify your student status to receive discounts at businesses."
+                      }
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <FormLabel>{language === "el" ? "Πανεπιστήμιο" : "University"}</FormLabel>
+                      <Select 
+                        value={selectedUniversity} 
+                        onValueChange={setSelectedUniversity}
+                      >
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue placeholder={language === "el" ? "Επιλέξτε πανεπιστήμιο" : "Select university"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CYPRUS_UNIVERSITIES.map(uni => (
+                            <SelectItem key={uni.domain} value={uni.domain}>
+                              {language === "el" ? uni.nameEl : uni.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {selectedUniversity && (
+                      <div className="space-y-2 animate-in slide-in-from-top-2">
+                        <FormLabel className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          {language === "el" ? "Ακαδημαϊκό Email" : "University Email"}
+                        </FormLabel>
+                        <Input
+                          type="email"
+                          value={universityEmail}
+                          onChange={(e) => setUniversityEmail(e.target.value)}
+                          placeholder={`example@${selectedUniversity}`}
+                          className="rounded-xl"
+                        />
+                        {studentEmailError && (
+                          <p className="text-sm text-destructive">{studentEmailError}</p>
+                        )}
+                        {universityEmail && !studentEmailError && isValidUniversityEmail(universityEmail) && (
+                          <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <AlertDescription className="text-green-700 dark:text-green-400">
+                              {language === "el" 
+                                ? "Θα λάβετε email επαλήθευσης μετά την εγγραφή."
+                                : "You will receive a verification email after signup."
+                              }
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={isLoading}>

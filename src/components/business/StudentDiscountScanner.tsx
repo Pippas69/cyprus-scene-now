@@ -36,6 +36,7 @@ const translations = {
     scanError: 'Invalid QR Code',
     expiredError: 'Student verification has expired',
     notFoundError: 'Student not found',
+    alreadyRedeemedError: 'This student has already used their discount at your business',
     originalPrice: 'Original Price (€)',
     discountedPrice: 'Discounted Price (€)',
     itemDescription: 'Item Description (optional)',
@@ -58,6 +59,7 @@ const translations = {
     scanError: 'Μη έγκυρος QR Κώδικας',
     expiredError: 'Η επαλήθευση φοιτητή έχει λήξει',
     notFoundError: 'Ο φοιτητής δεν βρέθηκε',
+    alreadyRedeemedError: 'Αυτός ο φοιτητής έχει ήδη χρησιμοποιήσει την έκπτωσή του στην επιχείρησή σας',
     originalPrice: 'Αρχική Τιμή (€)',
     discountedPrice: 'Τιμή με Έκπτωση (€)',
     itemDescription: 'Περιγραφή Προϊόντος (προαιρετικό)',
@@ -168,6 +170,7 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
         id,
         status,
         expires_at,
+        user_id,
         user:profiles!student_verifications_user_id_fkey(name, avatar_url),
         university_name
       `)
@@ -187,6 +190,21 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
     if (verification.expires_at && new Date(verification.expires_at) < new Date()) {
       setError(t.expiredError);
       return;
+    }
+    
+    // Check if this is "once" mode and the student has already redeemed
+    if (businessSettings?.student_discount_mode === 'once') {
+      const { data: existingRedemptions } = await supabase
+        .from('student_redemptions' as any)
+        .select('id')
+        .eq('student_verification_id', verification.id)
+        .eq('business_id', businessId)
+        .limit(1);
+      
+      if (existingRedemptions && existingRedemptions.length > 0) {
+        setError(t.alreadyRedeemedError);
+        return;
+      }
     }
     
     setScannedStudent({

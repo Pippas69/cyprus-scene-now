@@ -45,6 +45,7 @@ const filterCategories: FilterCategory[] = [
       { id: "freeEntrance", label: { el: "Δωρεάν Είσοδος", en: "Free Entrance" } },
       { id: "withReservations", label: { el: "Με Κρατήσεις", en: "With Reservations" } },
       { id: "withTickets", label: { el: "Με Εισιτήρια", en: "With Tickets" } },
+      { id: "studentDiscount", label: { el: "Φοιτητική Έκπτωση", en: "Student Discount" } },
     ],
   },
 ];
