@@ -5,12 +5,11 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MyEvents } from '@/components/user/MyEvents';
 import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
-import { ProfileSettings } from '@/components/user/ProfileSettings';
 import { Compass, Map, Ticket, Percent } from 'lucide-react';
-import { UserAccountSettings } from '@/components/user/UserAccountSettings';
 import { useLanguage } from '@/hooks/useLanguage';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { MyTickets } from '@/components/tickets/MyTickets';
+import { UserSettings } from '@/components/user/UserSettings';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -26,8 +25,13 @@ const DashboardUser = () => {
 
   useEffect(() => {
     const tab = searchParams.get('tab') || 'events';
+    // Redirect old tabs to settings
+    if (tab === 'profile' || tab === 'account') {
+      navigate('/dashboard-user?tab=settings', { replace: true });
+      return;
+    }
     setActiveTab(tab);
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -61,7 +65,6 @@ const DashboardUser = () => {
       reservations: 'Κρατήσεις',
       offers: 'Προσφορές',
       tickets: 'Τα Εισιτήριά μου',
-      profile: 'Προφίλ',
       settings: 'Ρυθμίσεις',
       browseEvents: 'Ανακάλυψε Εκδηλώσεις',
       exploreMap: 'Εξερεύνησε Χάρτη',
@@ -73,7 +76,6 @@ const DashboardUser = () => {
       reservations: 'Reservations',
       offers: 'Offers',
       tickets: 'My Tickets',
-      profile: 'Profile',
       settings: 'Settings',
       browseEvents: 'Browse Events',
       exploreMap: 'Explore Map',
@@ -97,7 +99,6 @@ const DashboardUser = () => {
       reservations: t.reservations,
       offers: t.offers,
       tickets: t.tickets,
-      profile: t.profile,
       settings: t.settings,
     };
     return titles[activeTab] || t.dashboard;
@@ -129,21 +130,17 @@ const DashboardUser = () => {
           <MyReservations userId={user.id} language={language} />
         </TabsContent>
 
-                <TabsContent value="offers" className="mt-6 animate-fade-in">
-                  <MyOffers userId={user.id} language={language} />
-                </TabsContent>
+        <TabsContent value="offers" className="mt-6 animate-fade-in">
+          <MyOffers userId={user.id} language={language} />
+        </TabsContent>
 
-                <TabsContent value="tickets" className="mt-6 animate-fade-in">
-                  <MyTickets />
-                </TabsContent>
+        <TabsContent value="tickets" className="mt-6 animate-fade-in">
+          <MyTickets />
+        </TabsContent>
 
-                <TabsContent value="profile" className="mt-6 animate-fade-in">
-                  <ProfileSettings userId={user.id} language={language} />
-                </TabsContent>
-
-                <TabsContent value="settings" className="mt-6 animate-fade-in">
-                  <UserAccountSettings userId={user.id} language={language} />
-                </TabsContent>
+        <TabsContent value="settings" className="mt-6 animate-fade-in">
+          <UserSettings userId={user.id} language={language} />
+        </TabsContent>
       </Tabs>
 
       {/* Quick Actions FAB */}
