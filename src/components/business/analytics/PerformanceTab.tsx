@@ -23,42 +23,35 @@ const translations = {
     male: 'Άνδρες',
     female: 'Γυναίκες',
     other: 'Άλλο',
-    profileDesc: 'Συνολικές προβολές, αλληλεπιδράσεις και επισκέψεις στο προφίλ της επιχείρησης.',
-    offersDesc: 'Απόδοση όλων των προσφορών (free + προωθημένες μαζί).',
-    eventsDesc: 'Απόδοση εκδηλώσεων. Οι επισκέψεις περιλαμβάνουν check-ins, κρατήσεις και εισιτήρια.',
+    profileDesc: 'Συνολικές ενέργειες στο προφίλ',
+    offersDesc: 'Συνολικές ενέργειες στις προσφορές',
+    eventsDesc: 'Συνολικές ενέργειες στις εκδηλώσεις',
     genderExplanation: 'Κατανομή του κοινού σας ανά φύλο.',
     ageExplanation: 'Κατανομή του κοινού σας ανά ηλικιακή ομάδα.',
     regionExplanation: 'Οι κορυφαίες περιοχές από όπου προέρχεται το κοινό σας.',
+    regionNoData: 'Προς το παρόν δεν υπάρχουν διαθέσιμα δεδομένα για την περιοχή.',
     dataSource: 'Πηγή δεδομένων',
-    // Profile explanations
-    profileViewsExplanation: 'Πόσο συχνά εμφανίστηκε το προφίλ σας',
-    profileViewsDetails: 'Οι προβολές προφίλ περιλαμβάνουν εμφανίσεις στο feed, στον χάρτη, και σε αναζητήσεις. Δείχνει πόσοι χρήστες είδαν την επιχείρησή σας.',
-    profileViewsSource: 'Feed, χάρτης, αναζητήσεις',
-    profileInteractionsExplanation: 'Ενέργειες που δείχνουν ενδιαφέρον για την επιχείρησή σας',
-    profileInteractionsDetails: 'Περιλαμβάνει αποθηκεύσεις, follows, shares και κλικ στο προφίλ σας. Δείχνει πόσοι χρήστες έδειξαν ενδιαφέρον.',
-    profileInteractionsSource: 'Αποθηκεύσεις, follows, shares',
-    profileVisitsExplanation: 'Επαληθευμένες επισκέψεις στον χώρο σας',
-    profileVisitsDetails: 'Check-ins μέσω QR code και ολοκληρωμένες κρατήσεις. Δείχνει πόσοι ήρθαν πραγματικά στην επιχείρησή σας μέσω ΦΟΜΟ.',
-    profileVisitsSource: 'QR check-ins, κρατήσεις',
-    // Offers explanations
-    offersViewsExplanation: 'Εμφανίσεις των προσφορών σας',
-    offersViewsDetails: 'Πόσες φορές εμφανίστηκαν οι προσφορές σας στο feed, στις αναζητήσεις και στη σελίδα της επιχείρησής σας.',
-    offersViewsSource: 'Feed προσφορών, αναζητήσεις, σελίδα επιχείρησης',
-    offersInteractionsExplanation: 'Ενδιαφέρον για τις προσφορές σας',
-    offersInteractionsDetails: 'Αποθηκεύσεις, shares και κλικ για λεπτομέρειες στις προσφορές σας. Δείχνει πόσοι σκέφτονται να επωφεληθούν.',
-    offersInteractionsSource: 'Αποθηκεύσεις, shares, κλικ',
-    offersVisitsExplanation: 'Εξαργυρώσεις προσφορών',
-    offersVisitsDetails: 'Επισκέψεις που προήλθαν από εξαργύρωση προσφοράς μέσω QR code ή κράτηση με προσφορά.',
-    offersVisitsSource: 'QR εξαργυρώσεις, κρατήσεις με προσφορά',
-    // Events explanations
-    eventsViewsExplanation: 'Εμφανίσεις των εκδηλώσεών σας',
-    eventsViewsDetails: 'Πόσες φορές εμφανίστηκαν οι εκδηλώσεις σας στο feed, στον χάρτη και στις αναζητήσεις.',
-    eventsViewsSource: 'Feed εκδηλώσεων, χάρτης, αναζητήσεις',
-    eventsInteractionsExplanation: 'RSVPs για τις εκδηλώσεις σας',
-    eventsInteractionsDetails: 'Πόσοι δήλωσαν "Ενδιαφέρομαι" ή "Θα πάω" στις εκδηλώσεις σας. Δείχνει την πρόθεση συμμετοχής.',
-    eventsInteractionsSource: 'Ενδιαφερόμενοι, Θα πάω RSVPs',
-    eventsVisitsExplanation: 'Check-ins στις εκδηλώσεις σας',
-    eventsVisitsDetails: 'Επαληθευμένα check-ins μέσω QR code από εισιτήρια ή κρατήσεις. Δείχνει πόσοι παρευρέθηκαν πραγματικά.',
+    // Views explanations - same for all
+    viewsExplanation: 'Προβολή',
+    viewsDetails: 'Μετράνε όταν ο χρήστης είτε δει είτε πατήσει.',
+    profileViewsSource: 'Feed, χάρτης, αναζητήσεις, σελίδα προφίλ',
+    offersViewsSource: 'Feed προσφορών, αναζητήσεις, σελίδα προσφοράς',
+    eventsViewsSource: 'Feed εκδηλώσεων, χάρτης, αναζητήσεις, σελίδα εκδήλωσης',
+    // Interactions explanations - same for all
+    interactionsExplanation: 'Αλληλεπίδραση',
+    interactionsDetails: 'Αποθηκεύσεις, ενδιαφέρον και δήλωση για πρόθεση επίσκεψης.',
+    profileInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    offersInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    eventsInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    // Visits explanations - different per type
+    profileVisitsExplanation: 'Επίσκεψη',
+    profileVisitsDetails: 'Check-ins και επιβεβαιωμένες κρατήσεις όταν το προφίλ ήταν επιλεγμένο.',
+    profileVisitsSource: 'QR check-ins, επιβεβαιωμένες κρατήσεις',
+    offersVisitsExplanation: 'Επίσκεψη',
+    offersVisitsDetails: 'Εξαργύρωση προσφοράς με QR ή κράτηση από προσφορά.',
+    offersVisitsSource: 'QR εξαργυρώσεις, κρατήσεις από προσφορά',
+    eventsVisitsExplanation: 'Επίσκεψη',
+    eventsVisitsDetails: 'QR check-in από εισιτήριο ή κράτηση.',
     eventsVisitsSource: 'QR check-ins (εισιτήρια, κρατήσεις)',
   },
   en: {
@@ -76,42 +69,35 @@ const translations = {
     male: 'Male',
     female: 'Female',
     other: 'Other',
-    profileDesc: 'Total views, interactions and visits to your business profile.',
-    offersDesc: 'Performance of all offers (free + boosted combined).',
-    eventsDesc: 'Event performance. Visits include check-ins, reservations and tickets.',
+    profileDesc: 'Total actions on profile',
+    offersDesc: 'Total actions on offers',
+    eventsDesc: 'Total actions on events',
     genderExplanation: 'Distribution of your audience by gender.',
     ageExplanation: 'Distribution of your audience by age group.',
     regionExplanation: 'Top regions where your audience comes from.',
+    regionNoData: 'No region data available at the moment.',
     dataSource: 'Data source',
-    // Profile explanations
-    profileViewsExplanation: 'How often your profile was displayed',
-    profileViewsDetails: 'Profile views include appearances in feed, map, and search results. Shows how many users saw your business.',
-    profileViewsSource: 'Feed, map, searches',
-    profileInteractionsExplanation: 'Actions showing interest in your business',
-    profileInteractionsDetails: 'Includes saves, follows, shares and clicks on your profile. Shows how many users showed interest.',
-    profileInteractionsSource: 'Saves, follows, shares',
-    profileVisitsExplanation: 'Verified visits to your venue',
-    profileVisitsDetails: 'Check-ins via QR code and completed reservations. Shows how many actually came to your business via FOMO.',
-    profileVisitsSource: 'QR check-ins, reservations',
-    // Offers explanations
-    offersViewsExplanation: 'How often your offers were displayed',
-    offersViewsDetails: 'How many times your offers appeared in feed, searches and on your business page.',
-    offersViewsSource: 'Offers feed, searches, business page',
-    offersInteractionsExplanation: 'Interest in your offers',
-    offersInteractionsDetails: 'Saves, shares and detail clicks on your offers. Shows how many are considering claiming them.',
-    offersInteractionsSource: 'Saves, shares, clicks',
-    offersVisitsExplanation: 'Offer redemptions',
-    offersVisitsDetails: 'Visits from offer redemption via QR code or reservation with offer.',
+    // Views explanations
+    viewsExplanation: 'View',
+    viewsDetails: 'Counted when user views or clicks.',
+    profileViewsSource: 'Feed, map, searches, profile page',
+    offersViewsSource: 'Offers feed, searches, offer page',
+    eventsViewsSource: 'Events feed, map, searches, event page',
+    // Interactions explanations
+    interactionsExplanation: 'Interaction',
+    interactionsDetails: 'Saves, interested and going declarations.',
+    profileInteractionsSource: 'Saves, Interested, Going',
+    offersInteractionsSource: 'Saves, Interested, Going',
+    eventsInteractionsSource: 'Saves, Interested, Going',
+    // Visits explanations
+    profileVisitsExplanation: 'Visit',
+    profileVisitsDetails: 'Check-ins and confirmed reservations when profile was featured.',
+    profileVisitsSource: 'QR check-ins, confirmed reservations',
+    offersVisitsExplanation: 'Visit',
+    offersVisitsDetails: 'Offer redemption via QR or reservation from offer.',
     offersVisitsSource: 'QR redemptions, offer reservations',
-    // Events explanations
-    eventsViewsExplanation: 'How often your events were displayed',
-    eventsViewsDetails: 'How many times your events appeared in feed, map and searches.',
-    eventsViewsSource: 'Events feed, map, searches',
-    eventsInteractionsExplanation: 'RSVPs for your events',
-    eventsInteractionsDetails: 'How many marked "Interested" or "Going" on your events. Shows participation intent.',
-    eventsInteractionsSource: 'Interested, Going RSVPs',
-    eventsVisitsExplanation: 'Check-ins at your events',
-    eventsVisitsDetails: 'Verified check-ins via QR code from tickets or reservations. Shows actual attendance.',
+    eventsVisitsExplanation: 'Visit',
+    eventsVisitsDetails: 'QR check-in from ticket or reservation.',
     eventsVisitsSource: 'QR check-ins (tickets, reservations)',
   },
 };
@@ -145,18 +131,18 @@ const getMetricExplanations = (language: 'el' | 'en', metricType: MetricType): {
   const t = translations[language];
   const explanations = {
     profile: {
-      views: { explanation: t.profileViewsExplanation, details: t.profileViewsDetails, source: t.profileViewsSource },
-      interactions: { explanation: t.profileInteractionsExplanation, details: t.profileInteractionsDetails, source: t.profileInteractionsSource },
+      views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.profileViewsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.profileInteractionsSource },
       visits: { explanation: t.profileVisitsExplanation, details: t.profileVisitsDetails, source: t.profileVisitsSource },
     },
     offers: {
-      views: { explanation: t.offersViewsExplanation, details: t.offersViewsDetails, source: t.offersViewsSource },
-      interactions: { explanation: t.offersInteractionsExplanation, details: t.offersInteractionsDetails, source: t.offersInteractionsSource },
+      views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.offersViewsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.offersInteractionsSource },
       visits: { explanation: t.offersVisitsExplanation, details: t.offersVisitsDetails, source: t.offersVisitsSource },
     },
     events: {
-      views: { explanation: t.eventsViewsExplanation, details: t.eventsViewsDetails, source: t.eventsViewsSource },
-      interactions: { explanation: t.eventsInteractionsExplanation, details: t.eventsInteractionsDetails, source: t.eventsInteractionsSource },
+      views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.eventsViewsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.eventsInteractionsSource },
       visits: { explanation: t.eventsVisitsExplanation, details: t.eventsVisitsDetails, source: t.eventsVisitsSource },
     },
   };
@@ -419,9 +405,13 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
 
           <AudienceCard icon={MapPin} title={t.region} explanation={t.regionExplanation}>
             <div className="space-y-3">
-              {regionArray.slice(0, 5).map(r => (
-                <MetricBar key={r.name} label={r.name} value={r.count} total={regionTotal} />
-              ))}
+              {regionArray.length > 0 ? (
+                regionArray.slice(0, 5).map(r => (
+                  <MetricBar key={r.name} label={r.name} value={r.count} total={regionTotal} />
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground italic">{t.regionNoData}</p>
+              )}
             </div>
           </AudienceCard>
         </div>
