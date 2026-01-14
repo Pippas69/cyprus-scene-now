@@ -100,6 +100,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       ticketSalesTitle: "Πωλήσεις Εισιτηρίων",
       overview: "Επισκόπηση",
       scanner: "Σαρωτής",
+      cannotDeleteWithTickets: "Δεν μπορείτε να διαγράψετε αυτή την εκδήλωση γιατί υπάρχουν ολοκληρωμένες αγορές εισιτηρίων.",
     },
     en: {
       loading: "Loading...",
@@ -125,6 +126,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       ticketSalesTitle: "Ticket Sales",
       overview: "Overview",
       scanner: "Scanner",
+      cannotDeleteWithTickets: "Cannot delete this event because there are completed ticket purchases.",
     },
   };
 
@@ -175,6 +177,39 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
   const handleDelete = async (eventId: string) => {
     try {
+      // Check if there are completed ticket orders for this event
+      const { data: completedOrders, error: checkError } = await supabase
+        .from('ticket_orders')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('status', 'completed')
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      if (completedOrders && completedOrders.length > 0) {
+        toast({
+          title: t.error,
+          description: t.cannotDeleteWithTickets,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Delete pending ticket orders first (no refund needed)
+      await supabase
+        .from('ticket_orders')
+        .delete()
+        .eq('event_id', eventId)
+        .neq('status', 'completed');
+
+      // Delete tickets associated with pending orders
+      await supabase
+        .from('tickets')
+        .delete()
+        .eq('event_id', eventId);
+
+      // Now delete the event (other related tables have CASCADE)
       const { error } = await supabase
         .from('events')
         .delete()
