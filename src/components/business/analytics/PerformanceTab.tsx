@@ -45,7 +45,7 @@ const translations = {
     eventsInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
     // Visits explanations - different per type
     profileVisitsExplanation: 'Επίσκεψη',
-    profileVisitsDetails: 'Check-ins και επιβεβαιωμένες κρατήσεις όταν το προφίλ ήταν επιλεγμένο.',
+    profileVisitsDetails: 'Check ins και επιβεβαιωμένες κρατήσεις από το προφίλ.',
     profileVisitsSource: 'QR check-ins, επιβεβαιωμένες κρατήσεις',
     offersVisitsExplanation: 'Επίσκεψη',
     offersVisitsDetails: 'Εξαργύρωση προσφοράς με QR ή κράτηση από προσφορά.',
