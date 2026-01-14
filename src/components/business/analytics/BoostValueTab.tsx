@@ -30,33 +30,28 @@ const translations = {
     eventTip1: 'Η προβολή αυξάνει την πρόθεση συμμετοχής στις εκδηλώσεις. Όσο πλησιάζει η ημερομηνία, η διαφορά γίνεται πιο εμφανής.',
     eventTip2: 'Οι εκδηλώσεις με ξεκάθαρη ημέρα και ώρα επωφελούνται περισσότερο από την προβολή.',
     dataSource: 'Πηγή δεδομένων',
-    // Metric explanations
-    profileViewsExplanation: 'Εμφανίσεις του προφίλ με/χωρίς επιλογή',
-    profileViewsDetails: 'Σύγκριση προβολών όταν το προφίλ είναι επιλεγμένο (featured) έναντι βασικού. Οι προβολές περιλαμβάνουν feed, χάρτη και αναζητήσεις.',
-    profileViewsSource: 'Feed, χάρτης, αναζητήσεις',
-    profileInteractionsExplanation: 'Αλληλεπιδράσεις με το επιλεγμένο vs βασικό προφίλ',
-    profileInteractionsDetails: 'Follows, saves και shares. Το επιλεγμένο προφίλ προσελκύει περισσότερη προσοχή και ενέργειες.',
-    profileInteractionsSource: 'Follows, saves, shares',
-    profileVisitsExplanation: 'Επισκέψεις με/χωρίς επιλεγμένο προφίλ',
-    profileVisitsDetails: 'QR check-ins και κρατήσεις όταν το προφίλ ήταν επιλεγμένο. Δείχνει την πραγματική επίδραση στην κίνηση.',
-    profileVisitsSource: 'QR check-ins, κρατήσεις',
-    offersViewsExplanation: 'Εμφανίσεις προσφορών με/χωρίς προβολή',
-    offersViewsDetails: 'Πόσες φορές εμφανίστηκαν οι προσφορές όταν ήταν προωθημένες vs απλές.',
-    offersViewsSource: 'Feed προσφορών, σελίδα επιχείρησης',
-    offersInteractionsExplanation: 'Ενδιαφέρον για προωθημένες vs απλές προσφορές',
-    offersInteractionsDetails: 'Αποθηκεύσεις, shares και κλικ. Η προβολή αυξάνει σημαντικά το ενδιαφέρον.',
-    offersInteractionsSource: 'Saves, shares, κλικ',
-    offersVisitsExplanation: 'Εξαργυρώσεις προωθημένων vs απλών προσφορών',
-    offersVisitsDetails: 'QR εξαργυρώσεις και κρατήσεις με προσφορά. Η προβολή μετατρέπει ενδιαφέρον σε επισκέψεις.',
-    offersVisitsSource: 'QR εξαργυρώσεις, κρατήσεις',
-    eventsViewsExplanation: 'Εμφανίσεις εκδηλώσεων με/χωρίς προβολή',
-    eventsViewsDetails: 'Πόσες φορές εμφανίστηκαν οι εκδηλώσεις όταν ήταν προωθημένες vs απλές.',
-    eventsViewsSource: 'Feed εκδηλώσεων, χάρτης',
-    eventsInteractionsExplanation: 'RSVPs για προωθημένες vs απλές εκδηλώσεις',
-    eventsInteractionsDetails: 'Ενδιαφερόμενοι και "Θα πάω". Η προβολή αυξάνει την πρόθεση συμμετοχής.',
-    eventsInteractionsSource: 'Ενδιαφερόμενοι, Θα πάω RSVPs',
-    eventsVisitsExplanation: 'Check-ins σε προωθημένες vs απλές εκδηλώσεις',
-    eventsVisitsDetails: 'QR check-ins από εισιτήρια ή κρατήσεις. Δείχνει την πραγματική συμμετοχή.',
+    // Unified metric explanations
+    viewsExplanation: 'Προβολή (Σύγκριση)',
+    viewsDetails: 'Μετράνε όταν ο χρήστης είτε δει είτε πατήσει. Συγκρίνονται οι προβολές με και χωρίς προώθηση.',
+    interactionsExplanation: 'Αλληλεπίδραση (Σύγκριση)',
+    interactionsDetails: 'Αποθηκεύσεις, ενδιαφέρον και δήλωση για πρόθεση επίσκεψης. Συγκρίνονται με και χωρίς προώθηση.',
+    // Profile sources
+    profileViewsSource: 'Feed, χάρτης, αναζητήσεις, σελίδα προφίλ',
+    profileInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    profileVisitsExplanation: 'Επίσκεψη (Σύγκριση)',
+    profileVisitsDetails: 'Check-ins και επιβεβαιωμένες κρατήσεις όταν το προφίλ ήταν επιλεγμένο vs μη επιλεγμένο.',
+    profileVisitsSource: 'QR check-ins, επιβεβαιωμένες κρατήσεις',
+    // Offers sources
+    offersViewsSource: 'Feed προσφορών, αναζητήσεις, σελίδα προσφοράς',
+    offersInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    offersVisitsExplanation: 'Επίσκεψη (Σύγκριση)',
+    offersVisitsDetails: 'Εξαργύρωση προσφοράς με QR ή κράτηση από προσφορά. Συγκρίνονται με και χωρίς προώθηση.',
+    offersVisitsSource: 'QR εξαργυρώσεις, κρατήσεις από προσφορά',
+    // Events sources
+    eventsViewsSource: 'Feed εκδηλώσεων, χάρτης, αναζητήσεις, σελίδα εκδήλωσης',
+    eventsInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    eventsVisitsExplanation: 'Επίσκεψη (Σύγκριση)',
+    eventsVisitsDetails: 'QR check-in από εισιτήριο ή κράτηση. Συγκρίνονται με και χωρίς προώθηση.',
     eventsVisitsSource: 'QR check-ins (εισιτήρια, κρατήσεις)',
   },
   en: {
@@ -83,33 +78,28 @@ const translations = {
     eventTip1: 'Boost increases participation intent for events. As the date approaches, the difference becomes more evident.',
     eventTip2: 'Events with a clear date and time benefit most from boost.',
     dataSource: 'Data source',
-    // Metric explanations
-    profileViewsExplanation: 'Profile views with/without featuring',
-    profileViewsDetails: 'Comparison of views when profile is featured vs basic. Views include feed, map and searches.',
-    profileViewsSource: 'Feed, map, searches',
-    profileInteractionsExplanation: 'Interactions with featured vs basic profile',
-    profileInteractionsDetails: 'Follows, saves and shares. Featured profile attracts more attention and actions.',
-    profileInteractionsSource: 'Follows, saves, shares',
-    profileVisitsExplanation: 'Visits with/without featured profile',
-    profileVisitsDetails: 'QR check-ins and reservations when profile was featured. Shows real impact on traffic.',
-    profileVisitsSource: 'QR check-ins, reservations',
-    offersViewsExplanation: 'Offer views with/without boost',
-    offersViewsDetails: 'How many times offers appeared when boosted vs regular.',
-    offersViewsSource: 'Offers feed, business page',
-    offersInteractionsExplanation: 'Interest in boosted vs regular offers',
-    offersInteractionsDetails: 'Saves, shares and clicks. Boost significantly increases interest.',
-    offersInteractionsSource: 'Saves, shares, clicks',
-    offersVisitsExplanation: 'Redemptions of boosted vs regular offers',
-    offersVisitsDetails: 'QR redemptions and offer reservations. Boost converts interest into visits.',
-    offersVisitsSource: 'QR redemptions, reservations',
-    eventsViewsExplanation: 'Event views with/without boost',
-    eventsViewsDetails: 'How many times events appeared when boosted vs regular.',
-    eventsViewsSource: 'Events feed, map',
-    eventsInteractionsExplanation: 'RSVPs for boosted vs regular events',
-    eventsInteractionsDetails: 'Interested and Going. Boost increases participation intent.',
-    eventsInteractionsSource: 'Interested, Going RSVPs',
-    eventsVisitsExplanation: 'Check-ins at boosted vs regular events',
-    eventsVisitsDetails: 'QR check-ins from tickets or reservations. Shows actual attendance.',
+    // Unified metric explanations
+    viewsExplanation: 'View (Comparison)',
+    viewsDetails: 'Counted when user views or clicks. Comparing views with and without boost.',
+    interactionsExplanation: 'Interaction (Comparison)',
+    interactionsDetails: 'Saves, interested and going declarations. Comparing with and without boost.',
+    // Profile sources
+    profileViewsSource: 'Feed, map, searches, profile page',
+    profileInteractionsSource: 'Saves, Interested, Going',
+    profileVisitsExplanation: 'Visit (Comparison)',
+    profileVisitsDetails: 'Check-ins and confirmed reservations when profile was featured vs non-featured.',
+    profileVisitsSource: 'QR check-ins, confirmed reservations',
+    // Offers sources
+    offersViewsSource: 'Offers feed, searches, offer page',
+    offersInteractionsSource: 'Saves, Interested, Going',
+    offersVisitsExplanation: 'Visit (Comparison)',
+    offersVisitsDetails: 'Offer redemption via QR or reservation from offer. Comparing with and without boost.',
+    offersVisitsSource: 'QR redemptions, offer reservations',
+    // Events sources
+    eventsViewsSource: 'Events feed, map, searches, event page',
+    eventsInteractionsSource: 'Saves, Interested, Going',
+    eventsVisitsExplanation: 'Visit (Comparison)',
+    eventsVisitsDetails: 'QR check-in from ticket or reservation. Comparing with and without boost.',
     eventsVisitsSource: 'QR check-ins (tickets, reservations)',
   },
 };
@@ -127,21 +117,21 @@ interface ChangeIndicatorProps {
 const ChangeIndicator: React.FC<ChangeIndicatorProps> = ({ change }) => {
   if (change > 0) {
     return (
-      <span className="flex items-center text-green-600 dark:text-green-400 font-medium">
+      <span className="inline-flex items-center justify-end text-green-600 dark:text-green-400 font-medium">
         <TrendingUp className="h-4 w-4 mr-1" />
         +{change}%
       </span>
     );
   } else if (change < 0) {
     return (
-      <span className="flex items-center text-red-600 dark:text-red-400 font-medium">
+      <span className="inline-flex items-center justify-end text-red-600 dark:text-red-400 font-medium">
         <TrendingDown className="h-4 w-4 mr-1" />
         {change}%
       </span>
     );
   }
   return (
-    <span className="flex items-center text-muted-foreground">
+    <span className="inline-flex items-center justify-end text-muted-foreground">
       <Minus className="h-4 w-4 mr-1" />
       0%
     </span>
@@ -160,18 +150,18 @@ const getBoostExplanations = (language: 'el' | 'en', blockType: BlockType): { vi
   const t = translations[language];
   const explanations = {
     profile: {
-      views: { explanation: t.profileViewsExplanation, details: t.profileViewsDetails, source: t.profileViewsSource },
-      interactions: { explanation: t.profileInteractionsExplanation, details: t.profileInteractionsDetails, source: t.profileInteractionsSource },
+      views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.profileViewsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.profileInteractionsSource },
       visits: { explanation: t.profileVisitsExplanation, details: t.profileVisitsDetails, source: t.profileVisitsSource },
     },
     offers: {
-      views: { explanation: t.offersViewsExplanation, details: t.offersViewsDetails, source: t.offersViewsSource },
-      interactions: { explanation: t.offersInteractionsExplanation, details: t.offersInteractionsDetails, source: t.offersInteractionsSource },
+      views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.offersViewsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.offersInteractionsSource },
       visits: { explanation: t.offersVisitsExplanation, details: t.offersVisitsDetails, source: t.offersVisitsSource },
     },
     events: {
-      views: { explanation: t.eventsViewsExplanation, details: t.eventsViewsDetails, source: t.eventsViewsSource },
-      interactions: { explanation: t.eventsInteractionsExplanation, details: t.eventsInteractionsDetails, source: t.eventsInteractionsSource },
+      views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.eventsViewsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.eventsInteractionsSource },
       visits: { explanation: t.eventsVisitsExplanation, details: t.eventsVisitsDetails, source: t.eventsVisitsSource },
     },
   };
