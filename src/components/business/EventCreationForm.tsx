@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Calendar, Clock, MapPin, Image, Ticket, Users, Gift, Plus, Trash2, AlertTriangle, Check, Info, Sparkles } from "lucide-react";
+import { Loader2, Calendar, Clock, MapPin, Ticket, Users, Gift, Plus, Trash2, AlertTriangle, Check, Sparkles } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
 import { ImageCropDialog } from "./ImageCropDialog";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -19,6 +19,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 import EventBoostDialog from "./EventBoostDialog";
 import { cn } from "@/lib/utils";
+import { TicketTierEditor, TicketTier, validateTicketTiers } from "@/components/tickets/TicketTierEditor";
 
 // ============================================
 // HELPER COMPONENTS (defined outside to prevent re-creation)
@@ -117,13 +118,8 @@ interface FormData {
   // Step 6: Cover Image (handled separately)
   // Step 7: Event Type
   eventType: EventType | null;
-  // Ticket fields
-  ticketName: string;
-  ticketDescription: string;
-  ticketPriceCents: number;
-  ticketQuantity: number;
-  ticketMaxPerOrder: number;
-  ticketDressCode: string;
+  // Ticket fields - now supports multiple tiers
+  ticketTiers: TicketTier[];
   // Reservation fields
   reservationFromTime: string;
   reservationToTime: string;
@@ -351,12 +347,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
     venueName: '',
     address: '',
     eventType: null,
-    ticketName: '',
-    ticketDescription: '',
-    ticketPriceCents: 1500,
-    ticketQuantity: 100,
-    ticketMaxPerOrder: 4,
-    ticketDressCode: '',
+    ticketTiers: [],
     reservationFromTime: '20:00',
     reservationToTime: '02:00',
     selectedSeatingTypes: [],
@@ -373,6 +364,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       noReservation: false,
     },
   });
+  
+  // Ticket tier validation errors
+  const [ticketValidationErrors, setTicketValidationErrors] = useState<string[]>([]);
   
   // Image state
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -500,9 +494,15 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
     
     // Type-specific validation
     if (formData.eventType === 'ticket') {
-      if (!formData.ticketName.trim()) return t.allFieldsRequired;
-      if (formData.ticketPriceCents <= 0) return t.allFieldsRequired;
-      if (formData.ticketQuantity <= 0) return t.allFieldsRequired;
+      const tierErrors = validateTicketTiers(formData.ticketTiers, language);
+      if (tierErrors.length > 0) {
+        setTicketValidationErrors(tierErrors);
+        return tierErrors[0];
+      }
+      if (formData.ticketTiers.length === 0) {
+        return language === 'el' ? 'Προσθέστε τουλάχιστον μία κατηγορία εισιτηρίου' : 'Add at least one ticket tier';
+      }
+      setTicketValidationErrors([]);
     }
     
     if (formData.eventType === 'reservation') {
@@ -578,7 +578,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         free_entry_declaration: formData.eventType === 'free_entry',
         accepts_reservations: formData.eventType === 'reservation',
         requires_approval: formData.eventType === 'reservation',
-        dress_code: formData.eventType === 'ticket' ? formData.ticketDressCode : null,
+        dress_code: formData.eventType === 'ticket' && formData.ticketTiers.length > 0 ? formData.ticketTiers[0].dress_code : null,
         reservation_hours_from: formData.eventType === 'reservation' ? formData.reservationFromTime : null,
         reservation_hours_to: formData.eventType === 'reservation' ? formData.reservationToTime : null,
       };
@@ -591,19 +591,21 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       
       if (insertError) throw insertError;
       
-      // Save ticket tier for ticket events
-      if (formData.eventType === 'ticket') {
-        await supabase.from('ticket_tiers').insert({
+      // Save ticket tiers for ticket events
+      if (formData.eventType === 'ticket' && formData.ticketTiers.length > 0) {
+        const tiersToInsert = formData.ticketTiers.map((tier, index) => ({
           event_id: createdEvent.id,
-          name: formData.ticketName,
-          description: formData.ticketDescription || null,
-          price_cents: formData.ticketPriceCents,
-          currency: 'EUR',
-          quantity_total: formData.ticketQuantity,
-          max_per_order: formData.ticketMaxPerOrder,
-          sort_order: 0,
-          dress_code: formData.ticketDressCode || null,
-        });
+          name: tier.name,
+          description: tier.description || null,
+          price_cents: tier.price_cents,
+          currency: tier.currency || 'EUR',
+          quantity_total: tier.quantity_total,
+          max_per_order: tier.max_per_order,
+          sort_order: index,
+          dress_code: tier.dress_code || null,
+        }));
+        
+        await supabase.from('ticket_tiers').insert(tiersToInsert);
       }
       
       // Save seating types and tiers for reservation events
@@ -887,76 +889,12 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 {t.ticketConfig}
               </h4>
               
-              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} />
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t.ticketNameLabel} *</Label>
-                  <Input
-                    value={formData.ticketName}
-                    onChange={(e) => updateField('ticketName', e.target.value)}
-                    placeholder="General Admission"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t.ticketDescLabel}</Label>
-                  <Input
-                    value={formData.ticketDescription}
-                    onChange={(e) => updateField('ticketDescription', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>{t.priceLabel} *</Label>
-                  <Input
-                    type="number"
-                    value={formData.ticketPriceCents / 100}
-                    onChange={(e) => updateField('ticketPriceCents', Math.round(parseFloat(e.target.value || '0') * 100))}
-                    min={0.5}
-                    step={0.5}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t.ticketsAvailable} *</Label>
-                  <Input
-                    type="number"
-                    value={formData.ticketQuantity}
-                    onChange={(e) => updateField('ticketQuantity', parseInt(e.target.value) || 0)}
-                    min={1}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t.maxPerOrder}</Label>
-                  <Input
-                    type="number"
-                    value={formData.ticketMaxPerOrder}
-                    onChange={(e) => updateField('ticketMaxPerOrder', parseInt(e.target.value) || 1)}
-                    min={1}
-                    max={10}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>{t.dressCode}</Label>
-                <Select
-                  value={formData.ticketDressCode}
-                  onValueChange={(v) => updateField('ticketDressCode', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="-" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="casual">{t.casual}</SelectItem>
-                    <SelectItem value="smart_casual">{t.smartCasual}</SelectItem>
-                    <SelectItem value="semi_formal">{t.semiFormal}</SelectItem>
-                    <SelectItem value="formal">{t.formal}</SelectItem>
-                    <SelectItem value="costume">{t.costume}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <TicketTierEditor
+                tiers={formData.ticketTiers}
+                onTiersChange={(tiers) => updateField('ticketTiers', tiers)}
+                commissionPercent={commissionPercent}
+                validationErrors={ticketValidationErrors}
+              />
             </div>
           )}
 
