@@ -48,9 +48,15 @@ export const useGuidanceData = (businessId: string) => {
         const hourCounts: Record<string, Record<number, number>> = {};
         
         events?.filter(e => eventTypes.includes(e.event_type)).forEach(event => {
+          if (!event?.created_at) return;
+
           const date = new Date(event.created_at);
           const day = date.getDay();
           const hour = date.getHours();
+
+          // Guard against invalid timestamps
+          if (!Number.isFinite(day) || !Number.isFinite(hour) || day < 0 || day > 6) return;
+
           const key = `${day}-${Math.floor(hour / 2) * 2}`; // Group by 2-hour slots
           
           if (!hourCounts[day]) hourCounts[day] = {};

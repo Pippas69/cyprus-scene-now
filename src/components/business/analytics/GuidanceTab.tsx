@@ -8,6 +8,7 @@ import { useGuidanceData } from '@/hooks/useGuidanceData';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
+import { ensureNotoSansFont } from '@/lib/jspdfNotoSans';
 
 const dayNamesEl: Record<number, string> = {
   0: 'Κυριακή',
@@ -29,8 +30,10 @@ const dayNamesEn: Record<number, string> = {
   6: 'Saturday',
 };
 
-const getDayName = (dayIndex: number, language: 'el' | 'en'): string => {
-  return language === 'el' ? dayNamesEl[dayIndex] : dayNamesEn[dayIndex];
+const getDayName = (dayIndex: unknown, language: 'el' | 'en'): string => {
+  const idx = Number(dayIndex);
+  if (!Number.isFinite(idx) || idx < 0 || idx > 6) return '—';
+  return language === 'el' ? dayNamesEl[idx] : dayNamesEn[idx];
 };
 
 const translations = {
@@ -131,7 +134,7 @@ const translations = {
     pdfGenerated: 'PDF generated!',
     noData: 'More data needed for reliable guidance.',
     // PDF specific
-    pdfTitle: 'FOMO Guidance Report',
+    pdfTitle: 'ΦΟΜΟ Guidance Report',
     pdfDate: 'Date',
     pdfTimeWindows: 'Time Windows',
     pdfSummary: 'Decision Summary',
@@ -244,7 +247,10 @@ const generateTips = (
 // Format time windows for display with language
 const formatWindowsWithLanguage = (windows: TimeWindow[], language: 'el' | 'en'): string => {
   if (!windows || windows.length === 0) return '—';
-  return windows.slice(0, 2).map(w => `${getDayName(w.dayIndex, language)} ${w.hours}`).join(' / ');
+  return windows
+    .slice(0, 2)
+    .map((w) => `${getDayName(w.dayIndex, language)} ${w.hours}`)
+    .join(' / ');
 };
 
 // Metric row with tooltip
@@ -380,109 +386,107 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
     });
   };
 
-  const generatePdfContent = (): jsPDF => {
+  const generatePdfContent = async (): Promise<jsPDF> => {
     const doc = new jsPDF();
+    await ensureNotoSansFont(doc);
+
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
     let yPos = 20;
-    const lineHeight = 7;
-    const sectionGap = 12;
+    const lineHeight = 6;
+    const sectionGap = 10;
+    const leftX = 18;
+    const indentX = 24;
+    const maxWidth = pageWidth - leftX * 2;
+
+    const ensureSpace = (neededLines = 1) => {
+      const neededHeight = neededLines * lineHeight + 6;
+      if (yPos + neededHeight > pageHeight - 18) {
+        doc.addPage();
+        yPos = 20;
+        doc.setFont('NotoSans', 'normal');
+      }
+    };
+
+    const write = (text: string, x = leftX, fontSize = 10) => {
+      doc.setFontSize(fontSize);
+      const lines = doc.splitTextToSize(text, maxWidth - (x - leftX));
+      ensureSpace(lines.length);
+      doc.text(lines, x, yPos);
+      yPos += lines.length * lineHeight;
+    };
+
+    const heading = (text: string) => {
+      ensureSpace(2);
+      doc.setFontSize(14);
+      doc.text(text, leftX, yPos);
+      yPos += lineHeight * 1.2;
+    };
 
     // Title
     doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text(language === 'el' ? 'Αναφορά Καθοδήγησης' : 'Guidance Report', pageWidth / 2, yPos, { align: 'center' });
+    doc.text(t.pdfTitle, pageWidth / 2, yPos, { align: 'center' });
     yPos += lineHeight * 2;
 
     // Date
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
     const dateStr = new Date().toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US');
-    doc.text(`${language === 'el' ? 'Ημερομηνία' : 'Date'}: ${dateStr}`, 20, yPos);
+    write(`${t.pdfDate}: ${dateStr}`, leftX, 10);
     yPos += sectionGap;
 
     if (!data) {
-      doc.text(t.noData, 20, yPos);
+      write(t.noData, leftX, 11);
       return doc;
     }
 
-    // Helper to add section
-    const addSection = (title: string, sectionData: GuidanceSection, sectionType: 'profile' | 'offers' | 'events') => {
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
-      }
+    const addGuidanceSection = (title: string, sectionData: GuidanceSection, sectionType: 'profile' | 'offers' | 'events') => {
+      heading(title);
 
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(title, 20, yPos);
-      yPos += lineHeight;
+      write(`${t.pdfTimeWindows}:`, leftX, 11);
+      write(`${t.views}: ${formatWindowsWithLanguage(sectionData.views, language)}`, indentX);
+      write(`${t.interactions}: ${formatWindowsWithLanguage(sectionData.interactions, language)}`, indentX);
+      write(`${t.visits}: ${formatWindowsWithLanguage(sectionData.visits, language)}`, indentX);
+      yPos += 4;
 
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-
-      // Views
-      doc.text(`${t.views}: ${formatWindowsWithLanguage(sectionData.views, language)}`, 25, yPos);
-      yPos += lineHeight;
-
-      // Interactions
-      doc.text(`${t.interactions}: ${formatWindowsWithLanguage(sectionData.interactions, language)}`, 25, yPos);
-      yPos += lineHeight;
-
-      // Visits
-      doc.text(`${t.visits}: ${formatWindowsWithLanguage(sectionData.visits, language)}`, 25, yPos);
-      yPos += lineHeight;
-
-      // Tips
       const tips = generateTips(sectionData, sectionType, language);
-      if (tips.tip1) {
-        doc.text(`1. ${tips.tip1}`, 25, yPos);
-        yPos += lineHeight;
-      }
-      if (tips.tip2) {
-        doc.text(`2. ${tips.tip2}`, 25, yPos);
-        yPos += lineHeight;
-      }
+      if (tips.tip1) write(`1. ${tips.tip1}`, indentX);
+      if (tips.tip2) write(`2. ${tips.tip2}`, indentX);
 
-      yPos += sectionGap / 2;
+      yPos += sectionGap;
     };
 
-    // Add all sections
-    addSection(t.featuredProfile, data.profile, 'profile');
-    addSection(t.boostedOffers, data.offers, 'offers');
-    addSection(t.boostedEvents, data.events, 'events');
+    addGuidanceSection(t.featuredProfile, data.profile, 'profile');
+    addGuidanceSection(t.boostedOffers, data.offers, 'offers');
+    addGuidanceSection(t.boostedEvents, data.events, 'events');
 
-    // Recommended Plan
-    if (yPos > 230) {
-      doc.addPage();
-      yPos = 20;
-    }
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(t.recommendedPlan, 20, yPos);
-    yPos += lineHeight;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const publishDay = getDayName(data.recommendedPlan.publish.dayIndex, language);
-    const interactionsDay = getDayName(data.recommendedPlan.interactions.dayIndex, language);
-    const visitsDay = getDayName(data.recommendedPlan.visits.dayIndex, language);
-    doc.text(`${t.publish}: ${publishDay} ${data.recommendedPlan.publish.hours}`, 25, yPos);
-    yPos += lineHeight;
-    doc.text(`${t.targetInteractions}: ${interactionsDay} ${data.recommendedPlan.interactions.hours}`, 25, yPos);
-    yPos += lineHeight;
-    doc.text(`${t.targetVisits}: ${visitsDay} ${data.recommendedPlan.visits.hours}`, 25, yPos);
-    yPos += lineHeight * 2;
+    // Recommended plan
+    heading(t.recommendedPlan);
+    write(`${t.publish}: ${getDayName(data.recommendedPlan.publish.dayIndex, language)} ${data.recommendedPlan.publish.hours}`, indentX);
+    write(`${t.targetInteractions}: ${getDayName(data.recommendedPlan.interactions.dayIndex, language)} ${data.recommendedPlan.interactions.hours}`, indentX);
+    write(`${t.targetVisits}: ${getDayName(data.recommendedPlan.visits.dayIndex, language)} ${data.recommendedPlan.visits.hours}`, indentX);
+    write(`✓ ${t.planNote}`, indentX);
+    yPos += sectionGap;
 
     // Application status
-    if (feedbackGiven !== null) {
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text(t.application, 20, yPos);
-      yPos += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      doc.text(feedbackGiven ? t.applied : t.notApplied, 25, yPos);
-    }
+    heading(t.pdfPlanStatus);
+    const statusText =
+      feedbackGiven === null
+        ? t.pdfPending
+        : feedbackGiven
+          ? t.pdfApplied
+          : t.pdfNotApplied;
+    write(statusText, indentX);
+    yPos += 6;
+
+    // Summary / conclusions
+    heading(t.pdfConclusion);
+    const conclusionText =
+      feedbackGiven === null
+        ? t.pdfConclusionPending
+        : feedbackGiven
+          ? t.pdfConclusionApplied
+          : t.pdfConclusionNotApplied;
+    write(conclusionText, indentX);
 
     return doc;
   };
@@ -490,7 +494,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
   const handleDownloadPdf = async () => {
     setIsGeneratingPdf(true);
     try {
-      const doc = generatePdfContent();
+      const doc = await generatePdfContent();
       doc.save(`guidance-report-${new Date().toISOString().split('T')[0]}.pdf`);
       toast({ title: t.pdfGenerated });
     } catch (error) {
@@ -512,11 +516,12 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
       }
 
       // Generate PDF as base64
-      const doc = generatePdfContent();
+      const doc = await generatePdfContent();
       const pdfBase64 = doc.output('datauristring');
 
-      // For now, just show success - in production, you'd send this to an edge function
+      // For now, just show success - in production, you'd send this to a backend function
       // that handles email sending with the PDF attachment
+      void pdfBase64;
       toast({ title: t.emailSent });
     } catch (error) {
       console.error('Email sending error:', error);
