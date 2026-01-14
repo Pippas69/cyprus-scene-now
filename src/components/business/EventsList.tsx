@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users, Copy, Pencil, Rocket, BarChart3, Sparkles } from "lucide-react";
+import { Trash2, Calendar, MapPin, Users, Copy, Pencil, Rocket, Sparkles, Ticket } from "lucide-react";
 import EventEditDialog from "./EventEditDialog";
 import EventBoostDialog from "./EventBoostDialog";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
@@ -22,6 +22,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
+import { TicketScanner } from "@/components/tickets/TicketScanner";
 
 interface EventsListProps {
   businessId: string;
@@ -54,6 +63,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [viewingBoostEventId, setViewingBoostEventId] = useState<string | null>(null);
   const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
+  const [ticketSalesEvent, setTicketSalesEvent] = useState<{ id: string; title: string } | null>(null);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -86,6 +96,10 @@ const EventsList = ({ businessId }: EventsListProps) => {
       deleteConfirmWarning: "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
       cancel: "Ακύρωση",
       confirmDelete: "Διαγραφή",
+      tickets: "Εισιτήρια",
+      ticketSalesTitle: "Πωλήσεις Εισιτηρίων",
+      overview: "Επισκόπηση",
+      scanner: "Σαρωτής",
     },
     en: {
       loading: "Loading...",
@@ -107,6 +121,10 @@ const EventsList = ({ businessId }: EventsListProps) => {
       deleteConfirmWarning: "This action cannot be undone.",
       cancel: "Cancel",
       confirmDelete: "Delete",
+      tickets: "Tickets",
+      ticketSalesTitle: "Ticket Sales",
+      overview: "Overview",
+      scanner: "Scanner",
     },
   };
 
@@ -302,6 +320,19 @@ const EventsList = ({ businessId }: EventsListProps) => {
               </div>
 
               <div className="flex gap-2">
+                {/* Tickets button - only for ticket events */}
+                {event.event_type === 'ticket' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}
+                    title={t.tickets}
+                    aria-label={`${t.tickets} ${event.title}`}
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    <Ticket className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -400,6 +431,33 @@ const EventsList = ({ businessId }: EventsListProps) => {
         open={performanceDialogOpen}
         onOpenChange={setPerformanceDialogOpen}
       />
+
+      {/* Ticket Sales Dialog */}
+      <Dialog open={!!ticketSalesEvent} onOpenChange={(open) => !open && setTicketSalesEvent(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-primary" />
+              {t.ticketSalesTitle} - {ticketSalesEvent?.title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {ticketSalesEvent && (
+            <Tabs defaultValue="overview" className="mt-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="overview">{t.overview}</TabsTrigger>
+                <TabsTrigger value="scanner">{t.scanner}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="overview" className="mt-4">
+                <TicketSalesOverview eventId={ticketSalesEvent.id} />
+              </TabsContent>
+              <TabsContent value="scanner" className="mt-4">
+                <TicketScanner eventId={ticketSalesEvent.id} />
+              </TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

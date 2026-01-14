@@ -34,7 +34,7 @@ import { Button } from "@/components/ui/button";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { User, Settings, LogOut } from "lucide-react";
-import TicketSales from "@/pages/TicketSales";
+// TicketSales moved into EventsList as a dialog
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
@@ -321,7 +321,6 @@ const DashboardBusiness = () => {
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
               <Route path="offers/new" element={businessId ? <OfferCreationForm businessId={businessId} /> : null} />
               <Route path="reservations" element={businessId ? <ReservationManagement businessId={businessId} language={language} /> : null} />
-              <Route path="ticket-sales" element={businessId ? <TicketSales businessId={businessId} /> : null} />
               <Route path="subscription" element={<SubscriptionPlans embedded />} />
               <Route path="boosts" element={businessId ? <BoostManagement businessId={businessId} /> : null} />
               <Route path="student-discounts" element={businessId ? <StudentDiscountsPage businessId={businessId} language={language} /> : null} />
