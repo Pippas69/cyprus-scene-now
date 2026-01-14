@@ -21,6 +21,64 @@ import EventBoostDialog from "./EventBoostDialog";
 import { cn } from "@/lib/utils";
 
 // ============================================
+// HELPER COMPONENTS (defined outside to prevent re-creation)
+// ============================================
+
+interface SectionCardProps {
+  title: string;
+  required?: boolean;
+  requiredLabel: string;
+  children: React.ReactNode;
+}
+
+const SectionCard: React.FC<SectionCardProps> = ({ 
+  title, 
+  required = false, 
+  requiredLabel,
+  children 
+}) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-3 pb-2 border-b">
+      <h3 className="font-semibold text-lg">{title}</h3>
+      {required && (
+        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+          {requiredLabel}
+        </span>
+      )}
+    </div>
+    <div className="space-y-4">
+      {children}
+    </div>
+  </div>
+);
+
+interface CommissionBannerProps {
+  platformFeeLabel: string;
+  commissionPercent: number;
+  upgradeHint: string;
+}
+
+const CommissionBanner: React.FC<CommissionBannerProps> = ({ 
+  platformFeeLabel, 
+  commissionPercent, 
+  upgradeHint 
+}) => (
+  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+    <div className="flex items-start gap-3">
+      <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+      <div>
+        <p className="font-medium text-amber-900 dark:text-amber-100">
+          {platformFeeLabel} {commissionPercent}%
+        </p>
+        <p className="text-sm text-amber-700 dark:text-amber-300">
+          {upgradeHint}
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// ============================================
 // TYPES
 // ============================================
 
@@ -604,46 +662,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
   // RENDER
   // ============================================
 
-  const SectionCard = ({ 
-    title, 
-    required = false, 
-    children 
-  }: { 
-    title: string; 
-    required?: boolean; 
-    children: React.ReactNode;
-  }) => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 pb-2 border-b">
-        <h3 className="font-semibold text-lg">{title}</h3>
-        {required && (
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-            {t.required}
-          </span>
-        )}
-      </div>
-      <div className="space-y-4">
-        {children}
-      </div>
-    </div>
-  );
-
-  const CommissionBanner = () => (
-    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-      <div className="flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
-        <div>
-          <p className="font-medium text-amber-900 dark:text-amber-100">
-            {t.platformFee} {commissionPercent}%
-          </p>
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            {t.upgradeHint}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <Card className="max-w-3xl mx-auto">
       <CardHeader className="border-b">
@@ -655,7 +673,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       
       <CardContent className="p-6 space-y-8">
         {/* Step 1: Title */}
-        <SectionCard title={t.step1} required>
+        <SectionCard title={t.step1} required requiredLabel={t.required}>
           <Input
             value={formData.title}
             onChange={(e) => updateField('title', e.target.value)}
@@ -665,7 +683,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         </SectionCard>
 
         {/* Step 2: Description */}
-        <SectionCard title={t.step2} required>
+        <SectionCard title={t.step2} required requiredLabel={t.required}>
           <Textarea
             value={formData.description}
             onChange={(e) => updateField('description', e.target.value)}
@@ -684,7 +702,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         </SectionCard>
 
         {/* Step 3: Start Date & Time */}
-        <SectionCard title={t.step3} required>
+        <SectionCard title={t.step3} required requiredLabel={t.required}>
           <DateTimePicker
             value={formData.startAt || undefined}
             onChange={(date) => updateField('startAt', date || null)}
@@ -694,7 +712,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         </SectionCard>
 
         {/* Step 4: Appearance Duration */}
-        <SectionCard title={t.step4} required>
+        <SectionCard title={t.step4} required requiredLabel={t.required}>
           <RadioGroup
             value={formData.appearanceMode}
             onValueChange={(v) => updateField('appearanceMode', v as AppearanceMode)}
@@ -777,7 +795,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         </SectionCard>
 
         {/* Step 5: Venue */}
-        <SectionCard title={t.step5} required>
+        <SectionCard title={t.step5} required requiredLabel={t.required}>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>{t.venueName}</Label>
@@ -802,7 +820,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         </SectionCard>
 
         {/* Step 6: Cover Image */}
-        <SectionCard title={t.step6} required>
+        <SectionCard title={t.step6} required requiredLabel={t.required}>
           <ImageUploadField
             label={t.coverImage}
             language={language}
@@ -813,7 +831,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
         </SectionCard>
 
         {/* Step 7: Event Type */}
-        <SectionCard title={t.step7} required>
+        <SectionCard title={t.step7} required requiredLabel={t.required}>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Ticket */}
             <button
@@ -869,7 +887,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 {t.ticketConfig}
               </h4>
               
-              <CommissionBanner />
+              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} />
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -950,7 +968,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 {t.reservationConfig}
               </h4>
               
-              <CommissionBanner />
+              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} />
               
               {/* Reservation Hours */}
               <div className="space-y-2">
