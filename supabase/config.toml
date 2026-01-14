@@ -130,7 +130,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-student-verification-email]
-verify_jwt = true
-
+verify_jwt = false
 [functions.verify-student-token]
 verify_jwt = false
