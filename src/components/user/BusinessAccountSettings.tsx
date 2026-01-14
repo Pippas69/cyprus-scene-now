@@ -30,6 +30,7 @@ import { toastTranslations } from "@/translations/toastTranslations";
 import { compressImage } from "@/lib/imageCompression";
 import { StripeConnectOnboarding } from "@/components/business/StripeConnectOnboarding";
 import { DirectReservationSettings } from "@/components/business/DirectReservationSettings";
+import { StudentDiscountSettings } from "@/components/business/StudentDiscountSettings";
 
 const createBusinessProfileSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -645,6 +646,9 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
       {/* Direct Reservation Settings */}
       <DirectReservationSettings businessId={businessId} language={language} />
+
+      {/* Student Discount Settings */}
+      <StudentDiscountSettings businessId={businessId} />
 
       {/* Account Information Section */}
       <Card>
