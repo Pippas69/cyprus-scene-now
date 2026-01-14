@@ -178,20 +178,35 @@ const Signup = () => {
               .select('id')
               .single();
             
-            if (!verificationError && verificationData) {
-              // Send verification email with correct field names
-              await supabase.functions.invoke('send-student-verification-email', {
-                body: {
-                  verificationId: verificationData.id,
-                  universityEmail: universityEmail,
-                  universityName: universityData.name,
-                  userName: `${values.firstName} ${values.lastName}`
+            if (verificationError) {
+              console.error('Student verification insert error:', verificationError);
+              toast.error(language === 'el' ? 'Αποτυχία δημιουργίας επαλήθευσης φοιτητή' : 'Failed to create student verification');
+            } else if (verificationData) {
+              // Send verification email (non-blocking for signup success)
+              try {
+                setSendingVerification(true);
+                const { error: emailError } = await supabase.functions.invoke('send-student-verification-email', {
+                  body: {
+                    verificationId: verificationData.id,
+                    universityEmail,
+                    universityName: universityData.name,
+                    userName: `${values.firstName} ${values.lastName}`,
+                  },
+                });
+
+                if (emailError) {
+                  console.error('Student verification email error:', emailError);
+                  toast.error(language === 'el' ? 'Δεν στάλθηκε email επαλήθευσης στο πανεπιστήμιο' : 'Verification email was not sent');
+                } else {
+                  setStudentVerificationSent(true);
+                  toast.success(language === 'el' ? 'Στάλθηκε email επαλήθευσης στο πανεπιστήμιο σου' : 'Verification email sent to your university inbox');
                 }
-              });
+              } finally {
+                setSendingVerification(false);
+              }
             }
           }
         }
-        
         confetti.trigger();
         toast.success(tt.created);
         setTimeout(() => navigate(redirectUrl), 1500);
