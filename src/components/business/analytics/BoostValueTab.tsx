@@ -26,6 +26,7 @@ const translations = {
     profileTip1: 'Το επιλεγμένο προφίλ αυξάνει σταθερά τις επισκέψεις σε σχέση με το βασικό προφίλ. Η μεγαλύτερη διαφορά εμφανίζεται σε μέρες με αυξημένη έξοδο.',
     profileTip2: 'Η αξία του επιλεγμένου προφίλ φαίνεται όταν συνδυάζεται με ενεργές προσφορές ή εκδηλώσεις. Το προφίλ λειτουργεί ως κεντρικό σημείο ανακάλυψης.',
     offerTip1: 'Οι προσφορές με προβολή μετατρέπουν περισσότερο το ενδιαφέρον σε επισκέψεις.',
+    offerTip1Suffix: 'Η διαφορά είναι πιο έντονη σε',
     offerTip2: 'Χωρίς προβολή, οι προσφορές παραμένουν κυρίως σε επίπεδο προβολής. Η προβολή βοηθά να έρθει ο κόσμος στο κατάστημα.',
     eventTip1: 'Η προβολή αυξάνει την πρόθεση συμμετοχής στις εκδηλώσεις. Όσο πλησιάζει η ημερομηνία, η διαφορά γίνεται πιο εμφανής.',
     eventTip2: 'Οι εκδηλώσεις με ξεκάθαρη ημέρα και ώρα επωφελούνται περισσότερο από την προβολή.',
@@ -74,6 +75,7 @@ const translations = {
     profileTip1: 'The featured profile consistently increases visits compared to the basic profile. The biggest difference appears on days with high activity.',
     profileTip2: 'The value of the featured profile is evident when combined with active offers or events. The profile acts as a central discovery point.',
     offerTip1: 'Offers with boost convert more interest into visits.',
+    offerTip1Suffix: 'The difference is more pronounced on',
     offerTip2: 'Without boost, offers mostly stay at view level. Boost helps bring people to the store.',
     eventTip1: 'Boost increases participation intent for events. As the date approaches, the difference becomes more evident.',
     eventTip2: 'Events with a clear date and time benefit most from boost.',
@@ -371,7 +373,7 @@ export const BoostValueTab: React.FC<BoostValueTabProps> = ({
   };
 
   const getOfferTips = () => {
-    const tip1 = `${t.offerTip1} Η διαφορά είναι πιο έντονη σε ${data.bestDays.offers}.`;
+    const tip1 = `${t.offerTip1} ${t.offerTip1Suffix} ${data.bestDays.offers}.`;
     return [tip1, t.offerTip2];
   };
 
