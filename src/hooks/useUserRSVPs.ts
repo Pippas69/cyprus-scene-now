@@ -45,15 +45,15 @@ export const useUserRSVPs = (userId: string | null) => {
     setLoading(true);
     const now = new Date().toISOString();
 
-    // Fetch upcoming RSVPs (events not ended)
-    const { data: upcomingData, error: upcomingError } = await supabase
+    // Fetch all RSVPs for the user with event data
+    const { data: allData, error } = await supabase
       .from('rsvps')
       .select(`
         id,
         status,
         notes,
         created_at,
-        event:events!inner(
+        event:events(
           id,
           title,
           start_at,
@@ -65,40 +65,28 @@ export const useUserRSVPs = (userId: string | null) => {
           business:businesses(id, name, logo_url)
         )
       `)
-      .eq('user_id', userId)
-      .gte('events.end_at', now)
-      .order('events.start_at', { ascending: true });
+      .eq('user_id', userId);
 
-    // Fetch past RSVPs (events ended)
-    const { data: pastData, error: pastError } = await supabase
-      .from('rsvps')
-      .select(`
-        id,
-        status,
-        notes,
-        created_at,
-        event:events!inner(
-          id,
-          title,
-          start_at,
-          end_at,
-          location,
-          category,
-          price_tier,
-          cover_image_url,
-          business:businesses(id, name, logo_url)
-        )
-      `)
-      .eq('user_id', userId)
-      .lt('events.end_at', now)
-      .order('events.end_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching RSVPs:', error);
+      setLoading(false);
+      return;
+    }
 
-    if (!upcomingError && upcomingData) {
-      setUpcomingRsvps(upcomingData as any);
-    }
-    if (!pastError && pastData) {
-      setPastRsvps(pastData as any);
-    }
+    // Filter on the client side since Supabase JS doesn't support filtering on nested relations well
+    const validRsvps = (allData || []).filter(r => r.event !== null);
+    
+    const upcoming = validRsvps.filter(r => new Date(r.event.end_at) >= new Date(now));
+    const past = validRsvps.filter(r => new Date(r.event.end_at) < new Date(now));
+
+    // Sort upcoming by start_at ascending
+    upcoming.sort((a, b) => new Date(a.event.start_at).getTime() - new Date(b.event.start_at).getTime());
+    
+    // Sort past by end_at descending
+    past.sort((a, b) => new Date(b.event.end_at).getTime() - new Date(a.event.end_at).getTime());
+
+    setUpcomingRsvps(upcoming as any);
+    setPastRsvps(past as any);
     setLoading(false);
   };
 
