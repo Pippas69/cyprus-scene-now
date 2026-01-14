@@ -163,11 +163,13 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
 
       if (data.isFree) {
         // Free tickets - order completed directly
+        setIsLoading(false);
         toast.success(language === 'el' 
           ? "Εισιτήρια επιβεβαιώθηκαν!" 
           : "Tickets confirmed!"
         );
-        onSuccess?.(data.orderId, true);
+        // Redirect to success page for free tickets
+        window.location.href = `/ticket-success?order_id=${data.orderId}&free=true`;
       } else {
         // Store URL and attempt redirect - use fallback pattern for iOS/Safari
         setCheckoutUrl(data.url);

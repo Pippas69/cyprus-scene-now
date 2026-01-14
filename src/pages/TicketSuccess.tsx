@@ -47,7 +47,30 @@ export const TicketSuccess = () => {
     const processPayment = async () => {
       const sessionId = searchParams.get("session_id");
       const orderId = searchParams.get("order_id");
+      const isFree = searchParams.get("free") === "true";
 
+      // For free tickets, we just need the orderId
+      if (isFree && orderId) {
+        try {
+          // Call process-free-ticket to send emails
+          const { data, error } = await supabase.functions.invoke("process-free-ticket", {
+            body: { orderId },
+          });
+
+          if (error) throw error;
+          
+          setTicketCount(data?.ticketCount || 1);
+          setStatus("success");
+        } catch (err) {
+          console.error("Free ticket processing error:", err);
+          // Still show success even if email fails - tickets were already created
+          setTicketCount(1);
+          setStatus("success");
+        }
+        return;
+      }
+
+      // For paid tickets, we need both sessionId and orderId
       if (!sessionId || !orderId) {
         setStatus("error");
         setErrorMessage("Missing payment information");
