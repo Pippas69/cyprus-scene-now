@@ -31,15 +31,15 @@ const translations = {
     regionExplanation: 'Οι κορυφαίες περιοχές από όπου προέρχεται το κοινό σας.',
     regionNoData: 'Προς το παρόν δεν υπάρχουν διαθέσιμα δεδομένα για την περιοχή.',
     dataSource: 'Πηγή δεδομένων',
-    // Views explanations - same for all
-    viewsExplanation: 'Προβολή',
-    viewsDetails: 'Μετράνε όταν ο χρήστης είτε δει είτε πατήσει.',
+    // Views explanations - same for all (LOCKED)
+    viewsExplanation: 'Προβολές',
+    viewsDetails: 'Δείχνει πόσες φορές χρήστες είδαν αυτό το περιεχόμενο και επέλεξαν να το ανοίξουν.',
     profileViewsSource: 'Feed, χάρτης, αναζητήσεις, σελίδα προφίλ',
     offersViewsSource: 'Feed προσφορών, αναζητήσεις, σελίδα προσφοράς',
     eventsViewsSource: 'Feed εκδηλώσεων, χάρτης, αναζητήσεις, σελίδα εκδήλωσης',
-    // Interactions explanations - same for all
-    interactionsExplanation: 'Αλληλεπίδραση',
-    interactionsDetails: 'Αποθηκεύσεις, ενδιαφέρον και δήλωση για πρόθεση επίσκεψης.',
+    // Interactions explanations - same for all (LOCKED)
+    interactionsExplanation: 'Αλληλεπιδράσεις',
+    interactionsDetails: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο αποθηκεύοντας το ή δείχνοντας πρόθεση ότι θα πάνε.',
     profileInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
     offersInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
     eventsInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
@@ -77,15 +77,15 @@ const translations = {
     regionExplanation: 'Top regions where your audience comes from.',
     regionNoData: 'No region data available at the moment.',
     dataSource: 'Data source',
-    // Views explanations
-    viewsExplanation: 'View',
-    viewsDetails: 'Counted when user views or clicks.',
+    // Views explanations (LOCKED)
+    viewsExplanation: 'Views',
+    viewsDetails: 'Shows how many times users saw this content and chose to open it.',
     profileViewsSource: 'Feed, map, searches, profile page',
     offersViewsSource: 'Offers feed, searches, offer page',
     eventsViewsSource: 'Events feed, map, searches, event page',
-    // Interactions explanations
-    interactionsExplanation: 'Interaction',
-    interactionsDetails: 'Saves, interested and going declarations.',
+    // Interactions explanations (LOCKED)
+    interactionsExplanation: 'Interactions',
+    interactionsDetails: 'Shows how many users showed interest by saving the content or indicating they will visit.',
     profileInteractionsSource: 'Saves, Interested, Going',
     offersInteractionsSource: 'Saves, Interested, Going',
     eventsInteractionsSource: 'Saves, Interested, Going',
