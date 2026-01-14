@@ -54,6 +54,7 @@ import OfferPurchaseSuccess from "./pages/OfferPurchaseSuccess";
 import Offers from "./pages/Offers";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import VerifyStudent from "./pages/VerifyStudent";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-student" element={<VerifyStudent />} />
           <Route path="/signup-business" element={<SignupBusiness />} />
           <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
           <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
