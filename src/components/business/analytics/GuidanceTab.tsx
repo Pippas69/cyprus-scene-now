@@ -9,6 +9,30 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 
+const dayNamesEl: Record<number, string> = {
+  0: 'Κυριακή',
+  1: 'Δευτέρα',
+  2: 'Τρίτη',
+  3: 'Τετάρτη',
+  4: 'Πέμπτη',
+  5: 'Παρασκευή',
+  6: 'Σάββατο',
+};
+
+const dayNamesEn: Record<number, string> = {
+  0: 'Sunday',
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday',
+};
+
+const getDayName = (dayIndex: number, language: 'el' | 'en'): string => {
+  return language === 'el' ? dayNamesEl[dayIndex] : dayNamesEn[dayIndex];
+};
+
 const translations = {
   el: {
     title: 'Καθοδήγηση',
@@ -50,6 +74,21 @@ const translations = {
     emailError: 'Σφάλμα κατά την αποστολή email.',
     pdfGenerated: 'Το PDF δημιουργήθηκε!',
     noData: 'Χρειάζονται περισσότερα δεδομένα για ασφαλή καθοδήγηση.',
+    // PDF specific
+    pdfTitle: 'Αναφορά Καθοδήγησης ΦΟΜΟ',
+    pdfDate: 'Ημερομηνία',
+    pdfTimeWindows: 'Χρονικά Παράθυρα',
+    pdfSummary: 'Σύνοψη Αποφάσεων',
+    pdfBestDay: 'Καλύτερη Μέρα',
+    pdfBestHours: 'Καλύτερες Ώρες',
+    pdfPlanStatus: 'Κατάσταση Εφαρμογής',
+    pdfApplied: 'Εφαρμόστηκε',
+    pdfNotApplied: 'Δεν εφαρμόστηκε',
+    pdfPending: 'Εκκρεμεί',
+    pdfConclusion: 'Συμπεράσματα',
+    pdfConclusionApplied: 'Το πλάνο εφαρμόστηκε. Αναμένουμε αποτελέσματα από τα επόμενα δεδομένα.',
+    pdfConclusionNotApplied: 'Το πλάνο δεν εφαρμόστηκε. Χωρίς εφαρμογή, δεν μπορούν να εξαχθούν αξιόπιστα συμπεράσματα.',
+    pdfConclusionPending: 'Αναμονή επιλογής εφαρμογής από τον επιχειρηματία.',
   },
   en: {
     title: 'Guidance',
@@ -91,6 +130,21 @@ const translations = {
     emailError: 'Error sending email.',
     pdfGenerated: 'PDF generated!',
     noData: 'More data needed for reliable guidance.',
+    // PDF specific
+    pdfTitle: 'FOMO Guidance Report',
+    pdfDate: 'Date',
+    pdfTimeWindows: 'Time Windows',
+    pdfSummary: 'Decision Summary',
+    pdfBestDay: 'Best Day',
+    pdfBestHours: 'Best Hours',
+    pdfPlanStatus: 'Application Status',
+    pdfApplied: 'Applied',
+    pdfNotApplied: 'Not Applied',
+    pdfPending: 'Pending',
+    pdfConclusion: 'Conclusions',
+    pdfConclusionApplied: 'The plan was applied. Awaiting results from upcoming data.',
+    pdfConclusionNotApplied: 'The plan was not applied. Without application, reliable conclusions cannot be drawn.',
+    pdfConclusionPending: 'Awaiting application choice from the business owner.',
   },
 };
 
@@ -100,7 +154,7 @@ interface GuidanceTabProps {
 }
 
 interface TimeWindow {
-  day: string;
+  dayIndex: number;
   hours: string;
   count: number;
 }
@@ -147,49 +201,50 @@ const generateTips = (
     };
   }
 
-  const best = metrics.sort((a, b) => (b.data?.count || 0) - (a.data?.count || 0))[0];
+  const viewDay = bestView ? getDayName(bestView.dayIndex, language) : (language === 'el' ? 'Παρασκευή' : 'Friday');
+  const visitDay = bestVisit ? getDayName(bestVisit.dayIndex, language) : (language === 'el' ? 'Σάββατο' : 'Saturday');
 
   if (language === 'el') {
     if (sectionType === 'profile') {
       return {
-        tip1: `Το προφίλ σου βλέπεται περισσότερο την ${bestView?.day || 'Παρασκευή'}, κυρίως ${bestView?.hours || '20:00–22:00'}.`,
+        tip1: `Το προφίλ σου βλέπεται περισσότερο την ${viewDay}, κυρίως ${bestView?.hours || '20:00–22:00'}.`,
         tip2: 'Αυτές είναι οι καλύτερες ώρες για να ανεβάζεις νέα προσφορά ή εκδήλωση.',
       };
     } else if (sectionType === 'offers') {
       return {
-        tip1: `Οι προσφορές αποδίδουν καλύτερα την ${bestView?.day || 'Παρασκευή'}, κυρίως ${bestView?.hours || '18:00–20:00'}.`,
+        tip1: `Οι προσφορές αποδίδουν καλύτερα την ${viewDay}, κυρίως ${bestView?.hours || '18:00–20:00'}.`,
         tip2: 'Ρύθμισε τη διάρκεια της προσφοράς να καλύπτει αυτά τα διαστήματα για περισσότερες επισκέψεις.',
       };
     } else {
       return {
-        tip1: `Οι εκδηλώσεις συγκεντρώνουν περισσότερους επισκέπτες το ${bestVisit?.day || 'Σάββατο'}, κυρίως ${bestVisit?.hours || '19:00–21:00'}.`,
+        tip1: `Οι εκδηλώσεις συγκεντρώνουν περισσότερους επισκέπτες την ${visitDay}, κυρίως ${bestVisit?.hours || '19:00–21:00'}.`,
         tip2: 'Προγραμμάτισε την έναρξη ή την κορύφωση της εκδήλωσης κοντά σε αυτά τα διαστήματα.',
       };
     }
   } else {
     if (sectionType === 'profile') {
       return {
-        tip1: `Your profile gets the most views on ${bestView?.day || 'Friday'}, mainly ${bestView?.hours || '20:00–22:00'}.`,
+        tip1: `Your profile gets the most views on ${viewDay}, mainly ${bestView?.hours || '20:00–22:00'}.`,
         tip2: 'These are the best hours to post a new offer or event.',
       };
     } else if (sectionType === 'offers') {
       return {
-        tip1: `Offers perform best on ${bestView?.day || 'Friday'}, mainly ${bestView?.hours || '18:00–20:00'}.`,
+        tip1: `Offers perform best on ${viewDay}, mainly ${bestView?.hours || '18:00–20:00'}.`,
         tip2: 'Set the offer duration to cover these periods for more visits.',
       };
     } else {
       return {
-        tip1: `Events attract the most visitors on ${bestVisit?.day || 'Saturday'}, mainly ${bestVisit?.hours || '19:00–21:00'}.`,
+        tip1: `Events attract the most visitors on ${visitDay}, mainly ${bestVisit?.hours || '19:00–21:00'}.`,
         tip2: 'Schedule the start or peak of the event near these periods.',
       };
     }
   }
 };
 
-// Format time windows for display
-const formatWindows = (windows: TimeWindow[]): string => {
+// Format time windows for display with language
+const formatWindowsWithLanguage = (windows: TimeWindow[], language: 'el' | 'en'): string => {
   if (!windows || windows.length === 0) return '—';
-  return windows.slice(0, 2).map(w => `${w.day} ${w.hours}`).join(' / ');
+  return windows.slice(0, 2).map(w => `${getDayName(w.dayIndex, language)} ${w.hours}`).join(' / ');
 };
 
 // Metric row with tooltip
@@ -199,7 +254,8 @@ const MetricRow: React.FC<{
   windows: TimeWindow[];
   tooltipTitle: string;
   tooltipText: string;
-}> = ({ label, icon: Icon, windows, tooltipTitle, tooltipText }) => {
+  language: 'el' | 'en';
+}> = ({ label, icon: Icon, windows, tooltipTitle, tooltipText, language }) => {
   return (
     <tr className="border-b last:border-b-0">
       <td className="py-3">
@@ -218,7 +274,7 @@ const MetricRow: React.FC<{
           </Tooltip>
         </TooltipProvider>
       </td>
-      <td className="text-right py-3 font-medium">{formatWindows(windows)}</td>
+      <td className="text-right py-3 font-medium">{formatWindowsWithLanguage(windows, language)}</td>
     </tr>
   );
 };
@@ -279,6 +335,7 @@ const GuidanceTable: React.FC<{
                 windows={data.views}
                 tooltipTitle={t.viewsTooltipTitle}
                 tooltipText={t.viewsTooltipText}
+                language={language}
               />
               <MetricRow
                 label={t.interactions}
@@ -286,6 +343,7 @@ const GuidanceTable: React.FC<{
                 windows={data.interactions}
                 tooltipTitle={t.interactionsTooltipTitle}
                 tooltipText={t.interactionsTooltipText}
+                language={language}
               />
               <MetricRow
                 label={t.visits}
@@ -293,6 +351,7 @@ const GuidanceTable: React.FC<{
                 windows={data.visits}
                 tooltipTitle={t.visitsTooltipTitle}
                 tooltipText={t.visitsTooltipText}
+                language={language}
               />
             </tbody>
           </table>
@@ -362,15 +421,15 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
       doc.setFont('helvetica', 'normal');
 
       // Views
-      doc.text(`${t.views}: ${formatWindows(sectionData.views)}`, 25, yPos);
+      doc.text(`${t.views}: ${formatWindowsWithLanguage(sectionData.views, language)}`, 25, yPos);
       yPos += lineHeight;
 
       // Interactions
-      doc.text(`${t.interactions}: ${formatWindows(sectionData.interactions)}`, 25, yPos);
+      doc.text(`${t.interactions}: ${formatWindowsWithLanguage(sectionData.interactions, language)}`, 25, yPos);
       yPos += lineHeight;
 
       // Visits
-      doc.text(`${t.visits}: ${formatWindows(sectionData.visits)}`, 25, yPos);
+      doc.text(`${t.visits}: ${formatWindowsWithLanguage(sectionData.visits, language)}`, 25, yPos);
       yPos += lineHeight;
 
       // Tips
@@ -405,11 +464,14 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${t.publish}: ${data.recommendedPlan.publish.day} ${data.recommendedPlan.publish.hours}`, 25, yPos);
+    const publishDay = getDayName(data.recommendedPlan.publish.dayIndex, language);
+    const interactionsDay = getDayName(data.recommendedPlan.interactions.dayIndex, language);
+    const visitsDay = getDayName(data.recommendedPlan.visits.dayIndex, language);
+    doc.text(`${t.publish}: ${publishDay} ${data.recommendedPlan.publish.hours}`, 25, yPos);
     yPos += lineHeight;
-    doc.text(`${t.targetInteractions}: ${data.recommendedPlan.interactions.day} ${data.recommendedPlan.interactions.hours}`, 25, yPos);
+    doc.text(`${t.targetInteractions}: ${interactionsDay} ${data.recommendedPlan.interactions.hours}`, 25, yPos);
     yPos += lineHeight;
-    doc.text(`${t.targetVisits}: ${data.recommendedPlan.visits.day} ${data.recommendedPlan.visits.hours}`, 25, yPos);
+    doc.text(`${t.targetVisits}: ${visitsDay} ${data.recommendedPlan.visits.hours}`, 25, yPos);
     yPos += lineHeight * 2;
 
     // Application status
@@ -532,15 +594,15 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-background rounded-lg border">
               <p className="text-sm text-muted-foreground mb-1">{t.publish}</p>
-              <p className="font-semibold">{data.recommendedPlan.publish.day} {data.recommendedPlan.publish.hours}</p>
+              <p className="font-semibold">{getDayName(data.recommendedPlan.publish.dayIndex, language)} {data.recommendedPlan.publish.hours}</p>
             </div>
             <div className="p-4 bg-background rounded-lg border">
               <p className="text-sm text-muted-foreground mb-1">{t.targetInteractions}</p>
-              <p className="font-semibold">{data.recommendedPlan.interactions.day} {data.recommendedPlan.interactions.hours}</p>
+              <p className="font-semibold">{getDayName(data.recommendedPlan.interactions.dayIndex, language)} {data.recommendedPlan.interactions.hours}</p>
             </div>
             <div className="p-4 bg-background rounded-lg border">
               <p className="text-sm text-muted-foreground mb-1">{t.targetVisits}</p>
-              <p className="font-semibold">{data.recommendedPlan.visits.day} {data.recommendedPlan.visits.hours}</p>
+              <p className="font-semibold">{getDayName(data.recommendedPlan.visits.dayIndex, language)} {data.recommendedPlan.visits.hours}</p>
             </div>
           </div>
           <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">

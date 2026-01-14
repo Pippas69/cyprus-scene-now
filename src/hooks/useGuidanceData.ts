@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TimeWindow {
-  day: string;
+  dayIndex: number;
   hours: string;
   count: number;
 }
@@ -18,21 +18,11 @@ interface GuidanceData {
   offers: GuidanceSection;
   events: GuidanceSection;
   recommendedPlan: {
-    publish: { day: string; hours: string };
-    interactions: { day: string; hours: string };
-    visits: { day: string; hours: string };
+    publish: { dayIndex: number; hours: string };
+    interactions: { dayIndex: number; hours: string };
+    visits: { dayIndex: number; hours: string };
   };
 }
-
-const dayNames: Record<number, string> = {
-  0: 'Κυριακή',
-  1: 'Δευτέρα',
-  2: 'Τρίτη',
-  3: 'Τετάρτη',
-  4: 'Πέμπτη',
-  5: 'Παρασκευή',
-  6: 'Σάββατο',
-};
 
 const formatHourRange = (hour: number): string => {
   const start = hour.toString().padStart(2, '0');
@@ -81,13 +71,13 @@ export const useGuidanceData = (businessId: string) => {
         if (top2.length === 0) {
           // Default to Friday/Saturday evenings
           return [
-            { day: 'Παρασκευή', hours: '18:00–20:00', count: 0 },
-            { day: 'Σάββατο', hours: '19:00–21:00', count: 0 },
+            { dayIndex: 5, hours: '18:00–20:00', count: 0 },
+            { dayIndex: 6, hours: '19:00–21:00', count: 0 },
           ];
         }
 
         return top2.map(w => ({
-          day: dayNames[w.day],
+          dayIndex: w.day,
           hours: formatHourRange(w.hour),
           count: w.count,
         }));
@@ -115,9 +105,9 @@ export const useGuidanceData = (businessId: string) => {
       const eventVisits = analyzeByTime(engagementEvents, ['event_check_in', 'ticket_validated']);
 
       // Generate recommended plan based on best performing times
-      const bestPublish = profileViews[0] || { day: 'Παρασκευή', hours: '17:00–19:00' };
-      const bestInteractions = profileInteractions[0] || { day: 'Παρασκευή', hours: '18:00–21:00' };
-      const bestVisits = profileVisits[0] || { day: 'Παρασκευή', hours: '20:00–23:00' };
+      const bestPublish = profileViews[0] || { dayIndex: 5, hours: '17:00–19:00' };
+      const bestInteractions = profileInteractions[0] || { dayIndex: 5, hours: '18:00–21:00' };
+      const bestVisits = profileVisits[0] || { dayIndex: 5, hours: '20:00–23:00' };
 
       return {
         profile: {
@@ -127,36 +117,36 @@ export const useGuidanceData = (businessId: string) => {
         },
         offers: {
           views: offerViews.length > 0 ? offerViews : [
-            { day: 'Παρασκευή', hours: '17:00–19:00', count: 0 },
-            { day: 'Σάββατο', hours: '17:00–19:00', count: 0 },
+            { dayIndex: 5, hours: '17:00–19:00', count: 0 },
+            { dayIndex: 6, hours: '17:00–19:00', count: 0 },
           ],
           interactions: offerInteractions.length > 0 ? offerInteractions : [
-            { day: 'Παρασκευή', hours: '18:00–21:00', count: 0 },
-            { day: 'Σάββατο', hours: '18:00–21:00', count: 0 },
+            { dayIndex: 5, hours: '18:00–21:00', count: 0 },
+            { dayIndex: 6, hours: '18:00–21:00', count: 0 },
           ],
           visits: offerVisits.length > 0 ? offerVisits : [
-            { day: 'Παρασκευή', hours: '20:00–23:00', count: 0 },
-            { day: 'Σάββατο', hours: '20:00–23:00', count: 0 },
+            { dayIndex: 5, hours: '20:00–23:00', count: 0 },
+            { dayIndex: 6, hours: '20:00–23:00', count: 0 },
           ],
         },
         events: {
           views: eventViews.length > 0 ? eventViews : [
-            { day: 'Τετάρτη', hours: '19:00–21:00', count: 0 },
-            { day: 'Πέμπτη', hours: '19:00–21:00', count: 0 },
+            { dayIndex: 3, hours: '19:00–21:00', count: 0 },
+            { dayIndex: 4, hours: '19:00–21:00', count: 0 },
           ],
           interactions: eventInteractions.length > 0 ? eventInteractions : [
-            { day: 'Πέμπτη', hours: '20:00–23:00', count: 0 },
-            { day: 'Παρασκευή', hours: '19:00–22:00', count: 0 },
+            { dayIndex: 4, hours: '20:00–23:00', count: 0 },
+            { dayIndex: 5, hours: '19:00–22:00', count: 0 },
           ],
           visits: eventVisits.length > 0 ? eventVisits : [
-            { day: 'Παρασκευή', hours: '23:00–03:00', count: 0 },
-            { day: 'Σάββατο', hours: '23:00–03:00', count: 0 },
+            { dayIndex: 5, hours: '23:00–03:00', count: 0 },
+            { dayIndex: 6, hours: '23:00–03:00', count: 0 },
           ],
         },
         recommendedPlan: {
-          publish: { day: bestPublish.day, hours: bestPublish.hours },
-          interactions: { day: bestInteractions.day, hours: bestInteractions.hours },
-          visits: { day: bestVisits.day, hours: bestVisits.hours },
+          publish: { dayIndex: bestPublish.dayIndex, hours: bestPublish.hours },
+          interactions: { dayIndex: bestInteractions.dayIndex, hours: bestInteractions.hours },
+          visits: { dayIndex: bestVisits.dayIndex, hours: bestVisits.hours },
         },
       };
     },
