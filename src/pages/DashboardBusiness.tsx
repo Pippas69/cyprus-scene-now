@@ -23,8 +23,6 @@ import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
 import SubscriptionPlans from "@/pages/SubscriptionPlans";
 import BoostManagement from "@/components/business/BoostManagement";
 import BudgetTracker from "@/components/business/BudgetTracker";
-import { StudentDiscountScanner } from "@/components/business/StudentDiscountScanner";
-import { StudentDiscountStats } from "@/components/business/StudentDiscountStats";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BusinessSidebar } from "@/components/business/BusinessSidebar";
 import { BusinessFAB } from "@/components/business/BusinessFAB";
@@ -323,7 +321,6 @@ const DashboardBusiness = () => {
               <Route path="reservations" element={businessId ? <ReservationManagement businessId={businessId} language={language} /> : null} />
               <Route path="subscription" element={<SubscriptionPlans embedded />} />
               <Route path="boosts" element={businessId ? <BoostManagement businessId={businessId} /> : null} />
-              <Route path="student-discounts" element={businessId ? <StudentDiscountsPage businessId={businessId} language={language} /> : null} />
               <Route path="settings" element={userId && businessId ? <BusinessAccountSettings userId={userId} businessId={businessId} language={language} /> : null} />
             </Routes>
           </main>
@@ -336,17 +333,5 @@ const DashboardBusiness = () => {
     </>
   );
 };
-
-// Student Discounts Page Component
-function StudentDiscountsPage({ businessId, language }: { businessId: string; language: 'el' | 'en' }) {
-  return (
-    <div className="p-4 sm:p-6 space-y-6">
-      <div className="grid gap-6 lg:grid-cols-2">
-        <StudentDiscountScanner businessId={businessId} language={language} />
-        <StudentDiscountStats businessId={businessId} language={language} />
-      </div>
-    </div>
-  );
-}
 
 export default DashboardBusiness;

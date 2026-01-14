@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Ticket, TrendingUp, MapPin, User, Settings, Users, Home, CreditCard, Zap, PenSquare, GraduationCap } from "lucide-react";
+import { Calendar, Ticket, TrendingUp, MapPin, Settings, Users, Home, CreditCard, Zap } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,9 +25,7 @@ const translations = {
     posts: "Posts",
     events: "Εκδηλώσεις",
     offers: "Προσφορές",
-    customers: "Πελάτες",
     reservations: "Κρατήσεις",
-    studentDiscounts: "Φοιτητικές Εκπτώσεις",
     business: "Επιχείρηση",
     subscription: "Συνδρομή",
     boosts: "Προωθήσεις",
@@ -44,9 +42,7 @@ const translations = {
     posts: "Posts",
     events: "Events",
     offers: "Offers",
-    customers: "Customers",
     reservations: "Reservations",
-    studentDiscounts: "Student Discounts",
     business: "Business",
     subscription: "Subscription",
     boosts: "Boosts",
@@ -74,11 +70,7 @@ export function BusinessSidebar() {
     // { title: t.posts, url: "/dashboard-business/posts", icon: PenSquare },
     { title: t.events, url: "/dashboard-business/events", icon: Calendar },
     { title: t.offers, url: "/dashboard-business/offers", icon: Ticket },
-  ];
-
-  const customerItems = [
     { title: t.reservations, url: "/dashboard-business/reservations", icon: Users },
-    { title: t.studentDiscounts, url: "/dashboard-business/student-discounts", icon: GraduationCap },
   ];
 
   const businessItems = [
@@ -119,29 +111,6 @@ export function BusinessSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {contentItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className="flex items-center gap-3"
-                      activeClassName="bg-accent text-accent-foreground font-medium"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {state !== "collapsed" && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Customer Management */}
-        <SidebarGroup>
-          <SidebarGroupLabel>{t.customers}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {customerItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
