@@ -9,6 +9,8 @@ import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { OfferQRScanner } from "./OfferQRScanner";
+import { StudentDiscountScanner } from "./StudentDiscountScanner";
+import { StudentDiscountStats } from "./StudentDiscountStats";
 
 interface OffersListProps {
   businessId: string;
@@ -179,6 +181,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Header with scanners */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Percent className="h-5 w-5" />
@@ -186,78 +189,85 @@ const OffersList = ({ businessId }: OffersListProps) => {
             {language === "el" ? "Προσφορές" : "Offers"}
           </h2>
         </div>
-        <OfferQRScanner businessId={businessId} language={language} />
+        <div className="flex items-center gap-2">
+          <StudentDiscountScanner businessId={businessId} language={language} />
+          <OfferQRScanner businessId={businessId} language={language} />
+        </div>
       </div>
       
-    <div className="space-y-4">
-      {offers.map((offer) => (
-        <Card key={offer.id}>
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <h3 className="text-xl font-semibold">{offer.title}</h3>
-                      <Badge variant={offer.active ? "default" : "secondary"}>
-                        {offer.active ? t.active : t.inactive}
-                      </Badge>
-                      {/* COMMISSION DISABLED: All offers are commission-free - badge hidden */}
+      {/* Student Discount Stats - integrated section */}
+      <StudentDiscountStats businessId={businessId} language={language} />
+      
+      {/* Offers list */}
+      <div className="space-y-4">
+        {offers.map((offer) => (
+          <Card key={offer.id}>
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <h3 className="text-xl font-semibold">{offer.title}</h3>
+                        <Badge variant={offer.active ? "default" : "secondary"}>
+                          {offer.active ? t.active : t.inactive}
+                        </Badge>
+                        {/* COMMISSION DISABLED: All offers are commission-free - badge hidden */}
+                      </div>
+                      {offer.description && (
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {offer.description}
+                        </p>
+                      )}
                     </div>
-                    {offer.description && (
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {offer.description}
-                      </p>
+                    
+                    {offer.percent_off && (
+                      <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full">
+                        <Percent className="h-4 w-4" />
+                        <span className="font-bold">{offer.percent_off}% OFF</span>
+                      </div>
                     )}
                   </div>
                   
-                  {offer.percent_off && (
-                    <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full">
-                      <Percent className="h-4 w-4" />
-                      <span className="font-bold">{offer.percent_off}% OFF</span>
+                  <div className="flex gap-4 text-sm text-muted-foreground mb-3">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {formatOfferDates(offer.start_at, offer.end_at)}
+                      </span>
                     </div>
+                  </div>
+
+                  {offer.terms && (
+                    <p className="text-xs text-muted-foreground italic">
+                      {t.terms} {offer.terms}
+                    </p>
                   )}
                 </div>
-                
-                <div className="flex gap-4 text-sm text-muted-foreground mb-3">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      {formatOfferDates(offer.start_at, offer.end_at)}
-                    </span>
-                  </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleActive(offer.id, offer.active || false)}
+                  >
+                    {offer.active ? t.deactivate : t.activate}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(offer.id)}
+                    className="text-destructive hover:text-destructive"
+                    aria-label={`Delete ${offer.title}`}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </Button>
                 </div>
-
-                {offer.terms && (
-                  <p className="text-xs text-muted-foreground italic">
-                    {t.terms} {offer.terms}
-                  </p>
-                )}
               </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleActive(offer.id, offer.active || false)}
-                >
-                  {offer.active ? t.deactivate : t.activate}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(offer.id)}
-                  className="text-destructive hover:text-destructive"
-                  aria-label={`Delete ${offer.title}`}
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
