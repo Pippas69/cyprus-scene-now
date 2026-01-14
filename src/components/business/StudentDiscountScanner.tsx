@@ -3,12 +3,12 @@ import QrScanner from 'qr-scanner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { QrCode, Camera, Loader2, CheckCircle, XCircle, GraduationCap, Euro } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useStudentPartner } from '@/hooks/useStudentPartner';
+import { useQuery } from '@tanstack/react-query';
 import { useCreateStudentRedemption } from '@/hooks/useStudentRedemptions';
 
 interface StudentDiscountScannerProps {
@@ -26,9 +26,9 @@ interface ScannedStudent {
 
 const translations = {
   en: {
-    title: 'Student Discount Scanner',
+    title: 'Student Scanner',
     description: 'Scan student QR codes to apply discounts',
-    openScanner: 'Open Scanner',
+    openScanner: 'Student Scanner',
     scanning: 'Scanning...',
     startScan: 'Start Scanning',
     stopScan: 'Stop Scanning',
@@ -45,12 +45,12 @@ const translations = {
     success: 'Discount recorded successfully!',
     scanAnother: 'Scan Another',
     close: 'Close',
-    notPartner: 'Your business is not registered as a student discount partner.',
+    notEnabled: 'Student discounts are not enabled for your business.',
   },
   el: {
-    title: 'Σαρωτής Φοιτητικής Έκπτωσης',
+    title: 'Σαρωτής Φοιτητών',
     description: 'Σαρώστε QR κώδικες φοιτητών για εφαρμογή εκπτώσεων',
-    openScanner: 'Άνοιγμα Σαρωτή',
+    openScanner: 'Σαρωτής Φοιτητών',
     scanning: 'Σάρωση...',
     startScan: 'Έναρξη Σάρωσης',
     stopScan: 'Διακοπή Σάρωσης',
@@ -67,7 +67,7 @@ const translations = {
     success: 'Η έκπτωση καταγράφηκε επιτυχώς!',
     scanAnother: 'Σάρωση Άλλου',
     close: 'Κλείσιμο',
-    notPartner: 'Η επιχείρησή σας δεν είναι εγγεγραμμένη ως συνεργάτης φοιτητικών εκπτώσεων.',
+    notEnabled: 'Οι φοιτητικές εκπτώσεις δεν είναι ενεργοποιημένες.',
   },
 };
 
@@ -84,10 +84,24 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
   
-  const { data: partner, isLoading: partnerLoading } = useStudentPartner(businessId);
+  // Fetch business student discount settings directly
+  const { data: businessSettings, isLoading: settingsLoading } = useQuery({
+    queryKey: ['business-student-settings', businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('student_discount_enabled, student_discount_percent, student_discount_mode')
+        .eq('id', businessId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+  
   const createRedemption = useCreateStudentRedemption();
   
-  const discountPercent = partner?.discount_percent || 0;
+  const discountPercent = businessSettings?.student_discount_percent || 0;
   const discountedPrice = originalPrice 
     ? (parseFloat(originalPrice) * (1 - discountPercent / 100)).toFixed(2)
     : '';
@@ -215,11 +229,12 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
     setIsOpen(false);
   };
   
-  if (partnerLoading) {
+  if (settingsLoading) {
     return null;
   }
   
-  if (!partner || !partner.is_active) {
+  // Don't show scanner if student discounts are not enabled
+  if (!businessSettings?.student_discount_enabled) {
     return null;
   }
   

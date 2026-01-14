@@ -49,8 +49,8 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
   } | null>(null);
 
   const text = {
-    scanButton: { el: "Σάρωση QR Αγοράς", en: "Scan Purchase QR" },
-    title: { el: "Σάρωση Αγοράς Πελάτη", en: "Scan Customer Purchase" },
+    scanButton: { el: "Σαρωτής Προσφορών", en: "Offer Scanner" },
+    title: { el: "Σαρωτής Προσφορών", en: "Offer Scanner" },
     scanning: { el: "Σάρωση...", en: "Scanning..." },
     verifying: { el: "Επαλήθευση...", en: "Verifying..." },
     startScanning: { el: "Ξεκινήστε τη σάρωση", en: "Start Scanning" },
