@@ -2,8 +2,15 @@ import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Crown, Gift, Ticket, Star, CheckCircle, XCircle, FileText, Mail, Eye, MousePointer, MapPin, AlertCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Crown, Gift, Ticket, Star, CheckCircle, XCircle, FileText, Mail, Eye, MousePointer, MapPin, AlertCircle, Info } from 'lucide-react';
 import { useGuidanceData } from '@/hooks/useGuidanceData';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -253,7 +260,7 @@ const formatWindowsWithLanguage = (windows: TimeWindow[], language: 'el' | 'en')
     .join(' / ');
 };
 
-// Metric row with tooltip
+// Metric row with click-to-dialog (same pattern as other Analytics tabs)
 const MetricRow: React.FC<{
   label: string;
   icon: React.ElementType;
@@ -263,25 +270,36 @@ const MetricRow: React.FC<{
   language: 'el' | 'en';
 }> = ({ label, icon: Icon, windows, tooltipTitle, tooltipText, language }) => {
   return (
-    <tr className="border-b last:border-b-0">
-      <td className="py-3">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="flex items-center gap-2 cursor-help">
-                <Icon className="h-4 w-4 text-muted-foreground" />
+    <Dialog>
+      <DialogTrigger asChild>
+        <tr className="border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors group">
+          <td className="py-3">
+            <span className="flex items-center gap-2">
+              <Icon className="h-4 w-4 text-muted-foreground" />
+              <span className="flex items-center gap-1">
                 {label}
+                <Info className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
               </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p className="font-semibold mb-1">{tooltipTitle}</p>
-              <p className="text-sm whitespace-pre-line">{tooltipText}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </td>
-      <td className="text-right py-3 font-medium">{formatWindowsWithLanguage(windows, language)}</td>
-    </tr>
+            </span>
+          </td>
+          <td className="text-right py-3 font-medium">{formatWindowsWithLanguage(windows, language)}</td>
+        </tr>
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle>{tooltipTitle}</DialogTitle>
+              <DialogDescription className="whitespace-pre-line">{tooltipText}</DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   );
 };
 

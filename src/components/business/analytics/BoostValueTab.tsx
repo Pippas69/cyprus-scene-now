@@ -5,6 +5,32 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User, Tag, Calendar, TrendingUp, TrendingDown, Minus, Lightbulb, Eye, MousePointer, MapPin, Info } from 'lucide-react';
 import { useBoostValueMetrics } from '@/hooks/useBoostValueMetrics';
 
+const dayNamesEl: Record<number, string> = {
+  0: 'Κυριακή',
+  1: 'Δευτέρα',
+  2: 'Τρίτη',
+  3: 'Τετάρτη',
+  4: 'Πέμπτη',
+  5: 'Παρασκευή',
+  6: 'Σάββατο',
+};
+
+const dayNamesEn: Record<number, string> = {
+  0: 'Sunday',
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday',
+};
+
+const getDayName = (dayIndex: unknown, language: 'el' | 'en'): string => {
+  const idx = Number(dayIndex);
+  if (!Number.isFinite(idx) || idx < 0 || idx > 6) return language === 'el' ? 'Παρασκευή' : 'Friday';
+  return language === 'el' ? dayNamesEl[idx] : dayNamesEn[idx];
+};
+
 const translations = {
   el: {
     title: 'Αξία Προώθησης',
@@ -23,7 +49,7 @@ const translations = {
     visits: 'Επισκέψεις',
     tips: 'Συμβουλές',
     noData: 'Χρειάζονται περισσότερα δεδομένα για αξιόπιστες συμβουλές.',
-    profileTip1: 'Το επιλεγμένο προφίλ αυξάνει σταθερά τις επισκέψεις σε σχέση με το βασικό προφίλ. Η μεγαλύτερη διαφορά εμφανίζεται σε μέρες με αυξημένη έξοδο.',
+    profileTip1: 'Το επιλεγμένο προφίλ αυξάνει σταθερά τις επισκέψεις σε σχέση με το βασικό προφίλ. Η μεγαλύτερη διαφορά είναι πιο έντονη την {day}.',
     profileTip2: 'Η αξία του επιλεγμένου προφίλ φαίνεται όταν συνδυάζεται με ενεργές προσφορές ή εκδηλώσεις. Το προφίλ λειτουργεί ως κεντρικό σημείο ανακάλυψης.',
     offerTip1: 'Οι προσφορές με προβολή μετατρέπουν περισσότερο το ενδιαφέρον σε επισκέψεις.',
     offerTip1Suffix: 'Η διαφορά είναι πιο έντονη σε',
@@ -72,7 +98,7 @@ const translations = {
     visits: 'Visits',
     tips: 'Tips',
     noData: 'More data needed for reliable tips.',
-    profileTip1: 'The featured profile consistently increases visits compared to the basic profile. The biggest difference appears on days with high activity.',
+    profileTip1: 'The featured profile consistently increases visits compared to the basic profile. The biggest difference is more pronounced on {day}.',
     profileTip2: 'The value of the featured profile is evident when combined with active offers or events. The profile acts as a central discovery point.',
     offerTip1: 'Offers with boost convert more interest into visits.',
     offerTip1Suffix: 'The difference is more pronounced on',
@@ -368,12 +394,14 @@ export const BoostValueTab: React.FC<BoostValueTabProps> = ({
 
   // Generate dynamic tips based on best days
   const getProfileTips = () => {
-    const tip1 = t.profileTip1.replace('μέρες με αυξημένη έξοδο', data.bestDays.profile);
+    const day = getDayName(data.bestDays.profile, language);
+    const tip1 = t.profileTip1.replace('{day}', day);
     return [tip1, t.profileTip2];
   };
 
   const getOfferTips = () => {
-    const tip1 = `${t.offerTip1} ${t.offerTip1Suffix} ${data.bestDays.offers}.`;
+    const day = getDayName(data.bestDays.offers, language);
+    const tip1 = `${t.offerTip1} ${t.offerTip1Suffix} ${day}.`;
     return [tip1, t.offerTip2];
   };
 
