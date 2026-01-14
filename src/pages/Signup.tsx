@@ -166,7 +166,7 @@ const Signup = () => {
         if (isStudent && universityEmail && selectedUniversity) {
           const universityData = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
           if (universityData) {
-            const { error: verificationError } = await supabase
+            const { data: verificationData, error: verificationError } = await supabase
               .from('student_verifications')
               .insert({
                 user_id: data.user.id,
@@ -174,16 +174,18 @@ const Signup = () => {
                 university_name: universityData.name,
                 university_domain: universityData.domain,
                 status: 'pending'
-              } as any);
+              } as any)
+              .select('id')
+              .single();
             
-            if (!verificationError) {
-              // Send verification email
+            if (!verificationError && verificationData) {
+              // Send verification email with correct field names
               await supabase.functions.invoke('send-student-verification-email', {
                 body: {
-                  userId: data.user.id,
-                  email: universityEmail,
-                  userName: `${values.firstName} ${values.lastName}`,
-                  language
+                  verificationId: verificationData.id,
+                  universityEmail: universityEmail,
+                  universityName: universityData.name,
+                  userName: `${values.firstName} ${values.lastName}`
                 }
               });
             }
