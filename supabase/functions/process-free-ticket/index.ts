@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
       .from("tickets")
       .select(`
         id,
-        qr_token,
+        qr_code_token,
         tier_id
       `)
       .eq("order_id", orderId);
@@ -67,8 +67,8 @@ Deno.serve(async (req) => {
       logStep("Failed to fetch tickets", { error: ticketsError.message });
     }
 
-    const ticketCount = tickets?.length || 1;
-    logStep("Tickets fetched", { count: ticketCount });
+    const ticketCount = tickets?.length || 0;
+    logStep("Tickets fetched", { count: ticketCount, tickets: tickets?.map(t => ({ id: t.id, tier_id: t.tier_id })) });
 
     // Fetch tier info separately
     const tierIds = [...new Set(tickets?.map(t => t.tier_id) || [])];
@@ -84,37 +84,39 @@ Deno.serve(async (req) => {
       const event = order.events;
       const business = event?.businesses;
 
+      // Format tickets with correct field names for send-ticket-email
+      const formattedTickets = tickets?.map(t => {
+        const tier = tierMap.get(t.tier_id);
+        const priceCents = tier?.price_cents || 0;
+        return {
+          id: t.id,
+          qrToken: t.qr_code_token,
+          tierName: tier?.name || "Ticket",
+          pricePaid: priceCents > 0 ? `€${(priceCents / 100).toFixed(2)}` : "Δωρεάν",
+        };
+      }) || [];
+
+      logStep("Sending email", { 
+        to: order.customer_email, 
+        ticketCount: formattedTickets.length,
+        eventTitle: event?.title 
+      });
+
       const emailResponse = await supabase.functions.invoke("send-ticket-email", {
         body: {
-          orderDetails: {
-            id: order.id,
-            customerName: order.customer_name,
-            customerEmail: order.customer_email,
-            totalCents: order.total_cents,
-          },
-          eventDetails: {
-            title: event?.title || "Event",
-            startAt: event?.start_at,
-            endAt: event?.end_at,
-            location: event?.location,
-            venueName: event?.venue_name,
-            coverImageUrl: event?.cover_image_url,
-            businessName: business?.name,
-            businessLogo: business?.logo_url,
-          },
-          tickets: tickets?.map(t => {
-            const tier = tierMap.get(t.tier_id);
-            return {
-              id: t.id,
-              qrToken: t.qr_token,
-              tierName: tier?.name || "Ticket",
-              priceCents: tier?.price_cents || 0,
-            };
-          }) || [],
+          orderId: order.id,
+          userEmail: order.customer_email,
+          customerName: order.customer_name,
+          eventTitle: event?.title || "Event",
+          eventDate: event?.start_at,
+          eventLocation: event?.venue_name || event?.location,
+          businessName: business?.name,
+          eventCoverImage: event?.cover_image_url,
+          tickets: formattedTickets,
         },
       });
 
-      logStep("Email sent", { response: emailResponse.data });
+      logStep("Email sent", { response: emailResponse.data, error: emailResponse.error });
     } catch (emailError) {
       logStep("Email sending failed (non-fatal)", { 
         error: emailError instanceof Error ? emailError.message : String(emailError) 

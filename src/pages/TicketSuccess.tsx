@@ -59,12 +59,31 @@ export const TicketSuccess = () => {
 
           if (error) throw error;
           
-          setTicketCount(data?.ticketCount || 1);
+          // Use actual ticket count from backend, default to checking database if not returned
+          const count = data?.ticketCount;
+          if (count !== undefined && count > 0) {
+            setTicketCount(count);
+          } else {
+            // Fallback: query tickets directly
+            const { count: dbCount } = await supabase
+              .from("tickets")
+              .select("*", { count: "exact", head: true })
+              .eq("order_id", orderId);
+            setTicketCount(dbCount || 1);
+          }
           setStatus("success");
         } catch (err) {
           console.error("Free ticket processing error:", err);
-          // Still show success even if email fails - tickets were already created
-          setTicketCount(1);
+          // Still show success but try to get count from database
+          try {
+            const { count: dbCount } = await supabase
+              .from("tickets")
+              .select("*", { count: "exact", head: true })
+              .eq("order_id", orderId);
+            setTicketCount(dbCount || 1);
+          } catch {
+            setTicketCount(1);
+          }
           setStatus("success");
         }
         return;
