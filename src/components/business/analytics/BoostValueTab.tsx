@@ -30,11 +30,11 @@ const translations = {
     eventTip1: 'Η προβολή αυξάνει την πρόθεση συμμετοχής στις εκδηλώσεις. Όσο πλησιάζει η ημερομηνία, η διαφορά γίνεται πιο εμφανής.',
     eventTip2: 'Οι εκδηλώσεις με ξεκάθαρη ημέρα και ώρα επωφελούνται περισσότερο από την προβολή.',
     dataSource: 'Πηγή δεδομένων',
-    // Unified metric explanations
-    viewsExplanation: 'Προβολή (Σύγκριση)',
-    viewsDetails: 'Μετράνε όταν ο χρήστης είτε δει είτε πατήσει. Συγκρίνονται οι προβολές με και χωρίς προώθηση.',
-    interactionsExplanation: 'Αλληλεπίδραση (Σύγκριση)',
-    interactionsDetails: 'Αποθηκεύσεις, ενδιαφέρον και δήλωση για πρόθεση επίσκεψης. Συγκρίνονται με και χωρίς προώθηση.',
+    // Unified metric explanations (LOCKED)
+    viewsExplanation: 'Προβολές (Σύγκριση)',
+    viewsDetails: 'Δείχνει πόσες φορές χρήστες είδαν αυτό το περιεχόμενο και επέλεξαν να το ανοίξουν. Συγκρίνονται οι προβολές με και χωρίς προώθηση.',
+    interactionsExplanation: 'Αλληλεπιδράσεις (Σύγκριση)',
+    interactionsDetails: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο αποθηκεύοντας το ή δείχνοντας πρόθεση ότι θα πάνε. Συγκρίνονται οι αλληλεπιδράσεις με και χωρίς προώθηση.',
     // Profile sources
     profileViewsSource: 'Feed, χάρτης, αναζητήσεις, σελίδα προφίλ',
     profileInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
@@ -78,11 +78,11 @@ const translations = {
     eventTip1: 'Boost increases participation intent for events. As the date approaches, the difference becomes more evident.',
     eventTip2: 'Events with a clear date and time benefit most from boost.',
     dataSource: 'Data source',
-    // Unified metric explanations
-    viewsExplanation: 'View (Comparison)',
-    viewsDetails: 'Counted when user views or clicks. Comparing views with and without boost.',
-    interactionsExplanation: 'Interaction (Comparison)',
-    interactionsDetails: 'Saves, interested and going declarations. Comparing with and without boost.',
+    // Unified metric explanations (LOCKED)
+    viewsExplanation: 'Views (Comparison)',
+    viewsDetails: 'Shows how many times users saw this content and chose to open it. Comparing views with and without boost.',
+    interactionsExplanation: 'Interactions (Comparison)',
+    interactionsDetails: 'Shows how many users showed interest by saving the content or indicating they will visit. Comparing interactions with and without boost.',
     // Profile sources
     profileViewsSource: 'Feed, map, searches, profile page',
     profileInteractionsSource: 'Saves, Interested, Going',
