@@ -4,12 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Ticket, Calendar, Percent, AlertTriangle } from "lucide-react";
+import { Trash2, Ticket, Calendar, Percent } from "lucide-react";
 import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { OfferQRScanner } from "./OfferQRScanner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface OffersListProps {
   businessId: string;
@@ -51,27 +50,10 @@ const OffersList = ({ businessId }: OffersListProps) => {
       activate: "Activate",
       deactivate: "Deactivate",
       terms: "Terms:",
-      stripeWarning: "Complete payment setup to receive offer payments",
     },
   };
 
   const t = translations[language];
-
-  // Fetch business Stripe status
-  const { data: businessData } = useQuery({
-    queryKey: ['business-stripe-status', businessId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('stripe_account_id, stripe_payouts_enabled')
-        .eq('id', businessId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const hasStripeSetup = !!businessData?.stripe_account_id && businessData?.stripe_payouts_enabled === true;
 
   const { data: offers, isLoading } = useQuery({
     queryKey: ['business-offers', businessId],
@@ -197,18 +179,6 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Stripe Setup Warning */}
-      {!hasStripeSetup && (
-        <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-900/20">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-700 dark:text-amber-300">
-            {language === 'el' 
-              ? 'Ολοκληρώστε τη ρύθμιση πληρωμών στις Ρυθμίσεις > Πληρωμές για να λαμβάνετε πληρωμές από προσφορές.' 
-              : 'Complete payment setup in Settings > Payments to receive payments from offers.'}
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Percent className="h-5 w-5" />
