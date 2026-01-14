@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RippleButton } from "@/components/ui/ripple-button";
-import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck } from "lucide-react";
+import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import OfferCard from "@/components/OfferCard";
 import { FollowButton } from "@/components/business/FollowButton";
@@ -29,6 +29,9 @@ interface Business {
   category: string[];
   verified: boolean;
   accepts_direct_reservations: boolean;
+  student_discount_enabled: boolean | null;
+  student_discount_percent: number | null;
+  student_discount_mode: string | null;
 }
 
 interface Event {
@@ -115,7 +118,10 @@ const BusinessProfile = () => {
       noEventsScheduled: "Δεν υπάρχουν προγραμματισμένες εκδηλώσεις αυτή τη στιγμή",
       noActiveOffers: "Δεν υπάρχουν ενεργές προσφορές αυτή τη στιγμή",
       reserveTable: "Κράτηση Τραπεζιού",
-      loginToReserve: "Συνδεθείτε για κράτηση"
+      loginToReserve: "Συνδεθείτε για κράτηση",
+      studentDiscount: "Φοιτητική Έκπτωση",
+      studentDiscountOnce: "στην πρώτη επίσκεψη",
+      studentDiscountUnlimited: "σε κάθε επίσκεψη"
     },
     en: {
       businessNotFound: "Business not found or not verified",
@@ -130,7 +136,10 @@ const BusinessProfile = () => {
       noEventsScheduled: "No scheduled events at this time",
       noActiveOffers: "No active offers at this time",
       reserveTable: "Reserve a Table",
-      loginToReserve: "Login to reserve"
+      loginToReserve: "Login to reserve",
+      studentDiscount: "Student Discount",
+      studentDiscountOnce: "on first visit",
+      studentDiscountUnlimited: "on every visit"
     }
   };
 
@@ -155,10 +164,10 @@ const BusinessProfile = () => {
 
   const fetchBusinessData = async () => {
     try {
-      // Fetch business details including direct reservation settings
+      // Fetch business details including direct reservation settings and student discount
       const { data: businessData, error: businessError } = await supabase
         .from("businesses")
-        .select("*, accepts_direct_reservations")
+        .select("*, accepts_direct_reservations, student_discount_enabled, student_discount_percent, student_discount_mode")
         .eq("id", businessId)
         .eq("verified", true)
         .maybeSingle();
@@ -287,6 +296,20 @@ const BusinessProfile = () => {
                 {cat}
               </Badge>
             ))}
+            
+            {/* Student Discount Badge */}
+            {business.student_discount_enabled && business.student_discount_percent && (
+              <Badge 
+                variant="outline" 
+                className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 text-primary gap-1.5"
+              >
+                <GraduationCap className="h-3.5 w-3.5" />
+                {business.student_discount_percent}% {t.studentDiscount}
+                <span className="text-muted-foreground text-[10px]">
+                  ({business.student_discount_mode === 'unlimited' ? t.studentDiscountUnlimited : t.studentDiscountOnce})
+                </span>
+              </Badge>
+            )}
           </div>
 
           {/* Follow Button and Reserve Button */}
