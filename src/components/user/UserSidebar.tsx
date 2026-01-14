@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, MapPin, Calendar, User, Settings, CalendarCheck, Percent, Ticket, GraduationCap } from 'lucide-react';
+import { Home, MapPin, Calendar, User, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
@@ -32,7 +32,6 @@ const translations = {
     reservations: 'Κρατήσεις',
     myOffers: 'Οι Προσφορές Μου',
     tickets: 'Τα Εισιτήριά μου',
-    studentDiscount: 'Φοιτητική Έκπτωση',
     account: 'Λογαριασμός',
     profile: 'Προφίλ',
     settings: 'Ρυθμίσεις',
@@ -48,7 +47,6 @@ const translations = {
     reservations: 'Reservations',
     myOffers: 'My Offers',
     tickets: 'My Tickets',
-    studentDiscount: 'Student Discount',
     account: 'Account',
     profile: 'Profile',
     settings: 'Settings',
@@ -112,7 +110,6 @@ export function UserSidebar() {
     { title: t.reservations, url: '/dashboard-user?tab=reservations', icon: CalendarCheck, tab: 'reservations' },
     { title: t.myOffers, url: '/dashboard-user?tab=offers', icon: Percent, tab: 'offers' },
     { title: t.tickets, url: '/dashboard-user?tab=tickets', icon: Ticket, tab: 'tickets' },
-    { title: t.studentDiscount, url: '/dashboard-user?tab=student', icon: GraduationCap, tab: 'student' },
   ];
 
   const accountItems = [
