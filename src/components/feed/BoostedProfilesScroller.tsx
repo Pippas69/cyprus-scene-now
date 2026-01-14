@@ -83,6 +83,8 @@ export const BoostedProfilesScroller = ({
                   <BusinessBoostBadges
                     hasEventBoost={eventBoostBusinessIds?.has(profile.business_id)}
                     hasOfferBoost={offerBoostBusinessIds?.has(profile.business_id)}
+                    studentDiscountPercent={(profile.businesses as any)?.student_discount_percent}
+                    studentDiscountMode={(profile.businesses as any)?.student_discount_mode}
                     language={language}
                   />
                   {profile.businesses.verified && (

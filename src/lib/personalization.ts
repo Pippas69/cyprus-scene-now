@@ -51,6 +51,8 @@ export interface ProfileBoostData {
     city: string;
     category: string[];
     verified: boolean | null;
+    student_discount_percent?: number | null;
+    student_discount_mode?: "once" | "unlimited" | string | null;
   };
 }
 

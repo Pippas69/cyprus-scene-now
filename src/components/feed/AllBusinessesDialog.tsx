@@ -25,6 +25,8 @@ interface Business {
   city: string;
   verified: boolean | null;
   description: string | null;
+  student_discount_percent?: number | null;
+  student_discount_mode?: "once" | "unlimited" | string | null;
   hasEventBoost?: boolean;
   hasOfferBoost?: boolean;
   hasProfileBoost?: boolean;
@@ -68,7 +70,7 @@ export const AllBusinessesDialog = ({
       
       let query = supabase
         .from('businesses')
-        .select('id, name, logo_url, category, city, verified, description')
+        .select('id, name, logo_url, category, city, verified, description, student_discount_percent, student_discount_mode')
         .eq('verified', true)
         .order('name', { ascending: true });
       
@@ -203,6 +205,8 @@ export const AllBusinessesDialog = ({
                       <BusinessBoostBadges
                         hasEventBoost={business.hasEventBoost}
                         hasOfferBoost={business.hasOfferBoost}
+                        studentDiscountPercent={business.student_discount_percent}
+                        studentDiscountMode={business.student_discount_mode}
                         language={language}
                       />
                       {business.verified && (

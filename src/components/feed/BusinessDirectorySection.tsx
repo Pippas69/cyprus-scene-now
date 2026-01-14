@@ -18,6 +18,8 @@ interface Business {
   category: string[];
   city: string;
   verified: boolean | null;
+  student_discount_percent?: number | null;
+  student_discount_mode?: "once" | "unlimited" | string | null;
   hasEventBoost?: boolean;
   hasOfferBoost?: boolean;
   hasProfileBoost?: boolean;
@@ -55,7 +57,7 @@ export const BusinessDirectorySection = ({
       
       let query = supabase
         .from('businesses')
-        .select('id, name, logo_url, category, city, verified')
+        .select('id, name, logo_url, category, city, verified, student_discount_percent, student_discount_mode')
         .eq('verified', true)
         .order('created_at', { ascending: false });
       
@@ -180,6 +182,8 @@ export const BusinessDirectorySection = ({
                 <BusinessBoostBadges
                   hasEventBoost={business.hasEventBoost}
                   hasOfferBoost={business.hasOfferBoost}
+                  studentDiscountPercent={business.student_discount_percent}
+                  studentDiscountMode={business.student_discount_mode}
                   language={language}
                 />
                 {business.verified && (
