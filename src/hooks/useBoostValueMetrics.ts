@@ -12,9 +12,9 @@ interface BoostValueData {
   offers: ComparisonMetrics;
   events: ComparisonMetrics;
   bestDays: {
-    profile: string;
-    offers: string;
-    events: string;
+    profile: number;
+    offers: number;
+    events: number;
   };
 }
 
@@ -276,17 +276,16 @@ export const useBoostValueMetrics = (
         nonBoostedEventVisits = totalVisits;
       }
 
-      // Get best performing days
-      const dayNames = ['Κυριακή', 'Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο'];
-      
-      const sortedByViews = [...(dailyData || [])].sort((a, b) => 
-        ((b.new_rsvps_going || 0) + (b.new_rsvps_interested || 0)) - 
-        ((a.new_rsvps_going || 0) + (a.new_rsvps_interested || 0))
+      // Get best performing day index (0=Sunday..6=Saturday)
+      const sortedByViews = [...(dailyData || [])].sort(
+        (a, b) =>
+          (b.new_rsvps_going || 0) + (b.new_rsvps_interested || 0) -
+          ((a.new_rsvps_going || 0) + (a.new_rsvps_interested || 0))
       );
-      
-      const bestDay = sortedByViews[0]?.date 
-        ? dayNames[new Date(sortedByViews[0].date).getDay()] 
-        : 'Παρασκευή';
+
+      const bestDayIndex = sortedByViews[0]?.date
+        ? new Date(sortedByViews[0].date).getDay()
+        : 5; // Friday
 
       return {
         profile: {
@@ -341,9 +340,9 @@ export const useBoostValueMetrics = (
           },
         },
         bestDays: {
-          profile: bestDay,
-          offers: bestDay,
-          events: bestDay,
+          profile: bestDayIndex,
+          offers: bestDayIndex,
+          events: bestDayIndex,
         },
       };
     },
