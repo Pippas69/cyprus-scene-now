@@ -56,17 +56,17 @@ const EventBoostDialog = ({
   // 2-tier boost system with hourly and daily rates
   const tiers = {
     standard: { 
-      dailyRate: 30, 
-      hourlyRate: 5, 
-      hourlyRateCents: 500, 
+      dailyRate: 35, 
+      hourlyRate: 7, 
+      hourlyRateCents: 700, 
       icon: Target, 
       quality: 70, 
       color: "text-purple-500" 
     },
     premium: { 
-      dailyRate: 80, 
-      hourlyRate: 12, 
-      hourlyRateCents: 1200, 
+      dailyRate: 50, 
+      hourlyRate: 10, 
+      hourlyRateCents: 1000, 
       icon: Rocket, 
       quality: 100, 
       color: "text-rose-500" 
