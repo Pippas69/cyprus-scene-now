@@ -664,6 +664,9 @@ export type Database = {
           stripe_account_id: string | null
           stripe_onboarding_completed: boolean | null
           stripe_payouts_enabled: boolean | null
+          student_discount_enabled: boolean | null
+          student_discount_mode: string | null
+          student_discount_percent: number | null
           updated_at: string
           user_id: string
           verification_notes: string | null
@@ -701,6 +704,9 @@ export type Database = {
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
+          student_discount_enabled?: boolean | null
+          student_discount_mode?: string | null
+          student_discount_percent?: number | null
           updated_at?: string
           user_id: string
           verification_notes?: string | null
@@ -738,6 +744,9 @@ export type Database = {
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
+          student_discount_enabled?: boolean | null
+          student_discount_mode?: string | null
+          student_discount_percent?: number | null
           updated_at?: string
           user_id?: string
           verification_notes?: string | null
@@ -3382,6 +3391,79 @@ export type Database = {
           },
         ]
       }
+      student_redemptions: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          redeemed_at: string
+          scanned_by: string | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          redeemed_at?: string
+          scanned_by?: string | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          redeemed_at?: string
+          scanned_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_redemptions_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_redemptions_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_subsidy_invoices: {
         Row: {
           business_id: string
@@ -3446,11 +3528,13 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          token_expires_at: string | null
           university_domain: string
           university_email: string
           university_name: string
           updated_at: string
           user_id: string
+          verification_token: string | null
           verified_at: string | null
         }
         Insert: {
@@ -3462,11 +3546,13 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          token_expires_at?: string | null
           university_domain: string
           university_email: string
           university_name: string
           updated_at?: string
           user_id: string
+          verification_token?: string | null
           verified_at?: string | null
         }
         Update: {
@@ -3478,11 +3564,13 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          token_expires_at?: string | null
           university_domain?: string
           university_email?: string
           university_name?: string
           updated_at?: string
           user_id?: string
+          verification_token?: string | null
           verified_at?: string | null
         }
         Relationships: [
