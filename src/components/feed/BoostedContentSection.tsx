@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, Percent, Tag } from "lucide-react";
+import { Calendar, MapPin, Clock, CalendarHeart, Tag } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, differenceInHours, Locale } from "date-fns";
+import { el, enUS } from "date-fns/locale";
 
 interface BoostedEvent {
   id: string;
@@ -19,7 +19,6 @@ interface BoostedEvent {
     verified: boolean;
     city: string;
   };
-  boostScore?: number;
 }
 
 interface BoostedOffer {
@@ -29,6 +28,7 @@ interface BoostedOffer {
   percent_off: number | null;
   original_price_cents: number | null;
   end_at: string;
+  start_at?: string;
   business_id: string;
   businesses: {
     name: string;
@@ -36,56 +36,105 @@ interface BoostedOffer {
     city: string;
     verified: boolean;
   };
-  boostScore?: number;
 }
 
 interface BoostedContentSectionProps {
   events: BoostedEvent[];
   offers: BoostedOffer[];
   language: "el" | "en";
+  userCity?: string | null;
 }
 
 const translations = {
   el: {
     endsSoon: "Λήγει σύντομα",
     daysLeft: "ημέρες",
+    hoursLeft: "ώρες",
+    today: "Σήμερα",
+    tomorrow: "Αύριο",
   },
   en: {
     endsSoon: "Ends soon",
     daysLeft: "days left",
+    hoursLeft: "hours left",
+    today: "Today",
+    tomorrow: "Tomorrow",
   },
 };
 
+// City proximity map for Cyprus (rough distances)
+const CITY_DISTANCES: Record<string, Record<string, number>> = {
+  "Λευκωσία": { "Λευκωσία": 0, "Λάρνακα": 50, "Λεμεσός": 85, "Πάφος": 150, "Αμμόχωστος": 70, "Παραλίμνι": 60, "Αγία Νάπα": 75 },
+  "Λάρνακα": { "Λευκωσία": 50, "Λάρνακα": 0, "Λεμεσός": 70, "Πάφος": 130, "Αμμόχωστος": 45, "Παραλίμνι": 35, "Αγία Νάπα": 40 },
+  "Λεμεσός": { "Λευκωσία": 85, "Λάρνακα": 70, "Λεμεσός": 0, "Πάφος": 70, "Αμμόχωστος": 110, "Παραλίμνι": 100, "Αγία Νάπα": 110 },
+  "Πάφος": { "Λευκωσία": 150, "Λάρνακα": 130, "Λεμεσός": 70, "Πάφος": 0, "Αμμόχωστος": 180, "Παραλίμνι": 170, "Αγία Νάπα": 175 },
+  "Αμμόχωστος": { "Λευκωσία": 70, "Λάρνακα": 45, "Λεμεσός": 110, "Πάφος": 180, "Αμμόχωστος": 0, "Παραλίμνι": 10, "Αγία Νάπα": 15 },
+  "Παραλίμνι": { "Λευκωσία": 60, "Λάρνακα": 35, "Λεμεσός": 100, "Πάφος": 170, "Αμμόχωστος": 10, "Παραλίμνι": 0, "Αγία Νάπα": 10 },
+  "Αγία Νάπα": { "Λευκωσία": 75, "Λάρνακα": 40, "Λεμεσός": 110, "Πάφος": 175, "Αμμόχωστος": 15, "Παραλίμνι": 10, "Αγία Νάπα": 0 },
+};
+
+// Get distance between two cities
+const getCityDistance = (cityA: string | null | undefined, cityB: string | null | undefined): number => {
+  if (!cityA || !cityB) return 1000; // Unknown = max distance
+  const normalizedA = cityA.trim();
+  const normalizedB = cityB.trim();
+  
+  // Check direct lookup
+  if (CITY_DISTANCES[normalizedA]?.[normalizedB] !== undefined) {
+    return CITY_DISTANCES[normalizedA][normalizedB];
+  }
+  
+  // Fallback: same city = 0, different = 100
+  return normalizedA === normalizedB ? 0 : 100;
+};
+
 type ContentItem = 
-  | { type: 'event'; data: BoostedEvent; startTime: Date }
-  | { type: 'offer'; data: BoostedOffer; startTime: Date };
+  | { type: 'event'; data: BoostedEvent; sortTime: Date; distance: number }
+  | { type: 'offer'; data: BoostedOffer; sortTime: Date; distance: number };
 
 export const BoostedContentSection = ({ 
   events, 
   offers, 
-  language 
+  language,
+  userCity,
 }: BoostedContentSectionProps) => {
   const t = translations[language];
+  const dateLocale = language === "el" ? el : enUS;
 
-  // Combine and sort all boosted content by start time (chronological order)
-  // Events use start_at, Offers use start_at for when they become active
+  // Combine all boosted content with distance scoring
   const allContent: ContentItem[] = [
     ...events.map(e => ({ 
       type: 'event' as const, 
       data: e, 
-      startTime: new Date(e.start_at) 
+      sortTime: new Date(e.start_at),
+      distance: getCityDistance(userCity, e.businesses?.city),
     })),
     ...offers.map(o => ({ 
       type: 'offer' as const, 
       data: o, 
-      startTime: new Date(o.end_at) // Use end_at for offers to show soonest expiry first
+      sortTime: new Date(o.end_at), // Use end_at for offers (soonest expiry first)
+      distance: getCityDistance(userCity, o.businesses?.city),
     }))
-  ].sort((a, b) => a.startTime.getTime() - b.startTime.getTime()); // Earliest first
+  ];
+
+  // Sort: First by distance (closest first), then by time (earliest first)
+  allContent.sort((a, b) => {
+    // Primary: Geographic proximity
+    if (a.distance !== b.distance) {
+      return a.distance - b.distance;
+    }
+    // Secondary: Chronological (earliest first)
+    return a.sortTime.getTime() - b.sortTime.getTime();
+  });
 
   // Always render the container even if empty - prevents mobile layout issues
   if (allContent.length === 0) {
     return <div className="w-full min-h-[1px]" />;
   }
+
+  // Shared card dimensions for consistency
+  const CARD_WIDTH = "w-[240px]";
+  const CARD_HEIGHT = "h-[180px]";
 
   return (
     <div className="w-full">
@@ -99,9 +148,21 @@ export const BoostedContentSection = ({
               transition={{ delay: index * 0.03 }}
             >
               {item.type === 'event' ? (
-                <EventCard event={item.data} />
+                <EventCard 
+                  event={item.data} 
+                  language={language}
+                  dateLocale={dateLocale}
+                  cardWidth={CARD_WIDTH}
+                  cardHeight={CARD_HEIGHT}
+                />
               ) : (
-                <OfferCard offer={item.data} t={t} />
+                <OfferCard 
+                  offer={item.data} 
+                  t={t} 
+                  language={language}
+                  cardWidth={CARD_WIDTH}
+                  cardHeight={CARD_HEIGHT}
+                />
               )}
             </motion.div>
           ))}
@@ -112,111 +173,153 @@ export const BoostedContentSection = ({
   );
 };
 
-const EventCard = ({ event }: { event: BoostedEvent }) => (
-  <Link
-    to={`/ekdiloseis/${event.id}`}
-    className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 min-w-[220px] max-w-[220px] overflow-hidden group"
-  >
-    {/* Event Image */}
-    <div className="relative h-28 w-full overflow-hidden">
-      {event.cover_image_url ? (
-        <img 
-          src={event.cover_image_url} 
-          alt={event.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-          <Calendar className="h-8 w-8 text-primary/50" />
+interface EventCardProps {
+  event: BoostedEvent;
+  language: "el" | "en";
+  dateLocale: Locale;
+  cardWidth: string;
+  cardHeight: string;
+}
+
+const EventCard = ({ event, language, dateLocale, cardWidth, cardHeight }: EventCardProps) => {
+  const eventDate = new Date(event.start_at);
+  const now = new Date();
+  const isToday = eventDate.toDateString() === now.toDateString();
+  const isTomorrow = eventDate.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+  
+  const t = translations[language];
+  
+  let dateLabel: string;
+  if (isToday) {
+    dateLabel = `${t.today} • ${format(eventDate, "HH:mm")}`;
+  } else if (isTomorrow) {
+    dateLabel = `${t.tomorrow} • ${format(eventDate, "HH:mm")}`;
+  } else {
+    dateLabel = format(eventDate, "EEE, d MMM • HH:mm", { locale: dateLocale });
+  }
+
+  return (
+    <Link
+      to={`/ekdiloseis/${event.id}`}
+      className={`flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 min-${cardWidth} max-${cardWidth} ${cardHeight} overflow-hidden group`}
+      style={{ minWidth: '240px', maxWidth: '240px', height: '180px' }}
+    >
+      {/* Event Image with Badge */}
+      <div className="relative h-24 w-full overflow-hidden flex-shrink-0">
+        {event.cover_image_url ? (
+          <img 
+            src={event.cover_image_url} 
+            alt={event.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+            <Calendar className="h-8 w-8 text-primary/50" />
+          </div>
+        )}
+        
+        {/* EVENT BADGE - Top Right, Icon Only, Orange CalendarHeart */}
+        <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1.5 shadow-lg">
+          <CalendarHeart className="h-3.5 w-3.5" />
         </div>
-      )}
-      {/* Category badge overlay */}
-      {event.category?.[0] && (
-        <Badge 
-          variant="secondary" 
-          className="absolute top-2 left-2 text-[10px] px-1.5 py-0 h-5 bg-background/90 backdrop-blur-sm"
-        >
-          {event.category[0]}
-        </Badge>
-      )}
-    </div>
-
-    {/* Event Details */}
-    <div className="p-3 space-y-2">
-      <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
-        {event.title}
-      </h4>
-      
-      <div className="flex items-center gap-1 text-muted-foreground">
-        <Clock className="h-3 w-3 flex-shrink-0" />
-        <span className="text-xs truncate">
-          {format(new Date(event.start_at), "EEE, MMM d • HH:mm")}
-        </span>
-      </div>
-      
-      <div className="flex items-center gap-1 text-muted-foreground">
-        <MapPin className="h-3 w-3 flex-shrink-0" />
-        <span className="text-xs truncate">{event.location}</span>
       </div>
 
-      {/* Business name */}
-      <p className="text-[10px] text-muted-foreground truncate">
-        {event.businesses.name}
-      </p>
-    </div>
-  </Link>
-);
+      {/* Event Details */}
+      <div className="p-3 flex-1 flex flex-col justify-between min-h-0">
+        <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+          {event.title}
+        </h4>
+        
+        <div className="space-y-1 mt-auto">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="h-3 w-3 flex-shrink-0" />
+            <span className="text-xs truncate">{dateLabel}</span>
+          </div>
+          
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            <span className="text-xs truncate">{event.businesses?.city || event.location}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+};
 
-const OfferCard = ({ offer, t }: { offer: BoostedOffer; t: { endsSoon: string; daysLeft: string } }) => {
-  const daysLeft = differenceInDays(new Date(offer.end_at), new Date());
-  const isEndingSoon = daysLeft <= 3;
+interface OfferCardProps {
+  offer: BoostedOffer;
+  t: { endsSoon: string; daysLeft: string; hoursLeft: string };
+  language: "el" | "en";
+  cardWidth: string;
+  cardHeight: string;
+}
+
+const OfferCard = ({ offer, t, language, cardWidth, cardHeight }: OfferCardProps) => {
+  const endDate = new Date(offer.end_at);
+  const now = new Date();
+  const hoursLeft = differenceInHours(endDate, now);
+  const daysLeft = differenceInDays(endDate, now);
+  const isEndingSoon = hoursLeft <= 48;
+
+  let expiryLabel: string;
+  if (hoursLeft < 24) {
+    expiryLabel = `${hoursLeft} ${t.hoursLeft}`;
+  } else {
+    expiryLabel = `${daysLeft} ${t.daysLeft}`;
+  }
 
   return (
     <Link
       to={`/offers?highlight=${offer.id}`}
-      className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 min-w-[200px] max-w-[200px] overflow-hidden group p-4"
+      className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 overflow-hidden group"
+      style={{ minWidth: '240px', maxWidth: '240px', height: '180px' }}
     >
-      {/* Header with logo and discount */}
-      <div className="flex items-start justify-between mb-3">
-        <Avatar className="h-10 w-10 border-2 border-primary/20">
+      {/* Visual header with gradient and badge (same height as event image) */}
+      <div className="relative h-24 w-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-emerald-500/20 via-primary/10 to-secondary/20 flex items-center justify-center">
+        <Avatar className="h-14 w-14 border-2 border-white shadow-lg">
           <AvatarImage 
-            src={offer.businesses.logo_url || undefined} 
-            alt={offer.businesses.name} 
+            src={offer.businesses?.logo_url || undefined} 
+            alt={offer.businesses?.name} 
           />
-          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-            {offer.businesses.name.substring(0, 2).toUpperCase()}
+          <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
+            {offer.businesses?.name?.substring(0, 2)?.toUpperCase() || '?'}
           </AvatarFallback>
         </Avatar>
         
+        {/* Discount overlay badge */}
         {offer.percent_off && (
-          <Badge className="bg-primary text-primary-foreground font-bold text-sm px-2">
+          <div className="absolute bottom-2 left-2 bg-primary text-primary-foreground font-bold text-sm px-2 py-0.5 rounded-full shadow">
             -{offer.percent_off}%
-          </Badge>
+          </div>
         )}
+        
+        {/* OFFER BADGE - Top Right, Icon Only, Green Tag */}
+        <div className="absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-1.5 shadow-lg">
+          <Tag className="h-3.5 w-3.5" />
+        </div>
       </div>
 
-      {/* Offer Title */}
-      <h4 className="text-sm font-semibold line-clamp-2 mb-2 group-hover:text-primary transition-colors min-h-[2.5rem]">
-        {offer.title}
-      </h4>
-      
-      {/* Business name */}
-      <p className="text-xs text-muted-foreground truncate mb-2">
-        {offer.businesses.name}
-      </p>
-
-      {/* Expiry info */}
-      <div className="flex items-center gap-1 mt-auto">
-        <Clock className="h-3 w-3 text-muted-foreground" />
-        {isEndingSoon ? (
-          <span className="text-xs text-destructive font-medium">
-            {t.endsSoon}
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">
-            {daysLeft} {t.daysLeft}
-          </span>
-        )}
+      {/* Offer Details (same structure as event) */}
+      <div className="p-3 flex-1 flex flex-col justify-between min-h-0">
+        <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+          {offer.title}
+        </h4>
+        
+        <div className="space-y-1 mt-auto">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="h-3 w-3 flex-shrink-0" />
+            {isEndingSoon ? (
+              <span className="text-xs text-destructive font-medium">{t.endsSoon}</span>
+            ) : (
+              <span className="text-xs truncate">{expiryLabel}</span>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            <span className="text-xs truncate">{offer.businesses?.city}</span>
+          </div>
+        </div>
       </div>
     </Link>
   );
