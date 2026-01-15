@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
-import { getPlanScore, getRotationSeed, type PlanSlug } from "@/lib/personalization";
+import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/personalization";
 
 type CategoryKey = "nightlife" | "clubs" | "dining" | "beach";
 
@@ -24,13 +24,15 @@ interface Business {
   hasEventBoost?: boolean;
   hasOfferBoost?: boolean;
   planSlug?: PlanSlug | string | null;
-  planScore?: number;
+  planTierIndex?: number;
 }
 
 interface CategoryBusinessesSectionProps {
   language: "el" | "en";
   /** When set, applies a city filter to the business lists */
   selectedCity?: string | null;
+  /** User's current city for proximity sorting */
+  userCity?: string | null;
 }
 
 const CATEGORY_DEFS: Record<
@@ -58,16 +60,14 @@ const CATEGORY_DEFS: Record<
   },
 };
 
-export const CategoryBusinessesSections = ({ language, selectedCity }: CategoryBusinessesSectionProps) => {
-  const rotationSeed = getRotationSeed();
-
+export const CategoryBusinessesSections = ({ language, selectedCity, userCity = null }: CategoryBusinessesSectionProps) => {
   const categories = useMemo(
     () => ["nightlife", "clubs", "dining", "beach"] as CategoryKey[],
     []
   );
 
   const { data, isLoading } = useQuery({
-    queryKey: ["feed-category-businesses", selectedCity],
+    queryKey: ["feed-category-businesses", selectedCity, userCity],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
 
@@ -85,7 +85,7 @@ export const CategoryBusinessesSections = ({ language, selectedCity }: CategoryB
 
           if (selectedCity) query = query.eq("city", selectedCity);
 
-          // Pull extra for ranking fairness.
+          // Pull extra for ranking.
           const { data: businessList, error } = await query.limit(50);
           if (error) throw error;
 
@@ -121,24 +121,34 @@ export const CategoryBusinessesSections = ({ language, selectedCity }: CategoryB
             if (sub.subscription_plans?.slug) subscriptionMap.set(sub.business_id, sub.subscription_plans.slug);
           });
 
-          const businessesWithScores = businessList.map((business) => {
+          // Build businesses with plan tier index
+          const businessesWithTiers = businessList.map((business) => {
             const planSlug = subscriptionMap.get(business.id) || "free";
-            const basePlanScore = getPlanScore(planSlug);
-
-            // Small rotation factor for fair distribution within the same plan tier.
-            const itemSeed = business.id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const rotationFactor = (rotationSeed + itemSeed) % 20;
+            const planTierIndex = getPlanTierIndex(planSlug);
 
             return {
               ...business,
               hasEventBoost: hasEventBoost.has(business.id),
               hasOfferBoost: hasOfferBoost.has(business.id),
               planSlug,
-              planScore: basePlanScore + rotationFactor,
+              planTierIndex,
             } as Business;
           });
 
-          const ranked = businessesWithScores.sort((a, b) => (b.planScore || 0) - (a.planScore || 0)).slice(0, 12);
+          // STRICT SORTING: Plan hierarchy first (Elite>Pro>Basic>Free), then proximity
+          // NO ROTATION. NO RANDOMNESS.
+          const ranked = businessesWithTiers.sort((a, b) => {
+            // PRIMARY: Plan tier (Elite=0, Pro=1, Basic=2, Free=3)
+            if ((a.planTierIndex ?? 3) !== (b.planTierIndex ?? 3)) {
+              return (a.planTierIndex ?? 3) - (b.planTierIndex ?? 3);
+            }
+            
+            // SECONDARY: Geographic proximity (within same plan tier)
+            const distanceA = getCityDistance(userCity, a.city);
+            const distanceB = getCityDistance(userCity, b.city);
+            return distanceA - distanceB;
+          }).slice(0, 12);
+          
           return { key, businesses: ranked };
         })
       );
