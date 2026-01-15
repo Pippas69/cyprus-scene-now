@@ -7,7 +7,7 @@ import FeedSidebar from "@/components/feed/FeedSidebar";
 import SmartSearchBar from "@/components/feed/SmartSearchBar";
 import { BoostedContentSection } from "@/components/feed/BoostedContentSection";
 import { BoostedProfilesScroller } from "@/components/feed/BoostedProfilesScroller";
-import CategoryBusinessesSections from "@/components/feed/CategoryBusinessesSections";
+
 import BusinessDirectorySection from "@/components/feed/BusinessDirectorySection";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import { FilterChips } from "@/components/feed/FilterChips";
@@ -344,10 +344,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-            {/* POSITION #3: Category sections for exploration */}
-            <CategoryBusinessesSections language={language} selectedCity={selectedCity} />
-
-            {/* Filters (categories + student discount) should sit directly above businesses */}
+            {/* Filters (categories + student discount) - directly above businesses */}
             <div data-filters className="w-full">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -441,8 +438,12 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </section>
             )}
 
-            {/* All businesses from FOMO - immediately below filters (no extra gaps) */}
-            <BusinessDirectorySection language={language} selectedCity={selectedCity} />
+            {/* All businesses from FOMO - filtered by selected categories */}
+            <BusinessDirectorySection 
+              language={language} 
+              selectedCity={selectedCity} 
+              selectedCategories={selectedCategories}
+            />
 
           </div>
         </div>
