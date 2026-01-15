@@ -97,15 +97,15 @@ const CompactLocationDropdown = ({ language, selectedCity, onCityChange }: Compa
       onValueChange={(val) => onCityChange(val === "all" ? null : val)}
     >
       <SelectTrigger 
-        className="h-8 w-auto min-w-0 gap-1 border-none bg-transparent hover:bg-accent/50 focus:ring-0 focus:ring-offset-0 px-2"
+        className="h-8 w-auto min-w-0 gap-1.5 border-none bg-transparent hover:bg-accent/50 focus:ring-0 focus:ring-offset-0 px-2 [&>svg:last-child]:hidden"
       >
         <MapPin className="h-3.5 w-3.5 text-ocean flex-shrink-0" />
-        <span className="text-sm font-medium text-foreground truncate max-w-[100px]">
+        <span className="text-sm font-medium text-foreground truncate max-w-[120px]">
           {selectedLabel}
         </span>
-        <ChevronDown className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
       </SelectTrigger>
-      <SelectContent align="start" className="min-w-[160px]">
+      <SelectContent align="start" className="min-w-[160px] bg-popover z-50">
         {cities.map((city) => (
           <SelectItem key={city.value} value={city.value}>
             {city.label}

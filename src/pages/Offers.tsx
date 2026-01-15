@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Tag } from "lucide-react";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
 import SignupModal from "@/components/SignupModal";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
 
 const Offers = () => {
   const navigate = useNavigate();
@@ -180,23 +180,19 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
 
 // Full View for Logged-in Users - FOMO Style
 const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }) => {
-  // null = no filter (show all), otherwise filter by time
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   const text = {
     el: {
-      boosted: "Προτεινόμενες",
       today: "Σήμερα",
       week: "Επόμενες 7 Μέρες",
       month: "Επόμενες 30 Μέρες",
-      allOffers: "Όλες οι Προσφορές",
     },
     en: {
-      boosted: "Featured",
       today: "Today",
       week: "Next 7 Days",
       month: "Next 30 Days",
-      allOffers: "All Offers",
     },
   };
 
@@ -242,12 +238,12 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
 
   // Fetch BOOSTED offers (always shown at top, sorted by end_at - earliest expiry first)
   const { data: boostedOffers, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-offers-page", Array.from(boostedOfferIds)],
+    queryKey: ["boosted-offers-page", selectedCity, Array.from(boostedOfferIds)],
     queryFn: async () => {
       if (boostedOfferIds.size === 0) return [];
 
       const now = new Date().toISOString();
-      const { data, error } = await supabase
+      let query = supabase
         .from('discounts')
         .select(`
           *,
@@ -258,8 +254,14 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
         .eq('businesses.verified', true)
         .lte('start_at', now)
         .gte('end_at', now)
-        .order('end_at', { ascending: true }); // Chronological: soonest expiry first
+        .order('end_at', { ascending: true });
 
+      // Filter by city if selected
+      if (selectedCity) {
+        query = query.eq('businesses.city', selectedCity);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -268,9 +270,9 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
 
   const timeBoundaries = getTimeBoundaries(timeFilter);
 
-  // Fetch NON-BOOSTED offers (filtered by time if selected, otherwise all)
+  // Fetch NON-BOOSTED offers (filtered by time and city)
   const { data: regularOffers, isLoading: loadingRegular } = useQuery({
-    queryKey: ["regular-offers", timeFilter, Array.from(boostedOfferIds)],
+    queryKey: ["regular-offers", timeFilter, selectedCity, Array.from(boostedOfferIds)],
     queryFn: async () => {
       const now = new Date().toISOString();
       
@@ -284,7 +286,12 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
         .eq('businesses.verified', true)
         .lte('start_at', now)
         .gte('end_at', now)
-        .order('end_at', { ascending: true }); // Earliest expiry first
+        .order('end_at', { ascending: true });
+
+      // Filter by city if selected
+      if (selectedCity) {
+        query = query.eq('businesses.city', selectedCity);
+      }
 
       // Apply time filter: show offers that END within the selected time window
       if (timeBoundaries) {
@@ -312,15 +319,38 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
   };
 
   return (
-    <div className="space-y-8">
-      {/* BOOSTED ZONE - Always at top, not filtered */}
+    <div className="space-y-6">
+      {/* Location Dropdown at top */}
+      <div className="flex items-center">
+        <CompactLocationDropdown
+          language={language}
+          selectedCity={selectedCity}
+          onCityChange={setSelectedCity}
+        />
+      </div>
+
+      {/* Time Filter Chips - At top */}
+      <div className="flex flex-wrap gap-2">
+        {(['today', 'week', 'month'] as const).map((filter) => (
+          <button
+            key={filter}
+            onClick={() => handleFilterClick(filter)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              timeFilter === filter
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+            }`}
+          >
+            {filter === 'today' && t.today}
+            {filter === 'week' && t.week}
+            {filter === 'month' && t.month}
+          </button>
+        ))}
+      </div>
+
+      {/* BOOSTED ZONE - No header, just cards with badge */}
       {hasBoostedOffers && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-accent" />
-            <h2 className="text-xl font-semibold">{t.boosted}</h2>
-          </div>
-          
+        <section>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {boostedOffers.map((offer: any, index: number) => (
               <motion.div
@@ -331,8 +361,8 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
                 className="relative"
               >
                 <div className="absolute -top-2 -right-2 z-10">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent text-accent-foreground text-xs font-medium rounded-full">
-                    <Sparkles className="h-3 w-3" />
+                  <span className="inline-flex items-center justify-center w-7 h-7 bg-emerald-500 text-white rounded-full shadow-md">
+                    <Tag className="h-4 w-4" />
                   </span>
                 </div>
                 <OfferCard 
@@ -346,28 +376,8 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
         </section>
       )}
 
-      {/* TIME FILTER ZONE - Optional filters like Feed categories */}
-      <section className="space-y-4">
-        {/* Time Filter Chips - None selected by default */}
-        <div className="flex flex-wrap gap-2">
-          {(['today', 'week', 'month'] as const).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => handleFilterClick(filter)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                timeFilter === filter
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-              }`}
-            >
-              {filter === 'today' && t.today}
-              {filter === 'week' && t.week}
-              {filter === 'month' && t.month}
-            </button>
-          ))}
-        </div>
-
-        {/* Offers List - Always shows offers */}
+      {/* Regular Offers List */}
+      <section>
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
