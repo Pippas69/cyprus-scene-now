@@ -73,10 +73,13 @@ export const BoostedContentSection = ({
     ...offers.map(o => ({ type: 'offer' as const, data: o, score: o.boostScore || 0 }))
   ].sort((a, b) => b.score - a.score);
 
-  if (allContent.length === 0) return null;
+  // Always render the container even if empty - prevents mobile layout issues
+  if (allContent.length === 0) {
+    return <div className="w-full min-h-[1px]" />;
+  }
 
   return (
-    <div className="w-full -mt-2">
+    <div className="w-full">
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-4 pb-2">
           {allContent.map((item, index) => (
