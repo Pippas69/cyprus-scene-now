@@ -2314,6 +2314,7 @@ export type Database = {
       }
       offer_purchases: {
         Row: {
+          amount_paid_cents: number | null
           balance_remaining_cents: number | null
           business_id: string
           business_payout_cents: number
@@ -2341,6 +2342,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          amount_paid_cents?: number | null
           balance_remaining_cents?: number | null
           business_id: string
           business_payout_cents: number
@@ -2368,6 +2370,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          amount_paid_cents?: number | null
           balance_remaining_cents?: number | null
           business_id?: string
           business_payout_cents?: number
