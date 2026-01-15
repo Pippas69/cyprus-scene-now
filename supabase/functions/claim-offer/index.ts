@@ -146,7 +146,11 @@ Deno.serve(async (req) => {
         discount_id: discountId,
         user_id: user.id,
         business_id: discount.business_id,
-        amount_paid_cents: 0, // No payment for claims
+        original_price_cents: 0,
+        final_price_cents: 0,
+        commission_percent: 0,
+        commission_amount_cents: 0,
+        business_payout_cents: 0,
         status: "claimed",
         qr_code_token: qrCodeToken,
         expires_at: expiresAt,
