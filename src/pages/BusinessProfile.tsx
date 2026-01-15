@@ -7,7 +7,7 @@ import { trackEngagement } from "@/lib/analyticsTracking";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { RippleButton } from "@/components/ui/ripple-button";
 import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap } from "lucide-react";
 import EventCard from "@/components/EventCard";
@@ -114,10 +114,7 @@ const BusinessProfile = () => {
       phone: "Τηλέφωνο",
       website: "Ιστοσελίδα",
       about: "Σχετικά",
-      events: "Εκδηλώσεις",
-      offers: "Προσφορές",
-      noEventsScheduled: "Δεν υπάρχουν προγραμματισμένες εκδηλώσεις αυτή τη στιγμή",
-      noActiveOffers: "Δεν υπάρχουν ενεργές προσφορές αυτή τη στιγμή",
+      noContent: "Δεν υπάρχουν εκδηλώσεις ή προσφορές αυτή τη στιγμή",
       reserveTable: "Κράτηση Τραπεζιού",
       loginToReserve: "Συνδεθείτε για κράτηση",
       studentDiscount: "Φοιτητική Έκπτωση",
@@ -132,10 +129,7 @@ const BusinessProfile = () => {
       phone: "Phone",
       website: "Website",
       about: "About",
-      events: "Events",
-      offers: "Offers",
-      noEventsScheduled: "No scheduled events at this time",
-      noActiveOffers: "No active offers at this time",
+      noContent: "No events or offers at this time",
       reserveTable: "Reserve a Table",
       loginToReserve: "Login to reserve",
       studentDiscount: "Student Discount",
@@ -288,6 +282,8 @@ const BusinessProfile = () => {
             {business.verified && (
               <CheckCircle className="h-6 w-6 text-green-600" />
             )}
+            {/* Follow Button - Small, next to name */}
+            <FollowButton businessId={business.id} language={language} variant="compact" />
           </div>
 
           {/* Categories */}
@@ -313,11 +309,9 @@ const BusinessProfile = () => {
             )}
           </div>
 
-          {/* Follow Button, Reserve Button, and Student Discount Button */}
-          {business.id && (
+          {/* Action Buttons - Reserve Table & Student Discount */}
+          {business.id && (business.accepts_direct_reservations || (business.student_discount_enabled && business.student_discount_percent)) && (
             <div className="flex justify-center gap-3 flex-wrap">
-              <FollowButton businessId={business.id} language={language} />
-              
               {/* Direct Reservation Button */}
               {business.accepts_direct_reservations && (
                 <RippleButton
@@ -437,72 +431,41 @@ const BusinessProfile = () => {
           </motion.div>
         )}
 
-        {/* Events and Offers Tabs */}
+        {/* Unified Events & Offers List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <Tabs defaultValue="events" className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 md:h-10">
-              <TabsTrigger value="events">
-                {t.events} ({events.length})
-              </TabsTrigger>
-              <TabsTrigger value="offers">
-                {t.offers} ({offers.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="events" className="mt-6">
-              {events.length === 0 ? (
-                <Card variant="glass">
-                  <CardContent className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      {t.noEventsScheduled}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <motion.div 
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {events.map((event) => (
-                    <motion.div key={event.id} variants={itemVariants}>
-                      <EventCard event={event} language={language} user={user} />
-                    </motion.div>
-                  ))}
+          {events.length === 0 && offers.length === 0 ? (
+            <Card variant="glass">
+              <CardContent className="text-center py-8">
+                <p className="text-muted-foreground">
+                  {t.noContent}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {/* Render all events */}
+              {events.map((event) => (
+                <motion.div key={`event-${event.id}`} variants={itemVariants}>
+                  <EventCard event={event} language={language} user={user} />
                 </motion.div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="offers" className="mt-6">
-              {offers.length === 0 ? (
-                <Card variant="glass">
-                  <CardContent className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      {t.noActiveOffers}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <motion.div 
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {offers.map((offer) => (
-                    <motion.div key={offer.id} variants={itemVariants}>
-                      <OfferCard offer={offer} language={language} user={user} />
-                    </motion.div>
-                  ))}
+              ))}
+              {/* Render all offers */}
+              {offers.map((offer) => (
+                <motion.div key={`offer-${offer.id}`} variants={itemVariants}>
+                  <OfferCard offer={offer} language={language} user={user} />
                 </motion.div>
-              )}
-            </TabsContent>
-          </Tabs>
+              ))}
+            </motion.div>
+          )}
         </motion.div>
       </div>
 

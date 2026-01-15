@@ -9,9 +9,10 @@ interface FollowButtonProps {
   businessId: string;
   language: 'el' | 'en';
   source?: 'profile' | 'event' | 'feed' | 'search' | 'direct';
+  variant?: 'default' | 'compact';
 }
 
-export function FollowButton({ businessId, language, source = 'profile' }: FollowButtonProps) {
+export function FollowButton({ businessId, language, source = 'profile', variant = 'default' }: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -112,6 +113,22 @@ export function FollowButton({ businessId, language, source = 'profile' }: Follo
 
     setLoading(false);
   };
+
+  // Compact variant - icon only with tooltip-like behavior
+  if (variant === 'compact') {
+    return (
+      <Button
+        variant={isFollowing ? 'ghost' : 'ghost'}
+        size="icon"
+        onClick={handleToggleFollow}
+        disabled={loading}
+        className={`h-8 w-8 rounded-full ${isFollowing ? 'text-primary' : 'text-muted-foreground hover:text-primary'}`}
+        title={isFollowing ? t.following : t.follow}
+      >
+        <Heart className={`h-4 w-4 ${isFollowing ? 'fill-current' : ''}`} />
+      </Button>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3">
