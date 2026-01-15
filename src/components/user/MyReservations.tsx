@@ -42,9 +42,9 @@ interface ReservationData {
   confirmation_code: string | null;
   qr_code_token: string | null;
   // Prepaid reservation fields
-  seating_type: string | null;
+  seating_type_id: string | null;
   prepaid_min_charge_cents: number | null;
-  payment_status: string | null;
+  prepaid_charge_status: string | null;
   events?: {
     id: string;
     title: string;
@@ -102,7 +102,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       id, event_id, business_id, user_id, reservation_name, party_size, status,
       created_at, phone_number, preferred_time, seating_preference, special_requests,
       business_notes, confirmation_code, qr_code_token,
-      seating_type, prepaid_min_charge_cents, payment_status
+      seating_type_id, prepaid_min_charge_cents, prepaid_charge_status
     `;
 
     // 1. Event-based reservations (upcoming)
@@ -456,14 +456,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           </div>
 
           {/* Prepaid reservation info */}
-          {reservation.seating_type && reservation.prepaid_min_charge_cents && reservation.prepaid_min_charge_cents > 0 && !isPast && (
+          {reservation.seating_type_id && reservation.prepaid_min_charge_cents && reservation.prepaid_min_charge_cents > 0 && !isPast && (
             <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-green-600" />
                   <span className="font-medium text-green-800 dark:text-green-300">{t.prepaidCredit}</span>
                 </div>
-                {reservation.payment_status === 'completed' ? (
+                {reservation.prepaid_charge_status === 'completed' ? (
                   <Badge variant="default" className="bg-green-600">{t.paymentCompleted}</Badge>
                 ) : (
                   <Badge variant="secondary">{t.paymentPending}</Badge>
@@ -472,7 +472,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Wallet className="h-3 w-3" />
-                  <span>{t.seatingType}: <span className="capitalize font-medium">{t[reservation.seating_type as keyof typeof t] || reservation.seating_type}</span></span>
+                  <span>{t.seatingType}</span>
                 </div>
                 <p className="text-2xl font-bold text-green-700 dark:text-green-400">
                   €{(reservation.prepaid_min_charge_cents / 100).toFixed(2)}
