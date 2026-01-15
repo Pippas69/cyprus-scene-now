@@ -44,18 +44,7 @@ export const BoostedProfilesScroller = ({
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between gap-2 mb-3 px-1">
-        <div className="flex items-center gap-2">
-          <Star className="h-4 w-4 text-primary fill-primary" />
-          <h3 className="text-sm font-semibold text-foreground">{t.featuredBusinesses}</h3>
-          {hasMoreProfiles && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-              +{totalCount - profiles.length}
-            </Badge>
-          )}
-        </div>
-      </div>
-      
+      {/* No header - profiles display directly below paid content */}
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-3 pb-2">
           {profiles.map((profile, index) => (

@@ -376,7 +376,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-hidden">
           <div className="space-y-8">
-            {/* PRIORITY 2: Featured Businesses */}
+            {/* POSITION #2: Featured Businesses (no header, just profiles) */}
             {profileBoosts && profileBoosts.length > 0 && (
               <BoostedProfilesScroller
                 profiles={profileBoosts}
@@ -386,10 +386,13 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-            {/* PRIORITY 3: Core category sections */}
+            {/* POSITION #3: Category sections for exploration + ALL businesses below */}
             <CategoryBusinessesSections language={language} selectedCity={selectedCity} />
 
-            {/* Student Discount Section - shown only when filter is active */}
+            {/* All businesses from FOMO - directly below category sections */}
+            <BusinessDirectorySection language={language} selectedCity={selectedCity} />
+
+            {/* Student Discount Section - subtle, shown only when filter is active */}
             {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
@@ -445,8 +448,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </section>
             )}
 
-            {/* PRIORITY 4: All businesses directory */}
-            <BusinessDirectorySection language={language} selectedCity={selectedCity} />
           </div>
         </div>
 
