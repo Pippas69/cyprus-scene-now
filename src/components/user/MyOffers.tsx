@@ -372,8 +372,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{purchase.discounts.description}</p>
           )}
 
-          {/* Credit balance display */}
-          {isCredit ? (
+          {/* Credit balance display - only for credit offers */}
+          {isCredit && (
             <div className="space-y-2 bg-muted/50 rounded-lg p-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{t.balance}</span>
@@ -383,17 +383,6 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{t.used}: €{(usedAmount / 100).toFixed(2)}</span>
                 <span>{t.totalCredit}: €{(totalCredit / 100).toFixed(2)}</span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between text-sm bg-muted/50 rounded-lg p-2 sm:p-3 gap-2">
-              <div>
-                <p className="text-muted-foreground text-xs">{t.originalPrice}</p>
-                <p className="line-through text-sm">€{(purchase.original_price_cents / 100).toFixed(2)}</p>
-              </div>
-              <div className="xs:text-right">
-                <p className="text-muted-foreground text-xs">{t.youPaid}</p>
-                <p className="font-bold text-primary text-sm">€{(purchase.final_price_cents / 100).toFixed(2)}</p>
               </div>
             </div>
           )}
