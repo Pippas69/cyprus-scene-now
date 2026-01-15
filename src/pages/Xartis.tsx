@@ -1,18 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import MapWrapper from "@/components/map/MapWrapper";
 import { useLanguage } from "@/hooks/useLanguage";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import { FilterChips } from "@/components/feed/FilterChips";
 
+/**
+ * ΚΑΝΟΝΑΣ ΧΑΡΤΗ – FOMO (ΑΠΑΡΑΒΑΤΟΣ)
+ * 
+ * Ο χάρτης χρησιμοποιείται ΑΠΟΚΛΕΙΣΤΙΚΑ για την προβολή ΠΡΟΦΙΛ ΕΠΙΧΕΙΡΗΣΕΩΝ.
+ * ΔΕΝ εμφανίζονται: Events, Offers, Boosted events, Boosted offers
+ * 
+ * Λογική εμφάνισης ανά Plan:
+ * - FREE: Εμφανίζεται ΜΟΝΟ σε κοντινό zoom (13+), μικρό pin
+ * - BASIC: Εμφανίζεται από zoom 11+, ελαφρώς μεγαλύτερο pin
+ * - PRO: Εμφανίζεται από zoom 9+, σαφώς ορατό pin
+ * - ELITE: Εμφανίζεται ΠΑΝΤΑ (zoom 7+), μέγιστη ορατότητα
+ */
 const Xartis = () => {
   const { language } = useLanguage();
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [eventCounts, setEventCounts] = useState<Record<string, number>>({});
 
   const text = {
     el: {
@@ -24,28 +34,6 @@ const Xartis = () => {
   };
 
   const t = text[language];
-
-  // Fetch event counts per category
-  useEffect(() => {
-    const fetchEventCounts = async () => {
-      const { data } = await supabase
-        .from('events')
-        .select('category')
-        .gte('end_at', new Date().toISOString());
-
-      if (data) {
-        const counts: Record<string, number> = {};
-        data.forEach(event => {
-          event.category?.forEach((cat: string) => {
-            counts[cat] = (counts[cat] || 0) + 1;
-          });
-        });
-        setEventCounts(counts);
-      }
-    };
-
-    fetchEventCounts();
-  }, []);
 
   const clearAllFilters = () => {
     setSelectedCategories([]);
@@ -111,14 +99,12 @@ const Xartis = () => {
         </div>
       </div>
 
-      {/* Interactive Map */}
+      {/* Interactive Map - ONLY shows business profiles, NOT events/offers */}
       <div className="flex-1 w-full">
         <MapWrapper 
           city={selectedCity || ""} 
           neighborhood="" 
           selectedCategories={selectedCategories}
-          eventCounts={eventCounts}
-          timeAccessFilters={[]}
         />
       </div>
     </div>
