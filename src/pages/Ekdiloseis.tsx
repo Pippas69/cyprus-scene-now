@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useQuery } from "@tanstack/react-query";
 
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import CategoryFilter from "@/components/CategoryFilter";
-import TimeAccessFilters from "@/components/feed/TimeAccessFilters";
 import SignupModal from "@/components/SignupModal";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Ekdiloseis = () => {
   const navigate = useNavigate();
@@ -27,15 +27,8 @@ const Ekdiloseis = () => {
 
     getUser();
 
-    // Listen for real-time auth changes (signup, login, logout)
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        // Instantly unlock full view after signup/login
-        setUser(session.user);
-      } else {
-        // Show limited view if user logs out
-        setUser(null);
-      }
+      setUser(session?.user || null);
     });
 
     return () => subscription.subscription.unsubscribe();
@@ -43,15 +36,11 @@ const Ekdiloseis = () => {
 
   const text = {
     el: {
-      title: "Ανακαλύψτε Εκδηλώσεις",
-      subtitle: "Η καρδιά της κοινωνικής ζωής στην Κύπρο",
       loginRequired: "Συνδεθείτε ή εγγραφείτε για να δείτε όλες τις εκδηλώσεις!",
       loginSubtitle: "Γίνετε μέλος της κοινότητας ΦΟΜΟ και μην χάσετε τίποτα στην Κύπρο.",
       joinButton: "Εγγραφή στο ΦΟΜΟ",
     },
     en: {
-      title: "Discover Events",
-      subtitle: "The heart of social life in Cyprus",
       loginRequired: "Log in or sign up to see all events!",
       loginSubtitle: "Join the ΦΟΜΟ community and don't miss anything in Cyprus.",
       joinButton: "Join ΦΟΜΟ",
@@ -70,34 +59,9 @@ const Ekdiloseis = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="relative py-16 overflow-hidden bg-gradient-to-br from-primary via-primary to-accent">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/50 to-primary opacity-90" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-10 blur-3xl">
-          <div className="w-full h-full rounded-full bg-accent" />
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="text-center text-primary-foreground"
-          >
-            <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-              {t.title}
-            </h1>
-            <p className="font-inter text-lg md:text-xl lg:text-2xl opacity-90">
-              {t.subtitle}
-            </p>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-12">
+      {/* Main Content - No hero banner */}
+      <div className="container mx-auto px-4 py-6">
         {!user ? (
-          /* Visitors see blurred limited view */
           <LimitedExploreView 
             language={language} 
             navigate={navigate} 
@@ -105,20 +69,16 @@ const Ekdiloseis = () => {
             onSignupClick={() => setShowSignupModal(true)}
           />
         ) : (
-          /* Logged-in users see full view with fade-in animation */
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1.2 }}
+            transition={{ duration: 0.6 }}
           >
-            <FullExploreView language={language} />
+            <FullExploreView language={language} user={user} />
           </motion.div>
         )}
       </div>
 
-      
-      
-      {/* Signup Modal */}
       {showSignupModal && (
         <SignupModal 
           onClose={() => setShowSignupModal(false)} 
@@ -137,25 +97,24 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
   useEffect(() => {
     const fetchPreviewEvents = async () => {
       try {
-        // Fetch all events from verified businesses
-      const { data: eventsData, error } = await supabase
-        .from('events')
-        .select(`
-          *,
-          businesses!inner (
-            name,
-            logo_url,
-            verified
-          )
-        `)
-        .eq('businesses.verified', true)
-        .gte('end_at', new Date().toISOString())
-        .order('start_at', { ascending: true });
+        const { data: eventsData, error } = await supabase
+          .from('events')
+          .select(`
+            *,
+            businesses!inner (
+              name,
+              logo_url,
+              verified
+            )
+          `)
+          .eq('businesses.verified', true)
+          .gte('end_at', new Date().toISOString())
+          .order('start_at', { ascending: true })
+          .limit(12);
 
         if (error) throw error;
 
         if (eventsData) {
-          // Fetch RSVP counts for each event
           const eventsWithStats = await Promise.all(
             eventsData.map(async (event) => {
               const { data: rsvps } = await supabase
@@ -191,30 +150,22 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 1, ease: "easeOut" }}
+      transition={{ duration: 0.6 }}
       className="relative"
     >
-      {/* Preview Events - First 4 visible, rest blurred */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative">
         {loading ? (
-          // Show skeletons while loading
-          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
+          [1, 2, 3, 4, 5, 6].map((i) => (
             <EventCardSkeleton key={i} />
           ))
         ) : events.length > 0 ? (
-          // Show real events
           events.map((event, index) => (
             <motion.div
               key={event.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
-              className={`rounded-2xl overflow-hidden shadow-card bg-card transition-all duration-300 ${
-                index > 3 ? 'blur-md opacity-60 pointer-events-none scale-95' : ''
-              }`}
-              style={{
-                filter: index > 3 ? 'blur(4px)' : 'none',
-              }}
+              transition={{ delay: index * 0.05, duration: 0.4 }}
+              className={index > 3 ? 'blur-md opacity-60 pointer-events-none scale-95' : ''}
             >
               <EventCard 
                 language={language} 
@@ -224,23 +175,20 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
             </motion.div>
           ))
         ) : (
-          // Show message if no events
           <div className="col-span-full text-center py-12">
             <p className="text-muted-foreground text-lg">
-              {language === "el" ? "Δεν υπάρχουν διαθέσιμες εκδηλώσεις αυτή τη στιγμή" : "No events available at the moment"}
+              {language === "el" ? "Δεν υπάρχουν διαθέσιμες εκδηλώσεις" : "No events available"}
             </p>
           </div>
         )}
         
-        {/* Gradient overlay on blurred cards */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-background/80" />
       </div>
 
-      {/* Signup CTA Overlay */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.8 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
         className="relative backdrop-blur-sm bg-card/90 rounded-3xl shadow-premium p-8 md:p-12 border border-primary/10"
       >
         <div className="flex flex-col items-center justify-center text-center">
@@ -255,19 +203,6 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
             onClick={onSignupClick}
             className="gradient-brand text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl shadow-glow hover:shadow-hover font-semibold text-base md:text-lg transition-all hover:scale-105"
             whileHover={{ scale: 1.05 }}
-            animate={{ 
-              opacity: [0.85, 1, 0.85]
-            }}
-            transition={{
-              opacity: {
-                repeat: Infinity,
-                duration: 2.5,
-                ease: "easeInOut"
-              },
-              scale: {
-                duration: 0.3
-              }
-            }}
           >
             {t.joinButton}
           </motion.button>
@@ -277,376 +212,240 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
   );
 };
 
-// Full View for Logged-in Users
-const FullExploreView = ({ language }: { language: "el" | "en" }) => {
-  const EVENTS_PER_PAGE = 12;
-  
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [timeAccessFilters, setTimeAccessFilters] = useState<string[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
-  const [personalizedEvents, setPersonalizedEvents] = useState<any[]>([]);
-  const [otherEvents, setOtherEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  
-  // Time/Access filter logic
-  const getTimeAccessFilterQuery = (query: any, filters: string[]) => {
-    const now = new Date();
-    
-    filters.forEach(filter => {
-      switch (filter) {
-        case 'liveNow':
-          query = query.lte('start_at', now.toISOString()).gte('end_at', now.toISOString());
-          break;
-        case 'tonight':
-          const tonightStart = new Date(now);
-          tonightStart.setHours(18, 0, 0, 0);
-          const tonightEnd = new Date(now);
-          tonightEnd.setHours(23, 59, 59, 999);
-          query = query.gte('start_at', tonightStart.toISOString()).lte('start_at', tonightEnd.toISOString());
-          break;
-        case 'monFri':
-          const dayOfWeek = now.getDay();
-          const daysUntilMonday = dayOfWeek === 0 ? 1 : (dayOfWeek === 6 ? 2 : (1 - dayOfWeek + 7) % 7 || 7);
-          const daysUntilFriday = dayOfWeek === 0 ? 5 : (dayOfWeek === 6 ? 6 : (5 - dayOfWeek + 7) % 7);
-          const mondayStart = new Date(now);
-          mondayStart.setDate(now.getDate() + (dayOfWeek >= 1 && dayOfWeek <= 5 ? 1 - dayOfWeek : daysUntilMonday));
-          mondayStart.setHours(0, 0, 0, 0);
-          const fridayEnd = new Date(now);
-          fridayEnd.setDate(now.getDate() + (dayOfWeek >= 1 && dayOfWeek <= 5 ? 5 - dayOfWeek : daysUntilFriday));
-          fridayEnd.setHours(23, 59, 59, 999);
-          query = query.gte('start_at', mondayStart.toISOString()).lte('start_at', fridayEnd.toISOString());
-          break;
-        case 'theWeekend':
-          const currentDay = now.getDay();
-          let saturdayStart = new Date(now);
-          if (currentDay === 0) {
-            saturdayStart.setDate(now.getDate() - 1);
-          } else if (currentDay === 6) {
-            // Already Saturday
-          } else {
-            saturdayStart.setDate(now.getDate() + (6 - currentDay));
-          }
-          saturdayStart.setHours(0, 0, 0, 0);
-          const sundayEnd = new Date(saturdayStart);
-          sundayEnd.setDate(saturdayStart.getDate() + 1);
-          sundayEnd.setHours(23, 59, 59, 999);
-          query = query.gte('start_at', saturdayStart.toISOString()).lte('start_at', sundayEnd.toISOString());
-          break;
-        case 'thisMonth':
-          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-          query = query.gte('start_at', monthStart.toISOString()).lte('start_at', monthEnd.toISOString());
-          break;
-        case 'freeEntrance':
-          query = query.eq('price_tier', 'free');
-          break;
-        case 'withReservations':
-          query = query.eq('accepts_reservations', true);
-          break;
-        case 'withTickets':
-          query = query.not('external_ticket_url', 'is', null);
-          break;
-      }
-    });
-    
-    return query;
-  };
-  
+// Full View for Logged-in Users - FOMO Style
+const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any }) => {
+  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('today');
+
   const text = {
     el: {
-      allEvents: "Όλες οι Εκδηλώσεις",
-      forYou: "Προτεινόμενα για Εσένα",
-      moreEvents: "Περισσότερες Εκδηλώσεις",
-      loadingMore: "Φόρτωση περισσότερων...",
-      endOfResults: "Αυτές είναι όλες οι εκδηλώσεις",
+      boosted: "Προτεινόμενες",
+      today: "Σήμερα",
+      week: "Επόμενες 7 Μέρες",
+      month: "Επόμενες 30 Μέρες",
+      noEvents: "Δεν βρέθηκαν εκδηλώσεις",
+      noEventsDesc: "Δοκιμάστε διαφορετικό χρονικό φίλτρο",
     },
     en: {
-      allEvents: "All Events",
-      forYou: "Recommended for You",
-      moreEvents: "More Events",
-      loadingMore: "Loading more...",
-      endOfResults: "You've seen all events",
+      boosted: "Featured",
+      today: "Today",
+      week: "Next 7 Days",
+      month: "Next 30 Days",
+      noEvents: "No events found",
+      noEventsDesc: "Try a different time filter",
     },
   };
 
   const t = text[language];
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-  }, []);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(0);
-    setHasMore(true);
-    fetchEvents(0, false);
-  }, [selectedCategories, timeAccessFilters, user]);
-
-  // Load more when page changes
-  useEffect(() => {
-    if (page > 0) {
-      fetchEvents(page, true);
-    }
-  }, [page]);
-
-  const fetchEvents = async (pageNum: number = 0, append: boolean = false) => {
-    if (pageNum === 0) {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
+  // Calculate time boundaries
+  const getTimeBoundaries = (filter: 'today' | 'week' | 'month') => {
+    const now = new Date();
+    const end = new Date();
+    
+    switch (filter) {
+      case 'today':
+        end.setHours(now.getHours() + 24);
+        break;
+      case 'week':
+        end.setDate(now.getDate() + 7);
+        break;
+      case 'month':
+        end.setDate(now.getDate() + 30);
+        break;
     }
     
-    try {
-      const from = pageNum * EVENTS_PER_PAGE;
-      const to = from + EVENTS_PER_PAGE - 1;
+    return { start: now.toISOString(), end: end.toISOString() };
+  };
+
+  // Fetch active event boosts
+  const { data: activeBoosts } = useQuery({
+    queryKey: ["active-event-boosts-ekdiloseis"],
+    queryFn: async () => {
+      const now = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("event_boosts")
+        .select("event_id, targeting_quality, boost_tier, business_id")
+        .eq("status", "active")
+        .lte("start_date", now)
+        .gte("end_date", now);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const boostedEventIds = new Set(activeBoosts?.map(b => b.event_id) || []);
+
+  // Fetch BOOSTED events (always shown, sorted by start_at soonest first)
+  const { data: boostedEvents, isLoading: loadingBoosted } = useQuery({
+    queryKey: ["boosted-events", Array.from(boostedEventIds)],
+    queryFn: async () => {
+      if (boostedEventIds.size === 0) return [];
+
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          businesses!inner (name, logo_url, city, verified)
+        `)
+        .in('id', Array.from(boostedEventIds))
+        .eq('businesses.verified', true)
+        .gte('end_at', new Date().toISOString())
+        .order('start_at', { ascending: true });
+
+      if (error) throw error;
       
+      // Fetch RSVP counts
+      const eventsWithStats = await Promise.all(
+        (data || []).map(async (event) => {
+          const { data: rsvps } = await supabase
+            .from('rsvps')
+            .select('status, user_id')
+            .eq('event_id', event.id);
+
+          return {
+            ...event,
+            interested_count: rsvps?.filter(r => r.status === 'interested').length || 0,
+            going_count: rsvps?.filter(r => r.status === 'going').length || 0,
+            user_status: rsvps?.find(r => r.user_id === user?.id)?.status || null,
+          };
+        })
+      );
+
+      return eventsWithStats;
+    },
+    enabled: boostedEventIds.size > 0,
+  });
+
+  // Fetch NON-BOOSTED events (filtered by time, sorted by start_at soonest first)
+  const { start, end } = getTimeBoundaries(timeFilter);
+
+  const { data: regularEvents, isLoading: loadingRegular } = useQuery({
+    queryKey: ["regular-events", timeFilter, Array.from(boostedEventIds)],
+    queryFn: async () => {
       let query = supabase
         .from('events')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          businesses!inner (name, logo_url, city, verified)
+        `)
+        .eq('businesses.verified', true)
+        .gte('start_at', start)
+        .lte('start_at', end)
         .gte('end_at', new Date().toISOString())
-        .order('start_at', { ascending: true })
-        .range(from, to);
+        .order('start_at', { ascending: true });
 
-      if (selectedCategories.length > 0) {
-        query = query.overlaps('category', selectedCategories);
+      // Exclude boosted events
+      if (boostedEventIds.size > 0) {
+        query = query.not('id', 'in', `(${Array.from(boostedEventIds).join(',')})`);
       }
 
-      // Apply time/access filters
-      if (timeAccessFilters.length > 0) {
-        query = getTimeAccessFilterQuery(query, timeAccessFilters);
-      }
-
-      const { data: eventsData, error, count } = await query;
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      if (eventsData) {
-        // Check if there are more events to load
-        const totalLoaded = (pageNum + 1) * EVENTS_PER_PAGE;
-        setHasMore(count ? totalLoaded < count : false);
-        
-        // Fetch RSVP counts and user status for each event
-        const eventsWithStats = await Promise.all(
-          eventsData.map(async (event) => {
-            const { data: rsvps } = await supabase
-              .from('rsvps')
-              .select('status, user_id')
-              .eq('event_id', event.id);
+      // Fetch RSVP counts
+      const eventsWithStats = await Promise.all(
+        (data || []).map(async (event) => {
+          const { data: rsvps } = await supabase
+            .from('rsvps')
+            .select('status, user_id')
+            .eq('event_id', event.id);
 
-            const interested_count = rsvps?.filter(r => r.status === 'interested').length || 0;
-            const going_count = rsvps?.filter(r => r.status === 'going').length || 0;
-            const user_status = rsvps?.find(r => r.user_id === user?.id)?.status || null;
+          return {
+            ...event,
+            interested_count: rsvps?.filter(r => r.status === 'interested').length || 0,
+            going_count: rsvps?.filter(r => r.status === 'going').length || 0,
+            user_status: rsvps?.find(r => r.user_id === user?.id)?.status || null,
+          };
+        })
+      );
 
-            return {
-              ...event,
-              interested_count,
-              going_count,
-              user_status,
-            };
-          })
-        );
+      return eventsWithStats;
+    },
+  });
 
-        // Get user preferences and personalize
-        const userPreferences = user?.user_metadata?.preferences || [];
-        
-        if (userPreferences.length > 0) {
-          // Split events into personalized and others
-          const personalized = eventsWithStats.filter(event =>
-            event.category?.some((cat: string) => userPreferences.includes(cat.toLowerCase()))
-          );
-          const others = eventsWithStats.filter(event =>
-            !event.category?.some((cat: string) => userPreferences.includes(cat.toLowerCase()))
-          );
-          
-          if (append) {
-            // When scrolling, only append to "others" section
-            setOtherEvents(prev => [...prev, ...others]);
-            // Personalized section doesn't paginate
-          } else {
-            // Fresh load
-            setPersonalizedEvents(personalized);
-            setOtherEvents(others);
-          }
-        } else {
-          // No preferences, show all as regular events
-          if (append) {
-            setOtherEvents(prev => [...prev, ...eventsWithStats]);
-          } else {
-            setPersonalizedEvents([]);
-            setOtherEvents(eventsWithStats);
-          }
-        }
-
-        if (!append) {
-          setEvents(eventsWithStats);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    } finally {
-      if (pageNum === 0) {
-        setLoading(false);
-      } else {
-        setLoadingMore(false);
-      }
-    }
-  };
-
-  const lastEventRef = useCallback((node: HTMLDivElement | null) => {
-    if (loading || loadingMore) return;
-    
-    if (observerRef.current) observerRef.current.disconnect();
-    
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prev => prev + 1);
-      }
-    }, { threshold: 0.1 });
-    
-    if (node) observerRef.current.observe(node);
-  }, [loading, loadingMore, hasMore]);
+  const hasBoostedEvents = boostedEvents && boostedEvents.length > 0;
+  const isLoading = loadingBoosted || loadingRegular;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-    >
-      {/* Filters */}
-      <div className="mb-6 space-y-4">
-        <TimeAccessFilters
-          language={language}
-          selectedFilters={timeAccessFilters}
-          onFilterChange={setTimeAccessFilters}
-        />
-        <CategoryFilter
-          language={language}
-          selectedCategories={selectedCategories}
-          onCategoryChange={setSelectedCategories}
-        />
-      </div>
-
-      {/* Events Grid */}
-      <motion.div 
-        className="mb-6"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h2 className="text-2xl font-bold text-foreground font-cinzel">
-          {t.allEvents}
-        </h2>
-      </motion.div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <EventCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : (
-        <>
-          {/* Personalized Events Section */}
-          {personalizedEvents.length > 0 && (
-            <div className="mb-12">
-              <motion.div 
-                className="mb-6 flex items-center gap-3"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
+    <div className="space-y-8">
+      {/* BOOSTED ZONE - Always at top, not filtered */}
+      {hasBoostedEvents && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-accent" />
+            <h2 className="text-xl font-semibold">{t.boosted}</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {boostedEvents.map((event, index) => (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.4 }}
+                className="relative"
               >
-                <div className="h-8 w-1 bg-gradient-brand rounded-full" />
-                <h2 className="text-2xl font-bold text-foreground font-cinzel">
-                  {t.forYou}
-                </h2>
-              </motion.div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {personalizedEvents.map((event, i) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08, duration: 0.6 }}
-                    whileHover={{ scale: 1.03, y: -4 }}
-                    className="rounded-2xl shadow-card hover:shadow-hover transition-all bg-card"
-                  >
-                    <EventCard language={language} event={event} user={user} />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Other Events Section */}
-          {otherEvents.length > 0 && (
-            <div>
-              <motion.div 
-                className="mb-6"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <h2 className="text-2xl font-bold text-foreground font-cinzel">
-                  {personalizedEvents.length > 0 ? t.moreEvents : t.allEvents}
-                </h2>
-              </motion.div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {otherEvents.map((event, i) => (
-                  <motion.div
-                    key={event.id}
-                    ref={i === otherEvents.length - 1 ? lastEventRef : null}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08, duration: 0.6 }}
-                    whileHover={{ scale: 1.03, y: -4 }}
-                    className="rounded-2xl shadow-card hover:shadow-hover transition-all bg-card"
-                  >
-                    <EventCard language={language} event={event} user={user} />
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Loading more indicator */}
-              {loadingMore && (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="absolute -top-2 -right-2 z-10">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent text-accent-foreground text-xs font-medium rounded-full">
+                    <Sparkles className="h-3 w-3" />
+                  </span>
                 </div>
-              )}
-
-              {/* End of results message */}
-              {!hasMore && otherEvents.length > 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    {t.endOfResults}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* No events message */}
-          {events.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-lg">
-                {language === "el" ? "Δεν βρέθηκαν εκδηλώσεις" : "No events found"}
-              </p>
-            </div>
-          )}
-        </>
+                <EventCard 
+                  language={language} 
+                  event={event}
+                  user={user}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </section>
       )}
-    </motion.div>
+
+      {/* TIME FILTER ZONE */}
+      <section className="space-y-4">
+        {/* Time Tabs */}
+        <Tabs value={timeFilter} onValueChange={(v) => setTimeFilter(v as any)} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsTrigger value="today">{t.today}</TabsTrigger>
+            <TabsTrigger value="week">{t.week}</TabsTrigger>
+            <TabsTrigger value="month">{t.month}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Regular Events List */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <EventCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : regularEvents && regularEvents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {regularEvents.map((event, index) => (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03, duration: 0.3 }}
+              >
+                <EventCard 
+                  language={language} 
+                  event={event}
+                  user={user}
+                />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-muted/30 rounded-xl">
+            <p className="text-lg font-medium text-muted-foreground">{t.noEvents}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t.noEventsDesc}</p>
+          </div>
+        )}
+      </section>
+    </div>
   );
 };
 
