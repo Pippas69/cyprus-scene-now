@@ -94,12 +94,12 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
     queryKey: ['offers-preview'],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const { data, error } = await supabase
-        .from('discounts')
-        .select(`
-          *,
-          businesses!inner (name, logo_url, city, verified, stripe_payouts_enabled)
-        `)
+        const { data, error } = await supabase
+          .from('discounts')
+          .select(`
+            *,
+            businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled)
+          `)
         .eq('active', true)
         .eq('businesses.verified', true)
         .lte('start_at', now)
@@ -252,12 +252,12 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
       if (boostedOfferIds.size === 0) return [];
 
       const now = new Date().toISOString();
-      let query = supabase
-        .from('discounts')
-        .select(`
-          *,
-          businesses!inner (name, logo_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations)
-        `)
+       let query = supabase
+         .from('discounts')
+         .select(`
+           *,
+           businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations)
+         `)
         .in('id', Array.from(boostedOfferIds))
         .eq('active', true)
         .eq('businesses.verified', true)
@@ -288,12 +288,12 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
     queryFn: async () => {
       const now = new Date().toISOString();
       
-      let query = supabase
-        .from('discounts')
-        .select(`
-          *,
-          businesses!inner (name, logo_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations)
-        `)
+       let query = supabase
+         .from('discounts')
+         .select(`
+           *,
+           businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations)
+         `)
         .eq('active', true)
         .eq('businesses.verified', true)
         .lte('start_at', now)

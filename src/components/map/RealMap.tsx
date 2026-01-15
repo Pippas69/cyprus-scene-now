@@ -158,11 +158,27 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
   // Update markers when businesses change or map moves
   useEffect(() => {
     if (!map.current || !businesses.length) return;
-    
+
     // Clear existing markers
-    markersRef.current.forEach(m => m.remove());
+    markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
-    
+
+    // Ensure we start with a view that can actually show the businesses.
+    // (Does not change filtering logic; it just avoids "empty map" on initial load.)
+    try {
+      const lngs = businesses.map((b) => b.coordinates[0]);
+      const lats = businesses.map((b) => b.coordinates[1]);
+      const sw: [number, number] = [Math.min(...lngs), Math.min(...lats)];
+      const ne: [number, number] = [Math.max(...lngs), Math.max(...lats)];
+      map.current.fitBounds([sw, ne], {
+        padding: 80,
+        duration: 700,
+        maxZoom: 12,
+      });
+    } catch {
+      // ignore
+    }
+
     /**
      * PREMIUM PIN RENDERING - NO CLUSTERING
      * Each business gets its own custom pin based on subscription plan.
@@ -171,34 +187,28 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
     const updateMarkers = () => {
       if (!map.current) return;
       const zoom = map.current.getZoom();
-      const bounds = map.current.getBounds();
-      
+
       // Clear existing markers
-      markersRef.current.forEach(m => m.remove());
+      markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
-      
-      // Filter businesses within current viewport and visible at current zoom
-      const visibleBusinesses = businesses.filter(business => {
-        // Check if within map bounds
-        const [lng, lat] = business.coordinates;
-        if (!bounds.contains([lng, lat])) return false;
-        
-        // Check if visible at current zoom based on plan
-        const minZoom = MIN_ZOOM_FOR_PLAN[business.planSlug];
-        return zoom >= minZoom;
-      });
-      
-      // Sort by plan tier so higher tiers render on top (Elite last = on top)
-      visibleBusinesses.sort((a, b) => a.planTierIndex - b.planTierIndex);
-      
-      // Render each business as individual premium pin
-      visibleBusinesses.forEach(business => {
+
+      // IMPORTANT: Do NOT hide pins via viewport bounds; they must be visible whenever they are on-screen.
+      // We only gate by zoom tier here.
+      const visibleBusinesses = businesses
+        .filter((business) => {
+          const minZoom = MIN_ZOOM_FOR_PLAN[business.planSlug];
+          return zoom >= minZoom;
+        })
+        // Render higher tiers on top (Elite last)
+        .sort((a, b) => a.planTierIndex - b.planTierIndex);
+
+      visibleBusinesses.forEach((business) => {
         const [lng, lat] = business.coordinates;
         const div = document.createElement('div');
         const root = ReactDOM.createRoot(div);
-        
+
         root.render(
-          <BusinessMarker 
+          <BusinessMarker
             planSlug={business.planSlug}
             markerId={business.id}
             name={business.name}
@@ -207,30 +217,26 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
               const popupDiv = document.createElement('div');
               const popupRoot = ReactDOM.createRoot(popupDiv);
               popupRoot.render(
-                <BusinessPopup 
-                  business={business} 
-                  onClose={() => popupRef.current?.remove()} 
-                  language={language} 
+                <BusinessPopup
+                  business={business}
+                  onClose={() => popupRef.current?.remove()}
+                  language={language}
                 />
               );
-              popupRef.current = new mapboxgl.Popup({ 
-                closeButton: false, 
-                closeOnClick: false, 
-                maxWidth: 'none', 
-                offset: 25 
+              popupRef.current = new mapboxgl.Popup({
+                closeButton: false,
+                closeOnClick: false,
+                maxWidth: 'none',
+                offset: 25,
               })
                 .setLngLat([lng, lat])
                 .setDOMContent(popupDiv)
                 .addTo(map.current!);
-            }} 
+            }}
           />
         );
-        
-        markersRef.current.push(
-          new mapboxgl.Marker({ element: div })
-            .setLngLat([lng, lat])
-            .addTo(map.current!)
-        );
+
+        markersRef.current.push(new mapboxgl.Marker({ element: div }).setLngLat([lng, lat]).addTo(map.current!));
       });
     };
     
