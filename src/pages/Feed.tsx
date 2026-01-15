@@ -429,12 +429,14 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </div>
             )}
 
-            {/* All businesses from FOMO - filtered by selected categories */}
-            <BusinessDirectorySection 
-              language={language} 
-              selectedCity={selectedCity} 
-              selectedCategories={selectedCategories}
-            />
+            {/* All businesses from FOMO - filtered by selected categories (hidden when student discount filter is active) */}
+            {!showStudentDiscounts && (
+              <BusinessDirectorySection 
+                language={language} 
+                selectedCity={selectedCity} 
+                selectedCategories={selectedCategories}
+              />
+            )}
 
           </div>
         </div>
