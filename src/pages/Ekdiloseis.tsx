@@ -9,7 +9,8 @@ import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import SignupModal from "@/components/SignupModal";
 import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
-import { Loader2, CalendarHeart } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { PremiumBadge } from "@/components/ui/premium-badge";
 
 const Ekdiloseis = () => {
   const navigate = useNavigate();
@@ -441,10 +442,8 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
                 transition={{ delay: index * 0.05, duration: 0.4 }}
                 className="relative"
               >
-                <div className="absolute -top-2 -right-2 z-10">
-                  <span className="inline-flex items-center justify-center w-7 h-7 bg-orange-500 text-white rounded-full shadow-md">
-                    <CalendarHeart className="h-4 w-4" />
-                  </span>
+                <div className="absolute top-2 right-2 z-10">
+                  <PremiumBadge type="event" />
                 </div>
                 <EventCard 
                   language={language} 
