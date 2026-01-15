@@ -32,6 +32,42 @@ interface BusinessDirectorySectionProps {
   userCity?: string | null;
 }
 
+// Map filter IDs to database category values
+// This converts UI filter selections to actual database values
+const CATEGORY_ID_TO_DB_VALUES: Record<string, string[]> = {
+  // Main categories
+  "nightlife": ["Nightlife"],
+  "clubs": ["Clubs"],
+  "dining": ["Dining"],
+  "beach-summer": ["Beach & Summer"],
+  // Nightlife sub-options
+  "bars": ["Nightlife", "Bars"],
+  "wine-cocktail-bars": ["Nightlife", "Wine & Cocktail Bars"],
+  "live-music": ["Nightlife", "Live Music"],
+  // Dining sub-options
+  "fine-dining": ["Dining", "Fine Dining"],
+  "casual-dining": ["Dining", "Casual Dining"],
+  // Beach & Summer sub-options
+  "beach-bars": ["Beach & Summer", "Beach Bars"],
+  "summer-events": ["Beach & Summer", "Summer Events"],
+  "seaside-restaurants": ["Beach & Summer", "Seaside Restaurants"],
+};
+
+// Convert filter IDs to database category values for querying
+const mapFilterIdsToDbCategories = (filterIds: string[]): string[] => {
+  const dbCategories = new Set<string>();
+  filterIds.forEach(id => {
+    const values = CATEGORY_ID_TO_DB_VALUES[id];
+    if (values) {
+      values.forEach(v => dbCategories.add(v));
+    } else {
+      // Fallback: use the ID directly (capitalized)
+      dbCategories.add(id.charAt(0).toUpperCase() + id.slice(1));
+    }
+  });
+  return Array.from(dbCategories);
+};
+
 const translations = {
   el: {
     noBusinesses: "Δεν βρέθηκαν επιχειρήσεις",
@@ -65,8 +101,10 @@ export const BusinessDirectorySection = ({
       }
 
       // Apply category filter if categories are selected
+      // Convert filter IDs to database category values
       if (selectedCategories.length > 0) {
-        query = query.overlaps('category', selectedCategories);
+        const dbCategories = mapFilterIdsToDbCategories(selectedCategories);
+        query = query.overlaps('category', dbCategories);
       }
       
       // Fetch ALL businesses (no limit)
