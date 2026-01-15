@@ -4,21 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search, X, Tag, Percent, Clock, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
 import SignupModal from "@/components/SignupModal";
-import LocationSwitcher from "@/components/feed/LocationSwitcher";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useDebounce } from "@/hooks/useDebounce";
-import { 
-  getOfferBoostScore, 
-  getRotationSeed, 
-  DISPLAY_CAPS,
-  type OfferBoost 
-} from "@/lib/personalization";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Offers = () => {
   const navigate = useNavigate();
@@ -45,15 +35,11 @@ const Offers = () => {
 
   const text = {
     el: {
-      title: "Ανακαλύψτε Προσφορές",
-      subtitle: "Αποκλειστικές εκπτώσεις από επιχειρήσεις στην Κύπρο",
       loginRequired: "Συνδεθείτε για να δείτε όλες τις προσφορές!",
       loginSubtitle: "Γίνετε μέλος της κοινότητας ΦΟΜΟ και εξοικονομήστε χρήματα.",
       joinButton: "Εγγραφή στο ΦΟΜΟ",
     },
     en: {
-      title: "Discover Offers",
-      subtitle: "Exclusive deals from businesses in Cyprus",
       loginRequired: "Log in to see all offers!",
       loginSubtitle: "Join the ΦΟΜΟ community and save money.",
       joinButton: "Join ΦΟΜΟ",
@@ -72,35 +58,8 @@ const Offers = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="relative py-16 overflow-hidden bg-gradient-to-br from-accent via-primary to-primary">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/50 to-primary opacity-90" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-10 blur-3xl">
-          <div className="w-full h-full rounded-full bg-accent" />
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="text-center text-primary-foreground"
-          >
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Tag className="h-8 w-8" />
-            </div>
-            <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-              {t.title}
-            </h1>
-            <p className="font-inter text-lg md:text-xl lg:text-2xl opacity-90">
-              {t.subtitle}
-            </p>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-12">
+      {/* Main Content - No hero banner */}
+      <div className="container mx-auto px-4 py-6">
         {!user ? (
           <LimitedOffersView 
             language={language} 
@@ -111,7 +70,7 @@ const Offers = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1.2 }}
+            transition={{ duration: 0.6 }}
           >
             <FullOffersView language={language} user={user} />
           </motion.div>
@@ -145,7 +104,7 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
         .lte('start_at', now)
         .gte('end_at', now)
         .gt('original_price_cents', 0)
-        .order('created_at', { ascending: false })
+        .order('end_at', { ascending: true })
         .limit(12);
 
       if (error) throw error;
@@ -157,7 +116,7 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 1, ease: "easeOut" }}
+      transition={{ duration: 0.6 }}
       className="relative"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative">
@@ -171,7 +130,7 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
               key={offer.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
+              transition={{ delay: index * 0.05, duration: 0.4 }}
               className={index > 3 ? 'blur-md opacity-60 pointer-events-none scale-95' : ''}
             >
               <OfferCard 
@@ -195,7 +154,7 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.8 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
         className="relative backdrop-blur-sm bg-card/90 rounded-3xl shadow-premium p-8 md:p-12 border border-primary/10"
       >
         <div className="flex flex-col items-center justify-center text-center">
@@ -219,271 +178,152 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
   );
 };
 
-// Full View for Logged-in Users
+// Full View for Logged-in Users - FOMO Style
 const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }) => {
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [discountFilter, setDiscountFilter] = useState<string | null>(null);
-  const [timeFilter, setTimeFilter] = useState<string | null>(null);
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('today');
 
   const text = {
     el: {
-      search: "Αναζήτηση προσφορών...",
-      filters: "Φίλτρα",
-      clearFilters: "Καθαρισμός",
-      noResults: "Δεν βρέθηκαν προσφορές",
-      noResultsDesc: "Δοκιμάστε να αλλάξετε τα φίλτρα σας",
-      discount10: "10-25%",
-      discount25: "25-50%",
-      discount50: "50%+",
-      endingSoon: "Λήγει Σύντομα",
-      newOffers: "Νέες Προσφορές",
       boosted: "Προτεινόμενες",
+      today: "Σήμερα",
+      week: "Επόμενες 7 Μέρες",
+      month: "Επόμενες 30 Μέρες",
+      noOffers: "Δεν βρέθηκαν προσφορές",
+      noOffersDesc: "Δοκιμάστε διαφορετικό χρονικό φίλτρο",
     },
     en: {
-      search: "Search offers...",
-      filters: "Filters",
-      clearFilters: "Clear",
-      noResults: "No offers found",
-      noResultsDesc: "Try adjusting your filters",
-      discount10: "10-25%",
-      discount25: "25-50%",
-      discount50: "50%+",
-      endingSoon: "Ending Soon",
-      newOffers: "New Offers",
       boosted: "Featured",
+      today: "Today",
+      week: "Next 7 Days",
+      month: "Next 30 Days",
+      noOffers: "No offers found",
+      noOffersDesc: "Try a different time filter",
     },
   };
 
   const t = text[language];
 
-  // Fetch offers with filters
-  const { data: offers, isLoading } = useQuery({
-    queryKey: ['offers-full', selectedCity, debouncedSearch, discountFilter, timeFilter],
+  // Calculate time boundaries for filtering
+  const getTimeBoundaries = (filter: 'today' | 'week' | 'month') => {
+    const now = new Date();
+    const end = new Date();
+    
+    switch (filter) {
+      case 'today':
+        end.setHours(now.getHours() + 24);
+        break;
+      case 'week':
+        end.setDate(now.getDate() + 7);
+        break;
+      case 'month':
+        end.setDate(now.getDate() + 30);
+        break;
+    }
+    
+    return { start: now.toISOString(), end: end.toISOString() };
+  };
+
+  // Fetch active offer boosts
+  const { data: activeBoosts } = useQuery({
+    queryKey: ["active-offer-boosts-offers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("offer_boosts")
+        .select("discount_id, targeting_quality, business_id")
+        .eq("active", true);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const boostedOfferIds = new Set(activeBoosts?.map(b => b.discount_id) || []);
+
+  // Fetch BOOSTED offers (always shown, sorted by end_at - earliest expiry first)
+  const { data: boostedOffers, isLoading: loadingBoosted } = useQuery({
+    queryKey: ["boosted-offers", Array.from(boostedOfferIds)],
+    queryFn: async () => {
+      if (boostedOfferIds.size === 0) return [];
+
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('discounts')
+        .select(`
+          *,
+          businesses!inner (name, logo_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations)
+        `)
+        .in('id', Array.from(boostedOfferIds))
+        .eq('active', true)
+        .eq('businesses.verified', true)
+        .lte('start_at', now)
+        .gte('end_at', now)
+        .order('end_at', { ascending: true }); // Earliest expiry first
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: boostedOfferIds.size > 0,
+  });
+
+  // Fetch NON-BOOSTED offers (filtered by time, sorted by end_at - earliest expiry first)
+  const { start, end } = getTimeBoundaries(timeFilter);
+
+  const { data: regularOffers, isLoading: loadingRegular } = useQuery({
+    queryKey: ["regular-offers", timeFilter, Array.from(boostedOfferIds)],
     queryFn: async () => {
       const now = new Date().toISOString();
+      
       let query = supabase
         .from('discounts')
         .select(`
           *,
-          businesses!inner (name, logo_url, city, verified, stripe_payouts_enabled)
+          businesses!inner (name, logo_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations)
         `)
         .eq('active', true)
         .eq('businesses.verified', true)
         .lte('start_at', now)
         .gte('end_at', now)
-        .gt('original_price_cents', 0);
+        // Filter: offer must be active within the selected time window
+        .lte('start_at', end)
+        .order('end_at', { ascending: true }); // Earliest expiry first
 
-      // City filter
-      if (selectedCity) {
-        query = query.eq('businesses.city', selectedCity);
+      // Exclude boosted offers
+      if (boostedOfferIds.size > 0) {
+        query = query.not('id', 'in', `(${Array.from(boostedOfferIds).join(',')})`);
       }
 
-      // Search filter
-      if (debouncedSearch) {
-        query = query.or(`title.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%`);
-      }
-
-      // Discount percentage filter
-      if (discountFilter === '10-25') {
-        query = query.gte('percent_off', 10).lt('percent_off', 25);
-      } else if (discountFilter === '25-50') {
-        query = query.gte('percent_off', 25).lt('percent_off', 50);
-      } else if (discountFilter === '50+') {
-        query = query.gte('percent_off', 50);
-      }
-
-      // Time filter
-      if (timeFilter === 'ending') {
-        const sevenDaysFromNow = new Date();
-        sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-        query = query.lte('end_at', sevenDaysFromNow.toISOString());
-      } else if (timeFilter === 'new') {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        query = query.gte('created_at', sevenDaysAgo.toISOString());
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Fetch user profile for personalization
-  const { data: userProfile } = useQuery({
-    queryKey: ['user-profile-offers', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('city, interests')
-        .eq('id', user.id)
-        .single();
       
-      if (error) return null;
-      return data;
-    },
-    enabled: !!user,
-  });
+      // Additional client-side filter: only offers that end within the time window
+      // or are still active during the time window
+      const filteredOffers = (data || []).filter(offer => {
+        const offerEnd = new Date(offer.end_at);
+        const windowEnd = new Date(end);
+        // Offer should be active at some point during the window
+        return offerEnd >= new Date(now);
+      });
 
-  // Fetch active boosts for prioritization
-  const { data: boosts } = useQuery({
-    queryKey: ['offer-boosts-active'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('offer_boosts')
-        .select('discount_id, targeting_quality')
-        .eq('active', true);
-
-      if (error) throw error;
-      return data || [];
+      return filteredOffers;
     },
   });
 
-  // Calculate rotation seed for fair distribution
-  const rotationSeed = getRotationSeed(user?.id);
-
-  // Sort offers with personalization, rotation, and fair distribution
-  const sortedOffers = offers?.map((offer: any) => {
-    const offerBoosts: OfferBoost[] = (boosts || []).map((b: any) => ({
-      discount_id: b.discount_id,
-      targeting_quality: b.targeting_quality,
-      boost_tier: b.targeting_quality >= 5 ? 'premium' : 'standard'
-    }));
-    
-    const boostScore = getOfferBoostScore(
-      { 
-        id: offer.id, 
-        business_id: offer.business_id,
-        businesses: offer.businesses 
-      },
-      userProfile || null,
-      offerBoosts,
-      rotationSeed
-    );
-    
-    return { ...offer, boostScore };
-  }).sort((a: any, b: any) => b.boostScore - a.boostScore);
-
-  const hasActiveFilters = selectedCity || discountFilter || timeFilter || debouncedSearch;
-
-  const clearFilters = () => {
-    setSelectedCity(null);
-    setDiscountFilter(null);
-    setTimeFilter(null);
-    setSearchQuery("");
-  };
+  const hasBoostedOffers = boostedOffers && boostedOffers.length > 0;
+  const isLoading = loadingBoosted || loadingRegular;
 
   return (
-    <div className="space-y-6">
-      {/* Filters Row */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-        {/* Search */}
-        <div className="relative flex-1 w-full md:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t.search}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-10"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Location */}
-        <LocationSwitcher
-          language={language}
-          selectedCity={selectedCity}
-          onCityChange={setSelectedCity}
-        />
-      </div>
-
-      {/* Filter Chips */}
-      <div className="flex flex-wrap gap-2">
-        {/* Discount Filters */}
-        <Badge
-          variant={discountFilter === '10-25' ? 'default' : 'outline'}
-          className="cursor-pointer hover:bg-primary/10"
-          onClick={() => setDiscountFilter(discountFilter === '10-25' ? null : '10-25')}
-        >
-          <Percent className="h-3 w-3 mr-1" />
-          {t.discount10}
-        </Badge>
-        <Badge
-          variant={discountFilter === '25-50' ? 'default' : 'outline'}
-          className="cursor-pointer hover:bg-primary/10"
-          onClick={() => setDiscountFilter(discountFilter === '25-50' ? null : '25-50')}
-        >
-          <Percent className="h-3 w-3 mr-1" />
-          {t.discount25}
-        </Badge>
-        <Badge
-          variant={discountFilter === '50+' ? 'default' : 'outline'}
-          className="cursor-pointer hover:bg-primary/10"
-          onClick={() => setDiscountFilter(discountFilter === '50+' ? null : '50+')}
-        >
-          <Percent className="h-3 w-3 mr-1" />
-          {t.discount50}
-        </Badge>
-
-        <div className="w-px h-6 bg-border mx-1" />
-
-        {/* Time Filters */}
-        <Badge
-          variant={timeFilter === 'ending' ? 'default' : 'outline'}
-          className="cursor-pointer hover:bg-primary/10"
-          onClick={() => setTimeFilter(timeFilter === 'ending' ? null : 'ending')}
-        >
-          <Clock className="h-3 w-3 mr-1" />
-          {t.endingSoon}
-        </Badge>
-        <Badge
-          variant={timeFilter === 'new' ? 'default' : 'outline'}
-          className="cursor-pointer hover:bg-primary/10"
-          onClick={() => setTimeFilter(timeFilter === 'new' ? null : 'new')}
-        >
-          <Sparkles className="h-3 w-3 mr-1" />
-          {t.newOffers}
-        </Badge>
-
-        {hasActiveFilters && (
-          <>
-            <div className="w-px h-6 bg-border mx-1" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="h-6 text-xs"
-            >
-              <X className="h-3 w-3 mr-1" />
-              {t.clearFilters}
-            </Button>
-          </>
-        )}
-      </div>
-
-      {/* Offers Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <OfferCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : sortedOffers && sortedOffers.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedOffers.map((offer: any, index: number) => {
-            const isBoosted = boosts?.some((b: any) => b.discount_id === offer.id);
-            return (
+    <div className="space-y-8">
+      {/* BOOSTED ZONE - Always at top, not filtered */}
+      {hasBoostedOffers && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-accent" />
+            <h2 className="text-xl font-semibold">{t.boosted}</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {boostedOffers.map((offer: any, index: number) => (
               <motion.div
                 key={offer.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -491,33 +331,64 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
                 transition={{ delay: index * 0.05, duration: 0.4 }}
                 className="relative"
               >
-                {isBoosted && (
-                  <Badge className="absolute -top-2 -right-2 z-10 bg-accent text-accent-foreground">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    {t.boosted}
-                  </Badge>
-                )}
+                <div className="absolute -top-2 -right-2 z-10">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent text-accent-foreground text-xs font-medium rounded-full">
+                    <Sparkles className="h-3 w-3" />
+                  </span>
+                </div>
                 <OfferCard 
                   offer={offer}
                   language={language}
                   user={user}
                 />
               </motion.div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">{t.noResults}</h3>
-          <p className="text-muted-foreground">{t.noResultsDesc}</p>
-          {hasActiveFilters && (
-            <Button variant="outline" className="mt-4" onClick={clearFilters}>
-              {t.clearFilters}
-            </Button>
-          )}
-        </div>
+            ))}
+          </div>
+        </section>
       )}
+
+      {/* TIME FILTER ZONE */}
+      <section className="space-y-4">
+        {/* Time Tabs */}
+        <Tabs value={timeFilter} onValueChange={(v) => setTimeFilter(v as any)} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsTrigger value="today">{t.today}</TabsTrigger>
+            <TabsTrigger value="week">{t.week}</TabsTrigger>
+            <TabsTrigger value="month">{t.month}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Regular Offers List */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <OfferCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : regularOffers && regularOffers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {regularOffers.map((offer: any, index: number) => (
+              <motion.div
+                key={offer.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03, duration: 0.3 }}
+              >
+                <OfferCard 
+                  offer={offer}
+                  language={language}
+                  user={user}
+                />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-muted/30 rounded-xl">
+            <p className="text-lg font-medium text-muted-foreground">{t.noOffers}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t.noOffersDesc}</p>
+          </div>
+        )}
+      </section>
     </div>
   );
 };
