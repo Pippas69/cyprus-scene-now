@@ -72,17 +72,18 @@ const SCORE = {
   TIER_STANDARD: 25,     // Standard tier base score
   
   // Subscription plan scores (for business profile visibility)
-  PLAN_ELITE: 100,       // Elite plan - "First suggestion"
-  PLAN_PRO: 60,          // Pro plan - "High visibility"
-  PLAN_BASIC: 20,        // Basic plan - "Normal visibility"
+  // Using large gaps to ensure plan hierarchy NEVER breaks
+  PLAN_ELITE: 10000,     // Elite plan - Always first
+  PLAN_PRO: 5000,        // Pro plan - Always after Elite
+  PLAN_BASIC: 1000,      // Basic plan - Always after Pro
+  PLAN_FREE: 0,          // Free plan - Always last
   
-  // Personalization bonuses
+  // Personalization bonuses (used ONLY within same plan tier)
   SAME_CITY: 30,         // User in same city
   CATEGORY_MATCH: 25,    // Per category match with user interests
   RSVP_CATEGORY: 20,     // Category from past RSVPs
   FAVORITE_CATEGORY: 15, // Category from favorited events
   TIME_PREFERENCE: 10,   // Time of day preference match
-  ROTATION_MAX: 20,      // Max random rotation points
 };
 
 const DISPLAY_CAPS = {
@@ -94,9 +95,33 @@ const DISPLAY_CAPS = {
 // Plan slug type for subscription hierarchy
 export type PlanSlug = 'free' | 'basic' | 'pro' | 'elite';
 
+// Plan tier order (index = priority, lower = higher priority)
+export const PLAN_TIER_ORDER: PlanSlug[] = ['elite', 'pro', 'basic', 'free'];
+
+/**
+ * Get the tier index for a plan (0 = Elite, 1 = Pro, 2 = Basic, 3 = Free)
+ * Lower index = higher priority
+ */
+export const getPlanTierIndex = (plan: PlanSlug | string | null): number => {
+  switch (plan) {
+    case 'elite':
+    case 'professional':
+      return 0; // Elite - highest priority
+    case 'pro':
+    case 'growth':
+      return 1; // Pro
+    case 'basic':
+    case 'starter':
+      return 2; // Basic
+    default:
+      return 3; // Free - lowest priority
+  }
+};
+
 /**
  * Get score based on subscription plan
  * Elite = First suggestion, Pro = High visibility, Basic = Normal visibility
+ * NOTE: For strict hierarchy sorting, use getPlanTierIndex instead
  */
 export const getPlanScore = (plan: PlanSlug | string | null): number => {
   switch (plan) {
@@ -110,31 +135,90 @@ export const getPlanScore = (plan: PlanSlug | string | null): number => {
     case 'starter':
       return SCORE.PLAN_BASIC;
     default:
-      return 0; // Free plan gets no boost
+      return SCORE.PLAN_FREE;
   }
 };
 
+// City proximity map for Cyprus (distances in km)
+export const CITY_DISTANCES: Record<string, Record<string, number>> = {
+  "Λευκωσία": { "Λευκωσία": 0, "Λάρνακα": 50, "Λεμεσός": 85, "Πάφος": 150, "Αμμόχωστος": 70, "Παραλίμνι": 60, "Αγία Νάπα": 75 },
+  "Λάρνακα": { "Λευκωσία": 50, "Λάρνακα": 0, "Λεμεσός": 70, "Πάφος": 130, "Αμμόχωστος": 45, "Παραλίμνι": 35, "Αγία Νάπα": 40 },
+  "Λεμεσός": { "Λευκωσία": 85, "Λάρνακα": 70, "Λεμεσός": 0, "Πάφος": 70, "Αμμόχωστος": 110, "Παραλίμνι": 100, "Αγία Νάπα": 110 },
+  "Πάφος": { "Λευκωσία": 150, "Λάρνακα": 130, "Λεμεσός": 70, "Πάφος": 0, "Αμμόχωστος": 180, "Παραλίμνι": 170, "Αγία Νάπα": 175 },
+  "Αμμόχωστος": { "Λευκωσία": 70, "Λάρνακα": 45, "Λεμεσός": 110, "Πάφος": 180, "Αμμόχωστος": 0, "Παραλίμνι": 10, "Αγία Νάπα": 15 },
+  "Παραλίμνι": { "Λευκωσία": 60, "Λάρνακα": 35, "Λεμεσός": 100, "Πάφος": 170, "Αμμόχωστος": 10, "Παραλίμνι": 0, "Αγία Νάπα": 10 },
+  "Αγία Νάπα": { "Λευκωσία": 75, "Λάρνακα": 40, "Λεμεσός": 110, "Πάφος": 175, "Αμμόχωστος": 15, "Παραλίμνι": 10, "Αγία Νάπα": 0 },
+  // English variants
+  "Nicosia": { "Nicosia": 0, "Larnaca": 50, "Limassol": 85, "Paphos": 150, "Famagusta": 70, "Paralimni": 60, "Ayia Napa": 75, "Λευκωσία": 0, "Λάρνακα": 50, "Λεμεσός": 85, "Πάφος": 150, "Αμμόχωστος": 70, "Παραλίμνι": 60, "Αγία Νάπα": 75 },
+  "Larnaca": { "Nicosia": 50, "Larnaca": 0, "Limassol": 70, "Paphos": 130, "Famagusta": 45, "Paralimni": 35, "Ayia Napa": 40, "Λευκωσία": 50, "Λάρνακα": 0, "Λεμεσός": 70, "Πάφος": 130, "Αμμόχωστος": 45, "Παραλίμνι": 35, "Αγία Νάπα": 40 },
+  "Limassol": { "Nicosia": 85, "Larnaca": 70, "Limassol": 0, "Paphos": 70, "Famagusta": 110, "Paralimni": 100, "Ayia Napa": 110, "Λευκωσία": 85, "Λάρνακα": 70, "Λεμεσός": 0, "Πάφος": 70, "Αμμόχωστος": 110, "Παραλίμνι": 100, "Αγία Νάπα": 110 },
+  "Paphos": { "Nicosia": 150, "Larnaca": 130, "Limassol": 70, "Paphos": 0, "Famagusta": 180, "Paralimni": 170, "Ayia Napa": 175, "Λευκωσία": 150, "Λάρνακα": 130, "Λεμεσός": 70, "Πάφος": 0, "Αμμόχωστος": 180, "Παραλίμνι": 170, "Αγία Νάπα": 175 },
+};
+
 /**
- * Generate a rotation seed that changes hourly and varies by user
- * This ensures fair distribution - different users see different orderings
- * Same user sees consistent order within the hour for good UX
+ * Get distance between two cities (in km)
+ * Returns 1000 for unknown cities (max distance)
+ */
+export const getCityDistance = (cityA: string | null | undefined, cityB: string | null | undefined): number => {
+  if (!cityA || !cityB) return 1000; // Unknown = max distance
+  const normalizedA = cityA.trim();
+  const normalizedB = cityB.trim();
+  
+  // Direct lookup
+  if (CITY_DISTANCES[normalizedA]?.[normalizedB] !== undefined) {
+    return CITY_DISTANCES[normalizedA][normalizedB];
+  }
+  
+  // Same city = 0, different = 100
+  return normalizedA === normalizedB ? 0 : 100;
+};
+
+/**
+ * Sort businesses by strict plan hierarchy + geographic proximity
+ * 1. First: ALL Elite businesses (sorted by proximity)
+ * 2. Then: ALL Pro businesses (sorted by proximity)
+ * 3. Then: ALL Basic businesses (sorted by proximity)
+ * 4. Last: ALL Free businesses (sorted by proximity)
+ * 
+ * NO ROTATION. NO RANDOMNESS. Plan hierarchy NEVER breaks.
+ */
+export const sortBusinessesByPlanAndProximity = <T extends { id: string; city: string; planTierIndex: number }>(
+  businesses: T[],
+  userCity: string | null
+): T[] => {
+  return [...businesses].sort((a, b) => {
+    // PRIMARY: Plan tier (Elite=0, Pro=1, Basic=2, Free=3)
+    // Lower index = higher priority
+    if (a.planTierIndex !== b.planTierIndex) {
+      return a.planTierIndex - b.planTierIndex;
+    }
+    
+    // SECONDARY: Geographic proximity (within same plan tier)
+    const distanceA = getCityDistance(userCity, a.city);
+    const distanceB = getCityDistance(userCity, b.city);
+    return distanceA - distanceB;
+  });
+};
+
+/**
+ * @deprecated For business sorting, use sortBusinessesByPlanAndProximity instead.
+ * This is kept for backwards compatibility with boost scoring.
  */
 export const getRotationSeed = (userId?: string | null): number => {
   const currentHour = Math.floor(Date.now() / (1000 * 60 * 60));
   const userSeed = userId 
     ? userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
     : Math.floor(Math.random() * 1000);
-  
-  // Simple hash combination
   return (currentHour * 31 + userSeed) % 1000;
 };
 
 /**
- * Get a random rotation factor (0 to ROTATION_MAX) based on seed and item index
+ * @deprecated For business sorting, use sortBusinessesByPlanAndProximity instead.
+ * This is kept for backwards compatibility with boost scoring.
  */
 const getRotationFactor = (rotationSeed: number, itemId: string): number => {
   const itemSeed = itemId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return ((rotationSeed + itemSeed) % (SCORE.ROTATION_MAX + 1));
+  return ((rotationSeed + itemSeed) % 21); // 0-20 range
 };
 
 /**

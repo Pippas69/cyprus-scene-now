@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { getPlanScore, getRotationSeed, type PlanSlug } from "@/lib/personalization";
+import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/personalization";
 
 interface Business {
   id: string;
@@ -32,7 +32,7 @@ interface Business {
   hasOfferBoost?: boolean;
   hasProfileBoost?: boolean;
   planSlug?: PlanSlug | string | null;
-  planScore?: number;
+  planTierIndex?: number;
 }
 
 interface AllBusinessesDialogProps {
@@ -40,6 +40,7 @@ interface AllBusinessesDialogProps {
   onOpenChange: (open: boolean) => void;
   language: "el" | "en";
   selectedCity?: string | null;
+  userCity?: string | null;
 }
 
 const translations = {
@@ -61,14 +62,14 @@ export const AllBusinessesDialog = ({
   open, 
   onOpenChange,
   language,
-  selectedCity 
+  selectedCity,
+  userCity = null,
 }: AllBusinessesDialogProps) => {
   const t = translations[language];
   const [searchQuery, setSearchQuery] = useState("");
-  const rotationSeed = getRotationSeed();
 
   const { data: businesses, isLoading } = useQuery({
-    queryKey: ['all-businesses-dialog', selectedCity],
+    queryKey: ['all-businesses-dialog', selectedCity, userCity],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
       
@@ -127,14 +128,10 @@ export const AllBusinessesDialog = ({
         }
       });
 
-      // Calculate scores and sort by plan hierarchy
-      const businessesWithScores = businessList.map(business => {
+      // Build businesses with plan tier index
+      const businessesWithTiers = businessList.map(business => {
         const planSlug = subscriptionMap.get(business.id) || 'free';
-        const planScore = getPlanScore(planSlug);
-        
-        // Add rotation factor for fair distribution within same tier
-        const itemSeed = business.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const rotationFactor = ((rotationSeed + itemSeed) % 20);
+        const planTierIndex = getPlanTierIndex(planSlug);
         
         return {
           ...business,
@@ -142,13 +139,23 @@ export const AllBusinessesDialog = ({
           hasOfferBoost: hasOfferBoost.has(business.id),
           hasProfileBoost: hasProfileBoost.has(business.id),
           planSlug,
-          planScore: planScore + rotationFactor,
+          planTierIndex,
         };
       });
 
-      // Sort by plan score (Elite first, then Pro, then Basic, then Free)
-      return businessesWithScores
-        .sort((a, b) => b.planScore - a.planScore) as Business[];
+      // STRICT SORTING: Plan hierarchy first (Elite>Pro>Basic>Free), then proximity
+      // NO ROTATION. NO RANDOMNESS.
+      return businessesWithTiers.sort((a, b) => {
+        // PRIMARY: Plan tier (Elite=0, Pro=1, Basic=2, Free=3)
+        if (a.planTierIndex !== b.planTierIndex) {
+          return a.planTierIndex - b.planTierIndex;
+        }
+        
+        // SECONDARY: Geographic proximity (within same plan tier)
+        const distanceA = getCityDistance(userCity, a.city);
+        const distanceB = getCityDistance(userCity, b.city);
+        return distanceA - distanceB;
+      }) as Business[];
     },
     enabled: open,
     staleTime: 60000
