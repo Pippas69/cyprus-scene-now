@@ -325,57 +325,15 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           <BoostedContentSection events={boostedEvents || []} offers={boostedOffers || []} language={language} />
         </div>
 
-        {/* Compact filters (no "Discover" / no "All Cyprus") */}
-        <div className="sticky top-0 z-40 bg-background shadow-sm">
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 overflow-hidden">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <HierarchicalCategoryFilter
-                  language={language}
-                  selectedCategories={selectedCategories}
-                  onCategoryChange={setSelectedCategories}
-                />
-                
-                {/* Student discount filter - small toggle button */}
-                <Button
-                  variant={showStudentDiscounts ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowStudentDiscounts(!showStudentDiscounts)}
-                  className="h-8 px-3 text-xs gap-1.5 shrink-0"
-                >
-                  <GraduationCap className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">
-                    {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
-                  </span>
-                  <span className="sm:hidden">🎓</span>
-                </Button>
-              </div>
-
-              {(selectedCategories.length > 0 || selectedCity) && (
-                <FilterChips
-                  categories={selectedCategories}
-                  quickFilters={[]}
-                  selectedCity={selectedCity}
-                  onRemoveCategory={handleRemoveCategory}
-                  onRemoveQuickFilter={() => {}}
-                  onRemoveCity={handleRemoveCity}
-                  onClearAll={handleClearFilters}
-                  language={language}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* Smart Search Bar */}
         {showNavbar && (
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 -mt-4 mb-6 relative z-30">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 mt-2 mb-6 relative z-30">
             <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
           </div>
         )}
 
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-hidden">
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* POSITION #2: Featured Businesses (no header, just profiles) */}
             {profileBoosts && profileBoosts.length > 0 && (
               <BoostedProfilesScroller
@@ -386,13 +344,49 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-            {/* POSITION #3: Category sections for exploration + ALL businesses below */}
+            {/* POSITION #3: Category sections for exploration */}
             <CategoryBusinessesSections language={language} selectedCity={selectedCity} />
 
-            {/* All businesses from FOMO - directly below category sections */}
-            <BusinessDirectorySection language={language} selectedCity={selectedCity} />
+            {/* Filters (categories + student discount) should sit directly above businesses */}
+            <div data-filters className="w-full">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <HierarchicalCategoryFilter
+                    language={language}
+                    selectedCategories={selectedCategories}
+                    onCategoryChange={setSelectedCategories}
+                  />
 
-            {/* Student Discount Section - subtle, shown only when filter is active */}
+                  <Button
+                    variant={showStudentDiscounts ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowStudentDiscounts(!showStudentDiscounts)}
+                    className="h-8 px-3 text-xs gap-1.5 shrink-0"
+                  >
+                    <GraduationCap className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">
+                      {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
+                    </span>
+                    <span className="sm:hidden">🎓</span>
+                  </Button>
+                </div>
+
+                {(selectedCategories.length > 0 || selectedCity) && (
+                  <FilterChips
+                    categories={selectedCategories}
+                    quickFilters={[]}
+                    selectedCity={selectedCity}
+                    onRemoveCategory={handleRemoveCategory}
+                    onRemoveQuickFilter={() => {}}
+                    onRemoveCity={handleRemoveCity}
+                    onClearAll={handleClearFilters}
+                    language={language}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Student Discount results (only when filter is active) */}
             {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
@@ -422,7 +416,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                             <span className="text-lg font-bold text-primary">{business.name.charAt(0)}</span>
                           </div>
                         )}
-                        {/* Graduation cap badge */}
                         <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground rounded-full p-1">
                           <GraduationCap className="h-3 w-3" />
                         </div>
@@ -431,9 +424,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                       <span className="text-xs font-medium text-center line-clamp-1 max-w-full group-hover:text-primary transition-colors">
                         {business.name}
                       </span>
-                      
+
                       <span className="text-[10px] text-muted-foreground">{business.city}</span>
-                      
+
                       <span className="text-xs font-semibold text-primary">
                         🎓 {business.student_discount_percent}%
                         {business.student_discount_mode === "once" && (
@@ -447,6 +440,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                 </div>
               </section>
             )}
+
+            {/* All businesses from FOMO - immediately below filters (no extra gaps) */}
+            <BusinessDirectorySection language={language} selectedCity={selectedCity} />
 
           </div>
         </div>
