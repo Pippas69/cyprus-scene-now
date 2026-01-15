@@ -201,23 +201,28 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
   // Calculate time boundaries for filtering
   const getTimeBoundaries = (filter: 'today' | 'week' | 'month' | null) => {
     if (!filter) return null; // No filter = show all
-    
+
     const now = new Date();
-    const end = new Date();
-    
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+
     switch (filter) {
       case 'today':
-        end.setHours(now.getHours() + 24);
+        end.setHours(23, 59, 59, 999);
         break;
       case 'week':
-        end.setDate(now.getDate() + 7);
+        end.setDate(start.getDate() + 7);
+        end.setHours(23, 59, 59, 999);
         break;
       case 'month':
-        end.setDate(now.getDate() + 30);
+        end.setDate(start.getDate() + 30);
+        end.setHours(23, 59, 59, 999);
         break;
     }
-    
-    return { start: now.toISOString(), end: end.toISOString() };
+
+    return { start: start.toISOString(), end: end.toISOString() };
   };
 
   // Fetch active offer boosts
@@ -234,11 +239,14 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
     },
   });
 
+
   const boostedOfferIds = new Set(activeBoosts?.map(b => b.discount_id) || []);
 
-  // Fetch BOOSTED offers (always shown at top, sorted by end_at - earliest expiry first)
+  const timeBoundaries = getTimeBoundaries(timeFilter);
+
+  // Fetch BOOSTED offers (shown at top, but STILL filtered by selected time window)
   const { data: boostedOffers, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-offers-page", selectedCity, Array.from(boostedOfferIds)],
+    queryKey: ["boosted-offers-page", timeFilter, selectedCity, Array.from(boostedOfferIds)],
     queryFn: async () => {
       if (boostedOfferIds.size === 0) return [];
 
@@ -261,14 +269,17 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
         query = query.eq('businesses.city', selectedCity);
       }
 
+      // Apply time filter if selected (Boosted must respect the same time window)
+      if (timeBoundaries) {
+        query = query.lte('end_at', timeBoundaries.end);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
     enabled: boostedOfferIds.size > 0,
   });
-
-  const timeBoundaries = getTimeBoundaries(timeFilter);
 
   // Fetch NON-BOOSTED offers (filtered by time and city)
   const { data: regularOffers, isLoading: loadingRegular } = useQuery({
