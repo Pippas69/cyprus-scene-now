@@ -4,7 +4,11 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Check, Sparkles, Loader2, Zap, Crown, Star, ExternalLink, Calendar, Rocket, TrendingUp } from 'lucide-react';
+import { 
+  Check, Sparkles, Loader2, Zap, Crown, Star, ExternalLink, Calendar, 
+  Rocket, TrendingUp, Building2, MapPin, BarChart3, Target, Lightbulb,
+  FileText, Percent, Mail, Gift
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -17,12 +21,10 @@ type BillingCycle = 'monthly' | 'annual';
 
 const translations = {
   el: {
-    title: "Επιλέξτε το Πλάνο σας",
-    subtitle: "Αναπτύξτε την επιχείρησή σας με τα κατάλληλα εργαλεία",
+    selectPlan: "Επιλέξτε το πλάνο σας",
     monthly: "Μηνιαίο",
     annual: "Ετήσιο",
     saveMonths: "2 μήνες δωρεάν!",
-    month: "μήνα",
     perMonth: "/μήνα",
     billedAnnually: "χρέωση ετησίως",
     choosePlan: "Επιλογή",
@@ -33,7 +35,6 @@ const translations = {
     renewsOn: "Ανανεώνεται στις",
     boostBudget: "Boost Credits",
     remainingThisMonth: "Διαθέσιμο αυτόν τον μήνα",
-    billingCycle: "Κύκλος Χρέωσης",
     annualBilling: "Ετήσια χρέωση",
     monthlyBilling: "Μηνιαία χρέωση",
     subscriptionActive: "Ενεργή Συνδρομή",
@@ -44,24 +45,60 @@ const translations = {
     usageReset: "Επαναφορά στις",
     of: "από",
     yourPlan: "Το Πλάνο σας",
-    // Plan specific
-    basicDesc: "Ξεκινήστε την ψηφιακή σας παρουσία με βασικά εργαλεία",
-    proDesc: "Κατανοήστε την απόδοση των boosts σας",
-    eliteDesc: "Λάβετε στρατηγικές προτάσεις και καθοδήγηση",
-    // Commission labels
-    commissionBasic: "Χαμηλότερη προμήθεια (10%)",
-    commissionPro: "Μειωμένη προμήθεια (8%)",
-    commissionElite: "Ελάχιστη προμήθεια (6%)",
-    // Boost credits
-    boostCreditsMonth: "boost credits/μήνα",
+    // Free plan
+    freeTitle: "FREE",
+    freeIncludes: "Περιλαμβάνει:",
+    freeBusinessProfile: "Προφίλ επιχείρησης",
+    freeEventCreation: "Δημιουργία εκδηλώσεων",
+    freeOfferCreation: "Δημιουργία προσφορών",
+    freeMarketplace: "Παρουσία στο marketplace",
+    freeMapPresence: "Διακριτική παρουσία στον χάρτη",
+    freeAnalytics: "Πρόσβαση στα αναλυτικά",
+    freeAnalyticsNote: "(Μόνο στην Επισκόπηση)",
+    freeCommission: "Commission: 12%",
+    freeBoostCredits: "Boost credits: 0€",
+    freeSupport: "Free Support",
+    // Basic plan
+    basicAllFree: "Όλα τα οφέλη του Free",
+    basicMarketplace: "Βελτιωμένη προβολή στο marketplace",
+    basicMarketplaceNote: "(εμφανίζεσαι πάνω από το Free)",
+    basicMapPresence: "Κανονική παρουσία στον χάρτη",
+    basicAnalytics: "Αναλυτικά Επισκόπησης και Απόδοσης",
+    basicCommission: "Commission: 10%",
+    basicBoostCredits: "Boost credits: 50€",
+    basicSupport: "Basic Support",
+    // Pro plan
+    proAllBasic: "Όλα τα οφέλη του Basic",
+    proMarketplace: "Αυξημένη προβολή στο marketplace",
+    proMarketplaceNote: "(εμφανίζεσαι πάνω από το Basic)",
+    proMapPresence: "Ενισχυμένη παρουσία στον χάρτη",
+    proAnalytics: "Αναλυτικά Επισκόπησης και Απόδοσης",
+    proBoostAnalytics: "Αναλυτικά Αξίας Προώθησης",
+    proBoostCompare: "Σύγκριση boost vs μη boost + Συμβουλές",
+    proCommission: "Commission: 8%",
+    proBoostCredits: "Boost credits: 150€",
+    proSupport: "Pro Support",
+    // Elite plan
+    eliteAllPro: "Όλα τα οφέλη του Pro",
+    eliteMarketplace: "Μέγιστη προτεραιότητα προβολής σε όλη την πλατφόρμα",
+    eliteMarketplaceNote: "(εμφανίζεσαι πάντα πριν από όλα τα άλλα πλάνα)",
+    eliteMapPresence: "Κυρίαρχη παρουσία στον χάρτη",
+    eliteFullAnalytics: "Πλήρης Πρόσβαση στα Αναλυτικά",
+    eliteGuidance: "Καθοδήγηση & Στρατηγικές προτάσεις",
+    elitePdfReport: "Έλεγχος Εφαρμογής & Αναφορά σε PDF",
+    eliteCommission: "Commission: 6%",
+    eliteBoostCredits: "Boost credits: 300€",
+    eliteSupport: "Elite Support",
+    // Enterprise
+    enterprise: "Enterprise",
+    enterpriseDesc: "Για μεγάλες επιχειρήσεις με ειδικές ανάγκες",
+    contactUs: "Επικοινωνήστε μαζί μας:",
   },
   en: {
-    title: "Choose Your Plan",
-    subtitle: "Grow your business with the right tools",
+    selectPlan: "Choose Your Plan",
     monthly: "Monthly",
     annual: "Annual",
     saveMonths: "2 months free!",
-    month: "month",
     perMonth: "/month",
     billedAnnually: "billed annually",
     choosePlan: "Get Started",
@@ -72,7 +109,6 @@ const translations = {
     renewsOn: "Renews on",
     boostBudget: "Boost Credits",
     remainingThisMonth: "Available this month",
-    billingCycle: "Billing Cycle",
     annualBilling: "Annual billing",
     monthlyBilling: "Monthly billing",
     subscriptionActive: "Active Subscription",
@@ -83,47 +119,76 @@ const translations = {
     usageReset: "Resets on",
     of: "of",
     yourPlan: "Your Plan",
-    // Plan specific
-    basicDesc: "Start your digital presence with essential tools",
-    proDesc: "Understand your boost performance and ROI",
-    eliteDesc: "Get strategic recommendations and guidance",
-    // Commission labels
-    commissionBasic: "Lower commission (10%)",
-    commissionPro: "Reduced commission (8%)",
-    commissionElite: "Minimum commission (6%)",
-    // Boost credits
-    boostCreditsMonth: "boost credits/month",
+    // Free plan
+    freeTitle: "FREE",
+    freeIncludes: "Includes:",
+    freeBusinessProfile: "Business profile",
+    freeEventCreation: "Event creation",
+    freeOfferCreation: "Offer creation",
+    freeMarketplace: "Marketplace presence",
+    freeMapPresence: "Discrete map presence",
+    freeAnalytics: "Analytics access",
+    freeAnalyticsNote: "(Overview only)",
+    freeCommission: "Commission: 12%",
+    freeBoostCredits: "Boost credits: €0",
+    freeSupport: "Free Support",
+    // Basic plan
+    basicAllFree: "All Free benefits",
+    basicMarketplace: "Improved marketplace visibility",
+    basicMarketplaceNote: "(shown above Free)",
+    basicMapPresence: "Normal map presence",
+    basicAnalytics: "Overview & Performance analytics",
+    basicCommission: "Commission: 10%",
+    basicBoostCredits: "Boost credits: €50",
+    basicSupport: "Basic Support",
+    // Pro plan
+    proAllBasic: "All Basic benefits",
+    proMarketplace: "Enhanced marketplace visibility",
+    proMarketplaceNote: "(shown above Basic)",
+    proMapPresence: "Enhanced map presence",
+    proAnalytics: "Overview & Performance analytics",
+    proBoostAnalytics: "Boost Value analytics",
+    proBoostCompare: "Boost vs non-boost comparison + Tips",
+    proCommission: "Commission: 8%",
+    proBoostCredits: "Boost credits: €150",
+    proSupport: "Pro Support",
+    // Elite plan
+    eliteAllPro: "All Pro benefits",
+    eliteMarketplace: "Maximum visibility priority across the platform",
+    eliteMarketplaceNote: "(always shown before all other plans)",
+    eliteMapPresence: "Dominant map presence",
+    eliteFullAnalytics: "Full Analytics Access",
+    eliteGuidance: "Guidance & Strategic recommendations",
+    elitePdfReport: "App audit & PDF report",
+    eliteCommission: "Commission: 6%",
+    eliteBoostCredits: "Boost credits: €300",
+    eliteSupport: "Elite Support",
+    // Enterprise
+    enterprise: "Enterprise",
+    enterpriseDesc: "For large businesses with special needs",
+    contactUs: "Contact us:",
   },
 };
 
-// Plan configuration with all details
+// Plan configuration
 const PLAN_CONFIG = {
   basic: {
     icon: Zap,
     gradient: 'from-blue-500 to-cyan-500',
     monthlyPrice: 5999,
     annualMonthlyPrice: 4999,
-    boostCredits: 5000,
-    commission: 10,
-    analyticsLevel: 'performance',
   },
   pro: {
     icon: Star,
     gradient: 'from-primary to-sunset-coral',
     monthlyPrice: 11999,
     annualMonthlyPrice: 9999,
-    boostCredits: 15000,
-    commission: 8,
-    analyticsLevel: 'boost_value',
   },
   elite: {
     icon: Crown,
     gradient: 'from-purple-500 to-pink-500',
     monthlyPrice: 23999,
     annualMonthlyPrice: 19999,
-    boostCredits: 30000,
-    commission: 6,
-    analyticsLevel: 'guidance',
   },
 };
 
@@ -283,48 +348,40 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
     return currentSubscription?.subscribed && currentSubscription?.plan_slug === planSlug;
   };
 
-  const getPlanDescription = (slug: string) => {
-    const descriptions: Record<string, string> = {
-      basic: t.basicDesc,
-      pro: t.proDesc,
-      elite: t.eliteDesc,
-    };
-    return descriptions[slug] || '';
-  };
+  // Get features for each plan
+  const getBasicFeatures = () => [
+    { icon: Gift, text: t.basicAllFree },
+    { icon: TrendingUp, text: t.basicMarketplace, note: t.basicMarketplaceNote },
+    { icon: MapPin, text: t.basicMapPresence },
+    { icon: BarChart3, text: t.basicAnalytics },
+    { icon: Percent, text: t.basicCommission },
+    { icon: Rocket, text: t.basicBoostCredits },
+    { icon: null, text: t.basicSupport },
+  ];
 
-  const getCommissionLabel = (slug: string) => {
-    const labels: Record<string, string> = {
-      basic: t.commissionBasic,
-      pro: t.commissionPro,
-      elite: t.commissionElite,
-    };
-    return labels[slug] || '';
-  };
+  const getProFeatures = () => [
+    { icon: Gift, text: t.proAllBasic },
+    { icon: TrendingUp, text: t.proMarketplace, note: t.proMarketplaceNote },
+    { icon: MapPin, text: t.proMapPresence },
+    { icon: BarChart3, text: t.proAnalytics },
+    { icon: Target, text: t.proBoostAnalytics },
+    { icon: Lightbulb, text: t.proBoostCompare },
+    { icon: Percent, text: t.proCommission },
+    { icon: Rocket, text: t.proBoostCredits },
+    { icon: null, text: t.proSupport },
+  ];
 
-  const getFeatures = (slug: string): string[] => {
-    const features: Record<string, string[]> = {
-      basic: [
-        language === 'el' ? 'Προφίλ επιχείρησης' : 'Business profile',
-        language === 'el' ? 'Αναλυτικά απόδοσης' : 'Performance analytics',
-        getCommissionLabel(slug),
-        `€50 ${t.boostCreditsMonth}`,
-      ],
-      pro: [
-        language === 'el' ? 'Όλα τα οφέλη του Basic' : 'All Basic benefits',
-        language === 'el' ? 'Σύγκριση Boost vs Μη Boost' : 'Boost vs Non-Boost comparison',
-        getCommissionLabel(slug),
-        `€150 ${t.boostCreditsMonth}`,
-      ],
-      elite: [
-        language === 'el' ? 'Όλα τα οφέλη του Pro' : 'All Pro benefits',
-        language === 'el' ? 'Καθοδήγηση & στρατηγικές προτάσεις' : 'Guidance & strategic recommendations',
-        language === 'el' ? 'Αναφορά PDF' : 'PDF reports',
-        getCommissionLabel(slug),
-        `€300 ${t.boostCreditsMonth}`,
-      ],
-    };
-    return features[slug] || [];
-  };
+  const getEliteFeatures = () => [
+    { icon: Gift, text: t.eliteAllPro },
+    { icon: Crown, text: t.eliteMarketplace, note: t.eliteMarketplaceNote },
+    { icon: MapPin, text: t.eliteMapPresence },
+    { icon: BarChart3, text: t.eliteFullAnalytics },
+    { icon: Lightbulb, text: t.eliteGuidance },
+    { icon: FileText, text: t.elitePdfReport },
+    { icon: Percent, text: t.eliteCommission },
+    { icon: Rocket, text: t.eliteBoostCredits },
+    { icon: null, text: t.eliteSupport },
+  ];
 
   // Calculate subscription usage percentages
   const budgetUsedPercent = currentSubscription?.event_boost_budget_cents > 0
@@ -337,6 +394,20 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
   const currentPlanGradient = currentPlanConfig?.gradient || 'from-blue-500 to-cyan-500';
 
   const plans = ['basic', 'pro', 'elite'] as const;
+
+  const renderFeatureItem = (feature: { icon: any; text: string; note?: string }, gradient: string, index: number) => (
+    <li key={index} className="flex items-start gap-2.5">
+      <div className={`p-0.5 rounded-full bg-gradient-to-br ${gradient} mt-0.5 shrink-0`}>
+        <Check className="w-3 h-3 text-white" />
+      </div>
+      <div className="flex flex-col">
+        <span className="text-sm text-foreground/90">{feature.text}</span>
+        {feature.note && (
+          <span className="text-xs text-muted-foreground">{feature.note}</span>
+        )}
+      </div>
+    </li>
+  );
 
   return (
     <div className={embedded ? "bg-background" : "min-h-screen bg-gradient-to-b from-background via-background to-muted/30"}>
@@ -478,107 +549,120 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
         </div>
       )}
 
-      {/* Hero Header */}
-      {(!currentSubscription?.subscribed || !embedded) && (
-        <div className="relative overflow-hidden">
-          {!embedded && (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-sunset-coral/5" />
-              <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2" />
-              <div className="absolute top-0 right-1/4 w-96 h-96 bg-sunset-coral/10 rounded-full blur-3xl -translate-y-1/2" />
-            </>
-          )}
-          
-          <div className={`relative max-w-7xl mx-auto px-4 ${embedded ? 'pt-6 pb-6' : 'pt-16 pb-12'}`}>
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center"
-            >
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                {t.title}
-              </h1>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-10">
-                {t.subtitle}
-              </p>
-
-              {/* Billing Toggle */}
-              <div className="inline-flex items-center gap-2 p-1.5 bg-muted rounded-full">
-                <button
-                  onClick={() => setBillingCycle('monthly')}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                    billingCycle === 'monthly'
-                      ? 'bg-background text-foreground shadow-md'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {t.monthly}
-                </button>
-                <button
-                  onClick={() => setBillingCycle('annual')}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                    billingCycle === 'annual'
-                      ? 'bg-background text-foreground shadow-md'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {t.annual}
-                  <Badge className="bg-gradient-to-r from-primary to-sunset-coral text-white border-0 text-xs">
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    {t.saveMonths}
-                  </Badge>
-                </button>
+      {/* Header Section with Free Plan */}
+      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${currentSubscription?.subscribed ? 'pb-4' : embedded ? 'pt-6 pb-4' : 'pt-12 pb-4'}`}>
+        {/* Free Plan - Horizontal Section Above Billing Toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-6"
+        >
+          <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              {/* Free Plan Title */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-muted">
+                  <Building2 className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">{t.freeTitle}</h3>
+                  <p className="text-xs text-muted-foreground">{t.freeIncludes}</p>
+                </div>
               </div>
-            </motion.div>
-          </div>
-        </div>
-      )}
-
-      {/* Billing Toggle for subscribed users */}
-      {currentSubscription?.subscribed && (
-        <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-6`}>
-          <div className="flex justify-center">
-            <div className="inline-flex items-center gap-2 p-1.5 bg-muted rounded-full">
-              <button
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                  billingCycle === 'monthly'
-                    ? 'bg-background text-foreground shadow-md'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {t.monthly}
-              </button>
-              <button
-                onClick={() => setBillingCycle('annual')}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                  billingCycle === 'annual'
-                    ? 'bg-background text-foreground shadow-md'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {t.annual}
-                <Badge className="bg-gradient-to-r from-primary to-sunset-coral text-white border-0 text-xs">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  {t.saveMonths}
-                </Badge>
-              </button>
+              
+              {/* Free Plan Features - Horizontal */}
+              <div className="flex-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                  {t.freeBusinessProfile}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                  {t.freeEventCreation}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                  {t.freeOfferCreation}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                  {t.freeMarketplace}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                  {t.freeMapPresence}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                  {t.freeAnalytics} <span className="text-xs">({t.freeAnalyticsNote})</span>
+                </span>
+              </div>
+              
+              {/* Free Plan Stats */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
+                <span>{t.freeCommission}</span>
+                <span>{t.freeBoostCredits}</span>
+                <span>{t.freeSupport}</span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        </motion.div>
+
+        {/* Title & Billing Toggle - Compact */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6"
+        >
+          <h2 className="text-xl font-semibold text-foreground">{t.selectPlan}</h2>
+          
+          {/* Billing Toggle */}
+          <div className="inline-flex items-center gap-2 p-1.5 bg-muted rounded-full">
+            <button
+              onClick={() => setBillingCycle('monthly')}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                billingCycle === 'monthly'
+                  ? 'bg-background text-foreground shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t.monthly}
+            </button>
+            <button
+              onClick={() => setBillingCycle('annual')}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                billingCycle === 'annual'
+                  ? 'bg-background text-foreground shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t.annual}
+              <Badge className="bg-gradient-to-r from-primary to-sunset-coral text-white border-0 text-xs">
+                <Sparkles className="w-3 h-3 mr-1" />
+                {t.saveMonths}
+              </Badge>
+            </button>
+          </div>
+        </motion.div>
+      </div>
 
       {/* Plans Grid - 3 Cards: Basic, Pro, Elite */}
-      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-16`}>
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-8`}>
+        <div className="grid md:grid-cols-3 gap-5 lg:gap-6">
           {plans.map((planSlug, index) => {
             const config = PLAN_CONFIG[planSlug];
             const price = billingCycle === 'monthly' ? config.monthlyPrice : config.annualMonthlyPrice;
             const isMostPopular = planSlug === 'pro';
             const isCurrent = isCurrentPlan(planSlug);
             const PlanIconComponent = config.icon;
-            const features = getFeatures(planSlug);
+            
+            const features = planSlug === 'basic' 
+              ? getBasicFeatures() 
+              : planSlug === 'pro' 
+                ? getProFeatures() 
+                : getEliteFeatures();
 
             return (
               <motion.div
@@ -607,16 +691,16 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
                     </div>
                   )}
                   
-                  <CardHeader className="pb-4">
+                  <CardHeader className="pb-3">
                     {/* Plan Icon & Name */}
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-3 mb-3">
                       <div className={`p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} text-white`}>
                         <PlanIconComponent className="w-5 h-5" />
                       </div>
-                      <h3 className="text-xl font-bold capitalize">{planSlug}</h3>
+                      <h3 className="text-xl font-bold uppercase">{planSlug}</h3>
                     </div>
 
-                    {/* Price - Small font next to /μήνα */}
+                    {/* Price */}
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-bold">{formatPrice(price)}</span>
                       <span className="text-sm text-muted-foreground">{t.perMonth}</span>
@@ -626,26 +710,14 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
                         {t.billedAnnually}
                       </p>
                     )}
-
-                    {/* Short Description */}
-                    <p className="text-sm text-muted-foreground mt-3">
-                      {getPlanDescription(planSlug)}
-                    </p>
                   </CardHeader>
 
                   <CardContent className="flex-1 pb-4">
                     {/* Features List */}
-                    <ul className="space-y-3">
-                      {features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
-                          <div className={`p-0.5 rounded-full bg-gradient-to-br ${config.gradient}`}>
-                            <Check className="w-3.5 h-3.5 text-white" />
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
+                    <ul className="space-y-2.5">
+                      {features.map((feature, idx) => 
+                        renderFeatureItem(feature, config.gradient, idx)
+                      )}
                     </ul>
                   </CardContent>
 
@@ -674,6 +746,39 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
             );
           })}
         </div>
+      </div>
+
+      {/* Enterprise Section - Horizontal */}
+      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-12`}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <div className="p-5 rounded-xl bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 border border-border/50">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">{t.enterprise}</h3>
+                  <p className="text-sm text-muted-foreground">{t.enterpriseDesc}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">{t.contactUs}</span>
+                <a 
+                  href="mailto:enterprise@fomo.cy"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background font-medium text-sm hover:opacity-90 transition-opacity"
+                >
+                  <Mail className="w-4 h-4" />
+                  enterprise@fomo.cy
+                </a>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
