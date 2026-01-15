@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import MapWrapper from "@/components/map/MapWrapper";
 import { useLanguage } from "@/hooks/useLanguage";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
-import TimeAccessFilters from "@/components/feed/TimeAccessFilters";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import { FilterChips } from "@/components/feed/FilterChips";
 
@@ -13,7 +12,6 @@ const Xartis = () => {
   const { language } = useLanguage();
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [timeAccessFilters, setTimeAccessFilters] = useState<string[]>([]);
   const [eventCounts, setEventCounts] = useState<Record<string, number>>({});
 
   const text = {
@@ -51,21 +49,13 @@ const Xartis = () => {
 
   const clearAllFilters = () => {
     setSelectedCategories([]);
-    setTimeAccessFilters([]);
     setSelectedCity(null);
   };
 
-  const hasActiveFilters = selectedCategories.length > 0 || timeAccessFilters.length > 0 || selectedCity;
-
-  // Extract quick filters (time/access) for FilterChips
-  const quickFilters = timeAccessFilters;
+  const hasActiveFilters = selectedCategories.length > 0 || selectedCity;
 
   const handleRemoveCategory = (category: string) => {
     setSelectedCategories(prev => prev.filter(c => c !== category));
-  };
-
-  const handleRemoveQuickFilter = (filter: string) => {
-    setTimeAccessFilters(prev => prev.filter(f => f !== filter));
   };
 
   const handleRemoveCity = () => {
@@ -107,20 +97,13 @@ const Xartis = () => {
             )}
           </div>
 
-          {/* Time/Access Filters */}
-          <TimeAccessFilters
-            language={language}
-            selectedFilters={timeAccessFilters}
-            onFilterChange={setTimeAccessFilters}
-          />
-
           {/* Filter Chips */}
           <FilterChips
             categories={selectedCategories}
-            quickFilters={quickFilters}
+            quickFilters={[]}
             selectedCity={selectedCity}
             onRemoveCategory={handleRemoveCategory}
-            onRemoveQuickFilter={handleRemoveQuickFilter}
+            onRemoveQuickFilter={() => {}}
             onRemoveCity={handleRemoveCity}
             onClearAll={clearAllFilters}
             language={language}
@@ -135,7 +118,7 @@ const Xartis = () => {
           neighborhood="" 
           selectedCategories={selectedCategories}
           eventCounts={eventCounts}
-          timeAccessFilters={timeAccessFilters}
+          timeAccessFilters={[]}
         />
       </div>
     </div>
