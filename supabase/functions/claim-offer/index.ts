@@ -87,42 +87,9 @@ Deno.serve(async (req) => {
       throw new Error("This offer is not currently available");
     }
 
-    // Validate day of week
-    if (discount.valid_days && discount.valid_days.length > 0) {
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const today = dayNames[now.getDay()];
-      if (!discount.valid_days.includes(today)) {
-        throw new Error("This offer is not valid today");
-      }
-    }
+    // Note: We allow claiming at any time during the overall offer date range.
+    // The business-side QR scanner enforces valid days/hours at redemption time.
 
-    // Validate time - use Cyprus timezone (Europe/Nicosia)
-    if (discount.valid_start_time && discount.valid_end_time) {
-      // Get current time in Cyprus timezone
-      const cyprusTime = new Date().toLocaleTimeString('en-GB', { 
-        timeZone: 'Europe/Nicosia', 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      });
-      const startTime = discount.valid_start_time.substring(0, 5);
-      const endTime = discount.valid_end_time.substring(0, 5);
-      
-      logStep("Time validation", { cyprusTime, startTime, endTime });
-      
-      // Handle overnight offers (e.g., 22:00 - 04:00)
-      if (endTime < startTime) {
-        // Overnight: valid if current >= start OR current <= end
-        if (cyprusTime < startTime && cyprusTime > endTime) {
-          throw new Error("This offer is only valid during specific hours");
-        }
-      } else {
-        // Normal: valid if current >= start AND current <= end
-        if (cyprusTime < startTime || cyprusTime > endTime) {
-          throw new Error("This offer is only valid during specific hours");
-        }
-      }
-    }
 
     // Validate party size against max per redemption
     const maxPeoplePerRedemption = discount.max_people_per_redemption || 5;

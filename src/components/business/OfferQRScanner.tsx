@@ -69,14 +69,16 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       alreadyRedeemed: { el: "Αυτή η αγορά έχει ήδη εξαργυρωθεί", en: "This purchase has already been redeemed" },
       expired: { el: "Αυτή η αγορά έχει λήξει", en: "This purchase has expired" },
       notPaid: { el: "Αυτή η αγορά δεν έχει πληρωθεί", en: "This purchase hasn't been paid" },
+      notValidToday: { el: "Η προσφορά δεν ισχύει σήμερα", en: "This offer is not valid today" },
+      notValidHours: { el: "Η προσφορά ισχύει μόνο σε συγκεκριμένες ώρες", en: "This offer is only valid during specific hours" },
       cameraError: { el: "Σφάλμα πρόσβασης κάμερας", en: "Camera access error" },
-      cameraPermissionDenied: { 
-        el: "Δεν επιτράπηκε η πρόσβαση στην κάμερα", 
-        en: "Camera access was denied" 
+      cameraPermissionDenied: {
+        el: "Δεν επιτράπηκε η πρόσβαση στην κάμερα",
+        en: "Camera access was denied",
       },
-      cameraNotFound: { 
-        el: "Δεν βρέθηκε κάμερα", 
-        en: "No camera found" 
+      cameraNotFound: {
+        el: "Δεν βρέθηκε κάμερα",
+        en: "No camera found",
       },
       scanError: { el: "Σφάλμα σάρωσης", en: "Scan error" },
     },
@@ -182,7 +184,10 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
             title,
             description,
             percent_off,
-            business_id
+            business_id,
+            valid_days,
+            valid_start_time,
+            valid_end_time
           )
         `)
         .eq("qr_code_token", qrToken)
@@ -224,6 +229,48 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
         setScanResult({ success: false, message: msg });
         stopScanner();
         return;
+      }
+
+      // Enforce valid days/hours at redemption time (Cyprus timezone)
+      const discount = purchase.discounts as any;
+
+      // Day of week
+      if (discount?.valid_days && Array.isArray(discount.valid_days) && discount.valid_days.length > 0) {
+        const cyprusWeekday = new Date().toLocaleDateString('en-US', { timeZone: 'Europe/Nicosia', weekday: 'long' }).toLowerCase();
+        // Map e.g. "monday" to stored values ("monday", ...)
+        if (!discount.valid_days.includes(cyprusWeekday)) {
+          const msg = language === "el" ? t.errors.notValidToday.el : t.errors.notValidToday.en;
+          setScanResult({ success: false, message: msg });
+          stopScanner();
+          return;
+        }
+      }
+
+      // Hours
+      if (discount?.valid_start_time && discount?.valid_end_time) {
+        const cyprusTime = new Date().toLocaleTimeString('en-GB', {
+          timeZone: 'Europe/Nicosia',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+        const startTime = String(discount.valid_start_time).substring(0, 5);
+        const endTime = String(discount.valid_end_time).substring(0, 5);
+
+        const withinHours = (() => {
+          // Overnight window (e.g., 22:00-04:00)
+          if (endTime < startTime) {
+            return cyprusTime >= startTime || cyprusTime <= endTime;
+          }
+          return cyprusTime >= startTime && cyprusTime <= endTime;
+        })();
+
+        if (!withinHours) {
+          const msg = language === "el" ? t.errors.notValidHours.el : t.errors.notValidHours.en;
+          setScanResult({ success: false, message: msg });
+          stopScanner();
+          return;
+        }
       }
 
       // Get current user for redemption tracking
