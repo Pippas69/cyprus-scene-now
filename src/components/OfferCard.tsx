@@ -182,35 +182,11 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
             </Link>
 
-            {/* BOTTOM HALF: white info panel (never looks empty) */}
+            {/* BOTTOM HALF: white info panel - clean, no logo duplicate */}
             <div className="bg-background p-4">
               <div className="flex h-full min-h-0 flex-col">
-                {/* Business row (moved DOWN as requested) */}
-                <div className="flex items-center gap-3">
-                  {offerData.businesses.logo_url ? (
-                    <img
-                      src={offerData.businesses.logo_url}
-                      alt={offerData.businesses.name}
-                      className="h-10 w-10 rounded-xl object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
-                      <Percent className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold leading-tight line-clamp-1">
-                      {offerData.businesses.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">
-                      {offerData.businesses.city}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Title + description */}
-                <div className="mt-3 min-h-0">
+                {/* Offer Title + description FIRST */}
+                <div className="min-h-0">
                   <h3 className="font-semibold text-base leading-tight line-clamp-2">{offerData.title}</h3>
                   {offerData.description && (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{offerData.description}</p>
@@ -224,7 +200,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                   )}
                 </div>
 
-                {/* Bottom area: price + date + CTA (no cutting) */}
+                {/* Bottom area: price + date + business name (tiny) + CTA */}
                 <div className="mt-auto pt-3">
                   {hasPricing && (
                     <div className="flex items-baseline gap-2 mb-2">
@@ -246,12 +222,15 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatOfferDates(offerData.start_at, offerData.end_at)}</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                    <Calendar className="h-3 w-3" />
+                    <span>{formatOfferDates(offerData.start_at, offerData.end_at)}</span>
                   </div>
+
+                  {/* Business name - very small, at the end */}
+                  <p className="text-[11px] text-muted-foreground mb-3">
+                    {language === "el" ? "από" : "by"} {offerData.businesses.name} • {offerData.businesses.city}
+                  </p>
 
                   <div className="flex justify-end">
                     <Button onClick={() => setIsPurchaseOpen(true)} size="sm" className="w-auto">

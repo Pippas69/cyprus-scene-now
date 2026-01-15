@@ -388,43 +388,19 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     );
   }
 
-  // Claim Form View
+  // Claim Form View - NO duplicate header, the header is in Dialog/Drawer already
   const formContent = (
     <div className="space-y-4">
-      {/* Offer Info */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          {offer.businesses.logo_url ? (
-            <img
-              src={offer.businesses.logo_url}
-              alt={offer.businesses.name}
-              className="w-12 h-12 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-              <Store className="h-6 w-6 text-muted-foreground" />
-            </div>
-          )}
-          <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold">{offer.title}</h3>
-              {offer.category && (
-                <Badge variant="outline" className="text-xs">
-                  {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">{offer.businesses.name}</p>
-          </div>
-        </div>
-        {offer.description && <p className="text-sm text-muted-foreground">{offer.description}</p>}
-      </div>
+      {/* Description if exists */}
+      {offer.description && (
+        <p className="text-sm text-muted-foreground">{offer.description}</p>
+      )}
 
-      {/* Discount Display */}
-      {discountDisplay && (
-        <div className="flex justify-center">
-          <Badge className="text-lg py-2 px-4 bg-gradient-to-r from-primary to-primary/80">{discountDisplay}</Badge>
-        </div>
+      {/* Category badge (only here, not in header) */}
+      {offer.category && (
+        <Badge variant="outline" className="text-xs w-fit">
+          {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
+        </Badge>
       )}
 
       <Separator />
@@ -566,6 +542,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     return (
       <Drawer open={isOpen} onOpenChange={onClose}>
         <DrawerContent className="h-[90vh] flex flex-col">
+          {/* SINGLE clean header - no duplicate */}
           <DrawerHeader className="flex-shrink-0 border-b pb-3">
             <div className="flex items-center gap-3">
               {offer.businesses.logo_url ? (
@@ -589,17 +566,14 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                 </Badge>
               )}
             </div>
+            <DrawerDescription className="sr-only">Claim this offer</DrawerDescription>
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto px-4 py-4">
-            {/* Cover Image */}
-            {offer.businesses.cover_url && (
-              <div className="w-full h-40 rounded-lg overflow-hidden mb-4">
-                <img 
-                  src={offer.businesses.cover_url} 
-                  alt="" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            {/* Category badge only */}
+            {offer.category && (
+              <Badge variant="outline" className="text-xs mb-4">
+                {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
+              </Badge>
             )}
             
             {/* Description */}
@@ -714,6 +688,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
+        {/* SINGLE clean header - no duplicate */}
         <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
           <div className="flex items-center gap-3">
             {offer.businesses.logo_url ? (
