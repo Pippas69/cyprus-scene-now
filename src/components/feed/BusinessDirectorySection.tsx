@@ -10,6 +10,7 @@ import { AllBusinessesDialog } from "./AllBusinessesDialog";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { getPlanScore, getRotationSeed, type PlanSlug } from "@/lib/personalization";
 
 interface Business {
   id: string;
@@ -23,6 +24,8 @@ interface Business {
   hasEventBoost?: boolean;
   hasOfferBoost?: boolean;
   hasProfileBoost?: boolean;
+  planSlug?: PlanSlug | string | null;
+  planScore?: number;
 }
 
 interface BusinessDirectorySectionProps {
@@ -49,6 +52,7 @@ export const BusinessDirectorySection = ({
 }: BusinessDirectorySectionProps) => {
   const t = translations[language];
   const [dialogOpen, setDialogOpen] = useState(false);
+  const rotationSeed = getRotationSeed();
 
   const { data: businesses, isLoading } = useQuery({
     queryKey: ['all-businesses-directory', selectedCity],
@@ -65,14 +69,15 @@ export const BusinessDirectorySection = ({
         query = query.eq('city', selectedCity);
       }
       
-      const { data: businessList, error } = await query.limit(12);
+      // Fetch more businesses initially for better ranking
+      const { data: businessList, error } = await query.limit(50);
       if (error) throw error;
       if (!businessList?.length) return [];
 
       const businessIds = businessList.map(b => b.id);
 
-      // Fetch active boosts in parallel
-      const [eventBoostsRes, offerBoostsRes, profileBoostsRes] = await Promise.all([
+      // Fetch active boosts and subscription plans in parallel
+      const [eventBoostsRes, offerBoostsRes, profileBoostsRes, subscriptionsRes] = await Promise.all([
         supabase
           .from('event_boosts')
           .select('business_id')
@@ -92,18 +97,49 @@ export const BusinessDirectorySection = ({
           .eq('status', 'active')
           .lte('start_date', today)
           .gte('end_date', today),
+        supabase
+          .from('business_subscriptions')
+          .select('business_id, subscription_plans(slug)')
+          .in('business_id', businessIds)
+          .eq('status', 'active'),
       ]);
 
       const hasEventBoost = new Set(eventBoostsRes.data?.map(b => b.business_id) || []);
       const hasOfferBoost = new Set(offerBoostsRes.data?.map(b => b.business_id) || []);
       const hasProfileBoost = new Set(profileBoostsRes.data?.map(b => b.business_id) || []);
+      
+      // Map subscription plans to businesses
+      const subscriptionMap = new Map<string, string>();
+      subscriptionsRes.data?.forEach((sub: any) => {
+        if (sub.subscription_plans?.slug) {
+          subscriptionMap.set(sub.business_id, sub.subscription_plans.slug);
+        }
+      });
 
-      return businessList.map(business => ({
-        ...business,
-        hasEventBoost: hasEventBoost.has(business.id),
-        hasOfferBoost: hasOfferBoost.has(business.id),
-        hasProfileBoost: hasProfileBoost.has(business.id),
-      })) as Business[];
+      // Calculate scores and sort by plan hierarchy
+      const businessesWithScores = businessList.map(business => {
+        const planSlug = subscriptionMap.get(business.id) || 'free';
+        const planScore = getPlanScore(planSlug);
+        
+        // Add rotation factor for fair distribution within same tier
+        const itemSeed = business.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const rotationFactor = ((rotationSeed + itemSeed) % 20);
+        
+        return {
+          ...business,
+          hasEventBoost: hasEventBoost.has(business.id),
+          hasOfferBoost: hasOfferBoost.has(business.id),
+          hasProfileBoost: hasProfileBoost.has(business.id),
+          planSlug,
+          planScore: planScore + rotationFactor,
+        };
+      });
+
+      // Sort by plan score (Elite first, then Pro, then Basic, then Free)
+      // Also apply rotation for fair distribution within same tier
+      return businessesWithScores
+        .sort((a, b) => b.planScore - a.planScore)
+        .slice(0, 12) as Business[];
     },
     staleTime: 60000
   });

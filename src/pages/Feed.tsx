@@ -8,9 +8,8 @@ import FeedSidebar from "@/components/feed/FeedSidebar";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import { FilterChips } from "@/components/feed/FilterChips";
 import { BoostedProfilesScroller } from "@/components/feed/BoostedProfilesScroller";
+import { BoostedContentSection } from "@/components/feed/BoostedContentSection";
 import { Badge } from "@/components/ui/badge";
-import { FeaturedEventsScroller } from "@/components/feed/FeaturedEventsScroller";
-import { FeaturedOffersScroller } from "@/components/feed/FeaturedOffersScroller";
 import { BusinessDirectorySection } from "@/components/feed/BusinessDirectorySection";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { PullIndicator } from "@/components/ui/pull-indicator";
@@ -427,6 +426,15 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-hidden">
           <div className="space-y-8">
+            {/* PRIORITY 1: Boosted Content (Paid Events & Offers) - ALWAYS FIRST */}
+            {!showStudentDiscounts && (boostedEvents?.length > 0 || boostedOffers?.length > 0) && (
+              <BoostedContentSection 
+                events={boostedEvents || []} 
+                offers={boostedOffers || []} 
+                language={language} 
+              />
+            )}
+
             {/* Student Discount Businesses Section */}
             {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
               <section>
@@ -488,23 +496,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </div>
             )}
 
-            {/* Featured Events Scroller */}
-            {!showStudentDiscounts && boostedEvents && boostedEvents.length > 0 && (
-              <FeaturedEventsScroller 
-                events={boostedEvents} 
-                language={language} 
-              />
-            )}
-
-            {/* Featured Offers Scroller */}
-            {!showStudentDiscounts && boostedOffers && boostedOffers.length > 0 && (
-              <FeaturedOffersScroller 
-                offers={boostedOffers} 
-                language={language} 
-              />
-            )}
-
-            {/* Boosted Profiles Scroller - Featured Businesses */}
+            {/* PRIORITY 2: Boosted Profiles - Based on Subscription Plans (Elite > Pro > Basic) */}
             {!showStudentDiscounts && profileBoosts && profileBoosts.length > 0 && (
               <BoostedProfilesScroller 
                 profiles={profileBoosts} 
@@ -514,7 +506,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-            {/* All Businesses Directory */}
+            {/* PRIORITY 3: All Businesses Directory - Ranked by Subscription Plan */}
             {!showStudentDiscounts && (
               <BusinessDirectorySection 
                 language={language} 
