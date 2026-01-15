@@ -96,47 +96,39 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
   const handleDelete = async (offerId: string) => {
     try {
-      // First, delete all related records to avoid FK constraint errors
-      // Order matters due to dependencies
-      
-      // 1. Delete commission ledger entries (depends on discount_id)
-      await supabase.from('commission_ledger').delete().eq('discount_id', offerId);
-      
-      // 2. Delete offer purchases (depends on discount_id)
-      await supabase.from('offer_purchases').delete().eq('discount_id', offerId);
-      
-      // 3. Delete redemptions (depends on discount_id)
-      await supabase.from('redemptions').delete().eq('discount_id', offerId);
-      
-      // 4. Delete discount views
-      await supabase.from('discount_views').delete().eq('discount_id', offerId);
-      
-      // 5. Delete discount scans
-      await supabase.from('discount_scans').delete().eq('discount_id', offerId);
-      
-      // 6. Delete favorites
-      await supabase.from('favorite_discounts').delete().eq('discount_id', offerId);
-      
-      // 7. Delete discount items (bundle items)
-      await supabase.from('discount_items').delete().eq('discount_id', offerId);
-      
-      // 8. Delete offer boosts
-      await supabase.from('offer_boosts').delete().eq('discount_id', offerId);
-      
-      // Finally, delete the discount itself
+      // Delete dependent rows first to avoid FK constraint errors.
+      // IMPORTANT: we must check errors here because RLS can silently block deletions.
+      const deleteByDiscountId = async (table: any) => {
+        const { error } = await (supabase as any)
+          .from(table)
+          .delete()
+          .eq("discount_id", offerId);
+        if (error) throw error;
+      };
+
+      await deleteByDiscountId("commission_ledger");
+      await deleteByDiscountId("offer_purchases");
+      await deleteByDiscountId("redemptions");
+      await deleteByDiscountId("discount_views");
+      await deleteByDiscountId("discount_scans");
+      await deleteByDiscountId("favorite_discounts");
+      await deleteByDiscountId("discount_items");
+      await deleteByDiscountId("offer_boosts");
+
+      // Finally, delete the offer itself.
+      // Use count='exact' so we can reliably detect "0 rows deleted" (RLS would otherwise look like success).
       const { error, count } = await supabase
-        .from('discounts')
-        .delete()
-        .eq('id', offerId)
-        .select();
+        .from("discounts")
+        .delete({ count: "exact" })
+        .eq("id", offerId)
+        .eq("business_id", businessId);
 
       if (error) throw error;
-      
-      // Check if something was actually deleted
-      if (!count && count !== undefined) {
-        throw new Error(language === "el" 
-          ? "Δεν βρέθηκε η προσφορά ή δεν έχετε δικαίωμα διαγραφής" 
-          : "Offer not found or you don't have permission to delete"
+      if (!count) {
+        throw new Error(
+          language === "el"
+            ? "Δεν έχετε δικαίωμα διαγραφής ή η προσφορά δεν υπάρχει πλέον"
+            : "You don't have permission to delete this offer, or it no longer exists"
         );
       }
 
@@ -145,12 +137,12 @@ const OffersList = ({ businessId }: OffersListProps) => {
         description: t.offerDeleted,
       });
 
-      queryClient.invalidateQueries({ queryKey: ['business-offers', businessId] });
+      queryClient.invalidateQueries({ queryKey: ["business-offers", businessId] });
     } catch (error: any) {
       console.error("Delete offer error:", error);
       toast({
         title: t.error,
-        description: error.message,
+        description: error?.message ?? String(error),
         variant: "destructive",
       });
     }
