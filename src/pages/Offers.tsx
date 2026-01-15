@@ -286,9 +286,9 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
         .gte('end_at', now)
         .order('end_at', { ascending: true }); // Earliest expiry first
 
-      // Apply time filter only if selected
+      // Apply time filter: show offers that END within the selected time window
       if (timeBoundaries) {
-        query = query.lte('start_at', timeBoundaries.end);
+        query = query.lte('end_at', timeBoundaries.end);
       }
 
       // Exclude boosted offers
