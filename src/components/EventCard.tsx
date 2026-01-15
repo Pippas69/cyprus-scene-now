@@ -13,9 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { toastTranslations } from "@/translations/toastTranslations";
-import { useFavorites } from "@/hooks/useFavorites";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
-import { FavoriteButton } from "@/components/FavoriteButton";
 import { ReservationDialog } from "@/components/business/ReservationDialog";
 import LiveBadge from "@/components/feed/LiveBadge";
 import { formatDistanceToNow } from "date-fns";
@@ -85,7 +83,6 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
     }
   }, { threshold: 0.5 });
   const [reservationStatus, setReservationStatus] = useState<string | null>(null);
-  const { isFavorited, toggleFavorite, loading: favoriteLoading } = useFavorites(user?.id || null);
   const [countdown, setCountdown] = useState<string | null>(null);
   const tt = toastTranslations[language];
   const confetti = useConfetti();
@@ -376,21 +373,9 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           <Share2 className="h-4 w-4" />
         </Button>
         
-        {/* Favorite Button - moved to avoid collision with badge */}
-        {user && !badgeType && (
-          <FavoriteButton
-            isFavorited={isFavorited(event.id)}
-            onClick={() => toggleFavorite(event.id)}
-            loading={favoriteLoading}
-            className="absolute top-3 left-3 z-10 bg-background/80 hover:bg-background backdrop-blur-sm shadow-lg"
-            size="sm"
-            businessId={event.business_id}
-            eventId={event.id}
-          />
-        )}
         
-        {/* Image with enhanced gradient */}
-        <div className="relative h-48 overflow-hidden">
+        {/* Image with enhanced gradient - reduced height */}
+        <div className="relative h-36 overflow-hidden">
           {event.cover_image_url ? (
             <>
               <img 
