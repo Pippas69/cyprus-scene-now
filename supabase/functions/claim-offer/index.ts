@@ -96,13 +96,31 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Validate time
+    // Validate time - use Cyprus timezone (Europe/Nicosia)
     if (discount.valid_start_time && discount.valid_end_time) {
-      const currentTime = now.toTimeString().substring(0, 5);
+      // Get current time in Cyprus timezone
+      const cyprusTime = new Date().toLocaleTimeString('en-GB', { 
+        timeZone: 'Europe/Nicosia', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
       const startTime = discount.valid_start_time.substring(0, 5);
       const endTime = discount.valid_end_time.substring(0, 5);
-      if (currentTime < startTime || currentTime > endTime) {
-        throw new Error("This offer is only valid during specific hours");
+      
+      logStep("Time validation", { cyprusTime, startTime, endTime });
+      
+      // Handle overnight offers (e.g., 22:00 - 04:00)
+      if (endTime < startTime) {
+        // Overnight: valid if current >= start OR current <= end
+        if (cyprusTime < startTime && cyprusTime > endTime) {
+          throw new Error("This offer is only valid during specific hours");
+        }
+      } else {
+        // Normal: valid if current >= start AND current <= end
+        if (cyprusTime < startTime || cyprusTime > endTime) {
+          throw new Error("This offer is only valid during specific hours");
+        }
       }
     }
 
