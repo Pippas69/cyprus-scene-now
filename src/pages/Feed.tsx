@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { ArrowUp, Filter, GraduationCap } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
@@ -376,50 +378,62 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </div>
             </div>
 
-            {/* Student Discount results (only when filter is active) - NO HEADER since filter already shows */}
+            {/* Student Discount results (only when filter is active) - uses same square card design */}
             {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {studentDiscountBusinesses.map((business: any) => (
-                  <a
+              <motion.div 
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                {studentDiscountBusinesses.map((business: any, index: number) => (
+                  <motion.div
                     key={business.id}
-                    href={`/business/${business.id}`}
-                    className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 group"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(index * 0.02, 0.5) }}
                   >
-                    <div className="relative">
-                      {business.logo_url ? (
-                        <img
-                          src={business.logo_url}
-                          alt={business.name}
-                          className="w-14 h-14 rounded-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-lg font-bold text-primary">{business.name.charAt(0)}</span>
-                        </div>
-                      )}
-                      <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground rounded-full p-1">
+                    <Link
+                      to={`/business/${business.id}`}
+                      className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
+                    >
+                      {/* Full cover background image */}
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ 
+                          backgroundImage: business.logo_url 
+                            ? `url(${business.logo_url})` 
+                            : undefined,
+                          backgroundColor: !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined
+                        }}
+                      />
+                      
+                      {/* Gradient overlay for text readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                      
+                      {/* Student discount badge - top right */}
+                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full px-2 py-1 flex items-center gap-1">
                         <GraduationCap className="h-3 w-3" />
+                        <span className="text-xs font-semibold">{business.student_discount_percent}%</span>
                       </div>
-                    </div>
-
-                    <span className="text-xs font-medium text-center line-clamp-1 max-w-full group-hover:text-primary transition-colors">
-                      {business.name}
-                    </span>
-
-                    <span className="text-[10px] text-muted-foreground">{business.city}</span>
-
-                    <span className="text-xs font-semibold text-primary">
-                      🎓 {business.student_discount_percent}%
-                      {business.student_discount_mode === "once" && (
-                        <span className="text-muted-foreground font-normal ml-1">
-                          ({language === "el" ? "1η" : "1st"})
-                        </span>
-                      )}
-                    </span>
-                  </a>
+                      
+                      {/* Content at bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <h4 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-primary-foreground transition-colors">
+                          {business.name}
+                        </h4>
+                        <p className="text-xs text-white/80 mt-0.5">
+                          {business.city}
+                        </p>
+                        {business.student_discount_mode === "once" && (
+                          <span className="text-[10px] text-white/60">
+                            ({language === "el" ? "1η φορά" : "1st time"})
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
 
             {/* All businesses from FOMO - filtered by selected categories (hidden when student discount filter is active) */}
