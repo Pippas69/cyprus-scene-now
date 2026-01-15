@@ -32,8 +32,13 @@ export const isEventHappeningNow = (startAt: string): boolean => {
 // Get category color
 export const getCategoryColor = (category: string): string => {
   const colors: Record<string, string> = {
-    cafe: "#FF6B35",
     nightlife: "#9D4EDD",
+    clubs: "#E040FB",
+    dining: "#FF6B35",
+    'beach-summer': "#4CC9F0",
+    // Legacy mapping
+    cafe: "#FF6B35",
+    restaurant: "#FF6B35",
     art: "#F72585",
     fitness: "#06FFA5",
     family: "#4CC9F0",
