@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Clock, Heart, CalendarCheck, Star, Ticket, QrCode, MapPin, Calendar } from 'lucide-react';
+import { ChevronDown, Clock, CalendarCheck, Star, Ticket, QrCode, MapPin, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { TicketQRDialog } from '@/components/tickets/TicketQRDialog';
@@ -21,8 +21,6 @@ interface MyEventsProps {
 
 export const MyEvents = ({ userId, language }: MyEventsProps) => {
   const { interested, going, pastInterested, pastGoing, loading: rsvpLoading } = useUserRSVPs(userId);
-  const [savedEvents, setSavedEvents] = useState<any[]>([]);
-  const [savedLoading, setSavedLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const dateLocale = language === 'el' ? el : enUS;
@@ -51,37 +49,6 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     },
   });
 
-  useEffect(() => {
-    fetchSavedEvents();
-  }, [userId]);
-
-  const fetchSavedEvents = async () => {
-    setSavedLoading(true);
-    const { data, error } = await supabase
-      .from('favorites')
-      .select(`
-        created_at,
-        event:events(
-          *,
-          business:businesses(id, name, logo_url)
-        )
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      const eventsData = data.map(f => ({
-        ...f.event,
-        favorited_at: f.created_at
-      }));
-      setSavedEvents(eventsData);
-    }
-    setSavedLoading(false);
-  };
-
-  const upcomingSaved = savedEvents.filter(e => new Date(e.start_at) > new Date());
-  const pastSaved = savedEvents.filter(e => new Date(e.start_at) <= new Date());
-
   // Categorize tickets
   const now = new Date();
   const upcomingTickets = tickets?.filter(t => 
@@ -95,11 +62,9 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     el: {
       going: 'Θα Πάω',
       interested: 'Ενδιαφέρομαι',
-      saved: 'Αποθηκευμένα',
       tickets: 'Εισιτήρια',
       noGoing: 'Δεν έχετε επιβεβαιώσει συμμετοχή σε καμία εκδήλωση',
       noInterested: 'Δεν έχετε σημειώσει ενδιαφέρον για καμία εκδήλωση',
-      noSaved: 'Δεν έχετε αποθηκευμένες εκδηλώσεις',
       noTickets: 'Δεν έχετε εισιτήρια ακόμα',
       history: 'Ιστορικό',
       eventEnded: 'Ολοκληρώθηκε',
@@ -113,11 +78,9 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     en: {
       going: "Going",
       interested: 'Interested',
-      saved: 'Saved',
       tickets: 'Tickets',
       noGoing: "You haven't confirmed attendance to any events",
       noInterested: "You haven't marked interest in any events",
-      noSaved: "You haven't saved any events",
       noTickets: "You don't have any tickets yet",
       history: 'History',
       eventEnded: 'Ended',
@@ -131,7 +94,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
   };
 
   const t = text[language];
-  const loading = rsvpLoading || savedLoading || ticketsLoading;
+  const loading = rsvpLoading || ticketsLoading;
 
   if (loading) {
     return (
@@ -285,31 +248,41 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     );
   };
 
-  const hasPastEvents = pastInterested.length > 0 || pastGoing.length > 0 || pastSaved.length > 0 || pastTickets.length > 0;
+  const hasPastEvents = pastInterested.length > 0 || pastGoing.length > 0 || pastTickets.length > 0;
 
   return (
     <div className="space-y-4">
       <Tabs defaultValue="going" className="w-full">
-        <TabsList className="flex-wrap h-auto gap-1 bg-muted/50 p-1">
-          <TabsTrigger value="going" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
-            <CalendarCheck className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">{t.going}</span>
-            <span className="text-muted-foreground">({going.length})</span>
+        <TabsList className="w-full h-auto p-1.5 bg-muted/40 rounded-xl gap-1.5">
+          <TabsTrigger 
+            value="going" 
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+          >
+            <CalendarCheck className="h-4 w-4" />
+            <span>{t.going}</span>
+            <span className="text-xs text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded-full">
+              {going.length}
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="interested" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
-            <Star className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">{t.interested}</span>
-            <span className="text-muted-foreground">({interested.length})</span>
+          <TabsTrigger 
+            value="interested" 
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+          >
+            <Star className="h-4 w-4" />
+            <span>{t.interested}</span>
+            <span className="text-xs text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded-full">
+              {interested.length}
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="saved" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
-            <Heart className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">{t.saved}</span>
-            <span className="text-muted-foreground">({upcomingSaved.length})</span>
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
-            <Ticket className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">{t.tickets}</span>
-            <span className="text-muted-foreground">({upcomingTickets.length})</span>
+          <TabsTrigger 
+            value="tickets" 
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+          >
+            <Ticket className="h-4 w-4" />
+            <span>{t.tickets}</span>
+            <span className="text-xs text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded-full">
+              {upcomingTickets.length}
+            </span>
           </TabsTrigger>
         </TabsList>
 
@@ -318,9 +291,6 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
         </TabsContent>
         <TabsContent value="interested" className="mt-4">
           {renderEvents(interested, t.noInterested, true)}
-        </TabsContent>
-        <TabsContent value="saved" className="mt-4">
-          {renderEvents(upcomingSaved, t.noSaved, false)}
         </TabsContent>
         <TabsContent value="tickets" className="mt-4">
           {renderTickets(upcomingTickets, t.noTickets, false)}
@@ -334,7 +304,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">
-                  {t.history} ({pastGoing.length + pastInterested.length + pastSaved.length + pastTickets.length})
+                  {t.history} ({pastGoing.length + pastInterested.length + pastTickets.length})
                 </span>
               </div>
               <ChevronDown 
@@ -344,17 +314,14 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-3">
             <Tabs defaultValue="past-going" className="w-full">
-              <TabsList className="flex-wrap h-auto gap-1 bg-muted/30 p-1">
-                <TabsTrigger value="past-going" className="text-xs px-2">
+              <TabsList className="w-full h-auto gap-1 bg-muted/30 p-1 rounded-lg">
+                <TabsTrigger value="past-going" className="flex-1 text-xs px-2 py-1.5">
                   {t.going} ({pastGoing.length})
                 </TabsTrigger>
-                <TabsTrigger value="past-interested" className="text-xs px-2">
+                <TabsTrigger value="past-interested" className="flex-1 text-xs px-2 py-1.5">
                   {t.interested} ({pastInterested.length})
                 </TabsTrigger>
-                <TabsTrigger value="past-saved" className="text-xs px-2">
-                  {t.saved} ({pastSaved.length})
-                </TabsTrigger>
-                <TabsTrigger value="past-tickets" className="text-xs px-2">
+                <TabsTrigger value="past-tickets" className="flex-1 text-xs px-2 py-1.5">
                   {t.tickets} ({pastTickets.length})
                 </TabsTrigger>
               </TabsList>
@@ -364,9 +331,6 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
               </TabsContent>
               <TabsContent value="past-interested" className="mt-4">
                 {renderPastEvents(pastInterested, true)}
-              </TabsContent>
-              <TabsContent value="past-saved" className="mt-4">
-                {renderPastEvents(pastSaved, false)}
               </TabsContent>
               <TabsContent value="past-tickets" className="mt-4">
                 {renderTickets(pastTickets, t.noHistory, true)}
