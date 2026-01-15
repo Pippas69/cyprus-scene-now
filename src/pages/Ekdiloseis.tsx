@@ -235,23 +235,28 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
   // Calculate time boundaries
   const getTimeBoundaries = (filter: 'today' | 'week' | 'month' | null) => {
     if (!filter) return null; // No filter = show all
-    
+
     const now = new Date();
-    const end = new Date();
-    
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+
     switch (filter) {
       case 'today':
-        end.setHours(now.getHours() + 24);
+        end.setHours(23, 59, 59, 999);
         break;
       case 'week':
-        end.setDate(now.getDate() + 7);
+        end.setDate(start.getDate() + 7);
+        end.setHours(23, 59, 59, 999);
         break;
       case 'month':
-        end.setDate(now.getDate() + 30);
+        end.setDate(start.getDate() + 30);
+        end.setHours(23, 59, 59, 999);
         break;
     }
-    
-    return { start: now.toISOString(), end: end.toISOString() };
+
+    return { start: start.toISOString(), end: end.toISOString() };
   };
 
   // Fetch active event boosts
@@ -271,11 +276,14 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
     },
   });
 
+
   const boostedEventIds = new Set(activeBoosts?.map(b => b.event_id) || []);
 
-  // Fetch BOOSTED events (always shown at top, sorted by start_at chronologically)
+  const timeBoundaries = getTimeBoundaries(timeFilter);
+
+  // Fetch BOOSTED events (shown at top, but STILL filtered by selected time window)
   const { data: boostedEvents, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-events-ekdiloseis", selectedCity, Array.from(boostedEventIds)],
+    queryKey: ["boosted-events-ekdiloseis", timeFilter, selectedCity, Array.from(boostedEventIds)],
     queryFn: async () => {
       if (boostedEventIds.size === 0) return [];
 
@@ -293,6 +301,13 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
       // Filter by city if selected
       if (selectedCity) {
         query = query.eq('businesses.city', selectedCity);
+      }
+
+      // Apply time filter if selected (Boosted must respect the same time window)
+      if (timeBoundaries) {
+        query = query
+          .gte('start_at', timeBoundaries.start)
+          .lte('start_at', timeBoundaries.end);
       }
 
       const { data, error } = await query;
@@ -319,8 +334,6 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
     },
     enabled: boostedEventIds.size > 0,
   });
-
-  const timeBoundaries = getTimeBoundaries(timeFilter);
 
   // Fetch NON-BOOSTED events (filtered by time and city)
   const { data: regularEvents, isLoading: loadingRegular } = useQuery({
