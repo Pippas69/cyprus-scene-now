@@ -3610,44 +3610,59 @@ export type Database = {
       subscription_plans: {
         Row: {
           active: boolean | null
+          analytics_level: string | null
           commission_free_offers_count: number
+          commission_percent: number | null
           created_at: string | null
           display_order: number | null
           event_boost_budget_cents: number
           features: Json | null
           id: string
+          map_pin_size: string | null
           name: string
           price_annual_cents: number
           price_monthly_cents: number
           slug: string
+          stripe_price_annual: string | null
+          stripe_price_monthly: string | null
           updated_at: string | null
         }
         Insert: {
           active?: boolean | null
+          analytics_level?: string | null
           commission_free_offers_count: number
+          commission_percent?: number | null
           created_at?: string | null
           display_order?: number | null
           event_boost_budget_cents: number
           features?: Json | null
           id?: string
+          map_pin_size?: string | null
           name: string
           price_annual_cents: number
           price_monthly_cents: number
           slug: string
+          stripe_price_annual?: string | null
+          stripe_price_monthly?: string | null
           updated_at?: string | null
         }
         Update: {
           active?: boolean | null
+          analytics_level?: string | null
           commission_free_offers_count?: number
+          commission_percent?: number | null
           created_at?: string | null
           display_order?: number | null
           event_boost_budget_cents?: number
           features?: Json | null
           id?: string
+          map_pin_size?: string | null
           name?: string
           price_annual_cents?: number
           price_monthly_cents?: number
           slug?: string
+          stripe_price_annual?: string | null
+          stripe_price_monthly?: string | null
           updated_at?: string | null
         }
         Relationships: []

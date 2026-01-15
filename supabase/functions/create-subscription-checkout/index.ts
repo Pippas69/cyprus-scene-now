@@ -11,19 +11,32 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-SUBSCRIPTION-CHECKOUT] ${step}${detailsStr}`);
 };
 
-// Price mapping for subscription plans (LIVE)
+// Price mapping for subscription plans (NEW - Basic/Pro/Elite)
 const PRICE_MAPPING: Record<string, Record<string, string>> = {
+  basic: {
+    monthly: 'price_1SpwozHTQ1AOHDjnVuRc9Qna',
+    annual: 'price_1Spwp1HTQ1AOHDjnQx155dfC',
+  },
+  pro: {
+    monthly: 'price_1Spwp2HTQ1AOHDjnrxToaDoC',
+    annual: 'price_1Spwp3HTQ1AOHDjnq9F1BnZh',
+  },
+  elite: {
+    monthly: 'price_1Spwp5HTQ1AOHDjn8NpaDDj6',
+    annual: 'price_1Spwp6HTQ1AOHDjn7yqgzaPN',
+  },
+  // Legacy mappings for backwards compatibility
   starter: {
-    monthly: 'price_1SlvtfHTQ1AOHDjnDcsxUMtQ',
-    annual: 'price_1Slw7rHTQ1AOHDjnihgMkZmh',
+    monthly: 'price_1SpwozHTQ1AOHDjnVuRc9Qna',
+    annual: 'price_1Spwp1HTQ1AOHDjnQx155dfC',
   },
   growth: {
-    monthly: 'price_1Slvw5HTQ1AOHDjnnCrH3wcW',
-    annual: 'price_1Slw8WHTQ1AOHDjnE06GFJu2',
+    monthly: 'price_1Spwp2HTQ1AOHDjnrxToaDoC',
+    annual: 'price_1Spwp3HTQ1AOHDjnq9F1BnZh',
   },
   professional: {
-    monthly: 'price_1SlvxaHTQ1AOHDjnmQviVoXk',
-    annual: 'price_1Slw8zHTQ1AOHDjnFCOk69r6',
+    monthly: 'price_1Spwp5HTQ1AOHDjn8NpaDDj6',
+    annual: 'price_1Spwp6HTQ1AOHDjn7yqgzaPN',
   },
 };
 
