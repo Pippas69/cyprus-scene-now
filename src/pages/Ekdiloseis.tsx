@@ -442,7 +442,7 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
                 transition={{ delay: index * 0.05, duration: 0.4 }}
                 className="relative"
               >
-                <div className="absolute top-2 right-2 z-10">
+                <div className="absolute -top-2 -right-2 z-10">
                   <PremiumBadge type="event" />
                 </div>
                 <EventCard 
