@@ -7,13 +7,16 @@ interface CustomMarkerProps {
   onClick: () => void;
 }
 
-// 4 core categories for student-focused audience
+// 4 core categories
 const getCategoryIcon = (category: string) => {
   const icons: Record<string, any> = {
+    nightlife: Moon,
+    clubs: Moon,
+    dining: Utensils,
+    'beach-summer': Umbrella,
+    // Legacy mapping
     cafe: Coffee,
     restaurant: Utensils,
-    nightlife: Moon,
-    'beach-summer': Umbrella,
   };
   return icons[category] || Coffee;
 };

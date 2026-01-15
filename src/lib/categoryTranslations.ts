@@ -4,24 +4,19 @@ type Language = 'el' | 'en';
 
 const categoryMap: Record<string, { el: string; en: string }> = {
   // Main categories (4 core categories)
-  'cafe': { el: 'Καφέ', en: 'Café' },
-  'restaurant': { el: 'Εστιατόρια', en: 'Restaurant' },
   'nightlife': { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
+  'clubs': { el: 'Clubs', en: 'Clubs' },
+  'dining': { el: 'Εστίαση', en: 'Dining' },
   'beach-summer': { el: 'Παραλία/Καλοκαίρι', en: 'Beach/Summer' },
   
-  // Restaurant sub-options
-  'brunch': { el: 'Brunch', en: 'Brunch' },
-  'breakfast': { el: 'Πρωινό', en: 'Breakfast' },
-  'lunch': { el: 'Μεσημεριανό', en: 'Lunch' },
-  'dinner': { el: 'Δείπνο', en: 'Dinner' },
+  // Nightlife sub-options
+  'bars': { el: 'Bars', en: 'Bars' },
+  'wine-cocktail-bars': { el: 'Κρασί & Cocktail Bars', en: 'Wine & Cocktail Bars' },
+  'live-music': { el: 'Ζωντανή Μουσική', en: 'Live Music' },
   
-  // Nightlife sub-options (now includes concerts/live music)
-  'bars': { el: 'Μπαρ', en: 'Bars' },
-  'clubs': { el: 'Κλαμπ', en: 'Clubs' },
-  'wine-cocktail-bars': { el: 'Κρασί/Κοκτέιλ Μπαρ', en: 'Wine/Cocktail Bars' },
-  'shisha-lounges': { el: 'Shisha Lounges', en: 'Shisha Lounges' },
-  'rooftop-bars': { el: 'Rooftop Bars', en: 'Rooftop Bars' },
-  'concerts-live-music': { el: 'Συναυλίες/Live Μουσική', en: 'Concerts/Live Music' },
+  // Dining sub-options
+  'fine-dining': { el: 'Επίσημη Εστίαση', en: 'Fine Dining' },
+  'casual-dining': { el: 'Χαλαρή Εστίαση', en: 'Casual Dining' },
   
   // Beach/Summer sub-options
   'beach-bars': { el: 'Beach Bars', en: 'Beach Bars' },
@@ -29,6 +24,15 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'seaside-restaurants': { el: 'Παραθαλάσσια Εστιατόρια', en: 'Seaside Restaurants' },
   
   // Legacy categories for backward compatibility (still translate existing data)
+  'cafe': { el: 'Καφέ', en: 'Café' },
+  'restaurant': { el: 'Εστιατόρια', en: 'Restaurant' },
+  'brunch': { el: 'Brunch', en: 'Brunch' },
+  'breakfast': { el: 'Πρωινό', en: 'Breakfast' },
+  'lunch': { el: 'Μεσημεριανό', en: 'Lunch' },
+  'dinner': { el: 'Δείπνο', en: 'Dinner' },
+  'concerts-live-music': { el: 'Ζωντανή Μουσική', en: 'Live Music' },
+  'shisha-lounges': { el: 'Shisha Lounges', en: 'Shisha Lounges' },
+  'rooftop-bars': { el: 'Rooftop Bars', en: 'Rooftop Bars' },
   'fitness-wellness': { el: 'Γυμναστική/Ευεξία', en: 'Fitness/Wellness' },
   'art-culture': { el: 'Τέχνη & Πολιτισμός', en: 'Art & Culture' },
   'art': { el: 'Τέχνη', en: 'Art' },

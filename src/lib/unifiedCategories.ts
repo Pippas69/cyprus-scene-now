@@ -14,8 +14,8 @@ export interface UnifiedCategory {
   subOptions?: SubOption[];
 }
 
-// Main unified categories with bilingual labels (4 core categories for student-focused audience)
-// Order: Nightlife → Café → Restaurant → Beach/Summer
+// Main unified categories with bilingual labels (4 core categories)
+// Order: Nightlife → Clubs → Dining → Beach & Summer
 export const unifiedCategories: UnifiedCategory[] = [
   {
     id: "nightlife",
@@ -23,30 +23,25 @@ export const unifiedCategories: UnifiedCategory[] = [
     icon: "🍸",
     hasDropdown: true,
     subOptions: [
-      { id: "bars", label: { el: "Μπαρ", en: "Bars" } },
-      { id: "clubs", label: { el: "Κλαμπ", en: "Clubs" } },
-      { id: "wine-cocktail-bars", label: { el: "Κρασί/Κοκτέιλ Μπαρ", en: "Wine/Cocktail Bars" } },
-      { id: "shisha-lounges", label: { el: "Shisha Lounges", en: "Shisha Lounges" } },
-      { id: "rooftop-bars", label: { el: "Rooftop Bars", en: "Rooftop Bars" } },
-      { id: "concerts-live-music", label: { el: "Συναυλίες/Live Μουσική", en: "Concerts/Live Music" } },
+      { id: "bars", label: { el: "Bars", en: "Bars" } },
+      { id: "wine-cocktail-bars", label: { el: "Κρασί & Cocktail Bars", en: "Wine & Cocktail Bars" } },
+      { id: "live-music", label: { el: "Ζωντανή Μουσική", en: "Live Music" } },
     ],
   },
   { 
-    id: "cafe", 
-    label: { el: "Καφέ", en: "Café" }, 
-    icon: "☕", 
+    id: "clubs", 
+    label: { el: "Clubs", en: "Clubs" }, 
+    icon: "🎉", 
     hasDropdown: false 
   },
   {
-    id: "restaurant",
-    label: { el: "Εστιατόρια", en: "Restaurant" },
+    id: "dining",
+    label: { el: "Εστίαση", en: "Dining" },
     icon: "🍽️",
     hasDropdown: true,
     subOptions: [
-      { id: "brunch", label: { el: "Brunch", en: "Brunch" } },
-      { id: "breakfast", label: { el: "Πρωινό", en: "Breakfast" } },
-      { id: "lunch", label: { el: "Μεσημεριανό", en: "Lunch" } },
-      { id: "dinner", label: { el: "Δείπνο", en: "Dinner" } },
+      { id: "fine-dining", label: { el: "Επίσημη Εστίαση", en: "Fine Dining" } },
+      { id: "casual-dining", label: { el: "Χαλαρή Εστίαση", en: "Casual Dining" } },
     ],
   },
   {

@@ -34,8 +34,8 @@ const HierarchicalCategoryFilter = ({
   const badgeRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // 4 core categories for student-focused audience
-  // Order: Nightlife → Café → Restaurant → Beach/Summer
+  // 4 core categories
+  // Order: Nightlife → Clubs → Dining → Beach & Summer
   const categories: { el: Category[]; en: Category[] } = {
     el: [
       {
@@ -44,25 +44,20 @@ const HierarchicalCategoryFilter = ({
         icon: "🍸",
         hasDropdown: true,
         subOptions: [
-          { id: "bars", label: "Μπαρ" },
-          { id: "clubs", label: "Κλαμπ" },
-          { id: "wine-cocktail-bars", label: "Κρασί/Κοκτέιλ Μπαρ" },
-          { id: "shisha-lounges", label: "Shisha Lounges" },
-          { id: "rooftop-bars", label: "Rooftop Bars" },
-          { id: "concerts-live-music", label: "Συναυλίες/Live Μουσική" },
+          { id: "bars", label: "Bars" },
+          { id: "wine-cocktail-bars", label: "Κρασί & Cocktail Bars" },
+          { id: "live-music", label: "Ζωντανή Μουσική" },
         ],
       },
-      { id: "cafe", label: "Καφέ", icon: "☕", hasDropdown: false },
+      { id: "clubs", label: "Clubs", icon: "🎉", hasDropdown: false },
       {
-        id: "restaurant",
-        label: "Εστιατόρια",
+        id: "dining",
+        label: "Εστίαση",
         icon: "🍽️",
         hasDropdown: true,
         subOptions: [
-          { id: "brunch", label: "Brunch" },
-          { id: "breakfast", label: "Πρωινό" },
-          { id: "lunch", label: "Μεσημεριανό" },
-          { id: "dinner", label: "Δείπνο" },
+          { id: "fine-dining", label: "Επίσημη Εστίαση" },
+          { id: "casual-dining", label: "Χαλαρή Εστίαση" },
         ],
       },
       {
@@ -85,24 +80,19 @@ const HierarchicalCategoryFilter = ({
         hasDropdown: true,
         subOptions: [
           { id: "bars", label: "Bars" },
-          { id: "clubs", label: "Clubs" },
-          { id: "wine-cocktail-bars", label: "Wine/Cocktail Bars" },
-          { id: "shisha-lounges", label: "Shisha Lounges" },
-          { id: "rooftop-bars", label: "Rooftop Bars" },
-          { id: "concerts-live-music", label: "Concerts/Live Music" },
+          { id: "wine-cocktail-bars", label: "Wine & Cocktail Bars" },
+          { id: "live-music", label: "Live Music" },
         ],
       },
-      { id: "cafe", label: "Café", icon: "☕", hasDropdown: false },
+      { id: "clubs", label: "Clubs", icon: "🎉", hasDropdown: false },
       {
-        id: "restaurant",
-        label: "Restaurant",
+        id: "dining",
+        label: "Dining",
         icon: "🍽️",
         hasDropdown: true,
         subOptions: [
-          { id: "brunch", label: "Brunch" },
-          { id: "breakfast", label: "Breakfast" },
-          { id: "lunch", label: "Lunch" },
-          { id: "dinner", label: "Dinner" },
+          { id: "fine-dining", label: "Fine Dining" },
+          { id: "casual-dining", label: "Casual Dining" },
         ],
       },
       {
