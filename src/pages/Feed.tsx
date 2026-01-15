@@ -11,7 +11,6 @@ import CategoryBusinessesSections from "@/components/feed/CategoryBusinessesSect
 import BusinessDirectorySection from "@/components/feed/BusinessDirectorySection";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import { FilterChips } from "@/components/feed/FilterChips";
-import { Button } from "@/components/ui/button";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { PullIndicator } from "@/components/ui/pull-indicator";
@@ -45,7 +44,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [showStudentDiscounts, setShowStudentDiscounts] = useState(false);
 
   const [isPulling, setIsPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
@@ -329,27 +327,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         <div className="sticky top-0 z-40 bg-background shadow-sm">
           <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 overflow-hidden">
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <HierarchicalCategoryFilter
-                  language={language}
-                  selectedCategories={selectedCategories}
-                  onCategoryChange={setSelectedCategories}
-                />
-                
-                {/* Student discount filter - small toggle button */}
-                <Button
-                  variant={showStudentDiscounts ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowStudentDiscounts(!showStudentDiscounts)}
-                  className="h-8 px-3 text-xs gap-1.5 shrink-0"
-                >
-                  <GraduationCap className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">
-                    {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
-                  </span>
-                  <span className="sm:hidden">🎓</span>
-                </Button>
-              </div>
+              <HierarchicalCategoryFilter
+                language={language}
+                selectedCategories={selectedCategories}
+                onCategoryChange={setSelectedCategories}
+              />
 
               {(selectedCategories.length > 0 || selectedCity) && (
                 <FilterChips
@@ -386,11 +368,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-            {/* PRIORITY 3: Core category sections */}
+            {/* PRIORITY 3: Core category sections (these replace the old "Explore Businesses" heading) */}
             <CategoryBusinessesSections language={language} selectedCity={selectedCity} />
 
-            {/* Student Discount Section - shown only when filter is active */}
-            {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
+            {/* Student Discount (directly under the 4 core sections) */}
+            {studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <GraduationCap className="h-5 w-5 text-primary" />
@@ -419,7 +401,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                             <span className="text-lg font-bold text-primary">{business.name.charAt(0)}</span>
                           </div>
                         )}
-                        {/* Graduation cap badge */}
                         <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground rounded-full p-1">
                           <GraduationCap className="h-3 w-3" />
                         </div>
@@ -445,7 +426,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </section>
             )}
 
-            {/* PRIORITY 4: All businesses directory */}
+            {/* PRIORITY 4: All businesses directory (NO "Explore Businesses" heading text) */}
             <BusinessDirectorySection language={language} selectedCity={selectedCity} />
           </div>
         </div>
