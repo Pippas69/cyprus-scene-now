@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
+import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
@@ -28,9 +28,8 @@ const translations = {
     offers: 'Προσφορές',
     myActivities: 'Οι Δραστηριότητές Μου',
     myEvents: 'Οι Εκδηλώσεις Μου',
-    reservations: 'Κρατήσεις',
+    reservations: 'Οι Κρατήσεις Μου',
     myOffers: 'Οι Προσφορές Μου',
-    tickets: 'Τα Εισιτήριά μου',
     account: 'Λογαριασμός',
     settings: 'Ρυθμίσεις',
   },
@@ -42,9 +41,8 @@ const translations = {
     offers: 'Offers',
     myActivities: 'My Activities',
     myEvents: 'My Events',
-    reservations: 'Reservations',
+    reservations: 'My Reservations',
     myOffers: 'My Offers',
-    tickets: 'My Tickets',
     account: 'Account',
     settings: 'Settings',
   },
@@ -106,7 +104,6 @@ export function UserSidebar() {
     { title: t.myEvents, url: '/dashboard-user?tab=events', icon: Calendar, tab: 'events' },
     { title: t.reservations, url: '/dashboard-user?tab=reservations', icon: CalendarCheck, tab: 'reservations' },
     { title: t.myOffers, url: '/dashboard-user?tab=offers', icon: Percent, tab: 'offers' },
-    { title: t.tickets, url: '/dashboard-user?tab=tickets', icon: Ticket, tab: 'tickets' },
   ];
 
   const accountItems = [

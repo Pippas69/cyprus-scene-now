@@ -462,37 +462,42 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 md:px-6 overflow-hidden">
-      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <ShoppingBag className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
-        <h1 className="text-2xl sm:text-3xl font-bold truncate">{t.title}</h1>
-      </div>
-
+    <div className="w-full max-w-6xl mx-auto overflow-hidden">
       <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm">
-          <TabsTrigger value="active" className="px-1 sm:px-3">
+        <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm bg-muted/50 p-1">
+          <TabsTrigger value="active" className="px-2 sm:px-3">
             {t.active}
             {activePurchases.length > 0 && (
-              <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">{activePurchases.length}</Badge>
+              <span className="ml-1.5 text-muted-foreground">({activePurchases.length})</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="redeemed" className="px-1 sm:px-3">{t.redeemed}</TabsTrigger>
-          <TabsTrigger value="expired" className="px-1 sm:px-3">{t.expired}</TabsTrigger>
+          <TabsTrigger value="redeemed" className="px-2 sm:px-3">
+            {t.redeemed}
+            {redeemedPurchases.length > 0 && (
+              <span className="ml-1.5 text-muted-foreground">({redeemedPurchases.length})</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="expired" className="px-2 sm:px-3">
+            {t.expired}
+            {expiredPurchases.length > 0 && (
+              <span className="ml-1.5 text-muted-foreground">({expiredPurchases.length})</span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="active" className="mt-6">
+        <TabsContent value="active" className="mt-4">
           {activePurchases.length === 0 ? (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <ShoppingBag className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">{t.noPurchases}</p>
-                <Button asChild variant="outline">
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <ShoppingBag className="h-10 w-10 text-muted-foreground mb-3" />
+                <p className="text-muted-foreground text-sm mb-3">{t.noPurchases}</p>
+                <Button asChild variant="outline" size="sm">
                   <a href="/feed">{t.browseOffers}</a>
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {activePurchases.map((purchase) => (
                 <PurchaseCard key={purchase.id} purchase={purchase} />
               ))}
@@ -500,16 +505,16 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           )}
         </TabsContent>
 
-        <TabsContent value="redeemed" className="mt-6">
+        <TabsContent value="redeemed" className="mt-4">
           {redeemedPurchases.length === 0 ? (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">{t.noRedeemed}</p>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <CheckCircle className="h-10 w-10 text-muted-foreground mb-3" />
+                <p className="text-muted-foreground text-sm">{t.noRedeemed}</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {redeemedPurchases.map((purchase) => (
                 <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />
               ))}
@@ -517,16 +522,16 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           )}
         </TabsContent>
 
-        <TabsContent value="expired" className="mt-6">
+        <TabsContent value="expired" className="mt-4">
           {expiredPurchases.length === 0 ? (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">{t.noExpired}</p>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <Clock className="h-10 w-10 text-muted-foreground mb-3" />
+                <p className="text-muted-foreground text-sm">{t.noExpired}</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {expiredPurchases.map((purchase) => (
                 <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />
               ))}

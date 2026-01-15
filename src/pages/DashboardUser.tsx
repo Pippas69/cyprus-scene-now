@@ -5,10 +5,9 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MyEvents } from '@/components/user/MyEvents';
 import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
-import { Compass, Map, Ticket, Percent } from 'lucide-react';
+import { Compass, Map, Percent } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
-import { MyTickets } from '@/components/tickets/MyTickets';
 import { UserSettings } from '@/components/user/UserSettings';
 
 const DashboardUser = () => {
@@ -62,9 +61,8 @@ const DashboardUser = () => {
       welcome: 'Καλώς ήρθατε',
       dashboard: 'Πίνακας Ελέγχου',
       myEvents: 'Οι Εκδηλώσεις Μου',
-      reservations: 'Κρατήσεις',
-      offers: 'Προσφορές',
-      tickets: 'Τα Εισιτήριά μου',
+      reservations: 'Οι Κρατήσεις Μου',
+      offers: 'Οι Προσφορές Μου',
       settings: 'Ρυθμίσεις',
       browseEvents: 'Ανακάλυψε Εκδηλώσεις',
       exploreMap: 'Εξερεύνησε Χάρτη',
@@ -73,9 +71,8 @@ const DashboardUser = () => {
       welcome: 'Welcome',
       dashboard: 'Dashboard',
       myEvents: 'My Events',
-      reservations: 'Reservations',
-      offers: 'Offers',
-      tickets: 'My Tickets',
+      reservations: 'My Reservations',
+      offers: 'My Offers',
       settings: 'Settings',
       browseEvents: 'Browse Events',
       exploreMap: 'Explore Map',
@@ -98,7 +95,6 @@ const DashboardUser = () => {
       events: t.myEvents,
       reservations: t.reservations,
       offers: t.offers,
-      tickets: t.tickets,
       settings: t.settings,
     };
     return titles[activeTab] || t.dashboard;
@@ -126,19 +122,15 @@ const DashboardUser = () => {
           <MyEvents userId={user.id} language={language} />
         </TabsContent>
 
-        <TabsContent value="reservations" className="mt-6 animate-fade-in">
+        <TabsContent value="reservations" className="mt-4 animate-fade-in">
           <MyReservations userId={user.id} language={language} />
         </TabsContent>
 
-        <TabsContent value="offers" className="mt-6 animate-fade-in">
+        <TabsContent value="offers" className="mt-4 animate-fade-in">
           <MyOffers userId={user.id} language={language} />
         </TabsContent>
 
-        <TabsContent value="tickets" className="mt-6 animate-fade-in">
-          <MyTickets />
-        </TabsContent>
-
-        <TabsContent value="settings" className="mt-6 animate-fade-in">
+        <TabsContent value="settings" className="mt-4 animate-fade-in">
           <UserSettings userId={user.id} language={language} />
         </TabsContent>
       </Tabs>
@@ -157,14 +149,6 @@ const DashboardUser = () => {
             icon: <Map size={20} />,
             label: t.exploreMap,
             onClick: () => navigate('/xartis')
-          },
-          {
-            icon: <Ticket size={20} />,
-            label: t.tickets,
-            onClick: () => {
-              setActiveTab('tickets');
-              navigate('/dashboard-user?tab=tickets', { replace: true });
-            }
           },
           {
             icon: <Percent size={20} />,
