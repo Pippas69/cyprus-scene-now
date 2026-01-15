@@ -512,47 +512,42 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold">{t.title}</h2>
-        <p className="text-muted-foreground mt-2">{t.description}</p>
-      </div>
-
+    <div className="space-y-4">
       {upcomingReservations.length === 0 && pastReservations.length === 0 ? (
-        <Card className="p-12 text-center">
-          <p className="text-muted-foreground">{t.noReservations}</p>
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground text-sm">{t.noReservations}</p>
         </Card>
       ) : (
         <>
           {/* Upcoming Reservations */}
           {upcomingReservations.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">{t.noReservations}</p>
+            <Card className="p-6 text-center">
+              <p className="text-muted-foreground text-sm">{t.noReservations}</p>
             </Card>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {upcomingReservations.map((reservation) => renderReservationCard(reservation, false))}
             </div>
           )}
 
           {/* History Section */}
           {pastReservations.length > 0 && (
-            <Collapsible open={showHistory} onOpenChange={setShowHistory} className="mt-8">
+            <Collapsible open={showHistory} onOpenChange={setShowHistory}>
               <CollapsibleTrigger asChild>
-                <button className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors">
+                <button className="flex items-center justify-between w-full p-3 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors text-sm">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-semibold">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">
                       {t.history} ({pastReservations.length})
                     </span>
                   </div>
                   <ChevronDown 
-                    className={`h-5 w-5 text-muted-foreground transition-transform ${showHistory ? 'rotate-180' : ''}`}
+                    className={`h-4 w-4 text-muted-foreground transition-transform ${showHistory ? 'rotate-180' : ''}`}
                   />
                 </button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-4">
-                <div className="grid gap-4">
+              <CollapsibleContent className="mt-3">
+                <div className="grid gap-3">
                   {pastReservations.map((reservation) => (
                     renderReservationCard(reservation, true)
                   ))}
