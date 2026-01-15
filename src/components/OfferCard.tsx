@@ -269,17 +269,18 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               </div>
             </div>
 
-            {/* Buy Button */}
-            {hasPricing && (
-              <Button 
-                onClick={() => setIsPurchaseOpen(true)} 
-                className="w-full"
-                size="sm"
-              >
-                <ShoppingBag className="h-4 w-4 mr-2" />
-                {language === "el" ? "Αγορά Τώρα" : "Buy Now"}
-              </Button>
-            )}
+            {/* Claim/Buy Button - Always show */}
+            <Button 
+              onClick={() => setIsPurchaseOpen(true)} 
+              className="w-full"
+              size="sm"
+            >
+              <ShoppingBag className="h-4 w-4 mr-2" />
+              {hasPricing 
+                ? (language === "el" ? "Αγορά Τώρα" : "Buy Now")
+                : (language === "el" ? "Κλείσε Τώρα" : "Claim Now")
+              }
+            </Button>
           </div>
         </div>
       </CardContent>
