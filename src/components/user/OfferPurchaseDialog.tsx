@@ -182,10 +182,11 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const handleClaim = async () => {
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         toast.error(t("errorAuth"));
-        setIsLoading(false);
         return;
       }
 
@@ -193,7 +194,31 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         body: { discountId: offer.id, partySize },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Supabase Functions errors often hide the real message in context.body
+        const rawBody = (error as any)?.context?.body;
+        const parsedMsg = (() => {
+          if (typeof rawBody === "string") {
+            try {
+              return JSON.parse(rawBody)?.error as string | undefined;
+            } catch {
+              return undefined;
+            }
+          }
+          return undefined;
+        })();
+
+        const serverMsg = parsedMsg || (error as any)?.message;
+        const friendlyMsg =
+          serverMsg === "You have already claimed this offer"
+            ? language === "el"
+              ? "Έχετε ήδη διεκδικήσει αυτή την προσφορά. Δείτε την στις “Οι Προσφορές μου”."
+              : "You already claimed this offer. Check it in “My Offers”."
+            : serverMsg || t("errorGeneric");
+
+        toast.error(friendlyMsg);
+        return;
+      }
 
       if (data?.success) {
         setClaimSuccess({
@@ -208,9 +233,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         });
         toast.success(language === "el" ? "Η προσφορά διεκδικήθηκε!" : "Offer claimed!");
       }
-    } catch (error: any) {
-      console.error("Claim error:", error);
-      toast.error(error.message || t("errorGeneric"));
+    } catch {
+      toast.error(t("errorGeneric"));
     } finally {
       setIsLoading(false);
     }
