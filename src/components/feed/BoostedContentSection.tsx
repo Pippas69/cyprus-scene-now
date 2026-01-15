@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, CalendarHeart, Tag } from "lucide-react";
+import { Calendar, MapPin, Clock } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { PremiumBadge } from "@/components/ui/premium-badge";
 import { format, differenceInDays, differenceInHours, Locale } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 
@@ -218,9 +219,9 @@ const EventCard = ({ event, language, dateLocale, cardWidth, cardHeight }: Event
           </div>
         )}
         
-        {/* EVENT BADGE - Top Right, Icon Only, Orange CalendarHeart */}
-        <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1.5 shadow-lg">
-          <CalendarHeart className="h-3.5 w-3.5" />
+        {/* EVENT BADGE - Premium, Top Right */}
+        <div className="absolute top-2 right-2">
+          <PremiumBadge type="event" />
         </div>
       </div>
 
@@ -293,9 +294,9 @@ const OfferCard = ({ offer, t, language, cardWidth, cardHeight }: OfferCardProps
           </div>
         )}
         
-        {/* OFFER BADGE - Top Right, Icon Only, Green Tag */}
-        <div className="absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-1.5 shadow-lg">
-          <Tag className="h-3.5 w-3.5" />
+        {/* OFFER BADGE - Premium, Top Right */}
+        <div className="absolute top-2 right-2">
+          <PremiumBadge type="offer" />
         </div>
       </div>
 
