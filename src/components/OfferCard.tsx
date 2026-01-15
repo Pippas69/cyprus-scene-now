@@ -35,6 +35,18 @@ interface Offer {
   business_id: string;
   terms?: string | null;
   max_per_user?: number | null;
+  // Fields needed for OfferPurchaseDialog
+  category?: string | null;
+  discount_type?: string | null;
+  special_deal_text?: string | null;
+  valid_days?: string[] | null;
+  valid_start_time?: string | null;
+  valid_end_time?: string | null;
+  total_people?: number | null;
+  people_remaining?: number | null;
+  max_people_per_redemption?: number | null;
+  one_per_user?: boolean | null;
+  show_reservation_cta?: boolean | null;
   businesses: {
     name: string;
     logo_url: string | null;
