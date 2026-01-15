@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
@@ -13,6 +12,7 @@ interface Business {
   id: string;
   name: string;
   logo_url: string | null;
+  cover_url: string | null;
   category: string[];
   city: string;
   verified: boolean | null;
@@ -56,7 +56,7 @@ export const BusinessDirectorySection = ({
       
       let query = supabase
         .from('businesses')
-        .select('id, name, logo_url, category, city, verified, student_discount_percent, student_discount_mode')
+        .select('id, name, logo_url, cover_url, category, city, verified, student_discount_percent, student_discount_mode')
         .eq('verified', true)
         .order('created_at', { ascending: false });
       
@@ -151,12 +151,10 @@ export const BusinessDirectorySection = ({
   if (isLoading) {
     return (
       <div className="w-full">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border">
-              <Skeleton className="h-14 w-14 rounded-full" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-3 w-16" />
+            <div key={i} className="aspect-square rounded-xl border border-border overflow-hidden">
+              <Skeleton className="h-full w-full" />
             </div>
           ))}
         </div>
@@ -175,7 +173,7 @@ export const BusinessDirectorySection = ({
   return (
     <div className="w-full">
       <motion.div
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ staggerChildren: 0.05 }}
@@ -189,18 +187,24 @@ export const BusinessDirectorySection = ({
           >
             <Link
               to={`/business/${business.id}`}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 group"
+              className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
             >
-              <div className="relative">
-                <Avatar className="h-14 w-14">
-                  <AvatarImage 
-                    src={business.logo_url || undefined} 
-                    alt={business.name} 
-                  />
-                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                    {business.name.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+              {/* Full cover background image */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ 
+                  backgroundImage: business.cover_url || business.logo_url 
+                    ? `url(${business.cover_url || business.logo_url})` 
+                    : undefined,
+                  backgroundColor: !business.cover_url && !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined
+                }}
+              />
+              
+              {/* Gradient overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              
+              {/* Boost badges - top right */}
+              <div className="absolute top-2 right-2">
                 <BusinessBoostBadges
                   hasEventBoost={business.hasEventBoost}
                   hasOfferBoost={business.hasOfferBoost}
@@ -208,26 +212,29 @@ export const BusinessDirectorySection = ({
                   studentDiscountMode={business.student_discount_mode}
                   language={language}
                 />
-                {business.verified && (
-                  <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
-                    <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
-                  </div>
+              </div>
+              
+              {/* Verified badge - top left */}
+              {business.verified && (
+                <div className="absolute top-2 left-2 bg-background/90 rounded-full p-1">
+                  <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
+                </div>
+              )}
+              
+              {/* Content at bottom */}
+              <div className="absolute bottom-0 left-0 right-0 p-3">
+                <h4 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-primary-foreground transition-colors">
+                  {business.name}
+                </h4>
+                <p className="text-xs text-white/80 mt-0.5">
+                  {business.city}
+                </p>
+                {business.category?.[0] && (
+                  <Badge variant="secondary" className="mt-1.5 text-[10px] px-1.5 py-0 h-4 bg-white/20 text-white border-0">
+                    {business.category[0]}
+                  </Badge>
                 )}
               </div>
-
-              <span className="text-xs font-medium text-center line-clamp-1 max-w-full group-hover:text-primary transition-colors">
-                {business.name}
-              </span>
-
-              <span className="text-[10px] text-muted-foreground">
-                {business.city}
-              </span>
-
-              {business.category?.[0] && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                  {business.category[0]}
-                </Badge>
-              )}
             </Link>
           </motion.div>
         ))}
