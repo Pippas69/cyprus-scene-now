@@ -77,17 +77,35 @@ Deno.serve(async (req) => {
     logStep('User authenticated', { userId: user.id, email: user.email });
 
     // Get request body
-    const { plan_slug, billing_cycle } = await req.json();
-    if (!plan_slug || !billing_cycle) {
+    const rawBody = await req.json().catch(() => ({}));
+    let { plan_slug, billing_cycle } = rawBody as { plan_slug?: unknown; billing_cycle?: unknown };
+
+    // Normalize inputs defensively (prevents hidden whitespace / casing issues)
+    const normalizedPlan = String(plan_slug ?? '').trim().toLowerCase();
+    const normalizedCycle = String(billing_cycle ?? '').trim().toLowerCase();
+
+    if (!normalizedPlan || !normalizedCycle) {
       throw new Error('Missing required fields: plan_slug and billing_cycle');
     }
-    logStep('Request validated', { plan_slug, billing_cycle });
+
+    // Accept common aliases
+    const cycle = normalizedCycle === 'yearly' ? 'annual' : normalizedCycle;
+
+    logStep('Request validated', { plan_slug: normalizedPlan, billing_cycle: cycle });
 
     // Validate plan and billing cycle
-    if (!PRICE_MAPPING[plan_slug] || !PRICE_MAPPING[plan_slug][billing_cycle]) {
-      throw new Error(`Invalid plan or billing cycle: ${plan_slug} - ${billing_cycle}`);
+    const planMapping = PRICE_MAPPING[normalizedPlan];
+    const priceId = planMapping?.[cycle];
+
+    if (!priceId) {
+      logStep('Invalid plan/cycle received', {
+        received: { plan_slug: normalizedPlan, billing_cycle: cycle },
+        available_plans: Object.keys(PRICE_MAPPING),
+        available_cycles_for_plan: planMapping ? Object.keys(planMapping) : null,
+      });
+      throw new Error(`Invalid plan or billing cycle: ${normalizedPlan} - ${cycle}`);
     }
-    const priceId = PRICE_MAPPING[plan_slug][billing_cycle];
+
     logStep('Price ID mapped', { priceId });
 
     // Get business ID for this user
