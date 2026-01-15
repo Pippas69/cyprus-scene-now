@@ -57,8 +57,8 @@ const translations = {
 };
 
 type ContentItem = 
-  | { type: 'event'; data: BoostedEvent; score: number }
-  | { type: 'offer'; data: BoostedOffer; score: number };
+  | { type: 'event'; data: BoostedEvent; startTime: Date }
+  | { type: 'offer'; data: BoostedOffer; startTime: Date };
 
 export const BoostedContentSection = ({ 
   events, 
@@ -67,11 +67,20 @@ export const BoostedContentSection = ({
 }: BoostedContentSectionProps) => {
   const t = translations[language];
 
-  // Combine and sort all boosted content by score
+  // Combine and sort all boosted content by start time (chronological order)
+  // Events use start_at, Offers use start_at for when they become active
   const allContent: ContentItem[] = [
-    ...events.map(e => ({ type: 'event' as const, data: e, score: e.boostScore || 0 })),
-    ...offers.map(o => ({ type: 'offer' as const, data: o, score: o.boostScore || 0 }))
-  ].sort((a, b) => b.score - a.score);
+    ...events.map(e => ({ 
+      type: 'event' as const, 
+      data: e, 
+      startTime: new Date(e.start_at) 
+    })),
+    ...offers.map(o => ({ 
+      type: 'offer' as const, 
+      data: o, 
+      startTime: new Date(o.end_at) // Use end_at for offers to show soonest expiry first
+    }))
+  ].sort((a, b) => a.startTime.getTime() - b.startTime.getTime()); // Earliest first
 
   // Always render the container even if empty - prevents mobile layout issues
   if (allContent.length === 0) {
@@ -84,7 +93,7 @@ export const BoostedContentSection = ({
         <div className="flex gap-4 pb-2">
           {allContent.map((item, index) => (
             <motion.div
-              key={`${item.type}-${item.type === 'event' ? item.data.id : item.data.id}`}
+              key={`${item.type}-${item.data.id}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.03 }}
