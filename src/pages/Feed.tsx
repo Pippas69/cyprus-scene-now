@@ -383,59 +383,50 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </div>
             </div>
 
-            {/* Student Discount results (only when filter is active) */}
+            {/* Student Discount results (only when filter is active) - NO HEADER since filter already shows */}
             {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <GraduationCap className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold text-foreground">
-                    {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {studentDiscountBusinesses.map((business: any) => (
-                    <a
-                      key={business.id}
-                      href={`/business/${business.id}`}
-                      className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 group"
-                    >
-                      <div className="relative">
-                        {business.logo_url ? (
-                          <img
-                            src={business.logo_url}
-                            alt={business.name}
-                            className="w-14 h-14 rounded-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-lg font-bold text-primary">{business.name.charAt(0)}</span>
-                          </div>
-                        )}
-                        <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground rounded-full p-1">
-                          <GraduationCap className="h-3 w-3" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {studentDiscountBusinesses.map((business: any) => (
+                  <a
+                    key={business.id}
+                    href={`/business/${business.id}`}
+                    className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 group"
+                  >
+                    <div className="relative">
+                      {business.logo_url ? (
+                        <img
+                          src={business.logo_url}
+                          alt={business.name}
+                          className="w-14 h-14 rounded-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-lg font-bold text-primary">{business.name.charAt(0)}</span>
                         </div>
+                      )}
+                      <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground rounded-full p-1">
+                        <GraduationCap className="h-3 w-3" />
                       </div>
+                    </div>
 
-                      <span className="text-xs font-medium text-center line-clamp-1 max-w-full group-hover:text-primary transition-colors">
-                        {business.name}
-                      </span>
+                    <span className="text-xs font-medium text-center line-clamp-1 max-w-full group-hover:text-primary transition-colors">
+                      {business.name}
+                    </span>
 
-                      <span className="text-[10px] text-muted-foreground">{business.city}</span>
+                    <span className="text-[10px] text-muted-foreground">{business.city}</span>
 
-                      <span className="text-xs font-semibold text-primary">
-                        🎓 {business.student_discount_percent}%
-                        {business.student_discount_mode === "once" && (
-                          <span className="text-muted-foreground font-normal ml-1">
-                            ({language === "el" ? "1η" : "1st"})
-                          </span>
-                        )}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              </section>
+                    <span className="text-xs font-semibold text-primary">
+                      🎓 {business.student_discount_percent}%
+                      {business.student_discount_mode === "once" && (
+                        <span className="text-muted-foreground font-normal ml-1">
+                          ({language === "el" ? "1η" : "1st"})
+                        </span>
+                      )}
+                    </span>
+                  </a>
+                ))}
+              </div>
             )}
 
             {/* All businesses from FOMO - filtered by selected categories */}
