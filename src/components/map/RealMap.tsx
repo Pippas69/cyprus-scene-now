@@ -98,12 +98,12 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
 };
 
 // Minimum zoom levels for each plan to appear
-// Free businesses only visible at close zoom
+// All pins visible at default Cyprus view
 const MIN_ZOOM_FOR_PLAN: Record<'free' | 'basic' | 'pro' | 'elite', number> = {
-  free: 13,   // Only visible at close zoom
-  basic: 11,  // Visible at medium zoom
-  pro: 9,     // Visible early
-  elite: 7,   // Always visible
+  free: 7,    // All visible at island view
+  basic: 7,   
+  pro: 7,     
+  elite: 7,   
 };
 
 const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
@@ -164,20 +164,23 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
     markersRef.current = [];
 
     // Ensure we start with a view that can actually show the businesses.
-    // (Does not change filtering logic; it just avoids "empty map" on initial load.)
-    try {
-      const lngs = businesses.map((b) => b.coordinates[0]);
-      const lats = businesses.map((b) => b.coordinates[1]);
-      const sw: [number, number] = [Math.min(...lngs), Math.min(...lats)];
-      const ne: [number, number] = [Math.max(...lngs), Math.max(...lats)];
-      map.current.fitBounds([sw, ne], {
-        padding: 80,
-        duration: 700,
-        maxZoom: 12,
-      });
-    } catch {
-      // ignore
-    }
+    const doBoundsAndMarkers = () => {
+      if (!map.current) return;
+      try {
+        const lngs = businesses.map((b) => b.coordinates[0]);
+        const lats = businesses.map((b) => b.coordinates[1]);
+        const sw: [number, number] = [Math.min(...lngs), Math.min(...lats)];
+        const ne: [number, number] = [Math.max(...lngs), Math.max(...lats)];
+        map.current.fitBounds([sw, ne], {
+          padding: 80,
+          duration: 0, // Instant so markers render immediately
+          maxZoom: 11, // Ensure most pins are visible
+        });
+      } catch {
+        // ignore
+      }
+    };
+    doBoundsAndMarkers();
 
     /**
      * PREMIUM PIN RENDERING - NO CLUSTERING

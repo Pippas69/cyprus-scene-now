@@ -565,15 +565,147 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onClose}>
-        <DrawerContent className="max-h-[95vh]">
-          <DrawerHeader>
-            <DrawerTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5" />
-              {t("title")}
-            </DrawerTitle>
-            <DrawerDescription className="sr-only">Claim offer: {offer.title}</DrawerDescription>
+        <DrawerContent className="h-[90vh] flex flex-col">
+          <DrawerHeader className="flex-shrink-0 border-b pb-3">
+            <div className="flex items-center gap-3">
+              {offer.businesses.logo_url ? (
+                <img
+                  src={offer.businesses.logo_url}
+                  alt={offer.businesses.name}
+                  className="w-10 h-10 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                  <Store className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <DrawerTitle className="text-left truncate">{offer.title}</DrawerTitle>
+                <p className="text-sm text-muted-foreground truncate">{offer.businesses.name}</p>
+              </div>
+              {discountDisplay && (
+                <Badge className="bg-primary text-primary-foreground shrink-0">
+                  {discountDisplay}
+                </Badge>
+              )}
+            </div>
           </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto">{formContent}</div>
+          <div className="flex-1 overflow-y-auto px-4 py-4">
+            {/* Cover Image */}
+            {offer.businesses.cover_url && (
+              <div className="w-full h-40 rounded-lg overflow-hidden mb-4">
+                <img 
+                  src={offer.businesses.cover_url} 
+                  alt="" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            
+            {/* Description */}
+            {offer.description && (
+              <p className="text-sm text-muted-foreground mb-4">{offer.description}</p>
+            )}
+            
+            <Separator className="my-4" />
+            
+            {/* Party Size Selector */}
+            <div className="space-y-2 mb-4">
+              <Label className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {t("partySize")}
+              </Label>
+              <Select value={partySize.toString()} onValueChange={(val) => setPartySize(parseInt(val))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: Math.min(maxPerRedemption, peopleRemaining) }, (_, i) => i + 1).map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} {num === 1 ? t("person") : t("people")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Availability Info */}
+            <div className="bg-muted/30 rounded-lg p-3 space-y-2 mb-4">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {language === "el" ? "Διαθεσιμότητα" : "Availability"}
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex flex-col">
+                  <span className="text-muted-foreground text-xs">{language === "el" ? "Διαθέσιμα" : "Available"}</span>
+                  <span className="font-medium">{peopleRemaining} {language === "el" ? "άτομα" : "people"}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-muted-foreground text-xs">{language === "el" ? "Μέγ. ανά εξαργύρωση" : "Max per redemption"}</span>
+                  <span className="font-medium">{maxPerRedemption} {language === "el" ? "άτομα" : "people"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Validity Info */}
+            <div className="space-y-2 text-sm mb-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{t("validDays")}: {formatDays(offer.valid_days || null)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{t("validHours")}: {formatTime(offer.valid_start_time || null, offer.valid_end_time || null)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{t("expiresOn")}: {formatDate(offer.end_at)}</span>
+              </div>
+            </div>
+
+            {/* Terms */}
+            {offer.terms && (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm mb-4">
+                <p className="font-medium mb-1">{t("terms")}</p>
+                <p className="text-muted-foreground">{offer.terms}</p>
+              </div>
+            )}
+
+            {/* Walk-in Note */}
+            <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg mb-4">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{t("walkInNote")}</span>
+            </div>
+          </div>
+
+          {/* Fixed bottom section */}
+          <div className="flex-shrink-0 border-t p-4 bg-background space-y-3">
+            {/* Accept Terms */}
+            <div className="flex items-center space-x-2">
+              <Checkbox id="terms-mobile" checked={acceptedTerms} onCheckedChange={(checked) => setAcceptedTerms(checked === true)} />
+              <label htmlFor="terms-mobile" className="text-sm font-medium leading-none">
+                {language === "el" ? (
+                  <>Αποδέχομαι τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a></>
+                ) : (
+                  <>I accept the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a></>
+                )}
+              </label>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
+                {t("cancel")}
+              </Button>
+              <Button onClick={handleClaim} className="flex-1" disabled={isLoading || !acceptedTerms || peopleRemaining < partySize}>
+                {isLoading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</>
+                ) : (
+                  <><Tag className="mr-2 h-4 w-4" />{t("claimOffer")}</>
+                )}
+              </Button>
+            </div>
+          </div>
         </DrawerContent>
       </Drawer>
     );
@@ -581,15 +713,35 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Tag className="h-5 w-5" />
-            {t("title")}
-          </DialogTitle>
-          <DialogDescription className="sr-only">Claim offer: {offer.title}</DialogDescription>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
+          <div className="flex items-center gap-3">
+            {offer.businesses.logo_url ? (
+              <img
+                src={offer.businesses.logo_url}
+                alt={offer.businesses.name}
+                className="w-12 h-12 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                <Store className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-left">{offer.title}</DialogTitle>
+              <DialogDescription className="text-left">{offer.businesses.name}</DialogDescription>
+            </div>
+            {discountDisplay && (
+              <Badge className="text-lg py-2 px-4 bg-primary text-primary-foreground shrink-0">
+                {discountDisplay}
+              </Badge>
+            )}
+          </div>
         </DialogHeader>
-        {formContent}
+        
+        <div className="flex-1 overflow-y-auto p-6">
+          {formContent}
+        </div>
       </DialogContent>
     </Dialog>
   );
