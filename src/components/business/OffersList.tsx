@@ -96,12 +96,49 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
   const handleDelete = async (offerId: string) => {
     try {
-      const { error } = await supabase
+      // First, delete all related records to avoid FK constraint errors
+      // Order matters due to dependencies
+      
+      // 1. Delete commission ledger entries (depends on discount_id)
+      await supabase.from('commission_ledger').delete().eq('discount_id', offerId);
+      
+      // 2. Delete offer purchases (depends on discount_id)
+      await supabase.from('offer_purchases').delete().eq('discount_id', offerId);
+      
+      // 3. Delete redemptions (depends on discount_id)
+      await supabase.from('redemptions').delete().eq('discount_id', offerId);
+      
+      // 4. Delete discount views
+      await supabase.from('discount_views').delete().eq('discount_id', offerId);
+      
+      // 5. Delete discount scans
+      await supabase.from('discount_scans').delete().eq('discount_id', offerId);
+      
+      // 6. Delete favorites
+      await supabase.from('favorite_discounts').delete().eq('discount_id', offerId);
+      
+      // 7. Delete discount items (bundle items)
+      await supabase.from('discount_items').delete().eq('discount_id', offerId);
+      
+      // 8. Delete offer boosts
+      await supabase.from('offer_boosts').delete().eq('discount_id', offerId);
+      
+      // Finally, delete the discount itself
+      const { error, count } = await supabase
         .from('discounts')
         .delete()
-        .eq('id', offerId);
+        .eq('id', offerId)
+        .select();
 
       if (error) throw error;
+      
+      // Check if something was actually deleted
+      if (!count && count !== undefined) {
+        throw new Error(language === "el" 
+          ? "Δεν βρέθηκε η προσφορά ή δεν έχετε δικαίωμα διαγραφής" 
+          : "Offer not found or you don't have permission to delete"
+        );
+      }
 
       toast({
         title: t.success,
@@ -110,6 +147,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
       queryClient.invalidateQueries({ queryKey: ['business-offers', businessId] });
     } catch (error: any) {
+      console.error("Delete offer error:", error);
       toast({
         title: t.error,
         description: error.message,
