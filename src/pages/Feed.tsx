@@ -7,6 +7,8 @@ import FeedSidebar from "@/components/feed/FeedSidebar";
 import SmartSearchBar from "@/components/feed/SmartSearchBar";
 import { BoostedContentSection } from "@/components/feed/BoostedContentSection";
 import { BoostedProfilesScroller } from "@/components/feed/BoostedProfilesScroller";
+import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
+import { Logo } from "@/components/Logo";
 
 import BusinessDirectorySection from "@/components/feed/BusinessDirectorySection";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
@@ -296,14 +298,32 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           )}
         </div>
 
+        {/* FOMO Logo + Location Dropdown Header */}
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 pt-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Logo size="sm" />
+            <div className="h-5 w-px bg-border" />
+            <CompactLocationDropdown
+              language={language}
+              selectedCity={selectedCity}
+              onCityChange={setSelectedCity}
+            />
+          </div>
+        </div>
+
         {/* PRIORITY 1: Paid content at the very top (above everything) - ALWAYS render container */}
-        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 pt-4 overflow-hidden">
-          <BoostedContentSection events={boostedEvents || []} offers={boostedOffers || []} language={language} />
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 overflow-hidden">
+          <BoostedContentSection 
+            events={boostedEvents || []} 
+            offers={boostedOffers || []} 
+            language={language}
+            userCity={selectedCity || personalizedData?.profile?.city}
+          />
         </div>
 
         {/* Smart Search Bar */}
         {showNavbar && (
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 mt-2 mb-6 relative z-30">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 mt-4 mb-6 relative z-30">
             <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
           </div>
         )}
