@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -7,11 +8,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, QrCode, CalendarCheck, ExternalLink } from "lucide-react";
+import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, QrCode, CalendarCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import QRCodeLib from "qrcode";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 interface Offer {
   id: string;
@@ -40,6 +43,7 @@ interface Offer {
   businesses: {
     name: string;
     logo_url: string | null;
+    cover_url?: string | null;
     city?: string;
     accepts_direct_reservations?: boolean;
   };
@@ -65,6 +69,7 @@ interface ClaimSuccessData {
 
 export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferClaimDialogProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [partySize, setPartySize] = useState(1);
@@ -254,248 +259,61 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
   // Success View
   if (claimSuccess) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-green-600">
-              <CheckCircle className="h-5 w-5" />
-              {t("successTitle")}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              Your offer has been claimed successfully
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Offer Info */}
-            <div className="flex items-center gap-3">
-              {claimSuccess.businessLogo ? (
-                <img
-                  src={claimSuccess.businessLogo}
-                  alt={claimSuccess.businessName}
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                  <Store className="h-6 w-6 text-muted-foreground" />
-                </div>
-              )}
-              <div>
-                <h3 className="font-semibold">{claimSuccess.offerTitle}</h3>
-                <p className="text-sm text-muted-foreground">{claimSuccess.businessName}</p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* QR Code */}
-            <div className="flex flex-col items-center py-4">
-              <div className="bg-white p-4 rounded-xl border-2 border-primary/20 shadow-sm">
-                {qrCodeDataUrl ? (
-                  <img src={qrCodeDataUrl} alt="QR Code" className="w-48 h-48" />
-                ) : (
-                  <div className="w-48 h-48 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
-                <QrCode className="h-4 w-4" />
-                <span>{t("showQrCode")}</span>
-              </div>
-            </div>
-
-            {/* Party Size Badge */}
-            <div className="flex justify-center">
-              <Badge variant="secondary" className="text-sm py-1 px-3">
-                <Users className="h-4 w-4 mr-2" />
-                {t("validFor")} {claimSuccess.partySize} {claimSuccess.partySize === 1 ? t("person") : t("people")}
-              </Badge>
-            </div>
-
-            {/* Email Confirmation */}
-            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg justify-center">
-              <CheckCircle className="h-4 w-4" />
-              <span>{t("emailSent")}</span>
-            </div>
-
-            {/* Walk-in Note */}
-            <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>{t("walkInNote")}</span>
-            </div>
-
-            {/* Optional Reservation CTA - for discount hours */}
-            {claimSuccess.showReservationCta && (
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-2 text-primary font-medium">
-                  <CalendarCheck className="h-5 w-5" />
-                  <span>{language === "el" ? "Θέλετε να κλείσετε τραπέζι;" : "Want to book a table?"}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {language === "el" 
-                    ? `Κάντε κράτηση για τις ώρες που ισχύει η έκπτωση (${offer?.valid_start_time?.substring(0,5) || ''} - ${offer?.valid_end_time?.substring(0,5) || ''}) για να εξασφαλίσετε θέση.`
-                    : `Make a reservation for the discount hours (${offer?.valid_start_time?.substring(0,5) || ''} - ${offer?.valid_end_time?.substring(0,5) || ''}) to secure a seat.`
-                  }
-                </p>
-                <Button onClick={handleMakeReservation} className="w-full">
-                  <CalendarCheck className="mr-2 h-4 w-4" />
-                  {language === "el" ? "Κάνε Κράτηση για Έκπτωση" : "Book for Discount Hours"}
-                </Button>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex flex-col gap-2">
-              <Button onClick={handleViewMyOffers} variant="outline" className="w-full">
-                <Tag className="mr-2 h-4 w-4" />
-                {t("viewMyOffers")}
-              </Button>
-
-              <Button onClick={onClose} variant="ghost" className="w-full">
-                {t("done")}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Claim Form View
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Tag className="h-5 w-5" />
-            {t("title")}
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Claim offer: {offer.title}
-          </DialogDescription>
-        </DialogHeader>
-
+    const content = (
+      <>
         <div className="space-y-4">
           {/* Offer Info */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              {offer.businesses.logo_url ? (
-                <img
-                  src={offer.businesses.logo_url}
-                  alt={offer.businesses.name}
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
+          <div className="flex items-center gap-3">
+            {claimSuccess.businessLogo ? (
+              <img
+                src={claimSuccess.businessLogo}
+                alt={claimSuccess.businessName}
+                className="w-12 h-12 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                <Store className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+            <div>
+              <h3 className="font-semibold">{claimSuccess.offerTitle}</h3>
+              <p className="text-sm text-muted-foreground">{claimSuccess.businessName}</p>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* QR Code */}
+          <div className="flex flex-col items-center py-4">
+            <div className="bg-white p-4 rounded-xl border-2 border-primary/20 shadow-sm">
+              {qrCodeDataUrl ? (
+                <img src={qrCodeDataUrl} alt="QR Code" className="w-48 h-48" />
               ) : (
-                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                  <Store className="h-6 w-6 text-muted-foreground" />
+                <div className="w-48 h-48 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               )}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold">{offer.title}</h3>
-                  {offer.category && (
-                    <Badge variant="outline" className="text-xs">
-                      {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">{offer.businesses.name}</p>
-              </div>
             </div>
-            {offer.description && (
-              <p className="text-sm text-muted-foreground">{offer.description}</p>
-            )}
-          </div>
-
-          {/* Discount Display */}
-          {discountDisplay && (
-            <div className="flex justify-center">
-              <Badge className="text-lg py-2 px-4 bg-gradient-to-r from-primary to-primary/80">
-                {discountDisplay}
-              </Badge>
-            </div>
-          )}
-
-          <Separator />
-
-          {/* Party Size Selector */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              {t("partySize")}
-            </Label>
-            <Select
-              value={partySize.toString()}
-              onValueChange={(val) => setPartySize(parseInt(val))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: Math.min(maxPerRedemption, peopleRemaining) }, (_, i) => i + 1).map((num) => (
-                  <SelectItem key={num} value={num.toString()}>
-                    {num} {num === 1 ? t("person") : t("people")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Separator />
-
-          {/* Availability Info */}
-          <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-            <h4 className="font-medium text-sm flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              {language === "el" ? "Διαθεσιμότητα" : "Availability"}
-            </h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex flex-col">
-                <span className="text-muted-foreground text-xs">
-                  {language === "el" ? "Διαθέσιμα" : "Available"}
-                </span>
-                <span className="font-medium">{peopleRemaining} {language === "el" ? "άτομα" : "people"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-muted-foreground text-xs">
-                  {language === "el" ? "Μέγ. ανά εξαργύρωση" : "Max per redemption"}
-                </span>
-                <span className="font-medium">{maxPerRedemption} {language === "el" ? "άτομα" : "people"}</span>
-              </div>
-            </div>
-            {offer.one_per_user && (
-              <Badge variant="secondary" className="text-xs">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user"}
-              </Badge>
-            )}
-          </div>
-
-          {/* Validity Info */}
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>{t("validDays")}: {formatDays(offer.valid_days || null)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>{t("validHours")}: {formatTime(offer.valid_start_time || null, offer.valid_end_time || null)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>{t("expiresOn")}: {formatDate(offer.end_at)}</span>
+            <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
+              <QrCode className="h-4 w-4" />
+              <span>{t("showQrCode")}</span>
             </div>
           </div>
 
-          {/* Terms */}
-          {offer.terms && (
-            <div className="bg-muted/50 rounded-lg p-3 text-sm">
-              <p className="font-medium mb-1">{t("terms")}</p>
-              <p className="text-muted-foreground">{offer.terms}</p>
-            </div>
-          )}
+          {/* Party Size Badge */}
+          <div className="flex justify-center">
+            <Badge variant="secondary" className="text-sm py-1 px-3">
+              <Users className="h-4 w-4 mr-2" />
+              {t("validFor")} {claimSuccess.partySize}{" "}
+              {claimSuccess.partySize === 1 ? t("person") : t("people")}
+            </Badge>
+          </div>
+
+          {/* Email Confirmation */}
+          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg justify-center">
+            <CheckCircle className="h-4 w-4" />
+            <span>{t("emailSent")}</span>
+          </div>
 
           {/* Walk-in Note */}
           <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
@@ -503,49 +321,275 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
             <span>{t("walkInNote")}</span>
           </div>
 
-          {/* Accept Terms */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="terms"
-              checked={acceptedTerms}
-              onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
-            />
-            <label
-              htmlFor="terms"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              {language === "el" ? (
-                <>Αποδέχομαι τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a></>
-              ) : (
-                <>I accept the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a></>
-              )}
-            </label>
-          </div>
+          {/* Optional Reservation CTA - for discount hours */}
+          {claimSuccess.showReservationCta && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-primary font-medium">
+                <CalendarCheck className="h-5 w-5" />
+                <span>{language === "el" ? "Θέλετε να κλείσετε τραπέζι;" : "Want to book a table?"}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {language === "el"
+                  ? `Κάντε κράτηση για τις ώρες που ισχύει η έκπτωση (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.`
+                  : `Make a reservation for the discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
+              </p>
+              <Button onClick={handleMakeReservation} className="w-full">
+                <CalendarCheck className="mr-2 h-4 w-4" />
+                {language === "el" ? "Κάνε Κράτηση για Έκπτωση" : "Book for Discount Hours"}
+              </Button>
+            </div>
+          )}
 
           {/* Actions */}
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
-              {t("cancel")}
+          <div className="flex flex-col gap-2">
+            <Button onClick={handleViewMyOffers} variant="outline" className="w-full">
+              <Tag className="mr-2 h-4 w-4" />
+              {t("viewMyOffers")}
             </Button>
-            <Button
-              onClick={handleClaim}
-              className="flex-1"
-              disabled={isLoading || !acceptedTerms || peopleRemaining < partySize}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("processing")}
-                </>
-              ) : (
-                <>
-                  <Tag className="mr-2 h-4 w-4" />
-                  {t("claimOffer")}
-                </>
-              )}
+
+            <Button onClick={onClose} variant="ghost" className="w-full">
+              {t("done")}
             </Button>
           </div>
         </div>
+      </>
+    );
+
+    if (isMobile) {
+      return (
+        <Drawer open={isOpen} onOpenChange={onClose}>
+          <DrawerContent className="max-h-[95vh]">
+            <DrawerHeader>
+              <DrawerTitle className="flex items-center gap-2 text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                {t("successTitle")}
+              </DrawerTitle>
+              <DrawerDescription className="sr-only">Your offer has been claimed successfully</DrawerDescription>
+            </DrawerHeader>
+            <div className="px-4 pb-6 overflow-y-auto">{content}</div>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle className="h-5 w-5" />
+              {t("successTitle")}
+            </DialogTitle>
+            <DialogDescription className="sr-only">Your offer has been claimed successfully</DialogDescription>
+          </DialogHeader>
+          {content}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Claim Form View
+  const formContent = (
+    <div className="space-y-4">
+      {/* Offer Info */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          {offer.businesses.logo_url ? (
+            <img
+              src={offer.businesses.logo_url}
+              alt={offer.businesses.name}
+              className="w-12 h-12 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+              <Store className="h-6 w-6 text-muted-foreground" />
+            </div>
+          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold">{offer.title}</h3>
+              {offer.category && (
+                <Badge variant="outline" className="text-xs">
+                  {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{offer.businesses.name}</p>
+          </div>
+        </div>
+        {offer.description && <p className="text-sm text-muted-foreground">{offer.description}</p>}
+      </div>
+
+      {/* Discount Display */}
+      {discountDisplay && (
+        <div className="flex justify-center">
+          <Badge className="text-lg py-2 px-4 bg-gradient-to-r from-primary to-primary/80">{discountDisplay}</Badge>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Party Size Selector */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          {t("partySize")}
+        </Label>
+        <Select value={partySize.toString()} onValueChange={(val) => setPartySize(parseInt(val))}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: Math.min(maxPerRedemption, peopleRemaining) }, (_, i) => i + 1).map((num) => (
+              <SelectItem key={num} value={num.toString()}>
+                {num} {num === 1 ? t("person") : t("people")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Separator />
+
+      {/* Availability Info */}
+      <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+        <h4 className="font-medium text-sm flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          {language === "el" ? "Διαθεσιμότητα" : "Availability"}
+        </h4>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="flex flex-col">
+            <span className="text-muted-foreground text-xs">{language === "el" ? "Διαθέσιμα" : "Available"}</span>
+            <span className="font-medium">
+              {peopleRemaining} {language === "el" ? "άτομα" : "people"}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-muted-foreground text-xs">{language === "el" ? "Μέγ. ανά εξαργύρωση" : "Max per redemption"}</span>
+            <span className="font-medium">
+              {maxPerRedemption} {language === "el" ? "άτομα" : "people"}
+            </span>
+          </div>
+        </div>
+        {offer.one_per_user && (
+          <Badge variant="secondary" className="text-xs">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            {language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user"}
+          </Badge>
+        )}
+      </div>
+
+      {/* Validity Info */}
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>
+            {t("validDays")}: {formatDays(offer.valid_days || null)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>
+            {t("validHours")}: {formatTime(offer.valid_start_time || null, offer.valid_end_time || null)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>
+            {t("expiresOn")}: {formatDate(offer.end_at)}
+          </span>
+        </div>
+      </div>
+
+      {/* Terms */}
+      {offer.terms && (
+        <div className="bg-muted/50 rounded-lg p-3 text-sm">
+          <p className="font-medium mb-1">{t("terms")}</p>
+          <p className="text-muted-foreground">{offer.terms}</p>
+        </div>
+      )}
+
+      {/* Walk-in Note */}
+      <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+        <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>{t("walkInNote")}</span>
+      </div>
+
+      {/* Accept Terms */}
+      <div className="flex items-center space-x-2">
+        <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(checked) => setAcceptedTerms(checked === true)} />
+        <label
+          htmlFor="terms"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          {language === "el" ? (
+            <>
+              Αποδέχομαι τους{" "}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                όρους χρήσης
+              </a>
+            </>
+          ) : (
+            <>
+              I accept the{" "}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                terms of use
+              </a>
+            </>
+          )}
+        </label>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
+          {t("cancel")}
+        </Button>
+        <Button onClick={handleClaim} className="flex-1" disabled={isLoading || !acceptedTerms || peopleRemaining < partySize}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {t("processing")}
+            </>
+          ) : (
+            <>
+              <Tag className="mr-2 h-4 w-4" />
+              {t("claimOffer")}
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={onClose}>
+        <DrawerContent className="max-h-[95vh]">
+          <DrawerHeader>
+            <DrawerTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5" />
+              {t("title")}
+            </DrawerTitle>
+            <DrawerDescription className="sr-only">Claim offer: {offer.title}</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-6 overflow-y-auto">{formContent}</div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Tag className="h-5 w-5" />
+            {t("title")}
+          </DialogTitle>
+          <DialogDescription className="sr-only">Claim offer: {offer.title}</DialogDescription>
+        </DialogHeader>
+        {formContent}
       </DialogContent>
     </Dialog>
   );
