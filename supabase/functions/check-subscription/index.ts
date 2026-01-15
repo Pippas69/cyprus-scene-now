@@ -23,14 +23,22 @@ const safeTimestampToISO = (timestamp: number | null | undefined): string => {
   }
 };
 
-// Product ID to plan slug mapping - LIVE (includes both monthly and annual product IDs)
+// Product ID to plan slug mapping - NEW (Basic/Pro/Elite)
 const PRODUCT_TO_PLAN: Record<string, string> = {
-  'prod_TjOhhBOl8h6KSY': 'starter',       // Starter Monthly
-  'prod_TjOvLr9W7CmRrp': 'starter',       // Starter Annual
-  'prod_TjOj8tEFcsmxHJ': 'growth',        // Growth Monthly
-  'prod_TjOwPgvfysk22': 'growth',         // Growth Annual
-  'prod_TjOlA1wCzel4BC': 'professional',  // Professional Monthly
-  'prod_TjOwpvKhaDl3xS': 'professional',  // Professional Annual
+  // NEW products
+  'prod_TnXuZRPpopjiki': 'basic',       // Basic Monthly
+  'prod_TnXujnMCC4egp8': 'basic',       // Basic Annual
+  'prod_TnXuM6SsuuyScm': 'pro',         // Pro Monthly
+  'prod_TnXu1Cjr9IvzhA': 'pro',         // Pro Annual
+  'prod_TnXuOoALyrNdew': 'elite',       // Elite Monthly
+  'prod_TnXuV3hkfa3wQJ': 'elite',       // Elite Annual
+  // LEGACY products (map to new slugs for backwards compatibility)
+  'prod_TjOhhBOl8h6KSY': 'basic',       // Old Starter Monthly
+  'prod_TjOvLr9W7CmRrp': 'basic',       // Old Starter Annual
+  'prod_TjOj8tEFcsmxHJ': 'pro',         // Old Growth Monthly
+  'prod_TjOwPgvfysk22': 'pro',          // Old Growth Annual
+  'prod_TjOlA1wCzel4BC': 'elite',       // Old Professional Monthly
+  'prod_TjOwpvKhaDl3xS': 'elite',       // Old Professional Annual
 };
 
 Deno.serve(async (req) => {
@@ -97,7 +105,7 @@ Deno.serve(async (req) => {
       customer: customerId,
       status: 'active',
       limit: 1,
-      expand: ['data.items.data.price.product'], // Explicitly control expansion depth
+      expand: ['data.items.data.price.product'],
     });
 
     const hasActiveSub = subscriptions.data.length > 0;
@@ -119,7 +127,7 @@ Deno.serve(async (req) => {
       ? priceItem.price.product 
       : priceItem.price.product.id;
     
-    const planSlug = PRODUCT_TO_PLAN[productId];
+    const planSlug = PRODUCT_TO_PLAN[productId] || 'basic';
     logStep('Determined subscription details', { 
       subscriptionId: subscription.id, 
       productId, 
@@ -152,7 +160,7 @@ Deno.serve(async (req) => {
 
     // Check if we need to reset monthly budgets (new billing period)
     let monthlyBudgetRemaining = plan.event_boost_budget_cents;
-    let commissionFreeOffersRemaining = plan.commission_free_offers_count;
+    let commissionFreeOffersRemaining = plan.commission_free_offers_count || 0;
 
     if (existingSub && existingSub.current_period_start === subscriptionStart) {
       // Same billing period, keep existing values
@@ -197,7 +205,9 @@ Deno.serve(async (req) => {
       monthly_budget_remaining_cents: monthlyBudgetRemaining,
       commission_free_offers_remaining: commissionFreeOffersRemaining,
       event_boost_budget_cents: plan.event_boost_budget_cents,
-      commission_free_offers_count: plan.commission_free_offers_count,
+      commission_free_offers_count: plan.commission_free_offers_count || 0,
+      commission_percent: plan.commission_percent || 12,
+      analytics_level: plan.analytics_level || 'overview',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
