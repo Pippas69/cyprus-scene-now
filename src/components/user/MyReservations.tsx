@@ -18,6 +18,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface MyReservationsProps {
@@ -72,6 +78,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     reservationId: null,
   });
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
+  const [qrDialog, setQrDialog] = useState<{ open: boolean; qrCode: string; confirmationCode: string; businessName: string } | null>(null);
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -403,17 +410,26 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                   </p>
                 </div>
                 {qrCodes[reservation.id] && (
-                  <div className="flex flex-col items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQrDialog({
+                      open: true,
+                      qrCode: qrCodes[reservation.id],
+                      confirmationCode: reservation.confirmation_code || '',
+                      businessName: businessInfo?.name || ''
+                    })}
+                    className="flex flex-col items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group"
+                  >
                     <img 
                       src={qrCodes[reservation.id]} 
                       alt="QR Code" 
-                      className="w-24 h-24 rounded border border-primary/20"
+                      className="w-24 h-24 rounded border border-primary/20 group-hover:border-primary/50 transition-colors"
                     />
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary transition-colors">
                       <QrCode className="h-3 w-3" />
-                      <span>QR Code</span>
+                      <span>{language === 'el' ? 'Πατήστε για μεγέθυνση' : 'Tap to enlarge'}</span>
                     </div>
-                  </div>
+                  </button>
                 )}
               </div>
             </div>
@@ -574,6 +590,46 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* QR Code Enlarged Dialog */}
+      <Dialog open={qrDialog?.open || false} onOpenChange={(open) => !open && setQrDialog(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              {language === 'el' ? 'Κωδικός Επιβεβαίωσης' : 'Confirmation Code'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-6 py-4">
+            {qrDialog?.businessName && (
+              <p className="text-muted-foreground text-sm">{qrDialog.businessName}</p>
+            )}
+            {qrDialog?.qrCode && (
+              <div className="bg-white p-4 rounded-xl border-2 border-primary/20 shadow-lg">
+                <img 
+                  src={qrDialog.qrCode} 
+                  alt="QR Code" 
+                  className="w-64 h-64"
+                />
+              </div>
+            )}
+            {qrDialog?.confirmationCode && (
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {language === 'el' ? 'Κωδικός' : 'Code'}
+                </p>
+                <p className="text-3xl font-bold text-primary tracking-widest">
+                  {qrDialog.confirmationCode}
+                </p>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground text-center">
+              {language === 'el' 
+                ? 'Παρουσιάστε αυτόν τον κωδικό QR στην επιχείρηση'
+                : 'Present this QR code at the venue'}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
