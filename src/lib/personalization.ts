@@ -204,22 +204,22 @@ export const sortBusinessesByPlanAndProximity = <T extends { id: string; city: s
  * @deprecated For business sorting, use sortBusinessesByPlanAndProximity instead.
  * This is kept for backwards compatibility with boost scoring.
  */
-export const getRotationSeed = (userId?: string | null): number => {
-  const currentHour = Math.floor(Date.now() / (1000 * 60 * 60));
-  const userSeed = userId 
-    ? userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    : Math.floor(Math.random() * 1000);
-  return (currentHour * 31 + userSeed) % 1000;
-};
+function getRotationFactor(rotationSeed: number, itemId: string): number {
+  const itemSeed = itemId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return ((rotationSeed + itemSeed) % 21); // 0-20 range
+}
 
 /**
  * @deprecated For business sorting, use sortBusinessesByPlanAndProximity instead.
  * This is kept for backwards compatibility with boost scoring.
  */
-const getRotationFactor = (rotationSeed: number, itemId: string): number => {
-  const itemSeed = itemId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return ((rotationSeed + itemSeed) % 21); // 0-20 range
-};
+export function getRotationSeed(userId?: string | null): number {
+  const currentHour = Math.floor(Date.now() / (1000 * 60 * 60));
+  const userSeed = userId 
+    ? userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    : Math.floor(Math.random() * 1000);
+  return (currentHour * 31 + userSeed) % 1000;
+}
 
 /**
  * Get tier base score from targeting_quality or boost_tier
