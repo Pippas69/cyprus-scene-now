@@ -26,16 +26,15 @@ interface FeaturedOffer {
 interface FeaturedOffersScrollerProps {
   offers: FeaturedOffer[];
   language: "el" | "en";
+  hideTitle?: boolean;
 }
 
 const translations = {
   el: {
-    featuredOffers: "Προβεβλημένες Προσφορές",
     endsSoon: "Λήγει σύντομα",
     daysLeft: "ημέρες",
   },
   en: {
-    featuredOffers: "Featured Offers",
     endsSoon: "Ends soon",
     daysLeft: "days left",
   },
@@ -43,7 +42,8 @@ const translations = {
 
 export const FeaturedOffersScroller = ({ 
   offers, 
-  language 
+  language,
+  hideTitle = false
 }: FeaturedOffersScrollerProps) => {
   const t = translations[language];
 
@@ -51,10 +51,6 @@ export const FeaturedOffersScroller = ({
 
   return (
     <div className="w-full">
-      <div className="flex items-center gap-2 mb-3 px-1">
-        <Tag className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground">{t.featuredOffers}</h3>
-      </div>
       
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-4 pb-2">

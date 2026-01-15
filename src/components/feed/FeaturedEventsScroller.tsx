@@ -24,33 +24,19 @@ interface FeaturedEvent {
 interface FeaturedEventsScrollerProps {
   events: FeaturedEvent[];
   language: "el" | "en";
+  hideTitle?: boolean;
 }
-
-const translations = {
-  el: {
-    featuredEvents: "Προβεβλημένες Εκδηλώσεις",
-    viewDetails: "Δείτε",
-  },
-  en: {
-    featuredEvents: "Featured Events",
-    viewDetails: "View",
-  },
-};
 
 export const FeaturedEventsScroller = ({ 
   events, 
-  language 
+  language,
+  hideTitle = false
 }: FeaturedEventsScrollerProps) => {
-  const t = translations[language];
 
   if (!events || events.length === 0) return null;
 
   return (
     <div className="w-full">
-      <div className="flex items-center gap-2 mb-3 px-1">
-        <Sparkles className="h-4 w-4 text-primary fill-primary/20" />
-        <h3 className="text-sm font-semibold text-foreground">{t.featuredEvents}</h3>
-      </div>
       
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-4 pb-2">

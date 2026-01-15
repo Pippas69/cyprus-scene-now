@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { getPlanScore, getRotationSeed, type PlanSlug } from "@/lib/personalization";
 
 interface Business {
   id: string;
@@ -30,6 +31,8 @@ interface Business {
   hasEventBoost?: boolean;
   hasOfferBoost?: boolean;
   hasProfileBoost?: boolean;
+  planSlug?: PlanSlug | string | null;
+  planScore?: number;
 }
 
 interface AllBusinessesDialogProps {
@@ -62,6 +65,7 @@ export const AllBusinessesDialog = ({
 }: AllBusinessesDialogProps) => {
   const t = translations[language];
   const [searchQuery, setSearchQuery] = useState("");
+  const rotationSeed = getRotationSeed();
 
   const { data: businesses, isLoading } = useQuery({
     queryKey: ['all-businesses-dialog', selectedCity],
@@ -71,8 +75,7 @@ export const AllBusinessesDialog = ({
       let query = supabase
         .from('businesses')
         .select('id, name, logo_url, category, city, verified, description, student_discount_percent, student_discount_mode')
-        .eq('verified', true)
-        .order('name', { ascending: true });
+        .eq('verified', true);
       
       if (selectedCity) {
         query = query.eq('city', selectedCity);
@@ -84,8 +87,8 @@ export const AllBusinessesDialog = ({
 
       const businessIds = businessList.map(b => b.id);
 
-      // Fetch active boosts in parallel
-      const [eventBoostsRes, offerBoostsRes, profileBoostsRes] = await Promise.all([
+      // Fetch active boosts and subscription plans in parallel
+      const [eventBoostsRes, offerBoostsRes, profileBoostsRes, subscriptionsRes] = await Promise.all([
         supabase
           .from('event_boosts')
           .select('business_id')
@@ -105,18 +108,47 @@ export const AllBusinessesDialog = ({
           .eq('status', 'active')
           .lte('start_date', today)
           .gte('end_date', today),
+        supabase
+          .from('business_subscriptions')
+          .select('business_id, subscription_plans(slug)')
+          .in('business_id', businessIds)
+          .eq('status', 'active'),
       ]);
 
       const hasEventBoost = new Set(eventBoostsRes.data?.map(b => b.business_id) || []);
       const hasOfferBoost = new Set(offerBoostsRes.data?.map(b => b.business_id) || []);
       const hasProfileBoost = new Set(profileBoostsRes.data?.map(b => b.business_id) || []);
+      
+      // Map subscription plans to businesses
+      const subscriptionMap = new Map<string, string>();
+      subscriptionsRes.data?.forEach((sub: any) => {
+        if (sub.subscription_plans?.slug) {
+          subscriptionMap.set(sub.business_id, sub.subscription_plans.slug);
+        }
+      });
 
-      return businessList.map(business => ({
-        ...business,
-        hasEventBoost: hasEventBoost.has(business.id),
-        hasOfferBoost: hasOfferBoost.has(business.id),
-        hasProfileBoost: hasProfileBoost.has(business.id),
-      })) as Business[];
+      // Calculate scores and sort by plan hierarchy
+      const businessesWithScores = businessList.map(business => {
+        const planSlug = subscriptionMap.get(business.id) || 'free';
+        const planScore = getPlanScore(planSlug);
+        
+        // Add rotation factor for fair distribution within same tier
+        const itemSeed = business.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const rotationFactor = ((rotationSeed + itemSeed) % 20);
+        
+        return {
+          ...business,
+          hasEventBoost: hasEventBoost.has(business.id),
+          hasOfferBoost: hasOfferBoost.has(business.id),
+          hasProfileBoost: hasProfileBoost.has(business.id),
+          planSlug,
+          planScore: planScore + rotationFactor,
+        };
+      });
+
+      // Sort by plan score (Elite first, then Pro, then Basic, then Free)
+      return businessesWithScores
+        .sort((a, b) => b.planScore - a.planScore) as Business[];
     },
     enabled: open,
     staleTime: 60000

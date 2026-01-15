@@ -67,8 +67,16 @@ interface Offer {
 
 // Constants for scoring
 const SCORE = {
+  // Boost tier scores (for paid event/offer boosts)
   TIER_PREMIUM: 50,      // Premium tier base score
   TIER_STANDARD: 25,     // Standard tier base score
+  
+  // Subscription plan scores (for business profile visibility)
+  PLAN_ELITE: 100,       // Elite plan - "First suggestion"
+  PLAN_PRO: 60,          // Pro plan - "High visibility"
+  PLAN_BASIC: 20,        // Basic plan - "Normal visibility"
+  
+  // Personalization bonuses
   SAME_CITY: 30,         // User in same city
   CATEGORY_MATCH: 25,    // Per category match with user interests
   RSVP_CATEGORY: 20,     // Category from past RSVPs
@@ -81,6 +89,29 @@ const DISPLAY_CAPS = {
   PROFILES: 10,
   EVENTS: 8,
   OFFERS: 8,
+};
+
+// Plan slug type for subscription hierarchy
+export type PlanSlug = 'free' | 'basic' | 'pro' | 'elite';
+
+/**
+ * Get score based on subscription plan
+ * Elite = First suggestion, Pro = High visibility, Basic = Normal visibility
+ */
+export const getPlanScore = (plan: PlanSlug | string | null): number => {
+  switch (plan) {
+    case 'elite':
+    case 'professional':
+      return SCORE.PLAN_ELITE;
+    case 'pro':
+    case 'growth':
+      return SCORE.PLAN_PRO;
+    case 'basic':
+    case 'starter':
+      return SCORE.PLAN_BASIC;
+    default:
+      return 0; // Free plan gets no boost
+  }
 };
 
 /**
