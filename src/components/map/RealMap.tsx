@@ -200,6 +200,7 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
         root.render(
           <BusinessMarker 
             planSlug={business.planSlug}
+            markerId={business.id}
             name={business.name}
             onClick={() => {
               if (popupRef.current) popupRef.current.remove();
