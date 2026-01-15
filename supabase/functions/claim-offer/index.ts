@@ -125,8 +125,9 @@ Deno.serve(async (req) => {
         .select("id")
         .eq("discount_id", discountId)
         .eq("user_id", user.id)
-        .eq("status", "claimed")
-        .single();
+        // A claim is considered "used" as soon as it's created (paid), or already redeemed.
+        .in("status", ["paid", "redeemed"]) 
+        .maybeSingle();
 
       if (existingClaim) {
         throw new Error("You have already claimed this offer");
@@ -140,18 +141,26 @@ Deno.serve(async (req) => {
     const expiresAt = discount.end_at;
 
     // Create claim record
+    const discountPercent = Number(discount.percent_off ?? 0);
+
     const { data: purchase, error: purchaseError } = await supabaseAdmin
       .from("offer_purchases")
       .insert({
         discount_id: discountId,
         user_id: user.id,
         business_id: discount.business_id,
+
+        // Required monetary columns in schema (even though this is a no-payment claim)
         original_price_cents: 0,
+        discount_percent: discountPercent,
         final_price_cents: 0,
+        amount_paid_cents: 0,
+
         commission_percent: 0,
         commission_amount_cents: 0,
         business_payout_cents: 0,
-        status: "claimed",
+
+        status: "paid",
         qr_code_token: qrCodeToken,
         expires_at: expiresAt,
         party_size: partySize,
