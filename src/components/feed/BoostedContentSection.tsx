@@ -219,8 +219,8 @@ const EventCard = ({ event, language, dateLocale, cardWidth, cardHeight }: Event
           </div>
         )}
         
-        {/* EVENT BADGE - Premium, Top Right */}
-        <div className="absolute top-2 right-2">
+        {/* EVENT BADGE - Premium, Top Right - Protruding */}
+        <div className="absolute -top-2 -right-2 z-10">
           <PremiumBadge type="event" />
         </div>
       </div>
@@ -294,8 +294,8 @@ const OfferCard = ({ offer, t, language, cardWidth, cardHeight }: OfferCardProps
           </div>
         )}
         
-        {/* OFFER BADGE - Premium, Top Right */}
-        <div className="absolute top-2 right-2">
+        {/* OFFER BADGE - Premium, Top Right - Protruding */}
+        <div className="absolute -top-2 -right-2 z-10">
           <PremiumBadge type="offer" />
         </div>
       </div>
