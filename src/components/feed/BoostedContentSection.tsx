@@ -140,7 +140,7 @@ export const BoostedContentSection = ({
   return (
     <div className="w-full">
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-4 pb-2">
+        <div className="flex gap-4 pt-3 pr-3 pb-2">
           {allContent.map((item, index) => (
             <motion.div
               key={`${item.type}-${item.data.id}`}
@@ -202,23 +202,26 @@ const EventCard = ({ event, language, dateLocale, cardWidth, cardHeight }: Event
   return (
     <Link
       to={`/ekdiloseis/${event.id}`}
-      className={`flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 min-${cardWidth} max-${cardWidth} ${cardHeight} overflow-hidden group`}
+      className={`flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 min-${cardWidth} max-${cardWidth} ${cardHeight} group`}
       style={{ minWidth: '240px', maxWidth: '240px', height: '180px' }}
     >
       {/* Event Image with Badge */}
-      <div className="relative h-24 w-full overflow-hidden flex-shrink-0">
-        {event.cover_image_url ? (
-          <img 
-            src={event.cover_image_url} 
-            alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-            <Calendar className="h-8 w-8 text-primary/50" />
-          </div>
-        )}
-        
+      <div className="relative h-24 w-full overflow-visible flex-shrink-0">
+        {/* Keep the image itself clipped, but allow the badge to protrude */}
+        <div className="absolute inset-0 overflow-hidden">
+          {event.cover_image_url ? (
+            <img 
+              src={event.cover_image_url} 
+              alt={event.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+              <Calendar className="h-8 w-8 text-primary/50" />
+            </div>
+          )}
+        </div>
+
         {/* EVENT BADGE - Premium, Top Right - Protruding */}
         <div className="absolute -top-2 -right-2 z-10">
           <PremiumBadge type="event" />
@@ -272,28 +275,31 @@ const OfferCard = ({ offer, t, language, cardWidth, cardHeight }: OfferCardProps
   return (
     <Link
       to={`/offers?highlight=${offer.id}`}
-      className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 overflow-hidden group"
+      className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group"
       style={{ minWidth: '240px', maxWidth: '240px', height: '180px' }}
     >
       {/* Visual header with gradient and badge (same height as event image) */}
-      <div className="relative h-24 w-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-emerald-500/20 via-primary/10 to-secondary/20 flex items-center justify-center">
-        <Avatar className="h-14 w-14 border-2 border-white shadow-lg">
-          <AvatarImage 
-            src={offer.businesses?.logo_url || undefined} 
-            alt={offer.businesses?.name} 
-          />
-          <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
-            {offer.businesses?.name?.substring(0, 2)?.toUpperCase() || '?'}
-          </AvatarFallback>
-        </Avatar>
-        
-        {/* Discount overlay badge */}
-        {offer.percent_off && (
-          <div className="absolute bottom-2 left-2 bg-primary text-primary-foreground font-bold text-sm px-2 py-0.5 rounded-full shadow">
-            -{offer.percent_off}%
-          </div>
-        )}
-        
+      <div className="relative h-24 w-full overflow-visible flex-shrink-0">
+        {/* Keep the header visuals clipped, but allow the badge to protrude */}
+        <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-emerald-500/20 via-primary/10 to-secondary/20 flex items-center justify-center">
+          <Avatar className="h-14 w-14 border-2 border-white shadow-lg">
+            <AvatarImage 
+              src={offer.businesses?.logo_url || undefined} 
+              alt={offer.businesses?.name} 
+            />
+            <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
+              {offer.businesses?.name?.substring(0, 2)?.toUpperCase() || '?'}
+            </AvatarFallback>
+          </Avatar>
+
+          {/* Discount overlay badge */}
+          {offer.percent_off && (
+            <div className="absolute bottom-2 left-2 bg-primary text-primary-foreground font-bold text-sm px-2 py-0.5 rounded-full shadow">
+              -{offer.percent_off}%
+            </div>
+          )}
+        </div>
+
         {/* OFFER BADGE - Premium, Top Right - Protruding */}
         <div className="absolute -top-2 -right-2 z-10">
           <PremiumBadge type="offer" />
