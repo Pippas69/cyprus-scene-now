@@ -8,9 +8,10 @@ import SmartSearchBar from "@/components/feed/SmartSearchBar";
 import { BoostedContentSection } from "@/components/feed/BoostedContentSection";
 import { BoostedProfilesScroller } from "@/components/feed/BoostedProfilesScroller";
 import CategoryBusinessesSections from "@/components/feed/CategoryBusinessesSections";
+import BusinessDirectorySection from "@/components/feed/BusinessDirectorySection";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import { FilterChips } from "@/components/feed/FilterChips";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { PullIndicator } from "@/components/ui/pull-indicator";
@@ -44,6 +45,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [showStudentDiscounts, setShowStudentDiscounts] = useState(false);
 
   const [isPulling, setIsPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
@@ -318,22 +320,36 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           )}
         </div>
 
-        {/* PRIORITY 1: Paid content at the very top (above everything) */}
-        {(boostedEvents?.length > 0 || boostedOffers?.length > 0) && (
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 pt-4 overflow-hidden">
-            <BoostedContentSection events={boostedEvents || []} offers={boostedOffers || []} language={language} />
-          </div>
-        )}
+        {/* PRIORITY 1: Paid content at the very top (above everything) - ALWAYS render container */}
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 pt-4 overflow-hidden">
+          <BoostedContentSection events={boostedEvents || []} offers={boostedOffers || []} language={language} />
+        </div>
 
         {/* Compact filters (no "Discover" / no "All Cyprus") */}
-        <div className="sticky top-0 z-40 bg-background border-b shadow-sm">
+        <div className="sticky top-0 z-40 bg-background shadow-sm">
           <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 overflow-hidden">
             <div className="flex flex-col gap-3">
-              <HierarchicalCategoryFilter
-                language={language}
-                selectedCategories={selectedCategories}
-                onCategoryChange={setSelectedCategories}
-              />
+              <div className="flex items-center gap-2 flex-wrap">
+                <HierarchicalCategoryFilter
+                  language={language}
+                  selectedCategories={selectedCategories}
+                  onCategoryChange={setSelectedCategories}
+                />
+                
+                {/* Student discount filter - small toggle button */}
+                <Button
+                  variant={showStudentDiscounts ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowStudentDiscounts(!showStudentDiscounts)}
+                  className="h-8 px-3 text-xs gap-1.5 shrink-0"
+                >
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">
+                    {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
+                  </span>
+                  <span className="sm:hidden">🎓</span>
+                </Button>
+              </div>
 
               {(selectedCategories.length > 0 || selectedCity) && (
                 <FilterChips
@@ -359,7 +375,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         )}
 
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-hidden">
-          <div className="space-y-10">
+          <div className="space-y-8">
             {/* PRIORITY 2: Featured Businesses */}
             {profileBoosts && profileBoosts.length > 0 && (
               <BoostedProfilesScroller
@@ -370,58 +386,67 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-            {/* PRIORITY 3: Core sections + businesses */}
+            {/* PRIORITY 3: Core category sections */}
             <CategoryBusinessesSections language={language} selectedCity={selectedCity} />
 
-            {/* Student Discount below the 4 sections */}
-            {studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
+            {/* Student Discount Section - shown only when filter is active */}
+            {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                  <GraduationCap className="h-6 w-6 text-primary" />
-                  <h2 className="text-xl font-bold text-foreground">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-foreground">
                     {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {studentDiscountBusinesses.map((business: any) => (
                     <a
                       key={business.id}
                       href={`/business/${business.id}`}
-                      className="block bg-card rounded-xl p-4 border hover:shadow-lg transition-all hover:scale-[1.02]"
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 group"
                     >
-                      <div className="flex flex-col items-center text-center gap-3">
+                      <div className="relative">
                         {business.logo_url ? (
                           <img
                             src={business.logo_url}
                             alt={business.name}
-                            className="w-16 h-16 rounded-full object-cover"
+                            className="w-14 h-14 rounded-full object-cover"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-2xl font-bold text-primary">{business.name.charAt(0)}</span>
+                          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-lg font-bold text-primary">{business.name.charAt(0)}</span>
                           </div>
                         )}
-
-                        <div>
-                          <h3 className="font-semibold text-foreground text-sm line-clamp-1">{business.name}</h3>
-                          <Badge className="mt-2 bg-primary/10 text-primary border-primary/20">
-                            {language === "el" ? "🎓 Έκπτωση" : "🎓 Discount"} {business.student_discount_percent}%
-                          </Badge>
-
-                          {business.student_discount_mode === "once" && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {language === "el" ? "Πρώτη επίσκεψη" : "First visit only"}
-                            </p>
-                          )}
+                        {/* Graduation cap badge */}
+                        <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground rounded-full p-1">
+                          <GraduationCap className="h-3 w-3" />
                         </div>
                       </div>
+
+                      <span className="text-xs font-medium text-center line-clamp-1 max-w-full group-hover:text-primary transition-colors">
+                        {business.name}
+                      </span>
+                      
+                      <span className="text-[10px] text-muted-foreground">{business.city}</span>
+                      
+                      <span className="text-xs font-semibold text-primary">
+                        🎓 {business.student_discount_percent}%
+                        {business.student_discount_mode === "once" && (
+                          <span className="text-muted-foreground font-normal ml-1">
+                            ({language === "el" ? "1η" : "1st"})
+                          </span>
+                        )}
+                      </span>
                     </a>
                   ))}
                 </div>
               </section>
             )}
+
+            {/* PRIORITY 4: All businesses directory */}
+            <BusinessDirectorySection language={language} selectedCity={selectedCity} />
           </div>
         </div>
 
