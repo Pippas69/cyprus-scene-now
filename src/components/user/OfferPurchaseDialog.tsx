@@ -302,19 +302,32 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
               <span>{t("walkInNote")}</span>
             </div>
 
+            {/* Optional Reservation CTA - for discount hours */}
+            {claimSuccess.showReservationCta && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2 text-primary font-medium">
+                  <CalendarCheck className="h-5 w-5" />
+                  <span>{language === "el" ? "Θέλετε να κλείσετε τραπέζι;" : "Want to book a table?"}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {language === "el" 
+                    ? `Κάντε κράτηση για τις ώρες που ισχύει η έκπτωση (${offer?.valid_start_time?.substring(0,5) || ''} - ${offer?.valid_end_time?.substring(0,5) || ''}) για να εξασφαλίσετε θέση.`
+                    : `Make a reservation for the discount hours (${offer?.valid_start_time?.substring(0,5) || ''} - ${offer?.valid_end_time?.substring(0,5) || ''}) to secure a seat.`
+                  }
+                </p>
+                <Button onClick={handleMakeReservation} className="w-full">
+                  <CalendarCheck className="mr-2 h-4 w-4" />
+                  {language === "el" ? "Κάνε Κράτηση για Έκπτωση" : "Book for Discount Hours"}
+                </Button>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex flex-col gap-2">
               <Button onClick={handleViewMyOffers} variant="outline" className="w-full">
                 <Tag className="mr-2 h-4 w-4" />
                 {t("viewMyOffers")}
               </Button>
-
-              {claimSuccess.showReservationCta && (
-                <Button onClick={handleMakeReservation} className="w-full">
-                  <CalendarCheck className="mr-2 h-4 w-4" />
-                  {t("makeReservation")}
-                </Button>
-              )}
 
               <Button onClick={onClose} variant="ghost" className="w-full">
                 {t("done")}
@@ -408,6 +421,34 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
           <Separator />
 
+          {/* Availability Info */}
+          <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              {language === "el" ? "Διαθεσιμότητα" : "Availability"}
+            </h4>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">
+                  {language === "el" ? "Διαθέσιμα" : "Available"}
+                </span>
+                <span className="font-medium">{peopleRemaining} {language === "el" ? "άτομα" : "people"}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">
+                  {language === "el" ? "Μέγ. ανά εξαργύρωση" : "Max per redemption"}
+                </span>
+                <span className="font-medium">{maxPerRedemption} {language === "el" ? "άτομα" : "people"}</span>
+              </div>
+            </div>
+            {offer.one_per_user && (
+              <Badge variant="secondary" className="text-xs">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user"}
+              </Badge>
+            )}
+          </div>
+
           {/* Validity Info */}
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -421,10 +462,6 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>{t("expiresOn")}: {formatDate(offer.end_at)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{t("spotsRemaining")}: {peopleRemaining}</span>
             </div>
           </div>
 
