@@ -120,9 +120,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
   const eventBoostBusinessIds = new Set(activeBoosts?.map((b) => b.business_id) || []);
 
-  // Boosted events ONLY (paid priority)
+  // Boosted events ONLY (paid priority) - sorted chronologically by start_at
   const { data: boostedEvents } = useQuery({
-    queryKey: ["boosted-events", selectedCity, user?.id, activeBoosts?.map((b) => b.event_id).join(",")],
+    queryKey: ["boosted-events", selectedCity, activeBoosts?.map((b) => b.event_id).join(",")],
     queryFn: async () => {
       if (!activeBoosts || activeBoosts.length === 0) return [];
 
@@ -133,7 +133,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         .select("*, businesses!inner(name, logo_url, verified, city)")
         .in("id", boostedEventIds)
         .eq("businesses.verified", true)
-        .gte("end_at", new Date().toISOString());
+        .gte("end_at", new Date().toISOString())
+        .order("start_at", { ascending: true }); // Chronological order
 
       if (selectedCity) query = query.eq("businesses.city", selectedCity);
       if (selectedCategories.length > 0) query = query.overlaps("category", selectedCategories);
@@ -141,21 +142,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       const { data, error } = await query;
       if (error) throw error;
 
-      const rotationSeed = getRotationSeed(user?.id);
-      return (data || [])
-        .map((event: any) => ({
-          ...event,
-          boostScore: getPersonalizedScore(
-            event,
-            personalizedData?.profile || null,
-            personalizedData?.rsvps || [],
-            personalizedData?.favorites || [],
-            activeBoosts,
-            rotationSeed
-          ),
-        }))
-        .sort((a: any, b: any) => (b.boostScore || 0) - (a.boostScore || 0))
-        .slice(0, 10);
+      return data || [];
     },
     enabled: !!activeBoosts,
     staleTime: 60000,
@@ -181,6 +168,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
   const offerBoostBusinessIds = new Set(offerBoosts?.map((b: any) => b.business_id) || []);
 
+  // Boosted offers (paid priority) - sorted chronologically by end_at (soonest expiry first)
   const { data: boostedOffers } = useQuery({
     queryKey: ["boosted-offers", selectedCity, offerBoosts?.map((b: any) => b.discount_id).join(",")],
     queryFn: async () => {
@@ -202,27 +190,15 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         .eq("active", true)
         .eq("businesses.verified", true)
         .lte("start_at", now)
-        .gte("end_at", now);
+        .gte("end_at", now)
+        .order("end_at", { ascending: true }); // Soonest expiry first
 
       if (selectedCity) query = query.eq("businesses.city", selectedCity);
 
       const { data, error } = await query;
       if (error) throw error;
 
-      const rotationSeed = getRotationSeed(user?.id);
-      const boosts: OfferBoost[] = offerBoosts.map((b: any) => ({
-        discount_id: b.discount_id,
-        targeting_quality: b.targeting_quality,
-        boost_tier: b.targeting_quality >= 5 ? "premium" : "standard",
-      }));
-
-      return (data || [])
-        .map((offer: any) => ({
-          ...offer,
-          boostScore: getOfferBoostScore(offer, personalizedData?.profile || null, boosts, rotationSeed),
-        }))
-        .sort((a: any, b: any) => (b.boostScore || 0) - (a.boostScore || 0))
-        .slice(0, DISPLAY_CAPS.OFFERS);
+      return data || [];
     },
     enabled: !!offerBoosts,
     staleTime: 60000,

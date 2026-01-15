@@ -240,9 +240,9 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
 
   const boostedOfferIds = new Set(activeBoosts?.map(b => b.discount_id) || []);
 
-  // Fetch BOOSTED offers (always shown, sorted by end_at - earliest expiry first)
+  // Fetch BOOSTED offers (always shown at top, sorted by end_at - earliest expiry first)
   const { data: boostedOffers, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-offers", Array.from(boostedOfferIds)],
+    queryKey: ["boosted-offers-page", Array.from(boostedOfferIds)],
     queryFn: async () => {
       if (boostedOfferIds.size === 0) return [];
 
@@ -258,7 +258,7 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
         .eq('businesses.verified', true)
         .lte('start_at', now)
         .gte('end_at', now)
-        .order('end_at', { ascending: true }); // Earliest expiry first
+        .order('end_at', { ascending: true }); // Chronological: soonest expiry first
 
       if (error) throw error;
       return data || [];

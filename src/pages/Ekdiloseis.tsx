@@ -277,9 +277,9 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
 
   const boostedEventIds = new Set(activeBoosts?.map(b => b.event_id) || []);
 
-  // Fetch BOOSTED events (always shown, sorted by start_at soonest first)
+  // Fetch BOOSTED events (always shown at top, sorted by start_at chronologically)
   const { data: boostedEvents, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-events", Array.from(boostedEventIds)],
+    queryKey: ["boosted-events-ekdiloseis", Array.from(boostedEventIds)],
     queryFn: async () => {
       if (boostedEventIds.size === 0) return [];
 
@@ -292,7 +292,7 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
         .in('id', Array.from(boostedEventIds))
         .eq('businesses.verified', true)
         .gte('end_at', new Date().toISOString())
-        .order('start_at', { ascending: true });
+        .order('start_at', { ascending: true }); // Chronological: soonest event first
 
       if (error) throw error;
       
