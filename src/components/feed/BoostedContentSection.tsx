@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Calendar, MapPin, Clock, Percent, Tag } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format, differenceInDays } from "date-fns";
@@ -79,16 +80,16 @@ export const BoostedContentSection = ({
 
   return (
     <div className="w-full">
-      <div className="w-full overflow-x-auto">
-        <div className="flex gap-4 pb-2 pr-2 min-w-max">
+      <ScrollArea className="w-full whitespace-nowrap">
+        <div className="flex gap-4 pb-2">
           {allContent.map((item, index) => (
             <motion.div
-              key={`${item.type}-${item.data.id}`}
+              key={`${item.type}-${item.type === 'event' ? item.data.id : item.data.id}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.03 }}
             >
-              {item.type === "event" ? (
+              {item.type === 'event' ? (
                 <EventCard event={item.data} />
               ) : (
                 <OfferCard offer={item.data} t={t} />
@@ -96,7 +97,8 @@ export const BoostedContentSection = ({
             </motion.div>
           ))}
         </div>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   );
 };

@@ -146,8 +146,14 @@ export const BusinessDirectorySection = ({
 
   if (isLoading) {
     return (
-        <div className="w-full space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="w-full space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">{t.exploreBusinesses}</h3>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border">
               <Skeleton className="h-14 w-14 rounded-full" />
@@ -166,13 +172,16 @@ export const BusinessDirectorySection = ({
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">{t.exploreBusinesses}</h3>
+        </div>
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={() => setDialogOpen(true)}
           className="text-primary hover:text-primary/80 gap-1"
-          aria-label={t.seeMore}
         >
           {t.seeMore}
           <ChevronRight className="h-4 w-4" />
