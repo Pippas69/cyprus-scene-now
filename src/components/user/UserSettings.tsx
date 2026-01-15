@@ -11,14 +11,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Separator } from '@/components/ui/separator';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { usePasswordChange } from '@/hooks/usePasswordChange';
-import { useStudentVerification } from '@/hooks/useStudentVerification';
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from '@/hooks/use-toast';
 import { toastTranslations } from '@/translations/toastTranslations';
-import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Settings as SettingsIcon, Save, GraduationCap } from 'lucide-react';
+import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Settings as SettingsIcon, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getMainCategories } from '@/lib/unifiedCategories';
-import { StudentQRCard } from './StudentQRCard';
 
 interface UserSettingsProps {
   userId: string;
@@ -32,7 +30,6 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   const { setLanguage } = useLanguage();
   const { preferences, isLoading: prefsLoading, updatePreferences, isUpdating } = useUserPreferences(userId);
   const { changePassword, isChanging } = usePasswordChange();
-  const { data: studentVerification, isLoading: studentLoading } = useStudentVerification(userId);
   
   // Profile state
   const [profile, setProfile] = useState<any>(null);
@@ -291,19 +288,12 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
     }
   };
 
-  if (prefsLoading || !preferences || !profile || studentLoading) {
+  if (prefsLoading || !preferences || !profile) {
     return <div className="flex justify-center p-8">Loading...</div>;
   }
 
-  // Check if student is verified and has QR token
-  const isVerifiedStudent = studentVerification?.status === 'approved' && studentVerification?.qr_code_token;
-
   return (
     <div className="space-y-6 max-w-2xl">
-      {/* Student Discount QR Code - Only for verified students */}
-      {isVerifiedStudent && (
-        <StudentQRCard verification={studentVerification} language={language} />
-      )}
 
       {/* Profile Details - Matching Signup Form */}
       <Card>

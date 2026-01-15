@@ -341,7 +341,7 @@ const BusinessProfile = () => {
                   businessId={business.id}
                   businessName={business.name}
                   discountPercent={business.student_discount_percent}
-                  discountMode={business.student_discount_mode as 'one_time' | 'unlimited' || 'one_time'}
+                  discountMode={business.student_discount_mode === 'unlimited' ? 'unlimited' : 'one_time'}
                   userId={user?.id || null}
                   language={language}
                 />
