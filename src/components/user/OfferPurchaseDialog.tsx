@@ -199,8 +199,14 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         body: { discountId: offer.id, partySize },
       });
 
-      if (error) {
-        // Supabase Functions errors often hide the real message in context.body
+      // New contract: backend returns 200 with { success: false, error }
+      const serverMsg =
+        (data as any)?.success === false
+          ? ((data as any)?.error as string | undefined)
+          : undefined;
+
+      if (error || serverMsg) {
+        // Fallback parsing for any unexpected non-2xx errors
         const rawBody = (error as any)?.context?.body;
         const parsedMsg = (() => {
           if (typeof rawBody === "string") {
@@ -213,13 +219,13 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
           return undefined;
         })();
 
-        const serverMsg = parsedMsg || (error as any)?.message;
+        const msg = serverMsg || parsedMsg || (error as any)?.message;
         const friendlyMsg =
-          serverMsg === "You have already claimed this offer"
+          msg === "You have already claimed this offer"
             ? language === "el"
               ? "Έχετε ήδη διεκδικήσει αυτή την προσφορά. Δείτε την στις “Οι Προσφορές μου”."
               : "You already claimed this offer. Check it in “My Offers”."
-            : serverMsg || t("errorGeneric");
+            : msg || t("errorGeneric");
 
         toast.error(friendlyMsg);
         return;

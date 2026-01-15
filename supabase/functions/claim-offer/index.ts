@@ -277,11 +277,14 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error: any) {
-    logStep("ERROR", { message: error.message });
+    logStep("ERROR", { message: error?.message });
+
+    // IMPORTANT: Return 200 so the client doesn't surface a generic "non-2xx" runtime error overlay.
+    // We still include the error message in the payload so the UI can show a friendly toast.
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ success: false, error: error?.message || "Unknown error" }),
       {
-        status: 400,
+        status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
