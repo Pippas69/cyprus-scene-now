@@ -158,48 +158,133 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
       className={cn("overflow-hidden transition-all duration-300", className)}
       style={style}
     >
-      {/* Square layout: top 50% image, bottom 50% details */}
+      {/* Square layout: 50% media (top), 50% info (bottom) */}
       <CardContent className="p-0">
         <div className="relative aspect-square overflow-hidden">
-          {/* Top half: business cover (preferred) or logo */}
-          <Link to={`/business/${offerData.business_id}`} className="absolute inset-0">
-            {offerData.businesses.cover_url || offerData.businesses.logo_url ? (
-              <img
-                src={(offerData.businesses.cover_url || offerData.businesses.logo_url) as string}
-                alt={offerData.businesses.name}
-                className="absolute inset-0 h-1/2 w-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="absolute inset-0 h-1/2 w-full bg-muted" />
-            )}
-            <div className="absolute inset-0 h-1/2 w-full bg-gradient-to-b from-black/10 via-black/10 to-background/70" />
-          </Link>
+          <div className="absolute inset-0 grid grid-rows-2">
+            {/* TOP HALF: cover image */}
+            <Link
+              to={`/business/${offerData.business_id}`}
+              className="relative block overflow-hidden"
+              aria-label={offerData.businesses.name}
+            >
+              {offerData.businesses.cover_url || offerData.businesses.logo_url ? (
+                <img
+                  src={(offerData.businesses.cover_url || offerData.businesses.logo_url) as string}
+                  alt={offerData.businesses.name}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-muted" />
+              )}
+              {/* Subtle premium overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+            </Link>
 
-          {/* Top-left: small logo chip */}
-          <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-xl bg-background/85 px-2.5 py-2 backdrop-blur">
-            {offerData.businesses.logo_url ? (
-              <img
-                src={offerData.businesses.logo_url}
-                alt={offerData.businesses.name}
-                className="h-7 w-7 rounded-lg object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="h-7 w-7 rounded-lg bg-muted flex items-center justify-center">
-                <Percent className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            {/* BOTTOM HALF: white info panel (never looks empty) */}
+            <div className="bg-background p-4">
+              <div className="flex h-full min-h-0 flex-col">
+                {/* Business row (moved DOWN as requested) */}
+                <div className="flex items-center gap-3">
+                  {offerData.businesses.logo_url ? (
+                    <img
+                      src={offerData.businesses.logo_url}
+                      alt={offerData.businesses.name}
+                      className="h-10 w-10 rounded-xl object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
+                      <Percent className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-tight line-clamp-1">
+                      {offerData.businesses.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                      {offerData.businesses.city}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Title + description */}
+                <div className="mt-3 min-h-0">
+                  <h3 className="font-semibold text-base leading-tight line-clamp-2">{offerData.title}</h3>
+                  {offerData.description && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{offerData.description}</p>
+                  )}
+
+                  {/* Bundle Items Preview */}
+                  {isBundle && discountItems && itemCount > 0 && (
+                    <div className="mt-2">
+                      <OfferItemsDisplay items={discountItems} language={language} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom area: price + date + CTA (no cutting) */}
+                <div className="mt-auto pt-3">
+                  {hasPricing && (
+                    <div className="flex items-baseline gap-2 mb-2">
+                      {isCredit ? (
+                        <>
+                          <span className="text-sm text-muted-foreground">
+                            {language === "el" ? "Πληρώνεις" : "Pay"} €{originalPrice.toFixed(2)}
+                          </span>
+                          <span className="text-lg font-bold text-primary">
+                            → €{creditValue.toFixed(2)} {language === "el" ? "αξία" : "value"}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-sm line-through text-muted-foreground">€{originalPrice.toFixed(2)}</span>
+                          <span className="text-lg font-bold text-primary">€{finalPrice.toFixed(2)}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{formatOfferDates(offerData.start_at, offerData.end_at)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button onClick={() => setIsPurchaseOpen(true)} size="sm" className="w-auto">
+                      <ShoppingBag className="h-4 w-4 mr-2" />
+                      {hasPricing
+                        ? language === "el"
+                          ? "Αγορά Τώρα"
+                          : "Buy Now"
+                        : language === "el"
+                          ? "Κλείσε Τώρα"
+                          : "Claim Now"}
+                    </Button>
+                  </div>
+                </div>
               </div>
-            )}
-            <div className="min-w-0">
-              <p className="text-xs font-medium leading-none line-clamp-1">{offerData.businesses.name}</p>
-              <p className="text-[11px] text-muted-foreground leading-none mt-1">{offerData.businesses.city}</p>
             </div>
           </div>
 
-          {/* Top-right: discount/credit badge (keeps existing semantics) */}
+          {/* BADGES ON TOP OF IMAGE */}
+          {/* Top-left: Reservation badge (ONLY if exists) */}
+          {offerData.requires_reservation && (
+            <div className="absolute left-3 top-3 z-10">
+              <Badge variant="secondary" className="bg-background/85 backdrop-blur">
+                <CalendarCheck className="h-3 w-3 mr-1" />
+                {language === "el" ? "Κράτηση" : "Reservation"}
+              </Badge>
+            </div>
+          )}
+
+          {/* Top-right: Discount/Credit + Bundle badge */}
           <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1">
             {isCredit ? (
-              <Badge variant="default" className="flex-shrink-0 bg-emerald-600">
+              <Badge variant="default" className="flex-shrink-0">
                 <Wallet className="h-3 w-3 mr-1" />
                 {bonusPercent > 0 ? `+${bonusPercent}%` : language === "el" ? "Πίστωση" : "Credit"}
               </Badge>
@@ -208,81 +293,13 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 {offerData.percent_off}% OFF
               </Badge>
             ) : null}
+
             {isBundle && (
-              <Badge variant="outline" className="text-xs flex-shrink-0 bg-background/80">
+              <Badge variant="outline" className="text-xs flex-shrink-0 bg-background/85 backdrop-blur">
                 <Package className="h-3 w-3 mr-1" />
                 {language === "el" ? "Πακέτο" : "Bundle"}
               </Badge>
             )}
-            {offerData.requires_reservation && (
-              <Badge variant="secondary" className="text-xs flex-shrink-0 bg-background/80">
-                <CalendarCheck className="h-3 w-3 mr-1" />
-                {language === "el" ? "Κράτηση" : "Reservation"}
-              </Badge>
-            )}
-          </div>
-
-          {/* Bottom half content */}
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background p-4">
-            <div className="flex h-full flex-col">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-base leading-tight line-clamp-2">{offerData.title}</h3>
-                  {offerData.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{offerData.description}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Bundle Items Preview */}
-              {isBundle && discountItems && itemCount > 0 && (
-                <div className="mt-2">
-                  <OfferItemsDisplay items={discountItems} language={language} />
-                </div>
-              )}
-
-              <div className="mt-auto">
-                {/* Price row */}
-                {hasPricing && (
-                  <div className="flex items-center gap-2 mb-3">
-                    {isCredit ? (
-                      <>
-                        <span className="text-sm text-muted-foreground">
-                          {language === "el" ? "Πληρώνεις" : "Pay"} €{originalPrice.toFixed(2)}
-                        </span>
-                        <span className="text-lg font-bold text-primary">→ €{creditValue.toFixed(2)} {language === "el" ? "αξία" : "value"}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm line-through text-muted-foreground">€{originalPrice.toFixed(2)}</span>
-                        <span className="text-lg font-bold text-primary">€{finalPrice.toFixed(2)}</span>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>{formatOfferDates(offerData.start_at, offerData.end_at)}</span>
-                  </div>
-                </div>
-
-                {/* CTA aligned bottom-right (matches request) */}
-                <div className="flex justify-end">
-                  <Button onClick={() => setIsPurchaseOpen(true)} size="sm" className="w-auto">
-                    <ShoppingBag className="h-4 w-4 mr-2" />
-                    {hasPricing
-                      ? language === "el"
-                        ? "Αγορά Τώρα"
-                        : "Buy Now"
-                      : language === "el"
-                        ? "Κλείσε Τώρα"
-                        : "Claim Now"}
-                  </Button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </CardContent>

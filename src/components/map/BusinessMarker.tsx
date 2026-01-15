@@ -55,31 +55,34 @@ const PIN_CONFIG: Record<'free' | 'basic' | 'pro' | 'elite', {
 };
 
 // Mediterranean color palette - unified brand identity
-// NOTE: kept unchanged; this fix focuses strictly on pins rendering reliably.
+// IMPORTANT: keep colors aligned with design tokens (HSL) for consistent theming.
 const PIN_COLORS: Record<'free' | 'basic' | 'pro' | 'elite', {
   primary: string;
   secondary: string;
   accent: string;
 }> = {
   free: {
-    primary: '#6B7280',
-    secondary: '#9CA3AF',
-    accent: '#D1D5DB',
+    // Subtle but still "premium" (ocean blue, not gray)
+    primary: 'hsl(var(--ocean))',
+    secondary: 'hsl(var(--aegean))',
+    accent: 'hsl(var(--accent))',
   },
   basic: {
-    primary: '#0D3B66',
-    secondary: '#1F5A8A',
-    accent: '#3D6B99',
+    primary: 'hsl(var(--aegean))',
+    secondary: 'hsl(var(--ocean))',
+    accent: 'hsl(var(--accent))',
   },
   pro: {
-    primary: '#0369A1',
-    secondary: '#0284C7',
-    accent: '#0EA5E9',
+    // Brighter ocean tier
+    primary: 'hsl(var(--ocean))',
+    secondary: 'hsl(var(--accent))',
+    accent: 'hsl(var(--seafoam))',
   },
   elite: {
-    primary: '#059669',
-    secondary: '#10B981',
-    accent: '#34D399',
+    // Seafoam prestige
+    primary: 'hsl(var(--seafoam))',
+    secondary: 'hsl(var(--accent))',
+    accent: 'hsl(var(--seafoam))',
   },
 };
 
