@@ -174,39 +174,83 @@ const handler = async (req: Request): Promise<Response> => {
     const reservationTypeEmoji = isDirectReservation ? '🪑' : '🎉';
 
     if (type === 'new') {
-      // User confirmation email
-      userSubject = `Επιβεβαίωση Κράτησης - ${reservationContext}`;
-      userHtml = wrapEmailContent(`
-        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Επιβεβαίωση Κράτησης ${reservationTypeEmoji}</h2>
-        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-          Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
-          Η κράτησή σου έχει καταχωρηθεί επιτυχώς!
-        </p>
-        
-        <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
-          <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
-          <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
-          <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> <span style="font-size: 20px; color: #0d3b66; font-weight: bold;">${reservation.confirmation_code}</span></p>
-          <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
-          <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
-          ${locationInfo ? `<p style="color: #475569; margin: 4px 0;">📍 ${locationInfo}</p>` : ''}
-          <p style="color: #475569; margin: 12px 0 0 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
-          <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
-          ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
-          ${reservation.preferred_time && !isDirectReservation ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
-          ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικά Αιτήματα:</strong> ${reservation.special_requests}</p>` : ''}
-          <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: #f59e0b;">Εκκρεμεί</span></p>
-        </div>
-        
-        <p style="color: #f59e0b; font-style: italic; margin: 16px 0;">
-          ⏳ Η κράτησή σου εκκρεμεί και περιμένει έγκριση από την επιχείρηση.
-        </p>
-        
-        <p style="color: #64748b; font-size: 14px;">
-          Θα λάβεις email όταν η κατάσταση της κράτησής σου αλλάξει.<br>
-          Παρουσίασε τον κωδικό επιβεβαίωσης κατά την άφιξή σου.
-        </p>
-      `);
+      // Check if the reservation is already accepted (auto-approve case)
+      const isAutoAccepted = reservation.status === 'accepted';
+      
+      if (isAutoAccepted && qrCodeUrl) {
+        // Auto-accepted reservation - send confirmation with QR code
+        userSubject = `Η Κράτησή σου Επιβεβαιώθηκε - ${reservationContext}`;
+        userHtml = wrapEmailContent(`
+          <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Η Κράτησή σου Επιβεβαιώθηκε! ✅</h2>
+          <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+            Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
+            Η κράτησή σου έχει επιβεβαιωθεί επιτυχώς!
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
+            <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
+            <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+            <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
+            ${locationInfo ? `<p style="color: #475569; margin: 4px 0;">📍 ${locationInfo}</p>` : ''}
+            <p style="color: #475569; margin: 12px 0 0px 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
+            ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
+            ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικά Αιτήματα:</strong> ${reservation.special_requests}</p>` : ''}
+          </div>
+          
+          <!-- QR Code Section -->
+          <div style="text-align: center; margin: 28px 0;">
+            <h3 style="color: #102b4a; margin: 0 0 8px 0; font-size: 18px; font-weight: bold;">Ο Κωδικός σου</h3>
+            <p style="color: #64748b; margin: 0 0 20px 0; font-size: 14px;">Παρουσίασε αυτόν τον κωδικό QR κατά την άφιξή σου</p>
+            
+            <div style="background: #ffffff; border: 3px solid #3ec3b7; border-radius: 16px; padding: 20px; display: inline-block; box-shadow: 0 4px 12px rgba(16, 43, 74, 0.08);">
+              <img src="${qrCodeUrl}" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
+            </div>
+            
+            <p style="color: #102b4a; font-size: 24px; font-weight: bold; margin: 16px 0 4px 0; letter-spacing: 2px;">${reservation.confirmation_code}</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0;">Κωδικός Επιβεβαίωσης</p>
+          </div>
+          
+          <p style="color: #059669; font-weight: 600; text-align: center; font-size: 16px;">
+            🎉 Ανυπομονούμε να σας δούμε!
+          </p>
+        `);
+      } else {
+        // Pending reservation - needs approval
+        userSubject = `Επιβεβαίωση Κράτησης - ${reservationContext}`;
+        userHtml = wrapEmailContent(`
+          <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Επιβεβαίωση Κράτησης ${reservationTypeEmoji}</h2>
+          <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+            Γεια σου <strong>${userProfile.name || 'φίλε'}</strong>,<br><br>
+            Η κράτησή σου έχει καταχωρηθεί επιτυχώς!
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
+            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">${reservationTypeLabel}</p>
+            <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reservationContext}</h3>
+            <p style="color: #475569; margin: 4px 0;"><strong>Κωδικός Επιβεβαίωσης:</strong> <span style="font-size: 20px; color: #0d3b66; font-weight: bold;">${reservation.confirmation_code}</span></p>
+            <p style="color: #475569; margin: 4px 0;">🏢 ${businessName}</p>
+            <p style="color: #475569; margin: 4px 0;">📅 ${formattedDateTime}</p>
+            ${locationInfo ? `<p style="color: #475569; margin: 4px 0;">📍 ${locationInfo}</p>` : ''}
+            <p style="color: #475569; margin: 12px 0 0 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
+            <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
+            ${reservation.seating_preference ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτίμηση Θέσης:</strong> ${reservation.seating_preference}</p>` : ''}
+            ${reservation.preferred_time && !isDirectReservation ? `<p style="color: #475569; margin: 4px 0;"><strong>Προτιμώμενη Ώρα:</strong> ${reservation.preferred_time}</p>` : ''}
+            ${reservation.special_requests ? `<p style="color: #475569; margin: 4px 0;"><strong>Ειδικά Αιτήματα:</strong> ${reservation.special_requests}</p>` : ''}
+            <p style="color: #475569; margin: 12px 0 0 0;"><strong>Κατάσταση:</strong> <span style="color: #f59e0b;">Εκκρεμεί</span></p>
+          </div>
+          
+          <p style="color: #f59e0b; font-style: italic; margin: 16px 0;">
+            ⏳ Η κράτησή σου εκκρεμεί και περιμένει έγκριση από την επιχείρηση.
+          </p>
+          
+          <p style="color: #64748b; font-size: 14px;">
+            Θα λάβεις email όταν η κατάσταση της κράτησής σου αλλάξει.<br>
+            Παρουσίασε τον κωδικό επιβεβαίωσης κατά την άφιξή σου.
+          </p>
+        `);
+      }
 
       // Business notification email
       if (businessEmail) {
