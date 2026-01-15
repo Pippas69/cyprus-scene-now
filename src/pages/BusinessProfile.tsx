@@ -14,6 +14,7 @@ import EventCard from "@/components/EventCard";
 import OfferCard from "@/components/OfferCard";
 import { FollowButton } from "@/components/business/FollowButton";
 import { DirectReservationDialog } from "@/components/business/DirectReservationDialog";
+import { StudentDiscountButton } from "@/components/user/StudentDiscountButton";
 import { useLanguage } from "@/hooks/useLanguage";
 
 interface Business {
@@ -312,7 +313,7 @@ const BusinessProfile = () => {
             )}
           </div>
 
-          {/* Follow Button and Reserve Button */}
+          {/* Follow Button, Reserve Button, and Student Discount Button */}
           {business.id && (
             <div className="flex justify-center gap-3 flex-wrap">
               <FollowButton businessId={business.id} language={language} />
@@ -332,6 +333,18 @@ const BusinessProfile = () => {
                   <CalendarCheck className="h-4 w-4" />
                   {t.reserveTable}
                 </RippleButton>
+              )}
+
+              {/* Student Discount Button */}
+              {business.student_discount_enabled && business.student_discount_percent && (
+                <StudentDiscountButton
+                  businessId={business.id}
+                  businessName={business.name}
+                  discountPercent={business.student_discount_percent}
+                  discountMode={business.student_discount_mode as 'one_time' | 'unlimited' || 'one_time'}
+                  userId={user?.id || null}
+                  language={language}
+                />
               )}
             </div>
           )}
