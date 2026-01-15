@@ -4,22 +4,19 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import ReactDOM from 'react-dom/client';
 import Supercluster from 'supercluster';
 import { MAPBOX_CONFIG } from '@/config/mapbox';
-import { useMapEvents, type EventLocation } from '@/hooks/useMapEvents';
-import { isEventHappeningNow } from '@/lib/mapUtils';
-import { CustomMarker } from './CustomMarker';
+import { useMapBusinesses, type BusinessLocation } from '@/hooks/useMapBusinesses';
+import { BusinessMarker } from './BusinessMarker';
 import { ClusterMarker } from './ClusterMarker';
-import { EventPopup } from './EventPopup';
+import { BusinessPopup } from './BusinessPopup';
 import { MapSearch } from './MapSearch';
 import { MapControls } from './MapControls';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Building2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface RealMapProps {
   city: string;
   neighborhood: string;
   selectedCategories: string[];
-  eventCounts: Record<string, number>;
-  timeAccessFilters?: string[];
 }
 
 // Dynamic ocean theme application - styles ALL road layers by matching keywords
@@ -102,29 +99,30 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
   console.log(`Ocean theme applied: ${styledCount} road layers styled`);
 };
 
-const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [] }: RealMapProps) => {
+// Minimum zoom levels for each plan to appear
+// Free businesses only visible at close zoom
+const MIN_ZOOM_FOR_PLAN: Record<'free' | 'basic' | 'pro' | 'elite', number> = {
+  free: 13,   // Only visible at close zoom
+  basic: 11,  // Visible at medium zoom
+  pro: 9,     // Visible early
+  elite: 7,   // Always visible
+};
+
+const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const { language } = useLanguage();
 
-  const { events, loading } = useMapEvents(selectedCategories, timeAccessFilters);
+  // Use the new businesses hook instead of events
+  const { businesses, loading } = useMapBusinesses(selectedCategories, city || null);
 
   const MAPBOX_TOKEN = MAPBOX_CONFIG.publicToken;
-
-  if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes('your-mapbox-token')) {
-    return (
-      <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
-        <div className="text-center space-y-2">
-          <p className="text-muted-foreground">Mapbox token not configured</p>
-        </div>
-      </div>
-    );
-  }
+  const isTokenMissing = !MAPBOX_TOKEN || MAPBOX_TOKEN.includes('your-mapbox-token');
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || map.current || isTokenMissing) return;
     mapboxgl.accessToken = MAPBOX_TOKEN;
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -160,11 +158,21 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
   }, [MAPBOX_TOKEN]);
 
   useEffect(() => {
-    if (!map.current || !events.length) return;
+    if (!map.current || !businesses.length) return;
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
-    const cluster = new Supercluster({ radius: MAPBOX_CONFIG.clusterRadius, maxZoom: MAPBOX_CONFIG.clusterMaxZoom });
-    cluster.load(events.map(e => ({ type: 'Feature' as const, properties: { event: e }, geometry: { type: 'Point' as const, coordinates: e.coordinates } })));
+    
+    // Cluster only for performance, not for visual hierarchy
+    const cluster = new Supercluster({ 
+      radius: MAPBOX_CONFIG.clusterRadius, 
+      maxZoom: MAPBOX_CONFIG.clusterMaxZoom 
+    });
+    
+    cluster.load(businesses.map(b => ({ 
+      type: 'Feature' as const, 
+      properties: { business: b }, 
+      geometry: { type: 'Point' as const, coordinates: b.coordinates } 
+    })));
     
     const updateMarkers = () => {
       if (!map.current) return;
@@ -180,32 +188,70 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
         const root = ReactDOM.createRoot(div);
         
         if (c.properties.cluster) {
-          root.render(<ClusterMarker count={c.properties.point_count} onClick={() => map.current?.easeTo({ center: [lng, lat], zoom: zoom + 2, duration: 500 })} />);
+          // For clusters, show cluster marker
+          root.render(
+            <ClusterMarker 
+              count={c.properties.point_count} 
+              onClick={() => map.current?.easeTo({ center: [lng, lat], zoom: zoom + 2, duration: 500 })} 
+            />
+          );
+          markersRef.current.push(new mapboxgl.Marker({ element: div }).setLngLat([lng, lat]).addTo(map.current!));
         } else {
-          const event = c.properties.event as EventLocation;
-          root.render(<CustomMarker category={event.category} isHappeningNow={isEventHappeningNow(event.start_at)} onClick={() => {
-            if (popupRef.current) popupRef.current.remove();
-            const popupDiv = document.createElement('div');
-            const popupRoot = ReactDOM.createRoot(popupDiv);
-            popupRoot.render(<EventPopup event={event} onClose={() => popupRef.current?.remove()} language={language} />);
-            popupRef.current = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: 'none', offset: 25 }).setLngLat([lng, lat]).setDOMContent(popupDiv).addTo(map.current!);
-          }} />);
+          // Individual business marker
+          const business = c.properties.business as BusinessLocation;
+          
+          // Check if business should be visible at current zoom based on plan
+          const minZoomForPlan = MIN_ZOOM_FOR_PLAN[business.planSlug];
+          if (zoom < minZoomForPlan) {
+            return; // Don't show this business at current zoom level
+          }
+          
+          root.render(
+            <BusinessMarker 
+              planSlug={business.planSlug}
+              name={business.name}
+              onClick={() => {
+                if (popupRef.current) popupRef.current.remove();
+                const popupDiv = document.createElement('div');
+                const popupRoot = ReactDOM.createRoot(popupDiv);
+                popupRoot.render(
+                  <BusinessPopup 
+                    business={business} 
+                    onClose={() => popupRef.current?.remove()} 
+                    language={language} 
+                  />
+                );
+                popupRef.current = new mapboxgl.Popup({ 
+                  closeButton: false, 
+                  closeOnClick: false, 
+                  maxWidth: 'none', 
+                  offset: 25 
+                })
+                  .setLngLat([lng, lat])
+                  .setDOMContent(popupDiv)
+                  .addTo(map.current!);
+              }} 
+            />
+          );
+          markersRef.current.push(new mapboxgl.Marker({ element: div }).setLngLat([lng, lat]).addTo(map.current!));
         }
-        markersRef.current.push(new mapboxgl.Marker({ element: div }).setLngLat([lng, lat]).addTo(map.current!));
       });
     };
     
     map.current.on('moveend', updateMarkers);
     map.current.on('zoomend', updateMarkers);
     updateMarkers();
-    return () => { map.current?.off('moveend', updateMarkers); map.current?.off('zoomend', updateMarkers); };
-  }, [events]);
+    return () => { 
+      map.current?.off('moveend', updateMarkers); 
+      map.current?.off('zoomend', updateMarkers); 
+    };
+  }, [businesses, language]);
 
   useEffect(() => {
     if (!map.current || !city) return;
     const coords: Record<string, [number, number]> = { 
-      'Λευκωσία': [33.3823, 35.1856], 'Λεμεσός': [33.0333, 34.6667], 'Λάρνακα': [33.6333, 34.9167], 'Πάφος': [32.4250, 34.7667], 'Παραλίμνι': [35.0381, 33.9833], 'Αγία Νάπα': [34.9833, 34.0],
-      'Nicosia': [33.3823, 35.1856], 'Limassol': [33.0333, 34.6667], 'Larnaca': [33.6333, 34.9167], 'Paphos': [32.4250, 34.7667], 'Paralimni': [35.0381, 33.9833], 'Ayia Napa': [34.9833, 34.0]
+      'Λευκωσία': [33.3823, 35.1856], 'Λεμεσός': [33.0333, 34.6667], 'Λάρνακα': [33.6333, 34.9167], 'Πάφος': [32.4250, 34.7667], 'Παραλίμνι': [35.0381, 33.9833], 'Αγία Νάπα': [33.9833, 34.0],
+      'Nicosia': [33.3823, 35.1856], 'Limassol': [33.0333, 34.6667], 'Larnaca': [33.6333, 34.9167], 'Paphos': [32.4250, 34.7667], 'Paralimni': [35.0381, 33.9833], 'Ayia Napa': [33.9833, 34.0]
     };
     if (coords[city]) map.current.flyTo({ center: coords[city], zoom: neighborhood ? 13 : 11, duration: 1000 });
   }, [city, neighborhood]);
@@ -213,6 +259,16 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
   const handleSearchResultClick = (coords: [number, number], id: string) => {
     map.current?.flyTo({ center: coords, zoom: 15, duration: 1000 });
   };
+
+  if (isTokenMissing) {
+    return (
+      <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
+        <div className="text-center space-y-2">
+          <p className="text-muted-foreground">Mapbox token not configured</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-[70vh] rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20">
@@ -231,7 +287,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
         <div className="absolute inset-0 z-20 bg-background/50 backdrop-blur-sm flex items-center justify-center">
           <div className="flex items-center gap-2 bg-background px-4 py-3 rounded-lg shadow-lg">
             <Loader2 className="animate-spin h-5 w-5 text-primary" />
-            <span className="text-sm font-medium">{language === 'el' ? 'Φόρτωση εκδηλώσεων...' : 'Loading events...'}</span>
+            <span className="text-sm font-medium">{language === 'el' ? 'Φόρτωση επιχειρήσεων...' : 'Loading businesses...'}</span>
           </div>
         </div>
       )}
@@ -241,11 +297,15 @@ const RealMap = ({ city, neighborhood, selectedCategories, timeAccessFilters = [
       {/* Ocean gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-aegean/5 via-transparent to-seafoam/5 rounded-2xl" />
       
-      {!loading && events.length > 0 && (
+      {/* Business count indicator */}
+      {!loading && businesses.length > 0 && (
         <div className="absolute bottom-4 left-4 z-10 bg-gradient-to-r from-aegean to-seafoam text-white px-4 py-2 rounded-lg shadow-lg">
-          <p className="text-sm font-medium">
-            {events.length} {language === 'el' ? (events.length === 1 ? 'εκδήλωση' : 'εκδηλώσεις') : (events.length === 1 ? 'event' : 'events')}
-          </p>
+          <div className="flex items-center gap-2">
+            <Building2 size={16} />
+            <p className="text-sm font-medium">
+              {businesses.length} {language === 'el' ? (businesses.length === 1 ? 'επιχείρηση' : 'επιχειρήσεις') : (businesses.length === 1 ? 'business' : 'businesses')}
+            </p>
+          </div>
         </div>
       )}
     </div>
