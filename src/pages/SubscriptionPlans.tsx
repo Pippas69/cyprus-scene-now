@@ -45,18 +45,17 @@ const translations = {
     usageReset: "Επαναφορά στις",
     of: "από",
     yourPlan: "Το Πλάνο σας",
+    mostPopular: "Δημοφιλέστερη",
     // Free plan
     freeTitle: "FREE",
-    freeIncludes: "Περιλαμβάνει:",
     freeBusinessProfile: "Προφίλ επιχείρησης",
-    freeEventCreation: "Δημιουργία εκδηλώσεων",
-    freeOfferCreation: "Δημιουργία προσφορών",
-    freeMarketplace: "Παρουσία στο marketplace",
-    freeMapPresence: "Διακριτική παρουσία στον χάρτη",
-    freeAnalytics: "Πρόσβαση στα αναλυτικά",
-    freeAnalyticsNote: "(Μόνο στην Επισκόπηση)",
-    freeCommission: "Commission: 12%",
-    freeBoostCredits: "Boost credits: 0€",
+    freeEventCreation: "Εκδηλώσεις",
+    freeOfferCreation: "Προσφορές",
+    freeMarketplace: "Marketplace",
+    freeMapPresence: "Χάρτης",
+    freeAnalytics: "Αναλυτικά (Επισκόπηση)",
+    freeCommission: "12%",
+    freeBoostCredits: "0€",
     freeSupport: "Free Support",
     // Basic plan
     basicAllFree: "Όλα τα οφέλη του Free",
@@ -119,18 +118,17 @@ const translations = {
     usageReset: "Resets on",
     of: "of",
     yourPlan: "Your Plan",
+    mostPopular: "Most Popular",
     // Free plan
     freeTitle: "FREE",
-    freeIncludes: "Includes:",
     freeBusinessProfile: "Business profile",
-    freeEventCreation: "Event creation",
-    freeOfferCreation: "Offer creation",
-    freeMarketplace: "Marketplace presence",
-    freeMapPresence: "Discrete map presence",
-    freeAnalytics: "Analytics access",
-    freeAnalyticsNote: "(Overview only)",
-    freeCommission: "Commission: 12%",
-    freeBoostCredits: "Boost credits: €0",
+    freeEventCreation: "Events",
+    freeOfferCreation: "Offers",
+    freeMarketplace: "Marketplace",
+    freeMapPresence: "Map",
+    freeAnalytics: "Analytics (Overview)",
+    freeCommission: "12%",
+    freeBoostCredits: "€0",
     freeSupport: "Free Support",
     // Basic plan
     basicAllFree: "All Free benefits",
@@ -551,59 +549,59 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
 
       {/* Header Section with Free Plan */}
       <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${currentSubscription?.subscribed ? 'pb-4' : embedded ? 'pt-6 pb-4' : 'pt-12 pb-4'}`}>
-        {/* Free Plan - Horizontal Section Above Billing Toggle */}
+        {/* Free Plan - Compact Horizontal Section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-6"
+          className="mb-4"
         >
-          <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
+          <div className="px-4 py-3 rounded-lg bg-muted/20 border border-border/30">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
               {/* Free Plan Title */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Building2 className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">{t.freeTitle}</h3>
-                  <p className="text-xs text-muted-foreground">{t.freeIncludes}</p>
-                </div>
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium text-sm text-foreground">{t.freeTitle}</span>
               </div>
               
-              {/* Free Plan Features - Horizontal */}
-              <div className="flex-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+              {/* Separator */}
+              <div className="hidden sm:block h-4 w-px bg-border" />
+              
+              {/* Features - All inline with consistent styling */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Check className="w-3 h-3" />
                   {t.freeBusinessProfile}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                <span className="flex items-center gap-1">
+                  <Check className="w-3 h-3" />
                   {t.freeEventCreation}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                <span className="flex items-center gap-1">
+                  <Check className="w-3 h-3" />
                   {t.freeOfferCreation}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                <span className="flex items-center gap-1">
+                  <Check className="w-3 h-3" />
                   {t.freeMarketplace}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
+                <span className="flex items-center gap-1">
+                  <Check className="w-3 h-3" />
                   {t.freeMapPresence}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-muted-foreground/70" />
-                  {t.freeAnalytics} <span className="text-xs">({t.freeAnalyticsNote})</span>
+                <span className="flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  {t.freeAnalytics}
                 </span>
               </div>
               
-              {/* Free Plan Stats */}
-              <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-                <span>{t.freeCommission}</span>
-                <span>{t.freeBoostCredits}</span>
-                <span>{t.freeSupport}</span>
+              {/* Separator */}
+              <div className="hidden md:block h-4 w-px bg-border" />
+              
+              {/* Stats - compact pills */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Commission: {t.freeCommission}</span>
+                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Boost: {t.freeBoostCredits}</span>
               </div>
             </div>
           </div>
@@ -676,9 +674,17 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
                     isCurrent ? 'ring-2 ring-primary' : ''
                   } ${isMostPopular ? 'shadow-lg border-primary/30' : ''}`}
                 >
-                  {/* Gradient Top Border for Popular */}
+                  {/* Gradient Top Border & Most Popular Badge for Pro */}
                   {isMostPopular && (
-                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient} rounded-t-lg`} />
+                    <>
+                      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient} rounded-t-lg`} />
+                      <div className="absolute -top-3 left-4">
+                        <Badge className={`bg-gradient-to-r ${config.gradient} text-white border-0 shadow-md px-3 py-1`}>
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {t.mostPopular}
+                        </Badge>
+                      </div>
+                    </>
                   )}
 
                   {/* Current Plan Badge */}
@@ -769,11 +775,11 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">{t.contactUs}</span>
                 <a 
-                  href="mailto:enterprise@fomo.cy"
+                  href="mailto:hello@fomo.cy"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background font-medium text-sm hover:opacity-90 transition-opacity"
                 >
                   <Mail className="w-4 h-4" />
-                  enterprise@fomo.cy
+                  hello@fomo.cy
                 </a>
               </div>
             </div>
