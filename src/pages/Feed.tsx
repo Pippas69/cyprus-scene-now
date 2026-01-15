@@ -8,7 +8,6 @@ import SmartSearchBar from "@/components/feed/SmartSearchBar";
 import { BoostedContentSection } from "@/components/feed/BoostedContentSection";
 import { BoostedProfilesScroller } from "@/components/feed/BoostedProfilesScroller";
 import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
-import { Logo } from "@/components/Logo";
 
 import BusinessDirectorySection from "@/components/feed/BusinessDirectorySection";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
@@ -298,11 +297,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           )}
         </div>
 
-        {/* FOMO Logo + Location Dropdown Header */}
+        {/* Location Dropdown Header (no FOMO box) */}
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 pt-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Logo size="sm" />
-            <div className="h-5 w-px bg-border" />
+          <div className="flex items-center mb-4">
             <CompactLocationDropdown
               language={language}
               selectedCity={selectedCity}
