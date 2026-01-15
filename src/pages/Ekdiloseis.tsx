@@ -214,7 +214,8 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
 
 // Full View for Logged-in Users - FOMO Style
 const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any }) => {
-  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('today');
+  // null = no filter (show all), otherwise filter by time
+  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | null>(null);
 
   const text = {
     el: {
@@ -222,23 +223,23 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
       today: "Σήμερα",
       week: "Επόμενες 7 Μέρες",
       month: "Επόμενες 30 Μέρες",
-      noEvents: "Δεν βρέθηκαν εκδηλώσεις",
-      noEventsDesc: "Δοκιμάστε διαφορετικό χρονικό φίλτρο",
+      allEvents: "Όλες οι Εκδηλώσεις",
     },
     en: {
       boosted: "Featured",
       today: "Today",
       week: "Next 7 Days",
       month: "Next 30 Days",
-      noEvents: "No events found",
-      noEventsDesc: "Try a different time filter",
+      allEvents: "All Events",
     },
   };
 
   const t = text[language];
 
   // Calculate time boundaries
-  const getTimeBoundaries = (filter: 'today' | 'week' | 'month') => {
+  const getTimeBoundaries = (filter: 'today' | 'week' | 'month' | null) => {
+    if (!filter) return null; // No filter = show all
+    
     const now = new Date();
     const end = new Date();
     
@@ -317,9 +318,9 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
     enabled: boostedEventIds.size > 0,
   });
 
-  // Fetch NON-BOOSTED events (filtered by time, sorted by start_at soonest first)
-  const { start, end } = getTimeBoundaries(timeFilter);
+  const timeBoundaries = getTimeBoundaries(timeFilter);
 
+  // Fetch NON-BOOSTED events (filtered by time if selected, otherwise all)
   const { data: regularEvents, isLoading: loadingRegular } = useQuery({
     queryKey: ["regular-events", timeFilter, Array.from(boostedEventIds)],
     queryFn: async () => {
@@ -330,10 +331,15 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
           businesses!inner (name, logo_url, city, verified)
         `)
         .eq('businesses.verified', true)
-        .gte('start_at', start)
-        .lte('start_at', end)
         .gte('end_at', new Date().toISOString())
         .order('start_at', { ascending: true });
+
+      // Apply time filter only if selected
+      if (timeBoundaries) {
+        query = query
+          .gte('start_at', timeBoundaries.start)
+          .lte('start_at', timeBoundaries.end);
+      }
 
       // Exclude boosted events
       if (boostedEventIds.size > 0) {
@@ -367,6 +373,11 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
 
   const hasBoostedEvents = boostedEvents && boostedEvents.length > 0;
   const isLoading = loadingBoosted || loadingRegular;
+
+  // Toggle filter - clicking same filter deselects it
+  const handleFilterClick = (filter: 'today' | 'week' | 'month') => {
+    setTimeFilter(prev => prev === filter ? null : filter);
+  };
 
   return (
     <div className="space-y-8">
@@ -403,27 +414,37 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
         </section>
       )}
 
-      {/* TIME FILTER ZONE */}
+      {/* TIME FILTER ZONE - Optional filters like Feed categories */}
       <section className="space-y-4">
-        {/* Time Tabs */}
-        <Tabs value={timeFilter} onValueChange={(v) => setTimeFilter(v as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="today">{t.today}</TabsTrigger>
-            <TabsTrigger value="week">{t.week}</TabsTrigger>
-            <TabsTrigger value="month">{t.month}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Time Filter Chips - None selected by default */}
+        <div className="flex flex-wrap gap-2">
+          {(['today', 'week', 'month'] as const).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => handleFilterClick(filter)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                timeFilter === filter
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+              }`}
+            >
+              {filter === 'today' && t.today}
+              {filter === 'week' && t.week}
+              {filter === 'month' && t.month}
+            </button>
+          ))}
+        </div>
 
-        {/* Regular Events List */}
+        {/* Events List - Always shows events */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <EventCardSkeleton key={i} />
             ))}
           </div>
-        ) : regularEvents && regularEvents.length > 0 ? (
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {regularEvents.map((event, index) => (
+            {regularEvents && regularEvents.map((event, index) => (
               <motion.div
                 key={event.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -437,11 +458,6 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
                 />
               </motion.div>
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-muted/30 rounded-xl">
-            <p className="text-lg font-medium text-muted-foreground">{t.noEvents}</p>
-            <p className="text-sm text-muted-foreground mt-1">{t.noEventsDesc}</p>
           </div>
         )}
       </section>
