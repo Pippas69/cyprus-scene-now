@@ -1,14 +1,13 @@
-import { useState } from 'react';
-import { GraduationCap, QrCode, AlertCircle, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { GraduationCap, AlertCircle } from 'lucide-react';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useStudentVerification } from '@/hooks/useStudentVerification';
 import { StudentQRCard } from './StudentQRCard';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StudentDiscountButtonProps {
   businessId: string;
@@ -62,11 +61,29 @@ export function StudentDiscountButton({
 }: StudentDiscountButtonProps) {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isRedeemed, setIsRedeemed] = useState(false);
   const { data: verification, isLoading } = useStudentVerification(userId || undefined);
   const t = translations[language];
 
   const isVerifiedStudent = verification?.status === 'approved' && verification?.qr_code_token;
   const isPendingVerification = verification?.status === 'pending';
+
+  // Check if one-time discount was already redeemed
+  useEffect(() => {
+    const checkRedemption = async () => {
+      if (userId && discountMode === 'one_time') {
+        const { data } = await supabase
+          .from('student_redemptions')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('business_id', businessId)
+          .maybeSingle();
+        
+        setIsRedeemed(!!data);
+      }
+    };
+    checkRedemption();
+  }, [userId, businessId, discountMode]);
 
   const handleClick = () => {
     if (!userId) {
@@ -165,17 +182,13 @@ export function StudentDiscountButton({
           {/* Verified - show QR */}
           {userId && isVerifiedStudent && verification && (
             <div className="space-y-4">
-              {/* Show the student QR card */}
-              <StudentQRCard verification={verification} language={language} />
-
-              {/* Discount mode note */}
-              <Card className="bg-muted/50">
-                <CardContent className="p-3">
-                  <p className="text-sm text-muted-foreground text-center">
-                    {discountMode === 'one_time' ? t.oneTimeNote : t.unlimitedNote}
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Show the student QR card with discount mode and redemption status */}
+              <StudentQRCard 
+                verification={verification} 
+                language={language}
+                discountMode={discountMode === 'one_time' ? 'once' : 'unlimited'}
+                isRedeemed={isRedeemed}
+              />
 
               <Button 
                 variant="outline" 
