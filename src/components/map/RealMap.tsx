@@ -2,11 +2,9 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import ReactDOM from 'react-dom/client';
-import Supercluster from 'supercluster';
 import { MAPBOX_CONFIG } from '@/config/mapbox';
 import { useMapBusinesses, type BusinessLocation } from '@/hooks/useMapBusinesses';
 import { BusinessMarker } from './BusinessMarker';
-import { ClusterMarker } from './ClusterMarker';
 import { BusinessPopup } from './BusinessPopup';
 import { MapSearch } from './MapSearch';
 import { MapControls } from './MapControls';
@@ -157,90 +155,88 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
     return () => { map.current?.remove(); };
   }, [MAPBOX_TOKEN]);
 
+  // Update markers when businesses change or map moves
   useEffect(() => {
     if (!map.current || !businesses.length) return;
+    
+    // Clear existing markers
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
     
-    // Cluster only for performance, not for visual hierarchy
-    const cluster = new Supercluster({ 
-      radius: MAPBOX_CONFIG.clusterRadius, 
-      maxZoom: MAPBOX_CONFIG.clusterMaxZoom 
-    });
-    
-    cluster.load(businesses.map(b => ({ 
-      type: 'Feature' as const, 
-      properties: { business: b }, 
-      geometry: { type: 'Point' as const, coordinates: b.coordinates } 
-    })));
-    
+    /**
+     * PREMIUM PIN RENDERING - NO CLUSTERING
+     * Each business gets its own custom pin based on subscription plan.
+     * Visibility is controlled by zoom level per plan tier.
+     */
     const updateMarkers = () => {
       if (!map.current) return;
       const zoom = map.current.getZoom();
       const bounds = map.current.getBounds();
-      const clusters = cluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom));
+      
+      // Clear existing markers
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       
-      clusters.forEach(c => {
-        const [lng, lat] = c.geometry.coordinates;
+      // Filter businesses within current viewport and visible at current zoom
+      const visibleBusinesses = businesses.filter(business => {
+        // Check if within map bounds
+        const [lng, lat] = business.coordinates;
+        if (!bounds.contains([lng, lat])) return false;
+        
+        // Check if visible at current zoom based on plan
+        const minZoom = MIN_ZOOM_FOR_PLAN[business.planSlug];
+        return zoom >= minZoom;
+      });
+      
+      // Sort by plan tier so higher tiers render on top (Elite last = on top)
+      visibleBusinesses.sort((a, b) => a.planTierIndex - b.planTierIndex);
+      
+      // Render each business as individual premium pin
+      visibleBusinesses.forEach(business => {
+        const [lng, lat] = business.coordinates;
         const div = document.createElement('div');
         const root = ReactDOM.createRoot(div);
         
-        if (c.properties.cluster) {
-          // For clusters, show cluster marker
-          root.render(
-            <ClusterMarker 
-              count={c.properties.point_count} 
-              onClick={() => map.current?.easeTo({ center: [lng, lat], zoom: zoom + 2, duration: 500 })} 
-            />
-          );
-          markersRef.current.push(new mapboxgl.Marker({ element: div }).setLngLat([lng, lat]).addTo(map.current!));
-        } else {
-          // Individual business marker
-          const business = c.properties.business as BusinessLocation;
-          
-          // Check if business should be visible at current zoom based on plan
-          const minZoomForPlan = MIN_ZOOM_FOR_PLAN[business.planSlug];
-          if (zoom < minZoomForPlan) {
-            return; // Don't show this business at current zoom level
-          }
-          
-          root.render(
-            <BusinessMarker 
-              planSlug={business.planSlug}
-              name={business.name}
-              onClick={() => {
-                if (popupRef.current) popupRef.current.remove();
-                const popupDiv = document.createElement('div');
-                const popupRoot = ReactDOM.createRoot(popupDiv);
-                popupRoot.render(
-                  <BusinessPopup 
-                    business={business} 
-                    onClose={() => popupRef.current?.remove()} 
-                    language={language} 
-                  />
-                );
-                popupRef.current = new mapboxgl.Popup({ 
-                  closeButton: false, 
-                  closeOnClick: false, 
-                  maxWidth: 'none', 
-                  offset: 25 
-                })
-                  .setLngLat([lng, lat])
-                  .setDOMContent(popupDiv)
-                  .addTo(map.current!);
-              }} 
-            />
-          );
-          markersRef.current.push(new mapboxgl.Marker({ element: div }).setLngLat([lng, lat]).addTo(map.current!));
-        }
+        root.render(
+          <BusinessMarker 
+            planSlug={business.planSlug}
+            name={business.name}
+            onClick={() => {
+              if (popupRef.current) popupRef.current.remove();
+              const popupDiv = document.createElement('div');
+              const popupRoot = ReactDOM.createRoot(popupDiv);
+              popupRoot.render(
+                <BusinessPopup 
+                  business={business} 
+                  onClose={() => popupRef.current?.remove()} 
+                  language={language} 
+                />
+              );
+              popupRef.current = new mapboxgl.Popup({ 
+                closeButton: false, 
+                closeOnClick: false, 
+                maxWidth: 'none', 
+                offset: 25 
+              })
+                .setLngLat([lng, lat])
+                .setDOMContent(popupDiv)
+                .addTo(map.current!);
+            }} 
+          />
+        );
+        
+        markersRef.current.push(
+          new mapboxgl.Marker({ element: div })
+            .setLngLat([lng, lat])
+            .addTo(map.current!)
+        );
       });
     };
     
     map.current.on('moveend', updateMarkers);
     map.current.on('zoomend', updateMarkers);
     updateMarkers();
+    
     return () => { 
       map.current?.off('moveend', updateMarkers); 
       map.current?.off('zoomend', updateMarkers); 

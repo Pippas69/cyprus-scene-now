@@ -1,4 +1,12 @@
-import { Building2 } from "lucide-react";
+/**
+ * PREMIUM BUSINESS PIN - FOMO MAP
+ * 
+ * Design Rules:
+ * - Clean, professional pin shape (no numbers, no text, no labels)
+ * - Differentiation ONLY through: size, intensity, clarity
+ * - Plan hierarchy: Elite (largest, most prominent) → Pro → Basic → Free (smallest, subtle)
+ * - No "featured", "elite", or plan labels visible
+ */
 
 interface BusinessMarkerProps {
   planSlug: 'free' | 'basic' | 'pro' | 'elite';
@@ -7,116 +15,167 @@ interface BusinessMarkerProps {
 }
 
 // Pin sizes based on subscription plan - strict hierarchy
-// Free: 16px (minimal, only visible at close zoom)
-// Basic: 24px (slightly more visible)
-// Pro: 32px (clear presence)
-// Elite: 44px (maximum visibility, dominant)
-const PIN_SIZES: Record<'free' | 'basic' | 'pro' | 'elite', number> = {
-  free: 16,
-  basic: 24,
-  pro: 32,
-  elite: 44,
+const PIN_CONFIG: Record<'free' | 'basic' | 'pro' | 'elite', {
+  size: number;
+  opacity: number;
+  shadowBlur: number;
+  strokeWidth: number;
+  glowRadius: number;
+}> = {
+  free: { 
+    size: 20, 
+    opacity: 0.7, 
+    shadowBlur: 2, 
+    strokeWidth: 1,
+    glowRadius: 0,
+  },
+  basic: { 
+    size: 28, 
+    opacity: 0.85, 
+    shadowBlur: 4, 
+    strokeWidth: 1.5,
+    glowRadius: 0,
+  },
+  pro: { 
+    size: 36, 
+    opacity: 0.95, 
+    shadowBlur: 6, 
+    strokeWidth: 2,
+    glowRadius: 4,
+  },
+  elite: { 
+    size: 48, 
+    opacity: 1, 
+    shadowBlur: 10, 
+    strokeWidth: 2.5,
+    glowRadius: 8,
+  },
 };
 
-// Opacity/intensity based on plan
-const PIN_OPACITY: Record<'free' | 'basic' | 'pro' | 'elite', number> = {
-  free: 0.6,
-  basic: 0.75,
-  pro: 0.9,
-  elite: 1,
-};
-
-// Colors based on plan (subtle differentiation without revealing plan name)
-const PIN_COLORS: Record<'free' | 'basic' | 'pro' | 'elite', { primary: string; secondary: string }> = {
-  free: { primary: '#6B7280', secondary: '#9CA3AF' },      // Gray - subtle
-  basic: { primary: '#0D3B66', secondary: '#1F5A8A' },     // Aegean blue - standard
-  pro: { primary: '#2563EB', secondary: '#3B82F6' },       // Bright blue - prominent
-  elite: { primary: '#059669', secondary: '#10B981' },     // Seafoam green - premium distinction
+// Mediterranean color palette - unified brand identity
+const PIN_COLORS: Record<'free' | 'basic' | 'pro' | 'elite', { 
+  primary: string; 
+  secondary: string;
+  accent: string;
+}> = {
+  free: { 
+    primary: '#6B7280',   // Gray
+    secondary: '#9CA3AF', 
+    accent: '#D1D5DB',
+  },
+  basic: { 
+    primary: '#0D3B66',   // Aegean Deep Blue
+    secondary: '#1F5A8A', 
+    accent: '#3D6B99',
+  },
+  pro: { 
+    primary: '#0369A1',   // Ocean Blue
+    secondary: '#0284C7', 
+    accent: '#0EA5E9',
+  },
+  elite: { 
+    primary: '#059669',   // Seafoam Teal
+    secondary: '#10B981', 
+    accent: '#34D399',
+  },
 };
 
 export const BusinessMarker = ({ planSlug, name, onClick }: BusinessMarkerProps) => {
-  const size = PIN_SIZES[planSlug];
-  const opacity = PIN_OPACITY[planSlug];
+  const config = PIN_CONFIG[planSlug];
   const colors = PIN_COLORS[planSlug];
-  const iconSize = Math.max(10, size * 0.4);
+  const { size, opacity, shadowBlur, strokeWidth, glowRadius } = config;
 
   return (
     <div
       onClick={onClick}
-      className="relative cursor-pointer transition-all duration-200 hover:scale-110 hover:-translate-y-1 group"
-      style={{ opacity }}
+      className="relative cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:-translate-y-1"
+      style={{ 
+        opacity,
+        filter: `drop-shadow(0 ${shadowBlur}px ${shadowBlur * 2}px rgba(0,0,0,0.25))`,
+      }}
+      title={name}
     >
-      {/* Outer glow for Elite */}
-      {planSlug === 'elite' && (
+      {/* Subtle outer glow for Pro and Elite */}
+      {glowRadius > 0 && (
         <div 
-          className="absolute inset-0 rounded-full animate-pulse"
+          className="absolute rounded-full pointer-events-none"
           style={{
-            width: size + 12,
-            height: size + 12,
-            left: -6,
-            top: -6,
-            background: `radial-gradient(circle, ${colors.primary}40 0%, transparent 70%)`,
+            width: size + glowRadius * 2,
+            height: size + glowRadius * 2,
+            left: -glowRadius,
+            top: -glowRadius,
+            background: `radial-gradient(circle, ${colors.secondary}30 0%, transparent 70%)`,
+            animation: planSlug === 'elite' ? 'pulse 3s ease-in-out infinite' : undefined,
           }}
         />
       )}
 
-      {/* Main pin */}
+      {/* Main pin SVG */}
       <svg
         width={size}
-        height={size * 1.3}
-        viewBox="0 0 40 52"
-        className="drop-shadow-md transition-all group-hover:drop-shadow-xl"
+        height={size * 1.25}
+        viewBox="0 0 40 50"
+        className="transition-transform duration-200"
       >
-        {/* Shadow */}
-        <ellipse 
-          cx="20" 
-          cy="49" 
-          rx={planSlug === 'elite' ? 10 : 6} 
-          ry={planSlug === 'elite' ? 3 : 2} 
-          fill="black" 
-          fillOpacity={planSlug === 'elite' ? 0.25 : 0.15} 
-        />
-        
-        {/* Pin shape with gradient */}
+        {/* Definitions */}
         <defs>
-          <linearGradient id={`pin-gradient-${planSlug}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={colors.secondary} />
+          {/* Pin gradient */}
+          <linearGradient id={`pin-fill-${planSlug}-${name}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={colors.accent} />
+            <stop offset="50%" stopColor={colors.secondary} />
             <stop offset="100%" stopColor={colors.primary} />
           </linearGradient>
+          
+          {/* Inner highlight for premium feel */}
+          <radialGradient id={`pin-highlight-${planSlug}-${name}`} cx="30%" cy="30%" r="50%">
+            <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </radialGradient>
         </defs>
-        
-        <path
-          d="M20 2 C10 2, 2 10, 2 20 C2 30, 20 48, 20 48 C20 48, 38 30, 38 20 C38 10, 30 2, 20 2 Z"
-          fill={`url(#pin-gradient-${planSlug})`}
-          stroke="white"
-          strokeWidth={planSlug === 'elite' ? 2.5 : planSlug === 'pro' ? 2 : 1.5}
+
+        {/* Ground shadow */}
+        <ellipse 
+          cx="20" 
+          cy="48" 
+          rx={planSlug === 'elite' ? 8 : planSlug === 'pro' ? 6 : 4} 
+          ry="2" 
+          fill="black" 
+          fillOpacity={0.15 + (PIN_CONFIG[planSlug].size - 20) * 0.005}
         />
         
-        {/* Icon circle background */}
+        {/* Pin shape - clean teardrop */}
+        <path
+          d="M20 2 C10 2, 2 10, 2 18 C2 28, 20 46, 20 46 C20 46, 38 28, 38 18 C38 10, 30 2, 20 2 Z"
+          fill={`url(#pin-fill-${planSlug}-${name})`}
+          stroke="white"
+          strokeWidth={strokeWidth}
+        />
+        
+        {/* Inner highlight overlay */}
+        <path
+          d="M20 4 C11 4, 4 11, 4 18 C4 26, 20 44, 20 44 C20 44, 36 26, 36 18 C36 11, 29 4, 20 4 Z"
+          fill={`url(#pin-highlight-${planSlug}-${name})`}
+        />
+        
+        {/* Center dot - elegant accent */}
         <circle 
           cx="20" 
           cy="18" 
-          r={planSlug === 'elite' ? 12 : planSlug === 'pro' ? 10 : 8} 
-          fill="white" 
-          fillOpacity="0.95" 
+          r={planSlug === 'elite' ? 8 : planSlug === 'pro' ? 6 : planSlug === 'basic' ? 5 : 4}
+          fill="white"
+          fillOpacity="0.9"
         />
+        
+        {/* Inner dot for premium pins */}
+        {(planSlug === 'elite' || planSlug === 'pro') && (
+          <circle 
+            cx="20" 
+            cy="18" 
+            r={planSlug === 'elite' ? 3 : 2}
+            fill={colors.primary}
+          />
+        )}
       </svg>
-
-      {/* Building icon */}
-      <div 
-        className="absolute pointer-events-none"
-        style={{
-          top: size * 0.2,
-          left: '50%',
-          transform: 'translateX(-50%)',
-        }}
-      >
-        <Building2 
-          size={iconSize} 
-          color={colors.primary} 
-          strokeWidth={planSlug === 'elite' ? 2.5 : 2} 
-        />
-      </div>
     </div>
   );
 };
