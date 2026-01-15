@@ -1,0 +1,193 @@
+import { useState } from 'react';
+import { GraduationCap, QrCode, AlertCircle, X } from 'lucide-react';
+import { RippleButton } from '@/components/ui/ripple-button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { useStudentVerification } from '@/hooks/useStudentVerification';
+import { StudentQRCard } from './StudentQRCard';
+import { useNavigate } from 'react-router-dom';
+
+interface StudentDiscountButtonProps {
+  businessId: string;
+  businessName: string;
+  discountPercent: number;
+  discountMode: 'one_time' | 'unlimited';
+  userId: string | null;
+  language: 'en' | 'el';
+}
+
+const translations = {
+  en: {
+    useStudentDiscount: 'Use Student Discount',
+    studentDiscountTitle: 'Student Discount',
+    showQRToStaff: 'Show this QR code to staff at checkout',
+    oneTimeNote: 'This discount can only be used once at this business',
+    unlimitedNote: 'You can use this discount on every visit',
+    verificationRequired: 'Student Verification Required',
+    verifyNow: 'Verify Now',
+    verifyDescription: 'To access student discounts, you need to verify your student status with your university email.',
+    loginRequired: 'Please log in to use student discounts',
+    login: 'Log In',
+    pendingVerification: 'Your student verification is pending approval',
+    off: 'off',
+    close: 'Close',
+  },
+  el: {
+    useStudentDiscount: 'Χρήση Φοιτητικής Έκπτωσης',
+    studentDiscountTitle: 'Φοιτητική Έκπτωση',
+    showQRToStaff: 'Δείξτε αυτόν τον QR κώδικα στο ταμείο',
+    oneTimeNote: 'Αυτή η έκπτωση μπορεί να χρησιμοποιηθεί μόνο μία φορά σε αυτή την επιχείρηση',
+    unlimitedNote: 'Μπορείτε να χρησιμοποιήσετε αυτή την έκπτωση σε κάθε επίσκεψη',
+    verificationRequired: 'Απαιτείται Επιβεβαίωση Φοιτητικής Ιδιότητας',
+    verifyNow: 'Επιβεβαίωση Τώρα',
+    verifyDescription: 'Για πρόσβαση στις φοιτητικές εκπτώσεις, πρέπει να επιβεβαιώσετε τη φοιτητική σας ιδιότητα με το email του πανεπιστημίου σας.',
+    loginRequired: 'Συνδεθείτε για να χρησιμοποιήσετε τη φοιτητική έκπτωση',
+    login: 'Σύνδεση',
+    pendingVerification: 'Η επαλήθευση φοιτητικής ιδιότητας εκκρεμεί',
+    off: 'έκπτωση',
+    close: 'Κλείσιμο',
+  },
+};
+
+export function StudentDiscountButton({
+  businessId,
+  businessName,
+  discountPercent,
+  discountMode,
+  userId,
+  language,
+}: StudentDiscountButtonProps) {
+  const navigate = useNavigate();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: verification, isLoading } = useStudentVerification(userId || undefined);
+  const t = translations[language];
+
+  const isVerifiedStudent = verification?.status === 'approved' && verification?.qr_code_token;
+  const isPendingVerification = verification?.status === 'pending';
+
+  const handleClick = () => {
+    if (!userId) {
+      // Not logged in
+      setDialogOpen(true);
+      return;
+    }
+    setDialogOpen(true);
+  };
+
+  const handleLogin = () => {
+    navigate('/login', { state: { from: `/business/${businessId}` } });
+  };
+
+  const handleVerify = () => {
+    // Navigate to signup to verify student status
+    navigate('/signup');
+  };
+
+  if (isLoading) {
+    return (
+      <RippleButton disabled className="gap-2 opacity-50">
+        <GraduationCap className="h-4 w-4" />
+        {t.useStudentDiscount}
+      </RippleButton>
+    );
+  }
+
+  return (
+    <>
+      <RippleButton
+        onClick={handleClick}
+        variant="outline"
+        className="gap-2 border-primary/30 hover:bg-primary/10"
+      >
+        <GraduationCap className="h-4 w-4" />
+        {t.useStudentDiscount}
+      </RippleButton>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              {t.studentDiscountTitle}
+            </DialogTitle>
+            <DialogDescription>
+              {businessName} - {discountPercent}% {t.off}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Not logged in */}
+          {!userId && (
+            <div className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{t.loginRequired}</AlertDescription>
+              </Alert>
+              <Button onClick={handleLogin} className="w-full gap-2">
+                {t.login}
+              </Button>
+            </div>
+          )}
+
+          {/* Logged in but not verified */}
+          {userId && !verification && (
+            <div className="space-y-4">
+              <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <AlertDescription className="text-amber-700 dark:text-amber-400">
+                  {t.verificationRequired}
+                </AlertDescription>
+              </Alert>
+              <p className="text-sm text-muted-foreground">
+                {t.verifyDescription}
+              </p>
+              <Button onClick={handleVerify} className="w-full gap-2">
+                <GraduationCap className="h-4 w-4" />
+                {t.verifyNow}
+              </Button>
+            </div>
+          )}
+
+          {/* Pending verification */}
+          {userId && isPendingVerification && (
+            <div className="space-y-4">
+              <Alert variant="default" className="border-blue-500/50 bg-blue-500/10">
+                <AlertCircle className="h-4 w-4 text-blue-500" />
+                <AlertDescription className="text-blue-700 dark:text-blue-400">
+                  {t.pendingVerification}
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          {/* Verified - show QR */}
+          {userId && isVerifiedStudent && verification && (
+            <div className="space-y-4">
+              {/* Show the student QR card */}
+              <StudentQRCard verification={verification} language={language} />
+
+              {/* Discount mode note */}
+              <Card className="bg-muted/50">
+                <CardContent className="p-3">
+                  <p className="text-sm text-muted-foreground text-center">
+                    {discountMode === 'one_time' ? t.oneTimeNote : t.unlimitedNote}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Button 
+                variant="outline" 
+                onClick={() => setDialogOpen(false)} 
+                className="w-full"
+              >
+                {t.close}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
