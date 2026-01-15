@@ -123,11 +123,12 @@ export const useMapBusinesses = (
             .map(business => {
               const coords = coordsMap.get(business.id)!;
               
-              // Get subscription plan
-              const subscription = business.business_subscriptions?.[0];
+              // Get subscription plan (business_subscriptions is one-to-one in DB, but may come back as object or array)
+              const subscriptionRaw: any = (business as any).business_subscriptions;
+              const subscription = Array.isArray(subscriptionRaw) ? subscriptionRaw[0] : subscriptionRaw;
               const isActive = subscription?.status === 'active';
               const planSlug = isActive 
-                ? mapPlanSlug(subscription?.plan_id, (subscription?.subscription_plans as any)?.slug)
+                ? mapPlanSlug(subscription?.plan_id, subscription?.subscription_plans?.slug ?? null)
                 : 'free';
               
               return {
