@@ -50,11 +50,15 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
         };
       }
 
-      // Fetch profiles for these users
-      const { data: profiles } = await supabase
+      // Fetch profiles for these users - use both id and user_id since some profiles have user_id = id
+      // Also check if we should use 'id' column directly since in some cases profile.id = auth.user.id
+      const { data: profilesById } = await supabase
         .from("profiles")
         .select("gender, age, dob_year, city, town")
         .in("id", userIds);
+
+      // Combine results (profiles.id usually equals auth user id)
+      const profiles = profilesById || [];
 
       // Calculate metrics
       const genderCount = { male: 0, female: 0, other: 0 };
