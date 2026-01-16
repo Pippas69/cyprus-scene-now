@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
         
         <div style="text-align: center; margin: 32px 0;">
-          <a href="https://fomo.cy/login" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          <a href="https://fomo.com.cy/login" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
             Συνδεθείτε τώρα
           </a>
         </div>
@@ -132,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
         
         <p style="color: #64748b; font-size: 14px; margin: 24px 0 0 0;">
-          Παρακαλούμε επικοινωνήστε μαζί μας στο <a href="mailto:info@fomo.cy" style="color: #4ecdc4;">info@fomo.cy</a> για περισσότερες λεπτομέρειες.
+          Παρακαλούμε επικοινωνήστε μαζί μας στο <a href="mailto:info@fomo.com.cy" style="color: #4ecdc4;">info@fomo.com.cy</a> για περισσότερες λεπτομέρειες.
         </p>
       `);
     }

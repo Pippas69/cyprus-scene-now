@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
           ` : ''}
 
           <div style="text-align: center; margin: 32px 0;">
-            <a href="https://fomo.cy/dashboard-business/analytics" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+            <a href="https://fomo.com.cy/dashboard-business/analytics" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
               Δείτε Αναλυτικά
             </a>
           </div>
