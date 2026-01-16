@@ -4,13 +4,43 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Ticket, Calendar, Percent } from "lucide-react";
+import { Trash2, Ticket, Calendar, Percent, Sparkles } from "lucide-react";
 import { useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { OfferQRScanner } from "./OfferQRScanner";
 import { StudentDiscountScanner } from "./StudentDiscountScanner";
 import { StudentDiscountStats } from "./StudentDiscountStats";
+
+// Helper component to show active boost badge for offers
+const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
+  const { data: activeBoost } = useQuery({
+    queryKey: ["offer-active-boost", offerId],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data } = await supabase
+        .from("offer_boosts")
+        .select("id")
+        .eq("discount_id", offerId)
+        .eq("status", "active")
+        .lte("start_date", now)
+        .gte("end_date", now)
+        .maybeSingle();
+      return data;
+    },
+  });
+  
+  if (!activeBoost) return null;
+  return (
+    <Badge 
+      variant="default" 
+      className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white flex items-center gap-1"
+    >
+      <Sparkles className="h-3 w-3" />
+      {label}
+    </Badge>
+  );
+};
 
 interface OffersListProps {
   businessId: string;
@@ -37,6 +67,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       activate: "Ενεργοποίηση",
       deactivate: "Απενεργοποίηση",
       terms: "Όροι:",
+      boosted: "Προωθείται",
     },
     en: {
       loading: "Loading...",
@@ -52,6 +83,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       activate: "Activate",
       deactivate: "Deactivate",
       terms: "Terms:",
+      boosted: "Boosted",
     },
   };
 
@@ -242,13 +274,9 @@ const OffersList = ({ businessId }: OffersListProps) => {
                         <Badge variant={offer.active ? "default" : "secondary"}>
                           {offer.active ? t.active : t.inactive}
                         </Badge>
-                        {/* COMMISSION DISABLED: All offers are commission-free - badge hidden */}
+                        <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
                       </div>
-                      {offer.description && (
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {offer.description}
-                        </p>
-                      )}
+                      {/* Description hidden in business dashboard per user request */}
                     </div>
                     
                     {offer.percent_off && (

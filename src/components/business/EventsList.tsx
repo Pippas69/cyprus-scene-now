@@ -338,9 +338,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                     setPerformanceDialogOpen(true);
                   }} />
                 </div>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                  {event.description}
-                </p>
+                {/* Description hidden in business dashboard per user request */}
                 
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
                   <div className="flex items-center gap-1">
