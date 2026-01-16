@@ -4,13 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Ticket, Calendar, Percent, Sparkles } from "lucide-react";
-import { useEffect } from "react";
+import { Trash2, Ticket, Calendar, Percent, Sparkles, Rocket } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { OfferQRScanner } from "./OfferQRScanner";
 import { StudentDiscountScanner } from "./StudentDiscountScanner";
 import { StudentDiscountStats } from "./StudentDiscountStats";
+import OfferBoostDialog from "./OfferBoostDialog";
 
 // Helper component to show active boost badge for offers
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
@@ -51,6 +52,17 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { language } = useLanguage();
+  const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
+
+  // Fetch subscription status
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const translations = {
     el: {
@@ -305,6 +317,16 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
                 <div className="flex gap-2">
                   <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
+                    title={language === "el" ? "Προώθηση" : "Boost"}
+                    aria-label={`Boost ${offer.title}`}
+                    className="text-primary hover:text-primary"
+                  >
+                    <Rocket className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                  <Button
                     variant="outline"
                     size="sm"
                     onClick={() => toggleActive(offer.id, offer.active || false)}
@@ -326,6 +348,18 @@ const OffersList = ({ businessId }: OffersListProps) => {
           </Card>
         ))}
       </div>
+
+      {/* Offer Boost Dialog */}
+      {boostingOffer && (
+        <OfferBoostDialog
+          open={!!boostingOffer}
+          onOpenChange={(open) => !open && setBoostingOffer(null)}
+          offerId={boostingOffer.id}
+          offerTitle={boostingOffer.title}
+          hasActiveSubscription={subscriptionData?.subscribed || false}
+          remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
+        />
+      )}
     </div>
   );
 };
