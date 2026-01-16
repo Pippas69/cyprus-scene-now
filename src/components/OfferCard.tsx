@@ -11,7 +11,6 @@ import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { OfferItemsDisplay } from "@/components/business/offers/OfferItemsDisplay";
-import { CardActionBar } from "@/components/feed/CardActionBar";
 
 interface OfferItem {
   id: string;
@@ -193,7 +192,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
             </Link>
 
-            {/* BOTTOM HALF: white info panel - FIXED 4 lines */}
+            {/* BOTTOM HALF: white info panel - FIXED 3 lines */}
             <div className="bg-background p-4 flex flex-col justify-between">
               {/* LINE 1: What you get (benefit) - bold */}
               <h3 className="font-bold text-base leading-tight line-clamp-1">
@@ -214,25 +213,6 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                   {language === "el" ? "Εξαργύρωσε" : "Redeem"}
                 </Button>
               </div>
-
-              {/* LINE 4: Action Bar (Interested, Going, Share) */}
-              <CardActionBar
-                entityId={offerData.id}
-                entityType="offer"
-                interestedCount={0}
-                goingCount={0}
-                language={language}
-                shareData={{
-                  title: offerData.title,
-                  location: offerData.businesses.city,
-                  start_at: offerData.start_at || new Date().toISOString(),
-                  cover_image_url: offerData.businesses.cover_url || offerData.businesses.logo_url || undefined,
-                  businesses: {
-                    id: offerData.business_id,
-                    name: offerData.businesses.name,
-                  },
-                }}
-              />
             </div>
           </div>
 
