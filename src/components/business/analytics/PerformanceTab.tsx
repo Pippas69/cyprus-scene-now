@@ -37,12 +37,13 @@ const translations = {
     profileViewsSource: 'Feed, χάρτης, αναζητήσεις, σελίδα προφίλ',
     offersViewsSource: 'Feed προσφορών, αναζητήσεις, σελίδα προσφοράς',
     eventsViewsSource: 'Feed εκδηλώσεων, χάρτης, αναζητήσεις, σελίδα εκδήλωσης',
-    // Interactions explanations - same for all (LOCKED)
+    // Interactions explanations - different for events vs offers
     interactionsExplanation: 'Αλληλεπιδράσεις',
-    interactionsDetails: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο αποθηκεύοντας το ή δείχνοντας πρόθεση ότι θα πάνε.',
+    interactionsDetailsEvents: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο αποθηκεύοντας το ή δείχνοντας πρόθεση ότι θα πάνε.',
+    interactionsDetailsOffers: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο κάνοντας κλικ στο "Εξαργύρωσε".',
     profileInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
-    offersInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
-    eventsInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    offersInteractionsSource: 'Κλικ στο "Εξαργύρωσε"',
+    eventsInteractionsSource: 'Ενδιαφέρομαι, Θα πάω',
     // Visits explanations - different per type
     profileVisitsExplanation: 'Επίσκεψη',
     profileVisitsDetails: 'Check ins και επιβεβαιωμένες κρατήσεις από το προφίλ.',
@@ -83,12 +84,13 @@ const translations = {
     profileViewsSource: 'Feed, map, searches, profile page',
     offersViewsSource: 'Offers feed, searches, offer page',
     eventsViewsSource: 'Events feed, map, searches, event page',
-    // Interactions explanations (LOCKED)
+    // Interactions explanations - different for events vs offers
     interactionsExplanation: 'Interactions',
-    interactionsDetails: 'Shows how many users showed interest by saving the content or indicating they will visit.',
+    interactionsDetailsEvents: 'Shows how many users showed interest by saving the content or indicating they will visit.',
+    interactionsDetailsOffers: 'Shows how many users showed interest by clicking the "Redeem" button.',
     profileInteractionsSource: 'Saves, Interested, Going',
-    offersInteractionsSource: 'Saves, Interested, Going',
-    eventsInteractionsSource: 'Saves, Interested, Going',
+    offersInteractionsSource: 'Clicks on "Redeem"',
+    eventsInteractionsSource: 'Interested, Going',
     // Visits explanations
     profileVisitsExplanation: 'Visit',
     profileVisitsDetails: 'Check-ins and confirmed reservations when profile was featured.',
@@ -132,17 +134,17 @@ const getMetricExplanations = (language: 'el' | 'en', metricType: MetricType): {
   const explanations = {
     profile: {
       views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.profileViewsSource },
-      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.profileInteractionsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetailsEvents, source: t.profileInteractionsSource },
       visits: { explanation: t.profileVisitsExplanation, details: t.profileVisitsDetails, source: t.profileVisitsSource },
     },
     offers: {
       views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.offersViewsSource },
-      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.offersInteractionsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetailsOffers, source: t.offersInteractionsSource },
       visits: { explanation: t.offersVisitsExplanation, details: t.offersVisitsDetails, source: t.offersVisitsSource },
     },
     events: {
       views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.eventsViewsSource },
-      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.eventsInteractionsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetailsEvents, source: t.eventsInteractionsSource },
       visits: { explanation: t.eventsVisitsExplanation, details: t.eventsVisitsDetails, source: t.eventsVisitsSource },
     },
   };

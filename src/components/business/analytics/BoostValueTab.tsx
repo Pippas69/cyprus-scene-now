@@ -61,7 +61,8 @@ const translations = {
     viewsExplanation: 'Προβολές (Σύγκριση)',
     viewsDetails: 'Δείχνει πόσες φορές χρήστες είδαν αυτό το περιεχόμενο και επέλεξαν να το ανοίξουν. Συγκρίνονται οι προβολές με και χωρίς προώθηση.',
     interactionsExplanation: 'Αλληλεπιδράσεις (Σύγκριση)',
-    interactionsDetails: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο αποθηκεύοντας το ή δείχνοντας πρόθεση ότι θα πάνε. Συγκρίνονται οι αλληλεπιδράσεις με και χωρίς προώθηση.',
+    interactionsDetailsEvents: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο αποθηκεύοντας το ή δείχνοντας πρόθεση ότι θα πάνε. Συγκρίνονται οι αλληλεπιδράσεις με και χωρίς προώθηση.',
+    interactionsDetailsOffers: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο κάνοντας κλικ στο "Εξαργύρωσε". Συγκρίνονται οι αλληλεπιδράσεις με και χωρίς προώθηση.',
     // Profile sources
     profileViewsSource: 'Feed, χάρτης, αναζητήσεις, σελίδα προφίλ',
     profileInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
@@ -70,13 +71,13 @@ const translations = {
     profileVisitsSource: 'QR check-ins, επιβεβαιωμένες κρατήσεις',
     // Offers sources
     offersViewsSource: 'Feed προσφορών, αναζητήσεις, σελίδα προσφοράς',
-    offersInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    offersInteractionsSource: 'Κλικ στο "Εξαργύρωσε"',
     offersVisitsExplanation: 'Επίσκεψη (Σύγκριση)',
     offersVisitsDetails: 'Εξαργύρωση προσφοράς με QR ή κράτηση από προσφορά. Συγκρίνονται με και χωρίς προώθηση.',
     offersVisitsSource: 'QR εξαργυρώσεις, κρατήσεις από προσφορά',
     // Events sources
     eventsViewsSource: 'Feed εκδηλώσεων, χάρτης, αναζητήσεις, σελίδα εκδήλωσης',
-    eventsInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
+    eventsInteractionsSource: 'Ενδιαφέρομαι, Θα πάω',
     eventsVisitsExplanation: 'Επίσκεψη (Σύγκριση)',
     eventsVisitsDetails: 'QR check-in από εισιτήριο ή κράτηση. Συγκρίνονται με και χωρίς προώθηση.',
     eventsVisitsSource: 'QR check-ins (εισιτήρια, κρατήσεις)',
@@ -110,7 +111,8 @@ const translations = {
     viewsExplanation: 'Views (Comparison)',
     viewsDetails: 'Shows how many times users saw this content and chose to open it. Comparing views with and without boost.',
     interactionsExplanation: 'Interactions (Comparison)',
-    interactionsDetails: 'Shows how many users showed interest by saving the content or indicating they will visit. Comparing interactions with and without boost.',
+    interactionsDetailsEvents: 'Shows how many users showed interest by saving the content or indicating they will visit. Comparing interactions with and without boost.',
+    interactionsDetailsOffers: 'Shows how many users showed interest by clicking the "Redeem" button. Comparing interactions with and without boost.',
     // Profile sources
     profileViewsSource: 'Feed, map, searches, profile page',
     profileInteractionsSource: 'Saves, Interested, Going',
@@ -119,13 +121,13 @@ const translations = {
     profileVisitsSource: 'QR check-ins, confirmed reservations',
     // Offers sources
     offersViewsSource: 'Offers feed, searches, offer page',
-    offersInteractionsSource: 'Saves, Interested, Going',
+    offersInteractionsSource: 'Clicks on "Redeem"',
     offersVisitsExplanation: 'Visit (Comparison)',
     offersVisitsDetails: 'Offer redemption via QR or reservation from offer. Comparing with and without boost.',
     offersVisitsSource: 'QR redemptions, offer reservations',
     // Events sources
     eventsViewsSource: 'Events feed, map, searches, event page',
-    eventsInteractionsSource: 'Saves, Interested, Going',
+    eventsInteractionsSource: 'Interested, Going',
     eventsVisitsExplanation: 'Visit (Comparison)',
     eventsVisitsDetails: 'QR check-in from ticket or reservation. Comparing with and without boost.',
     eventsVisitsSource: 'QR check-ins (tickets, reservations)',
@@ -179,17 +181,17 @@ const getBoostExplanations = (language: 'el' | 'en', blockType: BlockType): { vi
   const explanations = {
     profile: {
       views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.profileViewsSource },
-      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.profileInteractionsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetailsEvents, source: t.profileInteractionsSource },
       visits: { explanation: t.profileVisitsExplanation, details: t.profileVisitsDetails, source: t.profileVisitsSource },
     },
     offers: {
       views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.offersViewsSource },
-      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.offersInteractionsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetailsOffers, source: t.offersInteractionsSource },
       visits: { explanation: t.offersVisitsExplanation, details: t.offersVisitsDetails, source: t.offersVisitsSource },
     },
     events: {
       views: { explanation: t.viewsExplanation, details: t.viewsDetails, source: t.eventsViewsSource },
-      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetails, source: t.eventsInteractionsSource },
+      interactions: { explanation: t.interactionsExplanation, details: t.interactionsDetailsEvents, source: t.eventsInteractionsSource },
       visits: { explanation: t.eventsVisitsExplanation, details: t.eventsVisitsDetails, source: t.eventsVisitsSource },
     },
   };
