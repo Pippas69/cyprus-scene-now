@@ -78,7 +78,7 @@ export const trackEngagement = async (
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
-    await supabase.from('engagement_events').insert({
+    const { error } = await supabase.from('engagement_events').insert({
       business_id: businessId,
       user_id: user?.id || null,
       event_type: eventType,
@@ -87,6 +87,16 @@ export const trackEngagement = async (
       session_id: getSessionId(),
       metadata: metadata || null,
     });
+
+    if (error) {
+      console.error('Failed to track engagement:', {
+        eventType,
+        businessId,
+        entityType,
+        entityId,
+        error,
+      });
+    }
   } catch (error) {
     console.error('Failed to track engagement:', error);
   }
