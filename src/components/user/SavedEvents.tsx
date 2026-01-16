@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import EventCard from '@/components/EventCard';
+import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -98,7 +98,7 @@ export const SavedEvents = ({ userId, language }: SavedEventsProps) => {
   const renderEvents = (eventsList: any[]) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {eventsList.map(event => (
-        <EventCard key={event.id} event={event} language={language} user={{ id: userId }} />
+        <UnifiedEventCard key={event.id} event={event} language={language} size="full" />
       ))}
     </div>
   );
