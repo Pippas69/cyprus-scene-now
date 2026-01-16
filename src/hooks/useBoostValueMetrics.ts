@@ -159,18 +159,18 @@ export const useBoostValueMetrics = (
         }
       }
 
-      // Offer interactions
+      // Offer interactions = clicks on "Εξαργύρωσε" (intent)
       const { data: offerInteractions } = await supabase
         .from("engagement_events")
         .select("id, entity_id")
         .eq("business_id", businessId)
-        .in("event_type", ["offer_save", "offer_interest"])
+        .eq("event_type", "offer_redeem_click")
+        .in("entity_id", businessOfferIds)
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
-      const boostedOfferInteractions = offerInteractions?.filter(i => 
-        i.entity_id && boostedOfferIds.includes(i.entity_id)
-      ).length || 0;
+      const boostedOfferInteractions =
+        offerInteractions?.filter((i) => i.entity_id && boostedOfferIds.includes(i.entity_id)).length || 0;
       const nonBoostedOfferInteractions = (offerInteractions?.length || 0) - boostedOfferInteractions;
 
       // Offer visits (scans)

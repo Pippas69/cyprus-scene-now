@@ -251,6 +251,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
                   setIsPurchaseOpen(true);
                 }} 
                 size="sm" 

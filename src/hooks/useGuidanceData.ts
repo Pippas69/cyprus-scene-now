@@ -34,36 +34,23 @@ export const useGuidanceData = (businessId: string) => {
   return useQuery<GuidanceData>({
     queryKey: ["guidance-data", businessId],
     queryFn: async () => {
-      // Get engagement events with timestamps for the last 30 days
+      // Last 30 days
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      const { data: engagementEvents } = await supabase
-        .from("engagement_events")
-        .select("event_type, created_at, entity_type")
-        .eq("business_id", businessId)
-        .gte("created_at", thirtyDaysAgo);
+      const analyzeTimestamps = (timestamps: string[] | null | undefined) => {
+        const hourCounts: Record<number, Record<number, number>> = {};
 
-      // Analyze by day and hour
-      const analyzeByTime = (events: typeof engagementEvents, eventTypes: string[]) => {
-        const hourCounts: Record<string, Record<number, number>> = {};
-        
-        events?.filter(e => eventTypes.includes(e.event_type)).forEach(event => {
-          if (!event?.created_at) return;
-
-          const date = new Date(event.created_at);
+        (timestamps || []).forEach((ts) => {
+          const date = new Date(ts);
           const day = date.getDay();
           const hour = date.getHours();
-
-          // Guard against invalid timestamps
           if (!Number.isFinite(day) || !Number.isFinite(hour) || day < 0 || day > 6) return;
 
-          const key = `${day}-${Math.floor(hour / 2) * 2}`; // Group by 2-hour slots
-          
+          const slot = Math.floor(hour / 2) * 2;
           if (!hourCounts[day]) hourCounts[day] = {};
-          hourCounts[day][Math.floor(hour / 2) * 2] = (hourCounts[day][Math.floor(hour / 2) * 2] || 0) + 1;
+          hourCounts[day][slot] = (hourCounts[day][slot] || 0) + 1;
         });
 
-        // Find top 2 time windows
         const windows: { day: number; hour: number; count: number }[] = [];
         Object.entries(hourCounts).forEach(([day, hours]) => {
           Object.entries(hours).forEach(([hour, count]) => {
@@ -75,42 +62,123 @@ export const useGuidanceData = (businessId: string) => {
         const top2 = windows.slice(0, 2);
 
         if (top2.length === 0) {
-          // Default to Friday/Saturday evenings
           return [
             { dayIndex: 5, hours: '18:00–20:00', count: 0 },
             { dayIndex: 6, hours: '19:00–21:00', count: 0 },
           ];
         }
 
-        return top2.map(w => ({
+        return top2.map((w) => ({
           dayIndex: w.day,
           hours: formatHourRange(w.hour),
           count: w.count,
         }));
       };
 
-      // Profile analysis
-      const profileViews = analyzeByTime(engagementEvents, ['profile_view']);
-      const profileInteractions = analyzeByTime(engagementEvents, ['follow', 'save', 'share']);
-      const profileVisits = analyzeByTime(engagementEvents, ['check_in']);
+      // Fetch IDs
+      const [{ data: offers }, { data: events }] = await Promise.all([
+        supabase.from('discounts').select('id').eq('business_id', businessId),
+        supabase.from('events').select('id').eq('business_id', businessId),
+      ]);
 
-      // Offer analysis
-      const offerViews = analyzeByTime(
-        engagementEvents?.filter(e => e.entity_type === 'offer'),
-        ['view']
+      const offerIds = offers?.map((o) => o.id) || [];
+      const eventIds = events?.map((e) => e.id) || [];
+
+      // PROFILE (from engagement_events)
+      const { data: engagementEvents } = await supabase
+        .from('engagement_events')
+        .select('event_type, created_at')
+        .eq('business_id', businessId)
+        .gte('created_at', thirtyDaysAgo);
+
+      const profileViews = analyzeTimestamps(
+        engagementEvents?.filter((e) => e.event_type === 'profile_view').map((e) => e.created_at)
       );
-      const offerInteractions = analyzeByTime(engagementEvents, ['offer_save', 'offer_interest']);
-      const offerVisits = analyzeByTime(engagementEvents, ['offer_redeem', 'scan']);
-
-      // Event analysis
-      const eventViews = analyzeByTime(
-        engagementEvents?.filter(e => e.entity_type === 'event'),
-        ['view']
+      const profileInteractions = analyzeTimestamps(
+        engagementEvents
+          ?.filter((e) => ['follow', 'save', 'share'].includes(e.event_type))
+          .map((e) => e.created_at)
       );
-      const eventInteractions = analyzeByTime(engagementEvents, ['rsvp_going', 'rsvp_interested', 'event_save']);
-      const eventVisits = analyzeByTime(engagementEvents, ['event_check_in', 'ticket_validated']);
+      const profileVisits = analyzeTimestamps(
+        engagementEvents?.filter((e) => e.event_type === 'check_in').map((e) => e.created_at)
+      );
 
-      // Generate recommended plan based on best performing times
+      // OFFERS
+      const [offerViewsRes, offerInteractionsRes, offerScansRes] = await Promise.all([
+        offerIds.length
+          ? supabase
+              .from('discount_views')
+              .select('viewed_at')
+              .in('discount_id', offerIds)
+              .gte('viewed_at', thirtyDaysAgo)
+          : Promise.resolve({ data: [] as any[] }),
+        offerIds.length
+          ? supabase
+              .from('engagement_events')
+              .select('created_at')
+              .eq('business_id', businessId)
+              .eq('event_type', 'offer_redeem_click')
+              .in('entity_id', offerIds)
+              .gte('created_at', thirtyDaysAgo)
+          : Promise.resolve({ data: [] as any[] }),
+        offerIds.length
+          ? supabase
+              .from('discount_scans')
+              .select('scanned_at')
+              .in('discount_id', offerIds)
+              .eq('success', true)
+              .gte('scanned_at', thirtyDaysAgo)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const offerViews = analyzeTimestamps((offerViewsRes.data || []).map((v: any) => v.viewed_at));
+      const offerInteractions = analyzeTimestamps(
+        (offerInteractionsRes.data || []).map((v: any) => v.created_at)
+      );
+      const offerVisits = analyzeTimestamps((offerScansRes.data || []).map((v: any) => v.scanned_at));
+
+      // EVENTS
+      const [eventViewsRes, rsvpsRes, reservationsRes, ticketCheckInsRes] = await Promise.all([
+        eventIds.length
+          ? supabase
+              .from('event_views')
+              .select('viewed_at')
+              .in('event_id', eventIds)
+              .gte('viewed_at', thirtyDaysAgo)
+          : Promise.resolve({ data: [] as any[] }),
+        eventIds.length
+          ? supabase
+              .from('rsvps')
+              .select('created_at')
+              .in('event_id', eventIds)
+              .in('status', ['interested', 'going'])
+              .gte('created_at', thirtyDaysAgo)
+          : Promise.resolve({ data: [] as any[] }),
+        eventIds.length
+          ? supabase
+              .from('reservations')
+              .select('created_at')
+              .in('event_id', eventIds)
+              .gte('created_at', thirtyDaysAgo)
+          : Promise.resolve({ data: [] as any[] }),
+        eventIds.length
+          ? supabase
+              .from('tickets')
+              .select('checked_in_at')
+              .in('event_id', eventIds)
+              .not('checked_in_at', 'is', null)
+              .gte('checked_in_at', thirtyDaysAgo)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const eventViews = analyzeTimestamps((eventViewsRes.data || []).map((v: any) => v.viewed_at));
+      const eventInteractions = analyzeTimestamps((rsvpsRes.data || []).map((v: any) => v.created_at));
+      const eventVisits = analyzeTimestamps([
+        ...(reservationsRes.data || []).map((v: any) => v.created_at),
+        ...(ticketCheckInsRes.data || []).map((v: any) => v.checked_in_at),
+      ]);
+
+      // Generate recommended plan based on profile best times
       const bestPublish = profileViews[0] || { dayIndex: 5, hours: '17:00–19:00' };
       const bestInteractions = profileInteractions[0] || { dayIndex: 5, hours: '18:00–21:00' };
       const bestVisits = profileVisits[0] || { dayIndex: 5, hours: '20:00–23:00' };

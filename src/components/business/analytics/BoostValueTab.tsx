@@ -62,7 +62,7 @@ const translations = {
     viewsDetails: 'Δείχνει πόσες φορές χρήστες είδαν αυτό το περιεχόμενο και επέλεξαν να το ανοίξουν. Συγκρίνονται οι προβολές με και χωρίς προώθηση.',
     interactionsExplanation: 'Αλληλεπιδράσεις (Σύγκριση)',
     interactionsDetailsEvents: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο αποθηκεύοντας το ή δείχνοντας πρόθεση ότι θα πάνε. Συγκρίνονται οι αλληλεπιδράσεις με και χωρίς προώθηση.',
-    interactionsDetailsOffers: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο κάνοντας κλικ στο "Εξαργύρωσε". Συγκρίνονται οι αλληλεπιδράσεις με και χωρίς προώθηση.',
+    interactionsDetailsOffers: 'Δείχνει πώς οι χρήστες ενδιαφέρθηκαν για το περιεχόμενο, κάνοντας κλικ στο σύνδεσμο εξαργύρωση. Συγκρίνονται οι αλληλεπιδράσεις με και χωρίς προώθηση.',
     // Profile sources
     profileViewsSource: 'Feed, χάρτης, αναζητήσεις, σελίδα προφίλ',
     profileInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
@@ -71,7 +71,7 @@ const translations = {
     profileVisitsSource: 'QR check-ins, επιβεβαιωμένες κρατήσεις',
     // Offers sources
     offersViewsSource: 'Feed προσφορών, αναζητήσεις, σελίδα προσφοράς',
-    offersInteractionsSource: 'Κλικ στο "Εξαργύρωσε"',
+    offersInteractionsSource: 'Κλικ στο σύνδεσμο εξαργύρωση',
     offersVisitsExplanation: 'Επίσκεψη (Σύγκριση)',
     offersVisitsDetails: 'Εξαργύρωση προσφοράς με QR ή κράτηση από προσφορά. Συγκρίνονται με και χωρίς προώθηση.',
     offersVisitsSource: 'QR εξαργυρώσεις, κρατήσεις από προσφορά',
@@ -112,7 +112,7 @@ const translations = {
     viewsDetails: 'Shows how many times users saw this content and chose to open it. Comparing views with and without boost.',
     interactionsExplanation: 'Interactions (Comparison)',
     interactionsDetailsEvents: 'Shows how many users showed interest by saving the content or indicating they will visit. Comparing interactions with and without boost.',
-    interactionsDetailsOffers: 'Shows how many users showed interest by clicking the "Redeem" button. Comparing interactions with and without boost.',
+    interactionsDetailsOffers: 'Shows how users showed interest by clicking the redeem link. Comparing interactions with and without boost.',
     // Profile sources
     profileViewsSource: 'Feed, map, searches, profile page',
     profileInteractionsSource: 'Saves, Interested, Going',
@@ -121,7 +121,7 @@ const translations = {
     profileVisitsSource: 'QR check-ins, confirmed reservations',
     // Offers sources
     offersViewsSource: 'Offers feed, searches, offer page',
-    offersInteractionsSource: 'Clicks on "Redeem"',
+    offersInteractionsSource: 'Clicks on redeem link',
     offersVisitsExplanation: 'Visit (Comparison)',
     offersVisitsDetails: 'Offer redemption via QR or reservation from offer. Comparing with and without boost.',
     offersVisitsSource: 'QR redemptions, offer reservations',

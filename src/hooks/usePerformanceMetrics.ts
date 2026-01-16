@@ -80,12 +80,13 @@ export const usePerformanceMetrics = (
         offerViewsCount = count || 0;
       }
 
-      // Offer interactions (claims, saves)
+      // Offer interactions = clicks on "Εξαργύρωσε" (intent)
       const { data: offerInteractions } = await supabase
         .from("engagement_events")
         .select("id")
         .eq("business_id", businessId)
-        .in("event_type", ["offer_save", "offer_interest", "offer_claim"])
+        .eq("event_type", "offer_redeem_click")
+        .in("entity_id", offerIds)
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
