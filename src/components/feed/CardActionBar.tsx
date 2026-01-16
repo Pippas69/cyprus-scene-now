@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, Users, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { ShareDialog } from "@/components/sharing/ShareDialog";
 
 interface CardActionBarProps {
   entityId: string;
-  entityType: "event" | "offer";
+  entityType: "event";
   interestedCount: number;
   goingCount: number;
   language: "el" | "en";
@@ -41,6 +41,48 @@ export const CardActionBar = ({
   const [goingCount, setGoingCount] = useState(initialGoingCount);
   const [loading, setLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
+  // Fetch current user's RSVP status and actual counts on mount
+  useEffect(() => {
+    const fetchRSVPData = async () => {
+      try {
+        // Fetch actual counts from database
+        const { data: rsvps, error: rsvpError } = await supabase
+          .from("rsvps")
+          .select("status")
+          .eq("event_id", entityId);
+
+        if (!rsvpError && rsvps) {
+          const interested = rsvps.filter(r => r.status === "interested").length;
+          const going = rsvps.filter(r => r.status === "going").length;
+          setInterestedCount(interested);
+          setGoingCount(going);
+        }
+
+        // Check if current user has an RSVP
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userRsvp } = await supabase
+            .from("rsvps")
+            .select("status")
+            .eq("event_id", entityId)
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (userRsvp) {
+            setStatus(userRsvp.status as "interested" | "going");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching RSVP data:", error);
+      } finally {
+        setInitialized(true);
+      }
+    };
+
+    fetchRSVPData();
+  }, [entityId]);
 
   const handleAction = async (
     e: React.MouseEvent,
@@ -91,7 +133,7 @@ export const CardActionBar = ({
 
         if (error) throw error;
 
-        // Update counts
+        // Update counts based on previous status
         if (status === "interested") {
           setInterestedCount((prev) => Math.max(0, prev - 1));
         } else if (status === "going") {
@@ -111,8 +153,8 @@ export const CardActionBar = ({
           description:
             actionType === "interested"
               ? language === "el"
-                ? "Προστέθηκε στα ενδιαφέροντά σας"
-                : "Added to your interests"
+                ? "Ενδιαφέρεστε!"
+                : "You're interested!"
               : language === "el"
               ? "Θα πάτε!"
               : "You're going!",
@@ -155,7 +197,7 @@ export const CardActionBar = ({
           <Heart
             className={cn(
               "h-3.5 w-3.5",
-              status === "interested" && "fill-secondary"
+              status === "interested" && "fill-secondary text-secondary"
             )}
           />
           <span>{interestedCount}</span>
@@ -175,7 +217,7 @@ export const CardActionBar = ({
           <Users
             className={cn(
               "h-3.5 w-3.5",
-              status === "going" && "fill-ocean/20"
+              status === "going" && "text-ocean"
             )}
           />
           <span>{goingCount}</span>
