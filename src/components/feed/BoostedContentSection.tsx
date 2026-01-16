@@ -1,19 +1,23 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PremiumBadge } from "@/components/ui/premium-badge";
-import { format, differenceInDays, differenceInHours, Locale } from "date-fns";
-import { el, enUS } from "date-fns/locale";
+import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
+import { differenceInDays, differenceInHours } from "date-fns";
 
 interface BoostedEvent {
   id: string;
   title: string;
   start_at: string;
+  end_at?: string;
   location: string;
   cover_image_url: string | null;
   category: string[];
+  price_tier?: string;
+  interested_count?: number;
+  going_count?: number;
   businesses: {
     name: string;
     logo_url: string | null;
@@ -100,7 +104,6 @@ export const BoostedContentSection = ({
   userCity,
 }: BoostedContentSectionProps) => {
   const t = translations[language];
-  const dateLocale = language === "el" ? el : enUS;
 
   // Combine all boosted content with distance scoring
   const allContent: ContentItem[] = [
@@ -133,10 +136,6 @@ export const BoostedContentSection = ({
     return <div className="w-full min-h-[1px]" />;
   }
 
-  // Shared card dimensions for consistency
-  const CARD_WIDTH = "w-[240px]";
-  const CARD_HEIGHT = "h-[180px]";
-
   return (
     <div className="w-full">
       <ScrollArea className="w-full whitespace-nowrap">
@@ -149,20 +148,17 @@ export const BoostedContentSection = ({
               transition={{ delay: index * 0.03 }}
             >
               {item.type === 'event' ? (
-                <EventCard 
-                  event={item.data} 
+                <UnifiedEventCard
+                  event={item.data}
                   language={language}
-                  dateLocale={dateLocale}
-                  cardWidth={CARD_WIDTH}
-                  cardHeight={CARD_HEIGHT}
+                  isBoosted={true}
+                  size="boosted"
                 />
               ) : (
                 <OfferCard 
                   offer={item.data} 
                   t={t} 
                   language={language}
-                  cardWidth={CARD_WIDTH}
-                  cardHeight={CARD_HEIGHT}
                 />
               )}
             </motion.div>
@@ -174,91 +170,13 @@ export const BoostedContentSection = ({
   );
 };
 
-interface EventCardProps {
-  event: BoostedEvent;
-  language: "el" | "en";
-  dateLocale: Locale;
-  cardWidth: string;
-  cardHeight: string;
-}
-
-const EventCard = ({ event, language, dateLocale, cardWidth, cardHeight }: EventCardProps) => {
-  const eventDate = new Date(event.start_at);
-  const now = new Date();
-  const isToday = eventDate.toDateString() === now.toDateString();
-  const isTomorrow = eventDate.toDateString() === new Date(now.getTime() + 86400000).toDateString();
-  
-  const t = translations[language];
-  
-  let dateLabel: string;
-  if (isToday) {
-    dateLabel = `${t.today} • ${format(eventDate, "HH:mm")}`;
-  } else if (isTomorrow) {
-    dateLabel = `${t.tomorrow} • ${format(eventDate, "HH:mm")}`;
-  } else {
-    dateLabel = format(eventDate, "EEE, d MMM • HH:mm", { locale: dateLocale });
-  }
-
-  return (
-    <Link
-      to={`/ekdiloseis/${event.id}`}
-      className={`flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 min-${cardWidth} max-${cardWidth} ${cardHeight} group`}
-      style={{ minWidth: '240px', maxWidth: '240px', height: '180px' }}
-    >
-      {/* Event Image with Badge */}
-      <div className="relative h-24 w-full overflow-visible flex-shrink-0">
-        {/* Keep the image itself clipped, but allow the badge to protrude */}
-        <div className="absolute inset-0 overflow-hidden">
-          {event.cover_image_url ? (
-            <img 
-              src={event.cover_image_url} 
-              alt={event.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-              <Calendar className="h-8 w-8 text-primary/50" />
-            </div>
-          )}
-        </div>
-
-        {/* EVENT BADGE - Premium, Top Right - Protruding */}
-        <div className="absolute -top-2 -right-2 z-10">
-          <PremiumBadge type="event" />
-        </div>
-      </div>
-
-      {/* Event Details */}
-      <div className="p-3 flex-1 flex flex-col justify-between min-h-0">
-        <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
-          {event.title}
-        </h4>
-        
-        <div className="space-y-1 mt-auto">
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <Clock className="h-3 w-3 flex-shrink-0" />
-            <span className="text-xs truncate">{dateLabel}</span>
-          </div>
-          
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <MapPin className="h-3 w-3 flex-shrink-0" />
-            <span className="text-xs truncate">{event.businesses?.city || event.location}</span>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-};
-
 interface OfferCardProps {
   offer: BoostedOffer;
   t: { endsSoon: string; daysLeft: string; hoursLeft: string };
   language: "el" | "en";
-  cardWidth: string;
-  cardHeight: string;
 }
 
-const OfferCard = ({ offer, t, language, cardWidth, cardHeight }: OfferCardProps) => {
+const OfferCard = ({ offer, t, language }: OfferCardProps) => {
   const endDate = new Date(offer.end_at);
   const now = new Date();
   const hoursLeft = differenceInHours(endDate, now);
@@ -275,13 +193,12 @@ const OfferCard = ({ offer, t, language, cardWidth, cardHeight }: OfferCardProps
   return (
     <Link
       to={`/offers?highlight=${offer.id}`}
-      className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group"
-      style={{ minWidth: '240px', maxWidth: '240px', height: '180px' }}
+      className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group aspect-square min-w-[240px] max-w-[240px]"
     >
-      {/* Visual header with gradient and badge (same height as event image) */}
-      <div className="relative h-24 w-full overflow-visible flex-shrink-0">
+      {/* TOP HALF - Visual header with gradient and badge */}
+      <div className="relative flex-1 overflow-visible">
         {/* Keep the header visuals clipped, but allow the badge to protrude */}
-        <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-emerald-500/20 via-primary/10 to-secondary/20 flex items-center justify-center">
+        <div className="absolute inset-0 overflow-hidden rounded-t-xl bg-gradient-to-br from-emerald-500/20 via-primary/10 to-secondary/20 flex items-center justify-center">
           <Avatar className="h-14 w-14 border-2 border-white shadow-lg">
             <AvatarImage 
               src={offer.businesses?.logo_url || undefined} 
@@ -306,27 +223,30 @@ const OfferCard = ({ offer, t, language, cardWidth, cardHeight }: OfferCardProps
         </div>
       </div>
 
-      {/* Offer Details (same structure as event) */}
-      <div className="p-3 flex-1 flex flex-col justify-between min-h-0">
+      {/* BOTTOM HALF - Offer Details */}
+      <div className="flex-1 p-3 flex flex-col justify-between min-h-0">
         <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
           {offer.title}
         </h4>
         
-        <div className="space-y-1 mt-auto">
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <Clock className="h-3 w-3 flex-shrink-0" />
-            {isEndingSoon ? (
-              <span className="text-xs text-destructive font-medium">{t.endsSoon}</span>
-            ) : (
-              <span className="text-xs truncate">{expiryLabel}</span>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <MapPin className="h-3 w-3 flex-shrink-0" />
-            <span className="text-xs truncate">{offer.businesses?.city}</span>
-          </div>
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Clock className="h-3 w-3 flex-shrink-0" />
+          {isEndingSoon ? (
+            <span className="text-xs text-destructive font-medium">{t.endsSoon}</span>
+          ) : (
+            <span className="text-xs truncate">{expiryLabel}</span>
+          )}
         </div>
+        
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <MapPin className="h-3 w-3 flex-shrink-0" />
+          <span className="text-xs truncate">{offer.businesses?.city}</span>
+        </div>
+
+        {/* Business name */}
+        <p className="text-[11px] text-muted-foreground/70 truncate">
+          {offer.businesses?.name}
+        </p>
       </div>
     </Link>
   );
