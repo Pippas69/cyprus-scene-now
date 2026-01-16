@@ -119,32 +119,35 @@ export default function EventDetail() {
   const fetchRSVPStatus = async () => {
     if (!user || !event) return;
 
-    const { data: rows, error } = await supabase
+    const { data: row, error } = await supabase
       .from("rsvps")
       .select("status")
       .eq("event_id", event.id)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching RSVP status:", error);
       return;
     }
 
-    setIsInterested(!!rows?.some((r) => r.status === "interested"));
-    setIsGoing(!!rows?.some((r) => r.status === "going"));
+    setIsInterested(row?.status === "interested");
+    setIsGoing(row?.status === "going");
   };
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     setUser(user);
-    
+
     if (user) {
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, avatar_url')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("first_name, last_name, avatar_url")
+        .eq("id", user.id)
         .single();
-      
+
       setUserProfile(profile);
     }
   };
@@ -158,8 +161,9 @@ export default function EventDetail() {
     try {
       // Fetch event with business details
       const { data: eventData, error: fetchError } = await supabase
-        .from('events')
-        .select(`
+        .from("events")
+        .select(
+          `
           *,
           businesses!inner(
             id,
@@ -169,46 +173,49 @@ export default function EventDetail() {
             city,
             category
           )
-        `)
-        .eq('id', eventId)
+        `
+        )
+        .eq("id", eventId)
         .maybeSingle();
 
       if (fetchError) {
-        console.error('Event fetch error:', fetchError);
+        console.error("Event fetch error:", fetchError);
         setError(fetchError.message);
         setLoading(false);
         return;
       }
 
       if (!eventData) {
-        setError(language === 'el' ? 'Η εκδήλωση δεν βρέθηκε' : 'Event not found');
+        setError(language === "el" ? "Η εκδήλωση δεν βρέθηκε" : "Event not found");
         setLoading(false);
         return;
       }
 
       setEvent(eventData);
 
-    // Fetch RSVP counts (global)
-    await refreshCounts(eventId);
+      // Fetch RSVP counts (global)
+      await refreshCounts(eventId);
 
-    // Fetch similar events (same category or location)
-    const { data: similar } = await supabase
-      .from('events')
-      .select(`
+      // Fetch similar events (same category or location)
+      const { data: similar } = await supabase
+        .from("events")
+        .select(
+          `
         *,
         businesses!inner(name, logo_url, verified)
-      `)
-      .neq('id', eventId)
-      .gte('end_at', new Date().toISOString())
-      .or(
-        `location.ilike.%${eventData.location}%,category.cs.{${eventData.category[0] || ''}}`
-      )
-      .limit(3);
+      `
+        )
+        .neq("id", eventId)
+        .gte("end_at", new Date().toISOString())
+        .or(
+          `location.ilike.%${eventData.location}%,category.cs.{${eventData.category[0] || ""}}`
+        )
+        .limit(3);
 
       setSimilarEvents(similar || []);
     } catch (err: any) {
-      console.error('Event details error:', err);
-      setError(err.message || 'Failed to load event details');
+      console.error("Event details error:", err);
+      setError(err.message || "Failed to load event details");
     } finally {
       setLoading(false);
     }
@@ -218,51 +225,59 @@ export default function EventDetail() {
     setShowShareDialog(true);
   };
 
-  const handleRSVP = async (newStatus: 'interested' | 'going') => {
+  const handleRSVP = async (newStatus: "interested" | "going") => {
     if (!user) {
-      toast.error('Please login to RSVP');
-      navigate('/login');
+      toast.error("Please login to RSVP");
+      navigate("/login");
       return;
     }
 
     setRsvpLoading(true);
 
     try {
-      const isCurrentlyActive = newStatus === 'interested' ? isInterested : isGoing;
+      const isCurrentlyActive = newStatus === "interested" ? isInterested : isGoing;
 
       if (isCurrentlyActive) {
+        // Toggle off
         const { error } = await supabase
-          .from('rsvps')
+          .from("rsvps")
           .delete()
-          .eq('event_id', event.id)
-          .eq('user_id', user.id)
-          .eq('status', newStatus);
+          .eq("event_id", event.id)
+          .eq("user_id", user.id);
 
         if (error) throw error;
+
+        setIsInterested(false);
+        setIsGoing(false);
       } else {
+        // Upsert single RSVP (switch interested <-> going)
         const { error } = await supabase
-          .from('rsvps')
-          .insert({
-            event_id: event.id,
-            user_id: user.id,
-            status: newStatus,
-          });
+          .from("rsvps")
+          .upsert(
+            {
+              event_id: event.id,
+              user_id: user.id,
+              status: newStatus,
+            },
+            { onConflict: "event_id,user_id" }
+          );
 
         if (error) throw error;
+
+        setIsInterested(newStatus === "interested");
+        setIsGoing(newStatus === "going");
         toast.success(`Marked as ${newStatus}`);
       }
 
-      // Re-sync: user state + global counts
-      await fetchRSVPStatus();
       await refreshCounts(event.id);
 
       // Track engagement - using 'share' as a proxy for engagement tracking
       if (event?.businesses?.id) {
-        trackEngagement(event.businesses.id, 'share', 'event', event.id);
+        trackEngagement(event.businesses.id, "share", "event", event.id);
       }
     } catch (error) {
-      console.error('RSVP error:', error);
-      toast.error('Failed to update RSVP');
+      console.error("RSVP error:", error);
+      toast.error("Failed to update RSVP");
     } finally {
       setRsvpLoading(false);
     }
