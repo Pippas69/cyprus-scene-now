@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { Heart, Users, Share2 } from "lucide-react";
+import { Heart, Users, MapPin, Clock, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PremiumBadge } from "@/components/ui/premium-badge";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
-import { format, differenceInHours, differenceInMinutes } from "date-fns";
+import { format, differenceInMinutes } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { toast } from "sonner";
 
 interface UnifiedEventCardProps {
   event: {
@@ -37,18 +37,14 @@ const translations = {
     today: "Σήμερα",
     tomorrow: "Αύριο",
     free: "Δωρεάν",
-    startsIn: "ξεκινά σε",
-    hours: "ώρες",
-    hour: "ώρα",
+    startsIn: "ξεκινά σε περίπου",
     minutes: "λεπτά",
   },
   en: {
     today: "Today",
     tomorrow: "Tomorrow",
     free: "Free",
-    startsIn: "starts in",
-    hours: "hours",
-    hour: "hour",
+    startsIn: "starts in about",
     minutes: "minutes",
   },
 };
@@ -88,26 +84,17 @@ export const UnifiedEventCard = ({
   } else if (isTomorrow) {
     dateLabel = `${t.tomorrow} · ${format(eventDate, "HH:mm")}`;
   } else {
+    // Use Greek day abbreviation for Greek language
     const dayName = format(eventDate, "EEE", { locale: enUS });
     const dayLabel = language === "el" ? greekDays[dayName] || dayName : dayName;
     dateLabel = `${dayLabel} · ${format(eventDate, "HH:mm")}`;
   }
 
-  // Time proximity (show if event starts within 24 hours)
-  const hoursUntilStart = differenceInHours(eventDate, now);
+  // Time proximity (only show if event starts in < 1 hour)
   const minutesUntilStart = differenceInMinutes(eventDate, now);
-  const showTimeProximity = minutesUntilStart > 0 && hoursUntilStart < 24;
-  
-  let timeProximityLabel = "";
-  if (showTimeProximity) {
-    if (hoursUntilStart >= 1) {
-      timeProximityLabel = `${t.startsIn} ${hoursUntilStart} ${hoursUntilStart === 1 ? t.hour : t.hours}`;
-    } else {
-      timeProximityLabel = `${t.startsIn} ${minutesUntilStart} ${t.minutes}`;
-    }
-  }
+  const showTimeProximity = minutesUntilStart > 0 && minutesUntilStart < 60;
 
-  // Location line: Location · City · Business
+  // Location line: Spot · City · Business
   const locationParts: string[] = [];
   if (event.location) locationParts.push(event.location);
   if (event.businesses?.city && event.businesses.city !== event.location) {
@@ -120,34 +107,15 @@ export const UnifiedEventCard = ({
   const interestedCount = event.interested_count || 0;
   const goingCount = event.going_count || 0;
 
-  // Size variants - all square
+  // Size variants
   const sizeClasses = {
-    compact: "w-[180px] h-[180px]",
-    default: "w-[200px] h-[200px]",
-    boosted: "w-[220px] h-[220px]",
+    compact: "min-w-[200px] max-w-[200px]",
+    default: "min-w-[220px] max-w-[220px]",
+    boosted: "min-w-[240px] max-w-[240px]",
   };
 
   // Check if event is free
   const showFreeBadge = isFree || event.price_tier === "free";
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const eventUrl = `${window.location.origin}/ekdiloseis/${event.id}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: event.title,
-          url: eventUrl,
-        });
-      } catch {
-        // User cancelled or error
-      }
-    } else {
-      await navigator.clipboard.writeText(eventUrl);
-      toast.success(language === "el" ? "Αντιγράφηκε!" : "Copied!");
-    }
-  };
 
   return (
     <Link
@@ -155,82 +123,91 @@ export const UnifiedEventCard = ({
       className={cn(
         "flex flex-col rounded-xl bg-card border border-border",
         "hover:border-primary/50 hover:shadow-lg transition-all duration-200",
-        "overflow-hidden group flex-shrink-0",
+        "aspect-square overflow-visible group",
         sizeClasses[size],
         className
       )}
     >
-      {/* TOP HALF - Image Only (50%) */}
-      <div className="relative h-1/2 overflow-hidden">
-        {event.cover_image_url ? (
-          <img
-            src={event.cover_image_url}
-            alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
-        )}
+      {/* TOP HALF - Image */}
+      <div className="relative flex-1 overflow-visible">
+        {/* Image container - clipped */}
+        <div className="absolute inset-0 overflow-hidden rounded-t-xl">
+          {event.cover_image_url ? (
+            <img
+              src={event.cover_image_url}
+              alt={event.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+              <Calendar className="h-8 w-8 text-primary/50" />
+            </div>
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        </div>
 
-        {/* Share Button - Top Left */}
-        <button
-          onClick={handleShare}
-          className="absolute top-2 left-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background transition-colors z-10"
-          aria-label="Share event"
-        >
-          <Share2 className="h-3.5 w-3.5 text-foreground" />
-        </button>
-
-        {/* Boosted Badge - Top Right (protruding) */}
+        {/* Boosted Badge - protruding */}
         {isBoosted && (
-          <div className="absolute -top-1.5 -right-1.5 z-20">
+          <div className="absolute -top-2 -right-2 z-10">
             <PremiumBadge type="event" />
           </div>
         )}
 
-        {/* Free Badge - Bottom Right on image */}
+        {/* Category Badge */}
+        {event.category?.[0] && (
+          <Badge
+            variant="secondary"
+            className="absolute bottom-2 left-2 text-[10px] px-1.5 py-0 h-5 bg-background/90 backdrop-blur-sm z-10"
+          >
+            {getCategoryLabel(event.category[0], language)}
+          </Badge>
+        )}
+
+        {/* Free Badge */}
         {showFreeBadge && (
-          <Badge className="absolute bottom-1.5 right-1.5 bg-gradient-to-r from-accent to-seafoam text-white text-[9px] px-1.5 py-0 h-4 border-0 z-10">
+          <Badge className="absolute bottom-2 right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
             {t.free}
           </Badge>
         )}
       </div>
 
-      {/* BOTTOM HALF - Details (50%) */}
-      <div className="h-1/2 px-2.5 py-2 flex flex-col">
-        {/* 1. Title (max 1 line, bold) */}
-        <h4 className="text-xs font-semibold line-clamp-1 leading-tight group-hover:text-primary transition-colors">
+      {/* BOTTOM HALF - Details */}
+      <div className="flex-1 p-3 flex flex-col justify-between min-h-0">
+        {/* 1. Title (max 1 line) */}
+        <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
           {event.title}
         </h4>
 
         {/* 2. Date · Time */}
-        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
-          {dateLabel}
-        </p>
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Clock className="h-3 w-3 flex-shrink-0" />
+          <span className="text-xs truncate">{dateLabel}</span>
+        </div>
 
         {/* 3. Location · City · Business */}
-        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">
-          {locationLine || event.location}
-        </p>
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <MapPin className="h-3 w-3 flex-shrink-0" />
+          <span className="text-xs truncate">
+            {locationLine || event.location}
+          </span>
+        </div>
 
-        {/* 4. Time Proximity (only if < 24 hours) */}
+        {/* 4. Time Proximity (only if < 1 hour) */}
         {showTimeProximity && (
-          <p className="text-[9px] text-primary font-medium leading-tight mt-0.5">
-            {timeProximityLabel}
+          <p className="text-[10px] text-primary font-medium">
+            {t.startsIn} {minutesUntilStart} {t.minutes}
           </p>
         )}
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* 5. Counters - Bottom Right */}
-        <div className="flex items-center justify-end gap-2 text-[10px] text-muted-foreground">
-          <span className="flex items-center gap-0.5">
-            <Heart className="h-2.5 w-2.5 text-secondary" />
+        {/* 5. Counters (always at the end) */}
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Heart className="h-3 w-3 text-secondary" />
             {interestedCount}
           </span>
-          <span className="flex items-center gap-0.5">
-            <Users className="h-2.5 w-2.5 text-ocean" />
+          <span className="flex items-center gap-1">
+            <Users className="h-3 w-3 text-ocean" />
             {goingCount}
           </span>
         </div>
