@@ -128,8 +128,8 @@ export const UnifiedEventCard = ({
         className
       )}
     >
-      {/* TOP HALF - Image */}
-      <div className="relative flex-1 overflow-visible">
+      {/* TOP - Image (60%) */}
+      <div className="relative flex-[1.5] overflow-visible">
         {/* Image container - clipped */}
         <div className="absolute inset-0 overflow-hidden rounded-t-xl">
           {event.cover_image_url ? (
