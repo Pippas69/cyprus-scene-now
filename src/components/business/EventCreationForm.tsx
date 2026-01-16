@@ -612,22 +612,28 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       if (formData.eventType === 'reservation') {
         for (const seatingType of formData.selectedSeatingTypes) {
           const config = formData.seatingConfigs[seatingType];
-          
+          if (!config) {
+            throw new Error(`Missing seating config for: ${seatingType}`);
+          }
+
           const { data: seatingData, error: seatingError } = await supabase
             .from('reservation_seating_types')
             .insert({
               event_id: createdEvent.id,
               seating_type: seatingType,
               available_slots: config.availableSlots,
+              slots_booked: 0,
               dress_code: null,
               cancellation_policy: formData.cancellationHours > 0 ? `${formData.cancellationHours}h cancellation` : null,
               no_show_policy: 'non_refundable',
             })
             .select()
             .single();
-          
-          if (seatingError || !seatingData) continue;
-          
+
+          if (seatingError || !seatingData) {
+            throw seatingError || new Error('Failed to create seating type');
+          }
+
           // Insert price tiers
           const tiersToInsert = config.tiers.map((tier) => ({
             seating_type_id: seatingData.id,
@@ -635,11 +641,15 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             max_people: tier.maxPeople,
             prepaid_min_charge_cents: tier.prepaidChargeCents,
           }));
-          
-          await supabase.from('seating_type_tiers').insert(tiersToInsert);
+
+          const { error: tiersError } = await supabase
+            .from('seating_type_tiers')
+            .insert(tiersToInsert);
+
+          if (tiersError) throw tiersError;
         }
       }
-      
+
       toast.success(t.eventCreated);
       setCreatedEventId(createdEvent.id);
       
