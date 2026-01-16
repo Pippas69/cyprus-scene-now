@@ -82,7 +82,7 @@ const translations = {
     creditNote: "Αυτό το ποσό λειτουργεί ως πίστωση στο μαγαζί",
     name: "Όνομα κράτησης",
     phone: "Τηλέφωνο",
-    preferredTime: "Προτιμώμενη ώρα",
+    arrivalHours: "Ώρες άφιξης",
     specialRequests: "Ειδικά αιτήματα",
     optional: "προαιρετικό",
     summary: "Σύνοψη Κράτησης",
@@ -96,7 +96,7 @@ const translations = {
       partial_refund: "Μερική επιστροφή σε περίπτωση μη εμφάνισης",
       non_refundable: "Μη επιστρέψιμο σε περίπτωση μη εμφάνισης",
     },
-    platformFee: "Προμήθεια πλατφόρμας (12%)",
+    
     total: "Σύνολο",
     pay: "Πληρωμή",
     back: "Πίσω",
@@ -137,7 +137,7 @@ const translations = {
     creditNote: "This amount counts as credit at the venue",
     name: "Reservation name",
     phone: "Phone number",
-    preferredTime: "Preferred time",
+    arrivalHours: "Arrival hours",
     specialRequests: "Special requests",
     optional: "optional",
     summary: "Reservation Summary",
@@ -151,7 +151,7 @@ const translations = {
       partial_refund: "Partial refund if no-show",
       non_refundable: "Non-refundable if no-show",
     },
-    platformFee: "Platform fee (12%)",
+    
     total: "Total",
     pay: "Pay",
     back: "Back",
@@ -207,7 +207,6 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [partySize, setPartySize] = useState(minPartySize);
   const [reservationName, setReservationName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [preferredTime, setPreferredTime] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
   // Fetch seating options
@@ -251,6 +250,21 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     }
   };
 
+  // Get min/max party size from selected seating type's tiers
+  const getPartySizeLimits = () => {
+    if (!selectedSeating || selectedSeating.tiers.length === 0) {
+      return { min: minPartySize, max: maxPartySize };
+    }
+    const allMins = selectedSeating.tiers.map(t => t.min_people);
+    const allMaxs = selectedSeating.tiers.map(t => t.max_people);
+    return {
+      min: Math.min(...allMins),
+      max: Math.max(...allMaxs),
+    };
+  };
+
+  const partySizeLimits = getPartySizeLimits();
+
   // Calculate price for current selection
   const getPrice = (): number | null => {
     if (!selectedSeating) return null;
@@ -261,8 +275,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   };
 
   const price = getPrice();
-  const platformFee = price ? Math.round(price * 0.12) : 0;
-  const total = price ? price + platformFee : 0;
+  // Customer pays the prepaid amount only - commission is deducted from this on the backend
+  const total = price || 0;
 
   // Handle checkout
   const handleCheckout = async () => {
@@ -277,7 +291,6 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           party_size: partySize,
           reservation_name: reservationName,
           phone_number: phoneNumber,
-          preferred_time: preferredTime || null,
           special_requests: specialRequests || null,
         },
       });
@@ -346,7 +359,16 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                     isSelected && `${colors.border} border-2 ring-2 ring-offset-2 ring-primary/20`,
                     !isSelected && !isSoldOut && "hover:border-primary/50"
                   )}
-                  onClick={() => !isSoldOut && setSelectedSeating(option)}
+                  onClick={() => {
+                    if (!isSoldOut) {
+                      setSelectedSeating(option);
+                      // Reset party size to the min of this seating type's tiers
+                      if (option.tiers.length > 0) {
+                        const minPeople = Math.min(...option.tiers.map(t => t.min_people));
+                        setPartySize(minPeople);
+                      }
+                    }
+                  }}
                 >
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
@@ -398,8 +420,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setPartySize(Math.max(minPartySize, partySize - 1))}
-                  disabled={partySize <= minPartySize}
+                  onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
+                  disabled={partySize <= partySizeLimits.min}
                 >
                   -
                 </Button>
@@ -409,8 +431,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setPartySize(Math.min(maxPartySize, partySize + 1))}
-                  disabled={partySize >= maxPartySize}
+                  onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
+                  disabled={partySize >= partySizeLimits.max}
                 >
                   +
                 </Button>
@@ -478,21 +500,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             {(reservationHoursFrom || reservationHoursTo) && (
               <div className="space-y-2">
-                <Label htmlFor="time" className="flex items-center gap-2">
+                <Label className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  {t.preferredTime}
-                  {reservationHoursFrom && reservationHoursTo && (
-                    <span className="text-xs text-muted-foreground">
-                      ({reservationHoursFrom} - {reservationHoursTo})
-                    </span>
-                  )}
+                  {t.arrivalHours}
                 </Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={preferredTime}
-                  onChange={(e) => setPreferredTime(e.target.value)}
-                />
+                <div className="bg-muted/50 border rounded-lg p-3 text-sm">
+                  <p className="text-muted-foreground">
+                    {language === 'el' ? 'Μπορείτε να αφιχθείτε μεταξύ:' : 'You can arrive between:'}
+                  </p>
+                  <p className="font-medium text-lg mt-1">
+                    {reservationHoursFrom || '—'} - {reservationHoursTo || '—'}
+                  </p>
+                </div>
               </div>
             )}
 
