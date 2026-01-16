@@ -47,6 +47,14 @@ export const useBoostValueMetrics = (
 
       const featuredStart = subscription?.current_period_start;
 
+      // Get business events for visit calculations
+      const { data: businessEventsForVisits } = await supabase
+        .from("events")
+        .select("id")
+        .eq("business_id", businessId);
+      
+      const allEventIds = businessEventsForVisits?.map(e => e.id) || [];
+
       // Profile metrics - before and after featured
       let profileWithout = { views: 0, interactions: 0, visits: 0 };
       let profileWith = { views: 0, interactions: 0, visits: 0 };
@@ -69,18 +77,30 @@ export const useBoostValueMetrics = (
           .lt("created_at", featuredStart)
           .gte("created_at", startDate);
 
-        const { data: beforeVisits } = await supabase
-          .from("engagement_events")
-          .select("id")
+        // Visits = reservation_scans + ticket check-ins (correct calculation)
+        const { count: beforeResScans } = await (supabase
+          .from("reservation_scans") as any)
+          .select("*", { count: "exact", head: true })
           .eq("business_id", businessId)
-          .eq("event_type", "check_in")
-          .lt("created_at", featuredStart)
-          .gte("created_at", startDate);
+          .lt("scanned_at", featuredStart)
+          .gte("scanned_at", startDate);
+
+        let beforeTicketCheckIns = 0;
+        if (allEventIds.length > 0) {
+          const { data: checkedInTicketsBefore } = await supabase
+            .from("tickets")
+            .select("id")
+            .in("event_id", allEventIds)
+            .not("checked_in_at", "is", null)
+            .lt("checked_in_at", featuredStart)
+            .gte("created_at", startDate);
+          beforeTicketCheckIns = checkedInTicketsBefore?.length || 0;
+        }
 
         profileWithout = {
           views: beforeViews?.length || 0,
           interactions: beforeInteractions?.length || 0,
-          visits: beforeVisits?.length || 0,
+          visits: (beforeResScans || 0) + beforeTicketCheckIns,
         };
 
         // After featured
@@ -100,18 +120,57 @@ export const useBoostValueMetrics = (
           .gte("created_at", featuredStart)
           .lte("created_at", endDate);
 
-        const { data: afterVisits } = await supabase
-          .from("engagement_events")
-          .select("id")
+        // Visits = reservation_scans + ticket check-ins (correct calculation)
+        const { count: afterResScans } = await (supabase
+          .from("reservation_scans") as any)
+          .select("*", { count: "exact", head: true })
           .eq("business_id", businessId)
-          .eq("event_type", "check_in")
-          .gte("created_at", featuredStart)
-          .lte("created_at", endDate);
+          .gte("scanned_at", featuredStart)
+          .lte("scanned_at", endDate);
+
+        let afterTicketCheckIns = 0;
+        if (allEventIds.length > 0) {
+          const { data: checkedInTicketsAfter } = await supabase
+            .from("tickets")
+            .select("id")
+            .in("event_id", allEventIds)
+            .not("checked_in_at", "is", null)
+            .gte("checked_in_at", featuredStart)
+            .lte("checked_in_at", endDate);
+          afterTicketCheckIns = checkedInTicketsAfter?.length || 0;
+        }
 
         profileWith = {
           views: afterViews?.length || 0,
           interactions: afterInteractions?.length || 0,
-          visits: afterVisits?.length || 0,
+          visits: (afterResScans || 0) + afterTicketCheckIns,
+        };
+      } else {
+        // No subscription - just get total visits for the period
+        const { count: totalResScans } = await (supabase
+          .from("reservation_scans") as any)
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .gte("scanned_at", startDate)
+          .lte("scanned_at", endDate);
+
+        let totalTicketCheckIns = 0;
+        if (allEventIds.length > 0) {
+          const { data: checkedInTickets } = await supabase
+            .from("tickets")
+            .select("id")
+            .in("event_id", allEventIds)
+            .not("checked_in_at", "is", null)
+            .gte("created_at", startDate)
+            .lte("created_at", endDate);
+          totalTicketCheckIns = checkedInTickets?.length || 0;
+        }
+
+        // Put all visits in "without" since there's no boost period
+        profileWithout = {
+          views: 0,
+          interactions: 0,
+          visits: (totalResScans || 0) + totalTicketCheckIns,
         };
       }
 
