@@ -30,7 +30,7 @@ interface UnifiedEventCardProps {
   language: "el" | "en";
   isBoosted?: boolean;
   isFree?: boolean;
-  size?: "compact" | "default" | "boosted";
+  size?: "compact" | "default" | "boosted" | "full";
   className?: string;
 }
 const translations = {
@@ -110,7 +110,8 @@ export const UnifiedEventCard = ({
   const sizeClasses = {
     compact: "min-w-[200px] max-w-[200px]",
     default: "min-w-[220px] max-w-[220px]",
-    boosted: "min-w-[240px] max-w-[240px]"
+    boosted: "min-w-[240px] max-w-[240px]",
+    full: "w-full" // For grid layouts
   };
 
   // Check if event is free

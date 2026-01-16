@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useUserRSVPs } from '@/hooks/useUserRSVPs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import EventCard from '@/components/EventCard';
+import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -125,7 +125,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           const key = isRsvp ? item.id : event.id;
           return (
             <div key={key} className="relative">
-              <EventCard event={event} language={language} user={{ id: userId }} />
+              <UnifiedEventCard event={event} language={language} size="full" />
             </div>
           );
         })}
@@ -144,8 +144,8 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           const key = isRsvp ? item.id : event.id;
           return (
             <div key={key} className="relative opacity-60">
-              <EventCard event={event} language={language} user={{ id: userId }} />
-              <Badge variant="secondary" className="absolute top-2 right-2 bg-background/90 backdrop-blur text-xs">
+              <UnifiedEventCard event={event} language={language} size="full" />
+              <Badge variant="secondary" className="absolute top-2 right-2 bg-background/90 backdrop-blur text-xs z-20">
                 <Clock className="h-3 w-3 mr-1" />
                 {t.eventEnded}
               </Badge>

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
 
-import EventCard from "@/components/EventCard";
+import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import SignupModal from "@/components/SignupModal";
 import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
@@ -168,10 +168,10 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
               transition={{ delay: index * 0.05, duration: 0.4 }}
               className={index > 3 ? 'blur-md opacity-60 pointer-events-none scale-95' : ''}
             >
-              <EventCard 
+              <UnifiedEventCard 
                 language={language} 
                 event={event}
-                user={null}
+                size="full"
               />
             </motion.div>
           ))
@@ -440,15 +440,13 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05, duration: 0.4 }}
-                className="relative"
+                className="relative overflow-visible"
               >
-                <div className="absolute -top-2 -right-2 z-10">
-                  <PremiumBadge type="event" />
-                </div>
-                <EventCard 
+                <UnifiedEventCard 
                   language={language} 
                   event={event}
-                  user={user}
+                  isBoosted={true}
+                  size="full"
                 />
               </motion.div>
             ))}
@@ -473,10 +471,10 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03, duration: 0.3 }}
               >
-                <EventCard 
+                <UnifiedEventCard 
                   language={language} 
                   event={event}
-                  user={user}
+                  size="full"
                 />
               </motion.div>
             ))}
