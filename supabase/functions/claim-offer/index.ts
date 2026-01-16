@@ -152,12 +152,20 @@ Deno.serve(async (req) => {
 
       // Create reservation - combine date and time into preferred_time
       const preferredDateTime = `${reservationData.preferred_date}T${reservationData.preferred_time}:00`;
+
+      const reservationName =
+        (user.user_metadata?.first_name && user.user_metadata?.last_name
+          ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
+          : null) ||
+        user.email?.split("@")[0] ||
+        "Guest";
       
       const { data: reservation, error: reservationError } = await supabaseAdmin
         .from("reservations")
         .insert({
           business_id: discount.business_id,
           user_id: user.id,
+          reservation_name: reservationName,
           event_id: null, // Direct business reservation
           preferred_time: preferredDateTime,
           party_size: partySize,
