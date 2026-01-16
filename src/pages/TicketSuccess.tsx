@@ -179,14 +179,14 @@ export const TicketSuccess = () => {
 
           <div className="space-y-3">
             <Button asChild className="w-full">
-              <Link to="/dashboard-user?tab=tickets">
+              <Link to="/dashboard-user?tab=events&subtab=tickets">
                 {text.viewTickets}
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>
             
             <Button asChild variant="outline" className="w-full">
-              <Link to="/ekdiloseis">{text.continueBrowsing}</Link>
+              <Link to="/feed">{text.continueBrowsing}</Link>
             </Button>
           </div>
         </CardContent>
