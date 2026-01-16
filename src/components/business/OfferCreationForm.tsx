@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import OfferBoostDialog from "./OfferBoostDialog";
+import OfferBoostSection, { BoostTier, DurationMode } from "./OfferBoostSection";
 import {
   Select,
   SelectContent,
@@ -325,6 +326,20 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const [showBoostDialog, setShowBoostDialog] = useState(false);
   const [createdOfferId, setCreatedOfferId] = useState<string | null>(null);
   const [createdOfferTitle, setCreatedOfferTitle] = useState<string>("");
+  
+  // Boost state for pre-publish boost section
+  const [boostData, setBoostData] = useState<{
+    enabled: boolean;
+    tier: BoostTier;
+    durationMode: DurationMode;
+    startDate: Date;
+    endDate: Date;
+    durationHours?: number;
+    totalCostCents: number;
+    dailyRateCents: number;
+    hourlyRateCents?: number;
+    targetingQuality: number;
+  } | null>(null);
 
 
   // Fetch business data
@@ -486,9 +501,34 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       if (insertError) throw insertError;
 
+      // If boost was enabled in the form, create the boost
+      if (boostData?.enabled && offerData) {
+        const { error: boostError } = await supabase.from("offer_boosts").insert({
+          discount_id: offerData.id,
+          business_id: businessId,
+          boost_tier: boostData.tier,
+          duration_mode: boostData.durationMode,
+          start_date: boostData.startDate.toISOString(),
+          end_date: boostData.endDate.toISOString(),
+          duration_hours: boostData.durationHours || null,
+          daily_rate_cents: boostData.dailyRateCents,
+          hourly_rate_cents: boostData.hourlyRateCents || null,
+          total_cost_cents: boostData.totalCostCents,
+          targeting_quality: boostData.targetingQuality,
+          source: "budget",
+          status: "active",
+          commission_percent: 0,
+        });
+
+        if (boostError) {
+          console.error("Boost creation error:", boostError);
+          // Don't fail the whole offer creation, just log the error
+        }
+      }
+
       toast.success(t.offerCreated);
       
-      // Store created offer info and show boost dialog
+      // Store created offer info and show boost dialog as reminder
       if (offerData) {
         setCreatedOfferId(offerData.id);
         setCreatedOfferTitle(formData.title);
@@ -949,6 +989,13 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           <p className="text-xs text-muted-foreground">{t.reservationCtaDesc}</p>
         </div>
       </SectionCard>
+
+      {/* Section 10: Boost (Optional) */}
+      <OfferBoostSection
+        onBoostChange={setBoostData}
+        hasActiveSubscription={subscriptionData?.subscribed || false}
+        remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
+      />
 
       {/* Submit Button */}
       <Button
