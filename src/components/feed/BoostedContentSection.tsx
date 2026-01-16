@@ -9,6 +9,7 @@ import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import { differenceInDays } from "date-fns";
 import { useState } from "react";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
+import { trackOfferRedeemClick } from "@/lib/analyticsTracking";
 
 interface BoostedEvent {
   id: string;

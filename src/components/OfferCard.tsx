@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useViewTracking, trackDiscountView } from "@/lib/analyticsTracking";
+import { useViewTracking, trackDiscountView, trackOfferRedeemClick } from "@/lib/analyticsTracking";
 import { useRef, useState } from "react";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 
