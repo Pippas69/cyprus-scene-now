@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Eye, Users, Repeat, CalendarCheck, Ticket, QrCode, Info } from "lucide-react";
+import { Eye, Users, Repeat, CalendarCheck, Ticket, QrCode, Info, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOverviewMetrics } from "@/hooks/useOverviewMetrics";
+import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 import {
   Dialog,
   DialogContent,
@@ -11,12 +12,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
 
 const translations = {
   el: {
     title: "Σύνοψη Δεδομένων",
     subtitle: "Συνολικά στοιχεία από όλες τις πηγές (προφίλ, προσφορές, εκδηλώσεις).",
     footer: "Τα δεδομένα ενημερώνονται σε πραγματικό χρόνο. Χρησιμοποίησε το φίλτρο για παρελθόντες μήνες.",
+    upgradePrompt: "Θέλεις να δεις αναλυτικά ποιες ενέργειες αποδίδουν καλύτερα; Αναβάθμισε το πλάνο σου για πιο λεπτομερή δεδομένα και εξοικονόμηση χρημάτων.",
+    upgradeLink: "Δες τα πλάνα",
     tapForDetails: "Πάτα για λεπτομέρειες",
     dataSource: "Πηγή δεδομένων",
     metrics: {
@@ -50,6 +54,8 @@ const translations = {
     title: "Performance Summary",
     subtitle: "Combined data from all sources (profile, offers, events).",
     footer: "Data is updated in real time. Use the filter to view past months.",
+    upgradePrompt: "Want to see which actions perform best? Upgrade your plan for detailed insights and cost savings.",
+    upgradeLink: "View plans",
     tapForDetails: "Tap for details",
     dataSource: "Data source",
     metrics: {
@@ -89,7 +95,10 @@ interface OverviewTabProps {
 
 export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProps) => {
   const { data, isLoading } = useOverviewMetrics(businessId, dateRange);
+  const { data: subscription } = useSubscriptionPlan(businessId);
   const t = translations[language];
+  
+  const isFreePlan = !subscription?.plan || subscription?.plan === 'free';
 
   const metrics = [
     { 
@@ -221,6 +230,24 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
       </div>
 
       <p className="text-xs text-muted-foreground text-center">{t.footer}</p>
+
+      {/* Upgrade prompt for free plan users */}
+      {isFreePlan && (
+        <div className="p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
+          <div className="flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+            <div className="space-y-2">
+              <p className="text-sm text-foreground">{t.upgradePrompt}</p>
+              <Link 
+                to="/dashboard-business/subscription" 
+                className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+              >
+                {t.upgradeLink} →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
