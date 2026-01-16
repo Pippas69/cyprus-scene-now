@@ -208,6 +208,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
   const handleRedeemClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    trackOfferRedeemClick(offer.business_id, offer.id, 'boosted_section');
     setIsPurchaseOpen(true);
   };
 

@@ -59,7 +59,9 @@ const translations = {
     viewsTooltipTitle: 'Προβολές',
     viewsTooltipText: 'Δείχνει πότε περισσότεροι χρήστες βλέπουν και ανοίγουν αυτό το περιεχόμενο.\nΑυτές είναι οι καλύτερες ώρες για δημοσίευση και προβολή.',
     interactionsTooltipTitle: 'Αλληλεπιδράσεις',
-    interactionsTooltipText: 'Δείχνει πότε οι χρήστες δείχνουν ενδιαφέρον ή πρόθεση.\nΓια εκδηλώσεις: Ενδιαφέρομαι/Θα πάω. Για προσφορές: κλικ στο Εξαργύρωσε.',
+    profileInteractionsTooltipText: 'Δείχνει πότε οι χρήστες δείχνουν ενδιαφέρον ή πρόθεση μέσα στο προφίλ (π.χ. αποθηκεύσεις / ενέργειες που δείχνουν πρόθεση).',
+    offersInteractionsTooltipText: 'Δείχνει πότε οι χρήστες ενδιαφέρθηκαν για τις προσφορές, κάνοντας κλικ στο σύνδεσμο εξαργύρωση.',
+    eventsInteractionsTooltipText: 'Δείχνει πότε οι χρήστες έδειξαν πρόθεση για τις εκδηλώσεις (Ενδιαφέρομαι / Θα πάω).',
     visitsTooltipTitle: 'Επισκέψεις',
     visitsTooltipText: 'Δείχνει πότε ο κόσμος έρχεται πραγματικά στην επιχείρηση.\nΣτόχευσε αυτές τις ώρες για μέγιστη απόδοση.',
     // Tips
@@ -115,7 +117,9 @@ const translations = {
     viewsTooltipTitle: 'Views',
     viewsTooltipText: 'Shows when most users see and open this content.\nThese are the best hours for publishing and boosting.',
     interactionsTooltipTitle: 'Interactions',
-    interactionsTooltipText: 'Shows when users show interest or intent.\nFor events: Interested/Going. For offers: clicks on Redeem.',
+    profileInteractionsTooltipText: 'Shows when users show interest or intent inside your profile (e.g. saves / actions that indicate intent).',
+    offersInteractionsTooltipText: 'Shows when users interacted with offers by clicking the redeem link.',
+    eventsInteractionsTooltipText: 'Shows when users showed intent for events (Interested / Going).',
     visitsTooltipTitle: 'Visits',
     visitsTooltipText: 'Shows when people actually come to the business.\nTarget these hours for maximum results.',
     // Tips
@@ -366,7 +370,13 @@ const GuidanceTable: React.FC<{
                 icon={MousePointer}
                 windows={data.interactions}
                 tooltipTitle={t.interactionsTooltipTitle}
-                tooltipText={t.interactionsTooltipText}
+                tooltipText={
+                  sectionType === 'profile'
+                    ? (t as any).profileInteractionsTooltipText
+                    : sectionType === 'offers'
+                      ? (t as any).offersInteractionsTooltipText
+                      : (t as any).eventsInteractionsTooltipText
+                }
                 language={language}
               />
               <MetricRow

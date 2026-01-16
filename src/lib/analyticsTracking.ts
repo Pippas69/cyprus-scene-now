@@ -67,17 +67,17 @@ export const trackDiscountView = async (
   }
 };
 
-// Track engagement event
+// Track engagement event (generic)
 export const trackEngagement = async (
   businessId: string,
-  eventType: 'profile_view' | 'website_click' | 'phone_click' | 'share' | 'favorite' | 'unfavorite',
+  eventType: string,
   entityType?: 'event' | 'discount' | 'business',
   entityId?: string,
   metadata?: Record<string, any>
 ) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     await supabase.from('engagement_events').insert({
       business_id: businessId,
       user_id: user?.id || null,
@@ -90,6 +90,15 @@ export const trackEngagement = async (
   } catch (error) {
     console.error('Failed to track engagement:', error);
   }
+};
+
+// Track offer "Redeem" click (interaction intent)
+export const trackOfferRedeemClick = async (
+  businessId: string,
+  discountId: string,
+  source: 'offer_card' | 'boosted_section' | 'offer_page' | 'other' = 'other'
+) => {
+  return trackEngagement(businessId, 'offer_redeem_click', 'discount', discountId, { source });
 };
 
 // Track business follow

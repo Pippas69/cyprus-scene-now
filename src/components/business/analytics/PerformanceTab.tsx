@@ -40,9 +40,9 @@ const translations = {
     // Interactions explanations - different for events vs offers
     interactionsExplanation: 'Αλληλεπιδράσεις',
     interactionsDetailsEvents: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο αποθηκεύοντας το ή δείχνοντας πρόθεση ότι θα πάνε.',
-    interactionsDetailsOffers: 'Δείχνει πόσοι χρήστες ενδιαφέρθηκαν για το περιεχόμενο κάνοντας κλικ στο "Εξαργύρωσε".',
+    interactionsDetailsOffers: 'Δείχνει πώς οι χρήστες ενδιαφέρθηκαν για το περιεχόμενο, κάνοντας κλικ στο σύνδεσμο εξαργύρωση.',
     profileInteractionsSource: 'Αποθηκεύσεις, Ενδιαφέρομαι, Θα πάω',
-    offersInteractionsSource: 'Κλικ στο "Εξαργύρωσε"',
+    offersInteractionsSource: 'Κλικ στο σύνδεσμο εξαργύρωση',
     eventsInteractionsSource: 'Ενδιαφέρομαι, Θα πάω',
     // Visits explanations - different per type
     profileVisitsExplanation: 'Επίσκεψη',
@@ -87,9 +87,9 @@ const translations = {
     // Interactions explanations - different for events vs offers
     interactionsExplanation: 'Interactions',
     interactionsDetailsEvents: 'Shows how many users showed interest by saving the content or indicating they will visit.',
-    interactionsDetailsOffers: 'Shows how many users showed interest by clicking the "Redeem" button.',
+    interactionsDetailsOffers: 'Shows how users showed interest by clicking the redeem link.',
     profileInteractionsSource: 'Saves, Interested, Going',
-    offersInteractionsSource: 'Clicks on "Redeem"',
+    offersInteractionsSource: 'Clicks on redeem link',
     eventsInteractionsSource: 'Interested, Going',
     // Visits explanations
     profileVisitsExplanation: 'Visit',
