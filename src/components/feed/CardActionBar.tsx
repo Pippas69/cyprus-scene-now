@@ -43,28 +43,33 @@ export const CardActionBar = ({
   const [loading, setLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
+  const refreshCounts = async () => {
+    const { data, error } = await supabase.rpc("get_event_rsvp_counts", {
+      p_event_id: entityId,
+    });
+
+    if (error) {
+      console.error("Error fetching RSVP counts:", error);
+      return;
+    }
+
+    const row = Array.isArray(data) ? data[0] : data;
+    setInterestedCount(Number(row?.interested_count ?? 0));
+    setGoingCount(Number(row?.going_count ?? 0));
+  };
+
   // Fetch current user's RSVP status and actual counts on mount
   useEffect(() => {
     const fetchRSVPData = async () => {
       try {
-        // Fetch actual counts from database - count unique users for each status
-        const { data: interestedRsvps } = await supabase
-          .from("rsvps")
-          .select("id")
-          .eq("event_id", entityId)
-          .eq("status", "interested");
-
-        const { data: goingRsvps } = await supabase
-          .from("rsvps")
-          .select("id")
-          .eq("event_id", entityId)
-          .eq("status", "going");
-
-        setInterestedCount(interestedRsvps?.length || 0);
-        setGoingCount(goingRsvps?.length || 0);
+        // Global counts (must include ALL users, regardless of profile visibility)
+        await refreshCounts();
 
         // Check if current user has RSVPs
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         if (user) {
           const { data: userRsvps } = await supabase
             .from("rsvps")
@@ -72,10 +77,11 @@ export const CardActionBar = ({
             .eq("event_id", entityId)
             .eq("user_id", user.id);
 
-          if (userRsvps) {
-            setIsInterested(userRsvps.some(r => r.status === "interested"));
-            setIsGoing(userRsvps.some(r => r.status === "going"));
-          }
+          setIsInterested(!!userRsvps?.some((r) => r.status === "interested"));
+          setIsGoing(!!userRsvps?.some((r) => r.status === "going"));
+        } else {
+          setIsInterested(false);
+          setIsGoing(false);
         }
       } catch (error) {
         console.error("Error fetching RSVP data:", error);
@@ -83,6 +89,7 @@ export const CardActionBar = ({
     };
 
     fetchRSVPData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityId]);
 
   const handleAction = async (
@@ -93,13 +100,16 @@ export const CardActionBar = ({
     e.stopPropagation();
 
     // Check if user is logged in
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       toast({
         title: language === "el" ? "Συνδεθείτε" : "Please login",
-        description: language === "el" 
-          ? "Πρέπει να συνδεθείτε για αυτή την ενέργεια" 
-          : "You need to login for this action",
+        description:
+          language === "el"
+            ? "Πρέπει να συνδεθείτε για αυτή την ενέργεια"
+            : "You need to login for this action",
         variant: "destructive",
       });
       return;
@@ -120,14 +130,6 @@ export const CardActionBar = ({
           .eq("status", actionType);
 
         if (error) throw error;
-
-        if (actionType === "interested") {
-          setIsInterested(false);
-          setInterestedCount((prev) => Math.max(0, prev - 1));
-        } else {
-          setIsGoing(false);
-          setGoingCount((prev) => Math.max(0, prev - 1));
-        }
       } else {
         // Add new RSVP (allows both interested AND going)
         const { error } = await supabase.from("rsvps").insert({
@@ -138,14 +140,6 @@ export const CardActionBar = ({
 
         if (error) throw error;
 
-        if (actionType === "interested") {
-          setIsInterested(true);
-          setInterestedCount((prev) => prev + 1);
-        } else {
-          setIsGoing(true);
-          setGoingCount((prev) => prev + 1);
-        }
-
         toast({
           title: language === "el" ? "Επιτυχία!" : "Success!",
           description:
@@ -154,17 +148,27 @@ export const CardActionBar = ({
                 ? "Ενδιαφέρεστε!"
                 : "You're interested!"
               : language === "el"
-              ? "Θα πάτε!"
-              : "You're going!",
+                ? "Θα πάτε!"
+                : "You're going!",
         });
       }
+
+      // Re-sync user state + global counts after any mutation
+      const { data: userRsvps } = await supabase
+        .from("rsvps")
+        .select("status")
+        .eq("event_id", entityId)
+        .eq("user_id", user.id);
+
+      setIsInterested(!!userRsvps?.some((r) => r.status === "interested"));
+      setIsGoing(!!userRsvps?.some((r) => r.status === "going"));
+
+      await refreshCounts();
     } catch (error) {
       console.error("RSVP error:", error);
       toast({
         title: language === "el" ? "Σφάλμα" : "Error",
-        description: language === "el" 
-          ? "Κάτι πήγε στραβά" 
-          : "Something went wrong",
+        description: language === "el" ? "Κάτι πήγε στραβά" : "Something went wrong",
         variant: "destructive",
       });
     } finally {
