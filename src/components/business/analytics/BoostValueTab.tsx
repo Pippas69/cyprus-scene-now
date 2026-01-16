@@ -35,7 +35,7 @@ const translations = {
   el: {
     title: 'Αξία Προώθησης',
     subtitle: 'Σύγκριση απόδοσης με και χωρίς προβολή',
-    profileBlock: 'Απόδοση Επιλεγμένου Προφίλ',
+    profileBlock: 'Απόδοση Προφίλ',
     offersBlock: 'Απόδοση Προσφορών',
     eventsBlock: 'Απόδοση Εκδηλώσεων',
     metric: 'Μετρική',
