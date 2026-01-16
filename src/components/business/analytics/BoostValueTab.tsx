@@ -85,7 +85,7 @@ const translations = {
   en: {
     title: 'Boost Value',
     subtitle: 'Performance comparison with and without boost',
-    profileBlock: 'Featured Profile Performance',
+    profileBlock: 'Profile Performance',
     offersBlock: 'Offers Performance',
     eventsBlock: 'Events Performance',
     metric: 'Metric',
