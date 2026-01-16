@@ -300,7 +300,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
   const businessId = offer.business_id || offer.businesses?.id;
   const businessAcceptsReservations = offer.businesses?.accepts_direct_reservations === true;
-  const showReservationOption = offer.show_reservation_cta && businessAcceptsReservations && businessId;
+  // Show reservation option on ALL offers if business accepts reservations
+  const showReservationOption = businessAcceptsReservations && businessId;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(language === "el" ? "el-GR" : "en-US", {
