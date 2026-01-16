@@ -1,11 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Clock, MapPin } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PremiumBadge } from "@/components/ui/premium-badge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import { differenceInDays, differenceInHours } from "date-fns";
+import { useState } from "react";
+import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 
 interface BoostedEvent {
   id: string;
@@ -53,17 +57,17 @@ interface BoostedContentSectionProps {
 const translations = {
   el: {
     endsSoon: "Λήγει σύντομα",
-    daysLeft: "ημέρες",
-    hoursLeft: "ώρες",
-    today: "Σήμερα",
-    tomorrow: "Αύριο",
+    expiresToday: "Λήγει σήμερα",
+    expiresTomorrow: "Λήγει αύριο",
+    expiresOn: "Λήγει στις",
+    redeem: "Εξαργύρωσε",
   },
   en: {
     endsSoon: "Ends soon",
-    daysLeft: "days left",
-    hoursLeft: "hours left",
-    today: "Today",
-    tomorrow: "Tomorrow",
+    expiresToday: "Expires today",
+    expiresTomorrow: "Expires tomorrow",
+    expiresOn: "Expires",
+    redeem: "Redeem",
   },
 };
 
@@ -172,83 +176,130 @@ export const BoostedContentSection = ({
 
 interface OfferCardProps {
   offer: BoostedOffer;
-  t: { endsSoon: string; daysLeft: string; hoursLeft: string };
+  t: typeof translations.el;
   language: "el" | "en";
 }
 
 const OfferCard = ({ offer, t, language }: OfferCardProps) => {
+  const navigate = useNavigate();
+  const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
+  
   const endDate = new Date(offer.end_at);
   const now = new Date();
-  const hoursLeft = differenceInHours(endDate, now);
   const daysLeft = differenceInDays(endDate, now);
-  const isEndingSoon = hoursLeft <= 48;
 
-  let expiryLabel: string;
-  if (hoursLeft < 24) {
-    expiryLabel = `${hoursLeft} ${t.hoursLeft}`;
-  } else {
-    expiryLabel = `${daysLeft} ${t.daysLeft}`;
-  }
+  // Improved expiry label
+  const getExpiryLabel = () => {
+    if (daysLeft <= 0) return t.expiresToday;
+    if (daysLeft === 1) return t.expiresTomorrow;
+    const day = endDate.getDate();
+    const month = endDate.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
+    return language === "el" 
+      ? `${t.expiresOn} ${day} ${month}`
+      : `${t.expiresOn} ${month} ${day}`;
+  };
+
+  const handleMapClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/xartis?business=${offer.business_id}`);
+  };
+
+  const handleRedeemClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsPurchaseOpen(true);
+  };
 
   return (
-    <Link
-      to={`/offers?highlight=${offer.id}`}
-      className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group aspect-square min-w-[240px] max-w-[240px]"
-    >
-      {/* TOP SECTION - Visual header with gradient and badge */}
-      <div className="relative flex-[1.5] overflow-visible">
-        {/* Keep the header visuals clipped, but allow the badge to protrude */}
-        <div className="absolute inset-0 overflow-hidden rounded-t-xl bg-gradient-to-br from-emerald-500/20 via-primary/10 to-secondary/20 flex items-center justify-center">
-          <Avatar className="h-14 w-14 border-2 border-white shadow-lg">
-            <AvatarImage 
-              src={offer.businesses?.logo_url || undefined} 
-              alt={offer.businesses?.name} 
-            />
-            <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
-              {offer.businesses?.name?.substring(0, 2)?.toUpperCase() || '?'}
-            </AvatarFallback>
-          </Avatar>
+    <>
+      <div className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group aspect-square min-w-[240px] max-w-[240px] overflow-visible">
+        {/* TOP SECTION - Visual header with gradient and badge */}
+        <div className="relative flex-[1.5] overflow-visible">
+          {/* Keep the header visuals clipped, but allow the badge to protrude */}
+          <div className="absolute inset-0 overflow-hidden rounded-t-xl bg-gradient-to-br from-emerald-500/20 via-primary/10 to-secondary/20 flex items-center justify-center">
+            <Avatar className="h-14 w-14 border-2 border-white shadow-lg">
+              <AvatarImage 
+                src={offer.businesses?.logo_url || undefined} 
+                alt={offer.businesses?.name} 
+              />
+              <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
+                {offer.businesses?.name?.substring(0, 2)?.toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
+          </div>
 
-          {/* Discount overlay badge */}
-          {offer.percent_off && (
-            <div className="absolute bottom-2 left-2 bg-primary text-primary-foreground font-bold text-sm px-2 py-0.5 rounded-full shadow">
-              -{offer.percent_off}%
+          {/* BADGES - Top Right - Protruding, side by side */}
+          <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1">
+            {/* Discount percentage badge (smaller, left of premium badge) */}
+            {offer.percent_off && offer.percent_off > 0 && (
+              <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
+                -{offer.percent_off}%
+              </Badge>
+            )}
+            <PremiumBadge type="offer" />
+          </div>
+        </div>
+
+        {/* BOTTOM HALF - Offer Details */}
+        <div className="flex-1 p-3 flex flex-col justify-between min-h-0">
+          {/* LINE 1: Title */}
+          <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+            {offer.title}
+          </h4>
+          
+          {/* LINE 2: Expiry */}
+          <p className="text-xs text-muted-foreground">
+            {getExpiryLabel()}
+          </p>
+
+          {/* LINE 3: Location (clickable) + Business */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 min-w-0 flex-1">
+              <button 
+                onClick={handleMapClick}
+                className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors shrink-0"
+                title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+              >
+                <MapPin className="h-3.5 w-3.5" />
+              </button>
+              <span className="text-xs text-muted-foreground truncate">
+                {offer.businesses?.city} · {offer.businesses?.name}
+              </span>
             </div>
-          )}
-        </div>
-
-        {/* OFFER BADGE - Premium, Top Right - Protruding */}
-        <div className="absolute -top-2 -right-2 z-10">
-          <PremiumBadge type="offer" />
+            <Button 
+              onClick={handleRedeemClick}
+              size="sm" 
+              variant="default"
+              className="shrink-0 text-xs h-7 px-2"
+            >
+              {t.redeem}
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* BOTTOM HALF - Offer Details */}
-      <div className="flex-1 p-3 flex flex-col justify-between min-h-0">
-        <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
-          {offer.title}
-        </h4>
-        
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Clock className="h-3 w-3 flex-shrink-0" />
-          {isEndingSoon ? (
-            <span className="text-xs text-destructive font-medium">{t.endsSoon}</span>
-          ) : (
-            <span className="text-xs truncate">{expiryLabel}</span>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <MapPin className="h-3 w-3 flex-shrink-0" />
-          <span className="text-xs truncate">{offer.businesses?.city}</span>
-        </div>
-
-        {/* Business name */}
-        <p className="text-[11px] text-muted-foreground/70 truncate">
-          {offer.businesses?.name}
-        </p>
-      </div>
-    </Link>
+      {/* Purchase Dialog */}
+      <OfferPurchaseDialog
+        isOpen={isPurchaseOpen}
+        onClose={() => setIsPurchaseOpen(false)}
+        offer={{
+          id: offer.id,
+          title: offer.title,
+          description: offer.description,
+          percent_off: offer.percent_off || 0,
+          end_at: offer.end_at,
+          start_at: offer.start_at,
+          business_id: offer.business_id,
+          businesses: {
+            name: offer.businesses?.name || "",
+            logo_url: offer.businesses?.logo_url,
+            city: offer.businesses?.city || "",
+          },
+        }}
+        language={language}
+      />
+    </>
   );
 };
 
