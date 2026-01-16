@@ -36,48 +36,49 @@ export const CardActionBar = ({
   className,
 }: CardActionBarProps) => {
   const { toast } = useToast();
-  const [status, setStatus] = useState<"interested" | "going" | null>(null);
+  const [isInterested, setIsInterested] = useState(false);
+  const [isGoing, setIsGoing] = useState(false);
   const [interestedCount, setInterestedCount] = useState(initialInterestedCount);
   const [goingCount, setGoingCount] = useState(initialGoingCount);
   const [loading, setLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [initialized, setInitialized] = useState(false);
 
   // Fetch current user's RSVP status and actual counts on mount
   useEffect(() => {
     const fetchRSVPData = async () => {
       try {
-        // Fetch actual counts from database
-        const { data: rsvps, error: rsvpError } = await supabase
+        // Fetch actual counts from database - count unique users for each status
+        const { data: interestedRsvps } = await supabase
           .from("rsvps")
-          .select("status")
-          .eq("event_id", entityId);
+          .select("id")
+          .eq("event_id", entityId)
+          .eq("status", "interested");
 
-        if (!rsvpError && rsvps) {
-          const interested = rsvps.filter(r => r.status === "interested").length;
-          const going = rsvps.filter(r => r.status === "going").length;
-          setInterestedCount(interested);
-          setGoingCount(going);
-        }
+        const { data: goingRsvps } = await supabase
+          .from("rsvps")
+          .select("id")
+          .eq("event_id", entityId)
+          .eq("status", "going");
 
-        // Check if current user has an RSVP
+        setInterestedCount(interestedRsvps?.length || 0);
+        setGoingCount(goingRsvps?.length || 0);
+
+        // Check if current user has RSVPs
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data: userRsvp } = await supabase
+          const { data: userRsvps } = await supabase
             .from("rsvps")
             .select("status")
             .eq("event_id", entityId)
-            .eq("user_id", user.id)
-            .maybeSingle();
+            .eq("user_id", user.id);
 
-          if (userRsvp) {
-            setStatus(userRsvp.status as "interested" | "going");
+          if (userRsvps) {
+            setIsInterested(userRsvps.some(r => r.status === "interested"));
+            setIsGoing(userRsvps.some(r => r.status === "going"));
           }
         }
       } catch (error) {
         console.error("Error fetching RSVP data:", error);
-      } finally {
-        setInitialized(true);
       }
     };
 
@@ -107,25 +108,29 @@ export const CardActionBar = ({
     setLoading(true);
 
     try {
-      if (status === actionType) {
-        // Remove RSVP
+      const isCurrentlyActive = actionType === "interested" ? isInterested : isGoing;
+
+      if (isCurrentlyActive) {
+        // Remove this specific RSVP
         const { error } = await supabase
           .from("rsvps")
           .delete()
           .eq("event_id", entityId)
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .eq("status", actionType);
 
         if (error) throw error;
 
-        setStatus(null);
         if (actionType === "interested") {
+          setIsInterested(false);
           setInterestedCount((prev) => Math.max(0, prev - 1));
         } else {
+          setIsGoing(false);
           setGoingCount((prev) => Math.max(0, prev - 1));
         }
       } else {
-        // Add or update RSVP
-        const { error } = await supabase.from("rsvps").upsert({
+        // Add new RSVP (allows both interested AND going)
+        const { error } = await supabase.from("rsvps").insert({
           event_id: entityId,
           user_id: user.id,
           status: actionType,
@@ -133,20 +138,13 @@ export const CardActionBar = ({
 
         if (error) throw error;
 
-        // Update counts based on previous status
-        if (status === "interested") {
-          setInterestedCount((prev) => Math.max(0, prev - 1));
-        } else if (status === "going") {
-          setGoingCount((prev) => Math.max(0, prev - 1));
-        }
-
         if (actionType === "interested") {
+          setIsInterested(true);
           setInterestedCount((prev) => prev + 1);
         } else {
+          setIsGoing(true);
           setGoingCount((prev) => prev + 1);
         }
-
-        setStatus(actionType);
 
         toast({
           title: language === "el" ? "Επιτυχία!" : "Success!",
@@ -189,7 +187,7 @@ export const CardActionBar = ({
           disabled={loading}
           className={cn(
             "flex items-center gap-1 text-[11px] transition-colors",
-            status === "interested"
+            isInterested
               ? "text-secondary"
               : "text-muted-foreground hover:text-secondary"
           )}
@@ -197,7 +195,7 @@ export const CardActionBar = ({
           <Heart
             className={cn(
               "h-3.5 w-3.5",
-              status === "interested" && "fill-secondary text-secondary"
+              isInterested && "fill-secondary text-secondary"
             )}
           />
           <span>{interestedCount}</span>
@@ -209,7 +207,7 @@ export const CardActionBar = ({
           disabled={loading}
           className={cn(
             "flex items-center gap-1 text-[11px] transition-colors",
-            status === "going"
+            isGoing
               ? "text-ocean"
               : "text-muted-foreground hover:text-ocean"
           )}
@@ -217,7 +215,7 @@ export const CardActionBar = ({
           <Users
             className={cn(
               "h-3.5 w-3.5",
-              status === "going" && "text-ocean"
+              isGoing && "text-ocean"
             )}
           />
           <span>{goingCount}</span>
