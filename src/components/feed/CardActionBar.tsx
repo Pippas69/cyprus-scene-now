@@ -62,27 +62,33 @@ export const CardActionBar = ({
   useEffect(() => {
     const fetchRSVPData = async () => {
       try {
-        // Global counts (must include ALL users, regardless of profile visibility)
+        // Global counts (must include ALL users)
         await refreshCounts();
 
-        // Check if current user has RSVPs
         const {
           data: { user },
         } = await supabase.auth.getUser();
 
-        if (user) {
-          const { data: userRsvps } = await supabase
-            .from("rsvps")
-            .select("status")
-            .eq("event_id", entityId)
-            .eq("user_id", user.id);
-
-          setIsInterested(!!userRsvps?.some((r) => r.status === "interested"));
-          setIsGoing(!!userRsvps?.some((r) => r.status === "going"));
-        } else {
+        if (!user) {
           setIsInterested(false);
           setIsGoing(false);
+          return;
         }
+
+        const { data: row, error } = await supabase
+          .from("rsvps")
+          .select("status")
+          .eq("event_id", entityId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching RSVP status:", error);
+          return;
+        }
+
+        setIsInterested(row?.status === "interested");
+        setIsGoing(row?.status === "going");
       } catch (error) {
         console.error("Error fetching RSVP data:", error);
       }
@@ -99,10 +105,10 @@ export const CardActionBar = ({
     e.preventDefault();
     e.stopPropagation();
 
-    // Check if user is logged in
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
     if (!user) {
       toast({
         title: language === "el" ? "Συνδεθείτε" : "Please login",
@@ -121,24 +127,34 @@ export const CardActionBar = ({
       const isCurrentlyActive = actionType === "interested" ? isInterested : isGoing;
 
       if (isCurrentlyActive) {
-        // Remove this specific RSVP
+        // Toggle off (single RSVP per user/event)
         const { error } = await supabase
           .from("rsvps")
           .delete()
           .eq("event_id", entityId)
-          .eq("user_id", user.id)
-          .eq("status", actionType);
+          .eq("user_id", user.id);
 
         if (error) throw error;
+
+        setIsInterested(false);
+        setIsGoing(false);
       } else {
-        // Add new RSVP (allows both interested AND going)
-        const { error } = await supabase.from("rsvps").insert({
-          event_id: entityId,
-          user_id: user.id,
-          status: actionType,
-        });
+        // Upsert the single RSVP (switches between interested/going)
+        const { error } = await supabase
+          .from("rsvps")
+          .upsert(
+            {
+              event_id: entityId,
+              user_id: user.id,
+              status: actionType,
+            },
+            { onConflict: "event_id,user_id" }
+          );
 
         if (error) throw error;
+
+        setIsInterested(actionType === "interested");
+        setIsGoing(actionType === "going");
 
         toast({
           title: language === "el" ? "Επιτυχία!" : "Success!",
@@ -152,16 +168,6 @@ export const CardActionBar = ({
                 : "You're going!",
         });
       }
-
-      // Re-sync user state + global counts after any mutation
-      const { data: userRsvps } = await supabase
-        .from("rsvps")
-        .select("status")
-        .eq("event_id", entityId)
-        .eq("user_id", user.id);
-
-      setIsInterested(!!userRsvps?.some((r) => r.status === "interested"));
-      setIsGoing(!!userRsvps?.some((r) => r.status === "going"));
 
       await refreshCounts();
     } catch (error) {
