@@ -178,72 +178,72 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
       className={cn("overflow-visible transition-all duration-300", className)}
       style={style}
     >
-      {/* Square layout: 50% media (top), 50% info (bottom) */}
+      {/* Fixed square layout with exact 50/50 split */}
       <CardContent className="p-0">
-        <div className="relative aspect-square">
-          <div className="absolute inset-0 grid grid-rows-2">
-            {/* TOP HALF: cover image */}
-            <Link
-              to={`/business/${offerData.business_id}`}
-              className="relative block overflow-hidden rounded-t-xl"
-              aria-label={offerData.businesses.name}
-            >
-              {offerData.businesses.cover_url || offerData.businesses.logo_url ? (
-                <img
-                  src={(offerData.businesses.cover_url || offerData.businesses.logo_url) as string}
-                  alt={offerData.businesses.name}
-                  className="absolute inset-0 h-full w-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-muted" />
-              )}
-              {/* Subtle premium overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
-            </Link>
+        <div className="relative w-full aspect-square">
+          {/* TOP HALF: cover image - exactly 50% */}
+          <Link
+            to={`/business/${offerData.business_id}`}
+            className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden rounded-t-xl"
+            aria-label={offerData.businesses.name}
+          >
+            {offerData.businesses.cover_url || offerData.businesses.logo_url ? (
+              <img
+                src={(offerData.businesses.cover_url || offerData.businesses.logo_url) as string}
+                alt={offerData.businesses.name}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-muted" />
+            )}
+            {/* Subtle premium overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+          </Link>
 
-            {/* BOTTOM HALF: white info panel */}
-            <div className="bg-background p-3 flex flex-col justify-between rounded-b-xl">
-              {/* LINE 1: Title (business defined) */}
-              <h3 className="font-bold text-sm leading-tight line-clamp-1">
-                {offerData.title}
-              </h3>
+          {/* BOTTOM HALF: white info panel - exactly 50% */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-background p-3 flex flex-col rounded-b-xl">
+            {/* LINE 1: Title (business defined) */}
+            <h3 className="font-bold text-sm leading-tight line-clamp-1">
+              {offerData.title}
+            </h3>
 
-              {/* LINE 2: Expiry date with calendar icon - aligned like events */}
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5 shrink-0" />
-                <span className="text-xs truncate">
-                  {formatExpiryChip(offerData.end_at)}
-                </span>
-              </div>
+            {/* LINE 2: Expiry date with calendar icon - aligned like events */}
+            <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs">
+                {formatExpiryChip(offerData.end_at)}
+              </span>
+            </div>
 
-              {/* LINE 3: Location (clickable) + Business name + Redeem button */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <button 
-                    onClick={handleMapClick}
-                    className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
-                    title={language === "el" ? "Δες στο χάρτη" : "View on map"}
-                  >
-                    <MapPin className="h-3.5 w-3.5" />
-                  </button>
-                  <span className="text-xs text-muted-foreground truncate">
-                    {offerData.businesses.city} · {offerData.businesses.name}
-                  </span>
-                </div>
-                <Button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsPurchaseOpen(true);
-                  }} 
-                  size="sm" 
-                  variant="default"
-                  className="shrink-0 text-xs h-7 px-2"
-                >
-                  {language === "el" ? "Εξαργύρωσε" : "Redeem"}
-                </Button>
-              </div>
+            {/* LINE 3: Location (clickable) + Business name */}
+            <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+              <button 
+                onClick={handleMapClick}
+                className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+                title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+              >
+                <MapPin className="h-3.5 w-3.5" />
+              </button>
+              <span className="text-xs truncate">
+                {offerData.businesses.city} · {offerData.businesses.name}
+              </span>
+            </div>
+
+            {/* LINE 4: Redeem button - bottom right */}
+            <div className="flex-1 flex items-end justify-end mt-1">
+              <Button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsPurchaseOpen(true);
+                }} 
+                size="sm" 
+                variant="default"
+                className="text-xs h-7 px-3"
+              >
+                {language === "el" ? "Εξαργύρωσε" : "Redeem"}
+              </Button>
             </div>
           </div>
 
