@@ -235,14 +235,8 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           </div>
 
-          {/* BADGES - Top Right - Protruding, side by side */}
-          <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1">
-            {/* Discount percentage badge (smaller, left of premium badge) */}
-            {offer.percent_off && offer.percent_off > 0 && (
-              <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
-                -{offer.percent_off}%
-              </Badge>
-            )}
+          {/* BADGE - Top Right - Premium only for boosted */}
+          <div className="absolute -top-2 -right-2 z-10">
             <PremiumBadge type="offer" />
           </div>
         </div>
@@ -274,13 +268,20 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
             </span>
           </div>
 
-          {/* LINE 4: Redeem button - bottom right */}
-          <div className="flex items-end justify-end">
+          {/* LINE 4: Discount badge + Redeem button - bottom row */}
+          <div className="flex items-end justify-between">
+            {/* Discount badge on left */}
+            {offer.percent_off && offer.percent_off > 0 && (
+              <Badge variant="default" className="text-xs px-2 py-0.5 h-6">
+                -{offer.percent_off}%
+              </Badge>
+            )}
+            {/* Redeem button on right */}
             <Button 
               onClick={handleRedeemClick}
               size="sm" 
               variant="default"
-              className="text-xs h-7 px-3"
+              className="text-xs h-7 px-3 ml-auto"
             >
               {t.redeem}
             </Button>
