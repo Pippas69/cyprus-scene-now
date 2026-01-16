@@ -65,7 +65,7 @@ export const useBoostValueMetrics = (
           .from("engagement_events")
           .select("id")
           .eq("business_id", businessId)
-          .in("event_type", ["follow", "save"])
+          .in("event_type", ["follow", "save", "share"])
           .lt("created_at", featuredStart)
           .gte("created_at", startDate);
 
@@ -96,7 +96,7 @@ export const useBoostValueMetrics = (
           .from("engagement_events")
           .select("id")
           .eq("business_id", businessId)
-          .in("event_type", ["follow", "save"])
+          .in("event_type", ["follow", "save", "share"])
           .gte("created_at", featuredStart)
           .lte("created_at", endDate);
 
@@ -241,51 +241,69 @@ export const useBoostValueMetrics = (
         nonBoostedEventViews = count || 0;
       }
 
-      // Event interactions from daily_analytics
-      const { data: dailyData } = await supabase
-        .from("daily_analytics")
-        .select("date, new_rsvps_going, new_rsvps_interested, new_reservations")
-        .eq("business_id", businessId)
-        .gte("date", startDate.split('T')[0])
-        .lte("date", endDate.split('T')[0]);
-
-      // For simplicity, split 50/50 between boosted/non-boosted if both exist
-      const totalInteractions = dailyData?.reduce((sum, d) => 
-        sum + (d.new_rsvps_going || 0) + (d.new_rsvps_interested || 0), 0) || 0;
-      const totalVisits = dailyData?.reduce((sum, d) => 
-        sum + (d.new_reservations || 0), 0) || 0;
-
-      const hasBoosted = boostedEventIds.length > 0;
-      const hasNonBoosted = nonBoostedEventIds.length > 0;
-
+      // Event interactions (RSVPs) - directly from rsvps table for accuracy
       let boostedEventInteractions = 0;
       let nonBoostedEventInteractions = 0;
       let boostedEventVisits = 0;
       let nonBoostedEventVisits = 0;
 
-      if (hasBoosted && hasNonBoosted) {
-        boostedEventInteractions = Math.round(totalInteractions * 0.6);
-        nonBoostedEventInteractions = totalInteractions - boostedEventInteractions;
-        boostedEventVisits = Math.round(totalVisits * 0.6);
-        nonBoostedEventVisits = totalVisits - boostedEventVisits;
-      } else if (hasBoosted) {
-        boostedEventInteractions = totalInteractions;
-        boostedEventVisits = totalVisits;
-      } else {
-        nonBoostedEventInteractions = totalInteractions;
-        nonBoostedEventVisits = totalVisits;
+      if (boostedEventIds.length > 0) {
+        const { count: boostedRsvps } = await supabase
+          .from("rsvps")
+          .select("id", { count: 'exact', head: true })
+          .in("event_id", boostedEventIds)
+          .in("status", ["interested", "going"])
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+        boostedEventInteractions = boostedRsvps || 0;
+
+        const { count: boostedRes } = await supabase
+          .from("reservations")
+          .select("id", { count: 'exact', head: true })
+          .in("event_id", boostedEventIds)
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+        boostedEventVisits = boostedRes || 0;
       }
 
-      // Get best performing day index (0=Sunday..6=Saturday)
-      const sortedByViews = [...(dailyData || [])].sort(
-        (a, b) =>
-          (b.new_rsvps_going || 0) + (b.new_rsvps_interested || 0) -
-          ((a.new_rsvps_going || 0) + (a.new_rsvps_interested || 0))
-      );
+      if (nonBoostedEventIds.length > 0) {
+        const { count: nonBoostedRsvps } = await supabase
+          .from("rsvps")
+          .select("id", { count: 'exact', head: true })
+          .in("event_id", nonBoostedEventIds)
+          .in("status", ["interested", "going"])
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+        nonBoostedEventInteractions = nonBoostedRsvps || 0;
 
-      const bestDayIndex = sortedByViews[0]?.date
-        ? new Date(sortedByViews[0].date).getDay()
-        : 5; // Friday
+        const { count: nonBoostedRes } = await supabase
+          .from("reservations")
+          .select("id", { count: 'exact', head: true })
+          .in("event_id", nonBoostedEventIds)
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+        nonBoostedEventVisits = nonBoostedRes || 0;
+      }
+
+      // Get best performing day from RSVPs
+      const { data: rsvpDays } = await supabase
+        .from("rsvps")
+        .select("created_at")
+        .in("event_id", businessEventIds)
+        .gte("created_at", startDate)
+        .lte("created_at", endDate);
+
+      // Get best performing day index (0=Sunday..6=Saturday) from RSVPs
+      const dayCounts: Record<number, number> = {};
+      (rsvpDays || []).forEach((r: { created_at: string }) => {
+        const day = new Date(r.created_at).getDay();
+        dayCounts[day] = (dayCounts[day] || 0) + 1;
+      });
+
+      const bestDayIndex = Object.entries(dayCounts)
+        .sort((a, b) => b[1] - a[1])[0]?.[0]
+        ? parseInt(Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0][0])
+        : 5; // Default Friday
 
       return {
         profile: {

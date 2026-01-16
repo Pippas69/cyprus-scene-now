@@ -35,10 +35,11 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         .lte("created_at", endDate.toISOString());
 
       // 2. Customers through FOMO (unique users from reservations + ticket orders)
+      // Note: reservations can be linked via event_id OR direct business_id
       const { data: reservationUsers } = await supabase
         .from("reservations")
         .select("user_id")
-        .in("event_id", eventIds)
+        .or(`business_id.eq.${businessId}${eventIds.length > 0 ? `,event_id.in.(${eventIds.join(',')})` : ''}`)
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
@@ -66,11 +67,11 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       });
       const repeatCustomers = Object.values(userCounts).filter(c => c >= 2).length;
 
-      // 4. Bookings (accepted reservations)
+      // 4. Bookings (accepted reservations) - both event-linked and direct
       const { count: bookings } = await supabase
         .from("reservations")
         .select("*", { count: "exact", head: true })
-        .in("event_id", eventIds)
+        .or(`business_id.eq.${businessId}${eventIds.length > 0 ? `,event_id.in.(${eventIds.join(',')})` : ''}`)
         .eq("status", "accepted")
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
