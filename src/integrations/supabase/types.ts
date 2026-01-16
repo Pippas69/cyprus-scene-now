@@ -4598,6 +4598,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_event_rsvp_counts: {
+        Args: { p_event_id: string }
+        Returns: {
+          going_count: number
+          interested_count: number
+        }[]
+      }
       get_event_seating_availability: {
         Args: { p_event_id: string }
         Returns: {
