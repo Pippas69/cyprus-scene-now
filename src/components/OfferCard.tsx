@@ -203,23 +203,26 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </Link>
 
             {/* BOTTOM HALF: white info panel */}
-            <div className="bg-background p-4 flex flex-col justify-between rounded-b-xl">
+            <div className="bg-background p-3 flex flex-col justify-between rounded-b-xl">
               {/* LINE 1: Title (business defined) */}
-              <h3 className="font-bold text-base leading-tight line-clamp-1">
+              <h3 className="font-bold text-sm leading-tight line-clamp-1">
                 {offerData.title}
               </h3>
 
-              {/* LINE 2: Expiry date */}
-              <p className="text-sm text-muted-foreground">
-                {formatExpiryChip(offerData.end_at)}
-              </p>
+              {/* LINE 2: Expiry date with calendar icon - aligned like events */}
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span className="text-xs truncate">
+                  {formatExpiryChip(offerData.end_at)}
+                </span>
+              </div>
 
               {/* LINE 3: Location (clickable) + Business name + Redeem button */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1 min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   <button 
                     onClick={handleMapClick}
-                    className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors shrink-0"
+                    className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
                     title={language === "el" ? "Δες στο χάρτη" : "View on map"}
                   >
                     <MapPin className="h-3.5 w-3.5" />
@@ -236,7 +239,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                   }} 
                   size="sm" 
                   variant="default"
-                  className="shrink-0"
+                  className="shrink-0 text-xs h-7 px-2"
                 >
                   {language === "el" ? "Εξαργύρωσε" : "Redeem"}
                 </Button>

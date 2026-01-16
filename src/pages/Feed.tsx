@@ -186,7 +186,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           `
           id, title, description, percent_off, original_price_cents,
           start_at, end_at, business_id, terms, max_per_user,
-          businesses!inner (name, logo_url, city, verified)
+          businesses!inner (name, logo_url, cover_url, city, verified)
         `
         )
         .in("id", boostedOfferIds)
