@@ -123,6 +123,7 @@ const translations = {
     maxPerRedemption: "Μέγιστα Άτομα ανά Εξαργύρωση",
     maxPerRedemptionDesc: "Πόσα άτομα μπορούν να δηλωθούν σε μία εξαργύρωση",
     onePerUser: "Μία Εξαργύρωση ανά Χρήστη",
+    onePerUserTooltip: "Αν ενεργοποιηθεί, κάθε χρήστης μπορεί να εξαργυρώσει μόνο μία φορά",
     // Redemption
     redemptionTitle: "Show & Redeem (QR)",
     redemptionDesc: "Ο χρήστης πατάει 'Εξαργύρωση' → Δηλώνει αριθμό ατόμων → Λαμβάνει QR Code → Το δείχνει στο κατάστημα",
@@ -198,6 +199,7 @@ const translations = {
     maxPerRedemption: "Max People Per Redemption",
     maxPerRedemptionDesc: "How many people can be claimed in one group",
     onePerUser: "One Redemption Per User",
+    onePerUserTooltip: "If enabled, each user can redeem only once",
     // Redemption
     redemptionTitle: "Show & Redeem (QR)",
     redemptionDesc: "User taps 'Redeem' → States number of people → Gets QR Code → Shows it at venue",
@@ -886,7 +888,12 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
           {/* One Per User */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-            <Label htmlFor="one-per-user" className="cursor-pointer">{t.onePerUser}</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="one-per-user" className="cursor-pointer">{t.onePerUser}</Label>
+              <span title={t.onePerUserTooltip} className="cursor-help">
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </span>
+            </div>
             <Switch
               id="one-per-user"
               checked={formData.onePerUser}
