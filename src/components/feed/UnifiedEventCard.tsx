@@ -122,9 +122,9 @@ export const UnifiedEventCard = ({
 
   // Size variants - all square
   const sizeClasses = {
-    compact: "w-[180px] h-[180px]",
-    default: "w-[200px] h-[200px]",
-    boosted: "w-[220px] h-[220px]",
+    compact: "w-[180px] aspect-square",
+    default: "w-[200px] aspect-square",
+    boosted: "w-[220px] aspect-square",
   };
 
   // Check if event is free
@@ -133,7 +133,7 @@ export const UnifiedEventCard = ({
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const eventUrl = `${window.location.origin}/ekdiloseis/${event.id}`;
+    const eventUrl = `${window.location.origin}/event/${event.id}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -151,7 +151,7 @@ export const UnifiedEventCard = ({
 
   return (
     <Link
-      to={`/ekdiloseis/${event.id}`}
+      to={`/event/${event.id}`}
       className={cn(
         "flex flex-col rounded-xl bg-card border border-border",
         "hover:border-primary/50 hover:shadow-lg transition-all duration-200",
