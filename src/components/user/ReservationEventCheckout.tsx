@@ -504,14 +504,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   <Clock className="h-4 w-4" />
                   {t.arrivalHours}
                 </Label>
-                <div className="bg-muted/50 border rounded-lg p-3 text-sm">
-                  <p className="text-muted-foreground">
-                    {language === 'el' ? 'Μπορείτε να αφιχθείτε μεταξύ:' : 'You can arrive between:'}
-                  </p>
-                  <p className="font-medium text-lg mt-1">
-                    {reservationHoursFrom || '—'} - {reservationHoursTo || '—'}
-                  </p>
-                </div>
+                <Input
+                  readOnly
+                  value={`${reservationHoursFrom || '—'} - ${reservationHoursTo || '—'}`}
+                />
               </div>
             )}
 
