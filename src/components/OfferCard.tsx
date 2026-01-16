@@ -230,8 +230,23 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               </span>
             </div>
 
-            {/* LINE 4: Redeem button - bottom right */}
-            <div className="flex-1 flex items-end justify-end mt-1">
+            {/* LINE 4: Discount badge + Redeem button - bottom row */}
+            <div className="flex-1 flex items-end justify-between mt-1">
+              {/* Discount badge on left */}
+              <div className="flex items-center gap-1">
+                {offerData.percent_off && offerData.percent_off > 0 && (
+                  <Badge variant="default" className="text-xs px-2 py-0.5 h-6">
+                    -{offerData.percent_off}%
+                  </Badge>
+                )}
+                {isCredit && (
+                  <Badge variant="default" className="text-xs px-2 py-0.5 h-6">
+                    <Wallet className="h-3 w-3 mr-0.5" />
+                    {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
+                  </Badge>
+                )}
+              </div>
+              {/* Redeem button on right */}
               <Button 
                 onClick={(e) => {
                   e.preventDefault();
@@ -247,22 +262,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </div>
           </div>
 
-          {/* BADGES ON TOP OF IMAGE - Top-right, side by side */}
-          <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1">
-            {/* Discount percentage badge */}
-            {offerData.percent_off && offerData.percent_off > 0 && (
-              <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
-                -{offerData.percent_off}%
-              </Badge>
-            )}
-            {isCredit && (
-              <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
-                <Wallet className="h-3 w-3 mr-0.5" />
-                {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
-              </Badge>
-            )}
-            {/* NOTE: PremiumBadge only shown for boosted offers in BoostedContentSection */}
-          </div>
+          {/* Top-right: Premium badge ONLY for boosted offers (handled in BoostedContentSection) */}
 
           {/* Top-left: Reservation badge (ONLY if exists) */}
           {offerData.requires_reservation && (
