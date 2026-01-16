@@ -620,7 +620,8 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               seating_type: seatingType,
               available_slots: config.availableSlots,
               dress_code: null,
-              no_show_policy: `${formData.cancellationHours}h`,
+              cancellation_policy: formData.cancellationHours > 0 ? `${formData.cancellationHours}h cancellation` : null,
+              no_show_policy: 'non_refundable',
             })
             .select()
             .single();
@@ -628,12 +629,11 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
           if (seatingError || !seatingData) continue;
           
           // Insert price tiers
-          const tiersToInsert = config.tiers.map((tier, index) => ({
+          const tiersToInsert = config.tiers.map((tier) => ({
             seating_type_id: seatingData.id,
             min_people: tier.minPeople,
             max_people: tier.maxPeople,
             prepaid_min_charge_cents: tier.prepaidChargeCents,
-            sort_order: index,
           }));
           
           await supabase.from('seating_type_tiers').insert(tiersToInsert);
