@@ -6,7 +6,6 @@ import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
 import { format, differenceInMinutes } from "date-fns";
 import { enUS } from "date-fns/locale";
-
 interface UnifiedEventCardProps {
   event: {
     id: string;
@@ -31,22 +30,21 @@ interface UnifiedEventCardProps {
   size?: "compact" | "default" | "boosted";
   className?: string;
 }
-
 const translations = {
   el: {
     today: "Σήμερα",
     tomorrow: "Αύριο",
     free: "Δωρεάν",
     startsIn: "ξεκινά σε περίπου",
-    minutes: "λεπτά",
+    minutes: "λεπτά"
   },
   en: {
     today: "Today",
     tomorrow: "Tomorrow",
     free: "Free",
     startsIn: "starts in about",
-    minutes: "minutes",
-  },
+    minutes: "minutes"
+  }
 };
 
 // Greek day abbreviations
@@ -57,16 +55,15 @@ const greekDays: Record<string, string> = {
   Thu: "Πέμ",
   Fri: "Παρ",
   Sat: "Σάβ",
-  Sun: "Κυρ",
+  Sun: "Κυρ"
 };
-
 export const UnifiedEventCard = ({
   event,
   language,
   isBoosted = false,
   isFree = false,
   size = "default",
-  className,
+  className
 }: UnifiedEventCardProps) => {
   const t = translations[language];
   const eventDate = new Date(event.start_at);
@@ -74,10 +71,7 @@ export const UnifiedEventCard = ({
 
   // Date/Time formatting
   const isToday = eventDate.toDateString() === now.toDateString();
-  const isTomorrow =
-    eventDate.toDateString() ===
-    new Date(now.getTime() + 86400000).toDateString();
-
+  const isTomorrow = eventDate.toDateString() === new Date(now.getTime() + 86400000).toDateString();
   let dateLabel: string;
   if (isToday) {
     dateLabel = `${t.today} · ${format(eventDate, "HH:mm")}`;
@@ -85,7 +79,9 @@ export const UnifiedEventCard = ({
     dateLabel = `${t.tomorrow} · ${format(eventDate, "HH:mm")}`;
   } else {
     // Use Greek day abbreviation for Greek language
-    const dayName = format(eventDate, "EEE", { locale: enUS });
+    const dayName = format(eventDate, "EEE", {
+      locale: enUS
+    });
     const dayLabel = language === "el" ? greekDays[dayName] || dayName : dayName;
     dateLabel = `${dayLabel} · ${format(eventDate, "HH:mm")}`;
   }
@@ -111,65 +107,35 @@ export const UnifiedEventCard = ({
   const sizeClasses = {
     compact: "min-w-[200px] max-w-[200px]",
     default: "min-w-[220px] max-w-[220px]",
-    boosted: "min-w-[240px] max-w-[240px]",
+    boosted: "min-w-[240px] max-w-[240px]"
   };
 
   // Check if event is free
   const showFreeBadge = isFree || event.price_tier === "free";
-
-  return (
-    <Link
-      to={`/ekdiloseis/${event.id}`}
-      className={cn(
-        "flex flex-col rounded-xl bg-card border border-border",
-        "hover:border-primary/50 hover:shadow-lg transition-all duration-200",
-        "aspect-square overflow-visible group",
-        sizeClasses[size],
-        className
-      )}
-    >
+  return <Link to={`/ekdiloseis/${event.id}`} className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "aspect-square overflow-visible group", sizeClasses[size], className)}>
       {/* TOP - Image (60%) */}
       <div className="relative flex-[1.5] overflow-visible">
         {/* Image container - clipped */}
         <div className="absolute inset-0 overflow-hidden rounded-t-xl">
-          {event.cover_image_url ? (
-            <img
-              src={event.cover_image_url}
-              alt={event.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+          {event.cover_image_url ? <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
               <Calendar className="h-8 w-8 text-primary/50" />
-            </div>
-          )}
+            </div>}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </div>
 
         {/* Boosted Badge - protruding */}
-        {isBoosted && (
-          <div className="absolute -top-2 -right-2 z-10">
+        {isBoosted && <div className="absolute -top-2 -right-2 z-10">
             <PremiumBadge type="event" />
-          </div>
-        )}
+          </div>}
 
         {/* Category Badge */}
-        {event.category?.[0] && (
-          <Badge
-            variant="secondary"
-            className="absolute bottom-2 left-2 text-[10px] px-1.5 py-0 h-5 bg-background/90 backdrop-blur-sm z-10"
-          >
-            {getCategoryLabel(event.category[0], language)}
-          </Badge>
-        )}
+        {event.category?.[0]}
 
         {/* Free Badge */}
-        {showFreeBadge && (
-          <Badge className="absolute bottom-2 right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
+        {showFreeBadge && <Badge className="absolute bottom-2 right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
             {t.free}
-          </Badge>
-        )}
+          </Badge>}
       </div>
 
       {/* BOTTOM HALF - Details */}
@@ -194,11 +160,9 @@ export const UnifiedEventCard = ({
         </div>
 
         {/* 4. Time Proximity (only if < 1 hour) */}
-        {showTimeProximity && (
-          <p className="text-[10px] text-primary font-medium">
+        {showTimeProximity && <p className="text-[10px] text-primary font-medium">
             {t.startsIn} {minutesUntilStart} {t.minutes}
-          </p>
-        )}
+          </p>}
 
         {/* 5. Counters (always at the end) */}
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -212,8 +176,6 @@ export const UnifiedEventCard = ({
           </span>
         </div>
       </div>
-    </Link>
-  );
+    </Link>;
 };
-
 export default UnifiedEventCard;
