@@ -5,11 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
 
+import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import SignupModal from "@/components/SignupModal";
 import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
 import { Loader2 } from "lucide-react";
-import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
+import { PremiumBadge } from "@/components/ui/premium-badge";
 
 const Ekdiloseis = () => {
   const navigate = useNavigate();
@@ -167,11 +168,10 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
               transition={{ delay: index * 0.05, duration: 0.4 }}
               className={index > 3 ? 'blur-md opacity-60 pointer-events-none scale-95' : ''}
             >
-              <UnifiedEventCard
-                language={language}
+              <EventCard 
+                language={language} 
                 event={event}
-                size="default"
-                className="w-full"
+                user={null}
               />
             </motion.div>
           ))
@@ -442,12 +442,13 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
                 transition={{ delay: index * 0.05, duration: 0.4 }}
                 className="relative"
               >
-                <UnifiedEventCard
-                  language={language}
+                <div className="absolute -top-2 -right-2 z-10">
+                  <PremiumBadge type="event" />
+                </div>
+                <EventCard 
+                  language={language} 
                   event={event}
-                  isBoosted
-                  size="default"
-                  className="w-full"
+                  user={user}
                 />
               </motion.div>
             ))}
@@ -472,11 +473,10 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03, duration: 0.3 }}
               >
-                <UnifiedEventCard
-                  language={language}
+                <EventCard 
+                  language={language} 
                   event={event}
-                  size="default"
-                  className="w-full"
+                  user={user}
                 />
               </motion.div>
             ))}
