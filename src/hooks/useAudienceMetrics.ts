@@ -22,10 +22,11 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
       const eventIds = events?.map(e => e.id) || [];
 
       // Collect unique user IDs from reservations and ticket orders
+      // Note: reservations can be linked via event_id OR direct business_id
       const { data: reservationUsers } = await supabase
         .from("reservations")
         .select("user_id")
-        .in("event_id", eventIds)
+        .or(`business_id.eq.${businessId}${eventIds.length > 0 ? `,event_id.in.(${eventIds.join(',')})` : ''}`)
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 

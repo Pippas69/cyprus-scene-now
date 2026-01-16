@@ -122,20 +122,29 @@ export const usePerformanceMetrics = (
         eventViewsCount = count || 0;
       }
 
-      // Event interactions (RSVPs) from event_rsvp_counts view or daily_analytics
-      const { data: dailyData } = await supabase
-        .from("daily_analytics")
-        .select("new_rsvps_going, new_rsvps_interested, new_reservations")
-        .eq("business_id", businessId)
-        .gte("date", startDate.split('T')[0])
-        .lte("date", endDate.split('T')[0]);
-
-      const totalRsvps = dailyData?.reduce((sum, d) => 
-        sum + (d.new_rsvps_going || 0) + (d.new_rsvps_interested || 0), 0) || 0;
+      // Event interactions (RSVPs) - direct from rsvps table for accuracy
+      let totalRsvps = 0;
+      if (eventIds.length > 0) {
+        const { count: rsvpCount } = await supabase
+          .from("rsvps")
+          .select("id", { count: 'exact', head: true })
+          .in("event_id", eventIds)
+          .in("status", ["interested", "going"])
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+        totalRsvps = rsvpCount || 0;
+      }
 
       // Event visits (reservations + check-ins)
-      const totalReservations = dailyData?.reduce((sum, d) => 
-        sum + (d.new_reservations || 0), 0) || 0;
+      // Note: reservations can be linked via event_id OR direct business_id
+      let totalReservations = 0;
+      const { count: resCount } = await supabase
+        .from("reservations")
+        .select("id", { count: 'exact', head: true })
+        .or(`business_id.eq.${businessId}${eventIds.length > 0 ? `,event_id.in.(${eventIds.join(',')})` : ''}`)
+        .gte("created_at", startDate)
+        .lte("created_at", endDate);
+      totalReservations = resCount || 0;
 
       const { data: eventCheckIns } = await supabase
         .from("engagement_events")
