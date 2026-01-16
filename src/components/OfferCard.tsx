@@ -249,7 +249,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
 
           {/* BADGES ON TOP OF IMAGE - Top-right, side by side */}
           <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1">
-            {/* Discount percentage badge (smaller, left of premium badge) */}
+            {/* Discount percentage badge */}
             {offerData.percent_off && offerData.percent_off > 0 && (
               <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
                 -{offerData.percent_off}%
@@ -261,8 +261,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
               </Badge>
             )}
-            {/* Premium sparkle badge */}
-            <PremiumBadge type="offer" />
+            {/* NOTE: PremiumBadge only shown for boosted offers in BoostedContentSection */}
           </div>
 
           {/* Top-left: Reservation badge (ONLY if exists) */}
