@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Percent, Store, CheckCircle, Calendar, Clock, QrCode, Download, ShoppingBag, AlertCircle, Wallet, History, TrendingDown } from "lucide-react";
+import { Loader2, Store, CheckCircle, Calendar, Clock, QrCode, Download, ShoppingBag, AlertCircle, Wallet, History, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 import QRCodeLib from "qrcode";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { CreditTransactionHistory } from "./CreditTransactionHistory";
@@ -303,184 +302,145 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     // Guard against null discounts (can happen if discount was deleted)
     if (!purchase.discounts || !purchase.discounts.businesses) {
       return (
-        <Card className="overflow-hidden opacity-60">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                <Store className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm text-muted-foreground">
-                  {language === "el" ? "Προσφορά μη διαθέσιμη" : "Offer unavailable"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {language === "el" ? "Αυτή η προσφορά δεν υπάρχει πλέον" : "This offer no longer exists"}
-                </p>
-              </div>
-              <Badge variant="secondary" className="shrink-0">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {language === "el" ? "Διαγράφηκε" : "Deleted"}
-              </Badge>
+        <Card className="overflow-hidden opacity-60 aspect-square">
+          <div className="h-full flex flex-col">
+            <div className="h-1/2 bg-muted flex items-center justify-center rounded-t-xl">
+              <Store className="h-12 w-12 text-muted-foreground/50" />
             </div>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">
-                {t.purchasedOn}: {formatDate(purchase.created_at)}
-              </span>
+            <div className="h-1/2 p-3 flex flex-col justify-center">
+              <p className="font-semibold text-sm text-muted-foreground">
+                {language === "el" ? "Προσφορά μη διαθέσιμη" : "Offer unavailable"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {language === "el" ? "Αυτή η προσφορά δεν υπάρχει πλέον" : "This offer no longer exists"}
+              </p>
             </div>
-          </CardContent>
+          </div>
         </Card>
       );
     }
 
-    const timeRemaining = getTimeRemaining(purchase.expires_at);
-    const urgencyColors: Record<string, string> = {
-      low: 'text-muted-foreground bg-muted',
-      medium: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-950',
-      high: 'text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-950',
-      critical: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950',
-      expired: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950'
-    };
-
     const isCredit = purchase.discounts.offer_type === 'credit';
     const balanceRemaining = purchase.balance_remaining_cents ?? 0;
-    const totalCredit = purchase.original_price_cents * (1 + (purchase.discounts.bonus_percent || 0) / 100);
-    const usedAmount = totalCredit - balanceRemaining;
-    const usagePercent = totalCredit > 0 ? (usedAmount / totalCredit) * 100 : 0;
     const isDepleted = isCredit && balanceRemaining === 0;
+    const isExpired = new Date(purchase.expires_at) <= new Date();
+    const isRedeemed = purchase.status === 'redeemed';
+
+    // Format expiry date
+    const formatExpiryDate = (dateString: string) => {
+      const date = new Date(dateString);
+      const now = new Date();
+      const daysLeft = differenceInDays(date, now);
+      
+      if (daysLeft <= 0) return language === "el" ? "Λήγει σήμερα" : "Expires today";
+      if (daysLeft === 1) return language === "el" ? "Λήγει αύριο" : "Expires tomorrow";
+      
+      const day = date.getDate();
+      const month = date.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
+      return language === "el" ? `Λήγει στις ${day} ${month}` : `Expires ${month} ${day}`;
+    };
+
+    // Format purchase date
+    const formatPurchaseDate = (dateString: string) => {
+      const date = new Date(dateString);
+      const day = date.getDate();
+      const month = date.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
+      return language === "el" ? `${t.purchasedOn} ${day} ${month}` : `${t.purchasedOn} ${month} ${day}`;
+    };
 
     return (
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 flex-1">
-              {purchase.discounts.businesses.logo_url ? (
-                <img
-                  src={purchase.discounts.businesses.logo_url}
-                  alt={purchase.discounts.businesses.name}
-                  className="h-10 w-10 rounded-full object-cover"
-                />
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                  <Store className="h-5 w-5 text-muted-foreground" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{purchase.discounts.businesses.name}</p>
-                <p className="text-xs text-muted-foreground">{purchase.discounts.businesses.city}</p>
-              </div>
-            </div>
-            {/* Badge logic */}
-            {isDepleted ? (
-              <Badge variant="secondary" className="shrink-0">
-                <TrendingDown className="h-3 w-3 mr-1" />
-                {t.depleted}
-              </Badge>
-            ) : isCredit ? (
-              <Badge variant="default" className="shrink-0 bg-emerald-600">
-                <Wallet className="h-3 w-3 mr-1" />
-                {t.storeCredit}
-              </Badge>
-            ) : purchase.status === 'redeemed' ? (
-              <Badge variant="secondary" className="shrink-0">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                {language === "el" ? "Χρησιμοποιήθηκε" : "Used"}
-              </Badge>
-            ) : purchase.status === 'expired' || new Date(purchase.expires_at) <= new Date() ? (
-              <Badge variant="destructive" className="shrink-0">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {language === "el" ? "Έληξε" : "Expired"}
-              </Badge>
+      <Card className="overflow-visible aspect-square relative">
+        <div className="h-full flex flex-col">
+          {/* TOP HALF: Image */}
+          <div className="h-1/2 relative overflow-hidden rounded-t-xl">
+            {purchase.discounts.businesses.logo_url ? (
+              <img
+                src={purchase.discounts.businesses.logo_url}
+                alt={purchase.discounts.businesses.name}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
             ) : (
-              <Badge variant="default" className="text-lg font-bold shrink-0">
-                -{purchase.discount_percent}%
-              </Badge>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-muted" />
             )}
-          </div>
-          <CardTitle className="text-base sm:text-lg mt-2 line-clamp-2">{purchase.discounts.title}</CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-3 p-3 sm:p-6 pt-0 sm:pt-0">
-          {purchase.discounts.description && (
-            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{purchase.discounts.description}</p>
-          )}
-
-          {/* Credit balance display - only for credit offers */}
-          {isCredit && (
-            <div className="space-y-2 bg-muted/50 rounded-lg p-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">{t.balance}</span>
-                <span className="text-xl font-bold text-primary">€{(balanceRemaining / 100).toFixed(2)}</span>
-              </div>
-              <Progress value={100 - usagePercent} className="h-2" />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{t.used}: €{(usedAmount / 100).toFixed(2)}</span>
-                <span>{t.totalCredit}: €{(totalCredit / 100).toFixed(2)}</span>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">
-              {t.purchasedOn}: {formatDate(purchase.created_at)}
-            </span>
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
           </div>
 
-          {purchase.redeemed_at && !isCredit && (
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-muted-foreground">
-                {t.redeemedOn}: {formatDate(purchase.redeemed_at)}
-              </span>
+          {/* BOTTOM HALF: Info */}
+          <div className="h-1/2 p-3 flex flex-col bg-background rounded-b-xl">
+            {/* LINE 1: Title */}
+            <h4 className="text-sm font-semibold line-clamp-1">
+              {purchase.discounts.title}
+            </h4>
+
+            {/* LINE 2: Purchased date */}
+            <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+              <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs">{formatPurchaseDate(purchase.created_at)}</span>
             </div>
-          )}
 
-          {showQR && purchase.status === 'paid' && new Date(purchase.expires_at) > new Date() && !isDepleted && (
-            <>
-              <div className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full w-fit ${urgencyColors[timeRemaining.urgency]}`}>
-                <Clock className="h-4 w-4" />
-                <span className="font-medium">
-                  {t.expiresIn}: {timeRemaining.value}
-                </span>
-              </div>
+            {/* LINE 3: Expiry date */}
+            <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
+            </div>
 
-              <div className="flex gap-2">
-                <Button
+            {/* LINE 4: Show QR button - bottom right */}
+            <div className="flex-1 flex items-end justify-end mt-1">
+              {showQR && !isExpired && !isRedeemed && !isDepleted && (
+                <Button 
                   onClick={() => setSelectedPurchase(purchase)}
-                  className="flex-1"
+                  size="sm" 
                   variant="default"
+                  className="text-xs h-7 px-3"
                 >
-                  <QrCode className="h-4 w-4 mr-2" />
+                  <QrCode className="h-3.5 w-3.5 mr-1" />
                   {t.viewQR}
                 </Button>
-                {isCredit && (
-                  <Button
-                    onClick={() => setShowHistory(purchase.id)}
-                    variant="outline"
-                    size="icon"
-                  >
-                    <History className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
+              )}
+              {isCredit && (
+                <Button
+                  onClick={() => setShowHistory(purchase.id)}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-3 ml-2"
+                >
+                  <History className="h-3.5 w-3.5 mr-1" />
+                  {t.viewHistory}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
 
-          {/* History button for depleted credits */}
-          {isCredit && isDepleted && (
-            <Button
-              onClick={() => setShowHistory(purchase.id)}
-              variant="outline"
-              className="w-full"
-            >
-              <History className="h-4 w-4 mr-2" />
-              {t.viewHistory}
-            </Button>
+        {/* BADGES - Top Right */}
+        <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1">
+          {isDepleted ? (
+            <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
+              <TrendingDown className="h-3 w-3 mr-0.5" />
+              {t.depleted}
+            </Badge>
+          ) : isCredit ? (
+            <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5 bg-emerald-600">
+              <Wallet className="h-3 w-3 mr-0.5" />
+              €{(balanceRemaining / 100).toFixed(0)}
+            </Badge>
+          ) : isRedeemed ? (
+            <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
+              <CheckCircle className="h-3 w-3 mr-0.5" />
+              {language === "el" ? "Χρησιμ." : "Used"}
+            </Badge>
+          ) : isExpired ? (
+            <Badge variant="destructive" className="text-xs px-1.5 py-0.5 h-5">
+              <AlertCircle className="h-3 w-3 mr-0.5" />
+              {language === "el" ? "Έληξε" : "Expired"}
+            </Badge>
+          ) : purchase.discount_percent > 0 && (
+            <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
+              -{purchase.discount_percent}%
+            </Badge>
           )}
-        </CardContent>
+        </div>
       </Card>
     );
   };

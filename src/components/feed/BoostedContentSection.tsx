@@ -215,9 +215,10 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
 
   return (
     <>
-      <div className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group aspect-square min-w-[240px] max-w-[240px] overflow-visible">
-        {/* TOP SECTION - Full cover image like events */}
-        <div className="relative flex-1 overflow-visible">
+      {/* Matching UnifiedEventCard boosted size: 240x240 with exact 50/50 split */}
+      <div className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group w-[240px] h-[240px] overflow-visible">
+        {/* TOP HALF: Image - exactly 50% height (120px) */}
+        <div className="relative h-[120px] overflow-visible">
           {/* Image container clipped */}
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {coverImage ? (
@@ -246,38 +247,40 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           </div>
         </div>
 
-        {/* BOTTOM HALF - Offer Details */}
-        <div className="p-3 flex flex-col justify-between min-h-0 gap-1 bg-background rounded-b-xl" style={{ flex: '0 0 auto', height: '50%' }}>
-          {/* LINE 1: Title */}
+        {/* BOTTOM HALF: Offer Details - exactly 50% height (120px) */}
+        <div className="h-[120px] p-3 flex flex-col bg-background rounded-b-xl">
+          {/* LINE 1: Title - aligned with event title */}
           <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
             {offer.title}
           </h4>
           
-          {/* LINE 2: Expiry with calendar icon - aligned like events */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
+          {/* LINE 2: Expiry with calendar icon - aligned with event date/time */}
+          <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
             <Calendar className="h-3.5 w-3.5 shrink-0" />
-            <span className="text-xs truncate">{getExpiryLabel()}</span>
+            <span className="text-xs">{getExpiryLabel()}</span>
           </div>
 
-          {/* LINE 3: Location (clickable) + Business */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-              <button 
-                onClick={handleMapClick}
-                className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
-                title={language === "el" ? "Δες στο χάρτη" : "View on map"}
-              >
-                <MapPin className="h-3.5 w-3.5" />
-              </button>
-              <span className="text-xs text-muted-foreground truncate">
-                {offer.businesses?.city} · {offer.businesses?.name}
-              </span>
-            </div>
+          {/* LINE 3: Location + Business - aligned with event location */}
+          <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+            <button 
+              onClick={handleMapClick}
+              className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+              title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-xs truncate">
+              {offer.businesses?.city} · {offer.businesses?.name}
+            </span>
+          </div>
+
+          {/* LINE 4: Redeem button - bottom right, below location */}
+          <div className="flex-1 flex items-end justify-end mt-1">
             <Button 
               onClick={handleRedeemClick}
               size="sm" 
               variant="default"
-              className="shrink-0 text-xs h-7 px-2"
+              className="text-xs h-7 px-3"
             >
               {t.redeem}
             </Button>
