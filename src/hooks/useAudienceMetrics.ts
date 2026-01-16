@@ -14,33 +14,95 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
       const startDate = dateRange?.from || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       const endDate = dateRange?.to || new Date();
 
-      // Get events for this business
+      // Get all events for this business
       const { data: events } = await supabase
         .from("events")
         .select("id")
         .eq("business_id", businessId);
       const eventIds = events?.map(e => e.id) || [];
 
-      // Collect unique user IDs from reservations and ticket orders
-      // Note: reservations can be linked via event_id OR direct business_id
+      // Get all discounts for this business
+      const { data: discounts } = await supabase
+        .from("discounts")
+        .select("id")
+        .eq("business_id", businessId);
+      const discountIds = discounts?.map(d => d.id) || [];
+
+      // Collect ALL user IDs from all engagement sources
+      const userIdSet = new Set<string>();
+
+      // 1. Event views (users who viewed events)
+      if (eventIds.length > 0) {
+        const { data: eventViewUsers } = await supabase
+          .from("event_views")
+          .select("user_id")
+          .in("event_id", eventIds)
+          .gte("viewed_at", startDate.toISOString())
+          .lte("viewed_at", endDate.toISOString())
+          .not("user_id", "is", null);
+        eventViewUsers?.forEach(v => v.user_id && userIdSet.add(v.user_id));
+      }
+
+      // 2. Discount views (users who viewed offers)
+      if (discountIds.length > 0) {
+        const { data: discountViewUsers } = await supabase
+          .from("discount_views")
+          .select("user_id")
+          .in("discount_id", discountIds)
+          .gte("viewed_at", startDate.toISOString())
+          .lte("viewed_at", endDate.toISOString())
+          .not("user_id", "is", null);
+        discountViewUsers?.forEach(v => v.user_id && userIdSet.add(v.user_id));
+      }
+
+      // 3. RSVPs (users who RSVPed to events)
+      if (eventIds.length > 0) {
+        const { data: rsvpUsers } = await supabase
+          .from("rsvps")
+          .select("user_id")
+          .in("event_id", eventIds)
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+        rsvpUsers?.forEach(r => r.user_id && userIdSet.add(r.user_id));
+      }
+
+      // 4. Reservations (both event-linked and direct business reservations)
       const { data: reservationUsers } = await supabase
         .from("reservations")
         .select("user_id")
         .or(`business_id.eq.${businessId}${eventIds.length > 0 ? `,event_id.in.(${eventIds.join(',')})` : ''}`)
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
+      reservationUsers?.forEach(r => r.user_id && userIdSet.add(r.user_id));
 
+      // 5. Ticket orders (users who bought tickets)
       const { data: ticketUsers } = await supabase
         .from("ticket_orders")
         .select("user_id")
         .eq("business_id", businessId)
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
+      ticketUsers?.forEach(t => t.user_id && userIdSet.add(t.user_id));
 
-      const userIds = [...new Set([
-        ...(reservationUsers?.map(r => r.user_id) || []),
-        ...(ticketUsers?.map(t => t.user_id) || [])
-      ].filter(Boolean))];
+      // 6. Business followers
+      const { data: followerUsers } = await supabase
+        .from("business_followers")
+        .select("user_id")
+        .eq("business_id", businessId)
+        .is("unfollowed_at", null);
+      followerUsers?.forEach(f => f.user_id && userIdSet.add(f.user_id));
+
+      // 7. Engagement events (profile visits, shares, etc.)
+      const { data: engagementUsers } = await supabase
+        .from("engagement_events")
+        .select("user_id")
+        .eq("business_id", businessId)
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString())
+        .not("user_id", "is", null);
+      engagementUsers?.forEach(e => e.user_id && userIdSet.add(e.user_id));
+
+      const userIds = Array.from(userIdSet);
 
       if (userIds.length === 0) {
         return {
@@ -50,15 +112,11 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
         };
       }
 
-      // Fetch profiles for these users - use both id and user_id since some profiles have user_id = id
-      // Also check if we should use 'id' column directly since in some cases profile.id = auth.user.id
-      const { data: profilesById } = await supabase
+      // Fetch profiles with gender, age, city/town from signup data
+      const { data: profiles } = await supabase
         .from("profiles")
         .select("gender, age, dob_year, city, town")
         .in("id", userIds);
-
-      // Combine results (profiles.id usually equals auth user id)
-      const profiles = profilesById || [];
 
       // Calculate metrics
       const genderCount = { male: 0, female: 0, other: 0 };
@@ -68,13 +126,13 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
       const currentYear = new Date().getFullYear();
 
       profiles?.forEach(profile => {
-        // Gender
+        // Gender from signup
         const gender = profile.gender?.toLowerCase();
         if (gender === "male" || gender === "m") genderCount.male++;
         else if (gender === "female" || gender === "f") genderCount.female++;
         else if (gender) genderCount.other++;
 
-        // Age
+        // Age from signup (either direct age field or calculated from dob_year)
         let age = profile.age;
         if (!age && profile.dob_year) {
           age = currentYear - profile.dob_year;
@@ -87,7 +145,7 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
           else if (age >= 55) ageCount["55+"]++;
         }
 
-        // Region (prefer city, fallback to town)
+        // Region from signup (prefer city, fallback to town)
         const location = profile.city || profile.town;
         if (location) {
           regionCount[location] = (regionCount[location] || 0) + 1;
