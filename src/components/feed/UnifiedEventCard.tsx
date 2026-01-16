@@ -29,7 +29,6 @@ interface UnifiedEventCardProps {
   isBoosted?: boolean;
   isFree?: boolean;
   size?: "compact" | "default" | "boosted";
-  layout?: "half" | "twoThirds";
   className?: string;
 }
 
@@ -71,7 +70,6 @@ export const UnifiedEventCard = ({
   isBoosted = false,
   isFree = false,
   size = "default",
-  layout = "half",
   className,
 }: UnifiedEventCardProps) => {
   const t = translations[language];
@@ -122,11 +120,11 @@ export const UnifiedEventCard = ({
   const interestedCount = event.interested_count || 0;
   const goingCount = event.going_count || 0;
 
-  // Size variants (Feed wants slightly wider cards)
+  // Size variants - all square
   const sizeClasses = {
-    compact: "w-[188px] aspect-square",
-    default: "w-[208px] aspect-square",
-    boosted: "w-[240px] aspect-square",
+    compact: "w-[180px] aspect-square",
+    default: "w-[200px] aspect-square",
+    boosted: "w-[220px] aspect-square",
   };
 
   // Check if event is free
@@ -151,94 +149,90 @@ export const UnifiedEventCard = ({
     }
   };
 
-  const topHeightClass = layout === "twoThirds" ? "h-2/3" : "h-1/2";
-  const bottomHeightClass = layout === "twoThirds" ? "h-1/3" : "h-1/2";
-
   return (
     <Link
       to={`/event/${event.id}`}
       className={cn(
-        "relative flex-shrink-0 rounded-xl border border-border bg-card",
+        "flex flex-col rounded-xl bg-card border border-border",
         "hover:border-primary/50 hover:shadow-lg transition-all duration-200",
-        "overflow-visible group",
+        "overflow-hidden group flex-shrink-0",
         sizeClasses[size],
         className
       )}
     >
-      {/* Boosted Badge - protruding (never clipped) */}
-      {isBoosted && (
-        <div className="absolute -top-2 -right-2 z-20">
-          <PremiumBadge type="event" />
-        </div>
-      )}
+      {/* TOP HALF - Image Only (50%) */}
+      <div className="relative h-1/2 overflow-hidden">
+        {event.cover_image_url ? (
+          <img
+            src={event.cover_image_url}
+            alt={event.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
+        )}
 
-      {/* Inner clipped content */}
-      <div className="h-full w-full overflow-hidden rounded-xl flex flex-col">
-        {/* TOP - Image */}
-        <div className={cn("relative overflow-hidden", topHeightClass)}>
-          {event.cover_image_url ? (
-            <img
-              src={event.cover_image_url}
-              alt={event.title}
-              loading="lazy"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
-          )}
+        {/* Share Button - Top Left */}
+        <button
+          onClick={handleShare}
+          className="absolute top-2 left-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background transition-colors z-10"
+          aria-label="Share event"
+        >
+          <Share2 className="h-3.5 w-3.5 text-foreground" />
+        </button>
 
-          {/* Share Button - Top Left */}
-          <button
-            onClick={handleShare}
-            className="absolute top-2 left-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background transition-colors z-10"
-            aria-label="Share event"
-          >
-            <Share2 className="h-3.5 w-3.5 text-foreground" />
-          </button>
-
-          {/* Free Badge - Bottom Right on image */}
-          {showFreeBadge && (
-            <Badge className="absolute bottom-2 right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-2 py-0 h-5 border-0 z-10">
-              {t.free}
-            </Badge>
-          )}
-        </div>
-
-        {/* BOTTOM - Details */}
-        <div className={cn("px-3 py-2 flex flex-col", bottomHeightClass)}>
-          {/* 1. Title */}
-          <h4 className="text-sm font-semibold line-clamp-1 leading-[1.1] group-hover:text-primary transition-colors">
-            {event.title}
-          </h4>
-
-          {/* 2. Date · Time */}
-          <p className="text-[11px] text-muted-foreground leading-[1.15] mt-0.5">
-            {dateLabel}
-          </p>
-
-          {/* 3. Location · City · Business */}
-          <p className="text-[11px] text-muted-foreground leading-[1.15] mt-0.5 line-clamp-1">
-            {locationLine || event.location}
-          </p>
-
-          {/* 4. Time Proximity (only if < 24 hours) */}
-          {showTimeProximity && (
-            <p className="text-[10px] text-primary font-medium leading-[1.1] mt-0.5">
-              {timeProximityLabel}
-            </p>
-          )}
-
-          {/* 5. Counters - Bottom Right (tighter) */}
-          <div className="mt-auto flex items-center justify-end gap-2 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Heart className="h-3 w-3 text-secondary" />
-              {interestedCount}
-            </span>
-            <span className="flex items-center gap-1">
-              <Users className="h-3 w-3 text-ocean" />
-              {goingCount}
-            </span>
+        {/* Boosted Badge - Top Right (protruding) */}
+        {isBoosted && (
+          <div className="absolute -top-1.5 -right-1.5 z-20">
+            <PremiumBadge type="event" />
           </div>
+        )}
+
+        {/* Free Badge - Bottom Right on image */}
+        {showFreeBadge && (
+          <Badge className="absolute bottom-1.5 right-1.5 bg-gradient-to-r from-accent to-seafoam text-white text-[9px] px-1.5 py-0 h-4 border-0 z-10">
+            {t.free}
+          </Badge>
+        )}
+      </div>
+
+      {/* BOTTOM HALF - Details (50%) */}
+      <div className="h-1/2 px-2.5 py-2 flex flex-col">
+        {/* 1. Title (max 1 line, bold) */}
+        <h4 className="text-xs font-semibold line-clamp-1 leading-tight group-hover:text-primary transition-colors">
+          {event.title}
+        </h4>
+
+        {/* 2. Date · Time */}
+        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+          {dateLabel}
+        </p>
+
+        {/* 3. Location · City · Business */}
+        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">
+          {locationLine || event.location}
+        </p>
+
+        {/* 4. Time Proximity (only if < 24 hours) */}
+        {showTimeProximity && (
+          <p className="text-[9px] text-primary font-medium leading-tight mt-0.5">
+            {timeProximityLabel}
+          </p>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* 5. Counters - Bottom Right */}
+        <div className="flex items-center justify-end gap-2 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-0.5">
+            <Heart className="h-2.5 w-2.5 text-secondary" />
+            {interestedCount}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Users className="h-2.5 w-2.5 text-ocean" />
+            {goingCount}
+          </span>
         </div>
       </div>
     </Link>
