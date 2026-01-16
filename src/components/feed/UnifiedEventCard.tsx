@@ -116,7 +116,7 @@ export const UnifiedEventCard = ({
 
   // Check if event is free
   const showFreeBadge = isFree || event.price_tier === "free";
-  return <Link to={`/ekdiloseis/${event.id}`} className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "aspect-square overflow-visible group", sizeClasses[size], className)}>
+  return <Link to={`/event/${event.id}`} className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "aspect-square overflow-visible group", sizeClasses[size], className)}>
       {/* TOP - Image (60%) */}
       <div className="relative flex-[1.5] overflow-visible">
         {/* Image container - clipped */}
