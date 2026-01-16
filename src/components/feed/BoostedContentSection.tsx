@@ -217,8 +217,8 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
     <>
       {/* Matching UnifiedEventCard boosted size: 240x240 with exact 50/50 split */}
       <div className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group w-[240px] h-[240px] overflow-visible">
-        {/* TOP HALF: Image - exactly 50% height (120px) */}
-        <div className="relative h-[120px] overflow-visible">
+        {/* TOP HALF: Image - slightly taller to align with event cards */}
+        <div className="relative h-[128px] overflow-visible">
           {/* Image container clipped */}
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {coverImage ? (
