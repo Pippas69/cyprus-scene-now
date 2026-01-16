@@ -1,10 +1,11 @@
-import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck, Sparkles } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useViewTracking, trackDiscountView } from "@/lib/analyticsTracking";
 import { useRef, useState } from "react";
+import { PremiumBadge } from "@/components/ui/premium-badge";
 
 import { cn } from "@/lib/utils";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
@@ -68,6 +69,7 @@ interface OfferCardProps {
 
 const OfferCard = ({ offer, discount, language, style, className }: OfferCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   // Removed scroll reveal for stable layout
   const offerData = offer || discount;
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
@@ -110,25 +112,33 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
     }
   }, { threshold: 0.5 });
   
-  // Format expiry for chip display - always compact
+  // Format expiry for chip display - improved wording
   const formatExpiryChip = (endAt: string) => {
     const end = new Date(endAt);
     const now = new Date();
     const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const locale = language === "el" ? "el-GR" : "en-GB";
     
     // Today
     if (daysLeft <= 0) {
-      return language === "el" ? "Σήμερα" : "Today";
+      return language === "el" ? "Λήγει σήμερα" : "Expires today";
     }
-    // Ends soon (within 3 days)
-    if (daysLeft <= 3) {
-      return language === "el" ? "Λήγει σύντομα" : "Ends soon";
+    // Tomorrow
+    if (daysLeft === 1) {
+      return language === "el" ? "Λήγει αύριο" : "Expires tomorrow";
     }
-    // Show date
+    // Show specific date
+    const day = end.getDate();
+    const month = end.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
     return language === "el"
-      ? `Έως ${end.toLocaleDateString(locale, { day: "numeric", month: "short" })}`
-      : `Until ${end.toLocaleDateString(locale, { day: "numeric", month: "short" })}`;
+      ? `Λήγει στις ${day} ${month}`
+      : `Expires ${month} ${day}`;
+  };
+  
+  // Handle map navigation
+  const handleMapClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/xartis?business=${offerData?.business_id}`);
   };
 
   // Generate benefit text - what the user gets (1 line, bold)
@@ -165,17 +175,17 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
       ref={cardRef}
       variant="glass"
       interactive
-      className={cn("overflow-hidden transition-all duration-300", className)}
+      className={cn("overflow-visible transition-all duration-300", className)}
       style={style}
     >
       {/* Square layout: 50% media (top), 50% info (bottom) */}
       <CardContent className="p-0">
-        <div className="relative aspect-square overflow-hidden">
+        <div className="relative aspect-square">
           <div className="absolute inset-0 grid grid-rows-2">
             {/* TOP HALF: cover image */}
             <Link
               to={`/business/${offerData.business_id}`}
-              className="relative block overflow-hidden"
+              className="relative block overflow-hidden rounded-t-xl"
               aria-label={offerData.businesses.name}
             >
               {offerData.businesses.cover_url || offerData.businesses.logo_url ? (
@@ -192,61 +202,85 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
             </Link>
 
-            {/* BOTTOM HALF: white info panel - FIXED 3 lines */}
-            <div className="bg-background p-4 flex flex-col justify-between">
-              {/* LINE 1: What you get (benefit) - bold */}
+            {/* BOTTOM HALF: white info panel */}
+            <div className="bg-background p-4 flex flex-col justify-between rounded-b-xl">
+              {/* LINE 1: Title (business defined) */}
               <h3 className="font-bold text-base leading-tight line-clamp-1">
-                {getBenefitText()}
+                {offerData.title}
               </h3>
 
-              {/* LINE 2: Where - business name · city (muted) */}
-              <p className="text-sm text-muted-foreground truncate">
-                {offerData.businesses.name} · {offerData.businesses.city}
+              {/* LINE 2: Expiry date */}
+              <p className="text-sm text-muted-foreground">
+                {formatExpiryChip(offerData.end_at)}
               </p>
 
-              {/* LINE 3: Expiry chip + CTA */}
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-xs">
-                  {formatExpiryChip(offerData.end_at)}
-                </Badge>
-                <Button onClick={() => setIsPurchaseOpen(true)} size="sm" variant="default">
+              {/* LINE 3: Location (clickable) + Business name + Redeem button */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 min-w-0 flex-1">
+                  <button 
+                    onClick={handleMapClick}
+                    className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors shrink-0"
+                    title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {offerData.businesses.city} · {offerData.businesses.name}
+                  </span>
+                </div>
+                <Button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsPurchaseOpen(true);
+                  }} 
+                  size="sm" 
+                  variant="default"
+                  className="shrink-0"
+                >
                   {language === "el" ? "Εξαργύρωσε" : "Redeem"}
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* BADGES ON TOP OF IMAGE */}
+          {/* BADGES ON TOP OF IMAGE - Top-right, side by side */}
+          <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1">
+            {/* Discount percentage badge (smaller, left of premium badge) */}
+            {offerData.percent_off && offerData.percent_off > 0 && (
+              <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
+                -{offerData.percent_off}%
+              </Badge>
+            )}
+            {isCredit && (
+              <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
+                <Wallet className="h-3 w-3 mr-0.5" />
+                {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
+              </Badge>
+            )}
+            {/* Premium sparkle badge */}
+            <PremiumBadge type="offer" />
+          </div>
+
           {/* Top-left: Reservation badge (ONLY if exists) */}
           {offerData.requires_reservation && (
             <div className="absolute left-3 top-3 z-10">
-              <Badge variant="secondary" className="bg-background/85 backdrop-blur">
+              <Badge variant="secondary" className="bg-background/85 backdrop-blur text-xs">
                 <CalendarCheck className="h-3 w-3 mr-1" />
                 {language === "el" ? "Κράτηση" : "Reservation"}
               </Badge>
             </div>
           )}
 
-          {/* Top-right: Discount/Credit + Bundle badge */}
-          <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1">
-            {isCredit ? (
-              <Badge variant="default" className="flex-shrink-0">
-                <Wallet className="h-3 w-3 mr-1" />
-                {bonusPercent > 0 ? `+${bonusPercent}%` : language === "el" ? "Πίστωση" : "Credit"}
-              </Badge>
-            ) : offerData.percent_off ? (
-              <Badge variant="default" className="flex-shrink-0">
-                {offerData.percent_off}% OFF
-              </Badge>
-            ) : null}
-
-            {isBundle && (
-              <Badge variant="outline" className="text-xs flex-shrink-0 bg-background/85 backdrop-blur">
+          {/* Bundle badge (if applicable) */}
+          {isBundle && (
+            <div className="absolute left-3 bottom-[52%] z-10">
+              <Badge variant="outline" className="text-xs bg-background/85 backdrop-blur">
                 <Package className="h-3 w-3 mr-1" />
                 {language === "el" ? "Πακέτο" : "Bundle"}
               </Badge>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </CardContent>
 
