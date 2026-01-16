@@ -175,7 +175,7 @@ export const UnifiedEventCard = ({
       {/* BOTTOM HALF - Details */}
       <div className="flex-1 p-3 flex flex-col justify-between min-h-0">
         {/* 1. Title (max 1 line) */}
-        <h4 className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+        <h4 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
           {event.title}
         </h4>
 
