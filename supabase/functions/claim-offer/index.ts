@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
           party_size: partySize,
           status: "accepted", // Auto-accept for offer-based reservations
           special_requests: `Offer claim: ${discount.title}`,
-          confirmation_code: crypto.randomUUID().substring(0, 8).toUpperCase(),
+          confirmation_code: crypto.randomUUID().substring(0, 6).toUpperCase(),
         })
         .select()
         .single();
