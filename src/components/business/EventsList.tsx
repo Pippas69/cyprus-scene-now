@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Trash2, Calendar, MapPin, Users, Copy, Pencil, Rocket, Sparkles, Ticket } from "lucide-react";
-import EventEditDialog from "./EventEditDialog";
+import EventEditForm from "./EventEditForm";
 import EventBoostDialog from "./EventBoostDialog";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
 import { useEventActiveBoost } from "@/hooks/useBoostAnalytics";
@@ -414,7 +414,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       </div>
 
       {editingEvent && (
-        <EventEditDialog
+        <EventEditForm
           event={editingEvent}
           open={!!editingEvent}
           onOpenChange={(open) => !open && setEditingEvent(null)}
