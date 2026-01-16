@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface OverviewMetrics {
-  profileViews: number;
+  totalViews: number;
   customersThruFomo: number;
   repeatCustomers: number;
   bookings: number;
@@ -25,7 +25,8 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       
       const eventIds = events?.map(e => e.id) || [];
 
-      // 1. Profile Views
+      // 1. TOTAL Views (profile + offers + events)
+      // Profile views
       const { count: profileViews } = await supabase
         .from("engagement_events")
         .select("*", { count: "exact", head: true })
@@ -33,6 +34,39 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         .eq("event_type", "profile_view")
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
+
+      // Offer views (discounts)
+      const { data: businessDiscounts } = await supabase
+        .from("discounts")
+        .select("id")
+        .eq("business_id", businessId);
+      
+      const discountIds = businessDiscounts?.map(d => d.id) || [];
+      
+      let offerViews = 0;
+      if (discountIds.length > 0) {
+        const { count } = await supabase
+          .from("discount_views")
+          .select("*", { count: "exact", head: true })
+          .in("discount_id", discountIds)
+          .gte("viewed_at", startDate.toISOString())
+          .lte("viewed_at", endDate.toISOString());
+        offerViews = count || 0;
+      }
+
+      // Event views
+      let eventViews = 0;
+      if (eventIds.length > 0) {
+        const { count } = await supabase
+          .from("event_views")
+          .select("*", { count: "exact", head: true })
+          .in("event_id", eventIds)
+          .gte("viewed_at", startDate.toISOString())
+          .lte("viewed_at", endDate.toISOString());
+        eventViews = count || 0;
+      }
+
+      const totalViews = (profileViews || 0) + offerViews + eventViews;
 
       // 2. Customers through FOMO (unique users from reservations + ticket orders)
       // Note: reservations can be linked via event_id OR direct business_id
@@ -106,7 +140,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       }
 
       return {
-        profileViews: profileViews || 0,
+        totalViews,
         customersThruFomo,
         repeatCustomers,
         bookings: bookings || 0,
