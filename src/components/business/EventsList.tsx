@@ -135,20 +135,38 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const { data: events, isLoading } = useQuery({
     queryKey: ['business-events', businessId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch events
+      const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select(`
-          *,
-          realtime_stats (
-            interested_count,
-            going_count
-          )
-        `)
+        .select('*')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (eventsError) throw eventsError;
+      if (!eventsData || eventsData.length === 0) return [];
+
+      // Fetch RSVP counts using the RPC function for accurate counts
+      const eventIds = eventsData.map(e => e.id);
+      const { data: countsData } = await supabase.rpc('get_event_rsvp_counts_bulk', {
+        p_event_ids: eventIds
+      });
+
+      // Create a map for quick lookup
+      const countsMap = new Map<string, { interested_count: number; going_count: number }>();
+      if (countsData) {
+        countsData.forEach((c: any) => {
+          countsMap.set(c.event_id, {
+            interested_count: Number(c.interested_count) || 0,
+            going_count: Number(c.going_count) || 0
+          });
+        });
+      }
+
+      // Merge counts into events
+      return eventsData.map(event => ({
+        ...event,
+        rsvp_counts: countsMap.get(event.id) || { interested_count: 0, going_count: 0 }
+      }));
     },
   });
 
@@ -336,8 +354,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
                     <span>
-                      {event.realtime_stats?.[0]?.interested_count || 0} {t.interested.toLowerCase()}, {' '}
-                      {event.realtime_stats?.[0]?.going_count || 0} {t.going.toLowerCase()}
+                      {event.rsvp_counts?.interested_count || 0} {t.interested.toLowerCase()}, {' '}
+                      {event.rsvp_counts?.going_count || 0} {t.going.toLowerCase()}
                     </span>
                   </div>
                 </div>
