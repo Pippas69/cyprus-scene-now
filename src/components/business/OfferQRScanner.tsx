@@ -172,147 +172,47 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
 
   const handleScan = async (qrToken: string) => {
     setVerifying(true);
-    
+
     try {
-      // Fetch the purchase by QR token
-      const { data: purchase, error: purchaseError } = await supabase
-        .from("offer_purchases")
-        .select(`
-          *,
-          discounts (
-            id,
-            title,
-            description,
-            percent_off,
-            business_id,
-            valid_days,
-            valid_start_time,
-            valid_end_time
-          )
-        `)
-        .eq("qr_code_token", qrToken)
-        .single();
-
-      if (purchaseError || !purchase) {
-        const msg = language === "el" ? t.errors.notFound.el : t.errors.notFound.en;
-        setScanResult({ success: false, message: msg });
+      const cleanedToken = String(qrToken || '').trim();
+      if (!cleanedToken) {
+        const errorMsg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;
+        setScanResult({ success: false, message: errorMsg });
         stopScanner();
         return;
       }
 
-      // Verify business ownership via the discount
-      if (purchase.discounts.business_id !== businessId) {
-        const msg = language === "el" ? t.errors.wrongBusiness.el : t.errors.wrongBusiness.en;
-        setScanResult({ success: false, message: msg });
+      const { data, error } = await supabase.functions.invoke("validate-offer", {
+        body: {
+          qrToken: cleanedToken,
+          businessId,
+          language,
+        },
+      });
+
+      if (error) {
+        console.error("validate-offer invoke error:", error);
+        const errorMsg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;
+        setScanResult({ success: false, message: errorMsg });
         stopScanner();
         return;
       }
 
-      // Check status
-      if (purchase.status === 'redeemed') {
-        const msg = language === "el" ? t.errors.alreadyRedeemed.el : t.errors.alreadyRedeemed.en;
-        setScanResult({ success: false, message: msg });
+      const res = data as { success: boolean; message: string; purchase?: ScannedPurchase };
+
+      if (!res?.success) {
+        setScanResult({ success: false, message: res?.message || (language === "el" ? t.errors.scanError.el : t.errors.scanError.en) });
         stopScanner();
         return;
       }
 
-      if (purchase.status !== 'paid') {
-        const msg = language === "el" ? t.errors.notPaid.el : t.errors.notPaid.en;
-        setScanResult({ success: false, message: msg });
-        stopScanner();
-        return;
-      }
-
-      // Check expiry
-      if (new Date(purchase.expires_at) < new Date()) {
-        const msg = language === "el" ? t.errors.expired.el : t.errors.expired.en;
-        setScanResult({ success: false, message: msg });
-        stopScanner();
-        return;
-      }
-
-      // Enforce valid days/hours at redemption time (Cyprus timezone)
-      const discount = purchase.discounts as any;
-
-      // Day of week
-      if (discount?.valid_days && Array.isArray(discount.valid_days) && discount.valid_days.length > 0) {
-        const cyprusWeekday = new Date().toLocaleDateString('en-US', { timeZone: 'Europe/Nicosia', weekday: 'long' }).toLowerCase();
-        // Map e.g. "monday" to stored values ("monday", ...)
-        if (!discount.valid_days.includes(cyprusWeekday)) {
-          const msg = language === "el" ? t.errors.notValidToday.el : t.errors.notValidToday.en;
-          setScanResult({ success: false, message: msg });
-          stopScanner();
-          return;
-        }
-      }
-
-      // Hours
-      if (discount?.valid_start_time && discount?.valid_end_time) {
-        const cyprusTime = new Date().toLocaleTimeString('en-GB', {
-          timeZone: 'Europe/Nicosia',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        });
-        const startTime = String(discount.valid_start_time).substring(0, 5);
-        const endTime = String(discount.valid_end_time).substring(0, 5);
-
-        const withinHours = (() => {
-          // Overnight window (e.g., 22:00-04:00)
-          if (endTime < startTime) {
-            return cyprusTime >= startTime || cyprusTime <= endTime;
-          }
-          return cyprusTime >= startTime && cyprusTime <= endTime;
-        })();
-
-        if (!withinHours) {
-          const msg = language === "el" ? t.errors.notValidHours.el : t.errors.notValidHours.en;
-          setScanResult({ success: false, message: msg });
-          stopScanner();
-          return;
-        }
-      }
-
-      // Get current user for redemption tracking
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Update purchase to redeemed
-      const { error: updateError } = await supabase
-        .from("offer_purchases")
-        .update({
-          status: 'redeemed',
-          redeemed_at: new Date().toISOString(),
-          redeemed_by: user?.id
-        })
-        .eq("id", purchase.id);
-
-      if (updateError) {
-        console.error('Error updating purchase:', updateError);
-        const msg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;
-        setScanResult({ success: false, message: msg });
-        stopScanner();
-        return;
-      }
-
-      // Get customer name if possible
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("first_name, last_name")
-        .eq("id", purchase.user_id)
-        .single();
-
-      // Success!
-      setScanResult({ 
-        success: true, 
-        message: t.success,
-        purchase: {
-          ...purchase,
-          profiles: profile
-        } as ScannedPurchase
+      setScanResult({
+        success: true,
+        message: res.message || t.success,
+        purchase: res.purchase,
       });
       stopScanner();
-      toast.success(t.success);
-
+      toast.success(res.message || t.success);
     } catch (error) {
       console.error("Verification error:", error);
       const errorMsg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;

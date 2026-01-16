@@ -131,5 +131,9 @@ verify_jwt = false
 
 [functions.send-student-verification-email]
 verify_jwt = false
+
 [functions.verify-student-token]
 verify_jwt = false
+
+[functions.validate-offer]
+verify_jwt = true
