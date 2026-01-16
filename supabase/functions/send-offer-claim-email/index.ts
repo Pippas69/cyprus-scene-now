@@ -234,14 +234,14 @@ Deno.serve(async (req) => {
 
       ${data.showReservationCta ? `
         <div style="text-align: center; margin: 24px 0;">
-          <a href="https://fomo.cy/business/${data.businessId}" style="display: inline-block; background: #0d3b66; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+          <a href="https://fomo.com.cy/business/${data.businessId}" style="display: inline-block; background: #0d3b66; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px;">
             Κάντε Κράτηση
           </a>
         </div>
       ` : ''}
 
       <div style="text-align: center; margin: 32px 0;">
-        <a href="https://fomo.cy/dashboard-user/offers" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        <a href="https://fomo.com.cy/dashboard-user/offers" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
           Δείτε τις Προσφορές σας
         </a>
       </div>
