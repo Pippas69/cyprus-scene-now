@@ -9,9 +9,17 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CLAIM-OFFER] ${step}`, details ? JSON.stringify(details) : '');
 };
 
+interface ReservationData {
+  preferred_date: string;
+  preferred_time: string;
+  party_size: number;
+}
+
 interface ClaimOfferRequest {
   discountId: string;
   partySize: number;
+  withReservation?: boolean;
+  reservationData?: ReservationData;
 }
 
 Deno.serve(async (req) => {
@@ -43,8 +51,8 @@ Deno.serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Parse request
-    const { discountId, partySize }: ClaimOfferRequest = await req.json();
-    logStep("Request data", { discountId, partySize });
+    const { discountId, partySize, withReservation, reservationData }: ClaimOfferRequest = await req.json();
+    logStep("Request data", { discountId, partySize, withReservation, reservationData });
 
     if (!discountId || !partySize || partySize < 1) {
       throw new Error("Invalid request: discountId and partySize are required");
@@ -87,10 +95,6 @@ Deno.serve(async (req) => {
       throw new Error("This offer is not currently available");
     }
 
-    // Note: We allow claiming at any time during the overall offer date range.
-    // The business-side QR scanner enforces valid days/hours at redemption time.
-
-
     // Validate party size against max per redemption
     const maxPeoplePerRedemption = discount.max_people_per_redemption || 5;
     if (partySize > maxPeoplePerRedemption) {
@@ -110,13 +114,67 @@ Deno.serve(async (req) => {
         .select("id")
         .eq("discount_id", discountId)
         .eq("user_id", user.id)
-        // A claim is considered "used" as soon as it's created (paid), or already redeemed.
         .in("status", ["paid", "redeemed"]) 
         .maybeSingle();
 
       if (existingClaim) {
         throw new Error("You have already claimed this offer");
       }
+    }
+
+    // If reservation requested, check capacity first
+    let reservationId: string | null = null;
+    if (withReservation && reservationData) {
+      logStep("Creating reservation with offer claim", reservationData);
+      
+      // Check capacity
+      const { data: capacityData, error: capacityError } = await supabaseAdmin.rpc(
+        'get_business_available_capacity',
+        {
+          p_business_id: discount.business_id,
+          p_date: reservationData.preferred_date,
+        }
+      );
+
+      if (capacityError) {
+        logStep("Capacity check error", { error: capacityError.message });
+        throw new Error("Could not check reservation availability");
+      }
+
+      const capacity = capacityData as { available?: boolean; remaining_capacity?: number; reason?: string } | null;
+      if (!capacity?.available) {
+        throw new Error(capacity?.reason || "No availability for reservations on this date");
+      }
+      if (capacity?.remaining_capacity !== undefined && capacity.remaining_capacity < partySize) {
+        throw new Error("Not enough reservation slots available");
+      }
+      logStep("Capacity available", { remainingCapacity: capacity?.remaining_capacity });
+
+      // Create reservation - combine date and time into preferred_time
+      const preferredDateTime = `${reservationData.preferred_date}T${reservationData.preferred_time}:00`;
+      
+      const { data: reservation, error: reservationError } = await supabaseAdmin
+        .from("reservations")
+        .insert({
+          business_id: discount.business_id,
+          user_id: user.id,
+          event_id: null, // Direct business reservation
+          preferred_time: preferredDateTime,
+          party_size: partySize,
+          status: "accepted", // Auto-accept for offer-based reservations
+          special_requests: `Offer claim: ${discount.title}`,
+          confirmation_code: crypto.randomUUID().substring(0, 8).toUpperCase(),
+        })
+        .select()
+        .single();
+
+      if (reservationError) {
+        logStep("Reservation insert error", reservationError);
+        throw new Error("Failed to create reservation");
+      }
+      
+      reservationId = reservation.id;
+      logStep("Reservation created", { reservationId });
     }
 
     // Generate unique QR token
@@ -134,31 +192,32 @@ Deno.serve(async (req) => {
         discount_id: discountId,
         user_id: user.id,
         business_id: discount.business_id,
-
-        // Required monetary columns in schema (even though this is a no-payment claim)
         original_price_cents: 0,
         discount_percent: discountPercent,
         final_price_cents: 0,
         amount_paid_cents: 0,
-
         commission_percent: 0,
         commission_amount_cents: 0,
         business_payout_cents: 0,
-
         status: "paid",
         qr_code_token: qrCodeToken,
         expires_at: expiresAt,
         party_size: partySize,
-        claim_type: "walk_in",
+        claim_type: withReservation ? "with_reservation" : "walk_in",
+        reservation_id: reservationId,
       })
       .select()
       .single();
 
     if (purchaseError) {
       logStep("Purchase insert error", purchaseError);
+      // Clean up reservation if purchase failed
+      if (reservationId) {
+        await supabaseAdmin.from("reservations").delete().eq("id", reservationId);
+      }
       throw new Error("Failed to create claim record");
     }
-    logStep("Claim record created", { purchaseId: purchase.id });
+    logStep("Claim record created", { purchaseId: purchase.id, hasReservation: !!reservationId });
 
     // Deduct people from availability
     const newPeopleRemaining = peopleRemaining - partySize;
@@ -166,7 +225,6 @@ Deno.serve(async (req) => {
       .from("discounts")
       .update({ 
         people_remaining: newPeopleRemaining,
-        // Deactivate if no more people
         active: newPeopleRemaining > 0 ? discount.active : false
       })
       .eq("id", discountId);
@@ -223,8 +281,11 @@ Deno.serve(async (req) => {
           validDays: discount.valid_days,
           validStartTime: discount.valid_start_time,
           validEndTime: discount.valid_end_time,
-          showReservationCta: discount.show_reservation_cta,
+          showReservationCta: false, // No longer show CTA after claim
           businessId: discount.business_id,
+          hasReservation: !!reservationId,
+          reservationDate: reservationData?.preferred_date,
+          reservationTime: reservationData?.preferred_time,
         }),
       });
       logStep("User email sent");
@@ -250,6 +311,9 @@ Deno.serve(async (req) => {
             claimedAt: new Date().toISOString(),
             remainingPeople: newPeopleRemaining,
             totalPeople: discount.total_people,
+            hasReservation: !!reservationId,
+            reservationDate: reservationData?.preferred_date,
+            reservationTime: reservationData?.preferred_time,
           }),
         });
         logStep("Business notification sent");
@@ -268,8 +332,10 @@ Deno.serve(async (req) => {
         offerTitle: discount.title,
         businessName: discount.businesses.name,
         businessLogo: discount.businesses.logo_url,
-        showReservationCta: discount.show_reservation_cta,
+        showReservationCta: false,
         businessId: discount.business_id,
+        hasReservation: !!reservationId,
+        reservationId,
       }),
       {
         status: 200,
@@ -279,8 +345,6 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     logStep("ERROR", { message: error?.message });
 
-    // IMPORTANT: Return 200 so the client doesn't surface a generic "non-2xx" runtime error overlay.
-    // We still include the error message in the payload so the UI can show a friendly toast.
     return new Response(
       JSON.stringify({ success: false, error: error?.message || "Unknown error" }),
       {

@@ -5,16 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, QrCode, CalendarCheck } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, QrCode, CalendarCheck, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import QRCodeLib from "qrcode";
 import { useIsMobile } from "@/hooks/use-mobile";
-
+import { format, addDays, isAfter, isBefore, parse } from "date-fns";
+import { el, enUS } from "date-fns/locale";
 
 interface Offer {
   id: string;
@@ -36,11 +38,11 @@ interface Offer {
   end_at: string;
   terms?: string | null;
   business_id?: string;
-  // Legacy fields from OfferCard - kept for compatibility
   original_price_cents?: number | null;
   pricing_type?: string;
   requires_reservation?: boolean;
   businesses: {
+    id?: string;
     name: string;
     logo_url: string | null;
     cover_url?: string | null;
@@ -63,8 +65,10 @@ interface ClaimSuccessData {
   offerTitle: string;
   businessName: string;
   businessLogo: string | null;
-  showReservationCta: boolean;
   businessId: string;
+  hasReservation: boolean;
+  reservationDate?: string;
+  reservationTime?: string;
 }
 
 export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferClaimDialogProps) {
@@ -75,6 +79,14 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const [partySize, setPartySize] = useState(1);
   const [claimSuccess, setClaimSuccess] = useState<ClaimSuccessData | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  
+  // Reservation state - BEFORE claim
+  const [wantsReservation, setWantsReservation] = useState(false);
+  const [reservationDate, setReservationDate] = useState<Date | undefined>(undefined);
+  const [reservationTime, setReservationTime] = useState<string>("");
+  const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
+  const [checkingCapacity, setCheckingCapacity] = useState(false);
+  const [capacityError, setCapacityError] = useState<string | null>(null);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -84,6 +96,11 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       setPartySize(1);
       setClaimSuccess(null);
       setQrCodeDataUrl(null);
+      setWantsReservation(false);
+      setReservationDate(undefined);
+      setReservationTime("");
+      setAvailableCapacity(null);
+      setCapacityError(null);
     }
   }, [isOpen]);
 
@@ -97,6 +114,46 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       }).then(setQrCodeDataUrl);
     }
   }, [claimSuccess?.qrCodeToken]);
+
+  // Check capacity when date changes and user wants reservation
+  useEffect(() => {
+    if (wantsReservation && reservationDate && offer?.business_id) {
+      checkCapacity();
+    }
+  }, [wantsReservation, reservationDate, offer?.business_id]);
+
+  const checkCapacity = async () => {
+    if (!reservationDate || !offer?.business_id) return;
+    
+    setCheckingCapacity(true);
+    setCapacityError(null);
+    
+    try {
+      const { data, error } = await supabase.rpc('get_business_available_capacity', {
+        p_business_id: offer.business_id,
+        p_date: format(reservationDate, 'yyyy-MM-dd'),
+      });
+
+      if (error) throw error;
+
+      const capacityData = data as { available?: boolean; remaining_capacity?: number; reason?: string } | null;
+      
+      if (!capacityData?.available) {
+        setCapacityError(capacityData?.reason || (language === "el" ? "Δεν υπάρχει διαθεσιμότητα" : "No availability"));
+        setAvailableCapacity(0);
+      } else {
+        setAvailableCapacity(capacityData.remaining_capacity ?? 999);
+        if (capacityData.remaining_capacity === 0) {
+          setCapacityError(language === "el" ? "Δεν υπάρχουν διαθέσιμες κρατήσεις" : "No available reservations");
+        }
+      }
+    } catch (error) {
+      console.error("Capacity check error:", error);
+      setCapacityError(language === "el" ? "Σφάλμα ελέγχου διαθεσιμότητας" : "Error checking availability");
+    } finally {
+      setCheckingCapacity(false);
+    }
+  };
 
   const text = {
     title: { el: "Διεκδίκηση Προσφοράς", en: "Claim Offer" },
@@ -117,7 +174,6 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     showQrCode: { el: "Δείξτε αυτόν τον κωδικό QR στο κατάστημα", en: "Show this QR code at the venue" },
     emailSent: { el: "Email στάλθηκε με τον κωδικό QR", en: "Email sent with QR code" },
     viewMyOffers: { el: "Οι Προσφορές μου", en: "My Offers" },
-    makeReservation: { el: "Θέλετε κράτηση;", en: "Want a reservation?" },
     validFor: { el: "Ισχύει για", en: "Valid for" },
     people: { el: "άτομα", en: "people" },
     person: { el: "άτομο", en: "person" },
@@ -127,6 +183,15 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     account_total: { el: "Σύνολο Λογαριασμού", en: "Account Total" },
     everyDay: { el: "Κάθε μέρα", en: "Every day" },
     allDay: { el: "Όλη μέρα", en: "All day" },
+    wantReservation: { el: "Θέλετε να κλείσετε τραπέζι;", en: "Want to book a table?" },
+    reservationNote: { el: "Κάντε κράτηση για τις ώρες της έκπτωσης για να εξασφαλίσετε θέση.", en: "Make a reservation for discount hours to secure a seat." },
+    makeReservation: { el: "Κάνε Κράτηση για Έκπτωση", en: "Book for Discount Hours" },
+    selectDate: { el: "Επιλέξτε ημερομηνία", en: "Select date" },
+    selectTime: { el: "Επιλέξτε ώρα", en: "Select time" },
+    noAvailability: { el: "Δεν υπάρχουν διαθέσιμες κρατήσεις", en: "No available reservations" },
+    reservationConfirmed: { el: "Κράτηση επιβεβαιωμένη", en: "Reservation confirmed" },
+    walkInOnly: { el: "Μόνο walk-in", en: "Walk-in only" },
+    withReservation: { el: "Με κράτηση", en: "With reservation" },
   };
 
   const t = (key: keyof typeof text) => text[key][language];
@@ -139,6 +204,16 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     friday: { el: "Παρασκευή", en: "Friday" },
     saturday: { el: "Σάββατο", en: "Saturday" },
     sunday: { el: "Κυριακή", en: "Sunday" },
+  };
+
+  const dayToEnglish: Record<string, string> = {
+    monday: "monday",
+    tuesday: "tuesday",
+    wednesday: "wednesday",
+    thursday: "thursday",
+    friday: "friday",
+    saturday: "saturday",
+    sunday: "sunday",
   };
 
   const getCategoryLabel = (category: string | null): string => {
@@ -161,9 +236,56 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     return days.map(d => dayTranslations[d]?.[language] || d).join(", ");
   };
 
-  const formatTime = (start: string | null, end: string | null): string => {
+  const formatTimeRange = (start: string | null, end: string | null): string => {
     if (!start || !end) return t("allDay");
     return `${start.substring(0, 5)} - ${end.substring(0, 5)}`;
+  };
+
+  // Generate available time slots within offer valid hours
+  const getAvailableTimeSlots = (): string[] => {
+    if (!offer?.valid_start_time || !offer?.valid_end_time) return [];
+    
+    const slots: string[] = [];
+    const startHour = parseInt(offer.valid_start_time.substring(0, 2));
+    const endHour = parseInt(offer.valid_end_time.substring(0, 2));
+    
+    // Handle overnight offers (e.g., 22:00 - 04:00)
+    if (endHour < startHour) {
+      // From start to midnight
+      for (let h = startHour; h < 24; h++) {
+        slots.push(`${h.toString().padStart(2, '0')}:00`);
+      }
+      // From midnight to end
+      for (let h = 0; h <= endHour; h++) {
+        slots.push(`${h.toString().padStart(2, '0')}:00`);
+      }
+    } else {
+      for (let h = startHour; h <= endHour; h++) {
+        slots.push(`${h.toString().padStart(2, '0')}:00`);
+      }
+    }
+    
+    return slots;
+  };
+
+  // Check if a date is valid for this offer (within valid_days and date range)
+  const isDateValidForOffer = (date: Date): boolean => {
+    if (!offer) return false;
+    
+    // Check if within offer date range
+    const endAt = new Date(offer.end_at);
+    const startAt = offer.start_at ? new Date(offer.start_at) : new Date();
+    if (isBefore(date, startAt) || isAfter(date, endAt)) return false;
+    
+    // Check if day is in valid_days
+    if (offer.valid_days && offer.valid_days.length > 0 && offer.valid_days.length < 7) {
+      const dayIndex = date.getDay();
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayName = dayNames[dayIndex];
+      if (!offer.valid_days.includes(dayName)) return false;
+    }
+    
+    return true;
   };
 
   if (!offer) return null;
@@ -176,6 +298,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       ? `-${offer.percent_off}%`
       : null;
 
+  const businessId = offer.business_id || offer.businesses?.id;
+  const businessAcceptsReservations = offer.businesses?.accepts_direct_reservations === true;
+  const showReservationOption = offer.show_reservation_cta && businessAcceptsReservations && businessId;
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(language === "el" ? "el-GR" : "en-US", {
       day: "numeric",
@@ -187,34 +313,42 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const handleClaim = async () => {
     setIsLoading(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error(t("errorAuth"));
         return;
       }
 
+      // Build request body
+      const requestBody: any = { 
+        discountId: offer.id, 
+        partySize,
+      };
+
+      // If user wants reservation, include reservation data
+      if (wantsReservation && reservationDate && reservationTime) {
+        requestBody.withReservation = true;
+        requestBody.reservationData = {
+          preferred_date: format(reservationDate, 'yyyy-MM-dd'),
+          preferred_time: reservationTime,
+          party_size: partySize,
+        };
+      }
+
       const { data, error } = await supabase.functions.invoke("claim-offer", {
-        body: { discountId: offer.id, partySize },
+        body: requestBody,
       });
 
-      // New contract: backend returns 200 with { success: false, error }
-      const serverMsg =
-        (data as any)?.success === false
-          ? ((data as any)?.error as string | undefined)
-          : undefined;
+      const serverMsg = (data as any)?.success === false
+        ? ((data as any)?.error as string | undefined)
+        : undefined;
 
       if (error || serverMsg) {
-        // Fallback parsing for any unexpected non-2xx errors
         const rawBody = (error as any)?.context?.body;
         const parsedMsg = (() => {
           if (typeof rawBody === "string") {
-            try {
-              return JSON.parse(rawBody)?.error as string | undefined;
-            } catch {
-              return undefined;
-            }
+            try { return JSON.parse(rawBody)?.error as string | undefined; }
+            catch { return undefined; }
           }
           return undefined;
         })();
@@ -223,8 +357,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         const friendlyMsg =
           msg === "You have already claimed this offer"
             ? language === "el"
-              ? "Έχετε ήδη διεκδικήσει αυτή την προσφορά. Δείτε την στις “Οι Προσφορές μου”."
-              : "You already claimed this offer. Check it in “My Offers”."
+              ? "Έχετε ήδη διεκδικήσει αυτή την προσφορά. Δείτε την στις \"Οι Προσφορές μου\"."
+              : "You already claimed this offer. Check it in \"My Offers\"."
             : msg || t("errorGeneric");
 
         toast.error(friendlyMsg);
@@ -239,10 +373,16 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
           offerTitle: data.offerTitle,
           businessName: data.businessName,
           businessLogo: data.businessLogo,
-          showReservationCta: data.showReservationCta,
           businessId: data.businessId,
+          hasReservation: data.hasReservation || false,
+          reservationDate: wantsReservation && reservationDate ? format(reservationDate, 'dd/MM/yyyy') : undefined,
+          reservationTime: wantsReservation ? reservationTime : undefined,
         });
-        toast.success(language === "el" ? "Η προσφορά διεκδικήθηκε!" : "Offer claimed!");
+        
+        const successMsg = wantsReservation 
+          ? (language === "el" ? "Η προσφορά διεκδικήθηκε με κράτηση!" : "Offer claimed with reservation!")
+          : (language === "el" ? "Η προσφορά διεκδικήθηκε!" : "Offer claimed!");
+        toast.success(successMsg);
       }
     } catch {
       toast.error(t("errorGeneric"));
@@ -253,14 +393,143 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
   const handleViewMyOffers = () => {
     onClose();
-    navigate("/dashboard-user/offers");
+    navigate("/dashboard-user?tab=offers");
   };
 
-  const handleMakeReservation = () => {
-    if (claimSuccess?.businessId) {
-      onClose();
-      navigate(`/business/${claimSuccess.businessId}`);
-    }
+  // Reservation section that appears BEFORE claiming
+  const ReservationSection = () => {
+    if (!showReservationOption) return null;
+
+    const timeSlots = getAvailableTimeSlots();
+    const canProceedWithReservation = wantsReservation && reservationDate && reservationTime && 
+      availableCapacity !== null && availableCapacity >= partySize && !capacityError;
+
+    return (
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-primary font-medium">
+            <CalendarCheck className="h-5 w-5" />
+            <span>{t("wantReservation")}</span>
+          </div>
+          <Checkbox
+            id="want-reservation"
+            checked={wantsReservation}
+            onCheckedChange={(checked) => {
+              setWantsReservation(checked === true);
+              if (!checked) {
+                setReservationDate(undefined);
+                setReservationTime("");
+                setAvailableCapacity(null);
+                setCapacityError(null);
+              }
+            }}
+          />
+        </div>
+        
+        <p className="text-sm text-muted-foreground">
+          {language === "el"
+            ? `Κάντε κράτηση για τις ώρες που ισχύει η έκπτωση (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.`
+            : `Make a reservation for the discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
+        </p>
+
+        {wantsReservation && (
+          <div className="space-y-3 pt-2">
+            {/* Date Picker */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                {t("selectDate")}
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {reservationDate 
+                      ? format(reservationDate, "PPP", { locale: language === "el" ? el : enUS })
+                      : t("selectDate")
+                    }
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={reservationDate}
+                    onSelect={setReservationDate}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return isBefore(date, today) || !isDateValidForOffer(date);
+                    }}
+                    initialFocus
+                    locale={language === "el" ? el : enUS}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Time Selector */}
+            {reservationDate && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  {t("selectTime")}
+                </Label>
+                <Select value={reservationTime} onValueChange={setReservationTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("selectTime")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeSlots.map((slot) => (
+                      <SelectItem key={slot} value={slot}>
+                        {slot}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Capacity Status */}
+            {reservationDate && (
+              <div className="text-sm">
+                {checkingCapacity ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>{language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}</span>
+                  </div>
+                ) : capacityError ? (
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{capacityError}</span>
+                  </div>
+                ) : availableCapacity !== null && availableCapacity > 0 ? (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>
+                      {language === "el" 
+                        ? `${availableCapacity} διαθέσιμες θέσεις` 
+                        : `${availableCapacity} available slots`}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {/* Warning if party size exceeds capacity */}
+            {availableCapacity !== null && availableCapacity > 0 && availableCapacity < partySize && (
+              <div className="flex items-center gap-2 text-amber-600 text-sm">
+                <AlertCircle className="h-4 w-4" />
+                <span>
+                  {language === "el"
+                    ? `Μόνο ${availableCapacity} θέσεις διαθέσιμες. Μειώστε τον αριθμό ατόμων.`
+                    : `Only ${availableCapacity} slots available. Reduce party size.`}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Success View
@@ -315,34 +584,29 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
             </Badge>
           </div>
 
+          {/* Reservation Confirmation */}
+          {claimSuccess.hasReservation && claimSuccess.reservationDate && (
+            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg justify-center">
+              <CalendarCheck className="h-4 w-4" />
+              <span>
+                {language === "el" 
+                  ? `Κράτηση: ${claimSuccess.reservationDate} στις ${claimSuccess.reservationTime}`
+                  : `Reservation: ${claimSuccess.reservationDate} at ${claimSuccess.reservationTime}`}
+              </span>
+            </div>
+          )}
+
           {/* Email Confirmation */}
           <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg justify-center">
             <CheckCircle className="h-4 w-4" />
             <span>{t("emailSent")}</span>
           </div>
 
-          {/* Walk-in Note */}
-          <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-            <span>{t("walkInNote")}</span>
-          </div>
-
-          {/* Optional Reservation CTA - for discount hours */}
-          {claimSuccess.showReservationCta && (
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-2 text-primary font-medium">
-                <CalendarCheck className="h-5 w-5" />
-                <span>{language === "el" ? "Θέλετε να κλείσετε τραπέζι;" : "Want to book a table?"}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {language === "el"
-                  ? `Κάντε κράτηση για τις ώρες που ισχύει η έκπτωση (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.`
-                  : `Make a reservation for the discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
-              </p>
-              <Button onClick={handleMakeReservation} className="w-full">
-                <CalendarCheck className="mr-2 h-4 w-4" />
-                {language === "el" ? "Κάνε Κράτηση για Έκπτωση" : "Book for Discount Hours"}
-              </Button>
+          {/* Walk-in Note - only show if NO reservation */}
+          {!claimSuccess.hasReservation && (
+            <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{t("walkInNote")}</span>
             </div>
           )}
 
@@ -394,7 +658,12 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     );
   }
 
-  // Claim Form View - NO duplicate header, the header is in Dialog/Drawer already
+  // Check if claim button should be enabled
+  const canClaim = acceptedTerms && peopleRemaining >= partySize && !isLoading;
+  const reservationValid = !wantsReservation || (reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError);
+  const claimEnabled = canClaim && reservationValid;
+
+  // Claim Form View
   const formContent = (
     <div className="space-y-4">
       {/* Description if exists */}
@@ -402,7 +671,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         <p className="text-sm text-muted-foreground">{offer.description}</p>
       )}
 
-      {/* Category badge (only here, not in header) */}
+      {/* Category badge */}
       {offer.category && (
         <Badge variant="outline" className="text-xs w-fit">
           {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
@@ -472,7 +741,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-4 w-4" />
           <span>
-            {t("validHours")}: {formatTime(offer.valid_start_time || null, offer.valid_end_time || null)}
+            {t("validHours")}: {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}
           </span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
@@ -496,6 +765,9 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
         <span>{t("walkInNote")}</span>
       </div>
+
+      {/* RESERVATION SECTION - BEFORE CLAIM */}
+      <ReservationSection />
 
       {/* Accept Terms */}
       <div className="flex items-center space-x-2">
@@ -527,7 +799,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleClaim} className="flex-1" disabled={isLoading || !acceptedTerms || peopleRemaining < partySize}>
+        <Button onClick={handleClaim} className="flex-1" disabled={!claimEnabled}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -548,7 +820,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     return (
       <Drawer open={isOpen} onOpenChange={onClose}>
         <DrawerContent className="h-[90vh] flex flex-col">
-          {/* SINGLE clean header - no duplicate */}
+          {/* Header */}
           <DrawerHeader className="flex-shrink-0 border-b pb-3">
             <div className="flex items-center gap-3">
               {offer.businesses.logo_url ? (
@@ -574,8 +846,9 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
             </div>
             <DrawerDescription className="sr-only">Claim this offer</DrawerDescription>
           </DrawerHeader>
+          
           <div className="flex-1 overflow-y-auto px-4 py-4">
-            {/* Category badge only */}
+            {/* Category badge */}
             {offer.category && (
               <Badge variant="outline" className="text-xs mb-4">
                 {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
@@ -635,7 +908,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>{t("validHours")}: {formatTime(offer.valid_start_time || null, offer.valid_end_time || null)}</span>
+                <span>{t("validHours")}: {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}</span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
@@ -655,6 +928,11 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
             <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg mb-4">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
               <span>{t("walkInNote")}</span>
+            </div>
+
+            {/* RESERVATION SECTION - BEFORE CLAIM */}
+            <div className="mb-4">
+              <ReservationSection />
             </div>
           </div>
 
@@ -677,7 +955,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
               <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
                 {t("cancel")}
               </Button>
-              <Button onClick={handleClaim} className="flex-1" disabled={isLoading || !acceptedTerms || peopleRemaining < partySize}>
+              <Button onClick={handleClaim} className="flex-1" disabled={!claimEnabled}>
                 {isLoading ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</>
                 ) : (
@@ -694,7 +972,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
-        {/* SINGLE clean header - no duplicate */}
+        {/* Header */}
         <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
           <div className="flex items-center gap-3">
             {offer.businesses.logo_url ? (
