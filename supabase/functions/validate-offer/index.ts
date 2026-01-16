@@ -54,6 +54,28 @@ const withinOfferHoursCyprus = (start: string, end: string, nowHHMM: string) => 
   return nowHHMM >= startTime && nowHHMM <= endTime;
 };
 
+// Helper to safely log scan without breaking the flow
+const logScan = async (
+  supabaseAdmin: any,
+  discountId: string | null,
+  scannedBy: string,
+  success: boolean,
+  locationInfo: Record<string, unknown>
+) => {
+  try {
+    await supabaseAdmin.from("discount_scans").insert({
+      discount_id: discountId,
+      scanned_by: scannedBy,
+      scan_type: "offer_redeem",
+      scanned_at: new Date().toISOString(),
+      success,
+      location_info: locationInfo,
+    });
+  } catch (e) {
+    console.error("[VALIDATE-OFFER] Failed to log scan", e);
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -98,7 +120,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    logStep("Request", { userId: user.id, businessId: body.businessId });
+    logStep("Request", { userId: user.id, businessId: body.businessId, qrToken: body.qrToken });
 
     // Verify the caller actually owns this business
     const { data: business, error: businessError } = await supabaseAdmin
@@ -108,6 +130,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (businessError || !business) {
+      logStep("Business not found", { businessError });
       return new Response(JSON.stringify({ success: false, message: m.wrongBusiness }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -115,6 +138,7 @@ Deno.serve(async (req) => {
     }
 
     if (business.user_id !== user.id) {
+      logStep("Wrong business owner", { expected: business.user_id, actual: user.id });
       return new Response(JSON.stringify({ success: false, message: m.wrongBusiness }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -153,15 +177,8 @@ Deno.serve(async (req) => {
       .single();
 
     if (purchaseError || !purchase) {
-      // log failed attempt
-      await supabaseAdmin.from("discount_scans").insert({
-        discount_id: null,
-        scanned_by: user.id,
-        scan_type: "offer_redeem",
-        scanned_at: new Date().toISOString(),
-        success: false,
-        location_info: { reason: "not_found" },
-      }).catch(() => null);
+      logStep("Purchase not found", { purchaseError, qrToken: body.qrToken });
+      await logScan(supabaseAdmin, null, user.id, false, { reason: "not_found", qrToken: body.qrToken });
 
       return new Response(JSON.stringify({ success: false, message: m.notFound }), {
         status: 200,
@@ -169,17 +186,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    logStep("Purchase found", { purchaseId: purchase.id, status: purchase.status });
+
     // Verify purchase belongs to the business
-    const discount = (purchase as any).discounts;
+    const discount = purchase.discounts as any;
     if (!discount || discount.business_id !== body.businessId) {
-      await supabaseAdmin.from("discount_scans").insert({
-        discount_id: purchase.discount_id,
-        scanned_by: user.id,
-        scan_type: "offer_redeem",
-        scanned_at: new Date().toISOString(),
-        success: false,
-        location_info: { reason: "wrong_business" },
-      }).catch(() => null);
+      logStep("Discount mismatch", { discountBusinessId: discount?.business_id, requestedBusinessId: body.businessId });
+      await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { reason: "wrong_business" });
 
       return new Response(JSON.stringify({ success: false, message: m.wrongBusiness }), {
         status: 200,
@@ -189,14 +202,8 @@ Deno.serve(async (req) => {
 
     // Status checks
     if (purchase.status === "redeemed") {
-      await supabaseAdmin.from("discount_scans").insert({
-        discount_id: purchase.discount_id,
-        scanned_by: user.id,
-        scan_type: "offer_redeem",
-        scanned_at: new Date().toISOString(),
-        success: false,
-        location_info: { reason: "already_redeemed" },
-      }).catch(() => null);
+      logStep("Already redeemed", { redeemedAt: purchase.redeemed_at });
+      await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { reason: "already_redeemed" });
 
       return new Response(JSON.stringify({ success: false, message: m.alreadyRedeemed }), {
         status: 200,
@@ -205,14 +212,8 @@ Deno.serve(async (req) => {
     }
 
     if (purchase.status !== "paid") {
-      await supabaseAdmin.from("discount_scans").insert({
-        discount_id: purchase.discount_id,
-        scanned_by: user.id,
-        scan_type: "offer_redeem",
-        scanned_at: new Date().toISOString(),
-        success: false,
-        location_info: { reason: "not_paid", status: purchase.status },
-      }).catch(() => null);
+      logStep("Not paid", { status: purchase.status });
+      await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { reason: "not_paid", status: purchase.status });
 
       return new Response(JSON.stringify({ success: false, message: m.notPaid }), {
         status: 200,
@@ -222,14 +223,8 @@ Deno.serve(async (req) => {
 
     // Expiry
     if (purchase.expires_at && new Date(purchase.expires_at) < new Date()) {
-      await supabaseAdmin.from("discount_scans").insert({
-        discount_id: purchase.discount_id,
-        scanned_by: user.id,
-        scan_type: "offer_redeem",
-        scanned_at: new Date().toISOString(),
-        success: false,
-        location_info: { reason: "expired" },
-      }).catch(() => null);
+      logStep("Expired", { expiresAt: purchase.expires_at });
+      await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { reason: "expired" });
 
       return new Response(JSON.stringify({ success: false, message: m.expired }), {
         status: 200,
@@ -244,14 +239,12 @@ Deno.serve(async (req) => {
         .toLowerCase();
 
       if (!discount.valid_days.map((d: string) => String(d).toLowerCase()).includes(cyprusWeekday)) {
-        await supabaseAdmin.from("discount_scans").insert({
-          discount_id: purchase.discount_id,
-          scanned_by: user.id,
-          scan_type: "offer_redeem",
-          scanned_at: new Date().toISOString(),
-          success: false,
-          location_info: { reason: "not_valid_today", cyprusWeekday, valid_days: discount.valid_days },
-        }).catch(() => null);
+        logStep("Not valid today", { cyprusWeekday, validDays: discount.valid_days });
+        await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { 
+          reason: "not_valid_today", 
+          cyprusWeekday, 
+          valid_days: discount.valid_days 
+        });
 
         return new Response(JSON.stringify({ success: false, message: m.notValidToday }), {
           status: 200,
@@ -269,14 +262,13 @@ Deno.serve(async (req) => {
       });
 
       if (!withinOfferHoursCyprus(discount.valid_start_time, discount.valid_end_time, cyprusTime)) {
-        await supabaseAdmin.from("discount_scans").insert({
-          discount_id: purchase.discount_id,
-          scanned_by: user.id,
-          scan_type: "offer_redeem",
-          scanned_at: new Date().toISOString(),
-          success: false,
-          location_info: { reason: "not_valid_hours", cyprusTime, start: discount.valid_start_time, end: discount.valid_end_time },
-        }).catch(() => null);
+        logStep("Not valid hours", { cyprusTime, start: discount.valid_start_time, end: discount.valid_end_time });
+        await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { 
+          reason: "not_valid_hours", 
+          cyprusTime, 
+          start: discount.valid_start_time, 
+          end: discount.valid_end_time 
+        });
 
         return new Response(JSON.stringify({ success: false, message: m.notValidHours }), {
           status: 200,
@@ -299,14 +291,10 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       logStep("Update failed", { updateError });
-      await supabaseAdmin.from("discount_scans").insert({
-        discount_id: purchase.discount_id,
-        scanned_by: user.id,
-        scan_type: "offer_redeem",
-        scanned_at: nowIso,
-        success: false,
-        location_info: { reason: "update_failed", error: updateError.message },
-      }).catch(() => null);
+      await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { 
+        reason: "update_failed", 
+        error: updateError.message 
+      });
 
       return new Response(JSON.stringify({ success: false, message: m.internalError }), {
         status: 200,
@@ -321,14 +309,11 @@ Deno.serve(async (req) => {
       .eq("id", purchase.user_id)
       .single();
 
-    await supabaseAdmin.from("discount_scans").insert({
-      discount_id: purchase.discount_id,
-      scanned_by: user.id,
-      scan_type: "offer_redeem",
-      scanned_at: nowIso,
-      success: true,
-      location_info: { duration_ms: Date.now() - startedAt },
-    }).catch(() => null);
+    await logScan(supabaseAdmin, purchase.discount_id, user.id, true, { 
+      duration_ms: Date.now() - startedAt 
+    });
+
+    logStep("Success", { purchaseId: purchase.id, duration: Date.now() - startedAt });
 
     return new Response(
       JSON.stringify({
