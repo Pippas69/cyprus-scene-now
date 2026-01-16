@@ -110,42 +110,52 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
     }
   }, { threshold: 0.5 });
   
-  // Format date with smart display for short offers
-  const formatOfferDates = (startAt: string, endAt: string) => {
-    const start = new Date(startAt);
+  // Format expiry for chip display - always compact
+  const formatExpiryChip = (endAt: string) => {
     const end = new Date(endAt);
     const now = new Date();
-    const durationMs = end.getTime() - start.getTime();
-    const durationHours = durationMs / (1000 * 60 * 60);
-    const isSameDay = start.toDateString() === end.toDateString();
-    
-    const timeFormat: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+    const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     const locale = language === "el" ? "el-GR" : "en-GB";
     
-    // If offer is active and ends soon (within 24 hours)
-    if (now >= start && now <= end && durationHours <= 24) {
-      const hoursLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60));
-      if (hoursLeft <= 1) {
-        const minsLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60));
-        return language === "el" ? `Λήγει σε ${minsLeft} λεπτά` : `Ends in ${minsLeft} mins`;
-      }
-      return language === "el" ? `Λήγει σε ${hoursLeft} ώρες` : `Ends in ${hoursLeft} hours`;
+    // Today
+    if (daysLeft <= 0) {
+      return language === "el" ? "Σήμερα" : "Today";
     }
-    
-    // Same day offer - show times
-    if (isSameDay) {
-      const startTime = start.toLocaleTimeString(locale, timeFormat);
-      const endTime = end.toLocaleTimeString(locale, timeFormat);
-      const dayStr = start.toLocaleDateString(locale, { day: "numeric", month: "short" });
-      return language === "el" 
-        ? `${dayStr}, ${startTime} - ${endTime}` 
-        : `${dayStr}, ${startTime} - ${endTime}`;
+    // Ends soon (within 3 days)
+    if (daysLeft <= 3) {
+      return language === "el" ? "Λήγει σύντομα" : "Ends soon";
     }
-    
-    // Multi-day offer - show end date
+    // Show date
     return language === "el"
       ? `Έως ${end.toLocaleDateString(locale, { day: "numeric", month: "short" })}`
       : `Until ${end.toLocaleDateString(locale, { day: "numeric", month: "short" })}`;
+  };
+
+  // Generate benefit text - what the user gets (1 line, bold)
+  const getBenefitText = () => {
+    if (isCredit) {
+      return language === "el" 
+        ? `€${creditValue.toFixed(0)} πίστωση` 
+        : `€${creditValue.toFixed(0)} credit`;
+    }
+    if (offerData?.discount_type === "special_deal" && offerData?.special_deal_text) {
+      return offerData.special_deal_text;
+    }
+    if (percentOff > 0) {
+      // Use category context
+      const category = offerData?.category;
+      if (category === "drink") {
+        return language === "el" ? `-${percentOff}% στα ποτά` : `-${percentOff}% on drinks`;
+      }
+      if (category === "food") {
+        return language === "el" ? `-${percentOff}% στο φαγητό` : `-${percentOff}% on food`;
+      }
+      if (category === "account_total") {
+        return language === "el" ? `-${percentOff}% στον λογαριασμό` : `-${percentOff}% on total`;
+      }
+      return `-${percentOff}%`;
+    }
+    return offerData?.title || "";
   };
 
   if (!offerData) return null;
@@ -182,69 +192,26 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
             </Link>
 
-            {/* BOTTOM HALF: white info panel - clean, no logo duplicate */}
-            <div className="bg-background p-4">
-              <div className="flex h-full min-h-0 flex-col">
-                {/* Offer Title + description FIRST */}
-                <div className="min-h-0">
-                  <h3 className="font-semibold text-base leading-tight line-clamp-2">{offerData.title}</h3>
-                  {offerData.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{offerData.description}</p>
-                  )}
+            {/* BOTTOM HALF: white info panel - FIXED 3 lines only */}
+            <div className="bg-background p-4 flex flex-col justify-between">
+              {/* LINE 1: What you get (benefit) - bold */}
+              <h3 className="font-bold text-base leading-tight line-clamp-1">
+                {getBenefitText()}
+              </h3>
 
-                  {/* Bundle Items Preview */}
-                  {isBundle && discountItems && itemCount > 0 && (
-                    <div className="mt-2">
-                      <OfferItemsDisplay items={discountItems} language={language} />
-                    </div>
-                  )}
-                </div>
+              {/* LINE 2: Where - business name · city (muted) */}
+              <p className="text-sm text-muted-foreground truncate">
+                {offerData.businesses.name} · {offerData.businesses.city}
+              </p>
 
-                {/* Bottom area: price + date + business name (tiny) + CTA */}
-                <div className="mt-auto pt-3">
-                  {hasPricing && (
-                    <div className="flex items-baseline gap-2 mb-2">
-                      {isCredit ? (
-                        <>
-                          <span className="text-sm text-muted-foreground">
-                            {language === "el" ? "Πληρώνεις" : "Pay"} €{originalPrice.toFixed(2)}
-                          </span>
-                          <span className="text-lg font-bold text-primary">
-                            → €{creditValue.toFixed(2)} {language === "el" ? "αξία" : "value"}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-sm line-through text-muted-foreground">€{originalPrice.toFixed(2)}</span>
-                          <span className="text-lg font-bold text-primary">€{finalPrice.toFixed(2)}</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-                    <Calendar className="h-3 w-3" />
-                    <span>{formatOfferDates(offerData.start_at, offerData.end_at)}</span>
-                  </div>
-
-                  {/* Business name - very small, at the end */}
-                  <p className="text-[11px] text-muted-foreground mb-3">
-                    {language === "el" ? "από" : "by"} {offerData.businesses.name} • {offerData.businesses.city}
-                  </p>
-
-                  <div className="flex justify-end">
-                    <Button onClick={() => setIsPurchaseOpen(true)} size="sm" className="w-auto">
-                      <ShoppingBag className="h-4 w-4 mr-2" />
-                      {hasPricing
-                        ? language === "el"
-                          ? "Αγορά Τώρα"
-                          : "Buy Now"
-                        : language === "el"
-                          ? "Κλείσε Τώρα"
-                          : "Claim Now"}
-                    </Button>
-                  </div>
-                </div>
+              {/* LINE 3: Expiry chip + CTA */}
+              <div className="flex items-center justify-between">
+                <Badge variant="secondary" className="text-xs">
+                  {formatExpiryChip(offerData.end_at)}
+                </Badge>
+                <Button onClick={() => setIsPurchaseOpen(true)} size="sm" variant="default">
+                  {language === "el" ? "Εξαργύρωσε" : "Redeem"}
+                </Button>
               </div>
             </div>
           </div>

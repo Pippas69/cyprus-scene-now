@@ -108,7 +108,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     spotsRemaining: { el: "Διαθέσιμες θέσεις", en: "Spots remaining" },
     terms: { el: "Όροι & Προϋποθέσεις", en: "Terms & Conditions" },
     acceptTerms: { el: "Αποδέχομαι τους όρους χρήσης", en: "I accept the terms of use" },
-    walkInNote: { el: "Αυτή η προσφορά ισχύει για walk-in πελάτες και δεν εγγυάται θέση.", en: "This offer is for walk-in customers and does not guarantee a seat." },
+    walkInNote: { el: "Ισχύει για walk-in πελάτες. Δεν εγγυάται θέση.", en: "Valid for walk-in customers. Does not guarantee a seat." },
     claimOffer: { el: "Διεκδίκηση", en: "Claim" },
     cancel: { el: "Άκυρο", en: "Cancel" },
     processing: { el: "Επεξεργασία...", en: "Processing..." },

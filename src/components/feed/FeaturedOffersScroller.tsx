@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Percent, ChevronRight, Tag, Clock } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { format, differenceInDays } from "date-fns";
+import { differenceInDays } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface FeaturedOffer {
   id: string;
@@ -32,11 +32,15 @@ interface FeaturedOffersScrollerProps {
 const translations = {
   el: {
     endsSoon: "Λήγει σύντομα",
-    daysLeft: "ημέρες",
+    today: "Σήμερα",
+    until: "Έως",
+    redeem: "Εξαργύρωσε",
   },
   en: {
     endsSoon: "Ends soon",
-    daysLeft: "days left",
+    today: "Today",
+    until: "Until",
+    redeem: "Redeem",
   },
 };
 
@@ -56,7 +60,23 @@ export const FeaturedOffersScroller = ({
         <div className="flex gap-4 pb-2">
           {offers.map((offer, index) => {
             const daysLeft = differenceInDays(new Date(offer.end_at), new Date());
-            const isEndingSoon = daysLeft <= 3;
+            const endDate = new Date(offer.end_at);
+            const locale = language === "el" ? "el-GR" : "en-GB";
+            
+            // Expiry chip text
+            const getExpiryText = () => {
+              if (daysLeft <= 0) return t.today;
+              if (daysLeft <= 3) return t.endsSoon;
+              return `${t.until} ${endDate.toLocaleDateString(locale, { day: "numeric", month: "short" })}`;
+            };
+            
+            // Benefit text (what user gets)
+            const getBenefitText = () => {
+              if (offer.percent_off) {
+                return language === "el" ? `-${offer.percent_off}% στον λογαριασμό` : `-${offer.percent_off}% on total`;
+              }
+              return offer.title;
+            };
             
             return (
               <motion.div
@@ -67,50 +87,35 @@ export const FeaturedOffersScroller = ({
               >
                 <Link
                   to={`/offers?highlight=${offer.id}`}
-                  className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 min-w-[200px] max-w-[200px] overflow-hidden group p-4"
+                  className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 min-w-[180px] max-w-[180px] h-[120px] overflow-hidden group p-3"
                 >
-                  {/* Header with logo and discount */}
-                  <div className="flex items-start justify-between mb-3">
-                    <Avatar className="h-10 w-10 border-2 border-primary/20">
-                      <AvatarImage 
-                        src={offer.businesses.logo_url || undefined} 
-                        alt={offer.businesses.name} 
-                      />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                        {offer.businesses.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    
+                  {/* LINE 1: Benefit (bold) + Discount badge */}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h4 className="text-sm font-bold line-clamp-1 flex-1 group-hover:text-primary transition-colors">
+                      {getBenefitText()}
+                    </h4>
                     {offer.percent_off && (
-                      <Badge className="bg-primary text-primary-foreground font-bold text-sm px-2">
+                      <Badge className="bg-primary text-primary-foreground text-xs px-1.5 shrink-0">
                         -{offer.percent_off}%
                       </Badge>
                     )}
                   </div>
-
-                  {/* Offer Title */}
-                  <h4 className="text-sm font-semibold line-clamp-2 mb-2 group-hover:text-primary transition-colors min-h-[2.5rem]">
-                    {offer.title}
-                  </h4>
                   
-                  {/* Business name */}
-                  <p className="text-xs text-muted-foreground truncate mb-2">
-                    {offer.businesses.name}
+                  {/* LINE 2: Where (business · city) */}
+                  <p className="text-xs text-muted-foreground truncate mb-auto">
+                    {offer.businesses.name} · {offer.businesses.city}
                   </p>
 
-                  {/* Expiry info */}
-                  <div className="flex items-center gap-1 mt-auto">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    {isEndingSoon ? (
-                      <span className="text-xs text-destructive font-medium">
-                        {t.endsSoon}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">
-                        {daysLeft} {t.daysLeft}
-                      </span>
+                  {/* LINE 3: Expiry chip */}
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      "text-[10px] w-fit",
+                      daysLeft <= 3 && "bg-destructive/10 text-destructive"
                     )}
-                  </div>
+                  >
+                    {getExpiryText()}
+                  </Badge>
                 </Link>
               </motion.div>
             );
