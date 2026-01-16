@@ -14,7 +14,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import OfferBoostSection from "./OfferBoostSection";
+import OfferBoostDialog from "./OfferBoostDialog";
 import {
   Select,
   SelectContent,
@@ -322,29 +322,10 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBoostDialog, setShowBoostDialog] = useState(false);
+  const [createdOfferId, setCreatedOfferId] = useState<string | null>(null);
+  const [createdOfferTitle, setCreatedOfferTitle] = useState<string>("");
 
-  // Boost data
-  const [boostData, setBoostData] = useState<{
-    enabled: boolean;
-    tier: "standard" | "premium";
-    durationMode: "hourly" | "daily";
-    startDate: Date;
-    endDate: Date;
-    durationHours?: number;
-    totalCostCents: number;
-    dailyRateCents: number;
-    hourlyRateCents?: number;
-    targetingQuality: number;
-  }>({
-    enabled: false,
-    tier: "standard",
-    durationMode: "daily",
-    startDate: new Date(),
-    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    totalCostCents: 0,
-    dailyRateCents: 3000,
-    targetingQuality: 70,
-  });
 
   // Fetch business data
   const { data: businessData } = useQuery({
@@ -457,6 +438,16 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     return null;
   };
 
+  // Fetch subscription status for boost dialog
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Submit handler
   const handleSubmit = async () => {
     const error = validate();
@@ -495,26 +486,30 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       if (insertError) throw insertError;
 
-      // Handle boost if enabled
-      if (boostData.enabled && offerData) {
-        await supabase.functions.invoke("create-offer-boost", {
-          body: {
-            discountId: offerData.id,
-            tier: boostData.tier,
-            startDate: boostData.startDate.toISOString().split("T")[0],
-            endDate: boostData.endDate.toISOString().split("T")[0],
-          },
-        });
-      }
-
       toast.success(t.offerCreated);
-      navigate('/dashboard-business/offers');
+      
+      // Store created offer info and show boost dialog
+      if (offerData) {
+        setCreatedOfferId(offerData.id);
+        setCreatedOfferTitle(formData.title);
+        setShowBoostDialog(true);
+      } else {
+        navigate('/dashboard-business/offers');
+      }
 
     } catch (err) {
       console.error("Offer creation error:", err);
       toast.error(t.offerCreateFailed);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle boost dialog close
+  const handleBoostDialogClose = (open: boolean) => {
+    if (!open) {
+      setShowBoostDialog(false);
+      navigate('/dashboard-business/offers');
     }
   };
 
@@ -955,9 +950,6 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         </div>
       </SectionCard>
 
-      {/* Boost Section */}
-      <OfferBoostSection onBoostChange={setBoostData} />
-
       {/* Submit Button */}
       <Button
         onClick={handleSubmit}
@@ -974,6 +966,18 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           t.publishOffer
         )}
       </Button>
+
+      {/* Boost Dialog - shown after offer creation */}
+      {createdOfferId && (
+        <OfferBoostDialog
+          open={showBoostDialog}
+          onOpenChange={handleBoostDialogClose}
+          offerId={createdOfferId}
+          offerTitle={createdOfferTitle}
+          hasActiveSubscription={subscriptionData?.subscribed || false}
+          remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
+        />
+      )}
     </div>
   );
 };
