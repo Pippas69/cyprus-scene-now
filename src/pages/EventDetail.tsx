@@ -119,20 +119,20 @@ export default function EventDetail() {
   const fetchRSVPStatus = async () => {
     if (!user || !event) return;
 
-    const { data: row, error } = await supabase
+    // Fetch all user RSVPs for this event (may have 0, 1, or 2 rows)
+    const { data: rows, error } = await supabase
       .from("rsvps")
       .select("status")
       .eq("event_id", event.id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Error fetching RSVP status:", error);
       return;
     }
 
-    setIsInterested(row?.status === "interested");
-    setIsGoing(row?.status === "going");
+    setIsInterested(!!rows?.some((r) => r.status === "interested"));
+    setIsGoing(!!rows?.some((r) => r.status === "going"));
   };
 
   const checkUser = async () => {
@@ -238,40 +238,42 @@ export default function EventDetail() {
       const isCurrentlyActive = newStatus === "interested" ? isInterested : isGoing;
 
       if (isCurrentlyActive) {
-        // Toggle off
+        // Toggle OFF this specific status only
         const { error } = await supabase
           .from("rsvps")
           .delete()
           .eq("event_id", event.id)
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .eq("status", newStatus);
 
         if (error) throw error;
 
-        setIsInterested(false);
-        setIsGoing(false);
+        if (newStatus === "interested") {
+          setIsInterested(false);
+        } else {
+          setIsGoing(false);
+        }
       } else {
-        // Upsert single RSVP (switch interested <-> going)
-        const { error } = await supabase
-          .from("rsvps")
-          .upsert(
-            {
-              event_id: event.id,
-              user_id: user.id,
-              status: newStatus,
-            },
-            { onConflict: "event_id,user_id" }
-          );
+        // Insert new row for this status (allows both interested AND going)
+        const { error } = await supabase.from("rsvps").insert({
+          event_id: event.id,
+          user_id: user.id,
+          status: newStatus,
+        });
 
         if (error) throw error;
 
-        setIsInterested(newStatus === "interested");
-        setIsGoing(newStatus === "going");
+        if (newStatus === "interested") {
+          setIsInterested(true);
+        } else {
+          setIsGoing(true);
+        }
         toast.success(`Marked as ${newStatus}`);
       }
 
       await refreshCounts(event.id);
 
-      // Track engagement - using 'share' as a proxy for engagement tracking
+      // Track engagement
       if (event?.businesses?.id) {
         trackEngagement(event.businesses.id, "share", "event", event.id);
       }

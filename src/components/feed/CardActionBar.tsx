@@ -75,20 +75,20 @@ export const CardActionBar = ({
           return;
         }
 
-        const { data: row, error } = await supabase
+        // Fetch all RSVPs for this user/event (may have 0, 1, or 2 rows)
+        const { data: rows, error } = await supabase
           .from("rsvps")
           .select("status")
           .eq("event_id", entityId)
-          .eq("user_id", user.id)
-          .maybeSingle();
+          .eq("user_id", user.id);
 
         if (error) {
           console.error("Error fetching RSVP status:", error);
           return;
         }
 
-        setIsInterested(row?.status === "interested");
-        setIsGoing(row?.status === "going");
+        setIsInterested(!!rows?.some((r) => r.status === "interested"));
+        setIsGoing(!!rows?.some((r) => r.status === "going"));
       } catch (error) {
         console.error("Error fetching RSVP data:", error);
       }
@@ -127,34 +127,36 @@ export const CardActionBar = ({
       const isCurrentlyActive = actionType === "interested" ? isInterested : isGoing;
 
       if (isCurrentlyActive) {
-        // Toggle off (single RSVP per user/event)
+        // Toggle OFF this specific status only
         const { error } = await supabase
           .from("rsvps")
           .delete()
           .eq("event_id", entityId)
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .eq("status", actionType);
 
         if (error) throw error;
 
-        setIsInterested(false);
-        setIsGoing(false);
+        if (actionType === "interested") {
+          setIsInterested(false);
+        } else {
+          setIsGoing(false);
+        }
       } else {
-        // Upsert the single RSVP (switches between interested/going)
-        const { error } = await supabase
-          .from("rsvps")
-          .upsert(
-            {
-              event_id: entityId,
-              user_id: user.id,
-              status: actionType,
-            },
-            { onConflict: "event_id,user_id" }
-          );
+        // Insert new row for this status (allows both interested AND going)
+        const { error } = await supabase.from("rsvps").insert({
+          event_id: entityId,
+          user_id: user.id,
+          status: actionType,
+        });
 
         if (error) throw error;
 
-        setIsInterested(actionType === "interested");
-        setIsGoing(actionType === "going");
+        if (actionType === "interested") {
+          setIsInterested(true);
+        } else {
+          setIsGoing(true);
+        }
 
         toast({
           title: language === "el" ? "Επιτυχία!" : "Success!",
