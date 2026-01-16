@@ -195,8 +195,8 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
       to={`/offers?highlight=${offer.id}`}
       className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group aspect-square min-w-[240px] max-w-[240px]"
     >
-      {/* TOP HALF - Visual header with gradient and badge */}
-      <div className="relative flex-1 overflow-visible">
+      {/* TOP SECTION - Visual header with gradient and badge */}
+      <div className="relative flex-[1.5] overflow-visible">
         {/* Keep the header visuals clipped, but allow the badge to protrude */}
         <div className="absolute inset-0 overflow-hidden rounded-t-xl bg-gradient-to-br from-emerald-500/20 via-primary/10 to-secondary/20 flex items-center justify-center">
           <Avatar className="h-14 w-14 border-2 border-white shadow-lg">
