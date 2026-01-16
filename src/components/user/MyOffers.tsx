@@ -300,6 +300,41 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   }
 
   const PurchaseCard = ({ purchase, showQR = true }: { purchase: OfferPurchase; showQR?: boolean }) => {
+    // Guard against null discounts (can happen if discount was deleted)
+    if (!purchase.discounts || !purchase.discounts.businesses) {
+      return (
+        <Card className="overflow-hidden opacity-60">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                <Store className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm text-muted-foreground">
+                  {language === "el" ? "Προσφορά μη διαθέσιμη" : "Offer unavailable"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {language === "el" ? "Αυτή η προσφορά δεν υπάρχει πλέον" : "This offer no longer exists"}
+                </p>
+              </div>
+              <Badge variant="secondary" className="shrink-0">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {language === "el" ? "Διαγράφηκε" : "Deleted"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">
+                {t.purchasedOn}: {formatDate(purchase.created_at)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
     const timeRemaining = getTimeRemaining(purchase.expires_at);
     const urgencyColors: Record<string, string> = {
       low: 'text-muted-foreground bg-muted',
@@ -309,9 +344,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       expired: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-950'
     };
 
-    const isCredit = purchase.discounts?.offer_type === 'credit';
+    const isCredit = purchase.discounts.offer_type === 'credit';
     const balanceRemaining = purchase.balance_remaining_cents ?? 0;
-    const totalCredit = purchase.original_price_cents * (1 + (purchase.discounts?.bonus_percent || 0) / 100);
+    const totalCredit = purchase.original_price_cents * (1 + (purchase.discounts.bonus_percent || 0) / 100);
     const usedAmount = totalCredit - balanceRemaining;
     const usagePercent = totalCredit > 0 ? (usedAmount / totalCredit) * 100 : 0;
     const isDepleted = isCredit && balanceRemaining === 0;
