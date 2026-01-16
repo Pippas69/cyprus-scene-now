@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { Heart, Users, MapPin, Clock, Calendar } from "lucide-react";
+import { MapPin, Clock, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PremiumBadge } from "@/components/ui/premium-badge";
-import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
 import { format, differenceInMinutes } from "date-fns";
 import { enUS } from "date-fns/locale";
+import { CardActionBar } from "./CardActionBar";
+
 interface UnifiedEventCardProps {
   event: {
     id: string;
@@ -18,7 +19,9 @@ interface UnifiedEventCardProps {
     price_tier?: string;
     interested_count?: number;
     going_count?: number;
+    business_id?: string;
     businesses?: {
+      id?: string;
       name: string;
       logo_url?: string | null;
       city?: string;
@@ -164,17 +167,24 @@ export const UnifiedEventCard = ({
             {t.startsIn} {minutesUntilStart} {t.minutes}
           </p>}
 
-        {/* 5. Counters (always at the end) */}
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Heart className="h-3 w-3 text-secondary" />
-            {interestedCount}
-          </span>
-          <span className="flex items-center gap-1">
-            <Users className="h-3 w-3 text-ocean" />
-            {goingCount}
-          </span>
-        </div>
+        {/* 5. Interactive Action Bar */}
+        <CardActionBar
+          entityId={event.id}
+          entityType="event"
+          interestedCount={interestedCount}
+          goingCount={goingCount}
+          language={language}
+          shareData={{
+            title: event.title,
+            location: event.location,
+            start_at: event.start_at,
+            cover_image_url: event.cover_image_url || undefined,
+            businesses: event.businesses ? {
+              id: event.business_id || event.businesses.id || event.businesses.name,
+              name: event.businesses.name,
+            } : undefined,
+          }}
+        />
       </div>
     </Link>;
 };
