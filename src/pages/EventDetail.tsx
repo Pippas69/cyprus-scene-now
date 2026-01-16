@@ -74,7 +74,8 @@ export default function EventDetail() {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [status, setStatus] = useState<string | null>(null);
+  const [isInterested, setIsInterested] = useState(false);
+  const [isGoing, setIsGoing] = useState(false);
   const [interestedCount, setInterestedCount] = useState(0);
   const [goingCount, setGoingCount] = useState(0);
   const [rsvpLoading, setRsvpLoading] = useState(false);
@@ -100,19 +101,37 @@ export default function EventDetail() {
     }
   }, [event, user]);
 
+  const refreshCounts = async (targetEventId: string) => {
+    const { data, error } = await supabase.rpc("get_event_rsvp_counts", {
+      p_event_id: targetEventId,
+    });
+
+    if (error) {
+      console.error("Error fetching RSVP counts:", error);
+      return;
+    }
+
+    const row = Array.isArray(data) ? data[0] : data;
+    setInterestedCount(Number(row?.interested_count ?? 0));
+    setGoingCount(Number(row?.going_count ?? 0));
+  };
+
   const fetchRSVPStatus = async () => {
     if (!user || !event) return;
 
-    const { data } = await supabase
-      .from('rsvps')
-      .select('status')
-      .eq('event_id', event.id)
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const { data: rows, error } = await supabase
+      .from("rsvps")
+      .select("status")
+      .eq("event_id", event.id)
+      .eq("user_id", user.id);
 
-    if (data) {
-      setStatus(data.status);
+    if (error) {
+      console.error("Error fetching RSVP status:", error);
+      return;
     }
+
+    setIsInterested(!!rows?.some((r) => r.status === "interested"));
+    setIsGoing(!!rows?.some((r) => r.status === "going"));
   };
 
   const checkUser = async () => {
@@ -169,16 +188,8 @@ export default function EventDetail() {
 
       setEvent(eventData);
 
-    // Fetch RSVP counts
-    const { data: rsvpCounts } = await supabase
-      .from('rsvps')
-      .select('status')
-      .eq('event_id', eventId);
-
-    const interested = rsvpCounts?.filter(r => r.status === 'interested').length || 0;
-    const going = rsvpCounts?.filter(r => r.status === 'going').length || 0;
-    setInterestedCount(interested);
-    setGoingCount(going);
+    // Fetch RSVP counts (global)
+    await refreshCounts(eventId);
 
     // Fetch similar events (same category or location)
     const { data: similar } = await supabase
@@ -217,51 +228,33 @@ export default function EventDetail() {
     setRsvpLoading(true);
 
     try {
-      if (status === newStatus) {
-        // Remove RSVP
+      const isCurrentlyActive = newStatus === 'interested' ? isInterested : isGoing;
+
+      if (isCurrentlyActive) {
         const { error } = await supabase
           .from('rsvps')
           .delete()
           .eq('event_id', event.id)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .eq('status', newStatus);
 
         if (error) throw error;
-
-        setStatus(null);
-        if (newStatus === 'interested') {
-          setInterestedCount(prev => Math.max(0, prev - 1));
-        } else {
-          setGoingCount(prev => Math.max(0, prev - 1));
-        }
-        toast.success('RSVP removed');
       } else {
-        // Add or update RSVP
         const { error } = await supabase
           .from('rsvps')
-          .upsert({
+          .insert({
             event_id: event.id,
             user_id: user.id,
-            status: newStatus
+            status: newStatus,
           });
 
         if (error) throw error;
-
-        // Update counts
-        if (status === 'interested') {
-          setInterestedCount(prev => Math.max(0, prev - 1));
-        } else if (status === 'going') {
-          setGoingCount(prev => Math.max(0, prev - 1));
-        }
-
-        if (newStatus === 'interested') {
-          setInterestedCount(prev => prev + 1);
-        } else {
-          setGoingCount(prev => prev + 1);
-        }
-
-        setStatus(newStatus);
         toast.success(`Marked as ${newStatus}`);
       }
+
+      // Re-sync: user state + global counts
+      await fetchRSVPStatus();
+      await refreshCounts(event.id);
 
       // Track engagement - using 'share' as a proxy for engagement tracking
       if (event?.businesses?.id) {
@@ -275,7 +268,7 @@ export default function EventDetail() {
     }
   };
 
-  const isAttendee = status === 'interested' || status === 'going';
+  const isAttendee = isInterested || isGoing;
 
   const t = {
     el: {

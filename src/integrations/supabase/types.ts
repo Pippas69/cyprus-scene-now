@@ -4605,6 +4605,14 @@ export type Database = {
           interested_count: number
         }[]
       }
+      get_event_rsvp_counts_bulk: {
+        Args: { p_event_ids: string[] }
+        Returns: {
+          event_id: string
+          going_count: number
+          interested_count: number
+        }[]
+      }
       get_event_seating_availability: {
         Args: { p_event_id: string }
         Returns: {

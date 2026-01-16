@@ -75,6 +75,35 @@ export const useUserRSVPs = (userId: string | null) => {
 
     // Filter on the client side since Supabase JS doesn't support filtering on nested relations well
     const validRsvps = (allData || []).filter(r => r.event !== null);
+
+    // Attach GLOBAL RSVP counts to each event (so cards show the same numbers everywhere)
+    const eventIds = Array.from(new Set(validRsvps.map((r: any) => r.event.id)));
+    if (eventIds.length > 0) {
+      const { data: countsData, error: countsError } = await supabase.rpc(
+        "get_event_rsvp_counts_bulk",
+        {
+          p_event_ids: eventIds,
+        }
+      );
+
+      if (countsError) {
+        console.error("Error fetching RSVP counts bulk:", countsError);
+      } else {
+        const countsMap = new Map<string, { interested: number; going: number }>();
+        (countsData || []).forEach((row: any) => {
+          countsMap.set(row.event_id, {
+            interested: Number(row.interested_count || 0),
+            going: Number(row.going_count || 0),
+          });
+        });
+
+        validRsvps.forEach((r: any) => {
+          const c = countsMap.get(r.event.id) || { interested: 0, going: 0 };
+          r.event.interested_count = c.interested;
+          r.event.going_count = c.going;
+        });
+      }
+    }
     
     const upcoming = validRsvps.filter(r => new Date(r.event.end_at) >= new Date(now));
     const past = validRsvps.filter(r => new Date(r.event.end_at) < new Date(now));
