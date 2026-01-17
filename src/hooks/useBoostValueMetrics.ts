@@ -270,42 +270,64 @@ export const useBoostValueMetrics = (
       let boostedEventVisits = 0;
       let nonBoostedEventVisits = 0;
 
+      const countEventVisits = async (eventIds: string[]): Promise<number> => {
+        if (eventIds.length === 0) return 0;
+
+        // 1) Ticket check-ins
+        const { data: checkedInTickets } = await supabase
+          .from("tickets")
+          .select("id")
+          .in("event_id", eventIds)
+          .not("checked_in_at", "is", null)
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+
+        let visits = checkedInTickets?.length || 0;
+
+        // 2) Reservation scans for event-linked reservations
+        const { data: eventReservations } = await supabase
+          .from("reservations")
+          .select("id")
+          .in("event_id", eventIds)
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+
+        const eventResIds = eventReservations?.map((r) => r.id) || [];
+        if (eventResIds.length > 0) {
+          const { count: eventResScans } = await (supabase
+            .from("reservation_scans") as any)
+            .select("*", { count: "exact", head: true })
+            .in("reservation_id", eventResIds);
+          visits += eventResScans || 0;
+        }
+
+        return visits;
+      };
+
       if (boostedEventIds.length > 0) {
         const { count: boostedRsvps } = await supabase
           .from("rsvps")
-          .select("id", { count: 'exact', head: true })
+          .select("id", { count: "exact", head: true })
           .in("event_id", boostedEventIds)
           .in("status", ["interested", "going"])
           .gte("created_at", startDate)
           .lte("created_at", endDate);
         boostedEventInteractions = boostedRsvps || 0;
 
-        const { count: boostedRes } = await supabase
-          .from("reservations")
-          .select("id", { count: 'exact', head: true })
-          .in("event_id", boostedEventIds)
-          .gte("created_at", startDate)
-          .lte("created_at", endDate);
-        boostedEventVisits = boostedRes || 0;
+        boostedEventVisits = await countEventVisits(boostedEventIds);
       }
 
       if (nonBoostedEventIds.length > 0) {
         const { count: nonBoostedRsvps } = await supabase
           .from("rsvps")
-          .select("id", { count: 'exact', head: true })
+          .select("id", { count: "exact", head: true })
           .in("event_id", nonBoostedEventIds)
           .in("status", ["interested", "going"])
           .gte("created_at", startDate)
           .lte("created_at", endDate);
         nonBoostedEventInteractions = nonBoostedRsvps || 0;
 
-        const { count: nonBoostedRes } = await supabase
-          .from("reservations")
-          .select("id", { count: 'exact', head: true })
-          .in("event_id", nonBoostedEventIds)
-          .gte("created_at", startDate)
-          .lte("created_at", endDate);
-        nonBoostedEventVisits = nonBoostedRes || 0;
+        nonBoostedEventVisits = await countEventVisits(nonBoostedEventIds);
       }
 
       // Get best performing day from RSVPs
