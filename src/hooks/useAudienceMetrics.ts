@@ -7,22 +7,27 @@ export interface AudienceMetrics {
   region: Record<string, number>;
 }
 
-export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date; to: Date }) => {
+export const useAudienceMetrics = (
+  businessId: string,
+  dateRange?: { from: Date; to: Date }
+) => {
   return useQuery({
     queryKey: ["audience-metrics", businessId, dateRange?.from, dateRange?.to],
     queryFn: async (): Promise<AudienceMetrics> => {
       const startDate = dateRange?.from || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       const endDate = dateRange?.to || new Date();
 
-      // "Audience" here means VERIFIED visitors only (QR check-ins / redemptions)
-      // and is intentionally aligned with the "Visits" definition in Overview/Performance.
+      // "Audience" = VERIFIED visits only (QR scans / check-ins)
+      // Must match the same "Visits" definition used in Overview/Performance.
 
-      // Get all events for this business (needed for ticket check-ins)
-      const { data: events } = await supabase
-        .from("events")
-        .select("id")
-        .eq("business_id", businessId);
+      // Get all events & offers for this business (for filtering scans)
+      const [{ data: events }, { data: discounts }] = await Promise.all([
+        supabase.from("events").select("id").eq("business_id", businessId),
+        supabase.from("discounts").select("id").eq("business_id", businessId),
+      ]);
+
       const eventIds = events?.map((e) => e.id) || [];
+      const discountIds = discounts?.map((d) => d.id) || [];
 
       // We aggregate demographics by VISIT count (not unique users).
       // If the same person visits twice, they should count twice.
@@ -33,29 +38,32 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
         visitsByUserId[userId] = (visitsByUserId[userId] || 0) + 1;
       };
 
-      // A) Offer visits = redeemed offers (offer_purchases.redeemed_at)
-      // (More reliable than discount_scans because it includes user_id.)
-      const { data: redeemedOffers } = await supabase
-        .from("offer_purchases")
-        .select("user_id")
-        .eq("business_id", businessId)
-        .not("redeemed_at", "is", null)
-        .gte("redeemed_at", startDate.toISOString())
-        .lte("redeemed_at", endDate.toISOString());
-      redeemedOffers?.forEach((r) => addVisit(r.user_id));
+      // A) Offer visits = successful offer QR scans
+      if (discountIds.length > 0) {
+        const { data: offerScans } = await supabase
+          .from("discount_scans")
+          .select("scanned_by")
+          .in("discount_id", discountIds)
+          .eq("success", true)
+          .gte("scanned_at", startDate.toISOString())
+          .lte("scanned_at", endDate.toISOString());
 
-      // B) Reservation visits = checked-in reservations (reservations.checked_in_at)
-      // Includes both direct reservations + event-linked reservations.
-      const { data: checkedInReservations } = await supabase
-        .from("reservations")
-        .select("user_id")
-        .eq("business_id", businessId)
-        .not("checked_in_at", "is", null)
-        .gte("checked_in_at", startDate.toISOString())
-        .lte("checked_in_at", endDate.toISOString());
-      checkedInReservations?.forEach((r) => addVisit(r.user_id));
+        offerScans?.forEach((s) => addVisit(s.scanned_by));
+      }
 
-      // C) Event visits = ticket check-ins (tickets.checked_in_at)
+      // B) Reservation visits = reservation QR scans (direct + event-linked)
+      // NOTE: reservation_scans does not have business_id; we join via reservations.
+      const { data: reservationScans } = await (supabase
+        .from("reservation_scans") as any)
+        .select("scanned_by, reservation:reservations!inner(business_id)")
+        .eq("reservation.business_id", businessId)
+        .eq("success", true)
+        .gte("scanned_at", startDate.toISOString())
+        .lte("scanned_at", endDate.toISOString());
+
+      (reservationScans || []).forEach((s: any) => addVisit(s.scanned_by));
+
+      // C) Event visits = ticket check-ins
       if (eventIds.length > 0) {
         const { data: checkedInTickets } = await supabase
           .from("tickets")
@@ -64,6 +72,7 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
           .not("checked_in_at", "is", null)
           .gte("checked_in_at", startDate.toISOString())
           .lte("checked_in_at", endDate.toISOString());
+
         checkedInTickets?.forEach((t) => addVisit(t.user_id));
       }
 
@@ -72,7 +81,7 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
       if (userIds.length === 0) {
         return {
           gender: { male: 0, female: 0, other: 0 },
-          age: { "18-24": 0, "25-34": 0, "35-44": 0, "45-54": 0, "55+": 0 },
+          age: { "18-24": 0, "25-34": 0, "35-44": 0, "45-54": 0, "55+": 0, "Άγνωστο": 0 },
           region: {},
         };
       }
@@ -85,7 +94,14 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
 
       // Calculate metrics (weighted by visit count)
       const genderCount = { male: 0, female: 0, other: 0 };
-      const ageCount: Record<string, number> = { "18-24": 0, "25-34": 0, "35-44": 0, "45-54": 0, "55+": 0 };
+      const ageCount: Record<string, number> = {
+        "18-24": 0,
+        "25-34": 0,
+        "35-44": 0,
+        "45-54": 0,
+        "55+": 0,
+        "Άγνωστο": 0,
+      };
       const regionCount: Record<string, number> = {};
 
       const currentYear = new Date().getFullYear();
@@ -94,13 +110,14 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
         const weight = visitsByUserId[profile.id] || 0;
         if (weight <= 0) return;
 
-        // Gender from signup - handle various formats
+        // Gender from signup - handle various formats.
+        // If missing, count as "other" so charts never stay empty when visits exist.
         const gender = profile.gender?.toLowerCase()?.trim();
         if (gender === "male" || gender === "m" || gender === "άνδρας" || gender === "αρσενικό") {
           genderCount.male += weight;
         } else if (gender === "female" || gender === "f" || gender === "γυναίκα" || gender === "θηλυκό") {
           genderCount.female += weight;
-        } else if (gender && gender !== "" && gender !== "null" && gender !== "undefined") {
+        } else {
           genderCount.other += weight;
         }
 
@@ -116,13 +133,14 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
           else if (age <= 44) ageCount["35-44"] += weight;
           else if (age <= 54) ageCount["45-54"] += weight;
           else ageCount["55+"] += weight;
+        } else {
+          ageCount["Άγνωστο"] += weight;
         }
 
         // Region from signup (prefer city, fallback to town)
         const location = (profile.city || profile.town)?.trim();
-        if (location && location !== "" && location !== "null") {
-          regionCount[location] = (regionCount[location] || 0) + weight;
-        }
+        const key = location && location !== "" && location !== "null" ? location : "Άγνωστο";
+        regionCount[key] = (regionCount[key] || 0) + weight;
       });
 
       return {
@@ -134,3 +152,4 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
     enabled: !!businessId,
   });
 };
+
