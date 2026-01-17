@@ -63,18 +63,15 @@ export const usePerformanceMetrics = (
 
       const totalProfileInteractions = (profileInteractions?.length || 0) + (followerCount || 0);
 
-      // Profile visits = reservation scans (QR check-ins) for DIRECT business reservations only (reservation.event_id IS NULL)
-      const { count: profileVisitsCount } = await (supabase
-        .from("reservation_scans") as any)
-        .select("id, reservation:reservations!inner(event_id, business_id)", {
-          count: "exact",
-          head: true,
-        })
-        .eq("reservation.business_id", businessId)
-        .is("reservation.event_id", null)
-        .eq("success", true)
-        .gte("scanned_at", startDate)
-        .lte("scanned_at", endDate);
+      // Profile visits = verified reservation check-ins for DIRECT business reservations only (reservation.event_id IS NULL)
+      const { count: profileVisitsCount } = await supabase
+        .from("reservations")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", businessId)
+        .is("event_id", null)
+        .not("checked_in_at", "is", null)
+        .gte("checked_in_at", startDate)
+        .lte("checked_in_at", endDate);
 
       // Offer views from discount_views
       const { data: businessOffers } = await supabase
@@ -105,16 +102,17 @@ export const usePerformanceMetrics = (
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
-      // Offer visits = successful offer QR scans
+      // Offer visits = verified offer redemptions
+      // IMPORTANT: We count offer_purchases.redeemed_at (1 row per redemption).
       let offerVisitsCount = 0;
       if (offerIds.length > 0) {
         const { count } = await supabase
-          .from("discount_scans")
-          .select("id", { count: 'exact', head: true })
+          .from("offer_purchases")
+          .select("id", { count: "exact", head: true })
           .in("discount_id", offerIds)
-          .eq("success", true)
-          .gte("scanned_at", startDate)
-          .lte("scanned_at", endDate);
+          .not("redeemed_at", "is", null)
+          .gte("redeemed_at", startDate)
+          .lte("redeemed_at", endDate);
         offerVisitsCount = count || 0;
       }
 
@@ -150,7 +148,7 @@ export const usePerformanceMetrics = (
         totalRsvps = rsvpCount || 0;
       }
 
-      // Event visits = (1) ticket check-ins + (2) successful reservation scans for event-linked reservations
+      // Event visits = (1) ticket check-ins + (2) verified reservation check-ins for event-linked reservations
       let eventVisitsCount = 0;
       if (eventIds.length > 0) {
         const { count: ticketCheckins } = await supabase
@@ -163,23 +161,15 @@ export const usePerformanceMetrics = (
 
         eventVisitsCount = ticketCheckins || 0;
 
-        // Add event-linked reservation scans (date-filtered)
-        const { data: eventReservations } = await supabase
+        const { count: eventReservationCheckins } = await supabase
           .from("reservations")
-          .select("id")
-          .in("event_id", eventIds);
+          .select("id", { count: "exact", head: true })
+          .in("event_id", eventIds)
+          .not("checked_in_at", "is", null)
+          .gte("checked_in_at", startDate)
+          .lte("checked_in_at", endDate);
 
-        const eventResIds = eventReservations?.map(r => r.id) || [];
-        if (eventResIds.length > 0) {
-          const { count: eventResScans } = await (supabase
-            .from("reservation_scans") as any)
-            .select("id", { count: "exact", head: true })
-            .in("reservation_id", eventResIds)
-            .eq("success", true)
-            .gte("scanned_at", startDate)
-            .lte("scanned_at", endDate);
-          eventVisitsCount += eventResScans || 0;
-        }
+        eventVisitsCount += eventReservationCheckins || 0;
       }
 
       return {
