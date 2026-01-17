@@ -10,8 +10,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Crown, Gift, Ticket, Star, CheckCircle, XCircle, FileText, Mail, Eye, MousePointer, MapPin, AlertCircle, Info } from 'lucide-react';
+import { Crown, Gift, Ticket, Star, CheckCircle, XCircle, FileText, Mail, Eye, MousePointer, MapPin, AlertCircle, Info, Users, Euro, TrendingUp, Wallet } from 'lucide-react';
 import { useGuidanceData } from '@/hooks/useGuidanceData';
+import { useGuidanceMetrics } from '@/hooks/useGuidanceMetrics';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
@@ -105,6 +106,25 @@ const translations = {
     pdfConclusionApplied: 'Το πλάνο εφαρμόστηκε. Αναμένουμε αποτελέσματα από τα επόμενα δεδομένα.',
     pdfConclusionNotApplied: 'Το πλάνο δεν εφαρμόστηκε. Χωρίς εφαρμογή, δεν μπορούν να εξαχθούν αξιόπιστα συμπεράσματα.',
     pdfConclusionPending: 'Αναμονή επιλογής εφαρμογής από τον επιχειρηματία.',
+    // Metrics sections
+    newCustomersFromProfile: 'Νέοι Πελάτες από Επιλεγμένο Προφίλ',
+    newCustomersDescription: 'Οι παρακάτω πελάτες ήρθαν επειδή το προφίλ σας εμφανίζεται επιλεγμένο στο ΦΟΜΟ.',
+    newCustomersTooltip: 'Χρήστες που έκαναν επίσκεψη από την ημέρα που το προφίλ μπήκε σε paid plan. Μετρά μόνο φυσικές επισκέψεις που επαληθεύτηκαν στο κατάστημα: QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου.',
+    boostSpent: 'Χρήματα Boost',
+    boostSpentTooltip: 'Πόσα χρήματα δαπάνησε σε boost.',
+    visitsFromBoost: 'Επισκέψεις από Boost',
+    visitsFromBoostTooltip: 'Πόσες συνολικές επισκέψεις έγιναν μέσω QR εξαργύρωσης προσφοράς στον χώρο σου, είτε με κράτηση είτε χωρίς (walk-in). Αν ένας χρήστης ήρθε 3 φορές → μετρά 3 επισκέψεις.',
+    customerAcquisitionNote: 'Με αυτά τα χρήματα σε boost αποκτήθηκε περίπου',
+    newCustomer: 'νέος πελάτης',
+    newCustomers: 'νέοι πελάτες',
+    revenueFromBoost: 'Έσοδα από Boost',
+    revenueFromBoostTooltip: 'Πόσα χρήματα προήλθαν από tickets και κρατήσεις με minimum charge. Το ποσό περιλαμβάνει το commission του ΦΟΜΟ.',
+    netRevenue: 'Καθαρά Έσοδα',
+    netRevenueTooltip: 'Έσοδα μετά την αφαίρεση του commission του ΦΟΜΟ.',
+    onlyPaidEvents: 'Περιλαμβάνονται μόνο paid tickets και κρατήσεις με πληρωμή (minimum charge).',
+    noNewCustomersYet: 'Δεν υπάρχουν ακόμα νέοι πελάτες.',
+    noBoostData: 'Δεν υπάρχουν δεδομένα boost.',
+    noPaidEventsData: 'Δεν υπάρχουν δεδομένα από paid events.',
   },
   en: {
     title: 'Guidance',
@@ -167,6 +187,25 @@ const translations = {
     pdfConclusionApplied: 'The plan was applied. Awaiting results from upcoming data.',
     pdfConclusionNotApplied: 'The plan was not applied. Without application, reliable conclusions cannot be drawn.',
     pdfConclusionPending: 'Awaiting application choice from the business owner.',
+    // Metrics sections
+    newCustomersFromProfile: 'New Customers from Featured Profile',
+    newCustomersDescription: 'These customers came because your profile appears featured on FOMO.',
+    newCustomersTooltip: 'Users who visited since your profile went on a paid plan. Counts only verified physical visits: QR check-ins from reservations made directly through your profile.',
+    boostSpent: 'Boost Money',
+    boostSpentTooltip: 'How much money was spent on boost.',
+    visitsFromBoost: 'Visits from Boost',
+    visitsFromBoostTooltip: 'Total visits via QR offer redemption at your venue, with or without reservation (walk-in). If a user came 3 times → counts as 3 visits.',
+    customerAcquisitionNote: 'With this boost money, approximately',
+    newCustomer: 'new customer was acquired',
+    newCustomers: 'new customers were acquired',
+    revenueFromBoost: 'Revenue from Boost',
+    revenueFromBoostTooltip: 'Revenue from tickets and reservations with minimum charge. Amount includes FOMO commission.',
+    netRevenue: 'Net Revenue',
+    netRevenueTooltip: 'Revenue after deducting FOMO commission.',
+    onlyPaidEvents: 'Includes only paid tickets and reservations with payment (minimum charge).',
+    noNewCustomersYet: 'No new customers yet.',
+    noBoostData: 'No boost data available.',
+    noPaidEventsData: 'No data from paid events.',
   },
 };
 
@@ -343,7 +382,8 @@ const GuidanceTable: React.FC<{
   data: GuidanceSection;
   sectionType: 'profile' | 'offers' | 'events';
   language: 'el' | 'en';
-}> = ({ title, icon: Icon, iconColor, data, sectionType, language }) => {
+  metricsContent?: React.ReactNode;
+}> = ({ title, icon: Icon, iconColor, data, sectionType, language, metricsContent }) => {
   const t = translations[language];
   const tips = generateTips(data, sectionType, language);
 
@@ -355,7 +395,7 @@ const GuidanceTable: React.FC<{
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -411,8 +451,251 @@ const GuidanceTable: React.FC<{
           </table>
         </div>
         <TipsSection tip1={tips.tip1} tip2={tips.tip2} />
+        
+        {/* New Metrics Content */}
+        {metricsContent && (
+          <div className="pt-2 border-t">
+            {metricsContent}
+          </div>
+        )}
       </CardContent>
     </Card>
+  );
+};
+
+// Helper to format currency
+const formatCurrency = (cents: number): string => {
+  return `€${(cents / 100).toFixed(2)}`;
+};
+
+// Profile Metrics Section
+const ProfileMetricsSection: React.FC<{
+  newCustomers: number;
+  hasPaidPlan: boolean;
+  language: 'el' | 'en';
+}> = ({ newCustomers, hasPaidPlan, language }) => {
+  const t = translations[language];
+  
+  if (!hasPaidPlan) {
+    return null; // Don't show if no paid plan
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 rounded-lg border border-yellow-200/50 dark:border-yellow-800/30">
+        <Users className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground">{(t as any).newCustomersFromProfile}</span>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="p-0.5 hover:bg-yellow-200/50 dark:hover:bg-yellow-800/30 rounded">
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{(t as any).newCustomersFromProfile}</DialogTitle>
+                  <DialogDescription className="pt-2">
+                    {(t as any).newCustomersTooltip}
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300 mt-1">
+            {newCustomers > 0 ? newCustomers : '—'}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {newCustomers > 0 
+              ? (t as any).newCustomersDescription 
+              : (t as any).noNewCustomersYet}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Offer Boost Metrics Section
+const OfferBoostMetricsSection: React.FC<{
+  boostSpentCents: number;
+  totalVisits: number;
+  uniqueVisitors: number;
+  language: 'el' | 'en';
+}> = ({ boostSpentCents, totalVisits, uniqueVisitors, language }) => {
+  const t = translations[language];
+  
+  if (boostSpentCents === 0) {
+    return (
+      <p className="text-sm text-muted-foreground italic">{(t as any).noBoostData}</p>
+    );
+  }
+
+  const newCustomersAcquired = uniqueVisitors;
+  const customerWord = newCustomersAcquired === 1 
+    ? (t as any).newCustomer 
+    : (t as any).newCustomers;
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        {/* Boost Spent */}
+        <div className="p-3 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 rounded-lg border border-orange-200/50 dark:border-orange-800/30">
+          <div className="flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-orange-500" />
+            <span className="text-xs font-medium text-muted-foreground">{(t as any).boostSpent}</span>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="p-0.5 hover:bg-orange-200/50 dark:hover:bg-orange-800/30 rounded">
+                  <Info className="h-3 w-3 text-muted-foreground" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{(t as any).boostSpent}</DialogTitle>
+                  <DialogDescription className="pt-2">
+                    {(t as any).boostSpentTooltip}
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <p className="text-lg font-bold text-orange-700 dark:text-orange-300 mt-1">
+            {formatCurrency(boostSpentCents)}
+          </p>
+        </div>
+
+        {/* Visits from Boost */}
+        <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200/50 dark:border-green-800/30">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-green-500" />
+            <span className="text-xs font-medium text-muted-foreground">{(t as any).visitsFromBoost}</span>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="p-0.5 hover:bg-green-200/50 dark:hover:bg-green-800/30 rounded">
+                  <Info className="h-3 w-3 text-muted-foreground" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{(t as any).visitsFromBoost}</DialogTitle>
+                  <DialogDescription className="pt-2">
+                    {(t as any).visitsFromBoostTooltip}
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <p className="text-lg font-bold text-green-700 dark:text-green-300 mt-1">
+            {totalVisits}
+          </p>
+        </div>
+      </div>
+
+      {/* Customer Acquisition Note */}
+      {uniqueVisitors > 0 && (
+        <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg text-sm">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          <span>
+            {(t as any).customerAcquisitionNote} <strong>{newCustomersAcquired}</strong> {customerWord}.
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Event Boost Metrics Section
+const EventBoostMetricsSection: React.FC<{
+  boostSpentCents: number;
+  revenueWithCommissionCents: number;
+  netRevenueCents: number;
+  commissionPercent: number;
+  language: 'el' | 'en';
+}> = ({ boostSpentCents, revenueWithCommissionCents, netRevenueCents, commissionPercent, language }) => {
+  const t = translations[language];
+  
+  // Only show if there's actual revenue (paid events)
+  if (revenueWithCommissionCents === 0 && boostSpentCents === 0) {
+    return (
+      <p className="text-sm text-muted-foreground italic">{(t as any).noPaidEventsData}</p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-2">
+        {/* Boost Spent */}
+        <div className="p-3 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
+          <div className="flex items-center gap-1 mb-1">
+            <Wallet className="h-3.5 w-3.5 text-purple-500" />
+            <span className="text-[10px] font-medium text-muted-foreground">{(t as any).boostSpent}</span>
+          </div>
+          <p className="text-base font-bold text-purple-700 dark:text-purple-300">
+            {formatCurrency(boostSpentCents)}
+          </p>
+        </div>
+
+        {/* Revenue with Commission */}
+        <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg border border-blue-200/50 dark:border-blue-800/30">
+          <div className="flex items-center gap-1 mb-1">
+            <Euro className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-[10px] font-medium text-muted-foreground">{(t as any).revenueFromBoost}</span>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="p-0.5 hover:bg-blue-200/50 dark:hover:bg-blue-800/30 rounded">
+                  <Info className="h-2.5 w-2.5 text-muted-foreground" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{(t as any).revenueFromBoost}</DialogTitle>
+                  <DialogDescription className="pt-2">
+                    {(t as any).revenueFromBoostTooltip}
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <p className="text-base font-bold text-blue-700 dark:text-blue-300">
+            {formatCurrency(revenueWithCommissionCents)}
+          </p>
+        </div>
+
+        {/* Net Revenue */}
+        <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200/50 dark:border-green-800/30">
+          <div className="flex items-center gap-1 mb-1">
+            <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+            <span className="text-[10px] font-medium text-muted-foreground">{(t as any).netRevenue}</span>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="p-0.5 hover:bg-green-200/50 dark:hover:bg-green-800/30 rounded">
+                  <Info className="h-2.5 w-2.5 text-muted-foreground" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{(t as any).netRevenue}</DialogTitle>
+                  <DialogDescription className="pt-2">
+                    {(t as any).netRevenueTooltip}
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <p className="text-base font-bold text-green-700 dark:text-green-300">
+            {formatCurrency(netRevenueCents)}
+          </p>
+        </div>
+      </div>
+
+      {/* Note about paid events only */}
+      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+        <Info className="h-3 w-3" />
+        {(t as any).onlyPaidEvents}
+      </p>
+    </div>
   );
 };
 
@@ -422,6 +705,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
 }) => {
   const t = translations[language];
   const { data, isLoading } = useGuidanceData(businessId);
+  const { data: metrics, isLoading: metricsLoading } = useGuidanceMetrics(businessId);
   const { toast } = useToast();
   const [feedbackGiven, setFeedbackGiven] = useState<boolean | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -613,6 +897,15 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         data={data.profile}
         sectionType="profile"
         language={language}
+        metricsContent={
+          metrics && (
+            <ProfileMetricsSection
+              newCustomers={metrics.profile.newCustomers}
+              hasPaidPlan={!!metrics.profile.paidPlanStartDate}
+              language={language}
+            />
+          )
+        }
       />
 
       {/* 2. Boosted Offers */}
@@ -623,6 +916,16 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         data={data.offers}
         sectionType="offers"
         language={language}
+        metricsContent={
+          metrics && (
+            <OfferBoostMetricsSection
+              boostSpentCents={metrics.offers.boostSpentCents}
+              totalVisits={metrics.offers.totalVisits}
+              uniqueVisitors={metrics.offers.uniqueVisitors}
+              language={language}
+            />
+          )
+        }
       />
 
       {/* 3. Boosted Events */}
@@ -633,6 +936,17 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         data={data.events}
         sectionType="events"
         language={language}
+        metricsContent={
+          metrics && (
+            <EventBoostMetricsSection
+              boostSpentCents={metrics.events.boostSpentCents}
+              revenueWithCommissionCents={metrics.events.revenueWithCommissionCents}
+              netRevenueCents={metrics.events.netRevenueCents}
+              commissionPercent={metrics.events.commissionPercent}
+              language={language}
+            />
+          )
+        }
       />
 
       {/* 4. Recommended Plan */}
