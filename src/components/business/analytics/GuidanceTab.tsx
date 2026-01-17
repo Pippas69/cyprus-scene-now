@@ -521,23 +521,15 @@ const ProfileMetricsSection: React.FC<{
 const OfferBoostMetricsSection: React.FC<{
   boostSpentCents: number;
   totalVisits: number;
-  uniqueVisitors: number;
   language: 'el' | 'en';
-}> = ({ boostSpentCents, totalVisits, uniqueVisitors, language }) => {
+}> = ({ boostSpentCents, totalVisits, language }) => {
   const t = translations[language];
-  
+
   if (boostSpentCents === 0) {
     return (
       <p className="text-sm text-muted-foreground italic">{(t as any).noBoostData}</p>
     );
   }
-
-  const newCustomersAcquired = uniqueVisitors;
-  const customerWord = newCustomersAcquired === 1 
-    ? (t as any).newCustomer 
-    : (t as any).newCustomers;
-
-  const costPerCustomer = uniqueVisitors > 0 ? boostSpentCents / uniqueVisitors : 0;
 
   return (
     <div className="space-y-3">
@@ -595,12 +587,12 @@ const OfferBoostMetricsSection: React.FC<{
         </div>
       </div>
 
-      {/* Customer Acquisition Note */}
-      {uniqueVisitors > 0 && (
+      {/* Cost per visit note (boost spend / visits from boost) */}
+      {totalVisits > 0 && (
         <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg text-sm">
           <TrendingUp className="h-4 w-4 text-primary" />
           <span>
-            Με περίπου <strong>{formatCurrency(costPerCustomer)}</strong> σε boost αποκτήθηκε περίπου <strong>{newCustomersAcquired}</strong> {customerWord}.
+            Με περίπου <strong>{formatCurrency(Math.round(boostSpentCents / totalVisits))}</strong> σε boost αποκτήθηκε <strong>1</strong> επίσκεψη.
           </span>
         </div>
       )}
@@ -918,16 +910,15 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         data={data.offers}
         sectionType="offers"
         language={language}
-        metricsContent={
-          metrics && (
-            <OfferBoostMetricsSection
-              boostSpentCents={metrics.offers.boostSpentCents}
-              totalVisits={metrics.offers.totalVisits}
-              uniqueVisitors={metrics.offers.uniqueVisitors}
-              language={language}
-            />
-          )
-        }
+          metricsContent={
+            metrics && (
+              <OfferBoostMetricsSection
+                boostSpentCents={metrics.offers.boostSpentCents}
+                totalVisits={metrics.offers.totalVisits}
+                language={language}
+              />
+            )
+          }
       />
 
       {/* 3. Boosted Events */}

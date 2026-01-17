@@ -63,11 +63,16 @@ export const usePerformanceMetrics = (
 
       const totalProfileInteractions = (profileInteractions?.length || 0) + (followerCount || 0);
 
-      // Profile visits = reservation scans (QR check-ins) for direct business reservations
+      // Profile visits = reservation scans (QR check-ins) for DIRECT business reservations only (reservation.event_id IS NULL)
       const { count: profileVisitsCount } = await (supabase
         .from("reservation_scans") as any)
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", businessId)
+        .select("id, reservation:reservations!inner(event_id, business_id)", {
+          count: "exact",
+          head: true,
+        })
+        .eq("reservation.business_id", businessId)
+        .is("reservation.event_id", null)
+        .eq("success", true)
         .gte("scanned_at", startDate)
         .lte("scanned_at", endDate);
 
@@ -100,7 +105,7 @@ export const usePerformanceMetrics = (
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
-      // Offer visits (redemptions/scans)
+      // Offer visits = successful offer QR scans
       let offerVisitsCount = 0;
       if (offerIds.length > 0) {
         const { count } = await supabase
@@ -145,34 +150,34 @@ export const usePerformanceMetrics = (
         totalRsvps = rsvpCount || 0;
       }
 
-      // Event visits = ticket check-ins (not engagement events)
+      // Event visits = (1) ticket check-ins + (2) successful reservation scans for event-linked reservations
       let eventVisitsCount = 0;
       if (eventIds.length > 0) {
-        const { data: checkedInTickets } = await supabase
+        const { count: ticketCheckins } = await supabase
           .from("tickets")
-          .select("id")
+          .select("id", { count: "exact", head: true })
           .in("event_id", eventIds)
           .not("checked_in_at", "is", null)
-          .gte("created_at", startDate)
-          .lte("created_at", endDate);
-        eventVisitsCount = checkedInTickets?.length || 0;
-      }
-      
-      // Add event-linked reservation scans
-      if (eventIds.length > 0) {
+          .gte("checked_in_at", startDate)
+          .lte("checked_in_at", endDate);
+
+        eventVisitsCount = ticketCheckins || 0;
+
+        // Add event-linked reservation scans (date-filtered)
         const { data: eventReservations } = await supabase
           .from("reservations")
           .select("id")
-          .in("event_id", eventIds)
-          .gte("created_at", startDate)
-          .lte("created_at", endDate);
-        
+          .in("event_id", eventIds);
+
         const eventResIds = eventReservations?.map(r => r.id) || [];
         if (eventResIds.length > 0) {
           const { count: eventResScans } = await (supabase
             .from("reservation_scans") as any)
-            .select("*", { count: "exact", head: true })
-            .in("reservation_id", eventResIds);
+            .select("id", { count: "exact", head: true })
+            .in("reservation_id", eventResIds)
+            .eq("success", true)
+            .gte("scanned_at", startDate)
+            .lte("scanned_at", endDate);
           eventVisitsCount += eventResScans || 0;
         }
       }

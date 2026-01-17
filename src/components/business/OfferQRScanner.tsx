@@ -9,6 +9,7 @@ import QrScanner from "qr-scanner";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface OfferQRScannerProps {
   businessId: string;
@@ -329,14 +330,24 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
 
             {scanResult && (
               <div className="space-y-4">
-                <Alert variant={scanResult.success ? "default" : "destructive"}>
+                <Alert
+                  variant={scanResult.success ? "default" : "destructive"}
+                  className={cn(
+                    scanResult.success && "border-green-500 bg-green-50 dark:bg-green-950/20"
+                  )}
+                >
                   <div className="flex items-start gap-2">
                     {scanResult.success ? (
                       <CheckCircle className="h-5 w-5 shrink-0 mt-0.5 text-green-600" />
                     ) : (
                       <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
                     )}
-                    <AlertDescription className="flex-1 font-medium">
+                    <AlertDescription
+                      className={cn(
+                        "flex-1 font-medium",
+                        scanResult.success && "text-green-700 dark:text-green-400"
+                      )}
+                    >
                       {scanResult.message}
                     </AlertDescription>
                   </div>
