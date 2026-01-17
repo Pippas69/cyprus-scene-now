@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackEngagement } from "@/lib/analyticsTracking";
@@ -10,12 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { RippleButton } from "@/components/ui/ripple-button";
-import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap, Share2, Check, Copy } from "lucide-react";
+import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap, Share2 } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import OfferCard from "@/components/OfferCard";
 import { FollowButton } from "@/components/business/FollowButton";
 import { DirectReservationDialog } from "@/components/business/DirectReservationDialog";
 import { StudentDiscountButton } from "@/components/user/StudentDiscountButton";
+import { ShareProfileDialog } from "@/components/sharing/ShareProfileDialog";
 import { useLanguage } from "@/hooks/useLanguage";
 
 interface Business {
@@ -105,7 +106,7 @@ const BusinessProfile = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const translations = {
     el: {
@@ -146,42 +147,14 @@ const BusinessProfile = () => {
 
   const t = translations[language];
 
-  const handleShareProfile = async () => {
-    const shareUrl = `${window.location.origin}/business/${businessId}`;
+  const handleShareProfile = () => {
+    if (!businessId) return;
 
-    // Track the share (attempt)
-    if (businessId) {
-      trackEngagement(businessId, 'share', 'business', businessId);
-    }
+    // Track share intent
+    trackEngagement(businessId, 'share', 'business', businessId);
 
-    const copyFallback = async () => {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-        toast.success(t.copied);
-      } catch {
-        toast.error(language === 'el' ? 'Αποτυχία κοινοποίησης' : 'Failed to share');
-      }
-    };
-
-    // Try native share first (mobile), but ALWAYS fallback with feedback
-    if (typeof navigator !== 'undefined' && 'share' in navigator) {
-      try {
-        await navigator.share({
-          title: business?.name || (language === 'el' ? 'Προφίλ Επιχείρησης' : 'Business Profile'),
-          url: shareUrl,
-        });
-        toast.success(language === 'el' ? 'Άνοιξε κοινοποίηση' : 'Share opened');
-        return;
-      } catch {
-        // If blocked/cancelled in iframe/browser, fallback to copy so user always gets an action
-        await copyFallback();
-        return;
-      }
-    }
-
-    await copyFallback();
+    // Open our in-app share dialog (like events)
+    setShowShareDialog(true);
   };
 
   useEffect(() => {
@@ -333,11 +306,7 @@ const BusinessProfile = () => {
               className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
               title={t.share}
             >
-              {copied ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Share2 className="h-4 w-4" />
-              )}
+              <Share2 className="h-4 w-4" />
             </button>
             {/* Follow Button - Small, next to name */}
             <FollowButton businessId={business.id} language={language} variant="compact" />
@@ -525,6 +494,16 @@ const BusinessProfile = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Share Profile Dialog */}
+      {business && (
+        <ShareProfileDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          business={business}
+          language={language}
+        />
+      )}
 
       {/* Direct Reservation Dialog */}
       {business.accepts_direct_reservations && user && (
