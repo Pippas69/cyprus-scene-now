@@ -106,6 +106,8 @@ const translations = {
     errorLoading: "Σφάλμα φόρτωσης επιλογών θέσεων",
     errorNoSeating: "Δεν υπάρχουν διαθέσιμες θέσεις",
     errorNoTier: "Δεν βρέθηκε τιμή για αυτό το μέγεθος παρέας",
+    paymentsNotReady: "Οι online πληρωμές δεν είναι ακόμη διαθέσιμες",
+    paymentsNotReadyDesc: "Η επιχείρηση δεν έχει ολοκληρώσει τη ρύθμιση πληρωμών. Παρακαλώ επικοινωνήστε απευθείας με την επιχείρηση για κράτηση.",
   },
   en: {
     title: "Book a Seat",
@@ -161,6 +163,8 @@ const translations = {
     errorLoading: "Error loading seating options",
     errorNoSeating: "No seating options available",
     errorNoTier: "No price found for this party size",
+    paymentsNotReady: "Online payments not yet available",
+    paymentsNotReadyDesc: "The business has not completed payment setup. Please contact the business directly to make a reservation.",
   },
 };
 
@@ -201,6 +205,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [seatingOptions, setSeatingOptions] = useState<SeatingTypeOption[]>([]);
+  const [paymentsReady, setPaymentsReady] = useState<boolean | null>(null);
 
   // Selection state
   const [selectedSeating, setSelectedSeating] = useState<SeatingTypeOption | null>(null);
@@ -209,16 +214,36 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [phoneNumber, setPhoneNumber] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
-  // Fetch seating options
+  // Fetch seating options and check payment readiness
   useEffect(() => {
     if (open && eventId) {
-      fetchSeatingOptions();
+      fetchSeatingOptionsAndPaymentStatus();
     }
   }, [open, eventId]);
 
-  const fetchSeatingOptions = async () => {
+  const fetchSeatingOptionsAndPaymentStatus = async () => {
     setLoading(true);
     try {
+      // First check if business has completed payment setup
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select(`
+          business_id,
+          businesses (
+            stripe_account_id,
+            stripe_onboarding_completed
+          )
+        `)
+        .eq('id', eventId)
+        .single();
+
+      if (eventError) throw eventError;
+
+      const business = event?.businesses as { stripe_account_id: string | null; stripe_onboarding_completed: boolean | null } | null;
+      const isPaymentReady = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
+      setPaymentsReady(isPaymentReady);
+
+      // Fetch seating options regardless
       const { data: seatingTypes, error: seatingError } = await supabase
         .from('reservation_seating_types')
         .select('*')
@@ -296,14 +321,26 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       });
 
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) {
+        // Handle specific payment setup error
+        if (data.error.includes('payment setup') || data.error.includes('not completed')) {
+          setPaymentsReady(false);
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       if (data?.url) {
         window.location.href = data.url;
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
-      toast.error(language === 'el' ? 'Σφάλμα δημιουργίας πληρωμής' : 'Error creating checkout');
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('payment setup') || errorMessage.includes('not completed')) {
+        setPaymentsReady(false);
+      } else {
+        toast.error(language === 'el' ? 'Σφάλμα δημιουργίας πληρωμής' : 'Error creating checkout');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -324,6 +361,22 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2">{t.loading}</span>
+        </div>
+      );
+    }
+
+    // Check if payments are not ready - show error message
+    if (paymentsReady === false) {
+      return (
+        <div className="text-center py-12 space-y-4">
+          <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <CreditCard className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">{t.paymentsNotReady}</h3>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">{t.paymentsNotReadyDesc}</p>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="mt-4">
+            {t.back}
+          </Button>
         </div>
       );
     }
