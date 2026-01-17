@@ -31,48 +31,67 @@ export const useGuidanceMetrics = (businessId: string) => {
     queryKey: ["guidance-metrics", businessId],
     queryFn: async () => {
       // ========================================
-      // 1. PROFILE METRICS - New customers from paid plan start
+      // 1. PROFILE METRICS - New customers since FIRST paid plan start
       // ========================================
-      
-      // Get the paid plan start date (when business subscribed to any paid plan)
-      const { data: subscription } = await supabase
+
+      // Fetch all subscription rows for this business and find the earliest start
+      // for any paid plan (basic/pro/elite). This matches the requirement:
+      // "από την ημέρα που η επιχείρηση μπήκε σε paid plan".
+      const { data: subscriptions } = await supabase
         .from("business_subscriptions")
         .select("current_period_start, plan_id, status")
-        .eq("business_id", businessId)
-        .eq("status", "active")
-        .maybeSingle();
+        .eq("business_id", businessId);
 
-      let paidPlanStartDate: string | null = null;
+      const planIds = Array.from(
+        new Set((subscriptions || []).map((s) => s.plan_id).filter(Boolean))
+      ) as string[];
+
+      const { data: plans } = planIds.length
+        ? await supabase
+            .from("subscription_plans")
+            .select("id, slug")
+            .in("id", planIds)
+        : { data: [] as { id: string; slug: string | null }[] };
+
+      const slugByPlanId = new Map((plans || []).map((p) => [p.id, p.slug]));
+
+      const paidStartDates = (subscriptions || [])
+        .filter((s) => {
+          const slug = s.plan_id ? slugByPlanId.get(s.plan_id) : null;
+          return !!slug && slug !== "free" && !!s.current_period_start;
+        })
+        .map((s) => new Date(s.current_period_start).getTime());
+
+      const paidPlanStartDate =
+        paidStartDates.length > 0
+          ? new Date(Math.min(...paidStartDates)).toISOString()
+          : null;
+
       let newCustomers = 0;
 
-      if (subscription?.plan_id) {
-        // Check if it's a paid plan (not free)
-        const { data: plan } = await supabase
-          .from("subscription_plans")
-          .select("slug")
-          .eq("id", subscription.plan_id)
-          .maybeSingle();
+      if (paidPlanStartDate) {
+        // Count unique visitors (QR check-ins) from direct profile reservations
+        // since the paid plan started.
+        // reservation_scans does not have business_id; join via reservations.
+        const { data: reservationScans } = await (supabase
+          .from("reservation_scans") as any)
+          .select(
+            "scanned_by, reservation:reservations!inner(event_id, business_id)"
+          )
+          .eq("reservation.business_id", businessId)
+          .is("reservation.event_id", null)
+          .eq("success", true)
+          .gte("scanned_at", paidPlanStartDate);
 
-        if (plan && plan.slug !== "free") {
-          paidPlanStartDate = subscription.current_period_start;
+        const uniqueUsers = new Set(
+          (reservationScans || [])
+            .filter((s: any) => s.scanned_by)
+            .map((s: any) => s.scanned_by)
+        );
 
-          // Count unique visitors (QR check-ins) from direct profile reservations since paid plan started
-          const { data: reservationScans } = await (supabase
-            .from("reservation_scans") as any)
-            .select("user_id, reservation:reservations!inner(event_id)")
-            .eq("business_id", businessId)
-            .gte("scanned_at", paidPlanStartDate)
-            .is("reservation.event_id", null); // Only direct profile reservations
-
-          // Count unique users
-          const uniqueUsers = new Set(
-            (reservationScans || [])
-              .filter((s: any) => s.user_id)
-              .map((s: any) => s.user_id)
-          );
-          newCustomers = uniqueUsers.size;
-        }
+        newCustomers = uniqueUsers.size;
       }
+
 
       // ========================================
       // 2. OFFER BOOST METRICS
