@@ -197,9 +197,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
     try {
       // Get event details to check if it has ended
       const { data: eventData, error: eventFetchError } = await supabase
-        .from('events')
-        .select('end_at')
-        .eq('id', eventId)
+        .from("events")
+        .select("end_at")
+        .eq("id", eventId)
         .single();
 
       if (eventFetchError) throw eventFetchError;
@@ -208,10 +208,10 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
       // Check if there are completed ticket orders for this event
       const { data: completedOrders, error: checkError } = await supabase
-        .from('ticket_orders')
-        .select('id')
-        .eq('event_id', eventId)
-        .eq('status', 'completed')
+        .from("ticket_orders")
+        .select("id")
+        .eq("event_id", eventId)
+        .eq("status", "completed")
         .limit(1);
 
       if (checkError) throw checkError;
@@ -226,60 +226,63 @@ const EventsList = ({ businessId }: EventsListProps) => {
         return;
       }
 
-      // Delete all ticket orders (including completed ones if event has ended)
-      await supabase
-        .from('ticket_orders')
-        .delete()
-        .eq('event_id', eventId);
+      // Helper: delete with pre-check to detect RLS "0 rows" situations
+      const safeDeleteByEventId = async (table: string) => {
+        const { count: existingCount, error: countError } = await (supabase as any)
+          .from(table)
+          .select("*", { count: "exact", head: true })
+          .eq("event_id", eventId);
+        if (countError) throw countError;
 
-      // Delete all tickets
-      await supabase
-        .from('tickets')
-        .delete()
-        .eq('event_id', eventId);
+        const { error: delError, count: deletedCount } = await (supabase as any)
+          .from(table)
+          .delete({ count: "exact" })
+          .eq("event_id", eventId);
+        if (delError) throw delError;
 
-      // Delete RSVPs
-      await supabase
-        .from('rsvps')
-        .delete()
-        .eq('event_id', eventId);
+        if ((existingCount || 0) > 0 && (deletedCount || 0) === 0) {
+          throw new Error(
+            language === "el"
+              ? "Δεν έχετε δικαίωμα να διαγράψετε όλα τα συνδεδεμένα δεδομένα (ασφάλεια/RLS)."
+              : "You don't have permission to delete all dependent data (security/RLS)."
+          );
+        }
+      };
 
-      // Delete event views
-      await supabase
-        .from('event_views')
-        .delete()
-        .eq('event_id', eventId);
+      // Delete dependent rows first (order matters because of FK constraints)
+      await safeDeleteByEventId("ticket_orders");
+      await safeDeleteByEventId("tickets");
+      await safeDeleteByEventId("rsvps");
+      await safeDeleteByEventId("event_views");
+      await safeDeleteByEventId("event_boosts");
+      await safeDeleteByEventId("reservations");
 
-      // Delete event boosts
-      await supabase
-        .from('event_boosts')
-        .delete()
-        .eq('event_id', eventId);
-
-      // Delete reservations for this event
-      await supabase
-        .from('reservations')
-        .delete()
-        .eq('event_id', eventId);
-
-      // Now delete the event (other related tables have CASCADE)
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventId);
+      // Finally delete the event itself
+      const { error, count } = await supabase
+        .from("events")
+        .delete({ count: "exact" })
+        .eq("id", eventId)
+        .eq("business_id", businessId);
 
       if (error) throw error;
+      if (!count) {
+        throw new Error(
+          language === "el"
+            ? "Δεν έχετε δικαίωμα διαγραφής ή η εκδήλωση δεν υπάρχει πλέον"
+            : "You don't have permission to delete this event, or it no longer exists"
+        );
+      }
 
       toast({
         title: t.success,
         description: t.eventDeleted,
       });
 
-      queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+      queryClient.invalidateQueries({ queryKey: ["business-events", businessId] });
     } catch (error: any) {
       toast({
         title: t.error,
-        description: error.message,
+        description: error?.message ?? String(error),
         variant: "destructive",
       });
     }

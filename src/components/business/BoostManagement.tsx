@@ -9,11 +9,13 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface BoostManagementProps {
   businessId: string;
@@ -367,34 +369,47 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     guests: language === "el" ? "άτομα" : "guests",
   };
 
-  // Helper component for metric with tooltip
-  const MetricWithTooltip = ({ 
-    icon: Icon, 
-    label, 
-    value, 
-    tooltip 
-  }: { 
-    icon: any; 
-    label: string; 
-    value: number; 
+  // Click-to-open metric dialog (same interaction style as Analytics)
+  const MetricWithDialog = ({
+    icon: Icon,
+    label,
+    value,
+    tooltip,
+  }: {
+    icon: any;
+    label: string;
+    value: number;
     tooltip: string;
   }) => (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-            <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
-              <Icon className="h-4 w-4" />
-              <span className="text-xs font-medium">{label}</span>
-            </div>
-            <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+    <Dialog>
+      <DialogTrigger asChild>
+        <div className="p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors">
+          <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
+            <Icon className="h-4 w-4" />
+            <span className="text-xs font-medium">{label}</span>
           </div>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-xs text-center">
-          <p className="text-sm">{tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+          <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+        </div>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle>{label}</DialogTitle>
+              <DialogDescription>{tooltip}</DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <p className="text-3xl font-bold text-foreground">{value.toLocaleString()}</p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 
   return (
@@ -434,31 +449,32 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                     {/* Header with title and status badge */}
                     <div className="p-4 pb-3 border-b bg-muted/30 flex items-center justify-between">
                       <h3 className="font-semibold text-lg">{boost.event_title}</h3>
-                      <Badge variant={isActive ? "default" : "secondary"} className={isActive ? "bg-green-600" : ""}>
-                        {isActive ? t.active : t.paused}
-                      </Badge>
+                      {isActive ? (
+                        <Badge variant="default">{t.active}</Badge>
+                      ) : (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <button type="button" className="inline-flex">
+                              <Badge variant="destructive" className="cursor-pointer">
+                                {t.paused}
+                              </Badge>
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>{t.paused}</DialogTitle>
+                              <DialogDescription>{t.recreateEventBoost}</DialogDescription>
+                            </DialogHeader>
+                          </DialogContent>
+                        </Dialog>
+                      )}
                     </div>
 
-                    {/* Metrics Grid with Tooltips */}
+                    {/* Metrics Grid (click to open tooltip dialog) */}
                     <div className="grid grid-cols-3 divide-x border-b">
-                      <MetricWithTooltip
-                        icon={Eye}
-                        label={t.impressions}
-                        value={boost.impressions}
-                        tooltip={t.impressionsEventTooltip}
-                      />
-                      <MetricWithTooltip
-                        icon={MousePointer}
-                        label={t.interactions}
-                        value={boost.interactions}
-                        tooltip={t.interactionsEventTooltip}
-                      />
-                      <MetricWithTooltip
-                        icon={Users}
-                        label={t.visits}
-                        value={boost.visits}
-                        tooltip={t.visitsEventTooltip}
-                      />
+                      <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsEventTooltip} />
+                      <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsEventTooltip} />
+                      <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsEventTooltip} />
                     </div>
 
                     {/* Boost Info - Left aligned Tier/Period, Right aligned Cost/Status */}
@@ -487,7 +503,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                             <span className="text-muted-foreground">{t.totalCost}</span>
                             <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
                           </div>
-                          {isActive ? (
+                          {isActive && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -502,25 +518,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                               )}
                               {t.pauseBoost}
                             </Button>
-                          ) : (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    className="gap-1.5 opacity-60 cursor-help"
-                                    disabled
-                                  >
-                                    <Pause className="h-3.5 w-3.5" />
-                                    {t.paused}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs">
-                                  <p className="text-sm">{t.recreateEventBoost}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
                           )}
                         </div>
                       </div>
@@ -583,31 +580,32 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                   {/* Header with title and status badge */}
                   <div className="p-4 pb-3 border-b bg-muted/30 flex items-center justify-between">
                     <h3 className="font-semibold text-lg">{boost.offer_title}</h3>
-                    <Badge variant={boost.active ? "default" : "secondary"} className={boost.active ? "bg-green-600" : ""}>
-                      {boost.active ? t.active : t.paused}
-                    </Badge>
+                    {boost.active ? (
+                      <Badge variant="default">{t.active}</Badge>
+                    ) : (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button type="button" className="inline-flex">
+                            <Badge variant="destructive" className="cursor-pointer">
+                              {t.paused}
+                            </Badge>
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>{t.paused}</DialogTitle>
+                            <DialogDescription>{t.recreateOfferBoost}</DialogDescription>
+                          </DialogHeader>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </div>
 
-                  {/* Metrics Grid with Tooltips */}
+                  {/* Metrics Grid (click to open tooltip dialog) */}
                   <div className="grid grid-cols-3 divide-x border-b">
-                    <MetricWithTooltip
-                      icon={Eye}
-                      label={t.impressions}
-                      value={boost.impressions}
-                      tooltip={t.impressionsOfferTooltip}
-                    />
-                    <MetricWithTooltip
-                      icon={MousePointer}
-                      label={t.interactions}
-                      value={boost.interactions}
-                      tooltip={t.interactionsOfferTooltip}
-                    />
-                    <MetricWithTooltip
-                      icon={Users}
-                      label={t.visits}
-                      value={boost.visits}
-                      tooltip={t.visitsOfferTooltip}
-                    />
+                    <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsOfferTooltip} />
+                    <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsOfferTooltip} />
+                    <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsOfferTooltip} />
                   </div>
 
                   {/* Boost Info - Left aligned Tier/Period, Right aligned Cost/Status */}
@@ -636,7 +634,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                           <span className="text-muted-foreground">{t.totalCost}</span>
                           <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
                         </div>
-                        {boost.active ? (
+                        {boost.active && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -651,25 +649,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                             )}
                             {t.pauseBoost}
                           </Button>
-                        ) : (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  className="gap-1.5 opacity-60 cursor-help"
-                                  disabled
-                                >
-                                  <Pause className="h-3.5 w-3.5" />
-                                  {t.paused}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs">
-                                <p className="text-sm">{t.recreateOfferBoost}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
                         )}
                       </div>
                     </div>
