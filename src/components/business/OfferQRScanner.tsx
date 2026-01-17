@@ -57,7 +57,8 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     startScanning: { el: "Ξεκινήστε τη σάρωση", en: "Start Scanning" },
     close: { el: "Κλείσιμο", en: "Close" },
     scanAnother: { el: "Σάρωση Άλλου", en: "Scan Another" },
-    success: { el: "Επιτυχής Επαλήθευση!", en: "Successfully Verified!" },
+    success: { el: "Εξαργυρώθηκε Επιτυχώς!", en: "Redeemed Successfully!" },
+    successMessage: { el: "Η προσφορά εξαργυρώθηκε σωστά. Συγχαρητήρια!", en: "The offer was redeemed successfully. Congratulations!" },
     giveProduct: { el: "Δώστε το προϊόν στον πελάτη", en: "Give the product to the customer" },
     purchaseDetails: { el: "Λεπτομέρειες Αγοράς", en: "Purchase Details" },
     customer: { el: "Πελάτης", en: "Customer" },
@@ -94,6 +95,7 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     close: text.close.el,
     scanAnother: text.scanAnother.el,
     success: text.success.el,
+    successMessage: text.successMessage.el,
     giveProduct: text.giveProduct.el,
     purchaseDetails: text.purchaseDetails.el,
     customer: text.customer.el,
@@ -110,11 +112,12 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     close: text.close.en,
     scanAnother: text.scanAnother.en,
     success: text.success.en,
+    successMessage: text.successMessage.en,
     giveProduct: text.giveProduct.en,
     purchaseDetails: text.purchaseDetails.en,
     customer: text.customer.en,
     paidAmount: text.paidAmount.en,
-    discount: text.discount.el,
+    discount: text.discount.en,
     purchaseDate: text.purchaseDate.en,
     errors: text.errors,
   };
@@ -330,34 +333,28 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
 
             {scanResult && (
               <div className="space-y-4">
-                <Alert
-                  variant={scanResult.success ? "default" : "destructive"}
-                  className={cn(
-                    scanResult.success && "border-green-500 bg-green-50 dark:bg-green-950/20"
-                  )}
-                >
-                  <div className="flex items-start gap-2">
-                    {scanResult.success ? (
-                      <CheckCircle className="h-5 w-5 shrink-0 mt-0.5 text-green-600" />
-                    ) : (
-                      <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                    )}
-                    <AlertDescription
-                      className={cn(
-                        "flex-1 font-medium",
-                        scanResult.success && "text-green-700 dark:text-green-400"
-                      )}
-                    >
+                {scanResult.success ? (
+                  <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <AlertDescription className="font-semibold text-green-700 dark:text-green-400">
+                      {t.success}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Alert variant="destructive">
+                    <XCircle className="h-5 w-5" />
+                    <AlertDescription className="font-medium">
                       {scanResult.message}
                     </AlertDescription>
-                  </div>
-                </Alert>
+                  </Alert>
+                )}
 
                 {scanResult.success && scanResult.purchase && (
                   <>
                     <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
-                      <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                      <p className="font-semibold text-green-700 dark:text-green-300">{t.giveProduct}</p>
+                      <CheckCircle className="h-10 w-10 text-green-600 mx-auto mb-3" />
+                      <p className="text-lg font-bold text-green-700 dark:text-green-300 mb-1">{t.successMessage}</p>
+                      <p className="text-sm text-green-600 dark:text-green-400">{t.giveProduct}</p>
                     </div>
 
                     <Card>
