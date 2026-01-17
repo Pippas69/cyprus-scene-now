@@ -84,7 +84,7 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       </div>
 
       {/* Plan Badges Row - Above Tabs */}
-      <div className="grid w-full grid-cols-4 gap-1 text-center">
+      <div className="grid w-full grid-cols-4 gap-1 text-center mb-1">
         {/* Overview - no badge */}
         <div />
         {/* Performance = Basic */}
