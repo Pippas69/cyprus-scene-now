@@ -148,7 +148,22 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Profile is created automatically by the trigger
+        // Ensure demographic/profile fields are persisted immediately (do not rely on triggers)
+        const { error: profileUpsertError } = await supabase
+          .from("profiles")
+          .upsert(
+            {
+              id: authData.user.id,
+              gender: formData.gender || null,
+              town: formData.location,
+              city: formData.location,
+            } as any,
+            { onConflict: "id" }
+          );
+
+        if (profileUpsertError) {
+          console.error("Profile upsert error on signup (modal):", profileUpsertError);
+        }
 
         toast({
           title: t.success,
