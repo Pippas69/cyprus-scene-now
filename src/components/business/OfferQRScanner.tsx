@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import QrScanner from "qr-scanner";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 
 interface OfferQRScannerProps {
   businessId: string;
@@ -41,13 +40,25 @@ interface ScannedPurchase {
 export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const [scanner, setScanner] = useState<QrScanner | null>(null);
+  const scannerRef = useRef<QrScanner | null>(null);
+  const isVerifyingRef = useRef(false);
+
   const [verifying, setVerifying] = useState(false);
   const [scanResult, setScanResult] = useState<{
     success: boolean;
     message: string;
     purchase?: ScannedPurchase;
   } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.stop();
+        scannerRef.current.destroy();
+        scannerRef.current = null;
+      }
+    };
+  }, []);
 
   const text = {
     scanButton: { el: "Σαρωτής Προσφορών", en: "Offer Scanner" },
@@ -58,7 +69,10 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     close: { el: "Κλείσιμο", en: "Close" },
     scanAnother: { el: "Σάρωση Άλλου", en: "Scan Another" },
     success: { el: "Εξαργυρώθηκε Επιτυχώς!", en: "Redeemed Successfully!" },
-    successMessage: { el: "Η προσφορά εξαργυρώθηκε σωστά. Συγχαρητήρια!", en: "The offer was redeemed successfully. Congratulations!" },
+    successMessage: {
+      el: "Η προσφορά εξαργυρώθηκε σωστά. Συγχαρητήρια!",
+      en: "The offer was redeemed successfully. Congratulations!",
+    },
     giveProduct: { el: "Δώστε το προϊόν στον πελάτη", en: "Give the product to the customer" },
     purchaseDetails: { el: "Λεπτομέρειες Αγοράς", en: "Purchase Details" },
     customer: { el: "Πελάτης", en: "Customer" },
@@ -67,12 +81,18 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     purchaseDate: { el: "Ημ/νία αγοράς", en: "Purchase date" },
     errors: {
       notFound: { el: "Η αγορά δεν βρέθηκε", en: "Purchase not found" },
-      wrongBusiness: { el: "Αυτή η αγορά δεν ανήκει στην επιχείρησή σας", en: "This purchase doesn't belong to your business" },
+      wrongBusiness: {
+        el: "Αυτή η αγορά δεν ανήκει στην επιχείρησή σας",
+        en: "This purchase doesn't belong to your business",
+      },
       alreadyRedeemed: { el: "Αυτή η αγορά έχει ήδη εξαργυρωθεί", en: "This purchase has already been redeemed" },
       expired: { el: "Αυτή η αγορά έχει λήξει", en: "This purchase has expired" },
       notPaid: { el: "Αυτή η αγορά δεν έχει πληρωθεί", en: "This purchase hasn't been paid" },
       notValidToday: { el: "Η προσφορά δεν ισχύει σήμερα", en: "This offer is not valid today" },
-      notValidHours: { el: "Η προσφορά ισχύει μόνο σε συγκεκριμένες ώρες", en: "This offer is only valid during specific hours" },
+      notValidHours: {
+        el: "Η προσφορά ισχύει μόνο σε συγκεκριμένες ώρες",
+        en: "This offer is only valid during specific hours",
+      },
       cameraError: { el: "Σφάλμα πρόσβασης κάμερας", en: "Camera access error" },
       cameraPermissionDenied: {
         el: "Δεν επιτράπηκε η πρόσβαση στην κάμερα",
@@ -86,47 +106,59 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     },
   };
 
-  const t = language === "el" ? {
-    scanButton: text.scanButton.el,
-    title: text.title.el,
-    scanning: text.scanning.el,
-    verifying: text.verifying.el,
-    startScanning: text.startScanning.el,
-    close: text.close.el,
-    scanAnother: text.scanAnother.el,
-    success: text.success.el,
-    successMessage: text.successMessage.el,
-    giveProduct: text.giveProduct.el,
-    purchaseDetails: text.purchaseDetails.el,
-    customer: text.customer.el,
-    paidAmount: text.paidAmount.el,
-    discount: text.discount.el,
-    purchaseDate: text.purchaseDate.el,
-    errors: text.errors,
-  } : {
-    scanButton: text.scanButton.en,
-    title: text.title.en,
-    scanning: text.scanning.en,
-    verifying: text.verifying.en,
-    startScanning: text.startScanning.en,
-    close: text.close.en,
-    scanAnother: text.scanAnother.en,
-    success: text.success.en,
-    successMessage: text.successMessage.en,
-    giveProduct: text.giveProduct.en,
-    purchaseDetails: text.purchaseDetails.en,
-    customer: text.customer.en,
-    paidAmount: text.paidAmount.en,
-    discount: text.discount.en,
-    purchaseDate: text.purchaseDate.en,
-    errors: text.errors,
+  const t =
+    language === "el"
+      ? {
+          scanButton: text.scanButton.el,
+          title: text.title.el,
+          scanning: text.scanning.el,
+          verifying: text.verifying.el,
+          startScanning: text.startScanning.el,
+          close: text.close.el,
+          scanAnother: text.scanAnother.el,
+          success: text.success.el,
+          successMessage: text.successMessage.el,
+          giveProduct: text.giveProduct.el,
+          purchaseDetails: text.purchaseDetails.el,
+          customer: text.customer.el,
+          paidAmount: text.paidAmount.el,
+          discount: text.discount.el,
+          purchaseDate: text.purchaseDate.el,
+          errors: text.errors,
+        }
+      : {
+          scanButton: text.scanButton.en,
+          title: text.title.en,
+          scanning: text.scanning.en,
+          verifying: text.verifying.en,
+          startScanning: text.startScanning.en,
+          close: text.close.en,
+          scanAnother: text.scanAnother.en,
+          success: text.success.en,
+          successMessage: text.successMessage.en,
+          giveProduct: text.giveProduct.en,
+          purchaseDetails: text.purchaseDetails.en,
+          customer: text.customer.en,
+          paidAmount: text.paidAmount.en,
+          discount: text.discount.en,
+          purchaseDate: text.purchaseDate.en,
+          errors: text.errors,
+        };
+
+  const stopScanner = () => {
+    if (scannerRef.current) {
+      scannerRef.current.stop();
+      scannerRef.current.destroy();
+      scannerRef.current = null;
+    }
+    setIsScanning(false);
   };
 
   const handleScanStart = async () => {
     setIsScanning(true);
     setScanResult(null);
 
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     const videoElement = document.getElementById("qr-video") as HTMLVideoElement;
     if (!videoElement) {
@@ -141,10 +173,22 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
         throw new Error("Camera not supported");
       }
 
+      // Ensure old scanner is cleaned up
+      stopScanner();
+
       const qrScanner = new QrScanner(
         videoElement,
         async (result) => {
-          if (verifying) return;
+          // IMPORTANT: qr-scanner fires repeatedly; lock instantly via ref to avoid double invokes
+          if (isVerifyingRef.current) return;
+          isVerifyingRef.current = true;
+          setVerifying(true);
+
+          // stop camera immediately to avoid duplicate scans / flicker
+          if (scannerRef.current) {
+            scannerRef.current.stop();
+          }
+
           await handleScan(result.data);
         },
         {
@@ -154,29 +198,28 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
         }
       );
 
+      scannerRef.current = qrScanner;
       await qrScanner.start();
-      setScanner(qrScanner);
+      setIsScanning(true);
     } catch (error) {
       console.error("Scanner error:", error);
-      
+
       let errorMsg = language === "el" ? t.errors.cameraError.el : t.errors.cameraError.en;
-      
+
       if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
+        if (error.name === "NotAllowedError") {
           errorMsg = language === "el" ? t.errors.cameraPermissionDenied.el : t.errors.cameraPermissionDenied.en;
-        } else if (error.name === 'NotFoundError') {
+        } else if (error.name === "NotFoundError") {
           errorMsg = language === "el" ? t.errors.cameraNotFound.el : t.errors.cameraNotFound.en;
         }
       }
-      
+
       toast.error(errorMsg);
       setIsScanning(false);
     }
   };
 
   const handleScan = async (qrToken: string) => {
-    setVerifying(true);
-
     try {
       let cleanedToken = String(qrToken || "").trim();
 
@@ -204,7 +247,6 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       if (!cleanedToken) {
         const errorMsg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;
         setScanResult({ success: false, message: errorMsg });
-        stopScanner();
         return;
       }
 
@@ -220,42 +262,36 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
         console.error("validate-offer invoke error:", error);
         const errorMsg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;
         setScanResult({ success: false, message: errorMsg });
-        stopScanner();
         return;
       }
 
       const res = data as { success: boolean; message: string; purchase?: ScannedPurchase };
 
       if (!res?.success) {
-        setScanResult({ success: false, message: res?.message || (language === "el" ? t.errors.scanError.el : t.errors.scanError.en) });
-        stopScanner();
+        setScanResult({
+          success: false,
+          message: res?.message || (language === "el" ? t.errors.scanError.el : t.errors.scanError.en),
+        });
         return;
       }
 
+      // Always show our positive success UX (don’t rely on backend message variants)
       setScanResult({
         success: true,
-        message: res.message || t.success,
+        message: t.success,
         purchase: res.purchase,
       });
-      stopScanner();
-      toast.success(res.message || t.success);
+
+      toast.success(t.success);
     } catch (error) {
       console.error("Verification error:", error);
       const errorMsg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;
       setScanResult({ success: false, message: errorMsg });
-      stopScanner();
     } finally {
       setVerifying(false);
+      isVerifyingRef.current = false;
+      stopScanner();
     }
-  };
-
-  const stopScanner = () => {
-    if (scanner) {
-      scanner.stop();
-      scanner.destroy();
-      setScanner(null);
-    }
-    setIsScanning(false);
   };
 
   const handleClose = () => {
@@ -275,10 +311,11 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
 
   const getCustomerName = (purchase: ScannedPurchase) => {
     if (purchase.profiles?.first_name || purchase.profiles?.last_name) {
-      return `${purchase.profiles.first_name || ''} ${purchase.profiles.last_name || ''}`.trim();
+      return `${purchase.profiles.first_name || ""} ${purchase.profiles.last_name || ""}`.trim();
     }
     return language === "el" ? "Άγνωστος" : "Unknown";
   };
+
 
   return (
     <>
