@@ -23,6 +23,8 @@ const translations = {
     male: 'Άνδρες',
     female: 'Γυναίκες',
     other: 'Άλλο',
+    audienceSubtitle: 'Δημογραφικά από επαληθευμένες επισκέψεις (QR εξαργύρωση / check-in).',
+    totalVisitsLabel: 'Σύνολο επισκέψεων',
     profileDesc: 'Συνολικές ενέργειες στο προφίλ',
     offersDesc: 'Συνολικές ενέργειες στις προσφορές',
     eventsDesc: 'Συνολικές ενέργειες στις εκδηλώσεις',
@@ -71,6 +73,8 @@ const translations = {
     male: 'Male',
     female: 'Female',
     other: 'Other',
+    audienceSubtitle: 'Demographics from verified visits (QR redemption / check-in).',
+    totalVisitsLabel: 'Total visits',
     profileDesc: 'Total actions on profile',
     offersDesc: 'Total actions on offers',
     eventsDesc: 'Total actions on events',
@@ -389,7 +393,18 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
 
       {/* Audience Section */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">{t.audienceTitle}</h3>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold">{t.audienceTitle}</h3>
+            <p className="text-sm text-muted-foreground">{t.audienceSubtitle}</p>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{t.totalVisitsLabel}:</span>
+            <span className="text-sm font-semibold text-foreground">{genderTotal.toLocaleString()}</span>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <AudienceCard icon={Users} title={t.gender} explanation={t.genderExplanation}>
             <div className="space-y-3">
@@ -399,18 +414,20 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
             </div>
           </AudienceCard>
 
-          <AudienceCard icon={Users} title={t.age} explanation={t.ageExplanation}>
+          <AudienceCard icon={Calendar} title={t.age} explanation={t.ageExplanation}>
             <div className="space-y-3">
-              {Object.entries(audience?.age || {}).map(([range, count]) => (
-                <MetricBar key={range} label={range} value={count as number} total={ageTotal} />
-              ))}
+              {(['18-24', '25-34', '35-44', '45-54', '55+', 'Άγνωστο'] as const)
+                .filter((key) => (audience?.age?.[key] ?? 0) > 0 || key === 'Άγνωστο')
+                .map((key) => (
+                  <MetricBar key={key} label={key} value={(audience?.age?.[key] as number) || 0} total={ageTotal} />
+                ))}
             </div>
           </AudienceCard>
 
           <AudienceCard icon={MapPin} title={t.region} explanation={t.regionExplanation}>
             <div className="space-y-3">
               {regionArray.length > 0 ? (
-                regionArray.slice(0, 5).map(r => (
+                regionArray.slice(0, 6).map((r) => (
                   <MetricBar key={r.name} label={r.name} value={r.count} total={regionTotal} />
                 ))
               ) : (

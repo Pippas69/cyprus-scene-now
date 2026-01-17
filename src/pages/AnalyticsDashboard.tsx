@@ -10,7 +10,7 @@ import { LockedSection } from '@/components/business/analytics/LockedSection';
 import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from '@/hooks/useSubscriptionPlan';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { Lock } from 'lucide-react';
+import { Lock, Gem } from 'lucide-react';
 
 const translations = {
   el: {
@@ -28,6 +28,13 @@ const translations = {
     guidance: 'Guidance',
   },
 };
+
+const PlanBadge = ({ label }: { label: string }) => (
+  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
+    <Gem className="h-3 w-3" />
+    {label}
+  </span>
+);
 
 interface AnalyticsDashboardProps {
   businessId: string;
@@ -56,17 +63,33 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   const hasBoostValueAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('boostValue'));
   const hasGuidanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('guidance'));
 
-  // Render tab trigger with lock icon if not accessible
-  const renderTabTrigger = (value: string, label: string, hasAccess: boolean) => (
+  const getPlanBadgeLabel = (tab: 'performance' | 'boostValue' | 'guidance') => {
+    if (tab === 'performance') return 'Basic Plan';
+    if (tab === 'boostValue') return 'Pro Plan';
+    return 'Elite Plan';
+  };
+
+  // Render tab trigger with (optional) plan badge + lock icon if not accessible
+  const renderTabTrigger = (
+    value: string,
+    label: string,
+    hasAccess: boolean,
+    planBadgeTab?: 'performance' | 'boostValue' | 'guidance'
+  ) => (
     <TabsTrigger 
       value={value} 
       className={`relative ${!hasAccess ? 'text-muted-foreground/60' : ''}`}
       disabled={!hasAccess}
     >
-      {!hasAccess && (
-        <Lock className="w-3 h-3 mr-1.5 opacity-60" />
-      )}
-      {label}
+      <div className="flex flex-col items-center gap-1">
+        {planBadgeTab && <PlanBadge label={getPlanBadgeLabel(planBadgeTab)} />}
+        <div className="inline-flex items-center">
+          {!hasAccess && (
+            <Lock className="w-3 h-3 mr-1.5 opacity-60" />
+          )}
+          {label}
+        </div>
+      </div>
     </TabsTrigger>
   );
 
@@ -80,9 +103,9 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
-          {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
-          {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
-          {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess)}
+          {renderTabTrigger('performance', t.performance, hasPerformanceAccess, 'performance')}
+          {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess, 'boostValue')}
+          {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess, 'guidance')}
         </TabsList>
 
         <TabsContent value="overview">

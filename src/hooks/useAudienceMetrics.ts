@@ -38,32 +38,34 @@ export const useAudienceMetrics = (
         visitsByUserId[userId] = (visitsByUserId[userId] || 0) + 1;
       };
 
-      // A) Offer visits = successful offer QR scans
+      // A) Offer visits = successful offer redemptions (customer-side)
+      // IMPORTANT: discount_scans.scanned_by is the business staff member who scanned.
+      // For demographics we must attribute visits to the CUSTOMER (offer_purchases.user_id).
       if (discountIds.length > 0) {
-        const { data: offerScans } = await supabase
-          .from("discount_scans")
-          .select("scanned_by")
+        const { data: redeemedPurchases } = await supabase
+          .from("offer_purchases")
+          .select("user_id")
           .in("discount_id", discountIds)
-          .eq("success", true)
-          .gte("scanned_at", startDate.toISOString())
-          .lte("scanned_at", endDate.toISOString());
+          .not("redeemed_at", "is", null)
+          .gte("redeemed_at", startDate.toISOString())
+          .lte("redeemed_at", endDate.toISOString());
 
-        offerScans?.forEach((s) => addVisit(s.scanned_by));
+        redeemedPurchases?.forEach((p) => addVisit(p.user_id));
       }
 
       // B) Reservation visits = reservation QR scans (direct + event-linked)
-      // NOTE: reservation_scans does not have business_id; we join via reservations.
+      // scanned_by is staff; the customer is reservations.user_id.
       const { data: reservationScans } = await (supabase
         .from("reservation_scans") as any)
-        .select("scanned_by, reservation:reservations!inner(business_id)")
+        .select("reservation:reservations!inner(business_id,user_id)")
         .eq("reservation.business_id", businessId)
         .eq("success", true)
         .gte("scanned_at", startDate.toISOString())
         .lte("scanned_at", endDate.toISOString());
 
-      (reservationScans || []).forEach((s: any) => addVisit(s.scanned_by));
+      (reservationScans || []).forEach((s: any) => addVisit(s?.reservation?.user_id));
 
-      // C) Event visits = ticket check-ins
+      // C) Event visits = ticket check-ins (customer is tickets.user_id)
       if (eventIds.length > 0) {
         const { data: checkedInTickets } = await supabase
           .from("tickets")
