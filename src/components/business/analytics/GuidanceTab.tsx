@@ -537,6 +537,8 @@ const OfferBoostMetricsSection: React.FC<{
     ? (t as any).newCustomer 
     : (t as any).newCustomers;
 
+  const costPerCustomer = uniqueVisitors > 0 ? boostSpentCents / uniqueVisitors : 0;
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
@@ -598,7 +600,7 @@ const OfferBoostMetricsSection: React.FC<{
         <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg text-sm">
           <TrendingUp className="h-4 w-4 text-primary" />
           <span>
-            {(t as any).customerAcquisitionNote} <strong>{newCustomersAcquired}</strong> {customerWord}.
+            Με περίπου <strong>{formatCurrency(costPerCustomer)}</strong> σε boost αποκτήθηκε περίπου <strong>{newCustomersAcquired}</strong> {customerWord}.
           </span>
         </div>
       )}

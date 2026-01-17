@@ -207,23 +207,26 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       }
 
       // =====================================================
-      // 6. VISITS (QR scans verified by business)
-      // - Offer scans (walk-in or with reservation)
-      // - Ticket check-ins
-      // - Direct reservation scans
+      // 6. VISITS (verified visits at venue)
+      // - Offer redemptions (offer_purchases.redeemed_at)
+      // - Ticket check-ins (tickets.checked_in_at)
+      // - Reservation check-ins (reservations.checked_in_at)
+      //   * direct reservations (business profile)
+      //   * event reservations (for events owned by business)
       // =====================================================
-      
-      // A. Offer scans (discount_scans table - successful scans only)
-      let offerScans = 0;
+
+      // A. Offer redemptions
+      let offerRedemptions = 0;
       if (discountIds.length > 0) {
         const { count } = await supabase
-          .from("discount_scans")
+          .from("offer_purchases")
           .select("*", { count: "exact", head: true })
+          .eq("business_id", businessId)
           .in("discount_id", discountIds)
-          .eq("success", true)
-          .gte("scanned_at", startDate.toISOString())
-          .lte("scanned_at", endDate.toISOString());
-        offerScans = count || 0;
+          .not("redeemed_at", "is", null)
+          .gte("redeemed_at", startDate.toISOString())
+          .lte("redeemed_at", endDate.toISOString());
+        offerRedemptions = count || 0;
       }
 
       // B. Ticket check-ins
@@ -239,15 +242,32 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         ticketCheckIns = count || 0;
       }
 
-      // C. Direct reservation scans (from reservation_scans table)
-      const { count: reservationScans } = await (supabase
-        .from("reservation_scans") as any)
+      // C. Reservation check-ins (direct + event reservations)
+      const { count: directReservationCheckIns } = await supabase
+        .from("reservations")
         .select("*", { count: "exact", head: true })
         .eq("business_id", businessId)
-        .gte("scanned_at", startDate.toISOString())
-        .lte("scanned_at", endDate.toISOString());
+        .not("checked_in_at", "is", null)
+        .gte("checked_in_at", startDate.toISOString())
+        .lte("checked_in_at", endDate.toISOString());
 
-      const visitsViaQR = offerScans + ticketCheckIns + (reservationScans || 0);
+      let eventReservationCheckIns = 0;
+      if (eventIds.length > 0) {
+        const { count } = await supabase
+          .from("reservations")
+          .select("*", { count: "exact", head: true })
+          .in("event_id", eventIds)
+          .not("checked_in_at", "is", null)
+          .gte("checked_in_at", startDate.toISOString())
+          .lte("checked_in_at", endDate.toISOString());
+        eventReservationCheckIns = count || 0;
+      }
+
+      const visitsViaQR =
+        offerRedemptions +
+        ticketCheckIns +
+        (directReservationCheckIns || 0) +
+        eventReservationCheckIns;
 
       return {
         totalViews,
