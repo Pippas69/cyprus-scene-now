@@ -162,6 +162,25 @@ const Signup = () => {
         return;
       }
       if (data.user) {
+        // Ensure demographic/profile fields are persisted immediately (do not rely on triggers)
+        const { error: profileUpsertError } = await supabase
+          .from("profiles")
+          .upsert(
+            {
+              id: data.user.id,
+              gender: values.gender ?? null,
+              age: typeof values.age === "number" ? values.age : null,
+              // We treat “Περιοχή” as city/town for analytics
+              town: values.town,
+              city: values.town,
+            } as any,
+            { onConflict: "id" }
+          );
+
+        if (profileUpsertError) {
+          console.error("Profile upsert error on signup:", profileUpsertError);
+        }
+
         // If student verification is needed, create the verification record and send email
         if (isStudent && universityEmail && selectedUniversity) {
           const universityData = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
