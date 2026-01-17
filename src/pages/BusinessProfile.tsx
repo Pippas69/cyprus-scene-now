@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackEngagement } from "@/lib/analyticsTracking";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import { RippleButton } from "@/components/ui/ripple-button";
-import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap } from "lucide-react";
+import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap, Share2, Check, Copy } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import OfferCard from "@/components/OfferCard";
 import { FollowButton } from "@/components/business/FollowButton";
@@ -104,6 +105,7 @@ const BusinessProfile = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const translations = {
     el: {
@@ -119,7 +121,9 @@ const BusinessProfile = () => {
       loginToReserve: "Συνδεθείτε για κράτηση",
       studentDiscount: "Φοιτητική Έκπτωση",
       studentDiscountOnce: "στην πρώτη επίσκεψη",
-      studentDiscountUnlimited: "σε κάθε επίσκεψη"
+      studentDiscountUnlimited: "σε κάθε επίσκεψη",
+      share: "Κοινοποίηση",
+      copied: "Αντιγράφηκε!"
     },
     en: {
       businessNotFound: "Business not found or not verified",
@@ -134,11 +138,39 @@ const BusinessProfile = () => {
       loginToReserve: "Login to reserve",
       studentDiscount: "Student Discount",
       studentDiscountOnce: "on first visit",
-      studentDiscountUnlimited: "on every visit"
+      studentDiscountUnlimited: "on every visit",
+      share: "Share",
+      copied: "Copied!"
     }
   };
 
   const t = translations[language];
+
+  const handleShareProfile = async () => {
+    const shareUrl = `${window.location.origin}/business/${businessId}`;
+    
+    // Track the share
+    if (businessId) {
+      trackEngagement(businessId, 'share', 'business', businessId);
+    }
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: business?.name || 'Business Profile',
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or error
+      }
+    } else {
+      // Fallback to copy
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success(t.copied);
+    }
+  };
 
   useEffect(() => {
     checkUser();
@@ -275,13 +307,43 @@ const BusinessProfile = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
               {business.name}
             </h1>
             {business.verified && (
               <CheckCircle className="h-6 w-6 text-green-600" />
             )}
+            {/* Share Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShareProfile}
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5"
+              title={t.share}
+            >
+              <AnimatePresence mode="wait">
+                {copied ? (
+                  <motion.div
+                    key="check"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                  >
+                    <Check className="h-4 w-4 text-green-500" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="share"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Button>
             {/* Follow Button - Small, next to name */}
             <FollowButton businessId={business.id} language={language} variant="compact" />
           </div>

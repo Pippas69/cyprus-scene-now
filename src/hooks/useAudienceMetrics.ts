@@ -126,28 +126,33 @@ export const useAudienceMetrics = (businessId: string, dateRange?: { from: Date;
       const currentYear = new Date().getFullYear();
 
       profiles?.forEach(profile => {
-        // Gender from signup
-        const gender = profile.gender?.toLowerCase();
-        if (gender === "male" || gender === "m") genderCount.male++;
-        else if (gender === "female" || gender === "f") genderCount.female++;
-        else if (gender) genderCount.other++;
+        // Gender from signup - handle various formats
+        const gender = profile.gender?.toLowerCase()?.trim();
+        if (gender === "male" || gender === "m" || gender === "άνδρας" || gender === "αρσενικό") {
+          genderCount.male++;
+        } else if (gender === "female" || gender === "f" || gender === "γυναίκα" || gender === "θηλυκό") {
+          genderCount.female++;
+        } else if (gender && gender !== "" && gender !== "null" && gender !== "undefined") {
+          genderCount.other++;
+        }
 
         // Age from signup (either direct age field or calculated from dob_year)
-        let age = profile.age;
-        if (!age && profile.dob_year) {
+        let age = typeof profile.age === 'number' ? profile.age : null;
+        if (!age && profile.dob_year && typeof profile.dob_year === 'number') {
           age = currentYear - profile.dob_year;
         }
-        if (age) {
-          if (age >= 18 && age <= 24) ageCount["18-24"]++;
-          else if (age >= 25 && age <= 34) ageCount["25-34"]++;
-          else if (age >= 35 && age <= 44) ageCount["35-44"]++;
-          else if (age >= 45 && age <= 54) ageCount["45-54"]++;
-          else if (age >= 55) ageCount["55+"]++;
+        
+        if (age && age >= 18) {
+          if (age <= 24) ageCount["18-24"]++;
+          else if (age <= 34) ageCount["25-34"]++;
+          else if (age <= 44) ageCount["35-44"]++;
+          else if (age <= 54) ageCount["45-54"]++;
+          else ageCount["55+"]++;
         }
 
         // Region from signup (prefer city, fallback to town)
-        const location = profile.city || profile.town;
-        if (location) {
+        const location = (profile.city || profile.town)?.trim();
+        if (location && location !== "" && location !== "null") {
           regionCount[location] = (regionCount[location] || 0) + 1;
         }
       });
