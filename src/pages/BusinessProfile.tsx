@@ -148,28 +148,40 @@ const BusinessProfile = () => {
 
   const handleShareProfile = async () => {
     const shareUrl = `${window.location.origin}/business/${businessId}`;
-    
-    // Track the share
+
+    // Track the share (attempt)
     if (businessId) {
       trackEngagement(businessId, 'share', 'business', businessId);
     }
-    
-    if (navigator.share) {
+
+    const copyFallback = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success(t.copied);
+      } catch {
+        toast.error(language === 'el' ? 'Αποτυχία κοινοποίησης' : 'Failed to share');
+      }
+    };
+
+    // Try native share first (mobile), but ALWAYS fallback with feedback
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
       try {
         await navigator.share({
-          title: business?.name || 'Business Profile',
+          title: business?.name || (language === 'el' ? 'Προφίλ Επιχείρησης' : 'Business Profile'),
           url: shareUrl,
         });
-      } catch (err) {
-        // User cancelled or error
+        toast.success(language === 'el' ? 'Άνοιξε κοινοποίηση' : 'Share opened');
+        return;
+      } catch {
+        // If blocked/cancelled in iframe/browser, fallback to copy so user always gets an action
+        await copyFallback();
+        return;
       }
-    } else {
-      // Fallback to copy
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast.success(t.copied);
     }
+
+    await copyFallback();
   };
 
   useEffect(() => {
