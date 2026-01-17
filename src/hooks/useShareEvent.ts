@@ -108,19 +108,39 @@ export const useShareEvent = (): UseShareEventReturn => {
     try {
       switch (platform) {
         case 'instagram-story':
-          // Instagram doesn't have direct URL sharing for stories
-          // User needs to download the image and share manually
-          toast.info('Download the image and share it to your Instagram Story!');
+          // Instagram story - use native share on mobile, download on desktop
+          if (navigator.share) {
+            try {
+              await navigator.share({
+                title: eventData.title,
+                text: shareText,
+                url: eventUrl,
+              });
+            } catch {
+              toast.info('Κατεβάστε την εικόνα και μοιραστείτε την στο Instagram Story!', {
+                description: 'Download the image and share to Instagram Story'
+              });
+            }
+          } else {
+            // Open Instagram on mobile or show instruction
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+              window.open('instagram://story-camera', '_blank');
+            }
+            toast.info('Κατεβάστε την εικόνα και μοιραστείτε την στο Instagram Story!');
+          }
           break;
 
         case 'facebook-story':
-          window.open(`https://www.facebook.com/stories/create`, '_blank');
-          toast.info('Share the image to your Facebook Story!');
+          // Facebook story sharing
+          const fbStoryUrl = `https://www.facebook.com/dialog/share?app_id=966242223397117&display=popup&href=${encodedUrl}&quote=${encodedText}`;
+          window.open(fbStoryUrl, '_blank', 'width=600,height=500');
           break;
 
         case 'snapchat':
-          window.open(`https://www.snapchat.com/scan`, '_blank');
-          toast.info('Share the image to your Snapchat Story!');
+          // Snapchat sharing via share URL
+          const snapchatUrl = `https://www.snapchat.com/share?url=${encodedUrl}`;
+          window.open(snapchatUrl, '_blank', 'width=600,height=500');
           break;
 
         case 'facebook':
@@ -167,11 +187,17 @@ export const useShareEvent = (): UseShareEventReturn => {
           break;
 
         case 'messenger':
-          window.open(
-            `https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=966242223397117&redirect_uri=${encodedUrl}`,
-            '_blank',
-            'width=600,height=400'
-          );
+          // Messenger sharing - use mobile deep link or web fallback
+          const messengerMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          if (messengerMobile) {
+            window.open(`fb-messenger://share/?link=${encodedUrl}`, '_blank');
+          } else {
+            window.open(
+              `https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=966242223397117&redirect_uri=${encodeURIComponent(window.location.origin)}`,
+              '_blank',
+              'width=600,height=500'
+            );
+          }
           break;
 
         case 'email':

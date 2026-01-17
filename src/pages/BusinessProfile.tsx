@@ -315,35 +315,18 @@ const BusinessProfile = () => {
               <CheckCircle className="h-6 w-6 text-green-600" />
             )}
             {/* Share Button */}
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
+              type="button"
               onClick={handleShareProfile}
-              className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5"
+              className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
               title={t.share}
             >
-              <AnimatePresence mode="wait">
-                {copied ? (
-                  <motion.div
-                    key="check"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                  >
-                    <Check className="h-4 w-4 text-green-500" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="share"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                  >
-                    <Share2 className="h-4 w-4" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Button>
+              {copied ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Share2 className="h-4 w-4" />
+              )}
+            </button>
             {/* Follow Button - Small, next to name */}
             <FollowButton businessId={business.id} language={language} variant="compact" />
           </div>
