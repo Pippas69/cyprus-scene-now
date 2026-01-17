@@ -174,7 +174,29 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
     setVerifying(true);
 
     try {
-      const cleanedToken = String(qrToken || '').trim();
+      let cleanedToken = String(qrToken || "").trim();
+
+      // Support scanning full URLs (e.g. https://.../?qr_code_token=XYZ)
+      try {
+        if (cleanedToken.startsWith("http://") || cleanedToken.startsWith("https://")) {
+          const url = new URL(cleanedToken);
+          const qp =
+            url.searchParams.get("qr_code_token") ||
+            url.searchParams.get("qrToken") ||
+            url.searchParams.get("token") ||
+            url.searchParams.get("qr");
+          if (qp) cleanedToken = qp;
+          else cleanedToken = url.pathname.split("/").filter(Boolean).pop() || cleanedToken;
+        } else {
+          // If QR contains something like ".../XYZ?foo=bar"
+          cleanedToken = cleanedToken.split("?")[0].split("/").filter(Boolean).pop() || cleanedToken;
+        }
+      } catch {
+        // ignore URL parsing
+      }
+
+      cleanedToken = String(cleanedToken || "").trim();
+
       if (!cleanedToken) {
         const errorMsg = language === "el" ? t.errors.scanError.el : t.errors.scanError.en;
         setScanResult({ success: false, message: errorMsg });

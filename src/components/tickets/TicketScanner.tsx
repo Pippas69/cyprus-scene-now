@@ -129,9 +129,9 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
     setIsScanning(false);
   };
 
-  const handleScan = async (qrToken: string, action: "check" | "checkin" = "check") => {
+  const handleScan = async (qrToken: string, action: "check" | "checkin" = "checkin") => {
     if (isProcessing || !qrToken) return;
-    
+
     setLastScannedToken(qrToken);
     setIsProcessing(true);
     stopScanning();
@@ -142,9 +142,9 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
       });
 
       if (error) throw error;
-      
+
       setScanResult(data as ScanResult);
-      
+
       if (data.checkedIn) {
         toast.success(text.checkedInSuccess);
       }
@@ -159,15 +159,9 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
     }
   };
 
-  const handleCheckIn = () => {
-    if (scanResult?.ticket && lastScannedToken) {
-      handleScan(lastScannedToken, "checkin");
-    }
-  };
-
   const handleManualCheck = () => {
     if (manualCode.trim()) {
-      handleScan(manualCode.trim());
+      handleScan(manualCode.trim(), "checkin");
     }
   };
 
@@ -311,16 +305,6 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
         {/* Actions after scan */}
         {scanResult && (
           <div className="flex gap-2">
-            {scanResult.valid && scanResult.ticket?.status === "valid" && !scanResult.checkedIn && (
-              <Button onClick={handleCheckIn} className="flex-1" disabled={isProcessing}>
-                {isProcessing ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                )}
-                {text.checkIn}
-              </Button>
-            )}
             <Button variant="outline" onClick={reset} className="flex-1">
               <RefreshCw className="h-4 w-4 mr-2" />
               {text.scanAnother}
