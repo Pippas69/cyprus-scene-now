@@ -83,40 +83,42 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
         <DateRangePicker value={dateRange} onChange={setDateRange} language={language} />
       </div>
 
-      {/* Plan Badges Row - Above Tabs */}
-      <div className="grid w-full grid-cols-4 gap-1 text-center mb-1">
-        {/* Overview - no badge */}
-        <div />
-        {/* Performance = Basic */}
-        <div className="flex justify-center">
-          <span className="inline-flex items-center gap-1 rounded-full border border-blue-400/40 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 px-2.5 py-1 text-[11px] font-medium text-blue-600 dark:text-blue-400">
-            <Zap className="h-3 w-3" />
-            {t.basicPlan}
-          </span>
-        </div>
-        {/* Boost Value = Pro */}
-        <div className="flex justify-center">
-          <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-gradient-to-r from-primary/10 to-sunset-coral/10 px-2.5 py-1 text-[11px] font-medium text-primary">
-            <Star className="h-3 w-3" />
-            {t.proPlan}
-          </span>
-        </div>
-        {/* Guidance = Elite */}
-        <div className="flex justify-center">
-          <span className="inline-flex items-center gap-1 rounded-full border border-purple-400/40 bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-2.5 py-1 text-[11px] font-medium text-purple-600 dark:text-purple-400">
-            <Crown className="h-3 w-3" />
-            {t.elitePlan}
-          </span>
-        </div>
-      </div>
-
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
-          {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
-          {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
-          {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess)}
-        </TabsList>
+        {/* Plan Badges Row - Positioned to overlap the TabsList */}
+        <div className="relative">
+          <div className="absolute -top-3 left-0 right-0 z-10 grid w-full grid-cols-4 gap-1 text-center pointer-events-none">
+            {/* Overview - no badge */}
+            <div />
+            {/* Performance = Basic */}
+            <div className="flex justify-center">
+              <span className="inline-flex items-center gap-1 rounded-full border border-blue-400/40 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 px-2.5 py-1 text-[11px] font-medium text-blue-600 dark:text-blue-400 bg-background shadow-sm">
+                <Zap className="h-3 w-3" />
+                {t.basicPlan}
+              </span>
+            </div>
+            {/* Boost Value = Pro */}
+            <div className="flex justify-center">
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-gradient-to-r from-primary/10 to-sunset-coral/10 px-2.5 py-1 text-[11px] font-medium text-primary bg-background shadow-sm">
+                <Star className="h-3 w-3" />
+                {t.proPlan}
+              </span>
+            </div>
+            {/* Guidance = Elite */}
+            <div className="flex justify-center">
+              <span className="inline-flex items-center gap-1 rounded-full border border-purple-400/40 bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-2.5 py-1 text-[11px] font-medium text-purple-600 dark:text-purple-400 bg-background shadow-sm">
+                <Crown className="h-3 w-3" />
+                {t.elitePlan}
+              </span>
+            </div>
+          </div>
+
+          <TabsList className="grid w-full grid-cols-4 pt-3">
+            {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
+            {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
+            {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
+            {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess)}
+          </TabsList>
+        </div>
 
         <TabsContent value="overview">
           {hasOverviewAccess ? (
