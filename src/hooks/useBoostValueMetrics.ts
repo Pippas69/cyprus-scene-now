@@ -55,86 +55,130 @@ export const useBoostValueMetrics = (
       
       const allEventIds = businessEventsForVisits?.map(e => e.id) || [];
 
-      // Profile metrics - before and after featured
+      // Profile metrics - split into two periods so that (without + with) always equals Performance totals
+      // - Without = non-featured period
+      // - With = featured period
       let profileWithout = { views: 0, interactions: 0, visits: 0 };
       let profileWith = { views: 0, interactions: 0, visits: 0 };
 
-      if (featuredStart) {
-        // Before featured (non-featured period)
-        const { data: beforeViews } = await supabase
+      const clampIsoEndExclusive = (iso: string) => iso; // kept for readability
+
+      const countProfileViews = async (rangeStart: string, rangeEnd: string) => {
+        const { data } = await supabase
           .from("engagement_events")
           .select("id")
           .eq("business_id", businessId)
           .eq("event_type", "profile_view")
-          .lt("created_at", featuredStart)
-          .gte("created_at", startDate);
+          .gte("created_at", rangeStart)
+          .lte("created_at", rangeEnd);
+        return data?.length || 0;
+      };
 
-        const { data: beforeInteractions } = await supabase
+      const countProfileInteractions = async (rangeStart: string, rangeEnd: string) => {
+        // Must match Performance: follows + shares + clicks (+ follower rows)
+        const { data: events } = await supabase
           .from("engagement_events")
           .select("id")
           .eq("business_id", businessId)
-          .in("event_type", ["follow", "save", "share"])
-          .lt("created_at", featuredStart)
-          .gte("created_at", startDate);
+          .in("event_type", ["follow", "favorite", "share", "click", "profile_click"])
+          .gte("created_at", rangeStart)
+          .lte("created_at", rangeEnd);
 
-        // Profile visits = only reservation_scans (not ticket check-ins - those are event visits)
-        const { count: beforeResScans } = await (supabase
+        const { count: followerCount } = await supabase
+          .from("business_followers")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .is("unfollowed_at", null)
+          .gte("created_at", rangeStart)
+          .lte("created_at", rangeEnd);
+
+        return (events?.length || 0) + (followerCount || 0);
+      };
+
+      const countProfileVisits = async (rangeStart: string, rangeEnd: string) => {
+        // Profile visits = only direct reservation QR check-ins (not ticket check-ins)
+        const { count } = await (supabase
           .from("reservation_scans") as any)
           .select("*", { count: "exact", head: true })
           .eq("business_id", businessId)
-          .lt("scanned_at", featuredStart)
-          .gte("scanned_at", startDate);
+          .gte("scanned_at", rangeStart)
+          .lte("scanned_at", rangeEnd);
+        return count || 0;
+      };
 
+      // Determine how the featuredStart splits the selected date range
+      const hasFeaturedStart = !!featuredStart;
+      const featuredStartIso = featuredStart ? new Date(featuredStart).toISOString() : null;
+
+      if (!hasFeaturedStart || !featuredStartIso) {
+        // No featured period at all
         profileWithout = {
-          views: beforeViews?.length || 0,
-          interactions: beforeInteractions?.length || 0,
-          visits: beforeResScans || 0,
+          views: await countProfileViews(startDate, endDate),
+          interactions: await countProfileInteractions(startDate, endDate),
+          visits: await countProfileVisits(startDate, endDate),
         };
-
-        // After featured
-        const { data: afterViews } = await supabase
-          .from("engagement_events")
-          .select("id")
-          .eq("business_id", businessId)
-          .eq("event_type", "profile_view")
-          .gte("created_at", featuredStart)
-          .lte("created_at", endDate);
-
-        const { data: afterInteractions } = await supabase
-          .from("engagement_events")
-          .select("id")
-          .eq("business_id", businessId)
-          .in("event_type", ["follow", "save", "share"])
-          .gte("created_at", featuredStart)
-          .lte("created_at", endDate);
-
-        // Profile visits = only reservation_scans (not ticket check-ins - those are event visits)
-        const { count: afterResScans } = await (supabase
-          .from("reservation_scans") as any)
-          .select("*", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .gte("scanned_at", featuredStart)
-          .lte("scanned_at", endDate);
-
+      } else if (featuredStartIso <= startDate) {
+        // Entire range is within featured period
         profileWith = {
-          views: afterViews?.length || 0,
-          interactions: afterInteractions?.length || 0,
-          visits: afterResScans || 0,
+          views: await countProfileViews(startDate, endDate),
+          interactions: await countProfileInteractions(startDate, endDate),
+          visits: await countProfileVisits(startDate, endDate),
+        };
+      } else if (featuredStartIso >= endDate) {
+        // Entire range is before featured period
+        profileWithout = {
+          views: await countProfileViews(startDate, endDate),
+          interactions: await countProfileInteractions(startDate, endDate),
+          visits: await countProfileVisits(startDate, endDate),
         };
       } else {
-        // No subscription - just get total profile visits (reservation scans only)
-        const { count: totalResScans } = await (supabase
+        // Split range: [startDate, featuredStart) and [featuredStart, endDate]
+        // NOTE: For consistency with the rest of the analytics, we use < featuredStart for "without" and >= featuredStart for "with".
+        const withoutEnd = clampIsoEndExclusive(featuredStartIso);
+
+        // Without (non-featured)
+        const withoutViews = await supabase
+          .from("engagement_events")
+          .select("id")
+          .eq("business_id", businessId)
+          .eq("event_type", "profile_view")
+          .gte("created_at", startDate)
+          .lt("created_at", withoutEnd);
+
+        const withoutInteractionsEvents = await supabase
+          .from("engagement_events")
+          .select("id")
+          .eq("business_id", businessId)
+          .in("event_type", ["follow", "favorite", "share", "click", "profile_click"])
+          .gte("created_at", startDate)
+          .lt("created_at", withoutEnd);
+
+        const { count: withoutFollowerCount } = await supabase
+          .from("business_followers")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .is("unfollowed_at", null)
+          .gte("created_at", startDate)
+          .lt("created_at", withoutEnd);
+
+        const { count: withoutResScans } = await (supabase
           .from("reservation_scans") as any)
           .select("*", { count: "exact", head: true })
           .eq("business_id", businessId)
           .gte("scanned_at", startDate)
-          .lte("scanned_at", endDate);
+          .lt("scanned_at", withoutEnd);
 
-        // Put all visits in "without" since there's no boost period
         profileWithout = {
-          views: 0,
-          interactions: 0,
-          visits: totalResScans || 0,
+          views: withoutViews.data?.length || 0,
+          interactions: (withoutInteractionsEvents.data?.length || 0) + (withoutFollowerCount || 0),
+          visits: withoutResScans || 0,
+        };
+
+        // With (featured)
+        profileWith = {
+          views: await countProfileViews(featuredStartIso, endDate),
+          interactions: await countProfileInteractions(featuredStartIso, endDate),
+          visits: await countProfileVisits(featuredStartIso, endDate),
         };
       }
 
