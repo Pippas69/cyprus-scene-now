@@ -195,6 +195,17 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
   const handleDelete = async (eventId: string) => {
     try {
+      // Get event details to check if it has ended
+      const { data: eventData, error: eventFetchError } = await supabase
+        .from('events')
+        .select('end_at')
+        .eq('id', eventId)
+        .single();
+
+      if (eventFetchError) throw eventFetchError;
+
+      const eventHasEnded = eventData && new Date(eventData.end_at) < new Date();
+
       // Check if there are completed ticket orders for this event
       const { data: completedOrders, error: checkError } = await supabase
         .from('ticket_orders')
@@ -205,7 +216,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
       if (checkError) throw checkError;
 
-      if (completedOrders && completedOrders.length > 0) {
+      // Only block deletion if there are completed orders AND the event hasn't ended yet
+      if (completedOrders && completedOrders.length > 0 && !eventHasEnded) {
         toast({
           title: t.error,
           description: t.cannotDeleteWithTickets,
@@ -214,16 +226,39 @@ const EventsList = ({ businessId }: EventsListProps) => {
         return;
       }
 
-      // Delete pending ticket orders first (no refund needed)
+      // Delete all ticket orders (including completed ones if event has ended)
       await supabase
         .from('ticket_orders')
         .delete()
-        .eq('event_id', eventId)
-        .neq('status', 'completed');
+        .eq('event_id', eventId);
 
-      // Delete tickets associated with pending orders
+      // Delete all tickets
       await supabase
         .from('tickets')
+        .delete()
+        .eq('event_id', eventId);
+
+      // Delete RSVPs
+      await supabase
+        .from('rsvps')
+        .delete()
+        .eq('event_id', eventId);
+
+      // Delete event views
+      await supabase
+        .from('event_views')
+        .delete()
+        .eq('event_id', eventId);
+
+      // Delete event boosts
+      await supabase
+        .from('event_boosts')
+        .delete()
+        .eq('event_id', eventId);
+
+      // Delete reservations for this event
+      await supabase
+        .from('reservations')
         .delete()
         .eq('event_id', eventId);
 

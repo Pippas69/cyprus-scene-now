@@ -355,6 +355,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     active: language === "el" ? "Ενεργή" : "Active",
     paused: language === "el" ? "Σε Παύση" : "Paused",
     pauseBoost: language === "el" ? "Παύση" : "Pause",
+    recreateEventBoost: language === "el" 
+      ? "Για να ενεργοποιήσετε ξανά, δημιουργήστε νέα προώθηση από τις Εκδηλώσεις" 
+      : "To reactivate, create a new boost from Events",
+    recreateOfferBoost: language === "el" 
+      ? "Για να ενεργοποιήσετε ξανά, δημιουργήστε νέα προώθηση από τις Προσφορές" 
+      : "To reactivate, create a new boost from Offers",
     revenue: language === "el" ? "Έσοδα μέσω FOMO" : "Revenue via FOMO",
     ticketsSold: language === "el" ? "Εισιτήρια" : "Tickets",
     reservations: language === "el" ? "Κρατήσεις" : "Reservations",
@@ -481,7 +487,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                             <span className="text-muted-foreground">{t.totalCost}</span>
                             <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
                           </div>
-                          {isActive && (
+                          {isActive ? (
                             <Button
                               variant="outline"
                               size="sm"
@@ -496,6 +502,25 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                               )}
                               {t.pauseBoost}
                             </Button>
+                          ) : (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="gap-1.5 opacity-60 cursor-help"
+                                    disabled
+                                  >
+                                    <Pause className="h-3.5 w-3.5" />
+                                    {t.paused}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <p className="text-sm">{t.recreateEventBoost}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       </div>
@@ -611,7 +636,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                           <span className="text-muted-foreground">{t.totalCost}</span>
                           <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
                         </div>
-                        {boost.active && (
+                        {boost.active ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -626,6 +651,25 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                             )}
                             {t.pauseBoost}
                           </Button>
+                        ) : (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="gap-1.5 opacity-60 cursor-help"
+                                  disabled
+                                >
+                                  <Pause className="h-3.5 w-3.5" />
+                                  {t.paused}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <p className="text-sm">{t.recreateOfferBoost}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                     </div>

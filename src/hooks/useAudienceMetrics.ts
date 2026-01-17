@@ -14,7 +14,8 @@ export const useAudienceMetrics = (
   return useQuery({
     queryKey: ["audience-metrics", businessId, dateRange?.from, dateRange?.to],
     queryFn: async (): Promise<AudienceMetrics> => {
-      const startDate = dateRange?.from || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      // If no date range provided, default to ALL TIME (from 1 year ago) to capture all visits
+      const startDate = dateRange?.from || new Date(new Date().getFullYear() - 1, 0, 1);
       const endDate = dateRange?.to || new Date();
 
       // "Audience" = VERIFIED visits only (QR scans / check-ins)
@@ -39,8 +40,7 @@ export const useAudienceMetrics = (
       };
 
       // A) Offer visits = successful offer redemptions (customer-side)
-      // IMPORTANT: discount_scans.scanned_by is the business staff member who scanned.
-      // For demographics we must attribute visits to the CUSTOMER (offer_purchases.user_id).
+      // Use offer_purchases.redeemed_at which is set when the business scans the user's QR
       if (discountIds.length > 0) {
         const { data: redeemedPurchases } = await supabase
           .from("offer_purchases")
@@ -53,17 +53,17 @@ export const useAudienceMetrics = (
         redeemedPurchases?.forEach((p) => addVisit(p.user_id));
       }
 
-      // B) Reservation visits = reservation QR scans (direct + event-linked)
-      // scanned_by is staff; the customer is reservations.user_id.
-      const { data: reservationScans } = await (supabase
-        .from("reservation_scans") as any)
-        .select("reservation:reservations!inner(business_id,user_id)")
-        .eq("reservation.business_id", businessId)
-        .eq("success", true)
-        .gte("scanned_at", startDate.toISOString())
-        .lte("scanned_at", endDate.toISOString());
+      // B) Reservation visits = reservations with checked_in_at set
+      // Direct reservations or event-linked reservations
+      const { data: checkedInReservations } = await supabase
+        .from("reservations")
+        .select("user_id")
+        .eq("business_id", businessId)
+        .not("checked_in_at", "is", null)
+        .gte("checked_in_at", startDate.toISOString())
+        .lte("checked_in_at", endDate.toISOString());
 
-      (reservationScans || []).forEach((s: any) => addVisit(s?.reservation?.user_id));
+      checkedInReservations?.forEach((r) => addVisit(r.user_id));
 
       // C) Event visits = ticket check-ins (customer is tickets.user_id)
       if (eventIds.length > 0) {
