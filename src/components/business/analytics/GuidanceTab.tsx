@@ -55,15 +55,19 @@ const translations = {
     interactions: 'Αλληλεπιδράσεις',
     visits: 'Επισκέψεις',
     bestTimes: 'Καλύτερες Μέρες & Ώρες',
-    // Tooltips
+    // Tooltips - Same as Performance tab with best times note
     viewsTooltipTitle: 'Προβολές',
-    viewsTooltipText: 'Δείχνει πότε περισσότεροι χρήστες βλέπουν και ανοίγουν αυτό το περιεχόμενο.\nΑυτές είναι οι καλύτερες ώρες για δημοσίευση και προβολή.',
+    profileViewsTooltipText: 'Πόσες φορές είδαν οι χρήστες τη σελίδα του προφίλ σου από οπουδήποτε - feed, χάρτη, αναζήτηση, κοινοποιήσεις κ.λπ. Δείχνει τις καλύτερες μέρες και ώρες.',
+    offersViewsTooltipText: 'Πόσες φορές είδαν οι χρήστες τις σελίδες των προσφορών σου από οπουδήποτε. Δείχνει τις καλύτερες μέρες και ώρες.',
+    eventsViewsTooltipText: 'Πόσες φορές είδαν οι χρήστες τις σελίδες των εκδηλώσεών σου από οπουδήποτε. Δείχνει τις καλύτερες μέρες και ώρες.',
     interactionsTooltipTitle: 'Αλληλεπιδράσεις',
-    profileInteractionsTooltipText: 'Δείχνει πότε οι χρήστες δείχνουν ενδιαφέρον ή πρόθεση μέσα στο προφίλ (π.χ. αποθηκεύσεις / ενέργειες που δείχνουν πρόθεση).',
-    offersInteractionsTooltipText: 'Δείχνει πότε οι χρήστες ενδιαφέρθηκαν για τις προσφορές, κάνοντας κλικ στο σύνδεσμο εξαργύρωση.',
-    eventsInteractionsTooltipText: 'Δείχνει πότε οι χρήστες έδειξαν πρόθεση για τις εκδηλώσεις (Ενδιαφέρομαι / Θα πάω).',
+    profileInteractionsTooltipText: 'Χρήστες που ακολούθησαν, μοιράστηκαν ή έκαναν κλικ στο προφίλ σου. Δείχνει τις καλύτερες μέρες και ώρες.',
+    offersInteractionsTooltipText: 'Κλικ στο κουμπί "Εξαργύρωσε" – δείχνει πρόθεση χρήσης της προσφοράς. Δείχνει τις καλύτερες μέρες και ώρες.',
+    eventsInteractionsTooltipText: 'RSVPs χρηστών: "Ενδιαφέρομαι" ή "Θα πάω". Δείχνει τις καλύτερες μέρες και ώρες.',
     visitsTooltipTitle: 'Επισκέψεις',
-    visitsTooltipText: 'Δείχνει πότε ο κόσμος έρχεται πραγματικά στην επιχείρηση.\nΣτόχευσε αυτές τις ώρες για μέγιστη απόδοση.',
+    profileVisitsTooltipText: 'QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου. Δείχνει τις καλύτερες μέρες και ώρες.',
+    offersVisitsTooltipText: 'Σαρώσεις QR για εξαργύρωση προσφοράς στον χώρο σου, είτε με κράτηση είτε χωρίς (walk-in). Δείχνει τις καλύτερες μέρες και ώρες.',
+    eventsVisitsTooltipText: 'Check-ins εισιτηρίων και κρατήσεων εκδηλώσεων (minimum charge). Δείχνει τις καλύτερες μέρες και ώρες.',
     // Tips
     noDataTips: 'Χρειάζονται περισσότερα δεδομένα για αξιόπιστες συμβουλές.',
     // Recommended Plan
@@ -113,15 +117,19 @@ const translations = {
     interactions: 'Interactions',
     visits: 'Visits',
     bestTimes: 'Best Days & Hours',
-    // Tooltips
+    // Tooltips - Same as Performance tab with best times note
     viewsTooltipTitle: 'Views',
-    viewsTooltipText: 'Shows when most users see and open this content.\nThese are the best hours for publishing and boosting.',
+    profileViewsTooltipText: 'How many times users viewed your profile page from anywhere - feed, map, search, shared links, etc. Shows best days and hours.',
+    offersViewsTooltipText: 'How many times users viewed your offer pages from anywhere. Shows best days and hours.',
+    eventsViewsTooltipText: 'How many times users viewed your event pages from anywhere. Shows best days and hours.',
     interactionsTooltipTitle: 'Interactions',
-    profileInteractionsTooltipText: 'Shows when users show interest or intent inside your profile (e.g. saves / actions that indicate intent).',
-    offersInteractionsTooltipText: 'Shows when users interacted with offers by clicking the redeem link.',
-    eventsInteractionsTooltipText: 'Shows when users showed intent for events (Interested / Going).',
+    profileInteractionsTooltipText: 'Users who followed, shared, or clicked on your profile. Shows best days and hours.',
+    offersInteractionsTooltipText: 'Clicks on "Redeem" button – shows intent to use the offer. Shows best days and hours.',
+    eventsInteractionsTooltipText: 'User RSVPs: "Interested" or "Going". Shows best days and hours.',
     visitsTooltipTitle: 'Visits',
-    visitsTooltipText: 'Shows when people actually come to the business.\nTarget these hours for maximum results.',
+    profileVisitsTooltipText: 'QR check-ins from reservations made directly through your profile. Shows best days and hours.',
+    offersVisitsTooltipText: 'QR scans for offer redemption at your venue, with or without reservation (walk-in). Shows best days and hours.',
+    eventsVisitsTooltipText: 'Ticket and event reservation (minimum charge) check-ins. Shows best days and hours.',
     // Tips
     noDataTips: 'More data needed for reliable tips.',
     // Recommended Plan
@@ -362,7 +370,13 @@ const GuidanceTable: React.FC<{
                 icon={Eye}
                 windows={data.views}
                 tooltipTitle={t.viewsTooltipTitle}
-                tooltipText={t.viewsTooltipText}
+                tooltipText={
+                  sectionType === 'profile'
+                    ? (t as any).profileViewsTooltipText
+                    : sectionType === 'offers'
+                      ? (t as any).offersViewsTooltipText
+                      : (t as any).eventsViewsTooltipText
+                }
                 language={language}
               />
               <MetricRow
@@ -384,7 +398,13 @@ const GuidanceTable: React.FC<{
                 icon={MapPin}
                 windows={data.visits}
                 tooltipTitle={t.visitsTooltipTitle}
-                tooltipText={t.visitsTooltipText}
+                tooltipText={
+                  sectionType === 'profile'
+                    ? (t as any).profileVisitsTooltipText
+                    : sectionType === 'offers'
+                      ? (t as any).offersVisitsTooltipText
+                      : (t as any).eventsVisitsTooltipText
+                }
                 language={language}
               />
             </tbody>

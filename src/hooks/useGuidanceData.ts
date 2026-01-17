@@ -36,6 +36,7 @@ export const useGuidanceData = (businessId: string) => {
     queryFn: async () => {
       // Last 30 days
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const now = new Date().toISOString();
 
       const analyzeTimestamps = (timestamps: string[] | null | undefined) => {
         const hourCounts: Record<number, Record<number, number>> = {};
@@ -84,135 +85,239 @@ export const useGuidanceData = (businessId: string) => {
       const offerIds = offers?.map((o) => o.id) || [];
       const eventIds = events?.map((e) => e.id) || [];
 
-      // PROFILE (from engagement_events)
-      const { data: engagementEvents } = await supabase
+      // ========================================
+      // PROFILE - Same algorithm as Performance
+      // ========================================
+      
+      // Profile views from engagement_events (same as Performance)
+      const { data: profileViewEvents } = await supabase
         .from('engagement_events')
-        .select('event_type, created_at')
+        .select('created_at')
         .eq('business_id', businessId)
-        .gte('created_at', thirtyDaysAgo);
+        .eq('event_type', 'profile_view')
+        .gte('created_at', thirtyDaysAgo)
+        .lte('created_at', now);
 
-      const profileViews = analyzeTimestamps(
-        engagementEvents?.filter((e) => e.event_type === 'profile_view').map((e) => e.created_at)
-      );
-      const profileInteractions = analyzeTimestamps(
-        engagementEvents
-          ?.filter((e) => ['follow', 'save', 'share'].includes(e.event_type))
-          .map((e) => e.created_at)
-      );
-      const profileVisits = analyzeTimestamps(
-        engagementEvents?.filter((e) => e.event_type === 'check_in').map((e) => e.created_at)
-      );
+      const profileViews = analyzeTimestamps(profileViewEvents?.map((e) => e.created_at));
 
-      // OFFERS
-      const [offerViewsRes, offerInteractionsRes, offerScansRes] = await Promise.all([
-        offerIds.length
-          ? supabase
-              .from('discount_views')
-              .select('viewed_at')
-              .in('discount_id', offerIds)
-              .gte('viewed_at', thirtyDaysAgo)
-          : Promise.resolve({ data: [] as any[] }),
-        offerIds.length
-          ? supabase
-              .from('engagement_events')
-              .select('created_at')
-              .eq('business_id', businessId)
-              .eq('event_type', 'offer_redeem_click')
-              .in('entity_id', offerIds)
-              .gte('created_at', thirtyDaysAgo)
-          : Promise.resolve({ data: [] as any[] }),
-        offerIds.length
-          ? supabase
-              .from('discount_scans')
-              .select('scanned_at')
-              .in('discount_id', offerIds)
-              .eq('success', true)
-              .gte('scanned_at', thirtyDaysAgo)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
+      // Profile interactions (follows, shares, clicks) - same as Performance
+      const { data: profileInteractionEvents } = await supabase
+        .from('engagement_events')
+        .select('created_at')
+        .eq('business_id', businessId)
+        .in('event_type', ['follow', 'favorite', 'share', 'click', 'profile_click'])
+        .gte('created_at', thirtyDaysAgo)
+        .lte('created_at', now);
 
-      const offerViews = analyzeTimestamps((offerViewsRes.data || []).map((v: any) => v.viewed_at));
-      const offerInteractions = analyzeTimestamps(
-        (offerInteractionsRes.data || []).map((v: any) => v.created_at)
-      );
-      const offerVisits = analyzeTimestamps((offerScansRes.data || []).map((v: any) => v.scanned_at));
+      // Also count business followers for interactions - same as Performance
+      const { data: followerData } = await supabase
+        .from('business_followers')
+        .select('created_at')
+        .eq('business_id', businessId)
+        .is('unfollowed_at', null)
+        .gte('created_at', thirtyDaysAgo)
+        .lte('created_at', now);
 
-      // EVENTS
-      const [eventViewsRes, rsvpsRes, reservationsRes, ticketCheckInsRes] = await Promise.all([
-        eventIds.length
-          ? supabase
-              .from('event_views')
-              .select('viewed_at')
-              .in('event_id', eventIds)
-              .gte('viewed_at', thirtyDaysAgo)
-          : Promise.resolve({ data: [] as any[] }),
-        eventIds.length
-          ? supabase
-              .from('rsvps')
-              .select('created_at')
-              .in('event_id', eventIds)
-              .in('status', ['interested', 'going'])
-              .gte('created_at', thirtyDaysAgo)
-          : Promise.resolve({ data: [] as any[] }),
-        eventIds.length
-          ? supabase
-              .from('reservations')
-              .select('created_at')
-              .in('event_id', eventIds)
-              .gte('created_at', thirtyDaysAgo)
-          : Promise.resolve({ data: [] as any[] }),
-        eventIds.length
-          ? supabase
-              .from('tickets')
-              .select('checked_in_at')
-              .in('event_id', eventIds)
-              .not('checked_in_at', 'is', null)
-              .gte('checked_in_at', thirtyDaysAgo)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
+      const allProfileInteractionTimestamps = [
+        ...(profileInteractionEvents?.map((e) => e.created_at) || []),
+        ...(followerData?.map((f) => f.created_at) || []),
+      ];
+      const profileInteractions = analyzeTimestamps(allProfileInteractionTimestamps);
 
-      const eventViews = analyzeTimestamps((eventViewsRes.data || []).map((v: any) => v.viewed_at));
-      const eventInteractions = analyzeTimestamps((rsvpsRes.data || []).map((v: any) => v.created_at));
-      const eventVisits = analyzeTimestamps([
-        ...(reservationsRes.data || []).map((v: any) => v.created_at),
-        ...(ticketCheckInsRes.data || []).map((v: any) => v.checked_in_at),
-      ]);
+      // Profile visits = reservation scans (QR check-ins) for direct business reservations
+      const { data: profileVisitScans } = await (supabase
+        .from('reservation_scans') as any)
+        .select('scanned_at')
+        .eq('business_id', businessId)
+        .gte('scanned_at', thirtyDaysAgo)
+        .lte('scanned_at', now);
 
-      // Generate recommended plan based on profile best times
-      const bestPublish = profileViews[0] || { dayIndex: 5, hours: '17:00–19:00' };
-      const bestInteractions = profileInteractions[0] || { dayIndex: 5, hours: '18:00–21:00' };
-      const bestVisits = profileVisits[0] || { dayIndex: 5, hours: '20:00–23:00' };
+      const profileVisits = analyzeTimestamps((profileVisitScans || []).map((s: any) => s.scanned_at));
 
+      // ========================================
+      // OFFERS - Same algorithm as Performance
+      // ========================================
+      
+      let offerViewTimestamps: string[] = [];
+      let offerInteractionTimestamps: string[] = [];
+      let offerVisitTimestamps: string[] = [];
+
+      if (offerIds.length > 0) {
+        // Offer views from discount_views
+        const { data: offerViewsRes } = await supabase
+          .from('discount_views')
+          .select('viewed_at')
+          .in('discount_id', offerIds)
+          .gte('viewed_at', thirtyDaysAgo)
+          .lte('viewed_at', now);
+        offerViewTimestamps = (offerViewsRes || []).map((v) => v.viewed_at);
+
+        // Offer interactions = clicks on "Εξαργύρωσε" (same as Performance)
+        const { data: offerInteractionsRes } = await supabase
+          .from('engagement_events')
+          .select('created_at')
+          .eq('business_id', businessId)
+          .eq('event_type', 'offer_redeem_click')
+          .in('entity_id', offerIds)
+          .gte('created_at', thirtyDaysAgo)
+          .lte('created_at', now);
+        offerInteractionTimestamps = (offerInteractionsRes || []).map((v) => v.created_at);
+
+        // Offer visits (redemptions/scans) - same as Performance
+        const { data: offerScansRes } = await supabase
+          .from('discount_scans')
+          .select('scanned_at')
+          .in('discount_id', offerIds)
+          .eq('success', true)
+          .gte('scanned_at', thirtyDaysAgo)
+          .lte('scanned_at', now);
+        offerVisitTimestamps = (offerScansRes || []).map((v) => v.scanned_at);
+      }
+
+      const offerViews = analyzeTimestamps(offerViewTimestamps);
+      const offerInteractions = analyzeTimestamps(offerInteractionTimestamps);
+      const offerVisits = analyzeTimestamps(offerVisitTimestamps);
+
+      // ========================================
+      // EVENTS - Same algorithm as Performance
+      // ========================================
+      
+      let eventViewTimestamps: string[] = [];
+      let eventInteractionTimestamps: string[] = [];
+      let eventVisitTimestamps: string[] = [];
+
+      if (eventIds.length > 0) {
+        // Event views from event_views
+        const { data: eventViewsRes } = await supabase
+          .from('event_views')
+          .select('viewed_at')
+          .in('event_id', eventIds)
+          .gte('viewed_at', thirtyDaysAgo)
+          .lte('viewed_at', now);
+        eventViewTimestamps = (eventViewsRes || []).map((v) => v.viewed_at);
+
+        // Event interactions (RSVPs) - same as Performance
+        const { data: rsvpsRes } = await supabase
+          .from('rsvps')
+          .select('created_at')
+          .in('event_id', eventIds)
+          .in('status', ['interested', 'going'])
+          .gte('created_at', thirtyDaysAgo)
+          .lte('created_at', now);
+        eventInteractionTimestamps = (rsvpsRes || []).map((v) => v.created_at);
+
+        // Event visits = ticket check-ins + event reservation scans - same as Performance
+        const { data: ticketCheckInsRes } = await supabase
+          .from('tickets')
+          .select('checked_in_at')
+          .in('event_id', eventIds)
+          .not('checked_in_at', 'is', null)
+          .gte('created_at', thirtyDaysAgo)
+          .lte('created_at', now);
+        
+        const ticketCheckIns = (ticketCheckInsRes || [])
+          .filter((t) => t.checked_in_at)
+          .map((t) => t.checked_in_at as string);
+
+        // Add event-linked reservation scans
+        const { data: eventReservations } = await supabase
+          .from('reservations')
+          .select('id')
+          .in('event_id', eventIds)
+          .gte('created_at', thirtyDaysAgo)
+          .lte('created_at', now);
+
+        const eventResIds = eventReservations?.map((r) => r.id) || [];
+        let eventResScanTimestamps: string[] = [];
+        
+        if (eventResIds.length > 0) {
+          const { data: eventResScansRes } = await (supabase
+            .from('reservation_scans') as any)
+            .select('scanned_at')
+            .in('reservation_id', eventResIds);
+          eventResScanTimestamps = (eventResScansRes || []).map((s: any) => s.scanned_at);
+        }
+
+        eventVisitTimestamps = [...ticketCheckIns, ...eventResScanTimestamps];
+      }
+
+      const eventViews = analyzeTimestamps(eventViewTimestamps);
+      const eventInteractions = analyzeTimestamps(eventInteractionTimestamps);
+      const eventVisits = analyzeTimestamps(eventVisitTimestamps);
+
+      // ========================================
+      // RECOMMENDED PLAN
+      // Based on best times for interactions and visits across all content
+      // ========================================
+      
+      // Combine all timestamps for best publish time (based on profile views - when people are looking)
+      const allViewTimestamps = [
+        ...(profileViewEvents?.map((e) => e.created_at) || []),
+        ...offerViewTimestamps,
+        ...eventViewTimestamps,
+      ];
+      const bestPublishWindows = analyzeTimestamps(allViewTimestamps);
+      
+      // Combine all interaction timestamps for best interaction time
+      const allInteractionTimestamps = [
+        ...allProfileInteractionTimestamps,
+        ...offerInteractionTimestamps,
+        ...eventInteractionTimestamps,
+      ];
+      const bestInteractionWindows = analyzeTimestamps(allInteractionTimestamps);
+      
+      // Combine all visit timestamps for best visit time
+      const allVisitTimestamps = [
+        ...((profileVisitScans || []).map((s: any) => s.scanned_at)),
+        ...offerVisitTimestamps,
+        ...eventVisitTimestamps,
+      ];
+      const bestVisitWindows = analyzeTimestamps(allVisitTimestamps);
+
+      const bestPublish = bestPublishWindows[0] || { dayIndex: 5, hours: '17:00–19:00' };
+      const bestInteractions = bestInteractionWindows[0] || { dayIndex: 5, hours: '18:00–21:00' };
+      const bestVisits = bestVisitWindows[0] || { dayIndex: 5, hours: '20:00–23:00' };
+
+      // Return data with defaults for empty sections
       return {
         profile: {
-          views: profileViews,
-          interactions: profileInteractions,
-          visits: profileVisits,
-        },
-        offers: {
-          views: offerViews.length > 0 ? offerViews : [
+          views: profileViews.length > 0 && profileViews[0].count > 0 ? profileViews : [
             { dayIndex: 5, hours: '17:00–19:00', count: 0 },
             { dayIndex: 6, hours: '17:00–19:00', count: 0 },
           ],
-          interactions: offerInteractions.length > 0 ? offerInteractions : [
+          interactions: profileInteractions.length > 0 && profileInteractions[0].count > 0 ? profileInteractions : [
             { dayIndex: 5, hours: '18:00–21:00', count: 0 },
             { dayIndex: 6, hours: '18:00–21:00', count: 0 },
           ],
-          visits: offerVisits.length > 0 ? offerVisits : [
+          visits: profileVisits.length > 0 && profileVisits[0].count > 0 ? profileVisits : [
+            { dayIndex: 5, hours: '20:00–23:00', count: 0 },
+            { dayIndex: 6, hours: '20:00–23:00', count: 0 },
+          ],
+        },
+        offers: {
+          views: offerViews.length > 0 && offerViews[0].count > 0 ? offerViews : [
+            { dayIndex: 5, hours: '17:00–19:00', count: 0 },
+            { dayIndex: 6, hours: '17:00–19:00', count: 0 },
+          ],
+          interactions: offerInteractions.length > 0 && offerInteractions[0].count > 0 ? offerInteractions : [
+            { dayIndex: 5, hours: '18:00–21:00', count: 0 },
+            { dayIndex: 6, hours: '18:00–21:00', count: 0 },
+          ],
+          visits: offerVisits.length > 0 && offerVisits[0].count > 0 ? offerVisits : [
             { dayIndex: 5, hours: '20:00–23:00', count: 0 },
             { dayIndex: 6, hours: '20:00–23:00', count: 0 },
           ],
         },
         events: {
-          views: eventViews.length > 0 ? eventViews : [
+          views: eventViews.length > 0 && eventViews[0].count > 0 ? eventViews : [
             { dayIndex: 3, hours: '19:00–21:00', count: 0 },
             { dayIndex: 4, hours: '19:00–21:00', count: 0 },
           ],
-          interactions: eventInteractions.length > 0 ? eventInteractions : [
+          interactions: eventInteractions.length > 0 && eventInteractions[0].count > 0 ? eventInteractions : [
             { dayIndex: 4, hours: '20:00–23:00', count: 0 },
             { dayIndex: 5, hours: '19:00–22:00', count: 0 },
           ],
-          visits: eventVisits.length > 0 ? eventVisits : [
+          visits: eventVisits.length > 0 && eventVisits[0].count > 0 ? eventVisits : [
             { dayIndex: 5, hours: '23:00–03:00', count: 0 },
             { dayIndex: 6, hours: '23:00–03:00', count: 0 },
           ],
