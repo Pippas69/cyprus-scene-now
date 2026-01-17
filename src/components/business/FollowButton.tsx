@@ -37,8 +37,13 @@ export function FollowButton({ businessId, language, source = 'profile', variant
 
   useEffect(() => {
     checkUser();
-    fetchFollowerData();
-  }, [businessId]);
+  }, []);
+
+  useEffect(() => {
+    if (businessId) {
+      fetchFollowerData();
+    }
+  }, [businessId, userId]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -46,12 +51,14 @@ export function FollowButton({ businessId, language, source = 'profile', variant
   };
 
   const fetchFollowerData = async () => {
-    // Get follower count
-    const { data: countData } = await supabase.rpc('get_business_follower_count', {
-      business_id_param: businessId,
-    });
+    // Get follower count using direct query
+    const { count } = await supabase
+      .from('business_followers')
+      .select('*', { count: 'exact', head: true })
+      .eq('business_id', businessId)
+      .is('unfollowed_at', null);
 
-    setFollowerCount(countData || 0);
+    setFollowerCount(count || 0);
 
     // Check if current user is following
     if (userId) {
@@ -60,6 +67,7 @@ export function FollowButton({ businessId, language, source = 'profile', variant
         .select('id')
         .eq('business_id', businessId)
         .eq('user_id', userId)
+        .is('unfollowed_at', null)
         .maybeSingle();
 
       setIsFollowing(!!data);
@@ -114,19 +122,30 @@ export function FollowButton({ businessId, language, source = 'profile', variant
     setLoading(false);
   };
 
-  // Compact variant - icon only with tooltip-like behavior
+  // Compact variant - icon with follower count
   if (variant === 'compact') {
     return (
-      <Button
-        variant={isFollowing ? 'ghost' : 'ghost'}
-        size="icon"
-        onClick={handleToggleFollow}
-        disabled={loading}
-        className={`h-8 w-8 rounded-full ${isFollowing ? 'text-primary' : 'text-muted-foreground hover:text-primary'}`}
-        title={isFollowing ? t.following : t.follow}
-      >
-        <Heart className={`h-4 w-4 ${isFollowing ? 'fill-current' : ''}`} />
-      </Button>
+      <div className="flex items-center gap-1.5">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleToggleFollow}
+          disabled={loading}
+          className={`h-8 w-8 rounded-full transition-all ${
+            isFollowing 
+              ? 'text-primary bg-primary/10' 
+              : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
+          }`}
+          title={isFollowing ? t.following : t.follow}
+        >
+          <Heart className={`h-4 w-4 transition-all ${isFollowing ? 'fill-current scale-110' : ''}`} />
+        </Button>
+        {followerCount > 0 && (
+          <span className="text-xs text-muted-foreground font-medium">
+            {followerCount}
+          </span>
+        )}
+      </div>
     );
   }
 
@@ -136,9 +155,9 @@ export function FollowButton({ businessId, language, source = 'profile', variant
         variant={isFollowing ? 'secondary' : 'default'}
         onClick={handleToggleFollow}
         disabled={loading}
-        className="gap-2"
+        className={`gap-2 transition-all ${isFollowing ? 'bg-primary/10 text-primary border-primary/20' : ''}`}
       >
-        <Heart className={`h-4 w-4 ${isFollowing ? 'fill-current' : ''}`} />
+        <Heart className={`h-4 w-4 transition-all ${isFollowing ? 'fill-current' : ''}`} />
         {isFollowing ? t.following : t.follow}
       </Button>
       {followerCount > 0 && (

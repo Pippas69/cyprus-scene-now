@@ -43,14 +43,25 @@ export const usePerformanceMetrics = (
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
-      // Profile interactions (follows, saves)
+      // Profile interactions (follows, shares, clicks)
       const { data: profileInteractions } = await supabase
         .from("engagement_events")
         .select("id")
         .eq("business_id", businessId)
-        .in("event_type", ["follow", "save", "share"])
+        .in("event_type", ["follow", "favorite", "share", "click", "profile_click"])
         .gte("created_at", startDate)
         .lte("created_at", endDate);
+      
+      // Also count business followers for interactions
+      const { count: followerCount } = await supabase
+        .from("business_followers")
+        .select("*", { count: "exact", head: true })
+        .eq("business_id", businessId)
+        .is("unfollowed_at", null)
+        .gte("created_at", startDate)
+        .lte("created_at", endDate);
+
+      const totalProfileInteractions = (profileInteractions?.length || 0) + (followerCount || 0);
 
       // Profile visits = reservation scans (QR check-ins) for direct business reservations
       const { count: profileVisitsCount } = await (supabase
@@ -169,7 +180,7 @@ export const usePerformanceMetrics = (
       return {
         profile: {
           views: profileViews?.length || 0,
-          interactions: profileInteractions?.length || 0,
+          interactions: totalProfileInteractions,
           visits: profileVisitsCount || 0,
         },
         offers: {
