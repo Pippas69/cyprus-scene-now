@@ -10,7 +10,7 @@ import { LockedSection } from '@/components/business/analytics/LockedSection';
 import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from '@/hooks/useSubscriptionPlan';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { Lock, Gem } from 'lucide-react';
+import { Lock, Zap, Star, Crown } from 'lucide-react';
 
 const translations = {
   el: {
@@ -19,6 +19,9 @@ const translations = {
     performance: 'Απόδοση',
     boostValue: 'Αξία Προώθησης',
     guidance: 'Καθοδήγηση',
+    basicPlan: 'Basic',
+    proPlan: 'Pro',
+    elitePlan: 'Elite',
   },
   en: {
     title: 'Your Analytics',
@@ -26,15 +29,11 @@ const translations = {
     performance: 'Performance',
     boostValue: 'Boost Value',
     guidance: 'Guidance',
+    basicPlan: 'Basic',
+    proPlan: 'Pro',
+    elitePlan: 'Elite',
   },
 };
-
-const PlanBadge = ({ label }: { label: string }) => (
-  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
-    <Gem className="h-3 w-3" />
-    {label}
-  </span>
-);
 
 interface AnalyticsDashboardProps {
   businessId: string;
@@ -63,33 +62,17 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   const hasBoostValueAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('boostValue'));
   const hasGuidanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('guidance'));
 
-  const getPlanBadgeLabel = (tab: 'performance' | 'boostValue' | 'guidance') => {
-    if (tab === 'performance') return 'Basic Plan';
-    if (tab === 'boostValue') return 'Pro Plan';
-    return 'Elite Plan';
-  };
-
-  // Render tab trigger with (optional) plan badge + lock icon if not accessible
-  const renderTabTrigger = (
-    value: string,
-    label: string,
-    hasAccess: boolean,
-    planBadgeTab?: 'performance' | 'boostValue' | 'guidance'
-  ) => (
+  // Render tab trigger with lock icon if not accessible
+  const renderTabTrigger = (value: string, label: string, hasAccess: boolean) => (
     <TabsTrigger 
       value={value} 
       className={`relative ${!hasAccess ? 'text-muted-foreground/60' : ''}`}
       disabled={!hasAccess}
     >
-      <div className="flex flex-col items-center gap-1">
-        {planBadgeTab && <PlanBadge label={getPlanBadgeLabel(planBadgeTab)} />}
-        <div className="inline-flex items-center">
-          {!hasAccess && (
-            <Lock className="w-3 h-3 mr-1.5 opacity-60" />
-          )}
-          {label}
-        </div>
-      </div>
+      {!hasAccess && (
+        <Lock className="w-3 h-3 mr-1.5 opacity-60" />
+      )}
+      {label}
     </TabsTrigger>
   );
 
@@ -100,12 +83,39 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
         <DateRangePicker value={dateRange} onChange={setDateRange} language={language} />
       </div>
 
+      {/* Plan Badges Row - Above Tabs */}
+      <div className="grid w-full grid-cols-4 gap-1 text-center">
+        {/* Overview - no badge */}
+        <div />
+        {/* Performance = Basic */}
+        <div className="flex justify-center">
+          <span className="inline-flex items-center gap-1 rounded-full border border-blue-400/40 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 px-2.5 py-1 text-[11px] font-medium text-blue-600 dark:text-blue-400">
+            <Zap className="h-3 w-3" />
+            {t.basicPlan}
+          </span>
+        </div>
+        {/* Boost Value = Pro */}
+        <div className="flex justify-center">
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-gradient-to-r from-primary/10 to-sunset-coral/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+            <Star className="h-3 w-3" />
+            {t.proPlan}
+          </span>
+        </div>
+        {/* Guidance = Elite */}
+        <div className="flex justify-center">
+          <span className="inline-flex items-center gap-1 rounded-full border border-purple-400/40 bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-2.5 py-1 text-[11px] font-medium text-purple-600 dark:text-purple-400">
+            <Crown className="h-3 w-3" />
+            {t.elitePlan}
+          </span>
+        </div>
+      </div>
+
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
-          {renderTabTrigger('performance', t.performance, hasPerformanceAccess, 'performance')}
-          {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess, 'boostValue')}
-          {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess, 'guidance')}
+          {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
+          {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
+          {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess)}
         </TabsList>
 
         <TabsContent value="overview">
