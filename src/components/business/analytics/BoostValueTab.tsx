@@ -406,21 +406,90 @@ export const BoostValueTab: React.FC<BoostValueTabProps> = ({
 
   if (!data) return null;
 
-  // Generate dynamic tips based on best days
+  // Generate dynamic tips based on actual data
   const getProfileTips = () => {
+    const totalViews = data.profile.views.without + data.profile.views.with;
+    const totalInteractions = data.profile.interactions.without + data.profile.interactions.with;
+    const totalVisits = data.profile.visits.without + data.profile.visits.with;
+    const change = data.profile.visits.change;
+    
+    if (totalViews === 0 && totalInteractions === 0 && totalVisits === 0) {
+      return [t.noData];
+    }
+    
     const day = getDayName(data.bestDays.profile, language);
-    const tip1 = t.profileTip1.replace('{day}', day);
-    return [tip1, t.profileTip2];
+    
+    // Dynamic tip based on actual change
+    if (change > 20) {
+      const tip1 = t.profileTip1.replace('{day}', day);
+      return [tip1, t.profileTip2];
+    } else if (change > 0) {
+      const tip1 = language === 'el' 
+        ? `Το επιλεγμένο προφίλ φέρνει +${change}% περισσότερες επισκέψεις. Η διαφορά είναι πιο έντονη την ${day}.`
+        : `The featured profile brings +${change}% more visits. The difference is more pronounced on ${day}.`;
+      return [tip1, t.profileTip2];
+    } else {
+      const tip1 = language === 'el'
+        ? 'Συνέχισε να χρησιμοποιείς το επιλεγμένο προφίλ - τα δεδομένα χρειάζονται χρόνο για να συγκεντρωθούν.'
+        : 'Keep using the featured profile - data needs time to accumulate.';
+      return [tip1, t.profileTip2];
+    }
   };
 
   const getOfferTips = () => {
+    const totalViews = data.offers.views.without + data.offers.views.with;
+    const totalVisits = data.offers.visits.without + data.offers.visits.with;
+    const visitsChange = data.offers.visits.change;
+    
+    if (totalViews === 0 && totalVisits === 0) {
+      return [t.noData];
+    }
+    
     const day = getDayName(data.bestDays.offers, language);
-    const tip1 = `${t.offerTip1} ${t.offerTip1Suffix} ${day}.`;
-    return [tip1, t.offerTip2];
+    
+    // Dynamic tips based on actual conversion
+    if (visitsChange > 50) {
+      const tip1 = language === 'el'
+        ? `Οι προσφορές με προβολή φέρνουν +${visitsChange}% περισσότερες επισκέψεις! Η διαφορά είναι πιο έντονη την ${day}.`
+        : `Offers with boost bring +${visitsChange}% more visits! The difference is more pronounced on ${day}.`;
+      return [tip1, t.offerTip2];
+    } else if (visitsChange > 0) {
+      const tip1 = `${t.offerTip1} ${t.offerTip1Suffix} ${day}.`;
+      return [tip1, t.offerTip2];
+    } else if (data.offers.views.with > data.offers.views.without) {
+      const tip1 = language === 'el'
+        ? 'Η προβολή αυξάνει τις προβολές προσφορών. Δοκίμασε πιο ελκυστικές προσφορές για καλύτερη μετατροπή σε επισκέψεις.'
+        : 'Boost increases offer views. Try more attractive offers for better conversion to visits.';
+      return [tip1, t.offerTip2];
+    } else {
+      return [t.offerTip1, t.offerTip2];
+    }
   };
 
   const getEventTips = () => {
-    return [t.eventTip1, t.eventTip2];
+    const totalViews = data.events.views.without + data.events.views.with;
+    const totalInteractions = data.events.interactions.without + data.events.interactions.with;
+    const interactionsChange = data.events.interactions.change;
+    const visitsChange = data.events.visits.change;
+    
+    if (totalViews === 0 && totalInteractions === 0) {
+      return [t.noData];
+    }
+    
+    // Dynamic tips based on actual RSVP and visit changes
+    if (interactionsChange > 30) {
+      const tip1 = language === 'el'
+        ? `Η προβολή αυξάνει τα RSVPs κατά +${interactionsChange}%. Όσο πλησιάζει η ημερομηνία, η διαφορά γίνεται πιο εμφανής.`
+        : `Boost increases RSVPs by +${interactionsChange}%. As the date approaches, the difference becomes more evident.`;
+      return [tip1, t.eventTip2];
+    } else if (visitsChange > 0) {
+      const tip1 = language === 'el'
+        ? `Οι εκδηλώσεις με προβολή έχουν +${visitsChange}% περισσότερα check-ins.`
+        : `Events with boost have +${visitsChange}% more check-ins.`;
+      return [tip1, t.eventTip2];
+    } else {
+      return [t.eventTip1, t.eventTip2];
+    }
   };
 
   return (

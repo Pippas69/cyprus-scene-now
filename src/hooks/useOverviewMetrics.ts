@@ -166,17 +166,28 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
-      // Event reservations
+      // Event reservations (only from events with accepts_reservations=true)
       let eventBookings = 0;
       if (eventIds.length > 0) {
-        const { count } = await supabase
-          .from("reservations")
-          .select("*", { count: "exact", head: true })
-          .in("event_id", eventIds)
-          .eq("status", "accepted")
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString());
-        eventBookings = count || 0;
+        // First get events that have reservation option enabled
+        const { data: eventsWithReservations } = await supabase
+          .from("events")
+          .select("id")
+          .eq("business_id", businessId)
+          .eq("accepts_reservations", true);
+        
+        const eventIdsWithReservations = eventsWithReservations?.map(e => e.id) || [];
+        
+        if (eventIdsWithReservations.length > 0) {
+          const { count } = await supabase
+            .from("reservations")
+            .select("*", { count: "exact", head: true })
+            .in("event_id", eventIdsWithReservations)
+            .eq("status", "accepted")
+            .gte("created_at", startDate.toISOString())
+            .lte("created_at", endDate.toISOString());
+          eventBookings = count || 0;
+        }
       }
 
       const bookings = (directBookings || 0) + eventBookings;
