@@ -214,36 +214,16 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [phoneNumber, setPhoneNumber] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
-  // Fetch seating options and check payment readiness
+  // Fetch seating options
   useEffect(() => {
     if (open && eventId) {
-      fetchSeatingOptionsAndPaymentStatus();
+      fetchSeatingOptions();
     }
   }, [open, eventId]);
 
-  const fetchSeatingOptionsAndPaymentStatus = async () => {
+  const fetchSeatingOptions = async () => {
     setLoading(true);
     try {
-      // First check if business has completed payment setup
-      const { data: event, error: eventError } = await supabase
-        .from('events')
-        .select(`
-          business_id,
-          businesses (
-            stripe_account_id,
-            stripe_onboarding_completed
-          )
-        `)
-        .eq('id', eventId)
-        .single();
-
-      if (eventError) throw eventError;
-
-      const business = event?.businesses as { stripe_account_id: string | null; stripe_onboarding_completed: boolean | null } | null;
-      const isPaymentReady = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
-      setPaymentsReady(isPaymentReady);
-
-      // Fetch seating options regardless
       const { data: seatingTypes, error: seatingError } = await supabase
         .from('reservation_seating_types')
         .select('*')
@@ -267,6 +247,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       }
 
       setSeatingOptions(optionsWithTiers);
+      // Don't pre-block the flow; backend handles preview fallback.
+      setPaymentsReady(null);
     } catch (error) {
       console.error('Error fetching seating options:', error);
       toast.error(t.errorLoading);
@@ -321,26 +303,16 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       });
 
       if (error) throw error;
-      if (data?.error) {
-        // Handle specific payment setup error
-        if (data.error.includes('payment setup') || data.error.includes('not completed')) {
-          setPaymentsReady(false);
-          return;
-        }
-        throw new Error(data.error);
-      }
+      if (data?.error) throw new Error(data.error);
 
       if (data?.url) {
         window.location.href = data.url;
+      } else {
+        throw new Error('Missing checkout URL');
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
-      const errorMessage = error instanceof Error ? error.message : '';
-      if (errorMessage.includes('payment setup') || errorMessage.includes('not completed')) {
-        setPaymentsReady(false);
-      } else {
-        toast.error(language === 'el' ? 'Σφάλμα δημιουργίας πληρωμής' : 'Error creating checkout');
-      }
+      toast.error(language === 'el' ? 'Σφάλμα δημιουργίας πληρωμής' : 'Error creating checkout');
     } finally {
       setSubmitting(false);
     }
@@ -365,21 +337,6 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       );
     }
 
-    // Check if payments are not ready - show error message
-    if (paymentsReady === false) {
-      return (
-        <div className="text-center py-12 space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-            <CreditCard className="h-8 w-8 text-amber-600 dark:text-amber-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-foreground">{t.paymentsNotReady}</h3>
-          <p className="text-muted-foreground text-sm max-w-sm mx-auto">{t.paymentsNotReadyDesc}</p>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="mt-4">
-            {t.back}
-          </Button>
-        </div>
-      );
-    }
 
     if (seatingOptions.length === 0) {
       return (

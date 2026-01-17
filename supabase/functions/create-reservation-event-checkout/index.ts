@@ -75,7 +75,17 @@ serve(async (req) => {
     }
 
     const business = event.businesses;
-    if (!business?.stripe_account_id || !business?.stripe_onboarding_completed) {
+
+    // In production we REQUIRE the business to have completed payment setup (Stripe Connect)
+    // so we can create destination charges.
+    // In preview/dev environments, allow a fallback "platform checkout" so the team can test
+    // the customer Stripe redirect flow without having a fully onboarded business.
+    const origin = req.headers.get("origin") ?? "";
+    const isPreviewOrigin = origin.includes("lovable.app") || origin.includes("localhost");
+
+    const hasConnectSetup = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
+
+    if (!hasConnectSetup && !isPreviewOrigin) {
       throw new Error("Business has not completed payment setup");
     }
 
@@ -186,8 +196,10 @@ serve(async (req) => {
     };
     const seatingTypeName = seatingTypeLabels[seatingType.seating_type] || seatingType.seating_type;
 
-    // Create Stripe checkout session with destination charge
-    const session = await stripe.checkout.sessions.create({
+    // Create Stripe checkout session.
+    // - If the business has Connect setup: destination charge + application fee.
+    // - If not (preview/dev only): platform checkout (no transfer/application fee).
+    const baseSessionParams = {
       customer: customerId,
       payment_method_types: ["card"],
       line_items: [
@@ -196,7 +208,7 @@ serve(async (req) => {
             currency: priceTier.currency || "eur",
             product_data: {
               name: `${event.title} - ${seatingTypeName} Reservation`,
-              description: `Prepaid minimum charge for ${party_size} ${party_size === 1 ? 'person' : 'people'}. This amount counts as credit at the venue.`,
+              description: `Prepaid minimum charge for ${party_size} ${party_size === 1 ? "person" : "people"}. This amount counts as credit at the venue.`,
               metadata: {
                 event_id,
                 seating_type: seatingType.seating_type,
@@ -209,23 +221,11 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: success_url || `${req.headers.get("origin")}/reservations?success=true&reservation_id=${reservation.id}`,
-      cancel_url: cancel_url || `${req.headers.get("origin")}/event/${event_id}?cancelled=true`,
-      payment_intent_data: {
-        application_fee_amount: platformFeeCents,
-        transfer_data: {
-          destination: business.stripe_account_id,
-        },
-        metadata: {
-          type: "reservation_event",
-          event_id,
-          reservation_id: reservation.id,
-          seating_type_id,
-          party_size: party_size.toString(),
-          prepaid_amount_cents: prepaidAmountCents.toString(),
-          business_id: business.id,
-        },
-      },
+      success_url:
+        success_url ||
+        `${req.headers.get("origin")}/reservations?success=true&reservation_id=${reservation.id}`,
+      cancel_url:
+        cancel_url || `${req.headers.get("origin")}/event/${event_id}?cancelled=true`,
       metadata: {
         type: "reservation_event",
         event_id,
@@ -233,9 +233,33 @@ serve(async (req) => {
         seating_type_id,
         party_size: party_size.toString(),
         prepaid_amount_cents: prepaidAmountCents.toString(),
-        business_id: business.id,
+        business_id: business?.id ?? "",
+        used_platform_checkout: hasConnectSetup ? "false" : "true",
       },
-    });
+    };
+
+    const session = await stripe.checkout.sessions.create(
+      hasConnectSetup
+        ? {
+            ...baseSessionParams,
+            payment_intent_data: {
+              application_fee_amount: platformFeeCents,
+              transfer_data: {
+                destination: business.stripe_account_id,
+              },
+              metadata: {
+                type: "reservation_event",
+                event_id,
+                reservation_id: reservation.id,
+                seating_type_id,
+                party_size: party_size.toString(),
+                prepaid_amount_cents: prepaidAmountCents.toString(),
+                business_id: business.id,
+              },
+            },
+          }
+        : baseSessionParams
+    );
 
     // Update reservation with payment intent ID
     if (session.payment_intent) {
