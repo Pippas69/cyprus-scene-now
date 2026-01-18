@@ -19,6 +19,8 @@ interface ReservationStaffControlsProps {
 
 interface SlotAvailability {
   slot_time: string;
+  time_from: string;
+  time_to: string;
   capacity: number;
   booked: number;
   available: number;
@@ -285,70 +287,110 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
               <p className="text-sm text-muted-foreground">{t.noSlots}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {slots.map((slot) => (
-                <div
-                  key={slot.slot_time}
-                  className={`p-4 rounded-lg border transition-colors ${
-                    slot.is_closed
-                      ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800'
-                      : slot.available === 0
-                      ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800'
-                      : 'bg-card border-border'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-semibold text-lg">{slot.slot_time}</span>
-                    </div>
-                    {slot.is_closed ? (
-                      <Badge variant="destructive">{t.closed}</Badge>
-                    ) : slot.available === 0 ? (
-                      <Badge variant="secondary">Full</Badge>
-                    ) : (
-                      <Badge variant="default" className="bg-green-500">{slot.available} {t.available}</Badge>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 text-sm mb-3">
-                    <div className="text-center p-2 bg-muted/50 rounded">
-                      <p className="text-muted-foreground text-xs">{t.capacity}</p>
-                      <p className="font-semibold">{slot.capacity}</p>
-                    </div>
-                    <div className="text-center p-2 bg-muted/50 rounded">
-                      <p className="text-muted-foreground text-xs">{t.booked}</p>
-                      <p className="font-semibold text-orange-600">{slot.booked}</p>
-                    </div>
-                    <div className="text-center p-2 bg-muted/50 rounded">
-                      <p className="text-muted-foreground text-xs">{t.available}</p>
-                      <p className="font-semibold text-green-600">{slot.available}</p>
-                    </div>
-                  </div>
-
-                  <Button
-                    variant={slot.is_closed ? 'default' : 'destructive'}
-                    size="sm"
-                    className="w-full"
-                    onClick={() => handleSlotToggle(slot.slot_time, slot.is_closed)}
-                    disabled={updatingSlot === slot.slot_time}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {slots.map((slot) => {
+                const timeDisplay = slot.time_from && slot.time_to 
+                  ? `${slot.time_from} - ${slot.time_to}`
+                  : slot.slot_time;
+                
+                return (
+                  <div
+                    key={slot.slot_time}
+                    className={`relative rounded-xl border-2 transition-all shadow-sm overflow-hidden ${
+                      slot.is_closed
+                        ? 'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-700'
+                        : slot.available === 0
+                        ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700'
+                        : 'bg-card border-green-300 dark:border-green-700'
+                    }`}
                   >
-                    {updatingSlot === slot.slot_time ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : slot.is_closed ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        {t.openSlot}
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-4 w-4 mr-2" />
-                        {t.closeSlot}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ))}
+                    {/* Header with time */}
+                    <div className={`px-4 py-3 ${
+                      slot.is_closed 
+                        ? 'bg-red-100 dark:bg-red-900/50' 
+                        : slot.available === 0
+                        ? 'bg-amber-100 dark:bg-amber-900/50'
+                        : 'bg-green-100 dark:bg-green-900/50'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Clock className={`h-5 w-5 ${
+                            slot.is_closed 
+                              ? 'text-red-600 dark:text-red-400' 
+                              : slot.available === 0
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : 'text-green-600 dark:text-green-400'
+                          }`} />
+                          <span className="font-bold text-lg">{timeDisplay}</span>
+                        </div>
+                        {slot.is_closed ? (
+                          <Badge variant="destructive" className="text-xs font-semibold">
+                            {t.closed}
+                          </Badge>
+                        ) : slot.available === 0 ? (
+                          <Badge variant="secondary" className="bg-amber-500 text-white text-xs font-semibold">
+                            Full
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-green-500 text-white text-xs font-semibold">
+                            {slot.available} {t.available}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="p-4">
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/50">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
+                            {t.capacity}
+                          </p>
+                          <p className="font-bold text-xl">{slot.capacity}</p>
+                        </div>
+                        <div className="text-center p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                          <p className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium mb-1">
+                            {t.booked}
+                          </p>
+                          <p className="font-bold text-xl text-amber-600 dark:text-amber-400">{slot.booked}</p>
+                        </div>
+                        <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                          <p className="text-[10px] uppercase tracking-wider text-green-600 dark:text-green-400 font-medium mb-1">
+                            {t.available}
+                          </p>
+                          <p className="font-bold text-xl text-green-600 dark:text-green-400">{slot.available}</p>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant={slot.is_closed ? 'default' : 'outline'}
+                        size="sm"
+                        className={`w-full font-semibold ${
+                          slot.is_closed 
+                            ? 'bg-green-600 hover:bg-green-700 text-white' 
+                            : 'border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/50'
+                        }`}
+                        onClick={() => handleSlotToggle(slot.slot_time, slot.is_closed)}
+                        disabled={updatingSlot === slot.slot_time}
+                      >
+                        {updatingSlot === slot.slot_time ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : slot.is_closed ? (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            {t.openSlot}
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-4 w-4 mr-2" />
+                            {t.closeSlot}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>

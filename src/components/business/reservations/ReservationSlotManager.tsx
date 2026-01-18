@@ -421,23 +421,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
             />
           </div>
 
-          {settings.accepts_direct_reservations && (
-            <div className="mt-4 pt-4 border-t flex items-center justify-between">
-              <div className="space-y-1">
-                <Label htmlFor="pause-reservations" className="text-base font-medium text-orange-600 dark:text-orange-400">
-                  {t.paused}
-                </Label>
-                <p className="text-sm text-muted-foreground">{t.pausedDescription}</p>
-              </div>
-              <Switch
-                id="pause-reservations"
-                checked={settings.reservations_globally_paused}
-                onCheckedChange={(checked) =>
-                  setSettings((prev) => ({ ...prev, reservations_globally_paused: checked }))
-                }
-              />
-            </div>
-          )}
+          {/* Pause toggle removed - now only in Staff Controls tab */}
         </CardContent>
       </Card>
 
