@@ -157,11 +157,16 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
   const handleScanStart = async () => {
     setScanResult(null);
 
-    // Wait for video element to be in the DOM
+    // Wait for video element to be in the DOM and visible (Dialog portal + animation timing)
     let videoElement: HTMLVideoElement | null = null;
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 40; i++) {
       videoElement = document.getElementById("qr-video-offer") as HTMLVideoElement;
-      if (videoElement) break;
+      if (videoElement) {
+        const rect = videoElement.getBoundingClientRect();
+        const style = window.getComputedStyle(videoElement);
+        const visible = rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+        if (visible) break;
+      }
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
@@ -180,6 +185,12 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       stopScanner();
 
       setIsScanning(true);
+
+      // Ensure Safari/iOS will actually render the stream
+      videoElement.setAttribute('playsinline', 'true');
+      videoElement.muted = true;
+      videoElement.autoplay = true;
+      (videoElement as any).disablePictureInPicture = true;
 
       const qrScanner = new QrScanner(
         videoElement,
@@ -206,6 +217,13 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
 
       scannerRef.current = qrScanner;
       await qrScanner.start();
+
+      // Extra nudge: ensure the back camera is selected when possible
+      try {
+        await (qrScanner as any).setCamera?.('environment');
+      } catch {
+        // ignore
+      }
     } catch (error) {
       console.error("Scanner error:", error);
 
