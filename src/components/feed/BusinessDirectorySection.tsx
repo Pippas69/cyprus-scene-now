@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +7,6 @@ import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/personalization";
-import { trackEngagement } from "@/lib/analyticsTracking";
 
 interface Business {
   id: string;
@@ -226,7 +224,8 @@ export const BusinessDirectorySection = ({
   );
 };
 
-// Separate component for business card with view tracking
+// Separate component for business card - NO view tracking here
+// Views are tracked ONLY when the BusinessProfile page is opened
 const BusinessCard = ({ 
   business, 
   index, 
@@ -236,31 +235,6 @@ const BusinessCard = ({
   index: number;
   language: "el" | "en";
 }) => {
-  const cardRef = useRef<HTMLAnchorElement>(null);
-  const hasTracked = useRef(false);
-
-  useEffect(() => {
-    if (!cardRef.current || hasTracked.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasTracked.current) {
-            hasTracked.current = true;
-            // Track profile view when business card is 50% visible in feed
-            trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'feed' });
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    observer.observe(cardRef.current);
-
-    return () => observer.disconnect();
-  }, [business.id]);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -268,7 +242,6 @@ const BusinessCard = ({
       transition={{ delay: Math.min(index * 0.02, 0.5) }}
     >
       <Link
-        ref={cardRef}
         to={`/business/${business.id}`}
         className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
       >

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import QRCodeLib from "qrcode";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, isAfter, isBefore, parse } from "date-fns";
 import { el, enUS } from "date-fns/locale";
+import { trackDiscountView } from "@/lib/analyticsTracking";
 
 interface Offer {
   id: string;
@@ -87,6 +88,22 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
   const [checkingCapacity, setCheckingCapacity] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
+
+  // Track when offer dialog is opened (this is when a "view" occurs)
+  const hasTrackedView = useRef(false);
+  
+  // Track offer view when dialog opens
+  useEffect(() => {
+    if (isOpen && offer?.id && !hasTrackedView.current) {
+      hasTrackedView.current = true;
+      // Track the offer view - this is when the user actually sees the offer details
+      trackDiscountView(offer.id, 'direct');
+    }
+    
+    if (!isOpen) {
+      hasTrackedView.current = false;
+    }
+  }, [isOpen, offer?.id]);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
