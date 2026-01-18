@@ -9,7 +9,7 @@ import OfferCreationForm from "@/components/business/OfferCreationForm";
 import EventsList from "@/components/business/EventsList";
 import OffersList from "@/components/business/OffersList";
 import BusinessProfileForm from "@/components/business/BusinessProfileForm";
-import { ReservationManagement } from "@/components/business/ReservationManagement";
+import { ReservationDashboard } from '@/components/business/reservations';
 import { EventAnalytics } from "@/components/business/EventAnalytics";
 import { QuickStats } from "@/components/business/QuickStats";
 import LanguageToggle from "@/components/LanguageToggle";
@@ -318,7 +318,7 @@ const DashboardBusiness = () => {
               <Route path="events/new" element={businessId ? <EventCreationForm businessId={businessId} /> : null} />
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
               <Route path="offers/new" element={businessId ? <OfferCreationForm businessId={businessId} /> : null} />
-              <Route path="reservations" element={businessId ? <ReservationManagement businessId={businessId} language={language} /> : null} />
+              <Route path="reservations" element={businessId ? <ReservationDashboard businessId={businessId} language={language} /> : null} />
               <Route path="subscription" element={<SubscriptionPlans embedded />} />
               <Route path="boosts" element={businessId ? <BoostManagement businessId={businessId} /> : null} />
               <Route path="settings" element={userId && businessId ? <BusinessAccountSettings userId={userId} businessId={businessId} language={language} /> : null} />
