@@ -19,6 +19,14 @@ import { format, addDays, isAfter, isBefore, parse } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { trackDiscountView } from "@/lib/analyticsTracking";
 
+interface TimeSlot {
+  id?: string;
+  timeFrom: string;
+  timeTo: string;
+  capacity: number;
+  days: string[];
+}
+
 interface Offer {
   id: string;
   title: string;
@@ -49,6 +57,8 @@ interface Offer {
     cover_url?: string | null;
     city?: string;
     accepts_direct_reservations?: boolean;
+    reservation_time_slots?: TimeSlot[] | null;
+    reservation_days?: string[] | null;
   };
 }
 
@@ -209,6 +219,11 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     reservationConfirmed: { el: "Κράτηση επιβεβαιωμένη", en: "Reservation confirmed" },
     walkInOnly: { el: "Μόνο walk-in", en: "Walk-in only" },
     withReservation: { el: "Με κράτηση", en: "With reservation" },
+    noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" },
+    policyTitle: { el: "Πολιτική Κρατήσεων", en: "Reservation Policy" },
+    noShowPolicy: { el: "15 λεπτά περιθώριο - αυτόματη ακύρωση αν δεν γίνει check-in", en: "15 min grace period - auto-cancelled if no check-in" },
+    cancellationPolicy: { el: "Δωρεάν ακύρωση μέχρι 1 ώρα πριν", en: "Free cancellation up to 1 hour before" },
+    instantConfirmation: { el: "Άμεση επιβεβαίωση κράτησης", en: "Instant reservation confirmation" },
   };
 
   const t = (key: keyof typeof text) => text[key][language];
@@ -258,26 +273,73 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     return `${start.substring(0, 5)} - ${end.substring(0, 5)}`;
   };
 
-  // Generate available time slots within offer valid hours
+  // Generate available time slots - intersect offer hours with business reservation slots
   const getAvailableTimeSlots = (): string[] => {
     if (!offer?.valid_start_time || !offer?.valid_end_time) return [];
     
+    const offerStartHour = parseInt(offer.valid_start_time.substring(0, 2));
+    const offerStartMin = parseInt(offer.valid_start_time.substring(3, 5)) || 0;
+    const offerEndHour = parseInt(offer.valid_end_time.substring(0, 2));
+    const offerEndMin = parseInt(offer.valid_end_time.substring(3, 5)) || 0;
+    
+    // Convert offer times to minutes for easier comparison
+    const offerStartMins = offerStartHour * 60 + offerStartMin;
+    const offerEndMins = offerEndHour * 60 + offerEndMin;
+    
+    // If business has configured reservation slots, use them
+    const businessSlots = offer.businesses?.reservation_time_slots;
+    
+    if (businessSlots && Array.isArray(businessSlots) && businessSlots.length > 0 && reservationDate) {
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const selectedDay = dayNames[reservationDate.getDay()];
+      
+      // Filter slots that are active for the selected day AND overlap with offer hours
+      const validSlots: string[] = [];
+      
+      for (const slot of businessSlots) {
+        // Check if slot is active for this day
+        if (!slot.days || !slot.days.includes(selectedDay)) continue;
+        
+        const slotTime = slot.timeFrom;
+        const slotHour = parseInt(slotTime.substring(0, 2));
+        const slotMin = parseInt(slotTime.substring(3, 5)) || 0;
+        const slotMins = slotHour * 60 + slotMin;
+        
+        // Handle overnight offers (e.g., 22:00 - 04:00)
+        const isOvernight = offerEndMins < offerStartMins;
+        
+        let isWithinOfferHours = false;
+        if (isOvernight) {
+          // Slot is valid if it's after start OR before end
+          isWithinOfferHours = slotMins >= offerStartMins || slotMins <= offerEndMins;
+        } else {
+          // Normal case: slot must be between start and end
+          isWithinOfferHours = slotMins >= offerStartMins && slotMins <= offerEndMins;
+        }
+        
+        if (isWithinOfferHours) {
+          validSlots.push(slotTime.substring(0, 5));
+        }
+      }
+      
+      return [...new Set(validSlots)].sort();
+    }
+    
+    // Fallback: Generate hourly slots based on offer hours only
     const slots: string[] = [];
-    const startHour = parseInt(offer.valid_start_time.substring(0, 2));
-    const endHour = parseInt(offer.valid_end_time.substring(0, 2));
     
     // Handle overnight offers (e.g., 22:00 - 04:00)
-    if (endHour < startHour) {
+    if (offerEndHour < offerStartHour) {
       // From start to midnight
-      for (let h = startHour; h < 24; h++) {
+      for (let h = offerStartHour; h < 24; h++) {
         slots.push(`${h.toString().padStart(2, '0')}:00`);
       }
       // From midnight to end
-      for (let h = 0; h <= endHour; h++) {
+      for (let h = 0; h <= offerEndHour; h++) {
         slots.push(`${h.toString().padStart(2, '0')}:00`);
       }
     } else {
-      for (let h = startHour; h <= endHour; h++) {
+      for (let h = offerStartHour; h <= offerEndHour; h++) {
         slots.push(`${h.toString().padStart(2, '0')}:00`);
       }
     }
@@ -286,6 +348,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   };
 
   // Check if a date is valid for this offer (within valid_days and date range)
+  // AND has business reservation slots available for that day
   const isDateValidForOffer = (date: Date): boolean => {
     if (!offer) return false;
     
@@ -294,12 +357,27 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     const startAt = offer.start_at ? new Date(offer.start_at) : new Date();
     if (isBefore(date, startAt) || isAfter(date, endAt)) return false;
     
-    // Check if day is in valid_days
+    // Check if day is in offer's valid_days
+    const dayIndex = date.getDay();
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayName = dayNames[dayIndex];
+    
     if (offer.valid_days && offer.valid_days.length > 0 && offer.valid_days.length < 7) {
-      const dayIndex = date.getDay();
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const dayName = dayNames[dayIndex];
       if (!offer.valid_days.includes(dayName)) return false;
+    }
+    
+    // Check if business has reservation slots for this day
+    const businessSlots = offer.businesses?.reservation_time_slots;
+    const businessDays = offer.businesses?.reservation_days;
+    
+    if (businessDays && businessDays.length > 0) {
+      if (!businessDays.includes(dayName)) return false;
+    }
+    
+    // If business has specific slots, check if any are active for this day
+    if (businessSlots && Array.isArray(businessSlots) && businessSlots.length > 0) {
+      const hasSlotForDay = businessSlots.some(slot => slot.days && slot.days.includes(dayName));
+      if (!hasSlotForDay) return false;
     }
     
     return true;
@@ -452,6 +530,25 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
         {wantsReservation && (
           <div className="space-y-3 pt-2">
+            {/* Policy Info */}
+            <div className="bg-background/80 border rounded-lg p-2.5 space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">{t("policyTitle")}</p>
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  <span>{t("instantConfirmation")}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  <span>{t("noShowPolicy")}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                  <span>{t("cancellationPolicy")}</span>
+                </div>
+              </div>
+            </div>
+
             {/* Date Picker */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
@@ -492,18 +589,24 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                   <Clock className="h-4 w-4" />
                   {t("selectTime")}
                 </Label>
-                <Select value={reservationTime} onValueChange={setReservationTime}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectTime")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map((slot) => (
-                      <SelectItem key={slot} value={slot}>
-                        {slot}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {timeSlots.length === 0 ? (
+                  <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground text-center">
+                    {t("noSlotsForDay")}
+                  </div>
+                ) : (
+                  <Select value={reservationTime} onValueChange={setReservationTime}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("selectTime")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeSlots.map((slot) => (
+                        <SelectItem key={slot} value={slot}>
+                          {slot}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
 

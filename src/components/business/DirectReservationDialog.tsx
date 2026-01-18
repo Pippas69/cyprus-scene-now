@@ -25,15 +25,26 @@ interface DirectReservationDialogProps {
   onSuccess: () => void;
 }
 
+interface TimeSlot {
+  id?: string;
+  timeFrom: string;
+  timeTo: string;
+  capacity: number;
+  days: string[];
+  // Legacy support
+  time?: string;
+}
+
 interface BusinessSettings {
   reservation_capacity_type: 'daily' | 'time_slots';
   daily_reservation_limit: number | null;
-  reservation_time_slots: { time: string; capacity: number }[] | null;
+  reservation_time_slots: TimeSlot[] | null;
   reservation_days: string[];
   reservation_opens_at: string | null;
   reservation_closes_at: string | null;
   reservation_seating_options: string[];
   reservation_requires_approval: boolean;
+  accepts_direct_reservations: boolean;
 }
 
 export const DirectReservationDialog = ({
@@ -71,14 +82,14 @@ export const DirectReservationDialog = ({
       partySize: 'Αριθμός Ατόμων',
       seatingPreference: 'Προτίμηση Θέσης (Προαιρετικό)',
       preferredDate: 'Ημερομηνία',
-      preferredTime: 'Ώρα',
+      preferredTime: 'Ώρα Άφιξης',
       phoneNumber: 'Τηλέφωνο',
       phonePlaceholder: 'π.χ. +30 123 456 7890',
       specialRequests: 'Ειδικές Απαιτήσεις (Προαιρετικό)',
       requestsPlaceholder: 'Οποιεσδήποτε ειδικές απαιτήσεις...',
-      submit: 'Υποβολή Κράτησης',
+      submit: 'Επιβεβαίωση Κράτησης',
       submitting: 'Υποβολή...',
-      reservationCreated: 'Η κράτηση δημιουργήθηκε επιτυχώς!',
+      reservationCreated: 'Η κράτηση επιβεβαιώθηκε!',
       reservationPending: 'Η κράτηση υποβλήθηκε και αναμένει έγκριση',
       noPreference: 'Χωρίς Προτίμηση',
       indoor: 'Εσωτερικός Χώρος',
@@ -87,6 +98,11 @@ export const DirectReservationDialog = ({
       availableSlots: 'Διαθέσιμες θέσεις',
       fullyBooked: 'Πλήρως κατειλημμένο',
       selectTime: 'Επιλέξτε ώρα',
+      noSlotsForDay: 'Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα',
+      policyTitle: 'Πολιτική Κρατήσεων',
+      noShowPolicy: '15 λεπτά περιθώριο - αυτόματη ακύρωση αν δεν γίνει check-in',
+      cancellationPolicy: 'Δωρεάν ακύρωση μέχρι 1 ώρα πριν την κράτηση',
+      instantConfirmation: 'Άμεση επιβεβαίωση κράτησης',
     },
     en: {
       title: 'Reserve a Table',
@@ -96,14 +112,14 @@ export const DirectReservationDialog = ({
       partySize: 'Party Size',
       seatingPreference: 'Seating Preference (Optional)',
       preferredDate: 'Date',
-      preferredTime: 'Time',
+      preferredTime: 'Arrival Time',
       phoneNumber: 'Phone Number',
       phonePlaceholder: 'e.g. +30 123 456 7890',
       specialRequests: 'Special Requests (Optional)',
       requestsPlaceholder: 'Any special requirements...',
-      submit: 'Submit Reservation',
+      submit: 'Confirm Reservation',
       submitting: 'Submitting...',
-      reservationCreated: 'Reservation created successfully!',
+      reservationCreated: 'Reservation confirmed!',
       reservationPending: 'Reservation submitted and awaiting approval',
       noPreference: 'No Preference',
       indoor: 'Indoor',
@@ -112,6 +128,11 @@ export const DirectReservationDialog = ({
       availableSlots: 'Available slots',
       fullyBooked: 'Fully booked',
       selectTime: 'Select time',
+      noSlotsForDay: 'No available slots for this day',
+      policyTitle: 'Reservation Policy',
+      noShowPolicy: '15 min grace period - auto-cancelled if no check-in',
+      cancellationPolicy: 'Free cancellation up to 1 hour before',
+      instantConfirmation: 'Instant reservation confirmation',
     },
   };
 
@@ -142,19 +163,31 @@ export const DirectReservationDialog = ({
           reservation_opens_at,
           reservation_closes_at,
           reservation_seating_options,
-          reservation_requires_approval
+          reservation_requires_approval,
+          accepts_direct_reservations
         `)
         .eq('id', businessId)
         .single();
 
       if (error) throw error;
-      setSettings(data as BusinessSettings);
-
-      // Set default time if opens_at is available (normalize to HH:mm format)
-      if (data.reservation_opens_at) {
-        const normalizedTime = data.reservation_opens_at.substring(0, 5);
-        setFormData((prev) => ({ ...prev, preferred_time: normalizedTime }));
+      
+      // Parse time slots from JSON
+      let parsedTimeSlots: TimeSlot[] | null = null;
+      if (data.reservation_time_slots && Array.isArray(data.reservation_time_slots)) {
+        parsedTimeSlots = (data.reservation_time_slots as unknown as TimeSlot[]).map((slot) => ({
+          id: slot.id,
+          timeFrom: slot.timeFrom || slot.time || '12:00',
+          timeTo: slot.timeTo || '14:00',
+          capacity: slot.capacity || 10,
+          days: slot.days || [],
+          time: slot.time,
+        }));
       }
+      
+      setSettings({
+        ...data,
+        reservation_time_slots: parsedTimeSlots,
+      } as BusinessSettings);
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
@@ -199,14 +232,28 @@ export const DirectReservationDialog = ({
     return time.substring(0, 5);
   };
 
-  const getAvailableTimeSlots = () => {
+  const getAvailableTimeSlots = (): string[] => {
     if (!settings) return [];
 
+    // Get the selected day name in English (lowercase)
+    const selectedDayName = format(formData.preferred_date, 'EEEE').toLowerCase();
+
     if (settings.reservation_capacity_type === 'time_slots' && settings.reservation_time_slots) {
-      return settings.reservation_time_slots.map((slot) => normalizeTime(slot.time));
+      // Filter slots by the selected day and extract timeFrom
+      const slotsForDay = settings.reservation_time_slots
+        .filter((slot) => slot.days && slot.days.includes(selectedDayName))
+        .map((slot) => normalizeTime(slot.timeFrom));
+      
+      // Sort and deduplicate
+      return [...new Set(slotsForDay)].sort();
     }
 
-    // Generate time slots based on opens/closes
+    // Fallback: Check if the selected day is in reservation_days
+    if (settings.reservation_days && !settings.reservation_days.includes(selectedDayName)) {
+      return []; // No slots for this day
+    }
+
+    // Generate time slots based on opens/closes (legacy fallback)
     const slots: string[] = [];
     const opens = normalizeTime(settings.reservation_opens_at);
     const closes = normalizeTime(settings.reservation_closes_at) || '22:00';
@@ -217,7 +264,7 @@ export const DirectReservationDialog = ({
     // Safety check for invalid dates
     if (isNaN(current.getTime()) || isNaN(end.getTime())) {
       console.error('Invalid time values:', { opens, closes });
-      return ['12:00', '12:30', '13:00', '13:30', '14:00'];
+      return [];
     }
 
     while (isBefore(current, end) || format(current, 'HH:mm') === format(end, 'HH:mm')) {
@@ -303,6 +350,13 @@ export const DirectReservationDialog = ({
 
   const timeSlots = getAvailableTimeSlots();
 
+  // Set default time when date changes and slots are available
+  useEffect(() => {
+    if (timeSlots.length > 0 && !timeSlots.includes(formData.preferred_time)) {
+      setFormData((prev) => ({ ...prev, preferred_time: timeSlots[0] }));
+    }
+  }, [formData.preferred_date, timeSlots.length]);
+
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       {settingsLoading ? (
@@ -311,6 +365,25 @@ export const DirectReservationDialog = ({
         </div>
       ) : (
         <>
+          {/* Policy Info */}
+          <div className="bg-muted/50 border rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">{t.policyTitle}</p>
+            <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                <span>{t.instantConfirmation}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                <span>{t.noShowPolicy}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                <span>{t.cancellationPolicy}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Capacity indicator */}
           {availableCapacity !== null && (
             <div
@@ -401,21 +474,27 @@ export const DirectReservationDialog = ({
               <Clock className="w-4 h-4" />
               {t.preferredTime}
             </Label>
-            <Select
-              value={formData.preferred_time}
-              onValueChange={(value) => setFormData({ ...formData, preferred_time: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t.selectTime} />
-              </SelectTrigger>
-              <SelectContent>
-                {timeSlots.filter(time => time && time.trim() !== '').map((time) => (
-                  <SelectItem key={time} value={time}>
-                    {time}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {timeSlots.length === 0 ? (
+              <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground text-center">
+                {t.noSlotsForDay}
+              </div>
+            ) : (
+              <Select
+                value={formData.preferred_time}
+                onValueChange={(value) => setFormData({ ...formData, preferred_time: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t.selectTime} />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeSlots.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Phone */}
@@ -473,8 +552,8 @@ export const DirectReservationDialog = ({
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading || availableCapacity === 0}>
-            {loading ? t.submitting : availableCapacity === 0 ? t.fullyBooked : t.submit}
+          <Button type="submit" className="w-full" disabled={loading || availableCapacity === 0 || timeSlots.length === 0}>
+            {loading ? t.submitting : (availableCapacity === 0 || timeSlots.length === 0) ? t.fullyBooked : t.submit}
           </Button>
         </>
       )}
