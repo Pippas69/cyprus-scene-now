@@ -657,10 +657,12 @@ export type Database = {
           reservation_capacity_type: string | null
           reservation_closes_at: string | null
           reservation_days: string[] | null
+          reservation_no_show_count: number | null
           reservation_opens_at: string | null
           reservation_requires_approval: boolean | null
           reservation_seating_options: string[] | null
           reservation_time_slots: Json | null
+          reservations_globally_paused: boolean | null
           stripe_account_id: string | null
           stripe_onboarding_completed: boolean | null
           stripe_payouts_enabled: boolean | null
@@ -697,10 +699,12 @@ export type Database = {
           reservation_capacity_type?: string | null
           reservation_closes_at?: string | null
           reservation_days?: string[] | null
+          reservation_no_show_count?: number | null
           reservation_opens_at?: string | null
           reservation_requires_approval?: boolean | null
           reservation_seating_options?: string[] | null
           reservation_time_slots?: Json | null
+          reservations_globally_paused?: boolean | null
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
@@ -737,10 +741,12 @@ export type Database = {
           reservation_capacity_type?: string | null
           reservation_closes_at?: string | null
           reservation_days?: string[] | null
+          reservation_no_show_count?: number | null
           reservation_opens_at?: string | null
           reservation_requires_approval?: boolean | null
           reservation_seating_options?: string[] | null
           reservation_time_slots?: Json | null
+          reservations_globally_paused?: boolean | null
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
@@ -2946,6 +2952,55 @@ export type Database = {
           },
         ]
       }
+      reservation_no_shows: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          no_show_at: string
+          reservation_id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          no_show_at?: string
+          reservation_id: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          no_show_at?: string
+          reservation_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_no_shows_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_no_shows_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_no_shows_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservation_scans: {
         Row: {
           device_info: Json | null
@@ -3041,6 +3096,51 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_slot_closures: {
+        Row: {
+          business_id: string
+          closed_by: string | null
+          closure_date: string
+          created_at: string
+          id: string
+          reason: string | null
+          slot_time: string
+        }
+        Insert: {
+          business_id: string
+          closed_by?: string | null
+          closure_date: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          slot_time: string
+        }
+        Update: {
+          business_id?: string
+          closed_by?: string | null
+          closure_date?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          slot_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_slot_closures_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_slot_closures_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -4401,10 +4501,26 @@ export type Database = {
         Args: { is_suspended: boolean; reason?: string; target_user_id: string }
         Returns: boolean
       }
+      book_slot_atomically: {
+        Args: {
+          p_business_id: string
+          p_date: string
+          p_is_offer_based?: boolean
+          p_party_size: number
+          p_phone_number?: string
+          p_reservation_name: string
+          p_seating_preference?: string
+          p_slot_time: string
+          p_special_requests?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       calculate_user_similarity: {
         Args: { user1_id: string; user2_id: string }
         Returns: number
       }
+      cancel_expired_reservations: { Args: never; Returns: number }
       create_business_with_geo: {
         Args: {
           p_address: string
@@ -4651,6 +4767,20 @@ export type Database = {
           name: string
           similarity_score: number
           user_id: string
+        }[]
+      }
+      get_slot_available_capacity: {
+        Args: { p_business_id: string; p_date: string; p_slot_time: string }
+        Returns: number
+      }
+      get_slots_availability: {
+        Args: { p_business_id: string; p_date: string }
+        Returns: {
+          available: number
+          booked: number
+          capacity: number
+          is_closed: boolean
+          slot_time: string
         }[]
       }
       get_unread_message_count: { Args: never; Returns: number }
