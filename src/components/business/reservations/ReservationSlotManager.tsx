@@ -415,9 +415,30 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
             <Switch
               id="enable-reservations"
               checked={settings.accepts_direct_reservations}
-              onCheckedChange={(checked) =>
-                setSettings((prev) => ({ ...prev, accepts_direct_reservations: checked }))
-              }
+              onCheckedChange={async (checked) => {
+                setSettings((prev) => ({ ...prev, accepts_direct_reservations: checked }));
+                // Auto-save immediately for this toggle
+                try {
+                  const { error } = await supabase
+                    .from('businesses')
+                    .update({
+                      accepts_direct_reservations: checked,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', businessId);
+                  
+                  if (error) throw error;
+                  toast.success(checked 
+                    ? (language === 'el' ? 'Οι κρατήσεις ενεργοποιήθηκαν' : 'Reservations enabled')
+                    : (language === 'el' ? 'Οι κρατήσεις απενεργοποιήθηκαν' : 'Reservations disabled')
+                  );
+                } catch (error) {
+                  console.error('Error updating reservations status:', error);
+                  toast.error(t.error);
+                  // Revert on error
+                  setSettings((prev) => ({ ...prev, accepts_direct_reservations: !checked }));
+                }
+              }}
             />
           </div>
 
