@@ -3,13 +3,14 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import ReactDOM from 'react-dom/client';
 import { MAPBOX_CONFIG } from '@/config/mapbox';
-import { useMapBusinesses, type BusinessLocation } from '@/hooks/useMapBusinesses';
+import { useMapBusinesses } from '@/hooks/useMapBusinesses';
 import { BusinessMarker } from './BusinessMarker';
 import { BusinessPopup } from './BusinessPopup';
 import { MapSearch } from './MapSearch';
 import { MapControls } from './MapControls';
 import { Loader2, Building2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { trackEngagement } from '@/lib/analyticsTracking';
 
 interface RealMapProps {
   city: string;
@@ -225,6 +226,9 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
             markerId={business.id}
             name={business.name}
             onClick={() => {
+              // IMPORTANT: A marker click is an interaction (NOT a view).
+              trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map' });
+
               if (popupRef.current) popupRef.current.remove();
               const popupDiv = document.createElement('div');
               const popupRoot = ReactDOM.createRoot(popupDiv);
