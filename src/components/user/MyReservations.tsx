@@ -41,6 +41,7 @@ interface ReservationData {
   party_size: number;
   status: string;
   created_at: string;
+  checked_in_at?: string | null;
   phone_number: string | null;
   preferred_time: string | null;
   seating_preference: string | null;
@@ -113,7 +114,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     // Define the reservation fields to select
     const reservationFields = `
       id, event_id, business_id, user_id, reservation_name, party_size, status,
-      created_at, phone_number, preferred_time, seating_preference, special_requests,
+      created_at, checked_in_at, phone_number, preferred_time, seating_preference, special_requests,
       business_notes, confirmation_code, qr_code_token,
       seating_type_id, prepaid_min_charge_cents, prepaid_charge_status
     `;
@@ -317,6 +318,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       directReservation: 'Άμεση Κράτηση',
       offerReservation: 'Μέσω Προσφοράς',
       eventReservation: 'Μέσω Εκδήλωσης',
+      // Status
+      checkedIn: 'Check-in',
+      noShow: 'No-Show',
+      confirmed: 'Επιβεβαιωμένη',
       // Prepaid fields
       seatingType: 'Τύπος Θέσης',
       prepaidCredit: 'Προπληρωμένη Πίστωση',
@@ -366,6 +371,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       directReservation: 'Direct Reservation',
       offerReservation: 'Via Offer',
       eventReservation: 'Via Event',
+      // Status
+      checkedIn: 'Check-in',
+      noShow: 'No-show',
+      confirmed: 'Confirmed',
       // Prepaid fields
       seatingType: 'Seating Type',
       prepaidCredit: 'Prepaid Credit',
@@ -390,14 +399,39 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const t = text[language];
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (reservation: ReservationData) => {
+    // Check-in takes priority
+    if (reservation.checked_in_at) {
+      return (
+        <Badge className="bg-green-500 text-white">
+          {t.checkedIn}
+        </Badge>
+      );
+    }
+
+    // No-show (15min grace) for accepted upcoming direct/offer reservations
+    if (reservation.status === 'accepted' && reservation.preferred_time) {
+      const slotTime = new Date(reservation.preferred_time);
+      const graceEnd = new Date(slotTime.getTime() + 15 * 60 * 1000);
+      if (new Date() > graceEnd) {
+        return <Badge variant="destructive">{t.noShow}</Badge>;
+      }
+
+      // Still within grace window
+      return <Badge variant="default">{t.confirmed}</Badge>;
+    }
+
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       pending: 'secondary',
       accepted: 'default',
       declined: 'destructive',
       cancelled: 'outline',
     };
-    return <Badge variant={variants[status] || 'outline'}>{t[status as keyof typeof t] || status}</Badge>;
+    return (
+      <Badge variant={variants[reservation.status] || 'outline'}>
+        {t[reservation.status as keyof typeof t] || reservation.status}
+      </Badge>
+    );
   };
 
   const getTypeBadge = (reservation: ReservationData) => {
@@ -469,7 +503,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                   {t.eventEnded}
                 </Badge>
               )}
-              {getStatusBadge(reservation.status)}
+              {getStatusBadge(reservation)}
             </div>
           </div>
         </CardHeader>

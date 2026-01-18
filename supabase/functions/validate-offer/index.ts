@@ -153,6 +153,7 @@ Deno.serve(async (req) => {
         id,
         discount_id,
         user_id,
+        reservation_id,
         original_price_cents,
         discount_percent,
         final_price_cents,
@@ -302,16 +303,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    // If this offer purchase is linked to a reservation, mark it as checked-in too.
+    // This is what makes "κράτηση μέσω προσφοράς" flip to Check-in immediately after scanning.
+    try {
+      const reservationId = (purchase as any)?.reservation_id as string | null | undefined;
+      if (reservationId) {
+        await supabaseAdmin
+          .from('reservations')
+          .update({
+            checked_in_at: nowIso,
+            checked_in_by: user.id,
+          })
+          .eq('id', reservationId)
+          .is('checked_in_at', null);
+      }
+    } catch (e) {
+      console.error('[VALIDATE-OFFER] Failed to check-in linked reservation', e);
+    }
+
     // Fetch profile for display
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("first_name, last_name")
       .eq("id", purchase.user_id)
       .single();
-
-    await logScan(supabaseAdmin, purchase.discount_id, user.id, true, { 
-      duration_ms: Date.now() - startedAt 
-    });
 
     logStep("Success", { purchaseId: purchase.id, duration: Date.now() - startedAt });
 
