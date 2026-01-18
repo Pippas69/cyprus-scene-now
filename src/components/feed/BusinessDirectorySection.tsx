@@ -7,6 +7,8 @@ import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/personalization";
+import { useCallback, useRef } from "react";
+import { trackEngagement, useViewTracking } from "@/lib/analyticsTracking";
 
 interface Business {
   id: string;
@@ -224,8 +226,8 @@ export const BusinessDirectorySection = ({
   );
 };
 
-// Separate component for business card - NO view tracking here
-// Views are tracked ONLY when the BusinessProfile page is opened
+// Separate component for business card
+// View = card became visible to the user (NOT a click)
 const BusinessCard = ({ 
   business, 
   index, 
@@ -235,6 +237,12 @@ const BusinessCard = ({
   index: number;
   language: "el" | "en";
 }) => {
+  const cardRef = useRef<HTMLAnchorElement | null>(null);
+  const handleView = useCallback(() => {
+    trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'feed' });
+  }, [business.id]);
+  useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -242,6 +250,7 @@ const BusinessCard = ({
       transition={{ delay: Math.min(index * 0.02, 0.5) }}
     >
       <Link
+        ref={cardRef}
         to={`/business/${business.id}`}
         className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
       >

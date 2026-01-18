@@ -121,6 +121,7 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const viewedPinsRef = useRef<Set<string>>(new Set());
   const { language } = useLanguage();
 
   // Use the new businesses hook instead of events
@@ -217,6 +218,19 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
 
       visibleBusinesses.forEach((business) => {
         const [lng, lat] = business.coordinates;
+
+        // View = the pin is actually within the current map viewport (NOT a click)
+        try {
+          const bounds = map.current?.getBounds();
+          const isInViewport = bounds ? bounds.contains([lng, lat]) : false;
+          if (isInViewport && !viewedPinsRef.current.has(business.id)) {
+            viewedPinsRef.current.add(business.id);
+            trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map' });
+          }
+        } catch {
+          // ignore
+        }
+
         const div = document.createElement('div');
         const root = ReactDOM.createRoot(div);
 
