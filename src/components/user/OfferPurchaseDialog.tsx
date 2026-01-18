@@ -143,23 +143,29 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     }
   }, [claimSuccess?.qrCodeToken]);
 
-  // Check capacity when date changes and user wants reservation
+  // Check capacity when date or time changes and user wants reservation
   useEffect(() => {
-    if (wantsReservation && reservationDate && offer?.business_id) {
+    if (wantsReservation && reservationDate && reservationTime && offer?.business_id) {
       checkCapacity();
+    } else if (wantsReservation && reservationDate && !reservationTime) {
+      // Clear capacity until time is selected
+      setAvailableCapacity(null);
+      setCapacityError(null);
     }
-  }, [wantsReservation, reservationDate, offer?.business_id]);
+  }, [wantsReservation, reservationDate, reservationTime, offer?.business_id]);
 
   const checkCapacity = async () => {
-    if (!reservationDate || !offer?.business_id) return;
+    if (!reservationDate || !reservationTime || !offer?.business_id) return;
     
     setCheckingCapacity(true);
     setCapacityError(null);
     
     try {
-      const { data, error } = await supabase.rpc('get_business_available_capacity', {
+      // Use slot-specific capacity check
+      const { data, error } = await supabase.rpc('get_slot_available_capacity', {
         p_business_id: offer.business_id,
         p_date: format(reservationDate, 'yyyy-MM-dd'),
+        p_time_from: reservationTime,
       });
 
       if (error) throw error;
@@ -170,9 +176,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
         setCapacityError(capacityData?.reason || (language === "el" ? "Δεν υπάρχει διαθεσιμότητα" : "No availability"));
         setAvailableCapacity(0);
       } else {
-        setAvailableCapacity(capacityData.remaining_capacity ?? 999);
-        if (capacityData.remaining_capacity === 0) {
-          setCapacityError(language === "el" ? "Δεν υπάρχουν διαθέσιμες κρατήσεις" : "No available reservations");
+        const remaining = capacityData.remaining_capacity ?? 0;
+        setAvailableCapacity(remaining);
+        if (remaining === 0) {
+          setCapacityError(language === "el" ? "Δεν υπάρχουν διαθέσιμες θέσεις" : "No available seats");
         }
       }
     } catch (error) {
