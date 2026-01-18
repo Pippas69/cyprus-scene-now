@@ -98,7 +98,7 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
           .from('discounts')
           .select(`
             *,
-            businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled)
+            businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations, reservation_time_slots, reservation_days)
           `)
         .eq('active', true)
         .eq('businesses.verified', true)
@@ -256,7 +256,7 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
          .from('discounts')
          .select(`
            *,
-           businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations)
+           businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations, reservation_time_slots, reservation_days)
          `)
         .in('id', Array.from(boostedOfferIds))
         .eq('active', true)
@@ -292,7 +292,7 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
          .from('discounts')
          .select(`
            *,
-           businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations)
+           businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations, reservation_time_slots, reservation_days)
          `)
         .eq('active', true)
         .eq('businesses.verified', true)
