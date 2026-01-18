@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import { differenceInDays } from "date-fns";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
-import { trackOfferRedeemClick } from "@/lib/analyticsTracking";
+import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
 
 interface BoostedEvent {
   id: string;
@@ -184,6 +184,14 @@ interface OfferCardProps {
 const OfferCard = ({ offer, t, language }: OfferCardProps) => {
   const navigate = useNavigate();
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
+
+  // View = card became visible to the user (NOT a click)
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const handleView = useCallback(() => {
+    if (!offer?.id) return;
+    trackDiscountView(offer.id, 'feed');
+  }, [offer?.id]);
+  useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
   
   const endDate = new Date(offer.end_at);
   const now = new Date();
@@ -218,7 +226,10 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
   return (
     <>
       {/* Matching UnifiedEventCard boosted size: 240x240 with same flex ratios */}
-      <div className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[240px] max-w-[240px] aspect-square overflow-visible">
+      <div
+        ref={cardRef as any}
+        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[240px] max-w-[240px] aspect-square overflow-visible"
+      >
         {/* TOP - Image (60% like event cards) */}
         <div className="relative flex-[1.5] overflow-visible">
           {/* Image container clipped */}
