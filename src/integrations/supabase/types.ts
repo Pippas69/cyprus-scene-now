@@ -4781,6 +4781,8 @@ export type Database = {
           capacity: number
           is_closed: boolean
           slot_time: string
+          time_from: string
+          time_to: string
         }[]
       }
       get_unread_message_count: { Args: never; Returns: number }
