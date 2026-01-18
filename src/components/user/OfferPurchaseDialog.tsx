@@ -15,9 +15,10 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import QRCodeLib from "qrcode";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, addDays, isAfter, isBefore, parse } from "date-fns";
+import { format, addDays, isAfter, isBefore } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { trackDiscountView } from "@/lib/analyticsTracking";
+import { expandSlotsForDay, timeToMinutes } from "@/lib/timeSlots";
 
 interface TimeSlot {
   id?: string;
@@ -275,76 +276,47 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
   // Generate available time slots - intersect offer hours with business reservation slots
   const getAvailableTimeSlots = (): string[] => {
-    if (!offer?.valid_start_time || !offer?.valid_end_time) return [];
-    
-    const offerStartHour = parseInt(offer.valid_start_time.substring(0, 2));
-    const offerStartMin = parseInt(offer.valid_start_time.substring(3, 5)) || 0;
-    const offerEndHour = parseInt(offer.valid_end_time.substring(0, 2));
-    const offerEndMin = parseInt(offer.valid_end_time.substring(3, 5)) || 0;
-    
-    // Convert offer times to minutes for easier comparison
-    const offerStartMins = offerStartHour * 60 + offerStartMin;
-    const offerEndMins = offerEndHour * 60 + offerEndMin;
-    
-    // If business has configured reservation slots, use them
+    if (!offer?.valid_start_time || !offer?.valid_end_time || !reservationDate) return [];
+
+    const offerStartMins = timeToMinutes(offer.valid_start_time);
+    const offerEndMins = timeToMinutes(offer.valid_end_time);
+    const isOvernight = offerEndMins < offerStartMins;
+
+    // Build all possible arrival times from the business' configured ranges
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+    const selectedDay = dayNames[reservationDate.getDay()];
+
     const businessSlots = offer.businesses?.reservation_time_slots;
-    
-    if (businessSlots && Array.isArray(businessSlots) && businessSlots.length > 0 && reservationDate) {
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const selectedDay = dayNames[reservationDate.getDay()];
-      
-      // Filter slots that are active for the selected day AND overlap with offer hours
-      const validSlots: string[] = [];
-      
-      for (const slot of businessSlots) {
-        // Check if slot is active for this day
-        if (!slot.days || !slot.days.includes(selectedDay)) continue;
-        
-        const slotTime = slot.timeFrom;
-        const slotHour = parseInt(slotTime.substring(0, 2));
-        const slotMin = parseInt(slotTime.substring(3, 5)) || 0;
-        const slotMins = slotHour * 60 + slotMin;
-        
-        // Handle overnight offers (e.g., 22:00 - 04:00)
-        const isOvernight = offerEndMins < offerStartMins;
-        
-        let isWithinOfferHours = false;
-        if (isOvernight) {
-          // Slot is valid if it's after start OR before end
-          isWithinOfferHours = slotMins >= offerStartMins || slotMins <= offerEndMins;
-        } else {
-          // Normal case: slot must be between start and end
-          isWithinOfferHours = slotMins >= offerStartMins && slotMins <= offerEndMins;
-        }
-        
-        if (isWithinOfferHours) {
-          validSlots.push(slotTime.substring(0, 5));
-        }
+    const candidates = businessSlots && Array.isArray(businessSlots)
+      ? expandSlotsForDay(businessSlots, selectedDay, 30)
+      : [];
+
+    if (candidates.length === 0) {
+      // Fallback: generate from offer hours only (every 30min)
+      const out: number[] = [];
+      const start = offerStartMins;
+      let end = offerEndMins;
+      if (isOvernight) end += 1440;
+
+      for (let t = start; t < end; t += 30) {
+        out.push(((t % 1440) + 1440) % 1440);
       }
-      
-      return [...new Set(validSlots)].sort();
+
+      return out.map((m) => {
+        const hh = Math.floor(m / 60);
+        const mm = m % 60;
+        return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
+      });
     }
-    
-    // Fallback: Generate hourly slots based on offer hours only
-    const slots: string[] = [];
-    
-    // Handle overnight offers (e.g., 22:00 - 04:00)
-    if (offerEndHour < offerStartHour) {
-      // From start to midnight
-      for (let h = offerStartHour; h < 24; h++) {
-        slots.push(`${h.toString().padStart(2, '0')}:00`);
-      }
-      // From midnight to end
-      for (let h = 0; h <= offerEndHour; h++) {
-        slots.push(`${h.toString().padStart(2, '0')}:00`);
-      }
-    } else {
-      for (let h = offerStartHour; h <= offerEndHour; h++) {
-        slots.push(`${h.toString().padStart(2, '0')}:00`);
-      }
-    }
-    
-    return slots;
+
+    // Filter candidates by offer hours
+    const valid = candidates.filter((time) => {
+      const slotMins = timeToMinutes(time);
+      if (isOvernight) return slotMins >= offerStartMins || slotMins < offerEndMins;
+      return slotMins >= offerStartMins && slotMins < offerEndMins;
+    });
+
+    return valid;
   };
 
   // Check if a date is valid for this offer (within valid_days and date range)

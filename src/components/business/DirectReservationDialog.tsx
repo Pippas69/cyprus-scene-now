@@ -11,9 +11,10 @@ import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Users, Phone, MapPin, User, Clock } from 'lucide-react';
-import { format, isAfter, isBefore, startOfDay, parse } from 'date-fns';
+import { format, isBefore, startOfDay, parse } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toastTranslations } from '@/translations/toastTranslations';
+import { expandSlotsForDay, normalizeTime } from '@/lib/timeSlots';
 
 interface DirectReservationDialogProps {
   open: boolean;
@@ -226,34 +227,22 @@ export const DirectReservationDialog = ({
     return isBeforeToday || !settings.reservation_days.includes(dayName);
   };
 
-  // Helper to normalize time string (handles both "HH:mm" and "HH:mm:ss" formats)
-  const normalizeTime = (time: string | null): string => {
-    if (!time) return '12:00';
-    return time.substring(0, 5);
-  };
-
   const getAvailableTimeSlots = (): string[] => {
     if (!settings) return [];
 
-    // Get the selected day name in English (lowercase)
     const selectedDayName = format(formData.preferred_date, 'EEEE').toLowerCase();
 
+    // Preferred path: use business-defined arrival windows (timeFrom -> timeTo)
     if (settings.reservation_capacity_type === 'time_slots' && settings.reservation_time_slots) {
-      // Filter slots by the selected day and extract timeFrom
-      const slotsForDay = settings.reservation_time_slots
-        .filter((slot) => slot.days && slot.days.includes(selectedDayName))
-        .map((slot) => normalizeTime(slot.timeFrom));
-      
-      // Sort and deduplicate
-      return [...new Set(slotsForDay)].sort();
+      return expandSlotsForDay(settings.reservation_time_slots, selectedDayName, 30);
     }
 
     // Fallback: Check if the selected day is in reservation_days
     if (settings.reservation_days && !settings.reservation_days.includes(selectedDayName)) {
-      return []; // No slots for this day
+      return [];
     }
 
-    // Generate time slots based on opens/closes (legacy fallback)
+    // Legacy fallback: generate slots from opens/closes
     const slots: string[] = [];
     const opens = normalizeTime(settings.reservation_opens_at);
     const closes = normalizeTime(settings.reservation_closes_at) || '22:00';
@@ -261,13 +250,12 @@ export const DirectReservationDialog = ({
     let current = parse(opens, 'HH:mm', new Date());
     const end = parse(closes, 'HH:mm', new Date());
 
-    // Safety check for invalid dates
     if (isNaN(current.getTime()) || isNaN(end.getTime())) {
       console.error('Invalid time values:', { opens, closes });
       return [];
     }
 
-    while (isBefore(current, end) || format(current, 'HH:mm') === format(end, 'HH:mm')) {
+    while (current < end) {
       slots.push(format(current, 'HH:mm'));
       current = new Date(current.getTime() + 30 * 60 * 1000);
     }
