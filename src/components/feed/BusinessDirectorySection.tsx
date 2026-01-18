@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/personalization";
+import { trackEngagement } from "@/lib/analyticsTracking";
 
 interface Business {
   id: string;
@@ -217,67 +219,107 @@ export const BusinessDirectorySection = ({
         transition={{ staggerChildren: 0.05 }}
       >
         {businesses.map((business, index) => (
-          <motion.div
-            key={business.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(index * 0.02, 0.5) }}
-          >
-            <Link
-              to={`/business/${business.id}`}
-              className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
-            >
-              {/* Full cover background image */}
-              <div 
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ 
-                  backgroundImage: business.cover_url || business.logo_url 
-                    ? `url(${business.cover_url || business.logo_url})` 
-                    : undefined,
-                  backgroundColor: !business.cover_url && !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined
-                }}
-              />
-              
-              {/* Gradient overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              
-              {/* Boost badges - top right */}
-              <div className="absolute top-2 right-2">
-                <BusinessBoostBadges
-                  hasEventBoost={business.hasEventBoost}
-                  hasOfferBoost={business.hasOfferBoost}
-                  studentDiscountPercent={business.student_discount_percent}
-                  studentDiscountMode={business.student_discount_mode}
-                  language={language}
-                />
-              </div>
-              
-              {/* Verified badge - top left */}
-              {business.verified && (
-                <div className="absolute top-2 left-2 bg-background/90 rounded-full p-1">
-                  <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
-                </div>
-              )}
-              
-              {/* Content at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 p-3">
-                <h4 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-primary-foreground transition-colors">
-                  {business.name}
-                </h4>
-                <p className="text-xs text-white/80 mt-0.5">
-                  {business.city}
-                </p>
-                {business.category?.[0] && (
-                  <Badge variant="secondary" className="mt-1.5 text-[10px] px-1.5 py-0 h-4 bg-white/20 text-white border-0">
-                    {business.category[0]}
-                  </Badge>
-                )}
-              </div>
-            </Link>
-          </motion.div>
+          <BusinessCard key={business.id} business={business} index={index} language={language} />
         ))}
       </motion.div>
     </div>
+  );
+};
+
+// Separate component for business card with view tracking
+const BusinessCard = ({ 
+  business, 
+  index, 
+  language 
+}: { 
+  business: Business; 
+  index: number;
+  language: "el" | "en";
+}) => {
+  const cardRef = useRef<HTMLAnchorElement>(null);
+  const hasTracked = useRef(false);
+
+  useEffect(() => {
+    if (!cardRef.current || hasTracked.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasTracked.current) {
+            hasTracked.current = true;
+            // Track profile view when business card is 50% visible in feed
+            trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'feed' });
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => observer.disconnect();
+  }, [business.id]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(index * 0.02, 0.5) }}
+    >
+      <Link
+        ref={cardRef}
+        to={`/business/${business.id}`}
+        className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
+      >
+        {/* Full cover background image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: business.cover_url || business.logo_url 
+              ? `url(${business.cover_url || business.logo_url})` 
+              : undefined,
+            backgroundColor: !business.cover_url && !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined
+          }}
+        />
+        
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        
+        {/* Boost badges - top right */}
+        <div className="absolute top-2 right-2">
+          <BusinessBoostBadges
+            hasEventBoost={business.hasEventBoost}
+            hasOfferBoost={business.hasOfferBoost}
+            studentDiscountPercent={business.student_discount_percent}
+            studentDiscountMode={business.student_discount_mode}
+            language={language}
+          />
+        </div>
+        
+        {/* Verified badge - top left */}
+        {business.verified && (
+          <div className="absolute top-2 left-2 bg-background/90 rounded-full p-1">
+            <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
+          </div>
+        )}
+        
+        {/* Content at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <h4 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-primary-foreground transition-colors">
+            {business.name}
+          </h4>
+          <p className="text-xs text-white/80 mt-0.5">
+            {business.city}
+          </p>
+          {business.category?.[0] && (
+            <Badge variant="secondary" className="mt-1.5 text-[10px] px-1.5 py-0 h-4 bg-white/20 text-white border-0">
+              {business.category[0]}
+            </Badge>
+          )}
+        </div>
+      </Link>
+    </motion.div>
   );
 };
 
