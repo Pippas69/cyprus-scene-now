@@ -1,8 +1,10 @@
+import { useEffect, useRef } from "react";
 import { X, MapPin, Navigation, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getDirectionsUrl } from "@/lib/mapUtils";
+import { trackEngagement } from "@/lib/analyticsTracking";
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
 
 interface BusinessPopupProps {
@@ -13,6 +15,7 @@ interface BusinessPopupProps {
 
 export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProps) => {
   const navigate = useNavigate();
+  const hasTrackedView = useRef(false);
   
   const text = {
     el: {
@@ -27,9 +30,23 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
 
   const t = text[language];
 
+  // Track profile view when popup opens (viewed on map)
+  useEffect(() => {
+    if (!hasTrackedView.current && business.id) {
+      hasTrackedView.current = true;
+      trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map' });
+    }
+  }, [business.id]);
+
   const handleDirections = () => {
     const [lng, lat] = business.coordinates;
     window.open(getDirectionsUrl(lat, lng), "_blank");
+  };
+
+  const handleViewProfile = () => {
+    // Track profile click interaction from map
+    trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map' });
+    navigate(`/business/${business.id}`);
   };
 
   return (
@@ -108,7 +125,7 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
           <Button 
             size="sm" 
             className="flex-1" 
-            onClick={() => navigate(`/business/${business.id}`)}
+            onClick={handleViewProfile}
           >
             <ExternalLink size={14} className="mr-1.5" />
             {t.viewProfile}

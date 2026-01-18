@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useRef } from "react";
 import { Calendar, MapPin, Users, Heart } from "lucide-react";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatEventTime } from "@/lib/mapUtils";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
+import { trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 
 interface FeaturedEventCardProps {
   event: any;
@@ -14,6 +16,8 @@ interface FeaturedEventCardProps {
 }
 
 const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) => {
+  const cardRef = useRef<HTMLAnchorElement>(null);
+  
   const translations = {
     el: {
       viewDetails: "Δείτε Λεπτομέρειες",
@@ -32,8 +36,15 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
   const interestedCount = event.realtime_stats?.[0]?.interested_count || 0;
   const goingCount = event.realtime_stats?.[0]?.going_count || 0;
 
+  // Track event view when card is 50% visible
+  useViewTracking(cardRef, () => {
+    if (event.id) {
+      trackEventView(event.id, 'feed');
+    }
+  }, { threshold: 0.5 });
+
   return (
-    <Link to={`/ekdiloseis/${event.id}`} className="block group">
+    <Link ref={cardRef} to={`/ekdiloseis/${event.id}`} className="block group">
       <div className={cn(
         "relative w-full h-[350px] md:h-[500px] rounded-2xl overflow-hidden",
         "ring-2 ring-transparent transition-all duration-500",

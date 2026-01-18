@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useRef } from "react";
 import { MapPin, Clock, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PremiumBadge } from "@/components/ui/premium-badge";
@@ -6,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { format, differenceInMinutes } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { CardActionBar } from "./CardActionBar";
-
+import { trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 interface UnifiedEventCardProps {
   event: {
     id: string;
@@ -68,10 +69,20 @@ export const UnifiedEventCard = ({
   size = "default",
   className
 }: UnifiedEventCardProps) => {
+  const cardRef = useRef<HTMLAnchorElement>(null);
   const t = translations[language];
   const eventDate = new Date(event.start_at);
   const now = new Date();
 
+  // Track event view when card is 50% visible
+  useViewTracking(cardRef, () => {
+    if (event.id) {
+      const source = window.location.pathname.includes('/xartis') ? 'map' :
+                     window.location.pathname.includes('/search') ? 'search' :
+                     window.location.pathname.includes('/feed') || window.location.pathname === '/' ? 'feed' : 'direct';
+      trackEventView(event.id, source as 'feed' | 'map' | 'search' | 'profile' | 'direct');
+    }
+  }, { threshold: 0.5 });
   // Date/Time formatting
   const isToday = eventDate.toDateString() === now.toDateString();
   const isTomorrow = eventDate.toDateString() === new Date(now.getTime() + 86400000).toDateString();
@@ -116,7 +127,7 @@ export const UnifiedEventCard = ({
 
   // Check if event is free
   const showFreeBadge = isFree || event.price_tier === "free";
-  return <Link to={`/event/${event.id}`} className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "aspect-square overflow-visible group", sizeClasses[size], className)}>
+  return <Link ref={cardRef} to={`/event/${event.id}`} className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "aspect-square overflow-visible group", sizeClasses[size], className)}>
       {/* TOP - Image (60%) */}
       <div className="relative flex-[1.5] overflow-visible">
         {/* Image container - clipped */}
