@@ -3,19 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 import { 
-  Users, Phone, Calendar, MessageSquare, Building2, 
+  Users, Phone, Calendar, Building2, 
   Tag, Clock, Loader2, QrCode
 } from 'lucide-react';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { toastTranslations } from '@/translations/toastTranslations';
 
 interface DirectReservation {
   id: string;
@@ -49,12 +43,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notesDialog, setNotesDialog] = useState<{ open: boolean; reservation: DirectReservation | null }>({
-    open: false,
-    reservation: null,
-  });
-  const [businessNotes, setBusinessNotes] = useState('');
-  const tt = toastTranslations[language];
 
   const text = {
     el: {
@@ -195,43 +183,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
     }
   };
 
-  const handleCheckIn = async (reservationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('reservations')
-        .update({ 
-          checked_in_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', reservationId);
-
-      if (error) throw error;
-      toast.success(tt.reservationVerified);
-      fetchReservations();
-    } catch (error) {
-      console.error('Error checking in:', error);
-      toast.error(tt.error);
-    }
-  };
-
-  const handleAddNotes = async () => {
-    if (!notesDialog.reservation) return;
-    try {
-      const { error } = await supabase
-        .from('reservations')
-        .update({ business_notes: businessNotes, updated_at: new Date().toISOString() })
-        .eq('id', notesDialog.reservation.id);
-
-      if (error) throw error;
-      toast.success(tt.notesSaved);
-      setNotesDialog({ open: false, reservation: null });
-      setBusinessNotes('');
-      fetchReservations();
-    } catch (error) {
-      console.error('Error saving notes:', error);
-      toast.error(tt.error);
-    }
-  };
+  // ... keep existing code (no action buttons)
 
   // Show all reservations (no filters)
   const filteredReservations = reservations;
@@ -385,21 +337,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                     </div>
                   )}
                 </div>
-                
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setNotesDialog({ open: true, reservation });
-                      setBusinessNotes(reservation.business_notes || '');
-                    }}
-                    className="flex-1"
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    {t.addNotes}
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -409,13 +346,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
           <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[22%]">{t.name}</TableHead>
-                <TableHead className="w-[16%]">{t.dateTime}</TableHead>
-                <TableHead className="w-[16%]">{t.details}</TableHead>
-                <TableHead className="w-[14%]">{t.type}</TableHead>
+                <TableHead className="w-[24%]">{t.name}</TableHead>
+                <TableHead className="w-[18%]">{t.dateTime}</TableHead>
+                <TableHead className="w-[18%]">{t.details}</TableHead>
+                <TableHead className="w-[16%]">{t.type}</TableHead>
                 <TableHead className="w-[12%]">{t.confirmationCode}</TableHead>
                 <TableHead className="w-[12%]">{t.status}</TableHead>
-                <TableHead className="w-[8%] text-right">{t.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -458,18 +394,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                     )}
                   </TableCell>
                   <TableCell>{getStatusBadge(reservation)}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setNotesDialog({ open: true, reservation });
-                        setBusinessNotes(reservation.business_notes || '');
-                      }}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -477,34 +401,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         </div>
       )}
 
-      {/* Notes Dialog */}
-      <Dialog open={notesDialog.open} onOpenChange={(open) => setNotesDialog({ ...notesDialog, open })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t.businessNotesTitle}</DialogTitle>
-            <DialogDescription>{t.businessNotesDescription}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="notes">{t.addNotes}</Label>
-              <Textarea
-                id="notes"
-                value={businessNotes}
-                onChange={(e) => setBusinessNotes(e.target.value)}
-                placeholder={t.businessNotesDescription}
-                className="mt-2"
-                rows={4}
-              />
-            </div>
-            <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setNotesDialog({ open: false, reservation: null })}>
-                {t.cancel}
-              </Button>
-              <Button onClick={handleAddNotes}>{t.save}</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
