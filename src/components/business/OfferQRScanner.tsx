@@ -155,16 +155,19 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
   };
 
   const handleScanStart = async () => {
-    setIsScanning(true);
     setScanResult(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Wait for video element to be in the DOM
+    let videoElement: HTMLVideoElement | null = null;
+    for (let i = 0; i < 30; i++) {
+      videoElement = document.getElementById("qr-video-offer") as HTMLVideoElement;
+      if (videoElement) break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
 
-    const videoElement = document.getElementById("qr-video") as HTMLVideoElement;
     if (!videoElement) {
       const errorMsg = language === "el" ? t.errors.cameraError.el : t.errors.cameraError.en;
       toast.error(errorMsg);
-      setIsScanning(false);
       return;
     }
 
@@ -175,6 +178,8 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
 
       // Ensure old scanner is cleaned up
       stopScanner();
+
+      setIsScanning(true);
 
       const qrScanner = new QrScanner(
         videoElement,
@@ -195,12 +200,12 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
           highlightCodeOutline: true,
+          preferredCamera: 'environment',
         }
       );
 
       scannerRef.current = qrScanner;
       await qrScanner.start();
-      setIsScanning(true);
     } catch (error) {
       console.error("Scanner error:", error);
 
@@ -325,33 +330,41 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{t.title}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            {!isScanning && !scanResult && (
-              <div className="flex flex-col items-center gap-4 py-8">
-                <Camera className="h-16 w-16 text-muted-foreground" />
-                <div className="text-center space-y-2">
-                  <p className="text-muted-foreground">
-                    {language === "el" 
-                      ? "Σαρώστε τον QR κωδικό του πελάτη για να επαληθεύσετε την αγορά"
-                      : "Scan customer's QR code to verify their purchase"}
-                  </p>
-                </div>
-                <Button onClick={handleScanStart} size="lg">
-                  <QrCode className="h-5 w-5 mr-2" />
-                  {t.startScanning}
-                </Button>
-              </div>
-            )}
-
-            {isScanning && !scanResult && (
+            {!scanResult && (
               <div className="space-y-4">
-                <div className="relative aspect-square w-full bg-black rounded-lg overflow-hidden">
-                  <video id="qr-video" className="w-full h-full object-cover" />
+                <div className="relative aspect-square w-full bg-muted rounded-lg overflow-hidden">
+                  <video 
+                    id="qr-video-offer" 
+                    className="w-full h-full object-cover"
+                    playsInline
+                    muted
+                    autoPlay
+                  />
+                  {!isScanning && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
+                      <Camera className="h-16 w-16 text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground text-center px-4 mb-4">
+                        {language === "el" 
+                          ? "Σαρώστε τον QR κωδικό του πελάτη"
+                          : "Scan customer's QR code"}
+                      </p>
+                      <Button onClick={handleScanStart} size="lg">
+                        <QrCode className="h-5 w-5 mr-2" />
+                        {t.startScanning}
+                      </Button>
+                    </div>
+                  )}
+                  {isScanning && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-48 h-48 border-2 border-primary rounded-lg" />
+                    </div>
+                  )}
                   {verifying && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <div className="text-center text-white">
@@ -361,8 +374,10 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
                     </div>
                   )}
                 </div>
-                <p className="text-center text-sm text-muted-foreground">{t.scanning}</p>
-                <Button onClick={stopScanner} variant="outline" className="w-full">
+                <p className="text-center text-sm text-muted-foreground">
+                  {isScanning ? t.scanning : ""}
+                </p>
+                <Button onClick={handleClose} variant="outline" className="w-full">
                   {t.close}
                 </Button>
               </div>

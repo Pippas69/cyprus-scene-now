@@ -116,16 +116,18 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
 
   const initScanner = async () => {
     // Wait for the video element to mount (Dialog portal timing)
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 40; i++) {
       if (videoRef.current) break;
-      // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
-    if (!videoRef.current) return;
+    if (!videoRef.current) {
+      console.error('Video element not found');
+      return;
+    }
 
     // Wait for DOM to settle
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -139,16 +141,20 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
         scannerRef.current = null;
       }
 
-      setScanning(true);
+      const scanner = new QrScanner(
+        videoRef.current, 
+        (result) => handleScan(result.data), 
+        {
+          returnDetailedScanResult: true,
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+          preferredCamera: 'environment',
+        }
+      );
 
-      const scanner = new QrScanner(videoRef.current, (result) => handleScan(result.data), {
-        returnDetailedScanResult: true,
-        highlightScanRegion: true,
-        highlightCodeOutline: true,
-      });
-
-      await scanner.start();
       scannerRef.current = scanner;
+      await scanner.start();
+      setScanning(true);
     } catch (error) {
       console.error('Scanner error:', error);
 
@@ -368,7 +374,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       </Button>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{t.scanQR}</DialogTitle>
           </DialogHeader>
@@ -376,15 +382,25 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           <div className="space-y-4">
             {!verificationResult ? (
               <>
-                <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
+                <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
                   <video
                     ref={videoRef}
                     className="w-full h-full object-cover"
                     playsInline
+                    muted
+                    autoPlay
                   />
                   {scanning && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-48 h-48 border-2 border-primary rounded-lg"></div>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-48 h-48 border-2 border-primary rounded-lg" />
+                    </div>
+                  )}
+                  {!scanning && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
+                      <Camera className="h-16 w-16 text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground text-center px-4">
+                        {language === 'el' ? 'Εκκίνηση κάμερας...' : 'Starting camera...'}
+                      </p>
                     </div>
                   )}
                 </div>
