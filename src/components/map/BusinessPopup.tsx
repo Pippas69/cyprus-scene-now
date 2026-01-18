@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { X, MapPin, Navigation, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,8 @@ interface BusinessPopupProps {
 
 export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProps) => {
   const navigate = useNavigate();
-  const hasTrackedView = useRef(false);
-  
+  const hasTrackedProfileNavClick = useRef(false);
+
   const text = {
     el: {
       viewProfile: "Προφίλ",
@@ -30,22 +30,19 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
 
   const t = text[language];
 
-  // Track profile view when popup opens (viewed on map)
-  useEffect(() => {
-    if (!hasTrackedView.current && business.id) {
-      hasTrackedView.current = true;
-      trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map' });
-    }
-  }, [business.id]);
-
   const handleDirections = () => {
     const [lng, lat] = business.coordinates;
     window.open(getDirectionsUrl(lat, lng), "_blank");
   };
 
   const handleViewProfile = () => {
-    // Track profile click interaction from map
-    trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map' });
+    // IMPORTANT:
+    // - This is an interaction (click), NOT a view.
+    // - Views are tracked separately (e.g. feed visibility / profile page).
+    if (!hasTrackedProfileNavClick.current) {
+      hasTrackedProfileNavClick.current = true;
+      trackEngagement(business.id, "profile_click", "business", business.id, { source: "map" });
+    }
     navigate(`/business/${business.id}`);
   };
 
