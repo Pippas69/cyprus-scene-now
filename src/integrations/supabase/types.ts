@@ -4770,8 +4770,8 @@ export type Database = {
         }[]
       }
       get_slot_available_capacity: {
-        Args: { p_business_id: string; p_date: string; p_slot_time: string }
-        Returns: number
+        Args: { p_business_id: string; p_date: string; p_time_from: string }
+        Returns: Json
       }
       get_slots_availability: {
         Args: { p_business_id: string; p_date: string }

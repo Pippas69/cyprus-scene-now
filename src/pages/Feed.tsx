@@ -186,7 +186,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           `
           id, title, description, percent_off, original_price_cents,
           start_at, end_at, business_id, terms, max_per_user,
-          businesses!inner (name, logo_url, cover_url, city, verified)
+          valid_days, valid_start_time, valid_end_time,
+          businesses!inner (id, name, logo_url, cover_url, city, verified, accepts_direct_reservations, reservation_time_slots, reservation_days)
         `
         )
         .in("id", boostedOfferIds)
