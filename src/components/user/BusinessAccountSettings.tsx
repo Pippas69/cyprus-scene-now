@@ -29,7 +29,6 @@ import { validationTranslations } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { compressImage } from "@/lib/imageCompression";
 import { StripeConnectOnboarding } from "@/components/business/StripeConnectOnboarding";
-import { DirectReservationSettings } from "@/components/business/DirectReservationSettings";
 import { StudentDiscountSettings } from "@/components/business/StudentDiscountSettings";
 
 const createBusinessProfileSchema = (language: 'el' | 'en') => {
@@ -643,9 +642,6 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
       {/* Stripe Connect - Payments & Payouts */}
       <StripeConnectOnboarding businessId={businessId} language={language} />
-
-      {/* Direct Reservation Settings */}
-      <DirectReservationSettings businessId={businessId} language={language} />
 
       {/* Student Discount Settings */}
       <StudentDiscountSettings businessId={businessId} />
