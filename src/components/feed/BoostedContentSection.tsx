@@ -30,6 +30,14 @@ interface BoostedEvent {
   };
 }
 
+interface TimeSlot {
+  id?: string;
+  timeFrom: string;
+  timeTo: string;
+  capacity: number;
+  days: string[];
+}
+
 interface BoostedOffer {
   id: string;
   title: string;
@@ -39,12 +47,23 @@ interface BoostedOffer {
   end_at: string;
   start_at?: string;
   business_id: string;
+  max_per_user?: number | null;
+  total_people?: number | null;
+  people_remaining?: number | null;
+  max_people_per_redemption?: number | null;
+  valid_days?: string[] | null;
+  valid_start_time?: string | null;
+  valid_end_time?: string | null;
   businesses: {
     name: string;
     logo_url: string | null;
     cover_url?: string | null;
     city: string;
     verified: boolean;
+    accepts_direct_reservations?: boolean;
+    // Comes from the backend as Json; OfferPurchaseDialog will handle it as an array.
+    reservation_time_slots?: unknown;
+    reservation_days?: string[] | null;
   };
 }
 
@@ -314,11 +333,20 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           end_at: offer.end_at,
           start_at: offer.start_at,
           business_id: offer.business_id,
+          total_people: offer.total_people,
+          people_remaining: offer.people_remaining,
+          max_people_per_redemption: offer.max_people_per_redemption,
+          valid_days: offer.valid_days,
+          valid_start_time: offer.valid_start_time,
+          valid_end_time: offer.valid_end_time,
           businesses: {
             name: offer.businesses?.name || "",
             logo_url: offer.businesses?.logo_url,
             cover_url: offer.businesses?.cover_url,
             city: offer.businesses?.city || "",
+            accepts_direct_reservations: offer.businesses?.accepts_direct_reservations,
+            reservation_days: offer.businesses?.reservation_days || null,
+            reservation_time_slots: (offer.businesses?.reservation_time_slots as any) || null,
           },
         }}
         language={language}
