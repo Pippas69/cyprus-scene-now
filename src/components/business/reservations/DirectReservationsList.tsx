@@ -252,7 +252,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   }
 
   return (
-    <div className="space-y-4 w-full max-w-full overflow-x-hidden">
+    <div className="space-y-4 w-full max-w-full">
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-full">
         <Card className="min-w-0">
@@ -321,7 +321,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                   {reservation.preferred_time && (
                     <div className="flex items-center gap-2 min-w-0">
                       <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="truncate">{format(new Date(reservation.preferred_time), 'MMM dd, HH:mm', { locale: language === 'el' ? el : enUS })}</span>
+                      <span className="truncate">
+                        {format(new Date(reservation.preferred_time), 'MMM dd, HH:mm', { locale: language === 'el' ? el : enUS })}
+                      </span>
                     </div>
                   )}
                   {reservation.phone_number && (
@@ -343,57 +345,62 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         </div>
       ) : (
         <div className="rounded-md border w-full max-w-full overflow-x-auto">
-          <Table className="w-full table-fixed">
+          <Table className="w-full min-w-[980px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[24%]">{t.name}</TableHead>
-                <TableHead className="w-[18%]">{t.dateTime}</TableHead>
-                <TableHead className="w-[18%]">{t.details}</TableHead>
-                <TableHead className="w-[16%]">{t.type}</TableHead>
-                <TableHead className="w-[12%]">{t.confirmationCode}</TableHead>
-                <TableHead className="w-[12%]">{t.status}</TableHead>
+                <TableHead className="w-1/6">{t.name}</TableHead>
+                <TableHead className="w-1/6">{t.dateTime}</TableHead>
+                <TableHead className="w-1/6">{t.details}</TableHead>
+                <TableHead className="w-1/6">{t.type}</TableHead>
+                <TableHead className="w-1/6">{t.confirmationCode}</TableHead>
+                <TableHead className="w-1/6">{t.status}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredReservations.map((reservation) => (
                 <TableRow key={reservation.id}>
-                  <TableCell className="min-w-0">
+                  <TableCell className="min-w-0 align-top">
                     <div className="min-w-0">
                       <div className="font-medium truncate">{reservation.reservation_name}</div>
                       <div className="text-sm text-muted-foreground truncate">{reservation.profiles?.email}</div>
                     </div>
                   </TableCell>
-                  <TableCell>
+
+                  <TableCell className="align-top">
                     {reservation.preferred_time && (
                       <div className="flex items-center gap-2 min-w-0">
                         <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="truncate">
+                        <span className="whitespace-nowrap">
                           {format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
                         </span>
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>
+
+                  <TableCell className="align-top">
                     <div className="flex items-center gap-2 min-w-0">
                       <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="truncate">{reservation.party_size} {t.people}</span>
+                      <span className="whitespace-nowrap">{reservation.party_size} {t.people}</span>
                     </div>
                     {reservation.phone_number && (
                       <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1 min-w-0">
                         <Phone className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{reservation.phone_number}</span>
+                        <span className="whitespace-nowrap">{reservation.phone_number}</span>
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="min-w-0">{getTypeBadge(reservation)}</TableCell>
-                  <TableCell>
+
+                  <TableCell className="min-w-0 align-top">{getTypeBadge(reservation)}</TableCell>
+
+                  <TableCell className="align-top">
                     {reservation.confirmation_code && (
-                      <span className="font-mono text-sm bg-primary/10 px-2 py-1 rounded inline-block max-w-full truncate">
+                      <span className="font-mono text-sm bg-primary/10 px-2 py-1 rounded whitespace-nowrap inline-block">
                         {reservation.confirmation_code}
                       </span>
                     )}
                   </TableCell>
-                  <TableCell>{getStatusBadge(reservation)}</TableCell>
+
+                  <TableCell className="align-top">{getStatusBadge(reservation)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

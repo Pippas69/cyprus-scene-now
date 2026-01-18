@@ -96,7 +96,11 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
   const t = text[language];
 
   useEffect(() => {
-    if (isOpen && videoRef.current && !scannerRef.current) {
+    if (isOpen) {
+      // (Dialog is a portal) videoRef may not be ready on first effect tick.
+      // Always attempt init; initScanner will wait until the video element exists.
+      setVerificationResult(null);
+      setScanning(false);
       initScanner();
     }
 
@@ -107,54 +111,66 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
         scannerRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const initScanner = async () => {
+    // Wait for the video element to mount (Dialog portal timing)
+    for (let i = 0; i < 20; i++) {
+      if (videoRef.current) break;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
     if (!videoRef.current) return;
 
-    // Wait for DOM to update
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for DOM to settle
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     try {
-      // Check if camera is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Camera not supported");
+        throw new Error('Camera not supported');
       }
 
-      const scanner = new QrScanner(
-        videoRef.current,
-        (result) => handleScan(result.data),
-        {
-          returnDetailedScanResult: true,
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
-        }
-      );
+      // Clean up any previous scanner instance
+      if (scannerRef.current) {
+        scannerRef.current.stop();
+        scannerRef.current.destroy();
+        scannerRef.current = null;
+      }
+
+      setScanning(true);
+
+      const scanner = new QrScanner(videoRef.current, (result) => handleScan(result.data), {
+        returnDetailedScanResult: true,
+        highlightScanRegion: true,
+        highlightCodeOutline: true,
+      });
 
       await scanner.start();
       scannerRef.current = scanner;
-      setScanning(true);
     } catch (error) {
-      console.error("Scanner error:", error);
-      
+      console.error('Scanner error:', error);
+
       let errorMsg = toastTranslations[language].cameraError;
-      
+
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          errorMsg = language === "el" 
-            ? "Δεν επιτράπηκε η πρόσβαση στην κάμερα. Παρακαλώ ελέγξτε τις ρυθμίσεις του προγράμματος περιήγησης."
-            : "Camera access was denied. Please check your browser settings.";
+          errorMsg =
+            language === 'el'
+              ? 'Δεν επιτράπηκε η πρόσβαση στην κάμερα. Παρακαλώ ελέγξτε τις ρυθμίσεις του προγράμματος περιήγησης.'
+              : 'Camera access was denied. Please check your browser settings.';
         } else if (error.name === 'NotFoundError') {
-          errorMsg = language === "el"
-            ? "Δεν βρέθηκε κάμερα σε αυτή τη συσκευή"
-            : "No camera found on this device";
+          errorMsg = language === 'el' ? 'Δεν βρέθηκε κάμερα σε αυτή τη συσκευή' : 'No camera found on this device';
         } else if (error.name === 'NotReadableError') {
-          errorMsg = language === "el"
-            ? "Η κάμερα χρησιμοποιείται ήδη από άλλη εφαρμογή"
-            : "Camera is already in use by another application";
+          errorMsg =
+            language === 'el'
+              ? 'Η κάμερα χρησιμοποιείται ήδη από άλλη εφαρμογή'
+              : 'Camera is already in use by another application';
         }
       }
-      
+
+      setScanning(false);
       toast.error(errorMsg);
       setIsOpen(false);
     }
