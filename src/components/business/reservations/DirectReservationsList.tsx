@@ -15,7 +15,6 @@ import {
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { QRScanner } from '../QRScanner';
 import { toastTranslations } from '@/translations/toastTranslations';
 
 interface DirectReservation {
@@ -42,9 +41,11 @@ interface DirectReservation {
 interface DirectReservationsListProps {
   businessId: string;
   language: 'el' | 'en';
+  /** Increments when QR scan succeeds (to re-fetch list) */
+  refreshNonce?: number;
 }
 
-export const DirectReservationsList = ({ businessId, language }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +87,6 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
       upcoming: 'Επερχόμενες',
       today: 'Σήμερα',
       checkedInCount: 'Check-ins',
-      scanQr: 'Σάρωση QR',
     },
     en: {
       title: 'Profile & Offer Reservations',
@@ -118,7 +118,6 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
       upcoming: 'Upcoming',
       today: 'Today',
       checkedInCount: 'Check-ins',
-      scanQr: 'Scan QR',
     },
   };
 
@@ -139,6 +138,13 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
       supabase.removeChannel(channel);
     };
   }, [businessId]);
+
+  // Re-fetch when a QR scan succeeds (parent increments refreshNonce)
+  useEffect(() => {
+    if (refreshNonce === undefined) return;
+    fetchReservations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshNonce]);
 
   const fetchReservations = async () => {
     setLoading(true);
@@ -287,59 +293,190 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-6">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4 pb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-full">
+        <Card className="min-w-0">
+          <CardContent className="py-3">
             <div className="text-2xl font-bold">{stats.total}</div>
             <div className="text-sm text-muted-foreground">{t.total}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4">
+        <Card className="min-w-0">
+          <CardContent className="py-3">
             <div className="text-2xl font-bold text-blue-600">{stats.today}</div>
             <div className="text-sm text-muted-foreground">{t.today}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4">
+        <Card className="min-w-0">
+          <CardContent className="py-3">
             <div className="text-2xl font-bold text-orange-600">{stats.upcoming}</div>
             <div className="text-sm text-muted-foreground">{t.upcoming}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4">
+        <Card className="min-w-0">
+          <CardContent className="py-3">
             <div className="text-2xl font-bold text-green-600">{stats.checkedIn}</div>
             <div className="text-sm text-muted-foreground">{t.checkedInCount}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Header with QR Scanner */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <h2 className="text-xl font-semibold">{t.title}</h2>
-        <QRScanner 
-          businessId={businessId} 
-          language={language}
-          onReservationVerified={() => {
-            toast.success(tt.reservationVerified);
-            fetchReservations();
-          }}
-        />
+      {/* Section title (single line) */}
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold truncate">{t.title}</h2>
       </div>
 
       {/* Reservations List */}
       {filteredReservations.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
+          <CardContent className="py-10 text-center">
+            <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground">{t.noReservations}</p>
+          </CardContent>
+        </Card>
+      ) : isMobile ? (
+        <div className="space-y-3">
+          {filteredReservations.map((reservation) => (
+            <Card key={reservation.id} className="min-w-0">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start gap-3 min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
+                      {getTypeBadge(reservation)}
+                    </div>
+                    {reservation.profiles?.email && (
+                      <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
+                    )}
+                  </div>
+                  {getStatusBadge(reservation)}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">{reservation.party_size} {t.people}</span>
+                  </div>
+                  {reservation.preferred_time && (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">{format(new Date(reservation.preferred_time), 'MMM dd, HH:mm', { locale: language === 'el' ? el : enUS })}</span>
+                    </div>
+                  )}
+                  {reservation.phone_number && (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">{reservation.phone_number}</span>
+                    </div>
+                  )}
+                  {reservation.confirmation_code && (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <QrCode className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="font-mono truncate">{reservation.confirmation_code}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setNotesDialog({ open: true, reservation });
+                      setBusinessNotes(reservation.business_notes || '');
+                    }}
+                    className="flex-1"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    {t.addNotes}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-md border w-full max-w-full overflow-x-auto">
+          <Table className="w-full table-fixed">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[22%]">{t.name}</TableHead>
+                <TableHead className="w-[16%]">{t.dateTime}</TableHead>
+                <TableHead className="w-[16%]">{t.details}</TableHead>
+                <TableHead className="w-[14%]">{t.type}</TableHead>
+                <TableHead className="w-[12%]">{t.confirmationCode}</TableHead>
+                <TableHead className="w-[12%]">{t.status}</TableHead>
+                <TableHead className="w-[8%] text-right">{t.actions}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredReservations.map((reservation) => (
+                <TableRow key={reservation.id}>
+                  <TableCell className="min-w-0">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{reservation.reservation_name}</div>
+                      <div className="text-sm text-muted-foreground truncate">{reservation.profiles?.email}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {reservation.preferred_time && (
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">
+                          {format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                        </span>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="truncate">{reservation.party_size} {t.people}</span>
+                    </div>
+                    {reservation.phone_number && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1 min-w-0">
+                        <Phone className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{reservation.phone_number}</span>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="min-w-0">{getTypeBadge(reservation)}</TableCell>
+                  <TableCell>
+                    {reservation.confirmation_code && (
+                      <span className="font-mono text-sm bg-primary/10 px-2 py-1 rounded inline-block max-w-full truncate">
+                        {reservation.confirmation_code}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>{getStatusBadge(reservation)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setNotesDialog({ open: true, reservation });
+                        setBusinessNotes(reservation.business_notes || '');
+                      }}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">{t.noReservations}</p>
           </CardContent>
