@@ -115,9 +115,15 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
   }, [isOpen]);
 
   const initScanner = async () => {
-    // Wait for the video element to mount (Dialog portal timing)
-    for (let i = 0; i < 40; i++) {
-      if (videoRef.current) break;
+    // Wait for the video element to mount AND be visible (Dialog portal + animation timing)
+    for (let i = 0; i < 60; i++) {
+      const el = videoRef.current;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        const visible = rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+        if (visible) break;
+      }
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
@@ -127,7 +133,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
     }
 
     // Wait for DOM to settle
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 250));
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -141,9 +147,15 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
         scannerRef.current = null;
       }
 
+      // Ensure Safari/iOS will actually render the stream
+      videoRef.current.setAttribute('playsinline', 'true');
+      videoRef.current.muted = true;
+      videoRef.current.autoplay = true;
+      (videoRef.current as any).disablePictureInPicture = true;
+
       const scanner = new QrScanner(
-        videoRef.current, 
-        (result) => handleScan(result.data), 
+        videoRef.current,
+        (result) => handleScan(result.data),
         {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
@@ -154,6 +166,14 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
 
       scannerRef.current = scanner;
       await scanner.start();
+
+      // Extra nudge: ensure the back camera is selected when possible
+      try {
+        await (scanner as any).setCamera?.('environment');
+      } catch {
+        // ignore
+      }
+
       setScanning(true);
     } catch (error) {
       console.error('Scanner error:', error);
