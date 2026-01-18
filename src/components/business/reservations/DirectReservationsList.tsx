@@ -3,17 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { 
-  Download, Users, Phone, Calendar, MessageSquare, Building2, 
-  Tag, Clock, CheckCircle2, XCircle, Loader2, QrCode
+  Users, Phone, Calendar, MessageSquare, Building2, 
+  Tag, Clock, Loader2, QrCode
 } from 'lucide-react';
-import { format, isAfter, isBefore, addMinutes } from 'date-fns';
+import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { QRScanner } from '../QRScanner';
@@ -48,8 +47,6 @@ interface DirectReservationsListProps {
 export const DirectReservationsList = ({ businessId, language }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [selectedType, setSelectedType] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [notesDialog, setNotesDialog] = useState<{ open: boolean; reservation: DirectReservation | null }>({
     open: false,
@@ -61,18 +58,10 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
   const text = {
     el: {
       title: 'Κρατήσεις Προφίλ & Προσφορών',
-      subtitle: 'Κρατήσεις που έγιναν μέσω του προφίλ σας ή προσφορών (ενιαία διαθεσιμότητα)',
-      allStatuses: 'Όλες οι Καταστάσεις',
-      allTypes: 'Όλοι οι Τύποι',
-      profileOnly: 'Μόνο Προφίλ',
-      offerOnly: 'Μόνο Προσφορές',
-      pending: 'Εκκρεμής',
-      accepted: 'Επιβεβαιωμένη',
-      declined: 'Απορρίφθηκε',
-      cancelled: 'Ακυρώθηκε',
+      confirmed: 'Επιβεβαιωμένη',
+      cancelled: 'Ακυρωμένη',
       checkedIn: 'Check-in',
-      expired: 'Έληξε',
-      export: 'Εξαγωγή CSV',
+      noShow: 'No-Show',
       name: 'Όνομα',
       contact: 'Επικοινωνία',
       details: 'Λεπτομέρειες',
@@ -90,31 +79,21 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
       businessNotesDescription: 'Προσθέστε σημειώσεις για αυτήν την κράτηση',
       save: 'Αποθήκευση',
       cancel: 'Ακύρωση',
-      checkIn: 'Check-in',
       indoor: 'Εσωτερικά',
       outdoor: 'Εξωτερικά',
-      noShow: 'No-Show',
       stats: 'Στατιστικά',
       total: 'Σύνολο',
       upcoming: 'Επερχόμενες',
       today: 'Σήμερα',
       checkedInCount: 'Check-ins',
-      graceEnding: 'Λήγει σύντομα',
+      scanQr: 'Σάρωση QR',
     },
     en: {
       title: 'Profile & Offer Reservations',
-      subtitle: 'Reservations made via your profile or offers (unified availability)',
-      allStatuses: 'All Statuses',
-      allTypes: 'All Types',
-      profileOnly: 'Profile Only',
-      offerOnly: 'Offers Only',
-      pending: 'Pending',
-      accepted: 'Confirmed',
-      declined: 'Declined',
+      confirmed: 'Confirmed',
       cancelled: 'Cancelled',
       checkedIn: 'Checked In',
-      expired: 'Expired',
-      export: 'Export CSV',
+      noShow: 'No-Show',
       name: 'Name',
       contact: 'Contact',
       details: 'Details',
@@ -132,16 +111,14 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
       businessNotesDescription: 'Add notes for this reservation',
       save: 'Save',
       cancel: 'Cancel',
-      checkIn: 'Check-in',
       indoor: 'Indoor',
       outdoor: 'Outdoor',
-      noShow: 'No-Show',
       stats: 'Statistics',
       total: 'Total',
       upcoming: 'Upcoming',
       today: 'Today',
       checkedInCount: 'Check-ins',
-      graceEnding: 'Grace ending',
+      scanQr: 'Scan QR',
     },
   };
 
@@ -250,33 +227,8 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
     }
   };
 
-  const exportToCSV = () => {
-    const headers = [t.name, 'Email', t.contact, t.details, t.dateTime, t.type, t.status];
-    const rows = filteredReservations.map((r) => [
-      r.reservation_name,
-      r.profiles?.email || '',
-      r.phone_number || '',
-      `${r.party_size} ${t.people}`,
-      r.preferred_time ? format(new Date(r.preferred_time), 'yyyy-MM-dd HH:mm') : '',
-      r.offer_purchase ? t.fromOffer : t.fromProfile,
-      r.status,
-    ]);
-
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reservations-${new Date().toISOString()}.csv`;
-    a.click();
-  };
-
-  const filteredReservations = reservations.filter((r) => {
-    if (selectedStatus !== 'all' && r.status !== selectedStatus) return false;
-    if (selectedType === 'profile' && r.offer_purchase) return false;
-    if (selectedType === 'offer' && !r.offer_purchase) return false;
-    return true;
-  });
+  // Show all reservations (no filters)
+  const filteredReservations = reservations;
 
   // Calculate stats
   const now = new Date();
@@ -289,34 +241,31 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
   };
 
   const getStatusBadge = (reservation: DirectReservation) => {
+    // Check-in: verified via QR scan
     if (reservation.checked_in_at) {
-      return <Badge className="bg-green-500">{t.checkedIn}</Badge>;
+      return <Badge className="bg-green-500 text-white">{t.checkedIn}</Badge>;
     }
     
-    // Check if grace period expired
+    // Cancelled by user
+    if (reservation.status === 'cancelled') {
+      return <Badge variant="outline" className="text-muted-foreground">{t.cancelled}</Badge>;
+    }
+    
+    // No-Show: grace period (15 min) expired without check-in
     if (reservation.status === 'accepted' && reservation.preferred_time) {
       const slotTime = new Date(reservation.preferred_time);
       const graceEnd = addMinutes(slotTime, 15);
       if (isAfter(now, graceEnd)) {
         return <Badge variant="destructive">{t.noShow}</Badge>;
       }
-      // Within grace period
-      if (isAfter(now, slotTime) && isBefore(now, graceEnd)) {
-        return (
-          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 animate-pulse">
-            {t.graceEnding}
-          </Badge>
-        );
-      }
     }
 
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      pending: 'secondary',
-      accepted: 'default',
-      declined: 'destructive',
-      cancelled: 'outline',
-    };
-    return <Badge variant={variants[reservation.status] || 'outline'}>{t[reservation.status as keyof typeof t] || reservation.status}</Badge>;
+    // Confirmed (default for accepted reservations)
+    if (reservation.status === 'accepted') {
+      return <Badge variant="default">{t.confirmed}</Badge>;
+    }
+
+    return <Badge variant="outline">{reservation.status}</Badge>;
   };
 
   const getTypeBadge = (reservation: DirectReservation) => {
@@ -374,47 +323,17 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Header with QR Scanner */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div>
-          <h2 className="text-xl font-semibold">{t.title}</h2>
-          <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-        </div>
-        <div className="flex gap-3 flex-wrap items-center w-full sm:w-auto">
-          <QRScanner 
-            businessId={businessId} 
-            language={language}
-            onReservationVerified={() => {
-              toast.success(tt.reservationVerified);
-              fetchReservations();
-            }}
-          />
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.allTypes}</SelectItem>
-              <SelectItem value="profile">{t.profileOnly}</SelectItem>
-              <SelectItem value="offer">{t.offerOnly}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.allStatuses}</SelectItem>
-              <SelectItem value="pending">{t.pending}</SelectItem>
-              <SelectItem value="accepted">{t.accepted}</SelectItem>
-              <SelectItem value="cancelled">{t.cancelled}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={exportToCSV} variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            {t.export}
-          </Button>
-        </div>
+        <h2 className="text-xl font-semibold">{t.title}</h2>
+        <QRScanner 
+          businessId={businessId} 
+          language={language}
+          onReservationVerified={() => {
+            toast.success(tt.reservationVerified);
+            fetchReservations();
+          }}
+        />
       </div>
 
       {/* Reservations List */}
@@ -470,16 +389,6 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
                 </div>
                 
                 <div className="flex gap-2 pt-2">
-                  {reservation.status === 'accepted' && !reservation.checked_in_at && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleCheckIn(reservation.id)}
-                      className="flex-1"
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      {t.checkIn}
-                    </Button>
-                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -487,7 +396,7 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
                       setNotesDialog({ open: true, reservation });
                       setBusinessNotes(reservation.business_notes || '');
                     }}
-                    className={reservation.status === 'accepted' && !reservation.checked_in_at ? '' : 'flex-1'}
+                    className="flex-1"
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     {t.addNotes}
@@ -498,17 +407,17 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
           ))}
         </div>
       ) : (
-        <div className="rounded-md border">
-          <Table>
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
-                <TableHead>{t.name}</TableHead>
-                <TableHead>{t.dateTime}</TableHead>
-                <TableHead>{t.details}</TableHead>
-                <TableHead>{t.type}</TableHead>
-                <TableHead>{t.confirmationCode}</TableHead>
-                <TableHead>{t.status}</TableHead>
-                <TableHead>{t.actions}</TableHead>
+                <TableHead className="min-w-[150px]">{t.name}</TableHead>
+                <TableHead className="min-w-[120px]">{t.dateTime}</TableHead>
+                <TableHead className="min-w-[100px]">{t.details}</TableHead>
+                <TableHead className="min-w-[100px]">{t.type}</TableHead>
+                <TableHead className="min-w-[80px]">{t.confirmationCode}</TableHead>
+                <TableHead className="min-w-[100px]">{t.status}</TableHead>
+                <TableHead className="min-w-[80px]">{t.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -523,53 +432,45 @@ export const DirectReservationsList = ({ businessId, language }: DirectReservati
                   <TableCell>
                     {reservation.preferred_time && (
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        {format(new Date(reservation.preferred_time), 'MMM dd, HH:mm', { locale: language === 'el' ? el : enUS })}
+                        <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="whitespace-nowrap">
+                          {format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                        </span>
                       </div>
                     )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      {reservation.party_size} {t.people}
+                      <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="whitespace-nowrap">{reservation.party_size} {t.people}</span>
                     </div>
                     {reservation.phone_number && (
                       <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                        <Phone className="h-3 w-3" />
-                        {reservation.phone_number}
+                        <Phone className="h-3 w-3 flex-shrink-0" />
+                        <span className="whitespace-nowrap">{reservation.phone_number}</span>
                       </div>
                     )}
                   </TableCell>
                   <TableCell>{getTypeBadge(reservation)}</TableCell>
                   <TableCell>
                     {reservation.confirmation_code && (
-                      <span className="font-mono text-sm bg-primary/10 px-2 py-1 rounded">
+                      <span className="font-mono text-sm bg-primary/10 px-2 py-1 rounded whitespace-nowrap">
                         {reservation.confirmation_code}
                       </span>
                     )}
                   </TableCell>
                   <TableCell>{getStatusBadge(reservation)}</TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      {reservation.status === 'accepted' && !reservation.checked_in_at && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleCheckIn(reservation.id)}
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setNotesDialog({ open: true, reservation });
-                          setBusinessNotes(reservation.business_notes || '');
-                        }}
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setNotesDialog({ open: true, reservation });
+                        setBusinessNotes(reservation.business_notes || '');
+                      }}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
