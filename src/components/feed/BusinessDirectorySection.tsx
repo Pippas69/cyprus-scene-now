@@ -252,6 +252,10 @@ const BusinessCard = ({
       <Link
         ref={cardRef}
         to={`/business/${business.id}`}
+        onClick={() => {
+          // Interaction = click to open profile (NOT a view)
+          trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'feed' });
+        }}
         className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
       >
         {/* Full cover background image */}

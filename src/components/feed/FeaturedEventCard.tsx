@@ -7,7 +7,7 @@ import { formatEventTime } from "@/lib/mapUtils";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
 import { useCallback, useRef } from "react";
-import { trackEventView, useViewTracking } from "@/lib/analyticsTracking";
+import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 
 interface FeaturedEventCardProps {
   event: any;
@@ -40,8 +40,22 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
     trackEventView(event.id, 'feed');
   }, [event.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
+
+  // Interaction = click to open event (NOT a view)
+  const handleCardClick = useCallback(() => {
+    // featured card always has business info; fall back gracefully
+    const businessId = event.business_id || event.businesses?.id;
+    if (!businessId) return;
+    trackEngagement(businessId, 'click', 'event', event.id, { source: 'feed' });
+  }, [event]);
+
   return (
-    <Link ref={cardRef} to={`/ekdiloseis/${event.id}`} className="block group">
+    <Link
+      ref={cardRef}
+      to={`/ekdiloseis/${event.id}`}
+      onClick={handleCardClick}
+      className="block group"
+    >
       <div className={cn(
         "relative w-full h-[350px] md:h-[500px] rounded-2xl overflow-hidden",
         "ring-2 ring-transparent transition-all duration-500",
