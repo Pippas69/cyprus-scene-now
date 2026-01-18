@@ -100,12 +100,12 @@ export const useGuidanceData = (businessId: string) => {
 
       const profileViews = analyzeTimestamps(profileViewEvents?.map((e) => e.created_at));
 
-      // Profile interactions (follows, shares, clicks) - same as Performance
+      // Profile interactions (follows, shares, profile clicks ONLY) - same as Performance
       const { data: profileInteractionEvents } = await supabase
         .from('engagement_events')
         .select('created_at')
         .eq('business_id', businessId)
-        .in('event_type', ['follow', 'favorite', 'share', 'click', 'profile_click'])
+        .in('event_type', ['follow', 'favorite', 'share', 'profile_click'])
         .gte('created_at', thirtyDaysAgo)
         .lte('created_at', now);
 
