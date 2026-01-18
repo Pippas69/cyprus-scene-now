@@ -75,12 +75,12 @@ export const useBoostValueMetrics = (
       };
 
       const countProfileInteractions = async (rangeStart: string, rangeEnd: string) => {
-        // Must match Performance: follows + shares + clicks (+ follower rows)
+        // Must match Performance: follows + shares + profile clicks ONLY (not event clicks)
         const { data: events } = await supabase
           .from("engagement_events")
           .select("id")
           .eq("business_id", businessId)
-          .in("event_type", ["follow", "favorite", "share", "click", "profile_click"])
+          .in("event_type", ["follow", "favorite", "share", "profile_click"])
           .gte("created_at", rangeStart)
           .lte("created_at", rangeEnd);
 

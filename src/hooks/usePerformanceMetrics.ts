@@ -43,12 +43,12 @@ export const usePerformanceMetrics = (
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
-      // Profile interactions (follows, shares, clicks)
+      // Profile interactions (follows, shares, profile clicks ONLY - not event clicks)
       const { data: profileInteractions } = await supabase
         .from("engagement_events")
         .select("id")
         .eq("business_id", businessId)
-        .in("event_type", ["follow", "favorite", "share", "click", "profile_click"])
+        .in("event_type", ["follow", "favorite", "share", "profile_click"])
         .gte("created_at", startDate)
         .lte("created_at", endDate);
       
