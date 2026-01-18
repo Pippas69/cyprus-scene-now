@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { trackOfferRedeemClick } from "@/lib/analyticsTracking";
-import { useState } from "react";
+import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
+import { useCallback, useRef, useState } from "react";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 
 import { cn } from "@/lib/utils";
@@ -102,9 +102,14 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   const isBundle = offerData?.pricing_type === "bundle";
   const itemCount = discountItems?.length || 0;
   
-  // NOTE: Offer views are tracked ONLY when the OfferPurchaseDialog is opened,
-  // NOT when the card is visible in the feed/list.
-  
+  // View = card became visible to the user (NOT a click)
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const handleView = useCallback(() => {
+    if (!offerData?.id) return;
+    trackDiscountView(offerData.id, 'feed');
+  }, [offerData?.id]);
+  useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
+
   // Format expiry for chip display - improved wording
   const formatExpiryChip = (endAt: string) => {
     const end = new Date(endAt);
@@ -165,6 +170,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
 
   return (
     <Card
+      ref={cardRef as any}
       variant="glass"
       interactive
       className={cn("overflow-visible transition-all duration-300", className)}

@@ -6,6 +6,9 @@ import { cn } from "@/lib/utils";
 import { format, differenceInMinutes } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { CardActionBar } from "./CardActionBar";
+import { useCallback, useRef } from "react";
+import { trackEventView, useViewTracking } from "@/lib/analyticsTracking";
+
 interface UnifiedEventCardProps {
   event: {
     id: string;
@@ -71,8 +74,13 @@ export const UnifiedEventCard = ({
   const eventDate = new Date(event.start_at);
   const now = new Date();
 
-  // NOTE: Event views are tracked ONLY when the EventDetail page is opened,
-  // NOT when the card is visible in the feed.
+  // View = card became visible to the user (NOT a click)
+  const cardRef = useRef<HTMLAnchorElement | null>(null);
+  const handleView = useCallback(() => {
+    trackEventView(event.id, 'feed');
+  }, [event.id]);
+  useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
+
   // Date/Time formatting
   const isToday = eventDate.toDateString() === now.toDateString();
   const isTomorrow = eventDate.toDateString() === new Date(now.getTime() + 86400000).toDateString();
@@ -117,7 +125,7 @@ export const UnifiedEventCard = ({
 
   // Check if event is free
   const showFreeBadge = isFree || event.price_tier === "free";
-  return <Link to={`/event/${event.id}`} className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "aspect-square overflow-visible group", sizeClasses[size], className)}>
+  return <Link ref={cardRef} to={`/event/${event.id}`} className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "aspect-square overflow-visible group", sizeClasses[size], className)}>
       {/* TOP - Image (60%) */}
       <div className="relative flex-[1.5] overflow-visible">
         {/* Image container - clipped */}

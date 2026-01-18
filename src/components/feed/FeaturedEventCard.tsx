@@ -6,6 +6,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatEventTime } from "@/lib/mapUtils";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
+import { useCallback, useRef } from "react";
+import { trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 
 interface FeaturedEventCardProps {
   event: any;
@@ -32,11 +34,14 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
   const interestedCount = event.realtime_stats?.[0]?.interested_count || 0;
   const goingCount = event.realtime_stats?.[0]?.going_count || 0;
 
-  // NOTE: Event views are tracked ONLY when the EventDetail page is opened,
-  // NOT when the card is visible in the feed.
-
+  // View = card became visible to the user (NOT a click)
+  const cardRef = useRef<HTMLAnchorElement | null>(null);
+  const handleView = useCallback(() => {
+    trackEventView(event.id, 'feed');
+  }, [event.id]);
+  useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
   return (
-    <Link to={`/ekdiloseis/${event.id}`} className="block group">
+    <Link ref={cardRef} to={`/ekdiloseis/${event.id}`} className="block group">
       <div className={cn(
         "relative w-full h-[350px] md:h-[500px] rounded-2xl overflow-hidden",
         "ring-2 ring-transparent transition-all duration-500",
