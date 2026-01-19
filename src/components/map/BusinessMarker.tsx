@@ -1,18 +1,14 @@
 /**
- * PREMIUM BUSINESS PIN - FOMO MAP
+ * BUSINESS PIN - FOMO MAP
  *
- * Design Rules:
- * - Clean, professional pin shape
- * - Visual hierarchy through: size, color intensity, glow
- * - Plan colors MATCH subscription UI exactly
- * - Elite: Purple (premium, subtle pulse animation)
- * - Pro: Coral/Orange (larger, premium shape with glow)
- * - Basic: Cyan/Blue (same shape as Free but larger)
- * - Free: Original muted color (smallest, subtle)
+ * Visual hierarchy by plan:
+ * - Free: small teardrop (muted ocean)
+ * - Basic: larger teardrop (blue)
+ * - Pro: larger teardrop (purple) with star icon
+ * - Elite: largest teardrop (gold) with crown icon
  */
 
 import type { PlanSlug } from "@/lib/businessRanking";
-import elitePin from "@/assets/elite-pin.png";
 
 interface BusinessMarkerProps {
   planSlug: PlanSlug;
@@ -24,10 +20,8 @@ interface BusinessMarkerProps {
 
 /**
  * Pin configuration based on subscription plan - strict visual hierarchy
- * Free: Micro size, original muted styling
- * Basic: Same shape as Free, slightly larger, cyan color
- * Pro: Premium diamond/shield shape, larger, coral with glow
- * Elite: Premium shape, largest, purple with subtle pulse animation
+ * Free/Basic/Pro/Elite all use the SAME teardrop silhouette as in the reference.
+ * Pro/Elite are distinguished by color + icon.
  */
 const PIN_CONFIG: Record<PlanSlug, {
   size: number;
@@ -59,24 +53,24 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   pro: {
-    // Premium shape, clearly bigger than Basic
+    // Purple teardrop + star icon
     size: 24,
     opacity: 1,
-    shadowBlur: 5,
+    shadowBlur: 4,
     strokeWidth: 2,
-    glowRadius: 3,
-    isPremiumShape: true,
+    glowRadius: 0,
+    isPremiumShape: false,
     hasPulseAnimation: false,
   },
   elite: {
-    // Only slightly bigger than Pro (NOT huge) + subtle slow premium pulse
+    // Gold teardrop + crown icon
     size: 26,
     opacity: 1,
-    shadowBlur: 6,
+    shadowBlur: 4,
     strokeWidth: 2,
-    glowRadius: 5,
-    isPremiumShape: true,
-    hasPulseAnimation: true,
+    glowRadius: 0,
+    isPremiumShape: false,
+    hasPulseAnimation: false,
   },
 };
 
@@ -109,13 +103,13 @@ const PIN_COLORS: Record<PlanSlug, {
     primary: 'hsl(var(--plan-pro))',
     secondary: 'hsl(var(--plan-pro) / 0.9)',
     accent: 'hsl(var(--plan-pro) / 0.75)',
-    glow: 'hsla(var(--plan-pro) / 0.35)',
+    glow: 'transparent',
   },
   elite: {
     primary: 'hsl(var(--plan-elite))',
     secondary: 'hsl(var(--plan-elite) / 0.92)',
     accent: 'hsl(var(--plan-elite) / 0.78)',
-    glow: 'hsla(var(--plan-elite) / 0.35)',
+    glow: 'transparent',
   },
 };
 
@@ -145,61 +139,6 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
   // Calculate z-index based on plan tier
   const zIndex = planSlug === 'elite' ? 40 : planSlug === 'pro' ? 30 : planSlug === 'basic' ? 20 : 10;
 
-  // ELITE: use the exact crown pin image provided by the user
-  if (planSlug === 'elite') {
-    return (
-      <div
-        onClick={onClick}
-        className="relative cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:-translate-y-1"
-        style={{
-          opacity,
-          filter: `drop-shadow(0 ${shadowBlur}px ${shadowBlur * 2}px rgba(0,0,0,0.25))`,
-          zIndex,
-        }}
-        title={name}
-        aria-label={name}
-        role="button"
-      >
-        {/* Subtle premium halo */}
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: size + glowRadius * 4,
-            height: size + glowRadius * 4,
-            left: -glowRadius * 2,
-            top: -glowRadius * 2,
-            background: `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
-            animation: 'elitePulse 5.5s ease-in-out infinite',
-          }}
-        />
-
-        <img
-          src={elitePin}
-          alt={`${name} (Elite)`}
-          width={size}
-          height={Math.round(size * 1.25)}
-          style={{
-            width: size,
-            height: size * 1.25,
-            animation: 'eliteGlow 5.5s ease-in-out infinite',
-          }}
-          className="block"
-          loading="eager"
-        />
-
-        <style>{`
-          @keyframes elitePulse {
-            0%, 100% { opacity: 0.55; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.06); }
-          }
-          @keyframes eliteGlow {
-            0%, 100% { filter: brightness(1) saturate(1); }
-            50% { filter: brightness(1.08) saturate(1.05); }
-          }
-        `}</style>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -296,18 +235,25 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
           />
         )}
 
-        {/* Center dot */}
-        <circle
-          cx="20"
-          cy={isPremiumShape ? 16 : 18}
-          r={isPremiumShape ? 6 : (planSlug === 'basic' ? 5 : 4)}
-          fill="white"
-          fillOpacity="0.95"
-        />
-
-        {/* Inner accent dot for Pro */}
-        {isPremiumShape && (
-          <circle cx="20" cy="16" r={2} fill={colors.primary} />
+        {/* Center icon */}
+        {planSlug === 'pro' || planSlug === 'elite' ? (
+          <g fill="white" fillOpacity="0.96">
+            {planSlug === 'pro' ? (
+              // Star
+              <path d="M20 11.2 L22.9 16.9 L29.6 17.9 L24.8 22.2 L26 28.9 L20 25.7 L14 28.9 L15.2 22.2 L10.4 17.9 L17.1 16.9 Z" />
+            ) : (
+              // Crown
+              <path d="M12 22 L15.5 13.5 L20 18.5 L24.5 13.5 L28 22 L28 28 L12 28 Z" />
+            )}
+          </g>
+        ) : (
+          <circle
+            cx="20"
+            cy="18"
+            r={planSlug === 'basic' ? 5 : 4}
+            fill="white"
+            fillOpacity="0.95"
+          />
         )}
       </svg>
 
