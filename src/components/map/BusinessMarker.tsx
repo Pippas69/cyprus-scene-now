@@ -12,6 +12,7 @@
  */
 
 import type { PlanSlug } from "@/lib/businessRanking";
+import elitePin from "@/assets/elite-pin.png";
 
 interface BusinessMarkerProps {
   planSlug: PlanSlug;
@@ -144,6 +145,62 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
   // Calculate z-index based on plan tier
   const zIndex = planSlug === 'elite' ? 40 : planSlug === 'pro' ? 30 : planSlug === 'basic' ? 20 : 10;
 
+  // ELITE: use the exact crown pin image provided by the user
+  if (planSlug === 'elite') {
+    return (
+      <div
+        onClick={onClick}
+        className="relative cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:-translate-y-1"
+        style={{
+          opacity,
+          filter: `drop-shadow(0 ${shadowBlur}px ${shadowBlur * 2}px rgba(0,0,0,0.25))`,
+          zIndex,
+        }}
+        title={name}
+        aria-label={name}
+        role="button"
+      >
+        {/* Subtle premium halo */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: size + glowRadius * 4,
+            height: size + glowRadius * 4,
+            left: -glowRadius * 2,
+            top: -glowRadius * 2,
+            background: `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
+            animation: 'elitePulse 5.5s ease-in-out infinite',
+          }}
+        />
+
+        <img
+          src={elitePin}
+          alt={`${name} (Elite)`}
+          width={size}
+          height={Math.round(size * 1.25)}
+          style={{
+            width: size,
+            height: size * 1.25,
+            animation: 'eliteGlow 5.5s ease-in-out infinite',
+          }}
+          className="block"
+          loading="eager"
+        />
+
+        <style>{`
+          @keyframes elitePulse {
+            0%, 100% { opacity: 0.55; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.06); }
+          }
+          @keyframes eliteGlow {
+            0%, 100% { filter: brightness(1) saturate(1); }
+            50% { filter: brightness(1.08) saturate(1.05); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={onClick}
@@ -157,7 +214,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
       aria-label={name}
       role="button"
     >
-      {/* Outer glow for Pro and Elite */}
+      {/* Outer glow for Pro */}
       {glowRadius > 0 && (
         <div
           className="absolute rounded-full pointer-events-none"
@@ -167,7 +224,6 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
             left: -glowRadius * 2,
             top: -glowRadius * 2,
             background: `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
-            animation: hasPulseAnimation ? 'elitePulse 3s ease-in-out infinite' : undefined,
           }}
         />
       )}
@@ -177,9 +233,6 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
         height={size * 1.25}
         viewBox="0 0 40 50"
         className="transition-transform duration-200"
-        style={{
-          animation: hasPulseAnimation ? 'eliteGlow 3s ease-in-out infinite' : undefined,
-        }}
       >
         <defs>
           <linearGradient id={`pin-fill-${safeId}`} x1="0%" y1="0%" x2="0%" y2="100%">
@@ -196,7 +249,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
           {/* Drop shadow filter for premium pins */}
           {isPremiumShape && (
             <filter id={`pin-shadow-${safeId}`} x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={colors.primary} floodOpacity="0.4"/>
+              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={colors.primary} floodOpacity="0.4" />
             </filter>
           )}
         </defs>
@@ -211,7 +264,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
           fillOpacity={isPremiumShape ? 0.2 : 0.12}
         />
 
-        {/* Pin shape - standard teardrop for Free/Basic, premium for Pro/Elite */}
+        {/* Pin shape - standard teardrop for Free/Basic, premium for Pro */}
         <g filter={isPremiumShape ? `url(#pin-shadow-${safeId})` : undefined}>
           {isPremiumShape ? (
             <path
@@ -243,39 +296,23 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
           />
         )}
 
-        {/* Center dot - size varies by plan */}
+        {/* Center dot */}
         <circle
           cx="20"
           cy={isPremiumShape ? 16 : 18}
-          r={isPremiumShape ? (planSlug === 'elite' ? 7 : 6) : (planSlug === 'basic' ? 5 : 4)}
+          r={isPremiumShape ? 6 : (planSlug === 'basic' ? 5 : 4)}
           fill="white"
           fillOpacity="0.95"
         />
 
-        {/* Inner accent dot for premium tiers */}
+        {/* Inner accent dot for Pro */}
         {isPremiumShape && (
-          <circle
-            cx="20"
-            cy="16"
-            r={planSlug === 'elite' ? 3 : 2}
-            fill={colors.primary}
-          />
+          <circle cx="20" cy="16" r={2} fill={colors.primary} />
         )}
       </svg>
 
-      {/* Keyframes for Elite pulse animation - injected via style tag */}
-      {hasPulseAnimation && (
-        <style>{`
-          @keyframes elitePulse {
-            0%, 100% { opacity: 0.7; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.1); }
-          }
-          @keyframes eliteGlow {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.15); }
-          }
-        `}</style>
-      )}
+      {/* (Kept for API compatibility; currently only Elite animates) */}
+      {hasPulseAnimation && null}
     </div>
   );
 };
