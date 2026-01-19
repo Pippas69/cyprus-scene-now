@@ -35,14 +35,14 @@ interface EventsListProps {
   businessId: string;
 }
 
-// Helper component to show active boost badge
+// Helper component to show active boost badge (gold/premium color)
 const ActiveBoostBadge = ({ eventId, label }: { eventId: string; label: string }) => {
   const { activeBoost } = useEventActiveBoost(eventId);
   if (!activeBoost) return null;
   return (
     <Badge 
       variant="default" 
-      className="bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center gap-1"
+      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center gap-1 shadow-sm"
     >
       <Sparkles className="h-3 w-3" />
       {label}
