@@ -37,9 +37,10 @@ const PIN_CONFIG: Record<PlanSlug, {
   isPremiumShape: boolean;
   hasPulseAnimation: boolean;
 }> = {
+  // Free stays EXACTLY as-is per request
   free: {
-    size: 16,         // Smallest - micro presence
-    opacity: 0.7,     // Slightly muted
+    size: 16,
+    opacity: 0.7,
     shadowBlur: 2,
     strokeWidth: 1,
     glowRadius: 0,
@@ -47,8 +48,9 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   basic: {
-    size: 24,         // Slightly larger than Free
-    opacity: 0.9,
+    // Like the screenshot: slightly larger than Free, same teardrop shape
+    size: 20,
+    opacity: 1,
     shadowBlur: 3,
     strokeWidth: 1.5,
     glowRadius: 0,
@@ -56,31 +58,33 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   pro: {
-    size: 32,         // Larger than Basic
-    opacity: 0.95,
+    // Premium shape, clearly bigger than Basic
+    size: 24,
+    opacity: 1,
     shadowBlur: 5,
     strokeWidth: 2,
-    glowRadius: 4,    // Subtle glow for premium
+    glowRadius: 3,
     isPremiumShape: true,
     hasPulseAnimation: false,
   },
   elite: {
-    size: 38,         // Slightly larger than Pro (NOT huge)
+    // Only slightly bigger than Pro (NOT huge) + subtle slow premium pulse
+    size: 26,
     opacity: 1,
     shadowBlur: 6,
     strokeWidth: 2,
-    glowRadius: 6,    // Premium glow
+    glowRadius: 5,
     isPremiumShape: true,
     hasPulseAnimation: true,
   },
 };
 
 /**
- * Plan colors - MUST MATCH subscription UI colors exactly
- * Basic = Cyan (Zap icon in SubscriptionPlans)
- * Pro = Coral/Orange (Star icon in SubscriptionPlans)
- * Elite = Purple (Crown icon in SubscriptionPlans)
- * Free = Original ocean/teal color (muted)
+ * Plan colors (HSL tokens)
+ * - Free: keep the existing ocean color behavior
+ * - Basic: blue/cyan
+ * - Pro: purple
+ * - Elite: gold
  */
 const PIN_COLORS: Record<PlanSlug, {
   primary: string;
@@ -89,32 +93,28 @@ const PIN_COLORS: Record<PlanSlug, {
   glow: string;
 }> = {
   free: {
-    // Original ocean/teal color - not gray, but muted teal
-    primary: '#3D6B99',     // Ocean blue
-    secondary: '#5A8AB8',   // Lighter ocean
-    accent: '#7BA3C7',      // Light accent
+    primary: 'hsl(var(--ocean))',
+    secondary: 'hsl(var(--ocean) / 0.85)',
+    accent: 'hsl(var(--ocean) / 0.65)',
     glow: 'transparent',
   },
   basic: {
-    // Cyan - matches Basic plan badge
-    primary: '#06b6d4',     // Cyan 500
-    secondary: '#22d3ee',   // Cyan 400
-    accent: '#67e8f9',      // Cyan 300
-    glow: 'rgba(6, 182, 212, 0.25)',
+    primary: 'hsl(var(--plan-basic))',
+    secondary: 'hsl(var(--plan-basic) / 0.9)',
+    accent: 'hsl(var(--plan-basic) / 0.75)',
+    glow: 'transparent',
   },
   pro: {
-    // Coral/Orange - matches Pro plan badge
-    primary: '#f97316',     // Orange 500
-    secondary: '#fb923c',   // Orange 400
-    accent: '#fdba74',      // Orange 300
-    glow: 'rgba(249, 115, 22, 0.35)',
+    primary: 'hsl(var(--plan-pro))',
+    secondary: 'hsl(var(--plan-pro) / 0.9)',
+    accent: 'hsl(var(--plan-pro) / 0.75)',
+    glow: 'hsla(var(--plan-pro) / 0.35)',
   },
   elite: {
-    // Purple - matches Elite plan badge (Crown)
-    primary: '#8b5cf6',     // Violet 500
-    secondary: '#a78bfa',   // Violet 400
-    accent: '#c4b5fd',      // Violet 300
-    glow: 'rgba(139, 92, 246, 0.4)',
+    primary: 'hsl(var(--plan-elite))',
+    secondary: 'hsl(var(--plan-elite) / 0.92)',
+    accent: 'hsl(var(--plan-elite) / 0.78)',
+    glow: 'hsla(var(--plan-elite) / 0.35)',
   },
 };
 

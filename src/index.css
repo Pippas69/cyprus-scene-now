@@ -52,6 +52,11 @@ All colors MUST be HSL.
     --stone-gray: 0 0% 18%;
     --midnight: 207 72% 12%; /* Darker aegean for text */
     --ocean: 207 72% 35%; /* Interactive ocean blue */
+
+    /* Map Plan Pins (HSL) */
+    --plan-basic: 200 90% 48%; /* vivid blue-cyan */
+    --plan-pro: 270 70% 58%; /* premium purple */
+    --plan-elite: 45 95% 55%; /* premium gold */
     
     /* Mediterranean Gradients */
     --gradient-brand: linear-gradient(90deg, hsl(207 72% 22%) 0%, hsl(174 62% 56%) 100%);
