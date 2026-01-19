@@ -70,7 +70,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const fetchBoosts = async () => {
     setLoading(true);
     try {
-      // Fetch event boosts with all metrics
+      // Fetch event boosts with all metrics - ONLY paid boosts (total_cost_cents > 0)
       const { data: eventData, error: eventError } = await supabase
         .from("event_boosts")
         .select(`
@@ -88,63 +88,74 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           )
         `)
         .eq("business_id", businessId)
+        .gt("total_cost_cents", 0)
         .order("created_at", { ascending: false });
 
       if (eventError) throw eventError;
 
-      // Fetch metrics for each event boost
+      // Fetch metrics for each event boost - ONLY during boost period
       const eventBoostsWithMetrics: EventBoostWithMetrics[] = await Promise.all(
         (eventData || []).map(async (boost) => {
           const eventId = boost.event_id;
+          const boostStart = boost.start_date;
+          const boostEnd = boost.end_date;
           
-          // Fetch impressions (event views)
+          // Fetch impressions (event views) during boost period
           const { count: impressions } = await supabase
             .from("event_views")
             .select("*", { count: "exact", head: true })
-            .eq("event_id", eventId);
+            .eq("event_id", eventId)
+            .gte("viewed_at", boostStart)
+            .lte("viewed_at", boostEnd);
 
-          // Fetch RSVPs (interactions)
+          // Fetch RSVPs (interactions) during boost period
           const { count: rsvps } = await supabase
             .from("rsvps")
             .select("*", { count: "exact", head: true })
-            .eq("event_id", eventId);
-
-          // Fetch tickets sold
-          const { count: ticketsSold } = await supabase
-            .from("tickets")
-            .select("*", { count: "exact", head: true })
             .eq("event_id", eventId)
-            .eq("status", "valid");
+            .gte("created_at", boostStart)
+            .lte("created_at", boostEnd);
 
-          // Fetch ticket revenue from ticket_orders
+          // Fetch tickets sold during boost period
+          const { data: tickets } = await supabase
+            .from("tickets")
+            .select("id, checked_in_at, created_at")
+            .eq("event_id", eventId)
+            .eq("status", "valid")
+            .gte("created_at", boostStart)
+            .lte("created_at", boostEnd);
+
+          const ticketsSold = tickets?.length || 0;
+
+          // Fetch ticket revenue from ticket_orders during boost period
           const { data: ticketOrders } = await supabase
             .from("ticket_orders")
             .select("subtotal_cents")
             .eq("event_id", eventId)
-            .eq("status", "completed");
+            .eq("status", "completed")
+            .gte("created_at", boostStart)
+            .lte("created_at", boostEnd);
 
           const ticketRevenue = ticketOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
 
-          // Fetch ticket check-ins (visits from tickets)
-          const { count: ticketCheckIns } = await supabase
-            .from("tickets")
-            .select("*", { count: "exact", head: true })
-            .eq("event_id", eventId)
-            .not("checked_in_at", "is", null);
+          // Fetch ticket check-ins (visits from tickets) during boost period
+          const ticketCheckIns = tickets?.filter(t => t.checked_in_at).length || 0;
 
-          // Fetch reservations
+          // Fetch reservations during boost period
           const { data: reservations } = await supabase
             .from("reservations")
             .select("party_size, prepaid_min_charge_cents, checked_in_at")
             .eq("event_id", eventId)
-            .eq("status", "confirmed");
+            .eq("status", "confirmed")
+            .gte("created_at", boostStart)
+            .lte("created_at", boostEnd);
 
           const reservationsCount = reservations?.length || 0;
           const reservationGuests = reservations?.reduce((sum, r) => sum + (r.party_size || 0), 0) || 0;
           const reservationRevenue = reservations?.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0) || 0;
           const reservationCheckIns = reservations?.filter(r => r.checked_in_at).length || 0;
 
-          const totalVisits = (ticketCheckIns || 0) + reservationCheckIns;
+          const totalVisits = ticketCheckIns + reservationCheckIns;
           const hasPaidContent = ticketRevenue > 0 || reservationRevenue > 0;
 
           return {
@@ -160,7 +171,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             impressions: impressions || 0,
             interactions: rsvps || 0,
             visits: totalVisits,
-            tickets_sold: ticketsSold || 0,
+            tickets_sold: ticketsSold,
             ticket_revenue_cents: ticketRevenue,
             reservations_count: reservationsCount,
             reservation_guests: reservationGuests,
@@ -172,7 +183,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       setEventBoosts(eventBoostsWithMetrics);
 
-      // Fetch offer boosts with metrics
+      // Fetch offer boosts with metrics - ONLY paid boosts (total_cost_cents > 0)
       const { data: offerData, error: offerError } = await supabase
         .from("offer_boosts")
         .select(`
@@ -189,33 +200,42 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           )
         `)
         .eq("business_id", businessId)
+        .gt("total_cost_cents", 0)
         .order("created_at", { ascending: false });
 
       if (offerError) throw offerError;
 
-      // Fetch metrics for each offer boost
+      // Fetch metrics for each offer boost - ONLY during boost period
       const offerBoostsWithMetrics: OfferBoostWithMetrics[] = await Promise.all(
         (offerData || []).map(async (boost) => {
           const discountId = boost.discount_id;
+          const boostStart = boost.start_date;
+          const boostEnd = boost.end_date;
           
-          // Fetch impressions (discount views)
+          // Fetch impressions (discount views) during boost period
           const { count: impressions } = await supabase
             .from("discount_views")
             .select("*", { count: "exact", head: true })
-            .eq("discount_id", discountId);
+            .eq("discount_id", discountId)
+            .gte("viewed_at", boostStart)
+            .lte("viewed_at", boostEnd);
 
-          // Fetch interactions (offer purchases = redemption clicks)
+          // Fetch interactions (offer purchases = redemption clicks) during boost period
           const { count: redemptionClicks } = await supabase
             .from("offer_purchases")
             .select("*", { count: "exact", head: true })
-            .eq("discount_id", discountId);
+            .eq("discount_id", discountId)
+            .gte("created_at", boostStart)
+            .lte("created_at", boostEnd);
 
-          // Fetch visits (QR scans)
-          const { count: qrScans } = await supabase
-            .from("discount_scans")
+          // Fetch visits (redeemed_at = actual visit) during boost period
+          const { count: visits } = await supabase
+            .from("offer_purchases")
             .select("*", { count: "exact", head: true })
             .eq("discount_id", discountId)
-            .eq("success", true);
+            .not("redeemed_at", "is", null)
+            .gte("redeemed_at", boostStart)
+            .lte("redeemed_at", boostEnd);
 
           return {
             id: boost.id,
@@ -228,7 +248,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             offer_title: boost.discounts?.title || "Offer",
             impressions: impressions || 0,
             interactions: redemptionClicks || 0,
-            visits: qrScans || 0,
+            visits: visits || 0,
           };
         })
       );
