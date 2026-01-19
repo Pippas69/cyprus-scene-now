@@ -239,11 +239,11 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
         {planSlug === 'pro' || planSlug === 'elite' ? (
           <g fill="white" fillOpacity="0.96">
             {planSlug === 'pro' ? (
-              // Star
+              // Star (5-point)
               <path d="M20 11.2 L22.9 16.9 L29.6 17.9 L24.8 22.2 L26 28.9 L20 25.7 L14 28.9 L15.2 22.2 L10.4 17.9 L17.1 16.9 Z" />
             ) : (
-              // Crown
-              <path d="M12 22 L15.5 13.5 L20 18.5 L24.5 13.5 L28 22 L28 28 L12 28 Z" />
+              // Crown (Lucide-style: 3 spikes + band)
+              <path d="M11 26 L13 16 L17 20 L20 13 L23 20 L27 16 L29 26 Z" />
             )}
           </g>
         ) : (
@@ -254,6 +254,28 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
             fill="white"
             fillOpacity="0.95"
           />
+        )}
+
+        {/* Elite subtle golden glow pulse */}
+        {planSlug === 'elite' && (
+          <>
+            <circle
+              cx="20"
+              cy="18"
+              r="14"
+              fill="none"
+              stroke="white"
+              strokeOpacity="0.25"
+              strokeWidth="2"
+              style={{ animation: 'eliteGlowPulse 4s ease-in-out infinite' }}
+            />
+            <style>{`
+              @keyframes eliteGlowPulse {
+                0%, 100% { stroke-opacity: 0.2; r: 14; }
+                50% { stroke-opacity: 0.45; r: 16; }
+              }
+            `}</style>
+          </>
         )}
       </svg>
 
