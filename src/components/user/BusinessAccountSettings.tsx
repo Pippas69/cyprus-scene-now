@@ -753,13 +753,14 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               <Button
                 variant="default"
                 size="sm"
-                disabled={!pushSupported || permissionState === 'denied' || pushLoading}
+                disabled={pushLoading}
                 onClick={async () => {
+                  console.log('[Settings] Push Enable clicked, calling subscribePush...');
                   await subscribePush();
                 }}
-                className="bg-primary/90 hover:bg-primary text-primary-foreground"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
-                {t.enablePush}
+                {pushLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.enablePush}
               </Button>
             )}
           </div>
