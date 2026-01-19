@@ -245,25 +245,36 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
               // IMPORTANT: A marker click is an interaction (NOT a view).
               trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map' });
 
-              if (popupRef.current) popupRef.current.remove();
-              const popupDiv = document.createElement('div');
-              const popupRoot = ReactDOM.createRoot(popupDiv);
-              popupRoot.render(
-                <BusinessPopup
-                  business={business}
-                  onClose={() => popupRef.current?.remove()}
-                  language={language}
-                />
-              );
-              popupRef.current = new mapboxgl.Popup({
-                closeButton: false,
-                closeOnClick: false,
-                maxWidth: 'none',
-                offset: 25,
-              })
-                .setLngLat([lng, lat])
-                .setDOMContent(popupDiv)
-                .addTo(map.current!);
+              // ZOOM TO BUSINESS LOCATION - center and zoom in
+              map.current?.flyTo({
+                center: [lng, lat],
+                zoom: 15,
+                duration: 800,
+                essential: true,
+              });
+
+              // Show popup after zoom completes
+              setTimeout(() => {
+                if (popupRef.current) popupRef.current.remove();
+                const popupDiv = document.createElement('div');
+                const popupRoot = ReactDOM.createRoot(popupDiv);
+                popupRoot.render(
+                  <BusinessPopup
+                    business={business}
+                    onClose={() => popupRef.current?.remove()}
+                    language={language}
+                  />
+                );
+                popupRef.current = new mapboxgl.Popup({
+                  closeButton: false,
+                  closeOnClick: false,
+                  maxWidth: 'none',
+                  offset: 25,
+                })
+                  .setLngLat([lng, lat])
+                  .setDOMContent(popupDiv)
+                  .addTo(map.current!);
+              }, 500);
             }}
           />
         );
