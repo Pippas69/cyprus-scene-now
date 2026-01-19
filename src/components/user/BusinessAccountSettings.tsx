@@ -15,7 +15,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { toast } from '@/hooks/use-toast';
-import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, RotateCcw, BellRing } from 'lucide-react';
+import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, RotateCcw, BellRing, Mail, CalendarCheck, Ticket, Gift, BarChart3, Users, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,7 +24,8 @@ import { ImageUploadField } from "@/components/business/ImageUploadField";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
-import { businessTranslations, businessCategories, cities } from "@/components/business/translations";
+import { businessTranslations, cities } from "@/components/business/translations";
+import { BusinessCategorySelector } from "@/components/business/BusinessCategorySelector";
 import { validationTranslations } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { compressImage } from "@/lib/imageCompression";
@@ -104,19 +105,26 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       confirmPassword: 'Επιβεβαίωση Κωδικού',
       changePassword: 'Αλλαγή Κωδικού',
       businessNotifications: 'Ειδοποιήσεις Επιχείρησης',
-      emailNotifications: 'Ειδοποιήσεις Email',
+      businessNotificationsDescription: 'Επιλέξτε ποια ενημερωτικά emails και ειδοποιήσεις θέλετε να λαμβάνετε για την επιχείρησή σας',
+      emailNotifications: 'Λαμβάνω ειδοποιήσεις email',
+      emailNotificationsDescription: 'Λάβετε ενημερώσεις σχετικά με την επιχείρησή σας μέσω email',
       newReservations: 'Νέες Κρατήσεις',
-      newRSVPs: 'Νέα RSVP',
-      eventCapacity: 'Πλήρης Χωρητικότητα',
-      verificationUpdates: 'Ενημερώσεις Επαλήθευσης',
-      ticketSaleNotifications: 'Ειδοποιήσεις Πώλησης Εισιτηρίων',
-      ticketSaleDescription: 'Λάβετε email όταν πωλούνται εισιτήρια',
+      newReservationsDescription: 'Λάβετε ειδοποιήσεις για νέες κρατήσεις από events, προσφορές ή το προφίλ σας',
+      ticketSaleNotifications: 'Πωλήσεις Εισιτηρίων',
+      ticketSaleDescription: 'Λάβετε email όταν πωλιούνται εισιτήρια',
+      offerRedemption: 'Εξαργύρωση Προσφοράς',
+      offerRedemptionDescription: 'Λάβετε ειδοποίηση όταν εξαργυρώνεται μια προσφορά',
       dailySalesSummary: 'Ημερήσια Σύνοψη Πωλήσεων',
       dailySalesSummaryDescription: 'Λάβετε καθημερινή αναφορά πωλήσεων στις 9:00',
+      eventCapacity: 'Πλήρης Χωρητικότητα',
+      eventCapacityDescription: 'Ειδοποίηση όταν μια εκδήλωση φτάσει πλήρη χωρητικότητα',
       pushNotifications: 'Push Ειδοποιήσεις',
-      pushNotificationsDescription: 'Άμεσες ειδοποιήσεις στον browser για πωλήσεις',
+      pushNotificationsDescription: 'Ενεργοποιήστε τις ειδοποιήσεις στις ρυθμίσεις του browser',
       pushNotSupported: 'Ο browser σας δεν υποστηρίζει push ειδοποιήσεις',
       pushPermissionDenied: 'Ενεργοποιήστε τις ειδοποιήσεις στις ρυθμίσεις του browser',
+      enablePush: 'Ενεργοποίηση',
+      newRSVPs: 'Νέα RSVP',
+      verificationUpdates: 'Ενημερώσεις Επαλήθευσης',
       privacy: 'Απόρρητο & Δεδομένα',
       downloadData: 'Λήψη Δεδομένων Επιχείρησης',
       downloadBusinessData: 'Λήψη Δεδομένων',
@@ -148,19 +156,26 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       confirmPassword: 'Confirm Password',
       changePassword: 'Change Password',
       businessNotifications: 'Business Notifications',
-      emailNotifications: 'Email Notifications',
+      businessNotificationsDescription: 'Choose which emails and notifications you want to receive for your business',
+      emailNotifications: 'Receive Email Notifications',
+      emailNotificationsDescription: 'Get updates about your business via email',
       newReservations: 'New Reservations',
-      newRSVPs: 'New RSVPs',
-      eventCapacity: 'Event Capacity Reached',
-      verificationUpdates: 'Verification Updates',
-      ticketSaleNotifications: 'Ticket Sale Notifications',
+      newReservationsDescription: 'Get notified for new reservations from events, offers, or your profile',
+      ticketSaleNotifications: 'Ticket Sales',
       ticketSaleDescription: 'Receive emails when tickets are sold',
+      offerRedemption: 'Offer Redemption',
+      offerRedemptionDescription: 'Get notified when an offer is redeemed',
       dailySalesSummary: 'Daily Sales Summary',
       dailySalesSummaryDescription: 'Receive daily sales report at 9:00 AM',
+      eventCapacity: 'Full Capacity',
+      eventCapacityDescription: 'Get notified when an event reaches full capacity',
       pushNotifications: 'Push Notifications',
-      pushNotificationsDescription: 'Instant browser notifications for sales',
+      pushNotificationsDescription: 'Enable notifications in your browser settings',
       pushNotSupported: 'Your browser does not support push notifications',
       pushPermissionDenied: 'Enable notifications in your browser settings',
+      enablePush: 'Enable',
+      newRSVPs: 'New RSVPs',
+      verificationUpdates: 'Verification Updates',
       privacy: 'Privacy & Data',
       downloadData: 'Download Business Data',
       downloadBusinessData: 'Download Data',
@@ -553,22 +568,15 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               )}
             </div>
 
-            {/* Categories */}
+            {/* Categories - Hierarchical Selector */}
             <div>
               <Label>{businessT.categories} * ({businessT.selectAtLeastOne})</Label>
-              <div className="flex flex-wrap gap-3 mt-2">
-                {businessCategories[language].map((category) => (
-                  <div key={category} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`category-${category}`}
-                      checked={selectedCategories.includes(category)}
-                      onCheckedChange={(checked) => handleCategoryChange(category, checked as boolean)}
-                    />
-                    <Label htmlFor={`category-${category}`} className="text-sm font-normal cursor-pointer">
-                      {category}
-                    </Label>
-                  </div>
-                ))}
+              <div className="mt-2">
+                <BusinessCategorySelector
+                  selectedCategories={selectedCategories}
+                  onCategoryChange={handleCategoryChange}
+                  language={language}
+                />
               </div>
               {businessProfileForm.formState.errors.category && (
                 <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.category.message}</p>
@@ -610,6 +618,153 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
       {/* Stripe Connect - Payments & Payouts */}
       <StripeConnectOnboarding businessId={businessId} language={language} />
+
+      {/* Business Notifications - Above Student Discounts */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">
+            {t.businessNotifications}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {t.businessNotificationsDescription}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-0">
+          {/* Email Notifications Toggle */}
+          <div className="flex items-center justify-between py-4 border-b border-border">
+            <div>
+              <Label htmlFor="email-notifications" className="font-medium">{t.emailNotifications}</Label>
+              <p className="text-xs text-muted-foreground">{t.emailNotificationsDescription}</p>
+            </div>
+            <Switch
+              id="email-notifications"
+              checked={preferences.email_notifications_enabled}
+              onCheckedChange={(checked) =>
+                updatePreferences({ email_notifications_enabled: checked })
+              }
+              className="data-[state=checked]:bg-ocean"
+            />
+          </div>
+
+          {/* New Reservations */}
+          <div className="flex items-center justify-between py-4 border-b border-border">
+            <div>
+              <Label htmlFor="new-reservations" className="font-medium">{t.newReservations}</Label>
+              <p className="text-xs text-muted-foreground">{t.newReservationsDescription}</p>
+            </div>
+            <Switch
+              id="new-reservations"
+              checked={preferences.notification_reservations}
+              onCheckedChange={(checked) =>
+                updatePreferences({ notification_reservations: checked })
+              }
+              className="data-[state=checked]:bg-ocean"
+            />
+          </div>
+
+          {/* Ticket Sales */}
+          <div className="flex items-center justify-between py-4 border-b border-border">
+            <div>
+              <Label htmlFor="ticket-sales" className="font-medium">{t.ticketSaleNotifications}</Label>
+              <p className="text-xs text-muted-foreground">{t.ticketSaleDescription}</p>
+            </div>
+            <Switch
+              id="ticket-sales"
+              checked={preferences.notification_ticket_sales ?? true}
+              onCheckedChange={(checked) =>
+                updatePreferences({ notification_ticket_sales: checked })
+              }
+              className="data-[state=checked]:bg-ocean"
+            />
+          </div>
+
+          {/* Offer Redemption */}
+          <div className="flex items-center justify-between py-4 border-b border-border">
+            <div>
+              <Label htmlFor="offer-redemption" className="font-medium">{t.offerRedemption}</Label>
+              <p className="text-xs text-muted-foreground">{t.offerRedemptionDescription}</p>
+            </div>
+            <Switch
+              id="offer-redemption"
+              checked={preferences.notification_offer_redemption ?? true}
+              onCheckedChange={(checked) =>
+                updatePreferences({ notification_offer_redemption: checked })
+              }
+              className="data-[state=checked]:bg-ocean"
+            />
+          </div>
+
+          {/* Daily Sales Summary */}
+          <div className="flex items-center justify-between py-4 border-b border-border">
+            <div>
+              <Label htmlFor="daily-summary" className="font-medium">{t.dailySalesSummary}</Label>
+            </div>
+            <Switch
+              id="daily-summary"
+              checked={preferences.notification_daily_sales_summary ?? true}
+              onCheckedChange={(checked) =>
+                updatePreferences({ notification_daily_sales_summary: checked })
+              }
+              className="data-[state=checked]:bg-ocean"
+            />
+          </div>
+
+          {/* Full Capacity */}
+          <div className="flex items-center justify-between py-4 border-b border-border">
+            <div>
+              <Label htmlFor="event-capacity" className="font-medium">{t.eventCapacity}</Label>
+            </div>
+            <Switch
+              id="event-capacity"
+              checked={preferences.notification_business_updates}
+              onCheckedChange={(checked) =>
+                updatePreferences({ notification_business_updates: checked })
+              }
+              className="data-[state=checked]:bg-ocean"
+            />
+          </div>
+
+          {/* Push Notifications */}
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <Label htmlFor="push-notifications" className="font-medium">{t.pushNotifications}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {!pushSupported 
+                    ? t.pushNotSupported 
+                    : permissionState === 'denied' 
+                      ? t.pushPermissionDenied 
+                      : t.pushNotificationsDescription}
+                </p>
+              </div>
+            </div>
+            {pushSubscribed ? (
+              <Switch
+                id="push-notifications"
+                disabled={pushLoading}
+                checked={pushSubscribed}
+                onCheckedChange={async () => {
+                  await unsubscribePush();
+                }}
+                className="data-[state=checked]:bg-ocean"
+              />
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                disabled={!pushSupported || permissionState === 'denied' || pushLoading}
+                onClick={async () => {
+                  await subscribePush();
+                }}
+                className="bg-primary/90 hover:bg-primary text-primary-foreground"
+              >
+                {t.enablePush}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Student Discount Settings */}
       <StudentDiscountSettings businessId={businessId} />
@@ -656,120 +811,6 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           >
             {t.changePassword}
           </Button>
-        </CardContent>
-      </Card>
-
-      {/* Business Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            {t.businessNotifications}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="email-notifications">{t.emailNotifications}</Label>
-            <Switch
-              id="email-notifications"
-              checked={preferences.email_notifications_enabled}
-              onCheckedChange={(checked) =>
-                updatePreferences({ email_notifications_enabled: checked })
-              }
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <Label htmlFor="new-reservations">{t.newReservations}</Label>
-            <Switch
-              id="new-reservations"
-              checked={preferences.notification_reservations}
-              onCheckedChange={(checked) =>
-                updatePreferences({ notification_reservations: checked })
-              }
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="new-rsvps">{t.newRSVPs}</Label>
-            <Switch
-              id="new-rsvps"
-              checked={preferences.notification_rsvp_updates}
-              onCheckedChange={(checked) =>
-                updatePreferences({ notification_rsvp_updates: checked })
-              }
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="event-capacity">{t.eventCapacity}</Label>
-            <Switch
-              id="event-capacity"
-              checked={preferences.notification_business_updates}
-              onCheckedChange={(checked) =>
-                updatePreferences({ notification_business_updates: checked })
-              }
-            />
-          </div>
-          <Separator />
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="ticket-sales">{t.ticketSaleNotifications}</Label>
-                <p className="text-xs text-muted-foreground">{t.ticketSaleDescription}</p>
-              </div>
-              <Switch
-                id="ticket-sales"
-                checked={preferences.notification_ticket_sales ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_ticket_sales: checked })
-                }
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="daily-summary">{t.dailySalesSummary}</Label>
-                <p className="text-xs text-muted-foreground">{t.dailySalesSummaryDescription}</p>
-              </div>
-              <Switch
-                id="daily-summary"
-                checked={preferences.notification_daily_sales_summary ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_daily_sales_summary: checked })
-                }
-              />
-            </div>
-          </div>
-          <Separator />
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="push-notifications" className="flex items-center gap-2">
-                  <BellRing className="h-4 w-4" />
-                  {t.pushNotifications}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {!pushSupported 
-                    ? t.pushNotSupported 
-                    : permissionState === 'denied' 
-                      ? t.pushPermissionDenied 
-                      : t.pushNotificationsDescription}
-                </p>
-              </div>
-              <Switch
-                id="push-notifications"
-                disabled={!pushSupported || permissionState === 'denied' || pushLoading}
-                checked={pushSubscribed}
-                onCheckedChange={async (checked) => {
-                  if (checked) {
-                    await subscribePush();
-                  } else {
-                    await unsubscribePush();
-                  }
-                }}
-              />
-            </div>
-          </div>
         </CardContent>
       </Card>
 
