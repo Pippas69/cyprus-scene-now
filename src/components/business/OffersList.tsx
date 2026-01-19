@@ -81,6 +81,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       boosted: "Προωθείται",
       boost: "Προώθηση",
       edit: "Επεξεργασία",
+      delete: "Διαγραφή",
     },
     en: {
       title: "Offers",
@@ -98,6 +99,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       boosted: "Boosted",
       boost: "Boost",
       edit: "Edit",
+      delete: "Delete",
     },
   };
 
@@ -259,51 +261,23 @@ const OffersList = ({ businessId }: OffersListProps) => {
       <div className="space-y-4">
         {offers.map((offer) => (
           <Card key={offer.id} className="bg-card/50 border-border/50">
-            <CardContent className="p-6">
-              <div className="space-y-2">
-                {/* Top row: Title + Boosted badge on left, Action icons on right */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-xl font-semibold">{offer.title}</h3>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                {/* Left side content */}
+                <div className="flex-1 min-w-0">
+                  {/* Title row with boost badge */}
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <h3 className="text-lg font-semibold truncate">{offer.title}</h3>
                     <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
                   </div>
-                  
-                  {/* Action icons - Boost and Edit */}
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
-                      title={t.boost}
-                      aria-label={`${t.boost} ${offer.title}`}
-                      className="text-primary hover:text-primary hover:bg-primary/10"
-                    >
-                      <Rocket className="h-5 w-5" aria-hidden="true" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingOffer(offer)}
-                      title={t.edit}
-                      aria-label={`${t.edit} ${offer.title}`}
-                      className="text-muted-foreground hover:text-foreground hover:bg-muted"
-                    >
-                      <Pencil className="h-5 w-5" aria-hidden="true" />
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Date row */}
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-sm">
-                    {formatOfferDates(offer.start_at, offer.end_at)}
-                  </span>
-                </div>
-                
-                {/* Bottom row: Discount + Status badges on left, Deactivate + Delete on right */}
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-2 flex-wrap">
+
+                  {/* Date and badges row */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mb-2">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatOfferDates(offer.start_at, offer.end_at)}</span>
+                    </div>
+                    
                     {/* Discount percentage badge */}
                     {offer.percent_off && (
                       <Badge 
@@ -322,14 +296,38 @@ const OffersList = ({ businessId }: OffersListProps) => {
                       {offer.active ? t.active : t.inactive}
                     </Badge>
                   </div>
-                  
-                  {/* Deactivate/Activate button and Delete icon */}
-                  <div className="flex items-center gap-2">
+                </div>
+
+                {/* Right side actions */}
+                <div className="flex flex-col items-end gap-1">
+                  {/* Top row: Boost + Edit */}
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
+                      title={t.boost}
+                      className="h-8 w-8 text-primary hover:text-primary"
+                    >
+                      <Rocket className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditingOffer(offer)}
+                      title={t.edit}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {/* Bottom row: Deactivate + Delete */}
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => toggleActive(offer.id, offer.active || false)}
-                      className="text-sm"
+                      className="text-xs h-8"
                     >
                       {offer.active ? t.deactivate : t.activate}
                     </Button>
@@ -337,10 +335,10 @@ const OffersList = ({ businessId }: OffersListProps) => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(offer.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      aria-label={`Delete ${offer.title}`}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      title={t.delete}
                     >
-                      <Trash2 className="h-5 w-5" aria-hidden="true" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
