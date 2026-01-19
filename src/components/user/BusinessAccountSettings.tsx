@@ -481,84 +481,82 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
-      {/* Business Profile Section */}
-      <form onSubmit={businessProfileForm.handleSubmit(onBusinessProfileSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{businessT.images}</CardTitle>
-            <CardDescription>{businessT.imagesDescription}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <ImageUploadField
-              label={businessT.businessLogo}
-              currentImageUrl={currentLogoUrl}
-              onFileSelect={setLogoFile}
-              aspectRatio="1/1"
-              maxSizeMB={2}
-              language={language}
-            />
-            <ImageUploadField
-              label={businessT.businessCover}
-              currentImageUrl={currentCoverUrl}
-              onFileSelect={setCoverFile}
-              aspectRatio="16/9"
-              maxSizeMB={5}
-              language={language}
-            />
-          </CardContent>
-        </Card>
-
+      {/* Unified Business Profile Card */}
+      <form onSubmit={businessProfileForm.handleSubmit(onBusinessProfileSubmit)}>
         <Card>
           <CardHeader>
             <CardTitle>{businessT.basicInfo}</CardTitle>
-            <CardDescription>{businessT.basicInfoDescription}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="business-name">{businessT.businessName} *</Label>
-              <Input 
-                id="business-name" 
-                {...businessProfileForm.register("name")} 
-                placeholder={businessT.businessNamePlaceholder} 
+          <CardContent className="space-y-6">
+            {/* Images Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ImageUploadField
+                label={businessT.businessLogo}
+                currentImageUrl={currentLogoUrl}
+                onFileSelect={setLogoFile}
+                aspectRatio="1/1"
+                maxSizeMB={2}
+                language={language}
               />
-              {businessProfileForm.formState.errors.name && (
-                <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.name.message}</p>
-              )}
+              <ImageUploadField
+                label={businessT.businessCover}
+                currentImageUrl={currentCoverUrl}
+                onFileSelect={setCoverFile}
+                aspectRatio="16/9"
+                maxSizeMB={5}
+                language={language}
+              />
             </div>
 
+            {/* Name and City Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="business-name">{businessT.businessName} *</Label>
+                <Input 
+                  id="business-name" 
+                  {...businessProfileForm.register("name")} 
+                  placeholder={businessT.businessNamePlaceholder} 
+                />
+                {businessProfileForm.formState.errors.name && (
+                  <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.name.message}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="business-city">{businessT.city}</Label>
+                <select
+                  id="business-city"
+                  {...businessProfileForm.register("city")}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">{businessT.selectCity}</option>
+                  {cities[language].map((cityOption) => (
+                    <option key={cityOption} value={cityOption}>{cityOption}</option>
+                  ))}
+                </select>
+                {businessProfileForm.formState.errors.city && (
+                  <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.city.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
             <div>
               <Label htmlFor="business-description">{businessT.description}</Label>
               <Textarea 
                 id="business-description" 
                 {...businessProfileForm.register("description")} 
                 placeholder={businessT.businessDescPlaceholder}
-                rows={4}
+                rows={3}
               />
               {businessProfileForm.formState.errors.description && (
                 <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.description.message}</p>
               )}
             </div>
 
-            <div>
-              <Label htmlFor="business-city">{businessT.city} *</Label>
-              <select
-                id="business-city"
-                {...businessProfileForm.register("city")}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">{businessT.selectCity}</option>
-                {cities[language].map((cityOption) => (
-                  <option key={cityOption} value={cityOption}>{cityOption}</option>
-                ))}
-              </select>
-              {businessProfileForm.formState.errors.city && (
-                <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.city.message}</p>
-              )}
-            </div>
-
+            {/* Categories */}
             <div>
               <Label>{businessT.categories} * ({businessT.selectAtLeastOne})</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+              <div className="flex flex-wrap gap-3 mt-2">
                 {businessCategories[language].map((category) => (
                   <div key={category} className="flex items-center space-x-2">
                     <Checkbox
@@ -576,68 +574,38 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.category.message}</p>
               )}
             </div>
+
+            {/* Email */}
+            <div>
+              <Label>{t.email}</Label>
+              <Input disabled value={userProfile?.email || ''} className="bg-muted/50" />
+            </div>
+
+            {/* User ID & Business ID Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-muted-foreground">{t.userId}</Label>
+                <p className="text-sm font-mono text-muted-foreground mt-1">{userId}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t.businessId}</Label>
+                <p className="text-sm font-mono text-muted-foreground mt-1">{businessId}</p>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <Button type="submit" className="w-full" disabled={profileLoading}>
+              {profileLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {businessT.loading}
+                </>
+              ) : (
+                businessT.saveChanges
+              )}
+            </Button>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{businessT.contactInfo}</CardTitle>
-            <CardDescription>{businessT.basicInfoDescription}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="business-phone">{businessT.phone}</Label>
-              <Input 
-                id="business-phone" 
-                {...businessProfileForm.register("phone")} 
-                placeholder={businessT.phonePlaceholder} 
-              />
-              {businessProfileForm.formState.errors.phone && (
-                <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.phone.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="business-website">{businessT.website}</Label>
-              <Input 
-                id="business-website" 
-                {...businessProfileForm.register("website")} 
-                placeholder={businessT.websitePlaceholder} 
-              />
-              {businessProfileForm.formState.errors.website && (
-                <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.website.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="business-address">{businessT.address}</Label>
-              <Input 
-                id="business-address" 
-                {...businessProfileForm.register("address")} 
-                placeholder={businessT.addressPlaceholder} 
-              />
-              {geocoding && (
-                <p className="text-xs text-muted-foreground mt-1">{toastT.coordinatesUpdated}...</p>
-              )}
-              {businessProfileForm.formState.errors.address && (
-                <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.address.message}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex gap-4">
-          <Button type="submit" className="flex-1" disabled={profileLoading}>
-            {profileLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {businessT.loading}
-              </>
-            ) : (
-              businessT.saveChanges
-            )}
-          </Button>
-        </div>
       </form>
 
       {/* Stripe Connect - Payments & Payouts */}
@@ -645,30 +613,6 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
       {/* Student Discount Settings */}
       <StudentDiscountSettings businessId={businessId} />
-
-      {/* Account Information Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <SettingsIcon className="h-5 w-5" />
-            {t.accountInfo}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t.email}</Label>
-            <Input disabled value={userProfile?.email || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">{t.userId}</Label>
-            <p className="text-xs font-mono text-muted-foreground">{userId}</p>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">{t.businessId}</Label>
-            <p className="text-xs font-mono text-muted-foreground">{businessId}</p>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Password Management */}
       <Card>
