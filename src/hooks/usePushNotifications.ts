@@ -40,33 +40,69 @@ export function usePushNotifications(userId: string | null) {
   const [state, setState] = useState<PushSubscriptionState>({
     isSupported: false,
     isSubscribed: false,
-    isLoading: true,
+    isLoading: false,
     permissionState: null,
   });
 
   // Check if push notifications are supported
   useEffect(() => {
-    const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-    
-    setState(prev => ({
-      ...prev,
-      isSupported,
-      permissionState: isSupported ? Notification.permission : null,
-    }));
-    
-    if (isSupported && userId) {
-      checkSubscription();
-    } else {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
+    const checkSupport = async () => {
+      // Check basic support
+      const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+      
+      console.log('[Push] Support check:', {
+        serviceWorker: 'serviceWorker' in navigator,
+        PushManager: 'PushManager' in window,
+        Notification: 'Notification' in window,
+        isSupported
+      });
+
+      if (!isSupported) {
+        setState(prev => ({
+          ...prev,
+          isSupported: false,
+          permissionState: null,
+          isLoading: false,
+        }));
+        return;
+      }
+
+      const currentPermission = Notification.permission;
+      console.log('[Push] Current permission:', currentPermission);
+      
+      setState(prev => ({
+        ...prev,
+        isSupported: true,
+        permissionState: currentPermission,
+        isLoading: false,
+      }));
+      
+      // Only check subscription if user is logged in and permission is granted
+      if (userId && currentPermission === 'granted') {
+        checkSubscription();
+      }
+    };
+
+    checkSupport();
   }, [userId]);
 
   const checkSubscription = useCallback(async () => {
     if (!userId) return;
     
+    console.log('[Push] Checking existing subscription...');
+    
     try {
-      const registration = await navigator.serviceWorker.ready;
+      // First check if service worker is registered
+      const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+      
+      if (!registration) {
+        console.log('[Push] No service worker registered');
+        setState(prev => ({ ...prev, isSubscribed: false }));
+        return;
+      }
+
       const subscription = await registration.pushManager.getSubscription();
+      console.log('[Push] Existing subscription:', !!subscription);
       
       if (subscription) {
         // Verify it's in our database
@@ -75,71 +111,97 @@ export function usePushNotifications(userId: string | null) {
           .select('id')
           .eq('user_id', userId)
           .eq('endpoint', subscription.endpoint)
-          .single();
+          .maybeSingle();
         
         setState(prev => ({
           ...prev,
           isSubscribed: !!data,
-          isLoading: false,
         }));
       } else {
-        setState(prev => ({ ...prev, isSubscribed: false, isLoading: false }));
+        setState(prev => ({ ...prev, isSubscribed: false }));
       }
     } catch (error) {
-      console.error('Error checking push subscription:', error);
-      setState(prev => ({ ...prev, isLoading: false }));
+      console.error('[Push] Error checking subscription:', error);
+      setState(prev => ({ ...prev, isSubscribed: false }));
     }
   }, [userId]);
 
   const subscribe = useCallback(async (): Promise<boolean> => {
-    if (!userId || !state.isSupported) {
+    if (!userId) {
+      console.log('[Push] No user ID');
       toast({
-        title: 'Push notifications not supported',
-        description: 'Your browser does not support push notifications.',
+        title: 'Σύνδεση απαιτείται',
+        description: 'Παρακαλώ συνδεθείτε για να ενεργοποιήσετε τις ειδοποιήσεις.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (!state.isSupported) {
+      console.log('[Push] Not supported');
+      toast({
+        title: 'Δεν υποστηρίζονται',
+        description: 'Ο browser σας δεν υποστηρίζει push ειδοποιήσεις.',
         variant: 'destructive',
       });
       return false;
     }
 
     setState(prev => ({ ...prev, isLoading: true }));
+    console.log('[Push] Starting subscription process...');
 
     try {
       // Request permission
+      console.log('[Push] Requesting permission...');
       const permission = await Notification.requestPermission();
+      console.log('[Push] Permission result:', permission);
+      
       setState(prev => ({ ...prev, permissionState: permission }));
       
       if (permission !== 'granted') {
         toast({
-          title: 'Permission denied',
-          description: 'Please enable notifications in your browser settings.',
+          title: 'Δεν δόθηκε άδεια',
+          description: 'Ενεργοποιήστε τις ειδοποιήσεις στις ρυθμίσεις του browser.',
           variant: 'destructive',
         });
         setState(prev => ({ ...prev, isLoading: false }));
         return false;
       }
 
-      // Register service worker if not already registered
+      // Register service worker
+      console.log('[Push] Registering service worker...');
       let registration = await navigator.serviceWorker.getRegistration('/sw.js');
       if (!registration) {
-        registration = await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
+        registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        console.log('[Push] Service worker registered');
       }
+      
+      // Wait for service worker to be ready
+      await navigator.serviceWorker.ready;
+      console.log('[Push] Service worker ready');
 
       // Check for existing subscription
       let subscription = await registration.pushManager.getSubscription();
+      console.log('[Push] Existing subscription:', !!subscription);
       
       if (!subscription) {
-        // Create new subscription
+        // Get VAPID key from edge function
+        console.log('[Push] Fetching VAPID key...');
         const vapidKey = await getVapidPublicKey();
+        
         if (!vapidKey) {
-          throw new Error('VAPID public key not configured');
+          throw new Error('VAPID key not configured');
         }
+        console.log('[Push] VAPID key received');
         
         const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+        
+        console.log('[Push] Creating push subscription...');
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
         });
+        console.log('[Push] Push subscription created');
       }
 
       // Extract keys from subscription
@@ -157,6 +219,7 @@ export function usePushNotifications(userId: string | null) {
       const authKey = btoa(String.fromCharCode.apply(null, Array.from(authArray)));
 
       // Save to database
+      console.log('[Push] Saving subscription to database...');
       const { error } = await supabase
         .from('push_subscriptions')
         .upsert({
@@ -169,27 +232,25 @@ export function usePushNotifications(userId: string | null) {
           onConflict: 'user_id,endpoint',
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Push] Database error:', error);
+        throw error;
+      }
 
-      // Update preference
-      await supabase
-        .from('user_preferences')
-        .update({ notification_push_enabled: true })
-        .eq('user_id', userId);
-
+      console.log('[Push] Subscription saved successfully');
       setState(prev => ({ ...prev, isSubscribed: true, isLoading: false }));
       
       toast({
-        title: 'Push notifications enabled',
-        description: 'You will receive instant notifications for ticket sales.',
+        title: 'Push ειδοποιήσεις ενεργοποιήθηκαν!',
+        description: 'Θα λαμβάνετε άμεσες ειδοποιήσεις.',
       });
       
       return true;
     } catch (error) {
-      console.error('Error subscribing to push notifications:', error);
+      console.error('[Push] Error subscribing:', error);
       toast({
-        title: 'Failed to enable push notifications',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: 'Αποτυχία ενεργοποίησης',
+        description: error instanceof Error ? error.message : 'Παρακαλώ δοκιμάστε ξανά.',
         variant: 'destructive',
       });
       setState(prev => ({ ...prev, isLoading: false }));
