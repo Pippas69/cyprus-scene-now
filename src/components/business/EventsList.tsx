@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, ScanLine, Grid3X3 } from "lucide-react";
+import { Trash2, Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, ScanLine, Grid3X3, Gift } from "lucide-react";
 import EventEditForm from "./EventEditForm";
 import EventBoostDialog from "./EventBoostDialog";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
@@ -36,14 +36,13 @@ interface EventsListProps {
 }
 
 // Helper component to show active boost badge
-const ActiveBoostBadge = ({ eventId, label, onViewStats }: { eventId: string; label: string; onViewStats: (boostId: string) => void }) => {
+const ActiveBoostBadge = ({ eventId, label }: { eventId: string; label: string }) => {
   const { activeBoost } = useEventActiveBoost(eventId);
   if (!activeBoost) return null;
   return (
     <Badge 
       variant="default" 
-      className="bg-gradient-to-r from-amber-500 to-orange-500 text-white cursor-pointer hover:opacity-90 flex items-center gap-1"
-      onClick={() => onViewStats(activeBoost.id)}
+      className="bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center gap-1"
     >
       <Sparkles className="h-3 w-3" />
       {label}
@@ -363,9 +362,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'free_entry' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('free_entry')}
-          className={activeFilter === 'free_entry' ? 'bg-green-600 text-white hover:bg-green-700' : ''}
+          className={activeFilter === 'free_entry' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90' : ''}
         >
-          <span className="mr-1.5">🎟️</span>
+          <Gift className="h-3.5 w-3.5 mr-1.5" />
           {t.filterFreeEntry}
         </Button>
       </div>
@@ -404,11 +403,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                         <h3 className="text-lg font-semibold truncate">{event.title}</h3>
                         <ActiveBoostBadge 
                           eventId={event.id} 
-                          label={t.boosted} 
-                          onViewStats={(boostId) => {
-                            setSelectedBoostId(boostId);
-                            setPerformanceDialogOpen(true);
-                          }} 
+                          label={t.boosted}
                         />
                       </div>
 
@@ -443,8 +438,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
                           </Badge>
                         )}
                         {eventType === 'free_entry' && (
-                          <Badge className="bg-green-100 text-green-700 border border-green-300">
-                            <span className="mr-1">🎟️</span>
+                          <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center gap-1">
+                            <Gift className="h-3 w-3" />
                             {t.badgeFreeEntry}
                           </Badge>
                         )}
