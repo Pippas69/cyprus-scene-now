@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Ticket, TrendingUp, MapPin, Settings, Users, Home, CreditCard, Zap } from "lucide-react";
+import { Calendar, Percent, TrendingUp, MapPin, Settings, Users, Home, CreditCard, Zap } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -69,7 +69,7 @@ export function BusinessSidebar() {
     // Posts feature hidden but kept in code
     // { title: t.posts, url: "/dashboard-business/posts", icon: PenSquare },
     { title: t.events, url: "/dashboard-business/events", icon: Calendar },
-    { title: t.offers, url: "/dashboard-business/offers", icon: Ticket },
+    { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
     { title: t.reservations, url: "/dashboard-business/reservations", icon: Users },
   ];
 
