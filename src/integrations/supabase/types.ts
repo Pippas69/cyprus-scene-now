@@ -4057,6 +4057,7 @@ export type Database = {
           notification_daily_sales_summary: boolean | null
           notification_event_reminders: boolean | null
           notification_new_events: boolean | null
+          notification_offer_redemption: boolean | null
           notification_push_enabled: boolean | null
           notification_reservations: boolean | null
           notification_rsvp_updates: boolean | null
@@ -4076,6 +4077,7 @@ export type Database = {
           notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_new_events?: boolean | null
+          notification_offer_redemption?: boolean | null
           notification_push_enabled?: boolean | null
           notification_reservations?: boolean | null
           notification_rsvp_updates?: boolean | null
@@ -4095,6 +4097,7 @@ export type Database = {
           notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_new_events?: boolean | null
+          notification_offer_redemption?: boolean | null
           notification_push_enabled?: boolean | null
           notification_reservations?: boolean | null
           notification_rsvp_updates?: boolean | null
