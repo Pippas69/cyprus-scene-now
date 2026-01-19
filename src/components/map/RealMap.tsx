@@ -213,8 +213,10 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
           const minZoom = MIN_ZOOM_FOR_PLAN[business.planSlug];
           return zoom >= minZoom;
         })
-        // Render higher tiers on top (Elite last)
-        .sort((a, b) => a.planTierIndex - b.planTierIndex);
+        // Render higher tiers LAST so they appear ON TOP (z-index stacking)
+        // Elite (index 0) should render LAST to be visually on top
+        // Sort by planTierIndex DESCENDING: Free (3) first, Elite (0) last
+        .sort((a, b) => b.planTierIndex - a.planTierIndex);
 
       visibleBusinesses.forEach((business) => {
         const [lng, lat] = business.coordinates;

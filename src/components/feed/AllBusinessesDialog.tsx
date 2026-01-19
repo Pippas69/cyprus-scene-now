@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/personalization";
+import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/businessRanking";
 
 interface Business {
   id: string;
