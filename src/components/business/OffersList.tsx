@@ -11,6 +11,7 @@ import { OfferQRScanner } from "./OfferQRScanner";
 import { StudentDiscountScanner } from "./StudentDiscountScanner";
 import { StudentDiscountStats } from "./StudentDiscountStats";
 import OfferBoostDialog from "./OfferBoostDialog";
+import OfferEditDialog from "./OfferEditDialog";
 
 // Helper component to show active boost badge for offers (gold/premium color - non-clickable)
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
@@ -51,6 +52,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const queryClient = useQueryClient();
   const { language } = useLanguage();
   const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
+  const [editingOffer, setEditingOffer] = useState<any>(null);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -253,12 +255,12 @@ const OffersList = ({ businessId }: OffersListProps) => {
       {/* Student Discount Stats */}
       <StudentDiscountStats businessId={businessId} language={language} />
       
-      {/* Offers list - redesigned cards */}
+      {/* Offers list - redesigned cards with tighter spacing */}
       <div className="space-y-4">
         {offers.map((offer) => (
           <Card key={offer.id} className="bg-card/50 border-border/50">
             <CardContent className="p-6">
-              <div className="flex flex-col gap-4">
+              <div className="space-y-2">
                 {/* Top row: Title + Boosted badge on left, Action icons on right */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3 flex-wrap">
@@ -281,6 +283,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => setEditingOffer(offer)}
                       title={t.edit}
                       aria-label={`${t.edit} ${offer.title}`}
                       className="text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -299,7 +302,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                 </div>
                 
                 {/* Bottom row: Discount + Status badges on left, Deactivate + Delete on right */}
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Discount percentage badge */}
                     {offer.percent_off && (
@@ -356,6 +359,18 @@ const OffersList = ({ businessId }: OffersListProps) => {
           offerTitle={boostingOffer.title}
           hasActiveSubscription={subscriptionData?.subscribed || false}
           remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
+        />
+      )}
+
+      {/* Offer Edit Dialog */}
+      {editingOffer && (
+        <OfferEditDialog
+          offer={editingOffer}
+          open={!!editingOffer}
+          onOpenChange={(open) => !open && setEditingOffer(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['business-offers', businessId] });
+          }}
         />
       )}
     </div>
