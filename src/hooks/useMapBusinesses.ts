@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  getPlanTierIndex, 
+  mapToPlanSlug, 
+  sortBusinessesByPlanAndProximity,
+  type PlanSlug 
+} from "@/lib/businessRanking";
 
 export interface BusinessLocation {
   id: string;
@@ -13,28 +19,9 @@ export interface BusinessLocation {
   coordinates: [number, number];
   verified: boolean;
   // Subscription plan info
-  planSlug: 'free' | 'basic' | 'pro' | 'elite';
-  planTierIndex: number;
+  planSlug: PlanSlug;
+  planTierIndex: number; // 0=Elite, 1=Pro, 2=Basic, 3=Free
 }
-
-// Plan tier order for sorting and visibility
-const PLAN_TIER_ORDER: ('free' | 'basic' | 'pro' | 'elite')[] = ['free', 'basic', 'pro', 'elite'];
-
-const getPlanTierIndex = (plan: string | null): number => {
-  if (!plan) return 0;
-  const index = PLAN_TIER_ORDER.indexOf(plan as any);
-  return index === -1 ? 0 : index;
-};
-
-const mapPlanSlug = (planId: string | null, slug: string | null): 'free' | 'basic' | 'pro' | 'elite' => {
-  if (!planId || !slug) return 'free';
-  // Map old slugs to new ones if needed
-  const slugLower = slug.toLowerCase();
-  if (slugLower.includes('elite') || slugLower.includes('premium')) return 'elite';
-  if (slugLower.includes('pro') || slugLower.includes('professional')) return 'pro';
-  if (slugLower.includes('basic') || slugLower.includes('starter')) return 'basic';
-  return 'free';
-};
 
 export const useMapBusinesses = (
   selectedCategories: string[],
@@ -74,7 +61,6 @@ export const useMapBusinesses = (
 
         // Filter by city if selected
         if (selectedCity) {
-          // Handle both Greek and English city names
           const cityVariants: Record<string, string[]> = {
             'Λευκωσία': ['Λευκωσία', 'Nicosia'],
             'Nicosia': ['Λευκωσία', 'Nicosia'],
@@ -108,7 +94,6 @@ export const useMapBusinesses = (
 
           if (coordsError) {
             console.error('Error fetching coordinates:', coordsError);
-            // Continue without coordinates for some businesses
           }
 
           const coordsMap = new Map(
@@ -123,12 +108,12 @@ export const useMapBusinesses = (
             .map(business => {
               const coords = coordsMap.get(business.id)!;
               
-              // Get subscription plan (business_subscriptions is one-to-one in DB, but may come back as object or array)
+              // Get subscription plan
               const subscriptionRaw: any = (business as any).business_subscriptions;
               const subscription = Array.isArray(subscriptionRaw) ? subscriptionRaw[0] : subscriptionRaw;
               const isActive = subscription?.status === 'active';
               const planSlug = isActive 
-                ? mapPlanSlug(subscription?.plan_id, subscription?.subscription_plans?.slug ?? null)
+                ? mapToPlanSlug(subscription?.plan_id, subscription?.subscription_plans?.slug ?? null)
                 : 'free';
               
               return {
@@ -143,13 +128,12 @@ export const useMapBusinesses = (
                 verified: business.verified || false,
                 coordinates: [coords.lng, coords.lat] as [number, number],
                 planSlug,
-                planTierIndex: getPlanTierIndex(planSlug),
+                planTierIndex: getPlanTierIndex(planSlug), // 0=Elite, 1=Pro, 2=Basic, 3=Free
               };
             });
 
           // Category filtering
           if (selectedCategories.length > 0) {
-            // Map filter IDs to database values
             const categoryMap: Record<string, string[]> = {
               'nightlife': ['Nightlife', 'nightlife', 'Νυχτερινή Ζωή'],
               'bars': ['Bars', 'bars', 'Μπαρ'],
@@ -176,10 +160,11 @@ export const useMapBusinesses = (
             );
           }
 
-          // Sort by plan tier (Elite first, then Pro, Basic, Free)
-          mappedBusinesses.sort((a, b) => b.planTierIndex - a.planTierIndex);
-
-          setBusinesses(mappedBusinesses);
+          // STRICT SORTING: Elite first (0), then Pro (1), Basic (2), Free (3)
+          // Within each tier: sorted by city proximity (user city = null means no proximity sorting)
+          const sorted = sortBusinessesByPlanAndProximity(mappedBusinesses, null);
+          
+          setBusinesses(sorted);
         } else {
           setBusinesses([]);
         }

@@ -10,6 +10,7 @@ import { differenceInDays } from "date-fns";
 import { useCallback, useRef, useState } from "react";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
+import { getCityDistance } from "@/lib/businessRanking";
 
 interface BoostedEvent {
   id: string;
@@ -91,31 +92,7 @@ const translations = {
   },
 };
 
-// City proximity map for Cyprus (rough distances)
-const CITY_DISTANCES: Record<string, Record<string, number>> = {
-  "Λευκωσία": { "Λευκωσία": 0, "Λάρνακα": 50, "Λεμεσός": 85, "Πάφος": 150, "Αμμόχωστος": 70, "Παραλίμνι": 60, "Αγία Νάπα": 75 },
-  "Λάρνακα": { "Λευκωσία": 50, "Λάρνακα": 0, "Λεμεσός": 70, "Πάφος": 130, "Αμμόχωστος": 45, "Παραλίμνι": 35, "Αγία Νάπα": 40 },
-  "Λεμεσός": { "Λευκωσία": 85, "Λάρνακα": 70, "Λεμεσός": 0, "Πάφος": 70, "Αμμόχωστος": 110, "Παραλίμνι": 100, "Αγία Νάπα": 110 },
-  "Πάφος": { "Λευκωσία": 150, "Λάρνακα": 130, "Λεμεσός": 70, "Πάφος": 0, "Αμμόχωστος": 180, "Παραλίμνι": 170, "Αγία Νάπα": 175 },
-  "Αμμόχωστος": { "Λευκωσία": 70, "Λάρνακα": 45, "Λεμεσός": 110, "Πάφος": 180, "Αμμόχωστος": 0, "Παραλίμνι": 10, "Αγία Νάπα": 15 },
-  "Παραλίμνι": { "Λευκωσία": 60, "Λάρνακα": 35, "Λεμεσός": 100, "Πάφος": 170, "Αμμόχωστος": 10, "Παραλίμνι": 0, "Αγία Νάπα": 10 },
-  "Αγία Νάπα": { "Λευκωσία": 75, "Λάρνακα": 40, "Λεμεσός": 110, "Πάφος": 175, "Αμμόχωστος": 15, "Παραλίμνι": 10, "Αγία Νάπα": 0 },
-};
-
-// Get distance between two cities
-const getCityDistance = (cityA: string | null | undefined, cityB: string | null | undefined): number => {
-  if (!cityA || !cityB) return 1000; // Unknown = max distance
-  const normalizedA = cityA.trim();
-  const normalizedB = cityB.trim();
-  
-  // Check direct lookup
-  if (CITY_DISTANCES[normalizedA]?.[normalizedB] !== undefined) {
-    return CITY_DISTANCES[normalizedA][normalizedB];
-  }
-  
-  // Fallback: same city = 0, different = 100
-  return normalizedA === normalizedB ? 0 : 100;
-};
+// getCityDistance imported from @/lib/businessRanking
 
 type ContentItem = 
   | { type: 'event'; data: BoostedEvent; sortTime: Date; distance: number }

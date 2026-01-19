@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
-import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/personalization";
+import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/businessRanking";
 
 type CategoryKey = "nightlife" | "clubs" | "dining" | "beach";
 
