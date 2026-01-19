@@ -438,7 +438,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                           </Badge>
                         )}
                         {eventType === 'free_entry' && (
-                          <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center gap-1">
+                          <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 flex items-center gap-1">
                             <Gift className="h-3 w-3" />
                             {t.badgeFreeEntry}
                           </Badge>
