@@ -4,16 +4,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Ticket, Calendar, Percent, Sparkles, Rocket } from "lucide-react";
+import { Trash2, Ticket, Calendar, Sparkles, Rocket, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
 import { OfferQRScanner } from "./OfferQRScanner";
 import { StudentDiscountScanner } from "./StudentDiscountScanner";
 import { StudentDiscountStats } from "./StudentDiscountStats";
 import OfferBoostDialog from "./OfferBoostDialog";
 
-// Helper component to show active boost badge for offers
+// Helper component to show active boost badge for offers (gold/premium color - non-clickable)
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
   const { data: activeBoost } = useQuery({
     queryKey: ["offer-active-boost", offerId],
@@ -35,7 +34,7 @@ const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: str
   return (
     <Badge 
       variant="default" 
-      className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white flex items-center gap-1"
+      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center gap-1 shadow-sm cursor-default"
     >
       <Sparkles className="h-3 w-3" />
       {label}
@@ -50,7 +49,6 @@ interface OffersListProps {
 const OffersList = ({ businessId }: OffersListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
   const { language } = useLanguage();
   const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
 
@@ -66,6 +64,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
   const translations = {
     el: {
+      title: "Προσφορές",
       loading: "Φόρτωση...",
       noOffers: "Δεν έχετε δημοσιεύσει καμία προσφορά ακόμα.",
       success: "Επιτυχία",
@@ -73,15 +72,16 @@ const OffersList = ({ businessId }: OffersListProps) => {
       offerDeactivated: "Η προσφορά απενεργοποιήθηκε",
       offerActivated: "Η προσφορά ενεργοποιήθηκε",
       error: "Σφάλμα",
-      delete: "Διαγραφή",
       active: "Ενεργή",
       inactive: "Ανενεργή",
       activate: "Ενεργοποίηση",
       deactivate: "Απενεργοποίηση",
-      terms: "Όροι:",
       boosted: "Προωθείται",
+      boost: "Προώθηση",
+      edit: "Επεξεργασία",
     },
     en: {
+      title: "Offers",
       loading: "Loading...",
       noOffers: "You haven't published any offers yet.",
       success: "Success",
@@ -89,13 +89,13 @@ const OffersList = ({ businessId }: OffersListProps) => {
       offerDeactivated: "Offer deactivated",
       offerActivated: "Offer activated",
       error: "Error",
-      delete: "Delete",
       active: "Active",
       inactive: "Inactive",
       activate: "Activate",
       deactivate: "Deactivate",
-      terms: "Terms:",
       boosted: "Boosted",
+      boost: "Boost",
+      edit: "Edit",
     },
   };
 
@@ -140,8 +140,6 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
   const handleDelete = async (offerId: string) => {
     try {
-      // Delete dependent rows first to avoid FK constraint errors.
-      // IMPORTANT: we must check errors here because RLS can silently block deletions.
       const deleteByDiscountId = async (table: any) => {
         const { error } = await (supabase as any)
           .from(table)
@@ -159,8 +157,6 @@ const OffersList = ({ businessId }: OffersListProps) => {
       await deleteByDiscountId("discount_items");
       await deleteByDiscountId("offer_boosts");
 
-      // Finally, delete the offer itself.
-      // Use count='exact' so we can reliably detect "0 rows deleted" (RLS would otherwise look like success).
       const { error, count } = await supabase
         .from("discounts")
         .delete({ count: "exact" })
@@ -216,24 +212,14 @@ const OffersList = ({ businessId }: OffersListProps) => {
     }
   };
 
-  // Format dates with smart display for hourly offers
+  // Format dates for display
   const formatOfferDates = (startAt: string, endAt: string) => {
     const start = new Date(startAt);
     const end = new Date(endAt);
     const locale = language === "el" ? "el-GR" : "en-US";
-    const isSameDay = start.toDateString() === end.toDateString();
+    const dateFormat: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
     
-    const timeFormat: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
-    const dateFormat: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-    
-    if (isSameDay) {
-      const dayStr = start.toLocaleDateString(locale, dateFormat);
-      const startTime = start.toLocaleTimeString(locale, timeFormat);
-      const endTime = end.toLocaleTimeString(locale, timeFormat);
-      return `${dayStr}, ${startTime} - ${endTime}`;
-    }
-    
-    return `${start.toLocaleDateString(locale, { ...dateFormat, year: 'numeric' })} - ${end.toLocaleDateString(locale, { ...dateFormat, year: 'numeric' })}`;
+    return `${start.toLocaleDateString(locale, dateFormat)} - ${end.toLocaleDateString(locale, dateFormat)}`;
   };
 
   if (isLoading) {
@@ -257,91 +243,103 @@ const OffersList = ({ businessId }: OffersListProps) => {
     <div className="space-y-6">
       {/* Header with scanners */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-2">
-          <Percent className="h-5 w-5" />
-          <h2 className="text-2xl font-bold">
-            {language === "el" ? "Προσφορές" : "Offers"}
-          </h2>
-        </div>
+        <h1 className="text-2xl font-bold">{t.title}</h1>
         <div className="flex items-center gap-2">
           <StudentDiscountScanner businessId={businessId} language={language} />
           <OfferQRScanner businessId={businessId} language={language} />
         </div>
       </div>
       
-      {/* Student Discount Stats - integrated section */}
+      {/* Student Discount Stats */}
       <StudentDiscountStats businessId={businessId} language={language} />
       
-      {/* Offers list */}
+      {/* Offers list - redesigned cards */}
       <div className="space-y-4">
         {offers.map((offer) => (
-          <Card key={offer.id}>
+          <Card key={offer.id} className="bg-card/50 border-border/50">
             <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <h3 className="text-xl font-semibold">{offer.title}</h3>
-                        <Badge variant={offer.active ? "default" : "secondary"}>
-                          {offer.active ? t.active : t.inactive}
-                        </Badge>
-                        <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
-                      </div>
-                      {/* Description hidden in business dashboard per user request */}
-                    </div>
-                    
-                    {offer.percent_off && (
-                      <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full">
-                        <Percent className="h-4 w-4" />
-                        <span className="font-bold">{offer.percent_off}% OFF</span>
-                      </div>
-                    )}
+              <div className="flex flex-col gap-4">
+                {/* Top row: Title + Boosted badge on left, Action icons on right */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="text-xl font-semibold">{offer.title}</h3>
+                    <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
                   </div>
                   
-                  <div className="flex gap-4 text-sm text-muted-foreground mb-3">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {formatOfferDates(offer.start_at, offer.end_at)}
-                      </span>
-                    </div>
+                  {/* Action icons - Boost and Edit */}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
+                      title={t.boost}
+                      aria-label={`${t.boost} ${offer.title}`}
+                      className="text-primary hover:text-primary hover:bg-primary/10"
+                    >
+                      <Rocket className="h-5 w-5" aria-hidden="true" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title={t.edit}
+                      aria-label={`${t.edit} ${offer.title}`}
+                      className="text-muted-foreground hover:text-foreground hover:bg-muted"
+                    >
+                      <Pencil className="h-5 w-5" aria-hidden="true" />
+                    </Button>
                   </div>
-
-                  {offer.terms && (
-                    <p className="text-xs text-muted-foreground italic">
-                      {t.terms} {offer.terms}
-                    </p>
-                  )}
                 </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
-                    title={language === "el" ? "Προώθηση" : "Boost"}
-                    aria-label={`Boost ${offer.title}`}
-                    className="text-primary hover:text-primary"
-                  >
-                    <Rocket className="h-4 w-4" aria-hidden="true" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleActive(offer.id, offer.active || false)}
-                  >
-                    {offer.active ? t.deactivate : t.activate}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(offer.id)}
-                    className="text-destructive hover:text-destructive"
-                    aria-label={`Delete ${offer.title}`}
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden="true" />
-                  </Button>
+                
+                {/* Date row */}
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-sm">
+                    {formatOfferDates(offer.start_at, offer.end_at)}
+                  </span>
+                </div>
+                
+                {/* Bottom row: Discount + Status badges on left, Deactivate + Delete on right */}
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Discount percentage badge */}
+                    {offer.percent_off && (
+                      <Badge 
+                        variant="outline" 
+                        className="text-primary border-primary/30 bg-primary/5 font-semibold"
+                      >
+                        {offer.percent_off}% OFF
+                      </Badge>
+                    )}
+                    
+                    {/* Active/Inactive status badge */}
+                    <Badge 
+                      variant={offer.active ? "default" : "secondary"}
+                      className={offer.active ? "bg-primary text-primary-foreground" : ""}
+                    >
+                      {offer.active ? t.active : t.inactive}
+                    </Badge>
+                  </div>
+                  
+                  {/* Deactivate/Activate button and Delete icon */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleActive(offer.id, offer.active || false)}
+                      className="text-sm"
+                    >
+                      {offer.active ? t.deactivate : t.activate}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(offer.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      aria-label={`Delete ${offer.title}`}
+                    >
+                      <Trash2 className="h-5 w-5" aria-hidden="true" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
