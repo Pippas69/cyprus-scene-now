@@ -177,16 +177,19 @@ export const useMapBusinesses = (
 
     fetchBusinesses();
 
-    // Subscribe to realtime changes
+    // Subscribe to realtime changes (businesses + subscriptions) so plan changes reflect instantly on the map
     const channel = supabase
       .channel('businesses-map-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'businesses'
-        },
+        { event: '*', schema: 'public', table: 'businesses' },
+        () => {
+          fetchBusinesses();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'business_subscriptions' },
         () => {
           fetchBusinesses();
         }
