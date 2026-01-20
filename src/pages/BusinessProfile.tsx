@@ -281,42 +281,38 @@ const BusinessProfile = () => {
           {t.back}
         </RippleButton>
 
-        {/* Logo positioned at bottom, overlapping - with follow/share icons to the right */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 flex items-end gap-3">
-          <motion.div 
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
-          >
+        {/* Logo positioned at bottom center */}
+        <motion.div 
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+        >
+          <div className="relative">
             <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg ring-2 ring-primary/20">
               <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
               <AvatarFallback className="text-3xl font-bold bg-muted">
                 {business.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-          </motion.div>
-          
-          {/* Follow + Share icons to the right of avatar */}
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-2 mb-2"
-          >
-            <FollowButton businessId={business.id} language={language} variant="compact" />
-            <button
-              type="button"
-              onClick={handleShareProfile}
-              className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
-              title={t.share}
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
-          </motion.div>
-        </div>
+            
+            {/* Follow + Share icons to the right of avatar circle */}
+            <div className="absolute -right-16 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <FollowButton businessId={business.id} language={language} variant="compact" />
+              <button
+                type="button"
+                onClick={handleShareProfile}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                title={t.share}
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Business Info */}
+      {/* Business Info - centered below avatar */}
       <div className="container mx-auto px-4 pt-16 md:pt-20 pb-24 md:pb-8">
         <motion.div 
           className="text-center mb-6"
@@ -324,7 +320,7 @@ const BusinessProfile = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          {/* Name + Verified */}
+          {/* Name + Verified - centered */}
           <div className="flex items-center justify-center gap-2 mb-2">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {business.name}
@@ -334,7 +330,7 @@ const BusinessProfile = () => {
             )}
           </div>
 
-          {/* Category Badge - accent/coral style */}
+          {/* Category Badges - centered */}
           <div className="flex flex-wrap justify-center gap-2 mb-2">
             {business.category.map((cat) => (
               <Badge 
@@ -346,7 +342,7 @@ const BusinessProfile = () => {
             ))}
           </div>
           
-          {/* Description - small, clean, centered */}
+          {/* Description - centered */}
           {business.description && (
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
               {business.description}
@@ -354,18 +350,18 @@ const BusinessProfile = () => {
           )}
         </motion.div>
 
-        {/* Contact Info Cards - 3 columns like mockup */}
+        {/* Contact Info Cards - responsive columns */}
         <motion.div 
-          className="grid grid-cols-3 gap-3 mb-6 max-w-2xl mx-auto"
+          className="flex flex-wrap justify-center gap-3 mb-6 max-w-2xl mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* City Card - Clickable to map */}
-          <motion.div variants={itemVariants}>
+          <motion.div variants={itemVariants} className="flex-1 min-w-[120px] max-w-[200px]">
             <Card 
               variant="glass" 
-              className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer"
+              className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer h-full"
               onClick={handleCityClick}
             >
               <CardContent className="flex flex-col items-center text-center p-4">
@@ -381,9 +377,9 @@ const BusinessProfile = () => {
 
           {/* Phone Card */}
           {business.phone && (
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} className="flex-1 min-w-[120px] max-w-[200px]">
               <a href={`tel:${business.phone}`} onClick={() => trackEngagement(business.id, 'phone_click', 'business', business.id)}>
-                <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer">
+                <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer h-full">
                   <CardContent className="flex flex-col items-center text-center p-4">
                     <Phone className="h-5 w-5 text-muted-foreground mb-1" />
                     <p className="text-xs text-muted-foreground">{t.phone}</p>
@@ -396,14 +392,14 @@ const BusinessProfile = () => {
 
           {/* Website Card - Clickable to external site */}
           {business.website && (
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} className="flex-1 min-w-[120px] max-w-[200px]">
               <a 
                 href={getWebsiteUrl(business.website)} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 onClick={() => trackEngagement(business.id, 'website_click', 'business', business.id)}
               >
-                <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer">
+                <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer h-full">
                   <CardContent className="flex flex-col items-center text-center p-4">
                     <Globe className="h-5 w-5 text-muted-foreground mb-1" />
                     <p className="text-xs text-muted-foreground">{t.website}</p>
