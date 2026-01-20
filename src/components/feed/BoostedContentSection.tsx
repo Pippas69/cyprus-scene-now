@@ -277,20 +277,20 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
             </span>
           </div>
 
-          {/* LINE 4: Discount badge + Redeem button - bottom row */}
-          <div className="flex items-center justify-between mt-auto">
-            {/* Discount badge on left */}
+          {/* LINE 4: Discount badge + Redeem button - bottom row - smaller to match event card height */}
+          <div className="flex items-center justify-between">
+            {/* Discount badge on left - smaller */}
             {offer.percent_off && offer.percent_off > 0 && (
-              <Badge variant="default" className="text-xs px-2 py-0.5 h-6">
+              <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
                 -{offer.percent_off}%
               </Badge>
             )}
-            {/* Redeem button on right */}
+            {/* Redeem button on right - smaller */}
             <Button 
               onClick={handleRedeemClick}
               size="sm" 
               variant="default"
-              className="text-xs h-7 px-3 ml-auto"
+              className="text-[10px] h-6 px-2 ml-auto"
             >
               {t.redeem}
             </Button>
