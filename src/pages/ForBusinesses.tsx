@@ -667,10 +667,10 @@ const ForBusinesses = () => {
             <p className="text-xl text-muted-foreground mb-8">
               {content.cta.subtitle}
             </p>
-            <Button asChild size="lg" className="text-lg px-8 gap-2">
+            <Button asChild size="lg" className="text-lg px-6 md:px-8 gap-2 whitespace-nowrap w-full sm:w-auto">
               <Link to="/signup-business">
                 {content.cta.button}
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5 flex-shrink-0" />
               </Link>
             </Button>
           </motion.div>

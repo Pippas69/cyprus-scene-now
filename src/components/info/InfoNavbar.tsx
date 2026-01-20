@@ -77,7 +77,7 @@ const InfoNavbar = () => {
               </Button>
             </Link>
             <Link to="/signup-business">
-              <Button size="sm" className="bg-primary hover:bg-primary/90">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 whitespace-nowrap flex-shrink-0">
                 {t.getStarted}
               </Button>
             </Link>
