@@ -34,25 +34,13 @@ const BlogPost = () => {
 
   const t = text[language];
 
-  const { data: post, isLoading } = useQuery({
-    queryKey: ["blog-post", slug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("blog_posts")
-        .select("*")
-        .eq("slug", slug)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Placeholder for when post doesn't exist in DB
-  const placeholderPost = {
-    title_en: "Top Summer Events in Cyprus 2025",
-    title_el: "Κορυφαίες Καλοκαιρινές Εκδηλώσεις Κύπρου 2025",
-    content_en: `
+  const placeholderPosts = [
+    {
+      id: "1",
+      slug: "summer-events-cyprus-2025",
+      title_en: "Top Summer Events in Cyprus 2025",
+      title_el: "Κορυφαίες Καλοκαιρινές Εκδηλώσεις Κύπρου 2025",
+      content_en: `
 # Summer is Here!
 
 Cyprus comes alive in summer with an incredible array of events, festivals, and experiences. From beach parties to cultural festivals, here's your guide to the hottest events this season.
@@ -72,8 +60,8 @@ International and local artists perform at venues across the island, from intima
 ---
 
 *Stay tuned for more updates on ΦΟΜΟ!*
-    `,
-    content_el: `
+      `,
+      content_el: `
 # Το Καλοκαίρι Έφτασε!
 
 Η Κύπρος ζωντανεύει το καλοκαίρι με μια απίστευτη ποικιλία εκδηλώσεων, φεστιβάλ και εμπειριών. Από beach parties μέχρι πολιτιστικά φεστιβάλ, εδώ είναι ο οδηγός σας για τις πιο hot εκδηλώσεις αυτής της σεζόν.
@@ -93,15 +81,140 @@ International and local artists perform at venues across the island, from intima
 ---
 
 *Μείνετε συντονισμένοι για περισσότερες ενημερώσεις στο ΦΟΜΟ!*
-    `,
-    featured_image:
-      "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=1200",
-    category: "events",
-    published_at: "2025-06-01",
-    read_time_minutes: 5,
-  };
+      `,
+      featured_image:
+        "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=1200",
+      category: "events",
+      published_at: "2025-06-01",
+      read_time_minutes: 5,
+    },
+    {
+      id: "2",
+      slug: "boost-event-visibility",
+      title_en: "How to Boost Your Event Visibility",
+      title_el: "Πώς να Αυξήσεις τη Προβολή της Εκδήλωσής σου",
+      content_en: `
+# More visibility, more attendees
 
-  const displayPost = post || placeholderPost;
+Here are practical ways to help your event show up to the right people.
+
+## What matters most
+
+- Great cover photo
+- Clear time + location
+- Strong description
+- Consistent posting
+
+---
+
+*Pro tip: test different captions and track performance.*
+      `,
+      content_el: `
+# Περισσότερη προβολή, περισσότεροι συμμετέχοντες
+
+Πρακτικοί τρόποι για να εμφανίζεται η εκδήλωσή σου στα σωστά άτομα.
+
+## Τι μετράει περισσότερο
+
+- Δυνατή φωτογραφία
+- Καθαρή ώρα + τοποθεσία
+- Περιγραφή με ουσία
+- Συνεπές posting
+
+---
+
+*Pro tip: δοκίμασε διαφορετικές λεζάντες και δες τι αποδίδει.*
+      `,
+      featured_image:
+        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200",
+      category: "tips",
+      published_at: "2025-05-15",
+      read_time_minutes: 7,
+    },
+    {
+      id: "3",
+      slug: "limassol-nightlife-guide",
+      title_en: "The Ultimate Limassol Nightlife Guide",
+      title_el: "Ο Απόλυτος Οδηγός Νυχτερινής Ζωής Λεμεσού",
+      content_en: `
+# Limassol after dark
+
+A curated guide to bars, clubs and venues.
+
+## Where to start
+
+- Sunset drinks
+- Live music
+- Late-night clubs
+
+---
+
+*Save this guide for your next night out.*
+      `,
+      content_el: `
+# Λεμεσός μετά τη δύση
+
+Ένας επιμελημένος οδηγός για μπαρ, κλαμπ και venues.
+
+## Από πού να ξεκινήσεις
+
+- Ποτά στο ηλιοβασίλεμα
+- Live μουσική
+- Κλαμπ μέχρι αργά
+
+---
+
+*Κράτα τον οδηγό για την επόμενη έξοδό σου.*
+      `,
+      featured_image:
+        "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1200",
+      category: "guides",
+      published_at: "2025-05-01",
+      read_time_minutes: 10,
+    },
+  ];
+
+  const { data: post, isLoading } = useQuery({
+    queryKey: ["blog-post", slug],
+    queryFn: async () => {
+      if (!slug) return null;
+
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
+
+      // When no rows match, PostgREST returns PGRST116 (406) for object responses.
+      // Treat it as "not found" so we can fall back to placeholder content.
+      if (error && (error as any).code !== "PGRST116") throw error;
+      return data ?? null;
+    },
+  });
+
+  const placeholderBySlug = placeholderPosts.find((p) => p.slug === slug) ?? null;
+  const displayPost = post ?? placeholderBySlug;
+
+  if (!isLoading && !displayPost) {
+    return (
+      <div className="min-h-screen bg-background">
+        <InfoNavbar />
+        <div className="container mx-auto px-4 pt-32 pb-20 text-center">
+          <h1 className="font-urbanist text-3xl md:text-4xl font-bold mb-4">
+            {t.notFound}
+          </h1>
+          <p className="text-muted-foreground mb-8">{slug}</p>
+          <Link to="/blog">
+            <Button variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {t.backToList}
+            </Button>
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleShare = async () => {
     if (navigator.share) {
