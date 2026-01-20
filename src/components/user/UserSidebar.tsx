@@ -139,7 +139,7 @@ export function UserSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{t.mainNav}</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.mainNav}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
@@ -147,7 +147,7 @@ export function UserSidebar() {
                   <SidebarMenuButton asChild isActive={isItemActive(item.url)}>
                     <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
-                      {open && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -157,7 +157,7 @@ export function UserSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{t.myActivities}</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.myActivities}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {activityItems.map((item) => (
@@ -165,7 +165,7 @@ export function UserSidebar() {
                   <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
                     <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
-                      {open && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -175,7 +175,7 @@ export function UserSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{t.account}</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.account}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {accountItems.map((item) => (
@@ -183,7 +183,7 @@ export function UserSidebar() {
                   <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
                     <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
-                      {open && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
