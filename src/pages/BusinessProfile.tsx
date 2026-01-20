@@ -242,10 +242,23 @@ const BusinessProfile = () => {
     return null;
   }
 
+  // Navigate to map with this business
+  const handleCityClick = () => {
+    navigate(`/xartis?business=${businessId}`);
+  };
+
+  // Format website URL for display and links
+  const getWebsiteUrl = (url: string) => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return `https://${url}`;
+    }
+    return url;
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Hero Section with Cover Image */}
-      <div className="relative h-64 md:h-80">
+      <div className="relative h-56 md:h-72">
         {business.cover_url ? (
           <div
             className="absolute inset-0 bg-cover bg-center overflow-hidden pointer-events-none"
@@ -268,38 +281,29 @@ const BusinessProfile = () => {
           {t.back}
         </RippleButton>
 
-        {/* Logo positioned at bottom, overlapping */}
-        <motion.div 
-          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2"
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
-        >
-          <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 md:border-[6px] border-background shadow-lg ring-2 ring-primary/20">
-            <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
-            <AvatarFallback className="text-3xl font-bold bg-muted">
-              {business.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </motion.div>
-      </div>
-
-      {/* Business Info */}
-      <div className="container mx-auto px-4 pt-16 md:pt-24 pb-24 md:pb-8">
-        <motion.div 
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              {business.name}
-            </h1>
-            {business.verified && (
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            )}
-            {/* Share Button */}
+        {/* Logo positioned at bottom, overlapping - with follow/share icons to the right */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 flex items-end gap-3">
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          >
+            <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg ring-2 ring-primary/20">
+              <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
+              <AvatarFallback className="text-3xl font-bold bg-muted">
+                {business.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </motion.div>
+          
+          {/* Follow + Share icons to the right of avatar */}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex items-center gap-2 mb-2"
+          >
+            <FollowButton businessId={business.id} language={language} variant="compact" />
             <button
               type="button"
               onClick={handleShareProfile}
@@ -308,148 +312,150 @@ const BusinessProfile = () => {
             >
               <Share2 className="h-4 w-4" />
             </button>
-            {/* Follow Button - Small, next to name */}
-            <FollowButton businessId={business.id} language={language} variant="compact" />
-          </div>
+          </motion.div>
+        </div>
+      </div>
 
-          {/* Categories */}
-          <div className="flex flex-wrap justify-center gap-2 mb-4">
-            {business.category.map((cat) => (
-              <Badge key={cat} variant="secondary">
-                {cat}
-              </Badge>
-            ))}
-            
-            {/* Student Discount Badge */}
-            {business.student_discount_enabled && business.student_discount_percent && (
-              <Badge 
-                variant="outline" 
-                className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 text-primary gap-1.5"
-              >
-                <GraduationCap className="h-3.5 w-3.5" />
-                {business.student_discount_percent}% {t.studentDiscount}
-                <span className="text-muted-foreground text-[10px]">
-                  ({business.student_discount_mode === 'unlimited' ? t.studentDiscountUnlimited : t.studentDiscountOnce})
-                </span>
-              </Badge>
+      {/* Business Info */}
+      <div className="container mx-auto px-4 pt-16 md:pt-20 pb-24 md:pb-8">
+        <motion.div 
+          className="text-center mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          {/* Name + Verified */}
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              {business.name}
+            </h1>
+            {business.verified && (
+              <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />
             )}
           </div>
 
-          {/* Action Buttons - Reserve Table & Student Discount */}
-          {business.id && (business.accepts_direct_reservations || (business.student_discount_enabled && business.student_discount_percent)) && (
-            <div className="flex justify-center gap-3 flex-wrap">
-              {/* Direct Reservation Button */}
-              {business.accepts_direct_reservations && (
-                <RippleButton
-                  onClick={() => {
-                    if (!user) {
-                      toast.error(t.loginToReserve);
-                      return;
-                    }
-                    setReservationDialogOpen(true);
-                  }}
-                  className="gap-2"
-                >
-                  <CalendarCheck className="h-4 w-4" />
-                  {t.reserveTable}
-                </RippleButton>
-              )}
-
-              {/* Student Discount Button */}
-              {business.student_discount_enabled && business.student_discount_percent && (
-                <StudentDiscountButton
-                  businessId={business.id}
-                  businessName={business.name}
-                  discountPercent={business.student_discount_percent}
-                  discountMode={business.student_discount_mode === 'unlimited' ? 'unlimited' : 'one_time'}
-                  userId={user?.id || null}
-                  language={language}
-                />
-              )}
-            </div>
+          {/* Category Badge - accent/coral style */}
+          <div className="flex flex-wrap justify-center gap-2 mb-2">
+            {business.category.map((cat) => (
+              <Badge 
+                key={cat} 
+                className="bg-accent hover:bg-accent/90 text-accent-foreground border-0 px-3 py-1 text-xs"
+              >
+                {cat}
+              </Badge>
+            ))}
+          </div>
+          
+          {/* Description - small, clean, centered */}
+          {business.description && (
+            <p className="text-muted-foreground text-sm max-w-md mx-auto">
+              {business.description}
+            </p>
           )}
         </motion.div>
 
-        {/* Contact Info Cards */}
+        {/* Contact Info Cards - 3 columns like mockup */}
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
+          className="grid grid-cols-3 gap-3 mb-6 max-w-2xl mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {business.city && (
-            <motion.div variants={itemVariants}>
-              <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
-                <CardContent className="flex items-center gap-3 p-4">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t.city}</p>
-                    <p className="font-medium">{business.city}</p>
-                    {business.address && (
-                      <p className="text-sm text-muted-foreground">{business.address}</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
+          {/* City Card - Clickable to map */}
+          <motion.div variants={itemVariants}>
+            <Card 
+              variant="glass" 
+              className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer"
+              onClick={handleCityClick}
+            >
+              <CardContent className="flex flex-col items-center text-center p-4">
+                <MapPin className="h-5 w-5 text-muted-foreground mb-1" />
+                <p className="text-xs text-muted-foreground">{t.city}</p>
+                <p className="font-medium text-sm">{business.city}</p>
+                {business.address && (
+                  <p className="text-xs text-muted-foreground line-clamp-1">{business.address}</p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
+          {/* Phone Card */}
           {business.phone && (
             <motion.div variants={itemVariants}>
-              <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
-                <CardContent className="flex items-center gap-3 p-4">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t.phone}</p>
-                    <a
-                      href={`tel:${business.phone}`}
-                      className="inline-block py-2 font-medium hover:text-primary transition-colors"
-                      onClick={() => trackEngagement(business.id, 'phone_click', 'business', business.id)}
-                    >
-                      {business.phone}
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
+              <a href={`tel:${business.phone}`} onClick={() => trackEngagement(business.id, 'phone_click', 'business', business.id)}>
+                <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer">
+                  <CardContent className="flex flex-col items-center text-center p-4">
+                    <Phone className="h-5 w-5 text-muted-foreground mb-1" />
+                    <p className="text-xs text-muted-foreground">{t.phone}</p>
+                    <p className="font-medium text-sm">{business.phone}</p>
+                  </CardContent>
+                </Card>
+              </a>
             </motion.div>
           )}
 
+          {/* Website Card - Clickable to external site */}
           {business.website && (
             <motion.div variants={itemVariants}>
-              <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
-                <CardContent className="flex items-center gap-3 p-4">
-                  <Globe className="h-5 w-5 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">{t.website}</p>
-                    <a
-                      href={business.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium hover:text-primary truncate block transition-colors"
-                      onClick={() => trackEngagement(business.id, 'website_click', 'business', business.id)}
-                    >
-                      {business.website.replace(/^https?:\/\//, '')}
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
+              <a 
+                href={getWebsiteUrl(business.website)} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={() => trackEngagement(business.id, 'website_click', 'business', business.id)}
+              >
+                <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer">
+                  <CardContent className="flex flex-col items-center text-center p-4">
+                    <Globe className="h-5 w-5 text-muted-foreground mb-1" />
+                    <p className="text-xs text-muted-foreground">{t.website}</p>
+                    <p className="font-medium text-sm truncate max-w-full">
+                      {business.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    </p>
+                  </CardContent>
+                </Card>
+              </a>
             </motion.div>
           )}
         </motion.div>
 
-        {/* Description */}
-        {business.description && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
+        {/* Action Buttons - Reserve Table & Student Discount */}
+        {business.id && (business.accepts_direct_reservations || (business.student_discount_enabled && business.student_discount_percent)) && (
+          <motion.div 
+            className="flex justify-center gap-3 flex-wrap mb-6"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mb-8"
           >
-            <p className="text-muted-foreground text-sm whitespace-pre-wrap text-center max-w-2xl mx-auto">
-              {business.description}
-            </p>
+            {/* Direct Reservation Button */}
+            {business.accepts_direct_reservations && (
+              <RippleButton
+                onClick={() => {
+                  if (!user) {
+                    toast.error(t.loginToReserve);
+                    return;
+                  }
+                  setReservationDialogOpen(true);
+                }}
+                className="gap-2"
+              >
+                <CalendarCheck className="h-4 w-4" />
+                {t.reserveTable}
+              </RippleButton>
+            )}
+
+            {/* Student Discount Button */}
+            {business.student_discount_enabled && business.student_discount_percent && (
+              <StudentDiscountButton
+                businessId={business.id}
+                businessName={business.name}
+                discountPercent={business.student_discount_percent}
+                discountMode={business.student_discount_mode === 'unlimited' ? 'unlimited' : 'one_time'}
+                userId={user?.id || null}
+                language={language}
+              />
+            )}
           </motion.div>
         )}
+
 
         {/* Unified Events & Offers List */}
         <motion.div
