@@ -282,7 +282,7 @@ const BusinessProfile = () => {
         </RippleButton>
 
         {/* Avatar + Follow/Share row - centered */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-[calc(50%+20px)] translate-y-1/2 flex items-center gap-3">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-[calc(50%-20px)] translate-y-1/2 flex items-center gap-3">
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
