@@ -18,15 +18,30 @@ const MarqueeSection = () => {
   ];
 
   return (
-    <section className="relative py-12 bg-gradient-to-r from-seafoam/5 via-aegean/5 to-seafoam/5 overflow-hidden">
-      {/* Top Wave Divider */}
-      <div className="absolute top-0 left-0 w-full overflow-hidden leading-none rotate-180">
+    <section className="relative py-12 bg-gradient-to-b from-seafoam/5 via-aegean/8 to-seafoam/5 overflow-hidden">
+      {/* Top Wave Dividers - Multiple layered waves */}
+      <div className="absolute top-0 left-0 w-full overflow-hidden leading-none">
+        {/* First wave layer - lighter */}
         <svg
-          viewBox="0 0 1200 120"
+          viewBox="0 0 1440 120"
           preserveAspectRatio="none"
-          className="w-full h-8 md:h-12 fill-background"
+          className="relative block w-full h-16 md:h-24"
         >
-          <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" />
+          <path
+            d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,0 L0,0 Z"
+            className="fill-background"
+          />
+        </svg>
+        {/* Second wave layer - overlapping */}
+        <svg
+          viewBox="0 0 1440 80"
+          preserveAspectRatio="none"
+          className="absolute top-4 md:top-6 left-0 w-full h-12 md:h-16"
+        >
+          <path
+            d="M0,40 C180,80 360,0 540,40 C720,80 900,0 1080,40 C1260,80 1440,0 1440,40 L1440,0 L0,0 Z"
+            className="fill-background/60"
+          />
         </svg>
       </div>
 
@@ -70,14 +85,29 @@ const MarqueeSection = () => {
         </div>
       </div>
 
-      {/* Bottom Wave Divider */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none">
+      {/* Bottom Wave Dividers - Multiple layered waves */}
+      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none rotate-180">
+        {/* First wave layer - lighter */}
         <svg
-          viewBox="0 0 1200 120"
+          viewBox="0 0 1440 120"
           preserveAspectRatio="none"
-          className="w-full h-8 md:h-12 fill-background"
+          className="relative block w-full h-16 md:h-24"
         >
-          <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" />
+          <path
+            d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,0 L0,0 Z"
+            className="fill-background"
+          />
+        </svg>
+        {/* Second wave layer - overlapping */}
+        <svg
+          viewBox="0 0 1440 80"
+          preserveAspectRatio="none"
+          className="absolute top-4 md:top-6 left-0 w-full h-12 md:h-16"
+        >
+          <path
+            d="M0,40 C180,80 360,0 540,40 C720,80 900,0 1080,40 C1260,80 1440,0 1440,40 L1440,0 L0,0 Z"
+            className="fill-background/60"
+          />
         </svg>
       </div>
     </section>
