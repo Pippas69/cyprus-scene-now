@@ -348,7 +348,7 @@ const BusinessProfile = () => {
           
           {/* Description - centered */}
           {business.description && (
-            <p className="text-muted-foreground text-sm max-w-md mx-auto text-center">
+            <p className="text-muted-foreground text-sm max-w-md mx-auto text-center -translate-x-6">
               {business.description}
             </p>
           )}
