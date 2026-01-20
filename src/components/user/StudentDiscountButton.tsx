@@ -121,6 +121,9 @@ export function StudentDiscountButton({
       >
         <GraduationCap className="h-4 w-4" />
         {t.useStudentDiscount}
+        <span className="ml-1 px-1.5 py-0.5 text-xs font-semibold bg-accent text-accent-foreground rounded">
+          {discountPercent}%
+        </span>
       </RippleButton>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
