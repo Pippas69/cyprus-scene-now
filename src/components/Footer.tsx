@@ -61,8 +61,8 @@ const Footer = () => {
 
   return (
     <footer className="bg-primary text-primary-foreground">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-8">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-16">
           {/* Column 1 - Logo & Description */}
           <div className="space-y-4">
             <Logo size="lg" />
@@ -79,7 +79,7 @@ const Footer = () => {
               <li>
                 <Link 
                   to="/feed" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm underline decoration-accent underline-offset-2"
+                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
                 >
                   {t.explore}
                 </Link>
@@ -194,13 +194,13 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-primary-foreground/20 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="border-t border-primary-foreground/20 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1 text-sm text-primary-foreground/70">
             <span>{t.rights}</span>
             <span className="hidden sm:inline">•</span>
             <span>{t.madeWith} ❤️ {t.inCyprus}</span>
             <span className="hidden sm:inline">•</span>
-            <span className="text-accent font-medium">{t.liveNow}</span>
+            <span>{t.liveNow}</span>
           </div>
           <LanguageToggle />
         </div>

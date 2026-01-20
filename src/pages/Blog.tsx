@@ -115,21 +115,34 @@ const Blog = () => {
     <div className="min-h-screen bg-background">
       <InfoNavbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-12 px-4">
-        <div className="container mx-auto text-center">
+      {/* Hero Section - Premium Design */}
+      <section className="pt-32 pb-16 px-4 relative overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
+        
+        <div className="container mx-auto text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-6"
+          >
+            <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            {language === 'el' ? 'Τελευταία Άρθρα' : 'Latest Articles'}
+          </motion.div>
+          
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-urbanist text-4xl md:text-6xl font-bold mb-6"
+            transition={{ delay: 0.1 }}
+            className="font-urbanist text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
           >
-            {t.heroTitle}
+            {language === 'el' ? 'ΦΟΜΟ Blog' : 'FOMO Blog'}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-xl text-muted-foreground max-w-2xl mx-auto"
+            transition={{ delay: 0.2 }}
+            className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
           >
             {t.heroSubtitle}
           </motion.p>
@@ -143,7 +156,7 @@ const Blog = () => {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="space-y-4">
-                  <Skeleton className="h-48 w-full rounded-xl" />
+                  <Skeleton className="h-56 w-full rounded-2xl" />
                   <Skeleton className="h-6 w-3/4" />
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-1/2" />
@@ -162,10 +175,10 @@ const Blog = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="group"
+                  className="group bg-card rounded-2xl overflow-hidden border border-border/50 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300"
                 >
-                  <Link to={`/blog/${post.slug}`}>
-                    <div className="relative overflow-hidden rounded-xl mb-4">
+                  <Link to={`/blog/${post.slug}`} className="block">
+                    <div className="relative overflow-hidden">
                       <img
                         src={
                           post.featured_image ||
@@ -174,39 +187,42 @@ const Blog = () => {
                         alt={
                           language === "el" ? post.title_el : post.title_en
                         }
-                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded-full">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
                           {t.categories[
                             post.category as keyof typeof t.categories
                           ] || post.category}
                         </span>
                       </div>
                     </div>
-                    <h2 className="font-urbanist text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                      {language === "el" ? post.title_el : post.title_en}
-                    </h2>
-                    <p className="text-muted-foreground mb-3 line-clamp-2">
-                      {language === "el" ? post.excerpt_el : post.excerpt_en}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {post.published_at
-                          ? format(new Date(post.published_at), "d MMM yyyy", {
-                              locale: language === "el" ? el : enUS,
-                            })
-                          : ""}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {post.read_time_minutes} {t.minRead}
-                      </span>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-primary font-medium group-hover:gap-3 transition-all">
-                      {t.readMore}
-                      <ArrowRight className="w-4 h-4" />
+                    <div className="p-6">
+                      <h2 className="font-urbanist text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                        {language === "el" ? post.title_el : post.title_en}
+                      </h2>
+                      <p className="text-muted-foreground mb-4 line-clamp-2 text-sm leading-relaxed">
+                        {language === "el" ? post.excerpt_el : post.excerpt_en}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-muted-foreground border-t border-border/50 pt-4">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4" />
+                          {post.published_at
+                            ? format(new Date(post.published_at), "d MMM yyyy", {
+                                locale: language === "el" ? el : enUS,
+                              })
+                            : ""}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-4 h-4" />
+                          {post.read_time_minutes} {t.minRead}
+                        </span>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2 text-primary font-semibold group-hover:gap-3 transition-all">
+                        {t.readMore}
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
                     </div>
                   </Link>
                 </motion.article>
