@@ -355,6 +355,10 @@ const Contact = () => {
                     href="https://instagram.com/fomo.cy"
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.open("https://instagram.com/fomo.cy", "_blank", "noopener,noreferrer");
+                    }}
                     className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
                   >
                     <Instagram className="w-5 h-5" />

@@ -1,18 +1,31 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
+const scrollEverythingToTop = () => {
+  // Window scroll
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+  // Document scroll roots (some mobile browsers / embedded webviews)
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  // App internal scroll containers (e.g. UserLayout main)
+  const containers = document.querySelectorAll<HTMLElement>("[data-scroll-container]");
+  containers.forEach((el) => {
+    el.scrollTop = 0;
+    el.scrollLeft = 0;
+  });
+};
+
 const ScrollToTop = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const scrollNow = () => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    };
-
-    // Ensure we reset scroll even when transitions delay layout
-    scrollNow();
-    requestAnimationFrame(scrollNow);
-    setTimeout(scrollNow, 0);
+    // Ensure we reset scroll even when transitions delay layout/mounting
+    scrollEverythingToTop();
+    requestAnimationFrame(scrollEverythingToTop);
+    setTimeout(scrollEverythingToTop, 0);
+    setTimeout(scrollEverythingToTop, 50);
   }, [location.key, location.pathname, location.search, location.hash]);
 
   useEffect(() => {
@@ -38,7 +51,7 @@ const ScrollToTop = () => {
         url.hash === location.hash;
 
       if (sameRoute) {
-        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        scrollEverythingToTop();
       }
     };
 

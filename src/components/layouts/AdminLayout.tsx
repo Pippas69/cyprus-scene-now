@@ -17,7 +17,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         <AdminSidebar />
         <div className="flex flex-1 min-w-0 max-w-full flex-col">
           <AdminHeader />
-          <main className="flex-1 min-w-0 max-w-full overflow-x-hidden px-3 py-4 sm:p-6 bg-muted/10">
+          <main
+            data-scroll-container
+            className="flex-1 min-w-0 max-w-full overflow-x-hidden px-3 py-4 sm:p-6 bg-muted/10"
+          >
             {children || <Outlet />}
           </main>
         </div>
