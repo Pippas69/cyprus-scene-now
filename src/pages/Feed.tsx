@@ -31,8 +31,6 @@ import {
 } from "@/lib/personalization";
 import { useActiveProfileBoosts } from "@/hooks/useActiveProfileBoosts";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useScrollMemory } from "@/hooks/useScrollMemory";
-
 interface FeedProps {
   showNavbar?: boolean;
 }
@@ -57,9 +55,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
   const queryClient = useQueryClient();
   const { language } = useLanguage();
-
-  useScrollMemory();
-
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
     const {
