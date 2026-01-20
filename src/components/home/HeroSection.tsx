@@ -1,7 +1,4 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import PhoneMockup from "./PhoneMockup";
 import Typewriter from "@/components/ui/typewriter";
 import ParticleBackground from "@/components/ui/particle-background";
 
@@ -10,34 +7,30 @@ interface HeroSectionProps {
 }
 
 const HeroSection = ({ language }: HeroSectionProps) => {
-  const navigate = useNavigate();
-
   const phrases = {
-    el: ["απλά εν τες ξέρεις", "τζαιρός να τες μάθεις", "δες που αξίζει να είσαι"],
-    en: ["you just don't know them yet", "time to discover them", "see where it's worth being"],
+    el: ["δες που αξίζει να είσαι", "απλά εν τες ξέρεις", "τζαιρός να τες μάθεις"],
+    en: ["see where it's worth being", "you just don't know them yet", "time to discover them"],
   };
 
   const text = {
     el: {
-      tagline: "Φόβος of Missing Out",
+      tagline: "Φόβος OF MISSING OUT",
       heroMain: "Επιλογές υπάρχουν,",
-      description: "Η πύλη σου στην κοινωνική ζωή της Κύπρου. Ανακάλυψε τι συμβαίνει γύρω σου, κάνε RSVP με ένα tap και απόλαυσε αποκλειστικά προνόμια.",
-      joinBtn: "Εγγραφή στο ΦΟΜΟ",
-      exploreBtn: "Εξερεύνηση",
+      subText: '"Μα ένειξερω που να πάω πόψε"',
+      downloadCta: "Κατέβαστο τζαι μάθε",
     },
     en: {
-      tagline: "Fear of Missing Out",
+      tagline: "Fear OF MISSING OUT",
       heroMain: "Options exist,",
-      description: "Your gateway to Cyprus social life. Discover what's happening around you, RSVP with one tap and enjoy exclusive privileges.",
-      joinBtn: "Join ΦΟΜΟ",
-      exploreBtn: "Explore",
+      subText: '"But I don\'t know where to go tonight"',
+      downloadCta: "Download it and find out",
     },
   };
 
   const t = text[language];
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-background via-background to-seafoam/5">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-seafoam/5">
       {/* Particle background */}
       <ParticleBackground particleCount={25} className="z-0" />
       
@@ -76,86 +69,110 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       />
 
       <div className="container mx-auto px-4 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left content */}
-          <div className="space-y-8 text-center lg:text-left">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-seafoam/10 to-aegean/10 border border-seafoam/20 font-cinzel font-semibold text-sm tracking-wide">
-                <span className="bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent">
-                  {t.tagline}
-                </span>
+        <div className="flex flex-col items-center text-center space-y-8">
+          {/* Tagline badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-seafoam/15 to-aegean/15 border border-seafoam/30 font-cinzel font-bold text-base md:text-lg tracking-wider shadow-lg">
+              <span className="bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase">
+                {t.tagline}
               </span>
-            </motion.div>
+            </span>
+          </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="space-y-2"
-            >
-              <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent leading-tight tracking-tight">
-                {t.heroMain}
-              </h1>
-              <div className="relative inline-block">
-                <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold">
-                  <Typewriter 
-                    phrases={phrases[language]} 
-                    typingSpeed={70}
-                    deletingSpeed={40}
-                    pauseDuration={2500}
-                    className="bg-gradient-to-r from-aegean via-seafoam to-aegean bg-clip-text text-transparent"
-                  />
-                </h1>
-                <motion.div
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.8, delay: 0.5 }}
-                  className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-seafoam via-aegean to-seafoam rounded-full origin-left"
+          {/* Main heading */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="space-y-4"
+          >
+            <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black bg-gradient-to-r from-aegean via-foreground to-aegean bg-clip-text text-transparent leading-tight tracking-tight">
+              {t.heroMain}
+            </h1>
+            <div className="relative inline-block">
+              <h2 className="font-cinzel text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold min-h-[1.2em]">
+                <Typewriter 
+                  phrases={phrases[language]} 
+                  typingSpeed={70}
+                  deletingSpeed={40}
+                  pauseDuration={2500}
+                  className="bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent"
                 />
+              </h2>
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-seafoam to-transparent rounded-full"
+              />
+            </div>
+          </motion.div>
+
+          {/* Subtext */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-1 pt-4"
+          >
+            <p className="text-lg md:text-xl text-muted-foreground italic">
+              {t.subText}
+            </p>
+            <p className="text-lg md:text-xl font-semibold text-foreground">
+              {t.downloadCta}
+            </p>
+          </motion.div>
+
+          {/* App Store buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-row gap-4 justify-center pt-4"
+          >
+            {/* App Store Button */}
+            <button
+              type="button"
+              onClick={() => {
+                // TODO: Add actual App Store link when available
+                console.log("App Store clicked");
+              }}
+              className="group relative flex items-center gap-3 px-5 py-3 bg-foreground text-background rounded-xl hover:bg-foreground/90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              <svg viewBox="0 0 24 24" className="w-8 h-8 fill-current">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+              </svg>
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] opacity-80">Download on the</span>
+                <span className="text-lg font-semibold -mt-1">App Store</span>
               </div>
-            </motion.div>
+            </button>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed"
+            {/* Google Play Button */}
+            <button
+              type="button"
+              onClick={() => {
+                // TODO: Add actual Google Play link when available
+                console.log("Google Play clicked");
+              }}
+              className="group relative flex items-center gap-3 px-5 py-3 bg-foreground text-background rounded-xl hover:bg-foreground/90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
             >
-              {t.description}
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            >
-              <Button
-                size="lg"
-                onClick={() => navigate("/signup")}
-                className="text-lg px-8 py-6 bg-seafoam hover:bg-seafoam/90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl text-white"
-              >
-                {t.joinBtn}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => navigate("/feed")}
-                className="text-lg px-8 py-6 border-2 border-aegean/30 text-aegean hover:bg-aegean/5 transition-all duration-300"
-              >
-                {t.exploreBtn}
-              </Button>
-            </motion.div>
-          </div>
-
-          {/* Right content - Phone mockup */}
-          <div className="hidden lg:flex justify-center">
-            <PhoneMockup />
-          </div>
+              <svg viewBox="0 0 24 24" className="w-8 h-8">
+                <path fill="#EA4335" d="M3.609 1.814L13.445 12l-9.836 10.186c-.245-.244-.391-.555-.391-.9V2.714c0-.346.146-.656.391-.9z"/>
+                <path fill="#FBBC04" d="M17.87 8.262l-4.425 3.738 4.425 3.738 4.13-2.428c.78-.458.78-1.638 0-2.096l-4.13-2.952z"/>
+                <path fill="#4285F4" d="M3.609 22.186c.244.244.555.391.9.391.19 0 .38-.042.56-.125l12.801-6.452-4.425-3.738L3.609 22.186z"/>
+                <path fill="#34A853" d="M13.445 12L3.609 1.814C3.798 1.66 4.027 1.577 4.26 1.577c.19 0 .38.042.56.125l12.8 6.452-4.175 3.846z"/>
+              </svg>
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] opacity-80">GET IT ON</span>
+                <span className="text-lg font-semibold -mt-1">Google Play</span>
+              </div>
+            </button>
+          </motion.div>
         </div>
       </div>
     </section>
