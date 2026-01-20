@@ -32,6 +32,7 @@ interface BusinessDirectorySectionProps {
   selectedCity?: string | null;
   selectedCategories?: string[];
   userCity?: string | null;
+  showStudentDiscountBadges?: boolean;
 }
 
 // Map filter IDs to database category values
@@ -84,6 +85,7 @@ export const BusinessDirectorySection = ({
   selectedCity,
   selectedCategories = [],
   userCity = null,
+  showStudentDiscountBadges = false,
 }: BusinessDirectorySectionProps) => {
   const t = translations[language];
 
@@ -219,7 +221,13 @@ export const BusinessDirectorySection = ({
         transition={{ staggerChildren: 0.05 }}
       >
         {businesses.map((business, index) => (
-          <BusinessCard key={business.id} business={business} index={index} language={language} />
+          <BusinessCard
+            key={business.id}
+            business={business}
+            index={index}
+            language={language}
+            showStudentDiscountBadges={showStudentDiscountBadges}
+          />
         ))}
       </motion.div>
     </div>
@@ -231,11 +239,13 @@ export const BusinessDirectorySection = ({
 const BusinessCard = ({ 
   business, 
   index, 
-  language 
+  language,
+  showStudentDiscountBadges,
 }: { 
   business: Business; 
   index: number;
   language: "el" | "en";
+  showStudentDiscountBadges: boolean;
 }) => {
   const cardRef = useRef<HTMLAnchorElement | null>(null);
   const handleView = useCallback(() => {
@@ -277,6 +287,7 @@ const BusinessCard = ({
           <BusinessBoostBadges
             hasEventBoost={business.hasEventBoost}
             hasOfferBoost={business.hasOfferBoost}
+            showStudentDiscount={showStudentDiscountBadges}
             studentDiscountPercent={business.student_discount_percent}
             studentDiscountMode={business.student_discount_mode}
             language={language}
@@ -290,19 +301,14 @@ const BusinessCard = ({
           </div>
         )}
         
-        {/* Content at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-3">
+        {/* Content at bottom (name + city only; no category) */}
+        <div className="absolute bottom-0 left-0 right-0 p-2">
           <h4 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-primary-foreground transition-colors">
             {business.name}
           </h4>
-          <p className="text-xs text-white/80 mt-0.5">
+          <p className="text-xs text-white/80 mt-1">
             {business.city}
           </p>
-          {business.category?.[0] && (
-            <Badge variant="secondary" className="mt-1.5 text-[10px] px-1.5 py-0 h-4 bg-white/20 text-white border-0">
-              {business.category[0]}
-            </Badge>
-          )}
         </div>
       </Link>
     </motion.div>
