@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 import { RippleButton } from "@/components/ui/ripple-button";
 import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap, Share2 } from "lucide-react";
-import EventCard from "@/components/EventCard";
+import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import OfferCard from "@/components/OfferCard";
 import { FollowButton } from "@/components/business/FollowButton";
 import { DirectReservationDialog } from "@/components/business/DirectReservationDialog";
@@ -443,17 +443,11 @@ const BusinessProfile = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
+            className="mb-8"
           >
-            <Card variant="gradient" shine className="mb-8">
-              <CardHeader>
-                <CardTitle>{t.about}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {business.description}
-                </p>
-              </CardContent>
-            </Card>
+            <p className="text-muted-foreground text-sm whitespace-pre-wrap text-center max-w-2xl mx-auto">
+              {business.description}
+            </p>
           </motion.div>
         )}
 
@@ -481,7 +475,12 @@ const BusinessProfile = () => {
               {/* Render all events */}
               {events.map((event) => (
                 <motion.div key={`event-${event.id}`} variants={itemVariants}>
-                  <EventCard event={event} language={language} user={user} />
+                  <UnifiedEventCard 
+                    event={event} 
+                    language={language} 
+                    size="full"
+                    isFree={event.price_tier === "free"}
+                  />
                 </motion.div>
               ))}
               {/* Render all offers */}
