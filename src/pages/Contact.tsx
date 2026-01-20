@@ -133,21 +133,34 @@ const Contact = () => {
     <div className="min-h-screen bg-background">
       <InfoNavbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-12 px-4">
-        <div className="container mx-auto text-center">
+      {/* Hero Section - Premium Design */}
+      <section className="pt-32 pb-12 px-4 relative">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-seafoam/5 via-transparent to-transparent pointer-events-none" />
+        
+        <div className="container mx-auto text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 bg-seafoam/10 border border-seafoam/30 text-seafoam px-4 py-1.5 rounded-full text-sm font-medium mb-6"
+          >
+            <span className="w-2 h-2 bg-seafoam rounded-full animate-pulse" />
+            {language === "el" ? "Επικοινωνία" : "Contact"}
+          </motion.div>
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-urbanist text-4xl md:text-6xl font-bold mb-6"
+            transition={{ delay: 0.1 }}
+            className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-6 tracking-tight"
           >
             {t.heroTitle}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-xl text-muted-foreground max-w-2xl mx-auto"
+            transition={{ delay: 0.2 }}
+            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
           >
             {t.heroSubtitle}
           </motion.p>
