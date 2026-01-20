@@ -55,11 +55,11 @@ const businessFaqs = {
     },
     {
       question: "Τι κερδίζω αν βάλω την επιχείρησή μου στο ΦΟΜΟ;",
-      answer: "Αυξήστε την ορατότητα, προσελκύστε νέους πελάτες, διαχειριστείτε κρατήσεις και αναλύστε τα δεδομένα σας με τα εργαλεία analytics μας.",
+      answer: "Αποκτήστε νέους πελάτες, αυξήστε την ορατότητα, διαχειριστείτε κρατήσεις και αναλύστε τα δεδομένα σας. Το ΦΟΜΟ είναι marketplace - φέρνει κόσμο απευθείας στην πόρτα σας!",
     },
     {
       question: "Είναι απλή προβολή ή φέρνει πραγματικούς πελάτες;",
-      answer: "Το ΦΟΜΟ φέρνει πραγματικούς πελάτες! Με τις κρατήσεις, τα QR offers και τα RSVPs, μετράτε άμεσα τα αποτελέσματα.",
+      answer: "Το ΦΟΜΟ δεν είναι απλή σελίδα διαφήμισης - είναι marketplace που φέρνει πραγματικούς πελάτες! Με κρατήσεις, QR offers και RSVPs, μετράτε άμεσα τα αποτελέσματα και βλέπετε ποιος έρχεται στο μαγαζί σας.",
     },
     {
       question: "Υπάρχει δωρεάν πλάνο;",
@@ -73,11 +73,11 @@ const businessFaqs = {
     },
     {
       question: "What do I gain by adding my business to ΦΟΜΟ?",
-      answer: "Increase visibility, attract new customers, manage reservations, and analyze your data with our analytics tools.",
+      answer: "Get new customers, increase visibility, manage reservations, and analyze your data. ΦΟΜΟ is a marketplace - it brings people directly to your door!",
     },
     {
       question: "Is it just exposure or does it bring real customers?",
-      answer: "ΦΟΜΟ brings real customers! With reservations, QR offers, and RSVPs, you can measure results directly.",
+      answer: "ΦΟΜΟ is not just an advertising page - it's a marketplace that brings real customers! With reservations, QR offers, and RSVPs, you measure results directly and see who comes to your venue.",
     },
     {
       question: "Is there a free plan?",

@@ -80,7 +80,7 @@ const Footer = () => {
 
           {/* Column 2 - ΦΟΜΟ Links */}
           <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg text-[#8b2942]">ΦΟΜΟ</h4>
+            <h4 className="font-poppins font-semibold text-lg text-white">ΦΟΜΟ</h4>
             <ul className="space-y-2">
               <li>
                 <Link 
@@ -119,7 +119,7 @@ const Footer = () => {
 
           {/* Column 3 - Terms & Policies */}
           <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg text-[#8b2942]">{t.termsTitle}</h4>
+            <h4 className="font-poppins font-semibold text-lg text-white">{t.termsTitle}</h4>
             <ul className="space-y-2">
               <li>
                 <Link 
@@ -150,7 +150,7 @@ const Footer = () => {
 
           {/* Column 4 - Contact */}
           <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg text-[#8b2942]">{t.contactTitle}</h4>
+            <h4 className="font-poppins font-semibold text-lg text-white">{t.contactTitle}</h4>
             <ul className="space-y-2">
               <li>
                 <Link 

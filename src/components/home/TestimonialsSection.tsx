@@ -81,15 +81,18 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
   };
 
   return (
-    <section className="py-20 md:py-32 bg-gradient-to-b from-background via-aegean/5 to-background overflow-hidden">
-      <div className="container mx-auto px-4">
+    <section className="relative py-20 md:py-32 overflow-hidden">
+      {/* Background with gradient transition to seafoam */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-[#4dd4c4]/30" />
+      
+      <div className="container mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="font-display text-3xl md:text-5xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-4">
             {content[language].title}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -140,42 +143,25 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={prev}
-              className="rounded-full border-aegean/30 hover:bg-aegean/10"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-
-            <div className="flex gap-2">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrent(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    i === current
-                      ? "bg-aegean w-6"
-                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={next}
-              className="rounded-full border-aegean/30 hover:bg-aegean/10"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
+          {/* Dots only - no arrows, auto-scrolls */}
+          <div className="flex items-center justify-center gap-2 mt-8">
+            {testimonials.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === current
+                    ? "bg-aegean w-6"
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-2"
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>
+      
+      {/* Smooth gradient transition to seafoam section */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#4dd4c4]" />
     </section>
   );
 };

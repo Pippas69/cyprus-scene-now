@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Check, Loader2 } from "lucide-react";
+import { Sparkles, Check, Loader2, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -161,46 +161,66 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5 max-w-xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-gradient-to-r from-seafoam to-aegean flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">Ο</span>
+                </div>
+                <Input
+                  type="text"
+                  placeholder={t.firstName}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="h-14 bg-[#3bb8c0]/40 border-0 text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/30 rounded-full pl-14 pr-6 text-base"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-gradient-to-r from-seafoam to-aegean flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">Ε</span>
+                </div>
+                <Input
+                  type="text"
+                  placeholder={t.lastName}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="h-14 bg-[#3bb8c0]/40 border-0 text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/30 rounded-full pl-14 pr-6 text-base"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-gradient-to-r from-seafoam to-aegean flex items-center justify-center">
+                <Mail className="w-3.5 h-3.5 text-white" />
+              </div>
               <Input
-                type="text"
-                placeholder={t.firstName}
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="h-14 bg-[#3bb8c0]/40 border-0 text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/30 rounded-full px-6 text-base"
-                disabled={isLoading}
-              />
-              <Input
-                type="text"
-                placeholder={t.lastName}
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="h-14 bg-[#3bb8c0]/40 border-0 text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/30 rounded-full px-6 text-base"
+                type="email"
+                placeholder={t.email}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-14 bg-[#3bb8c0]/40 border-0 text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/30 rounded-full pl-14 pr-6 text-base"
                 disabled={isLoading}
               />
             </div>
-            <Input
-              type="email"
-              placeholder={t.email}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-14 bg-[#3bb8c0]/40 border-0 text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/30 rounded-full px-6 text-base"
-              disabled={isLoading}
-            />
             <div>
-              <Input
-                type="password"
-                placeholder={t.password}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-14 bg-[#3bb8c0]/40 border-0 text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/30 rounded-full px-6 text-base"
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-gradient-to-r from-seafoam to-aegean flex items-center justify-center">
+                  <Lock className="w-3.5 h-3.5 text-white" />
+                </div>
+                <Input
+                  type="password"
+                  placeholder={t.password}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-14 bg-[#3bb8c0]/40 border-0 text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/30 rounded-full pl-14 pr-6 text-base"
+                  disabled={isLoading}
+                />
+              </div>
               <p className="text-[#2d6a7a] text-sm mt-2 text-left ml-4">{t.passwordHint}</p>
             </div>
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-14 bg-[#2d7a8c] hover:bg-[#256a7a] text-white font-semibold text-lg rounded-full transition-all duration-300"
+              className="w-full h-14 bg-gradient-to-r from-seafoam to-aegean hover:opacity-90 text-white font-semibold text-lg rounded-full transition-all duration-300"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
