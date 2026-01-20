@@ -5,8 +5,7 @@ import Footer from "@/components/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import MarqueeSection from "@/components/home/MarqueeSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
-import ValueSection from "@/components/home/ValueSection";
-import HowItWorksSection from "@/components/home/HowItWorksSection";
+// ValueSection and HowItWorksSection removed per user request
 // Temporarily hidden for launch - uncomment when ready
 // import StatsSection from "@/components/home/StatsSection";
 // import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
@@ -57,13 +56,7 @@ const Index = () => {
       */}
       {/* Removed wave dividers for cleaner premium look */}
       <MarqueeSection />
-      <ParallaxSection intensity={0.2}>
-        <FeaturesSection language={language} />
-      </ParallaxSection>
-      <ValueSection language={language} />
-      <ParallaxSection intensity={0.15} fadeOnScroll>
-        <HowItWorksSection language={language} />
-      </ParallaxSection>
+      <FeaturesSection language={language} />
       <UpcomingEventsPreview language={language} />
       {/* Temporarily hidden for launch - uncomment when ready
       <StatsSection language={language} />
