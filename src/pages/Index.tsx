@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import MarqueeSection from "@/components/home/MarqueeSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
+import ValueSection from "@/components/home/ValueSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 // Temporarily hidden for launch - uncomment when ready
 // import StatsSection from "@/components/home/StatsSection";
@@ -59,6 +60,7 @@ const Index = () => {
       <ParallaxSection intensity={0.2}>
         <FeaturesSection language={language} />
       </ParallaxSection>
+      <ValueSection language={language} />
       <ParallaxSection intensity={0.15} fadeOnScroll>
         <HowItWorksSection language={language} />
       </ParallaxSection>
