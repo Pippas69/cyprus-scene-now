@@ -124,9 +124,9 @@ const Blog = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-6"
+            className="inline-flex items-center gap-2 bg-seafoam/10 border border-seafoam/30 text-seafoam px-4 py-1.5 rounded-full text-sm font-medium mb-6"
           >
-            <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            <span className="w-2 h-2 bg-seafoam rounded-full animate-pulse" />
             {language === "el" ? "Τελευταία Άρθρα" : "Latest Articles"}
           </motion.div>
 
@@ -134,7 +134,7 @@ const Blog = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="font-urbanist text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[0.95] break-words"
+            className="font-cinzel text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-6 leading-tight tracking-tight"
           >
             {language === "el" ? "ΦΟΜΟ Blog" : "FOMO Blog"}
           </motion.h1>
