@@ -161,22 +161,22 @@ export const UnifiedEventCard = ({
           </Badge>}
       </div>
 
-      {/* BOTTOM HALF - Details */}
-      <div className="flex-1 p-3 flex flex-col justify-between min-h-0">
+      {/* BOTTOM HALF - Details - reduced spacing */}
+      <div className="flex-1 p-3 flex flex-col justify-between min-h-0 gap-0.5">
         {/* 1. Title (max 1 line) */}
         <h4 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
           {event.title}
         </h4>
 
         {/* 2. Date · Time */}
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Clock className="h-3 w-3 flex-shrink-0" />
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Clock className="h-3.5 w-3.5 flex-shrink-0" />
           <span className="text-xs truncate">{dateLabel}</span>
         </div>
 
         {/* 3. Location · City · Business */}
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <MapPin className="h-3 w-3 flex-shrink-0" />
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
           <span className="text-xs truncate">
             {locationLine || event.location}
           </span>
@@ -187,7 +187,7 @@ export const UnifiedEventCard = ({
             {t.startsIn} {minutesUntilStart} {t.minutes}
           </p>}
 
-        {/* 5. Interactive Action Bar */}
+        {/* 5. Interactive Action Bar - slightly smaller gap */}
         <CardActionBar
           entityId={event.id}
           entityType="event"

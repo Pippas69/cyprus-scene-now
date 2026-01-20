@@ -199,15 +199,15 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
           </Link>
 
-          {/* BOTTOM HALF: white info panel - exactly 50% */}
-          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-background p-3 flex flex-col rounded-b-xl">
+          {/* BOTTOM HALF: white info panel - exactly 50% with reduced gaps */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-background p-3 flex flex-col rounded-b-xl gap-0.5">
             {/* LINE 1: Title (business defined) */}
             <h3 className="font-bold text-sm leading-tight line-clamp-1">
               {offerData.title}
             </h3>
 
-            {/* LINE 2: Expiry date with calendar icon - aligned like events */}
-            <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+            {/* LINE 2: Expiry date with calendar icon */}
+            <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span className="text-xs">
                 {formatExpiryChip(offerData.end_at)}
@@ -215,7 +215,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </div>
 
             {/* LINE 3: Location (clickable) + Business name */}
-            <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
               <button 
                 onClick={handleMapClick}
                 className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
@@ -228,8 +228,8 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               </span>
             </div>
 
-            {/* LINE 4: Discount badge + Redeem button - bottom row */}
-            <div className="flex-1 flex items-end justify-between mt-1">
+            {/* LINE 4: Discount badge + Redeem button - bottom row - reduced gap */}
+            <div className="flex-1 flex items-end justify-between">
               {/* Discount badge on left */}
               <div className="flex items-center gap-1">
                 {offerData.percent_off && offerData.percent_off > 0 && (
