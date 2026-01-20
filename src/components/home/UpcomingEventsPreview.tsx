@@ -71,8 +71,9 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
   if (loading) {
     return (
-      <section className="py-20 md:py-32 bg-background">
-        <div className="container mx-auto px-4">
+      <section className="relative py-16 md:py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-seafoam/20 via-seafoam/10 to-background" />
+        <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-12">
             <Skeleton className="h-10 w-64 mx-auto mb-4" />
             <Skeleton className="h-6 w-96 mx-auto" />
@@ -92,8 +93,11 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   }
 
   return (
-    <section className="py-12 md:py-16 bg-background">
-      <div className="container mx-auto px-4">
+    <section className="relative py-12 md:py-16 overflow-hidden">
+      {/* Gradient background - seafoam at top transitioning to white at bottom */}
+      <div className="absolute inset-0 bg-gradient-to-b from-seafoam/20 via-seafoam/10 to-background" />
+      
+      <div className="container mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -86,7 +86,9 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
   };
 
   return (
-    <section className="py-16 pb-12 bg-background relative overflow-hidden">
+    <section className="relative py-16 pb-8 overflow-hidden">
+      {/* Gradient background - ends with soft seafoam at bottom */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-seafoam/10" />
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-seafoam/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-aegean/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
