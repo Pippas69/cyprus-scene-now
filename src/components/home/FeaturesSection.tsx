@@ -68,8 +68,8 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
 
   return (
     <section className="relative py-16 md:py-20 overflow-hidden">
-      {/* Seamless seafoam gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#4dd4c4] via-[#5ddcc8] to-[#6ee4cc]" />
+      {/* Solid seafoam background - continues from MarqueeSection */}
+      <div className="absolute inset-0 bg-[#4dd4c4]" />
       
       <div className="container mx-auto px-4 relative z-10">
         <motion.div

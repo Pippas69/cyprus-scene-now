@@ -18,34 +18,11 @@ const MarqueeSection = () => {
   ];
 
   return (
-    <section className="relative py-12 bg-gradient-to-b from-seafoam/5 via-aegean/8 to-seafoam/5 overflow-hidden">
-      {/* Top Wave Dividers - Multiple layered waves */}
-      <div className="absolute top-0 left-0 w-full overflow-hidden leading-none">
-        {/* First wave layer - lighter */}
-        <svg
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          className="relative block w-full h-16 md:h-24"
-        >
-          <path
-            d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,0 L0,0 Z"
-            className="fill-background"
-          />
-        </svg>
-        {/* Second wave layer - overlapping */}
-        <svg
-          viewBox="0 0 1440 80"
-          preserveAspectRatio="none"
-          className="absolute top-4 md:top-6 left-0 w-full h-12 md:h-16"
-        >
-          <path
-            d="M0,40 C180,80 360,0 540,40 C720,80 900,0 1080,40 C1260,80 1440,0 1440,40 L1440,0 L0,0 Z"
-            className="fill-background/60"
-          />
-        </svg>
-      </div>
+    <section className="relative py-12 overflow-hidden">
+      {/* Gradient from white (top) to seafoam (bottom) - covering the marquee */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-[#c5f0ea] to-[#4dd4c4]" />
 
-      <div className="py-6">
+      <div className="py-6 relative z-10">
         {/* Top marquee - left to right */}
         <div className="relative flex overflow-hidden mb-6">
           <motion.div
@@ -83,32 +60,6 @@ const MarqueeSection = () => {
             ))}
           </motion.div>
         </div>
-      </div>
-
-      {/* Bottom Wave Dividers - Multiple layered waves */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none rotate-180">
-        {/* First wave layer - lighter */}
-        <svg
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          className="relative block w-full h-16 md:h-24"
-        >
-          <path
-            d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,0 L0,0 Z"
-            className="fill-background"
-          />
-        </svg>
-        {/* Second wave layer - overlapping */}
-        <svg
-          viewBox="0 0 1440 80"
-          preserveAspectRatio="none"
-          className="absolute top-4 md:top-6 left-0 w-full h-12 md:h-16"
-        >
-          <path
-            d="M0,40 C180,80 360,0 540,40 C720,80 900,0 1080,40 C1260,80 1440,0 1440,40 L1440,0 L0,0 Z"
-            className="fill-background/60"
-          />
-        </svg>
       </div>
     </section>
   );
