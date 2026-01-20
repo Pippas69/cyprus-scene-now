@@ -1,135 +1,273 @@
 import { motion } from "framer-motion";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { HelpCircle } from "lucide-react";
+import { ChevronDown, Heart } from "lucide-react";
+import { useState } from "react";
 
 interface FAQSectionProps {
   language: "en" | "el";
 }
 
-const faqs = [
-  {
-    question: {
-      en: "What is ΦΟΜΟ and how does it work?",
-      el: "Τι είναι το ΦΟΜΟ και πώς λειτουργεί;",
+// User FAQs
+const userFaqs = {
+  el: [
+    {
+      question: "Τι είναι το ΦΟΜΟ και πώς λειτουργεί;",
+      answer: "Το ΦΟΜΟ είναι η κορυφαία πλατφόρμα ανακάλυψης εκδηλώσεων της Κύπρου. Περιηγηθείτε σε εκδηλώσεις, κάντε RSVP, κρατήσεις και ξεκλειδώστε αποκλειστικές προσφορές - όλα σε μία εφαρμογή.",
     },
-    answer: {
-      en: "ΦΟΜΟ is Cyprus's premier event discovery platform. Browse events, RSVP, make reservations, and unlock exclusive offers - all in one app. We connect you with the best happenings across the island.",
-      el: "Το ΦΟΜΟ είναι η κορυφαία πλατφόρμα ανακάλυψης εκδηλώσεων της Κύπρου. Περιηγηθείτε σε εκδηλώσεις, κάντε RSVP, κρατήσεις και ξεκλειδώστε αποκλειστικές προσφορές - όλα σε μία εφαρμογή.",
+    {
+      question: "Είναι δωρεάν το ΦΟΜΟ;",
+      answer: "Ναι! Το ΦΟΜΟ είναι εντελώς δωρεάν για τους χρήστες. Περιηγηθείτε σε εκδηλώσεις, αποθηκεύστε αγαπημένα, κάντε RSVP και εξαργυρώστε προσφορές χωρίς κόστος.",
     },
-  },
-  {
-    question: {
-      en: "Is ΦΟΜΟ free to use?",
-      el: "Είναι δωρεάν το ΦΟΜΟ;",
+    {
+      question: "Πώς λειτουργούν οι κρατήσεις;",
+      answer: "Για εκδηλώσεις που δέχονται κρατήσεις, μπορείτε να κλείσετε θέση απευθείας μέσω ΦΟΜΟ. Θα λάβετε κωδικό επιβεβαίωσης και QR code για να παρουσιάσετε στο μαγαζί.",
     },
-    answer: {
-      en: "Yes! ΦΟΜΟ is completely free for users. Browse events, save favorites, RSVP, and redeem offers at no cost. Businesses pay a small subscription to list their events and offers.",
-      el: "Ναι! Το ΦΟΜΟ είναι εντελώς δωρεάν για τους χρήστες. Περιηγηθείτε σε εκδηλώσεις, αποθηκεύστε αγαπημένα, κάντε RSVP και εξαργυρώστε προσφορές χωρίς κόστος.",
+    {
+      question: "Πώς λειτουργούν οι εκδηλώσεις; προσφορές",
+      answer: "Απλά περιηγηθείτε στις διαθέσιμες προσφορές, πατήστε για αποθήκευση και δείξτε τον κωδικό QR στο μαγαζί. Η επιχείρηση θα σκανάρει τον κωδικό σας για επαλήθευση.",
     },
-  },
-  {
-    question: {
-      en: "How do I redeem offers and discounts?",
-      el: "Πώς εξαργυρώνω προσφορές και εκπτώσεις;",
+  ],
+  en: [
+    {
+      question: "What is ΦΟΜΟ and how does it work?",
+      answer: "ΦΟΜΟ is Cyprus's premier event discovery platform. Browse events, RSVP, make reservations, and unlock exclusive offers - all in one app.",
     },
-    answer: {
-      en: "Simply browse available offers, tap to save them, and show the QR code at the venue. The business will scan your code to verify and apply the discount instantly.",
-      el: "Απλά περιηγηθείτε στις διαθέσιμες προσφορές, πατήστε για αποθήκευση και δείξτε τον κωδικό QR στο μαγαζί. Η επιχείρηση θα σκανάρει τον κωδικό σας για επαλήθευση.",
+    {
+      question: "Is ΦΟΜΟ free to use?",
+      answer: "Yes! ΦΟΜΟ is completely free for users. Browse events, save favorites, RSVP, and redeem offers at no cost.",
     },
-  },
-  {
-    question: {
-      en: "Can I list my business or event on ΦΟΜΟ?",
-      el: "Μπορώ να καταχωρήσω την επιχείρησή μου στο ΦΟΜΟ;",
+    {
+      question: "How do reservations work?",
+      answer: "For events that accept reservations, you can book your spot directly through ΦΟΜΟ. You'll receive a confirmation code and QR code to present at the venue.",
     },
-    answer: {
-      en: "Absolutely! Create a business account, complete verification, and start posting events and offers. We offer flexible subscription plans with analytics, boost features, and promotional tools.",
-      el: "Απολύτως! Δημιουργήστε επαγγελματικό λογαριασμό, ολοκληρώστε την επαλήθευση και ξεκινήστε να δημοσιεύετε εκδηλώσεις και προσφορές.",
+    {
+      question: "How do events and offers work?",
+      answer: "Simply browse available offers, tap to save them, and show the QR code at the venue. The business will scan your code to verify and apply the discount instantly.",
     },
-  },
-  {
-    question: {
-      en: "Which cities does ΦΟΜΟ cover?",
-      el: "Ποιες πόλεις καλύπτει το ΦΟΜΟ;",
+  ],
+};
+
+// Business FAQs
+const businessFaqs = {
+  el: [
+    {
+      question: "Μπορώ να καταχωρήσω την επιχείρησή μου στο ΦΟΜΟ;",
+      answer: "Απολύτως! Δημιουργήστε επαγγελματικό λογαριασμό, ολοκληρώστε την επαλήθευση και ξεκινήστε να δημοσιεύετε εκδηλώσεις και προσφορές.",
     },
-    answer: {
-      en: "We currently cover all major Cyprus cities: Nicosia, Limassol, Larnaca, Paphos, and Ayia Napa. We're constantly expanding to include more venues and areas across the island.",
-      el: "Αυτή τη στιγμή καλύπτουμε όλες τις μεγάλες πόλεις της Κύπρου: Λευκωσία, Λεμεσό, Λάρνακα, Πάφο και Αγία Νάπα. Επεκτεινόμαστε συνεχώς.",
+    {
+      question: "Τι κερδίζω αν βάλω την επιχείρησή μου στο ΦΟΜΟ;",
+      answer: "Αυξήστε την ορατότητα, προσελκύστε νέους πελάτες, διαχειριστείτε κρατήσεις και αναλύστε τα δεδομένα σας με τα εργαλεία analytics μας.",
     },
-  },
-  {
-    question: {
-      en: "How do reservations work?",
-      el: "Πώς λειτουργούν οι κρατήσεις;",
+    {
+      question: "Είναι απλή προβολή ή φέρνει πραγματικούς πελάτες;",
+      answer: "Το ΦΟΜΟ φέρνει πραγματικούς πελάτες! Με τις κρατήσεις, τα QR offers και τα RSVPs, μετράτε άμεσα τα αποτελέσματα.",
     },
-    answer: {
-      en: "For events that accept reservations, you can book your spot directly through ΦΟΜΟ. You'll receive a confirmation code and QR code to present at the venue. Some events may require approval.",
-      el: "Για εκδηλώσεις που δέχονται κρατήσεις, μπορείτε να κλείσετε θέση απευθείας μέσω ΦΟΜΟ. Θα λάβετε κωδικό επιβεβαίωσης και QR code για να παρουσιάσετε στο μαγαζί.",
+    {
+      question: "Υπάρχει δωρεάν πλάνο;",
+      answer: "Ναι, υπάρχει δωρεάν πλάνο με βασικές λειτουργίες. Αναβαθμίστε για περισσότερες δυνατότητες όπως boost και analytics.",
     },
-  },
-];
+  ],
+  en: [
+    {
+      question: "Can I list my business on ΦΟΜΟ?",
+      answer: "Absolutely! Create a business account, complete verification, and start posting events and offers.",
+    },
+    {
+      question: "What do I gain by adding my business to ΦΟΜΟ?",
+      answer: "Increase visibility, attract new customers, manage reservations, and analyze your data with our analytics tools.",
+    },
+    {
+      question: "Is it just exposure or does it bring real customers?",
+      answer: "ΦΟΜΟ brings real customers! With reservations, QR offers, and RSVPs, you can measure results directly.",
+    },
+    {
+      question: "Is there a free plan?",
+      answer: "Yes, there's a free plan with basic features. Upgrade for more capabilities like boost and analytics.",
+    },
+  ],
+};
+
+const FAQItem = ({ 
+  question, 
+  answer, 
+  isOpen, 
+  onClick 
+}: { 
+  question: string; 
+  answer: string; 
+  isOpen: boolean; 
+  onClick: () => void;
+}) => (
+  <div 
+    className="bg-[#e8f4f4]/80 backdrop-blur-sm rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-[#e0f0f0]"
+    onClick={onClick}
+  >
+    <div className="flex items-center justify-between px-5 py-4">
+      <span className="text-[#1a4a5a] font-medium text-sm md:text-base pr-4">{question}</span>
+      <ChevronDown 
+        className={`w-5 h-5 text-[#2a6a7a] flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+      />
+    </div>
+    {isOpen && (
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: "auto", opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        className="px-5 pb-4"
+      >
+        <p className="text-[#3a7a8a] text-sm">{answer}</p>
+      </motion.div>
+    )}
+  </div>
+);
 
 const FAQSection = ({ language }: FAQSectionProps) => {
+  const [openUserFaq, setOpenUserFaq] = useState<number | null>(null);
+  const [openBusinessFaq, setOpenBusinessFaq] = useState<number | null>(null);
+
   const content = {
     en: {
-      title: "Frequently Asked Questions",
-      subtitle: "Everything you need to know about ΦΟΜΟ",
+      title: '"We had the same questions at the beginning!"',
+      userTitle: "User's FAQ",
+      businessTitle: "Businesses' FAQ",
+      tagline: "If it's happening, it's already on ΦΟΜΟ.",
     },
     el: {
-      title: "Συχνές Ερωτήσεις",
-      subtitle: "Όλα όσα χρειάζεται να ξέρετε για το ΦΟΜΟ",
+      title: '"Κι εμείς τις ίδιες απορίες είχαμε στην αρχή!"',
+      userTitle: "User's FAQ",
+      businessTitle: "Businesses' FAQ",
+      tagline: "Αν συμβαίνει, είναι ήδη στο ΦΟΜΟ.",
     },
   };
 
+  const t = content[language];
+  const currentUserFaqs = userFaqs[language];
+  const currentBusinessFaqs = businessFaqs[language];
+
   return (
-    <section className="py-20 md:py-32 bg-gradient-to-b from-background to-seafoam/5">
+    <section className="py-16 md:py-24 bg-gradient-to-b from-[#2da0b0] via-[#35b5b5] to-[#4dd4c4]">
       <div className="container mx-auto px-4">
+        {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-12 md:mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-aegean/10 text-aegean mb-6">
-            <HelpCircle className="w-4 h-4" />
-            <span className="text-sm font-medium">FAQ</span>
-          </div>
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
-            {content[language].title}
+          <h2 className="font-cinzel text-2xl md:text-4xl lg:text-5xl font-bold text-[#1a3a4a] italic leading-tight">
+            {t.title}
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {content[language].subtitle}
-          </p>
         </motion.div>
 
+        {/* Two Column FAQs */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto mb-16">
+          {/* User's FAQ */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <h3 className="text-xl md:text-2xl font-bold text-[#0d3b4a] mb-6">{t.userTitle}</h3>
+            <div className="space-y-3">
+              {currentUserFaqs.map((faq, index) => (
+                <FAQItem
+                  key={index}
+                  question={faq.question}
+                  answer={faq.answer}
+                  isOpen={openUserFaq === index}
+                  onClick={() => setOpenUserFaq(openUserFaq === index ? null : index)}
+                />
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Business FAQ */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <h3 className="text-xl md:text-2xl font-bold text-[#0d3b4a] mb-6">{t.businessTitle}</h3>
+            <div className="space-y-3">
+              {currentBusinessFaqs.map((faq, index) => (
+                <FAQItem
+                  key={index}
+                  question={faq.question}
+                  answer={faq.answer}
+                  isOpen={openBusinessFaq === index}
+                  onClick={() => setOpenBusinessFaq(openBusinessFaq === index ? null : index)}
+                />
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Heart Icon with Loading Bar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="max-w-3xl mx-auto"
+          className="flex flex-col items-center mb-8"
         >
-          <Accordion type="single" collapsible className="space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem
-                key={index}
-                value={`item-${index}`}
-                className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-6 data-[state=open]:shadow-card transition-shadow"
-              >
-                <AccordionTrigger className="text-left font-medium text-foreground hover:text-aegean transition-colors py-5">
-                  {faq.question[language]}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5">
-                  {faq.answer[language]}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          <div className="relative">
+            <Heart className="w-12 h-12 text-[#2a8a9a] fill-[#2a8a9a]" />
+          </div>
+          <div className="w-24 h-2 bg-[#1a5a6a]/30 rounded-full mt-2 overflow-hidden">
+            <motion.div 
+              className="h-full bg-[#2a8a9a] rounded-full"
+              initial={{ width: "0%" }}
+              whileInView={{ width: "100%" }}
+              viewport={{ once: true }}
+              transition={{ duration: 2, ease: "easeOut" }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Tagline */}
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center text-2xl md:text-3xl font-semibold text-[#0d3b4a] mb-8"
+        >
+          {t.tagline}
+        </motion.p>
+
+        {/* App Store Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex flex-wrap justify-center gap-4"
+        >
+          {/* App Store Button */}
+          <button
+            type="button"
+            onClick={() => console.log("App Store clicked")}
+            className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-seafoam to-aegean text-white rounded-xl hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg"
+          >
+            <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+            <div className="flex flex-col items-start">
+              <span className="text-xs opacity-90">Download on the</span>
+              <span className="text-lg font-semibold -mt-1">App Store</span>
+            </div>
+          </button>
+
+          {/* Google Play Button */}
+          <button
+            type="button"
+            onClick={() => console.log("Google Play clicked")}
+            className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-seafoam to-aegean text-white rounded-xl hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg"
+          >
+            <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+              <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
+            </svg>
+            <div className="flex flex-col items-start">
+              <span className="text-xs opacity-90">GET IT ON</span>
+              <span className="text-lg font-semibold -mt-1">Google Play</span>
+            </div>
+          </button>
         </motion.div>
       </div>
     </section>

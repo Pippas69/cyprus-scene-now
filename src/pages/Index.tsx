@@ -67,12 +67,12 @@ const Index = () => {
       <StatsSection language={language} />
       */}
       <TestimonialsSection language={language} />
-      {/* Temporarily hidden for launch - uncomment when ready
-      <NewsletterSection language={language} />
-      */}
-      <WaitlistSignup language={language} />
-      <FAQSection language={language} />
-      <Footer />
+      {/* Three connected sections with seamless gradients */}
+      <div className="relative">
+        <WaitlistSignup language={language} />
+        <FAQSection language={language} />
+        <Footer />
+      </div>
     </div>
   );
 };
