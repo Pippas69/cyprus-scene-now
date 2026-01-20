@@ -296,8 +296,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         </div>
 
         {/* Location Dropdown Header (no FOMO box) */}
-        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 pt-4">
-          <div className="flex items-center mb-4">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 pt-3">
+          <div className="flex items-center mb-2">
             <CompactLocationDropdown
               language={language}
               selectedCity={selectedCity}
@@ -318,13 +318,13 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
         {/* Smart Search Bar */}
         {showNavbar && (
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 mt-4 mb-6 relative z-30">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 mt-3 mb-3 relative z-30">
             <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
           </div>
         )}
 
-        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-hidden">
-          <div className="space-y-6">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 overflow-hidden">
+          <div className="space-y-4">
             {/* POSITION #2: Featured Businesses (no header, just profiles) */}
             {profileBoosts && profileBoosts.length > 0 && (
               <BoostedProfilesScroller
@@ -337,25 +337,26 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
             {/* Filters (categories + student discount) - directly above businesses */}
             <div data-filters className="w-full">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-col gap-2">
+                {/* Categories row */}
+                <div className="flex items-center gap-2">
                   <HierarchicalCategoryFilter
                     language={language}
                     selectedCategories={selectedCategories}
                     onCategoryChange={setSelectedCategories}
                   />
+                </div>
 
+                {/* Student Discount button - centered below categories */}
+                <div className="flex justify-center w-full">
                   <Button
                     variant={showStudentDiscounts ? "default" : "outline"}
                     size="sm"
                     onClick={() => setShowStudentDiscounts(!showStudentDiscounts)}
-                    className="h-8 px-3 text-xs gap-1.5 shrink-0"
+                    className="h-8 px-4 text-xs gap-1.5"
                   >
                     <GraduationCap className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">
-                      {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
-                    </span>
-                    <span className="sm:hidden">🎓</span>
+                    {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
                   </Button>
                 </div>
 
