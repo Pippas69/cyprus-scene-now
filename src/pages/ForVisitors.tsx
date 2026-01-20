@@ -200,30 +200,30 @@ const ForVisitors = () => {
       <InfoNavbar />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 bg-gradient-to-b from-primary/5 to-background">
+      <section className="pt-32 pb-20 px-4 bg-gradient-to-b from-seafoam/5 to-background">
         <div className="container mx-auto max-w-5xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 bg-seafoam/10 text-seafoam px-4 py-2 rounded-full mb-6 border border-seafoam/20">
               <Sparkles className="w-4 h-4" />
               <span className="text-sm font-medium">
                 {language === "el" ? "Για επισκέπτες" : "For visitors"}
               </span>
             </div>
-            <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
+            <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-6 tracking-tight">
               {content.hero.title}
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               {content.hero.subtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="text-lg">
+              <Button asChild size="lg" className="text-lg bg-seafoam hover:bg-seafoam/90 text-white">
                 <Link to="/signup">{content.hero.cta}</Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="text-lg">
+              <Button asChild variant="outline" size="lg" className="text-lg border-aegean/30 text-aegean hover:bg-aegean/5">
                 <Link to="/feed">{content.hero.exploreCta}</Link>
               </Button>
             </div>
@@ -234,7 +234,7 @@ const ForVisitors = () => {
       {/* Features Grid */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-center text-foreground mb-12">
+          <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-center text-seafoam mb-12">
             {content.features.title}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -296,28 +296,6 @@ const ForVisitors = () => {
         </div>
       </section>
 
-      {/* Guest Mode */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-3xl">
-          <Card className="bg-primary text-primary-foreground overflow-hidden">
-            <CardContent className="p-8 md:p-12 text-center">
-              <Users className="w-12 h-12 mx-auto mb-6 opacity-80" />
-              <h2 className="font-cinzel text-2xl md:text-3xl font-bold mb-4">
-                {content.guestMode.title}
-              </h2>
-              <p className="text-primary-foreground/80 mb-6 max-w-xl mx-auto">
-                {content.guestMode.description}
-              </p>
-              <Button asChild variant="secondary" size="lg">
-                <Link to="/feed" className="gap-2">
-                  {content.guestMode.cta}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
 
       {/* What You Unlock */}
       <section className="py-20 px-4 bg-muted/30">
