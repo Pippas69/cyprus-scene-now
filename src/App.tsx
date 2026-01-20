@@ -54,6 +54,9 @@ import OfferPurchaseSuccess from "./pages/OfferPurchaseSuccess";
 import Offers from "./pages/Offers";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import CookiesPolicy from "./pages/CookiesPolicy";
+import ForVisitors from "./pages/ForVisitors";
+import ForBusinesses from "./pages/ForBusinesses";
 import VerifyStudent from "./pages/VerifyStudent";
 
 const queryClient = new QueryClient();
@@ -79,6 +82,9 @@ function AppContent() {
           <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
           <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
           <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
+          <Route path="/cookies" element={<PageTransition><CookiesPolicy /></PageTransition>} />
+          <Route path="/for-visitors" element={<PageTransition><ForVisitors /></PageTransition>} />
+          <Route path="/for-businesses" element={<PageTransition><ForBusinesses /></PageTransition>} />
           <Route path="/feed" element={<PageTransition><UserLayout><Feed showNavbar={false} /></UserLayout></PageTransition>} />
           <Route path="/ekdiloseis" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
           <Route path="/xartis" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />
