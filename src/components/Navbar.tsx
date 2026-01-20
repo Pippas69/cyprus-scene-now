@@ -163,9 +163,6 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
-
-            {/* Global Search */}
-            <GlobalSearch language={language} />
             
             {/* Messages Icon (only for logged-in users) */}
             {user && (
