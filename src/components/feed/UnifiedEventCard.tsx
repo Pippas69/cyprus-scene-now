@@ -153,9 +153,6 @@ export const UnifiedEventCard = ({
             <PremiumBadge type="event" />
           </div>}
 
-        {/* Category Badge */}
-        {event.category?.[0]}
-
         {/* Free Badge */}
         {showFreeBadge && <Badge className="absolute bottom-2 right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
             {t.free}
