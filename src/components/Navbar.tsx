@@ -280,56 +280,65 @@ const Navbar = () => {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] bg-background">
                 <div className="flex flex-col gap-6 mt-8">
-                  <button onClick={() => {
-                  navigate("/ekdiloseis");
-                  setMobileOpen(false);
-                }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
-                    {t.events}
-                  </button>
-                  <button onClick={() => {
-                    navigate("/xartis");
-                    setMobileOpen(false);
-                  }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
-                    {t.map}
-                  </button>
-                  <button className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
-                    {t.discounts}
-                  </button>
-                  
-                  {user ? <>
-                      <button onClick={() => {
-                    const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
-                    navigate(`${basePath}?tab=profile`);
-                    setMobileOpen(false);
-                  }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
+                  {user ? (
+                    <>
+                      <button 
+                        onClick={() => {
+                          const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
+                          navigate(`${basePath}?tab=profile`);
+                          setMobileOpen(false);
+                        }} 
+                        className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
+                      >
                         {userRole === 'business' ? t.myDashboard : t.profile}
                       </button>
-                      <button onClick={() => {
-                    handleSignOut();
-                    setMobileOpen(false);
-                  }} className="text-destructive font-inter font-medium text-lg hover:text-destructive/80 transition-colors">
+                      <button 
+                        onClick={() => {
+                          handleSignOut();
+                          setMobileOpen(false);
+                        }} 
+                        className="text-destructive font-inter font-medium text-lg hover:text-destructive/80 transition-colors"
+                      >
                         {t.signOut}
                       </button>
-                    </> : <button onClick={() => {
-                  navigate("/login");
-                  setMobileOpen(false);
-                }} className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors">
-                      {t.login}
-                    </button>}
-                  {!user && <div className="pt-4 border-t space-y-3">
-                    <Button variant="gradient" className="w-full" size="lg" onClick={() => {
-                    navigate("/signup");
-                    setMobileOpen(false);
-                  }}>
-                      {t.joinFomo}
-                    </Button>
-                    <Button variant="premium" className="w-full" size="lg" onClick={() => {
-                    navigate("/signup-business");
-                    setMobileOpen(false);
-                  }}>
-                      {t.forBusinesses}
-                    </Button>
-                  </div>}
+                    </>
+                  ) : (
+                    <div className="space-y-4">
+                      <Button 
+                        variant="gradient" 
+                        className="w-full" 
+                        size="lg" 
+                        onClick={() => {
+                          navigate("/signup");
+                          setMobileOpen(false);
+                        }}
+                      >
+                        {t.joinFomo}
+                      </Button>
+                      <Button 
+                        variant="premium" 
+                        className="w-full" 
+                        size="lg" 
+                        onClick={() => {
+                          navigate("/signup-business");
+                          setMobileOpen(false);
+                        }}
+                      >
+                        {t.forBusinesses}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-aegean text-aegean hover:bg-aegean hover:text-white" 
+                        size="lg" 
+                        onClick={() => {
+                          navigate("/login");
+                          setMobileOpen(false);
+                        }}
+                      >
+                        {t.login}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
