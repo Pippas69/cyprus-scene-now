@@ -131,13 +131,14 @@ export const UnifiedEventCard = ({
 
   // Check if event is free
   const showFreeBadge = isFree || event.price_tier === "free";
+  
   return <Link
       ref={cardRef}
       to={`/event/${event.id}`}
       onClick={handleCardClick}
-      className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "aspect-square overflow-visible group", sizeClasses[size], className)}>
-      {/* TOP - Image (60%) */}
-      <div className="relative flex-[1.5] overflow-visible">
+      className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "overflow-visible group", sizeClasses[size], className)}>
+      {/* TOP - Image section - fixed height */}
+      <div className="relative h-40 overflow-visible">
         {/* Image container - clipped */}
         <div className="absolute inset-0 overflow-hidden rounded-t-xl">
           {event.cover_image_url ? <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">

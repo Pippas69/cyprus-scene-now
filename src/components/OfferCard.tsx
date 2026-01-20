@@ -176,94 +176,27 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
       className={cn("overflow-visible transition-all duration-300", className)}
       style={style}
     >
-      {/* Fixed square layout with exact 50/50 split */}
       <CardContent className="p-0">
-        <div className="relative w-full aspect-square">
-          {/* TOP HALF: cover image - exactly 50% */}
-          <Link
-            to={`/business/${offerData.business_id}`}
-            className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden rounded-t-xl"
-            aria-label={offerData.businesses.name}
-          >
-            {offerData.businesses.cover_url || offerData.businesses.logo_url ? (
-              <img
-                src={(offerData.businesses.cover_url || offerData.businesses.logo_url) as string}
-                alt={offerData.businesses.name}
-                className="absolute inset-0 h-full w-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-muted" />
-            )}
-            {/* Subtle premium overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
-          </Link>
-
-          {/* BOTTOM HALF: white info panel - exactly 50% with reduced gaps */}
-          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-background p-3 flex flex-col rounded-b-xl gap-0.5">
-            {/* LINE 1: Title (business defined) */}
-            <h3 className="font-bold text-sm leading-tight line-clamp-1">
-              {offerData.title}
-            </h3>
-
-            {/* LINE 2: Expiry date with calendar icon */}
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5 shrink-0" />
-              <span className="text-xs">
-                {formatExpiryChip(offerData.end_at)}
-              </span>
-            </div>
-
-            {/* LINE 3: Location (clickable) + Business name */}
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <button 
-                onClick={handleMapClick}
-                className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
-                title={language === "el" ? "Δες στο χάρτη" : "View on map"}
-              >
-                <MapPin className="h-3.5 w-3.5" />
-              </button>
-              <span className="text-xs truncate">
-                {offerData.businesses.city} · {offerData.businesses.name}
-              </span>
-            </div>
-
-            {/* LINE 4: Discount badge + Redeem button - bottom row - reduced gap */}
-            <div className="flex-1 flex items-end justify-between">
-              {/* Discount badge on left */}
-              <div className="flex items-center gap-1">
-                {offerData.percent_off && offerData.percent_off > 0 && (
-                  <Badge variant="default" className="text-xs px-2 py-0.5 h-6">
-                    -{offerData.percent_off}%
-                  </Badge>
-                )}
-                {isCredit && (
-                  <Badge variant="default" className="text-xs px-2 py-0.5 h-6">
-                    <Wallet className="h-3 w-3 mr-0.5" />
-                    {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
-                  </Badge>
-                )}
-              </div>
-              {/* Redeem button on right */}
-              <Button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
-                  setIsPurchaseOpen(true);
-                }} 
-                size="sm" 
-                variant="default"
-                className="text-xs h-7 px-3"
-              >
-                {language === "el" ? "Εξαργύρωσε" : "Redeem"}
-              </Button>
-            </div>
-          </div>
-
-          {/* Top-right: Premium badge ONLY for boosted offers (handled in BoostedContentSection) */}
-
-          {/* Top-left: Reservation badge (ONLY if exists) */}
+        {/* Image section - fixed height */}
+        <Link
+          to={`/business/${offerData.business_id}`}
+          className="block relative h-40 overflow-hidden rounded-t-xl"
+          aria-label={offerData.businesses.name}
+        >
+          {offerData.businesses.cover_url || offerData.businesses.logo_url ? (
+            <img
+              src={(offerData.businesses.cover_url || offerData.businesses.logo_url) as string}
+              alt={offerData.businesses.name}
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-muted" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+          
+          {/* Premium badge for boosted */}
+          {/* Reservation badge */}
           {offerData.requires_reservation && (
             <div className="absolute left-3 top-3 z-10">
               <Badge variant="secondary" className="bg-background/85 backdrop-blur text-xs">
@@ -272,16 +205,74 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               </Badge>
             </div>
           )}
-
-          {/* Bundle badge (if applicable) */}
+          
+          {/* Bundle badge */}
           {isBundle && (
-            <div className="absolute left-3 bottom-[52%] z-10">
+            <div className="absolute left-3 bottom-3 z-10">
               <Badge variant="outline" className="text-xs bg-background/85 backdrop-blur">
                 <Package className="h-3 w-3 mr-1" />
                 {language === "el" ? "Πακέτο" : "Bundle"}
               </Badge>
             </div>
           )}
+        </Link>
+
+        {/* Content section - compact spacing */}
+        <div className="p-3 space-y-1">
+          {/* Title */}
+          <h3 className="font-bold text-sm leading-tight line-clamp-1">
+            {offerData.title}
+          </h3>
+
+          {/* Expiry date */}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5 shrink-0" />
+            <span className="text-xs">{formatExpiryChip(offerData.end_at)}</span>
+          </div>
+
+          {/* Location */}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <button 
+              onClick={handleMapClick}
+              className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+              title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-xs truncate">
+              {offerData.businesses.city} · {offerData.businesses.name}
+            </span>
+          </div>
+
+          {/* Bottom row: Discount badge + Redeem button */}
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center gap-1">
+              {offerData.percent_off && offerData.percent_off > 0 && (
+                <Badge variant="outline" className="text-xs px-2 py-0.5 h-6 font-semibold">
+                  -{offerData.percent_off}%
+                </Badge>
+              )}
+              {isCredit && (
+                <Badge variant="outline" className="text-xs px-2 py-0.5 h-6">
+                  <Wallet className="h-3 w-3 mr-0.5" />
+                  {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
+                </Badge>
+              )}
+            </div>
+            <Button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
+                setIsPurchaseOpen(true);
+              }} 
+              size="sm" 
+              variant="default"
+              className="text-xs h-7 px-3"
+            >
+              {language === "el" ? "Εξαργύρωσε" : "Redeem"}
+            </Button>
+          </div>
         </div>
       </CardContent>
 
