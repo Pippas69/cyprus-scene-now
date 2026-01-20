@@ -134,28 +134,28 @@ const Navbar = () => {
           </button>
 
           {/* Desktop Horizontal Navigation Links */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-4 ml-8 mr-6">
             <button 
               onClick={() => navigate("/")} 
-              className="text-foreground font-inter font-medium hover:text-aegean transition-colors"
+              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
             >
               {language === "el" ? "Αρχική" : "Home"}
             </button>
             <button 
               onClick={() => navigate("/feed")} 
-              className="text-foreground font-inter font-medium hover:text-aegean transition-colors"
+              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
             >
               {language === "el" ? "Εξερεύνηση" : "Explore"}
             </button>
             <button 
               onClick={() => navigate("/for-visitors")} 
-              className="text-foreground font-inter font-medium hover:text-aegean transition-colors"
+              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
             >
               {language === "el" ? "Για Επισκέπτες" : "For Visitors"}
             </button>
             <button 
               onClick={() => navigate("/for-businesses")} 
-              className="text-foreground font-inter font-medium hover:text-aegean transition-colors"
+              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
             >
               {language === "el" ? "Για Επιχειρήσεις" : "For Businesses"}
             </button>
