@@ -121,15 +121,24 @@ const InfoNavbar = () => {
                   {link.label}
                 </Link>
               ))}
-              <div className="flex items-center gap-4 pt-4 border-t border-border">
+              <div className="flex items-center gap-3 pt-4 border-t border-border">
                 <LanguageToggle />
-                <Link to="/login" className="flex-1">
-                  <Button variant="outline" size="sm" className="w-full">
+
+                <Link to="/login" className="shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="px-3 whitespace-nowrap"
+                  >
                     {t.login}
                   </Button>
                 </Link>
-                <Link to="/signup-business" className="flex-1">
-                  <Button size="sm" className="w-full">
+
+                <Link to="/signup-business" className="flex-1 min-w-0">
+                  <Button
+                    size="sm"
+                    className="w-full px-3 whitespace-normal leading-tight h-auto py-2"
+                  >
                     {t.getStarted}
                   </Button>
                 </Link>
