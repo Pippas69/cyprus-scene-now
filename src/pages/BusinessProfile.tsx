@@ -281,35 +281,39 @@ const BusinessProfile = () => {
           {t.back}
         </RippleButton>
 
-        {/* Logo positioned at bottom center */}
-        <motion.div 
-          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2"
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
-        >
-          <div className="relative">
+        {/* Avatar + Follow/Share row - centered */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          >
             <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg ring-2 ring-primary/20">
               <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
               <AvatarFallback className="text-3xl font-bold bg-muted">
                 {business.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            
-            {/* Follow + Share icons to the right of avatar circle */}
-            <div className="absolute -right-16 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <FollowButton businessId={business.id} language={language} variant="compact" />
-              <button
-                type="button"
-                onClick={handleShareProfile}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
-                title={t.share}
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
+          
+          {/* Follow + Share icons to the right of avatar */}
+          <motion.div 
+            className="flex items-center gap-1"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <FollowButton businessId={business.id} language={language} variant="compact" />
+            <button
+              type="button"
+              onClick={handleShareProfile}
+              className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+              title={t.share}
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+          </motion.div>
+        </div>
       </div>
 
       {/* Business Info - centered below avatar */}
