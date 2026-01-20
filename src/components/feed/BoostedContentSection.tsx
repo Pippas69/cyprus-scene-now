@@ -221,14 +221,14 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
 
   return (
     <>
-      {/* Matching UnifiedEventCard boosted size: 240x240 with same flex ratios */}
+      {/* Matching UnifiedEventCard boosted size exactly: 240px width, h-40 image */}
       <div
         ref={cardRef as any}
-        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[240px] max-w-[240px] aspect-square overflow-visible"
+        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[240px] max-w-[240px] overflow-visible"
       >
-        {/* TOP - Image (60% like event cards) */}
-        <div className="relative flex-[1.5] overflow-visible">
-          {/* Image container clipped */}
+        {/* TOP - Image section - fixed h-40 like UnifiedEventCard */}
+        <div className="relative h-40 overflow-visible">
+          {/* Image container - clipped */}
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {coverImage ? (
               <img
@@ -250,27 +250,27 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           </div>
         </div>
 
-        {/* BOTTOM - Offer Details (40% like event cards) */}
-        <div className="flex-1 p-3 flex flex-col justify-between min-h-0 bg-background rounded-b-xl">
+        {/* BOTTOM HALF - Offer Details - matching UnifiedEventCard structure */}
+        <div className="flex-1 p-3 flex flex-col justify-between min-h-0 gap-0.5">
           {/* LINE 1: Title - aligned with event title */}
           <h4 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
             {offer.title}
           </h4>
           
           {/* LINE 2: Expiry with calendar icon - aligned with event date/time */}
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <Calendar className="h-3 w-3 flex-shrink-0" />
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="text-xs truncate">{getExpiryLabel()}</span>
           </div>
 
           {/* LINE 3: Location + Business - aligned with event location */}
-          <div className="flex items-center gap-1 text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
             <button 
               onClick={handleMapClick}
               className="flex items-center text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
               title={language === "el" ? "Δες στο χάρτη" : "View on map"}
             >
-              <MapPin className="h-3 w-3" />
+              <MapPin className="h-3.5 w-3.5" />
             </button>
             <span className="text-xs truncate">
               {offer.businesses?.city} · {offer.businesses?.name}
@@ -278,7 +278,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           </div>
 
           {/* LINE 4: Discount badge + Redeem button - bottom row */}
-          <div className="flex items-end justify-between">
+          <div className="flex items-center justify-between mt-auto">
             {/* Discount badge on left */}
             {offer.percent_off && offer.percent_off > 0 && (
               <Badge variant="default" className="text-xs px-2 py-0.5 h-6">
