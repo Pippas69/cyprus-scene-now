@@ -335,7 +335,7 @@ const BusinessProfile = () => {
           </div>
 
           {/* Category Badges - centered */}
-          <div className="flex flex-wrap justify-center gap-2 mb-2">
+          <div className="flex flex-wrap justify-center gap-2 mb-2 -ml-6">
             {business.category.map((cat) => (
               <Badge 
                 key={cat} 
@@ -348,7 +348,7 @@ const BusinessProfile = () => {
           
           {/* Description - centered */}
           {business.description && (
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
+            <p className="text-muted-foreground text-sm max-w-md mx-auto -ml-6">
               {business.description}
             </p>
           )}
