@@ -325,7 +325,7 @@ const BusinessProfile = () => {
           transition={{ delay: 0.3 }}
         >
           {/* Name + Verified - centered */}
-          <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="flex items-center justify-center gap-2 mb-2 -ml-4">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {business.name}
             </h1>
