@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { GlobalSearch } from '@/components/search/GlobalSearch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { User as UserIcon, Settings, LogOut } from 'lucide-react';
+import { Search, User as UserIcon, Settings, LogOut } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
 import LanguageToggle from '@/components/LanguageToggle';
@@ -102,7 +103,21 @@ export function UserLayout({ children }: UserLayoutProps) {
 
           {/* Search */}
           <div className="hidden md:flex flex-1 max-w-md mx-4 min-w-0">
-            <GlobalSearch language={language} />
+            <GlobalSearch language={language} resultTypes={['business']} />
+          </div>
+
+          {/* Mobile Search Button */}
+          <div className="md:hidden mr-2 shrink-0">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
+                  <Search className="h-5 w-5" aria-hidden="true" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="top" className="h-full">
+                <GlobalSearch language={language} fullscreen resultTypes={['business']} />
+              </SheetContent>
+            </Sheet>
           </div>
 
           {/* Language Toggle */}

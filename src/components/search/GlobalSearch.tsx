@@ -25,9 +25,10 @@ interface SearchResult {
 interface GlobalSearchProps {
   language: 'el' | 'en';
   fullscreen?: boolean;
+  resultTypes?: Array<'business' | 'event'>;
 }
 
-export function GlobalSearch({ language, fullscreen = false }: GlobalSearchProps) {
+export function GlobalSearch({ language, fullscreen = false, resultTypes }: GlobalSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,7 +92,11 @@ export function GlobalSearch({ language, fullscreen = false }: GlobalSearchProps
       });
 
       if (!error && data) {
-        setResults(data as SearchResult[]);
+        const typed = data as SearchResult[];
+        const filtered = resultTypes?.length
+          ? typed.filter((r) => resultTypes.includes(r.result_type))
+          : typed;
+        setResults(filtered);
       }
 
       setIsLoading(false);
@@ -99,7 +104,7 @@ export function GlobalSearch({ language, fullscreen = false }: GlobalSearchProps
 
     const debounce = setTimeout(searchContent, 300);
     return () => clearTimeout(debounce);
-  }, [query]);
+  }, [query, resultTypes]);
 
   const handleResultClick = (result: SearchResult) => {
     setIsOpen(false);
