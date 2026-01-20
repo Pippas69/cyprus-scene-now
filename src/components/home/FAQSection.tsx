@@ -144,21 +144,9 @@ const FAQSection = ({ language }: FAQSectionProps) => {
   const currentBusinessFaqs = businessFaqs[language];
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-[#2da0b0] via-[#35b5b5] to-[#4dd4c4]">
+    <section className="py-12 md:py-16 bg-gradient-to-b from-[#2da0b0] via-[#35b5b5] to-[#4dd4c4]">
       <div className="container mx-auto px-4">
-        {/* Title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12 md:mb-16"
-        >
-          <h2 className="font-cinzel text-2xl md:text-4xl lg:text-5xl font-bold text-[#1a3a4a] italic leading-tight">
-            {t.title}
-          </h2>
-        </motion.div>
-
-        {/* Two Column FAQs */}
+        {/* Two Column FAQs - No title, reduced spacing */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto mb-16">
           {/* User's FAQ */}
           <motion.div
