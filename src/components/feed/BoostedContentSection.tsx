@@ -250,8 +250,8 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           </div>
         </div>
 
-        {/* BOTTOM HALF - Offer Details - matching UnifiedEventCard structure */}
-        <div className="flex-1 p-3 flex flex-col justify-between min-h-0 gap-0.5">
+        {/* BOTTOM HALF - Offer Details - tuned to close at same height as boosted events */}
+        <div className="flex-1 px-3 pt-3 pb-2 flex flex-col justify-between min-h-0 gap-0.5">
           {/* LINE 1: Title - aligned with event title */}
           <h4 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
             {offer.title}
@@ -277,7 +277,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
             </span>
           </div>
 
-          {/* LINE 4: Discount badge + Redeem button - bottom row - smaller to match event card height */}
+          {/* LINE 4: Discount badge + Redeem button - bottom row (slightly smaller + tighter) */}
           <div className="flex items-center justify-between">
             {/* Discount badge on left - smaller */}
             {offer.percent_off && offer.percent_off > 0 && (
@@ -290,7 +290,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
               onClick={handleRedeemClick}
               size="sm" 
               variant="default"
-              className="text-[10px] h-6 px-2 ml-auto"
+              className="text-[10px] h-5 px-2 ml-auto"
             >
               {t.redeem}
             </Button>
