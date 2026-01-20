@@ -68,20 +68,21 @@ const Footer = () => {
   return (
     <footer className="bg-gradient-to-b from-[#4dd4c4] via-[#45c8c0] to-[#3bbcb8]">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-16">
+        {/* Mobile: 2x2 grid, Desktop: 4 columns */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-16">
           {/* Column 1 - Logo & Description */}
           <div className="space-y-4">
             <FooterLogo />
             <div className="text-[#0d3b4a] text-sm leading-relaxed space-y-1">
               <p>{t.description}</p>
-              <p>{t.descriptionSub}</p>
+              <p className="hidden sm:block">{t.descriptionSub}</p>
             </div>
           </div>
 
           {/* Column 2 - ΦΟΜΟ Links */}
-          <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg text-white">ΦΟΜΟ</h4>
-            <ul className="space-y-2">
+          <div className="space-y-3">
+            <h4 className="font-poppins font-semibold text-base lg:text-lg text-white">ΦΟΜΟ</h4>
+            <ul className="space-y-1.5">
               <li>
                 <Link 
                   to="/feed" 
@@ -118,9 +119,9 @@ const Footer = () => {
           </div>
 
           {/* Column 3 - Terms & Policies */}
-          <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg text-white">{t.termsTitle}</h4>
-            <ul className="space-y-2">
+          <div className="space-y-3">
+            <h4 className="font-poppins font-semibold text-base lg:text-lg text-white">{t.termsTitle}</h4>
+            <ul className="space-y-1.5">
               <li>
                 <Link 
                   to="/terms" 
@@ -149,9 +150,9 @@ const Footer = () => {
           </div>
 
           {/* Column 4 - Contact */}
-          <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg text-white">{t.contactTitle}</h4>
-            <ul className="space-y-2">
+          <div className="space-y-3">
+            <h4 className="font-poppins font-semibold text-base lg:text-lg text-white">{t.contactTitle}</h4>
+            <ul className="space-y-1.5">
               <li>
                 <Link 
                   to="/contact" 
@@ -169,8 +170,8 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
-            {/* Social Icons - Matching ΦΟΜΟ logo style */}
-            <div className="flex gap-3 pt-2">
+            {/* Social Icons */}
+            <div className="flex gap-2 pt-1">
               <a
                 href="https://instagram.com/fomo.cy"
                 target="_blank"
@@ -179,26 +180,26 @@ const Footer = () => {
                   e.preventDefault();
                   window.open("https://instagram.com/fomo.cy", "_blank", "noopener,noreferrer");
                 }}
-                className="w-10 h-10 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
+                className="w-9 h-9 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5 text-white" />
+                <Instagram className="w-4 h-4 text-white" />
               </a>
               <a
                 href="https://tiktok.com/@fomo.cy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
+                className="w-9 h-9 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
                 aria-label="TikTok"
               >
-                <TikTokIcon className="w-5 h-5 text-white" />
+                <TikTokIcon className="w-4 h-4 text-white" />
               </a>
               <a
                 href="mailto:hello@fomo.cy"
-                className="w-10 h-10 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
+                className="w-9 h-9 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
                 aria-label="Email"
               >
-                <Mail className="w-5 h-5 text-white" />
+                <Mail className="w-4 h-4 text-white" />
               </a>
             </div>
           </div>

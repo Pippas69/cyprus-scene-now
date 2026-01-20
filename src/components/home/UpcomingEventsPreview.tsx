@@ -119,6 +119,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       {/* Events cards on white background */}
       <div className="bg-background py-8 md:py-12">
         <div className="container mx-auto px-4">
+          {/* Mobile: show only 1 event, Desktop: show all */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {events.map((event, index) => (
               <motion.div
@@ -127,6 +128,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
+                className={index > 0 ? "hidden md:block" : ""}
               >
                 <Link
                   to={`/events/${event.id}`}
