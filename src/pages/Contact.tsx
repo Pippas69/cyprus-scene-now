@@ -329,17 +329,27 @@ const Contact = () => {
                 <div className="space-y-4">
                   <a
                     href="mailto:hello@fomo.cy"
-                    className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = "mailto:hello@fomo.cy";
+                    }}
+                    className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors cursor-pointer touch-action-manipulation"
+                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
                   >
-                    <Mail className="w-5 h-5" />
-                    hello@fomo.cy
+                    <Mail className="w-5 h-5 pointer-events-none" />
+                    <span className="pointer-events-none">hello@fomo.cy</span>
                   </a>
                   <a
                     href="tel:+35799123456"
-                    className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = "tel:+35799123456";
+                    }}
+                    className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
                   >
-                    <Phone className="w-5 h-5" />
-                    +357 99 123 456
+                    <Phone className="w-5 h-5 pointer-events-none" />
+                    <span className="pointer-events-none">+357 99 123 456</span>
                   </a>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <MapPin className="w-5 h-5" />
@@ -359,30 +369,38 @@ const Contact = () => {
                       e.preventDefault();
                       window.open("https://instagram.com/fomo.cy", "_blank", "noopener,noreferrer");
                     }}
-                    className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
                   >
-                    <Instagram className="w-5 h-5" />
+                    <Instagram className="w-5 h-5 pointer-events-none" />
                   </a>
                   <a
                     href="https://tiktok.com/@fomo.cy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.open("https://tiktok.com/@fomo.cy", "_blank", "noopener,noreferrer");
+                    }}
+                    className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-5 h-5 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
                     </svg>
                   </a>
+                  <a
+                    href="mailto:hello@fomo.cy"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = "mailto:hello@fomo.cy";
+                    }}
+                    className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+                  >
+                    <Mail className="w-5 h-5 pointer-events-none" />
+                  </a>
                 </div>
-              </div>
-
-              {/* Demo CTA */}
-              <div className="bg-gradient-to-r from-primary/10 to-accent/30 rounded-2xl p-6">
-                <h3 className="font-urbanist text-xl font-bold mb-2">
-                  {t.demoTitle}
-                </h3>
-                <p className="text-muted-foreground mb-4">{t.demoDesc}</p>
-                <Button>{t.bookDemo}</Button>
               </div>
             </motion.div>
           </div>
