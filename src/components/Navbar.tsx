@@ -128,29 +128,38 @@ const Navbar = () => {
     )}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo with Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                <Logo size="md" />
-                <ChevronDown className="w-5 h-5 text-aegean" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
-              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/")}>
-                {language === "el" ? "Αρχική" : "Home"}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/feed")}>
-                {language === "el" ? "Εξερεύνηση" : "Explore"}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-visitors")}>
-                {language === "el" ? "Για Επισκέπτες" : "For Visitors"}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-businesses")}>
-                {language === "el" ? "Για Επιχειρήσεις" : "For Businesses"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Logo */}
+          <button onClick={() => navigate("/")} className="hover:opacity-80 transition-opacity">
+            <Logo size="md" />
+          </button>
+
+          {/* Desktop Horizontal Navigation Links */}
+          <div className="hidden md:flex items-center gap-6">
+            <button 
+              onClick={() => navigate("/")} 
+              className="text-foreground font-inter font-medium hover:text-aegean transition-colors"
+            >
+              {language === "el" ? "Αρχική" : "Home"}
+            </button>
+            <button 
+              onClick={() => navigate("/feed")} 
+              className="text-foreground font-inter font-medium hover:text-aegean transition-colors"
+            >
+              {language === "el" ? "Εξερεύνηση" : "Explore"}
+            </button>
+            <button 
+              onClick={() => navigate("/for-visitors")} 
+              className="text-foreground font-inter font-medium hover:text-aegean transition-colors"
+            >
+              {language === "el" ? "Για Επισκέπτες" : "For Visitors"}
+            </button>
+            <button 
+              onClick={() => navigate("/for-businesses")} 
+              className="text-foreground font-inter font-medium hover:text-aegean transition-colors"
+            >
+              {language === "el" ? "Για Επιχειρήσεις" : "For Businesses"}
+            </button>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
