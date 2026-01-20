@@ -2,7 +2,6 @@ import { Instagram, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageToggle from "@/components/LanguageToggle";
-import { Logo } from "@/components/Logo";
 
 // TikTok icon component
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -13,6 +12,13 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   >
     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
   </svg>
+);
+
+// ΦΟΜΟ Logo for Footer
+const FooterLogo = () => (
+  <div className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-seafoam to-aegean">
+    <span className="font-cinzel text-2xl font-bold text-white tracking-wider">ΦΟΜΟ</span>
+  </div>
 );
 
 const Footer = () => {
@@ -60,13 +66,13 @@ const Footer = () => {
   const t = text[language];
 
   return (
-    <footer className="bg-primary text-primary-foreground">
+    <footer className="bg-gradient-to-b from-[#4dd4c4] via-[#45c8c0] to-[#3bbcb8]">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-16">
           {/* Column 1 - Logo & Description */}
           <div className="space-y-4">
-            <Logo size="lg" />
-            <div className="text-primary-foreground/80 text-sm leading-relaxed space-y-1">
+            <FooterLogo />
+            <div className="text-[#0d3b4a] text-sm leading-relaxed space-y-1">
               <p>{t.description}</p>
               <p>{t.descriptionSub}</p>
             </div>
@@ -74,12 +80,12 @@ const Footer = () => {
 
           {/* Column 2 - ΦΟΜΟ Links */}
           <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg">ΦΟΜΟ</h4>
+            <h4 className="font-poppins font-semibold text-lg text-[#8b2942]">ΦΟΜΟ</h4>
             <ul className="space-y-2">
               <li>
                 <Link 
                   to="/feed" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   {t.explore}
                 </Link>
@@ -87,7 +93,7 @@ const Footer = () => {
               <li>
                 <Link 
                   to="/for-visitors" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   {t.forVisitors}
                 </Link>
@@ -95,7 +101,7 @@ const Footer = () => {
               <li>
                 <Link 
                   to="/for-businesses" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   {t.forBusiness}
                 </Link>
@@ -103,7 +109,7 @@ const Footer = () => {
               <li>
                 <Link 
                   to="/blog" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   {t.blog}
                 </Link>
@@ -113,12 +119,12 @@ const Footer = () => {
 
           {/* Column 3 - Terms & Policies */}
           <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg">{t.termsTitle}</h4>
+            <h4 className="font-poppins font-semibold text-lg text-[#8b2942]">{t.termsTitle}</h4>
             <ul className="space-y-2">
               <li>
                 <Link 
                   to="/terms" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   {t.termsOfUse}
                 </Link>
@@ -126,7 +132,7 @@ const Footer = () => {
               <li>
                 <Link 
                   to="/privacy" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   {t.privacyPolicy}
                 </Link>
@@ -134,7 +140,7 @@ const Footer = () => {
               <li>
                 <Link 
                   to="/cookies" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   {t.cookies}
                 </Link>
@@ -144,12 +150,12 @@ const Footer = () => {
 
           {/* Column 4 - Contact */}
           <div className="space-y-4">
-            <h4 className="font-poppins font-semibold text-lg">{t.contactTitle}</h4>
+            <h4 className="font-poppins font-semibold text-lg text-[#8b2942]">{t.contactTitle}</h4>
             <ul className="space-y-2">
               <li>
                 <Link 
                   to="/contact" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   {t.contact}
                 </Link>
@@ -157,12 +163,13 @@ const Footer = () => {
               <li>
                 <a 
                   href="mailto:hello@fomo.cy" 
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm"
+                  className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-sm"
                 >
                   hello@fomo.cy
                 </a>
               </li>
             </ul>
+            {/* Social Icons - Matching ΦΟΜΟ logo style */}
             <div className="flex gap-3 pt-2">
               <a
                 href="https://instagram.com/fomo.cy"
@@ -172,34 +179,34 @@ const Footer = () => {
                   e.preventDefault();
                   window.open("https://instagram.com/fomo.cy", "_blank", "noopener,noreferrer");
                 }}
-                className="w-9 h-9 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+                className="w-10 h-10 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
                 aria-label="Instagram"
               >
-                <Instagram className="w-4 h-4" />
+                <Instagram className="w-5 h-5 text-white" />
               </a>
               <a
                 href="https://tiktok.com/@fomo.cy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+                className="w-10 h-10 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
                 aria-label="TikTok"
               >
-                <TikTokIcon className="w-4 h-4" />
+                <TikTokIcon className="w-5 h-5 text-white" />
               </a>
               <a
                 href="mailto:hello@fomo.cy"
-                className="w-9 h-9 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+                className="w-10 h-10 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
                 aria-label="Email"
               >
-                <Mail className="w-4 h-4" />
+                <Mail className="w-5 h-5 text-white" />
               </a>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-primary-foreground/20 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1 text-sm text-primary-foreground/70">
+        <div className="border-t border-[#0d3b4a]/20 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1 text-sm text-[#0d3b4a]">
             <span>{t.rights}</span>
             <span className="hidden sm:inline">•</span>
             <span>{t.madeWith} ❤️ {t.inCyprus}</span>
