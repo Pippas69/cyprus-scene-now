@@ -128,10 +128,37 @@ const Navbar = () => {
     )}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <button onClick={() => navigate("/")} className="hover:opacity-80 transition-opacity">
+          {/* Logo - Desktop: simple button, Mobile: dropdown with navigation */}
+          {/* Desktop Logo */}
+          <button onClick={() => navigate("/")} className="hidden md:block hover:opacity-80 transition-opacity">
             <Logo size="md" />
           </button>
+
+          {/* Mobile Logo with Dropdown */}
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                  <Logo size="md" />
+                  <ChevronDown className="w-5 h-5 text-aegean" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
+                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/")}>
+                  {language === "el" ? "Αρχική" : "Home"}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/feed")}>
+                  {language === "el" ? "Εξερεύνηση" : "Explore"}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-visitors")}>
+                  {language === "el" ? "Για Επισκέπτες" : "For Visitors"}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-businesses")}>
+                  {language === "el" ? "Για Επιχειρήσεις" : "For Businesses"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           {/* Desktop Horizontal Navigation Links */}
           <div className="hidden md:flex items-center gap-4 ml-8 mr-6">
