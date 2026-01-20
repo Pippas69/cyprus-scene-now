@@ -81,16 +81,16 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
   };
 
   return (
-    <section className="relative py-20 md:py-32 overflow-hidden">
+    <section className="relative py-12 md:py-16 overflow-hidden">
       {/* Background with gradient transition to seafoam */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-[#4dd4c4]/30" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-[#4dd4c4]" />
       
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10"
         >
           <h2 className="font-display text-3xl md:text-5xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-4">
             {content[language].title}
@@ -161,7 +161,7 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
       </div>
       
       {/* Smooth gradient transition to seafoam section */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#4dd4c4]" />
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-[#4dd4c4]" />
     </section>
   );
 };

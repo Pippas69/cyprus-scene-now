@@ -14,7 +14,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   const text = {
     el: {
-      tagline: "Φόβος OF MISSING OUT",
+      tagline: "ΦΟΒΟΣ OF MISSING OUT",
       heroMain: "Επιλογές υπάρχουν,",
       subText: '"Μα ένειξερω που να πάω πόψε"',
       downloadCta: "Κατέβαστο τζαι μάθε.",
