@@ -31,7 +31,9 @@ import { BusinessPostForm } from "@/components/business/posting/BusinessPostForm
 import { Button } from "@/components/ui/button";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut } from "lucide-react";
+import { Search, User, Settings, LogOut } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { GlobalSearch } from "@/components/search/GlobalSearch";
 // TicketSales moved into EventsList as a dialog
 
 const DashboardBusiness = () => {
@@ -264,6 +266,19 @@ const DashboardBusiness = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                {/* Search (mobile-first) */}
+                <div className="md:hidden">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
+                        <Search className="h-5 w-5" aria-hidden="true" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="top" className="h-full">
+                      <GlobalSearch language={language} fullscreen resultTypes={['business']} />
+                    </SheetContent>
+                  </Sheet>
+                </div>
                 <LanguageToggle />
                 
                 {/* User Profile Dropdown */}
