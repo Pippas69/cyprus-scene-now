@@ -168,6 +168,10 @@ const Footer = () => {
                 href="https://instagram.com/fomo.cy"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open("https://instagram.com/fomo.cy", "_blank", "noopener,noreferrer");
+                }}
                 className="w-9 h-9 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
                 aria-label="Instagram"
               >

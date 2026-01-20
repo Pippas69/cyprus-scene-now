@@ -150,7 +150,10 @@ export function UserLayout({ children }: UserLayoutProps) {
         <div className="flex flex-1 w-full min-h-0">
           <UserSidebar />
           
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background relative z-10 max-w-full [-webkit-overflow-scrolling:touch]">
+          <main
+            data-scroll-container
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background relative z-10 max-w-full [-webkit-overflow-scrolling:touch]"
+          >
             {children}
           </main>
         </div>
