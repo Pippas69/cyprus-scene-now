@@ -188,6 +188,11 @@ const Navbar = () => {
             </button>
           </div>
 
+          {/* Desktop Search */}
+          <div className="hidden md:flex flex-1 max-w-sm mx-4 min-w-0">
+            <GlobalSearch language={language} resultTypes={['business']} />
+          </div>
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
             
