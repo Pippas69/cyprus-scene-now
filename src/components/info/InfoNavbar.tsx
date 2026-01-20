@@ -52,7 +52,7 @@ const InfoNavbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden xl:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -69,7 +69,7 @@ const InfoNavbar = () => {
           </div>
 
           {/* Right Side */}
-          <div className="hidden xl:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             <LanguageToggle />
             <Link to="/login">
               <Button variant="ghost" size="sm">
@@ -85,7 +85,7 @@ const InfoNavbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="xl:hidden p-2"
+            className="md:hidden p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
