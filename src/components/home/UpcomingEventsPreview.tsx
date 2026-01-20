@@ -72,7 +72,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   if (loading) {
     return (
       <section className="relative py-16 md:py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-seafoam/20 via-seafoam/10 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#6ee4cc] via-[#9fede0] to-[#d4f7f0]" />
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-12">
             <Skeleton className="h-10 w-64 mx-auto mb-4" />
@@ -94,8 +94,8 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
   return (
     <section className="relative py-12 md:py-16 overflow-hidden">
-      {/* Gradient background - seafoam at top transitioning to white at bottom */}
-      <div className="absolute inset-0 bg-gradient-to-b from-seafoam/20 via-seafoam/10 to-background" />
+      {/* Seamless gradient continuation from FeaturesSection */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#6ee4cc] via-[#9fede0] to-[#d4f7f0]" />
       
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
@@ -104,10 +104,10 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="font-cinzel text-3xl md:text-5xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-4 tracking-tight">
+          <h2 className="font-cinzel text-3xl md:text-5xl font-bold text-aegean mb-4 tracking-tight">
             {content[language].title}
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-aegean/70 text-lg">
             {content[language].subtitle}
           </p>
         </motion.div>
@@ -123,7 +123,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
             >
               <Link
                 to={`/events/${event.id}`}
-                className="group block bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:shadow-hover hover:border-seafoam/30 transition-all duration-300 hover:-translate-y-1"
+                className="group block bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-40 overflow-hidden">
                   <img
@@ -131,10 +131,10 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
                     alt={event.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   
                   {event.category?.[0] && (
-                    <span className="absolute top-3 left-3 px-3 py-1 bg-seafoam/90 text-white text-xs font-medium rounded-full">
+                    <span className="absolute top-3 left-3 px-3 py-1 bg-seafoam text-white text-xs font-medium rounded-full">
                       {event.category[0]}
                     </span>
                   )}
@@ -196,7 +196,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
             asChild
             variant="outline"
             size="lg"
-            className="border-seafoam/30 hover:bg-seafoam/10 hover:border-seafoam text-aegean group"
+            className="bg-white border-aegean/30 hover:bg-white/80 hover:border-aegean text-aegean group rounded-full px-8"
           >
             <Link to="/feed">
               {content[language].viewAll}
