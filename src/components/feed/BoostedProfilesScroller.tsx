@@ -46,7 +46,7 @@ export const BoostedProfilesScroller = ({
     <div className="w-full">
       {/* No header - profiles display directly below paid content */}
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-3 pb-2">
+        <div className="flex gap-2 pb-1">
           {profiles.map((profile, index) => (
             <motion.div
               key={profile.id}

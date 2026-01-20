@@ -140,7 +140,7 @@ export const BoostedContentSection = ({
   return (
     <div className="w-full">
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-4 pt-3 pr-3 pb-2">
+        <div className="flex gap-3 pt-2 pr-2 pb-1">
           {allContent.map((item, index) => (
             <motion.div
               key={`${item.type}-${item.data.id}`}
