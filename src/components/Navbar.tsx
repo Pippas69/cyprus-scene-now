@@ -128,36 +128,32 @@ const Navbar = () => {
     )}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <button onClick={() => navigate("/")}>
-            <Logo size="md" />
-          </button>
+          {/* Logo with Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                <Logo size="md" />
+                <ChevronDown className="w-5 h-5 text-aegean" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
+              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/")}>
+                {language === "el" ? "Αρχική" : "Home"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/feed")}>
+                {language === "el" ? "Εξερεύνηση" : "Explore"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-visitors")}>
+                {language === "el" ? "Για Επισκέπτες" : "For Visitors"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-businesses")}>
+                {language === "el" ? "Για Επιχειρήσεις" : "For Businesses"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
-            {/* Explore Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="font-inter font-extrabold text-lg text-aegean hover:text-accent transition-colors flex items-center gap-1">
-                  {language === "el" ? "Εξερεύνηση" : "Explore"}
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
-                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/feed")}>
-                  {language === "el" ? "Αρχική" : "Home"}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/ekdiloseis")}>
-                  {t.events}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/xartis")}>
-                  {t.map}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {}}>
-                  {t.discounts}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             {/* Global Search */}
             <GlobalSearch language={language} />
