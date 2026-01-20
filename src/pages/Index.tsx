@@ -11,7 +11,6 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 // import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
 import ParallaxSection from "@/components/ui/parallax-section";
 import ScrollProgress from "@/components/ui/scroll-progress";
-import WaveDivider from "@/components/ui/wave-divider";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FAQSection from "@/components/home/FAQSection";
 // Temporarily hidden for launch - uncomment when ready
@@ -55,30 +54,23 @@ const Index = () => {
       {/* Temporarily hidden for launch - uncomment when ready
       <PartnerLogoMarquee language={language} />
       */}
-      <WaveDivider variant="aegean" />
+      {/* Removed wave dividers for cleaner premium look */}
       <MarqueeSection />
-      <WaveDivider variant="seafoam" flip />
       <ParallaxSection intensity={0.2}>
         <FeaturesSection language={language} />
       </ParallaxSection>
-      <WaveDivider variant="aegean" />
       <ParallaxSection intensity={0.15} fadeOnScroll>
         <HowItWorksSection language={language} />
       </ParallaxSection>
-      <WaveDivider variant="aegean" flip />
       <UpcomingEventsPreview language={language} />
       {/* Temporarily hidden for launch - uncomment when ready
-      <WaveDivider variant="seafoam" />
       <StatsSection language={language} />
-      <WaveDivider variant="seafoam" flip />
       */}
       <TestimonialsSection language={language} />
-      <WaveDivider variant="aegean" />
       {/* Temporarily hidden for launch - uncomment when ready
       <NewsletterSection language={language} />
       */}
       <WaitlistSignup language={language} />
-      <WaveDivider variant="sand" flip />
       <FAQSection language={language} />
       <Footer />
     </div>

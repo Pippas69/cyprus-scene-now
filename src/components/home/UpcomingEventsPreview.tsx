@@ -92,7 +92,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   }
 
   return (
-    <section className="py-20 md:py-32 bg-gradient-to-b from-background to-aegean/5">
+    <section className="py-20 md:py-32 bg-gradient-to-b from-background to-seafoam/5">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -100,7 +100,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="font-cinzel text-3xl md:text-5xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-4 tracking-tight">
             {content[language].title}
           </h2>
           <p className="text-muted-foreground text-lg">
@@ -119,7 +119,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
             >
               <Link
                 to={`/events/${event.id}`}
-                className="group block bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1"
+                className="group block bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:shadow-hover hover:border-seafoam/30 transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-40 overflow-hidden">
                   <img
@@ -130,28 +130,28 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   
                   {event.category?.[0] && (
-                    <span className="absolute top-3 left-3 px-3 py-1 bg-aegean/90 text-white text-xs font-medium rounded-full">
+                    <span className="absolute top-3 left-3 px-3 py-1 bg-seafoam/90 text-white text-xs font-medium rounded-full">
                       {event.category[0]}
                     </span>
                   )}
                 </div>
 
                 <div className="p-5">
-                  <h3 className="font-semibold text-foreground mb-2 line-clamp-1 group-hover:text-aegean transition-colors">
+                  <h3 className="font-semibold text-foreground mb-2 line-clamp-1 group-hover:text-seafoam transition-colors">
                     {event.title}
                   </h3>
 
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-aegean" />
+                      <Calendar className="w-4 h-4 text-seafoam" />
                       <span>{format(new Date(event.start_at), "EEE, MMM d")}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-aegean" />
+                      <Clock className="w-4 h-4 text-seafoam" />
                       <span>{format(new Date(event.start_at), "h:mm a")}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-seafoam" />
+                      <MapPin className="w-4 h-4 text-aegean" />
                       <span className="line-clamp-1">{event.location}</span>
                     </div>
                   </div>
@@ -165,8 +165,8 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
                           className="w-6 h-6 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-aegean/20 flex items-center justify-center">
-                          <span className="text-xs text-aegean font-medium">
+                        <div className="w-6 h-6 rounded-full bg-seafoam/20 flex items-center justify-center">
+                          <span className="text-xs text-seafoam font-medium">
                             {event.business.name.charAt(0)}
                           </span>
                         </div>
@@ -192,7 +192,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
             asChild
             variant="outline"
             size="lg"
-            className="border-aegean/30 hover:bg-aegean/10 hover:border-aegean group"
+            className="border-seafoam/30 hover:bg-seafoam/10 hover:border-seafoam text-aegean group"
           >
             <Link to="/feed">
               {content[language].viewAll}
