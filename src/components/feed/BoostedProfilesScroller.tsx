@@ -69,11 +69,11 @@ export const BoostedProfilesScroller = ({
                       {profile.businesses.name.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
+                  {/* Only show event/offer boost badges, NOT student discount */}
                   <BusinessBoostBadges
                     hasEventBoost={eventBoostBusinessIds?.has(profile.business_id)}
                     hasOfferBoost={offerBoostBusinessIds?.has(profile.business_id)}
-                    studentDiscountPercent={(profile.businesses as any)?.student_discount_percent}
-                    studentDiscountMode={(profile.businesses as any)?.student_discount_mode}
+                    showStudentDiscount={false}
                     language={language}
                   />
                   {profile.businesses.verified && (
@@ -90,22 +90,15 @@ export const BoostedProfilesScroller = ({
                   </div>
                 )}
 
-                {/* Business name */}
-                <span className="text-xs font-medium text-center line-clamp-1 max-w-[80px] group-hover:text-primary transition-colors">
+                {/* Business name + City - combined on one line */}
+                <span className="text-xs font-medium text-center line-clamp-1 max-w-[90px] group-hover:text-primary transition-colors">
                   {profile.businesses.name}
                 </span>
 
-                {/* City */}
+                {/* City only - no category */}
                 <span className="text-[10px] text-muted-foreground">
                   {profile.businesses.city}
                 </span>
-
-                {/* Category badge */}
-                {profile.businesses.category?.[0] && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                    {profile.businesses.category[0]}
-                  </Badge>
-                )}
               </Link>
             </motion.div>
           ))}

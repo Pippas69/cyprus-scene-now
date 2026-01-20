@@ -9,6 +9,8 @@ import {
 interface BusinessBoostBadgesProps {
   hasEventBoost?: boolean;
   hasOfferBoost?: boolean;
+  // Student discount badges only show when filter is active
+  showStudentDiscount?: boolean;
   studentDiscountPercent?: number | null;
   studentDiscountMode?: "once" | "unlimited" | string | null;
   language?: "el" | "en";
@@ -16,14 +18,14 @@ interface BusinessBoostBadgesProps {
 
 const tooltips = {
   el: {
-    event: "Έχει ενεργό event",
-    offer: "Έχει ενεργή προσφορά",
+    event: "Έχει boosted event",
+    offer: "Έχει boosted προσφορά",
     student: (percent?: number | null, mode?: string | null) =>
       `Φοιτητική έκπτωση${percent ? ` ${percent}%` : ""}${mode ? ` (${mode === "unlimited" ? "απεριόριστη" : "μια φορά"})` : ""}`,
   },
   en: {
-    event: "Has active event",
-    offer: "Has active offer",
+    event: "Has boosted event",
+    offer: "Has boosted offer",
     student: (percent?: number | null, mode?: string | null) =>
       `Student discount${percent ? ` ${percent}%` : ""}${mode ? ` (${mode === "unlimited" ? "unlimited" : "once"})` : ""}`,
   },
@@ -32,12 +34,14 @@ const tooltips = {
 export const BusinessBoostBadges = ({
   hasEventBoost,
   hasOfferBoost,
+  showStudentDiscount = false,
   studentDiscountPercent,
   studentDiscountMode,
   language = "en",
 }: BusinessBoostBadgesProps) => {
   const t = tooltips[language];
-  const hasStudentDiscount = (studentDiscountPercent ?? 0) > 0;
+  // Only show student badge when filter is active AND business has discount
+  const hasStudentDiscount = showStudentDiscount && (studentDiscountPercent ?? 0) > 0;
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -59,7 +63,7 @@ export const BusinessBoostBadges = ({
       {hasOfferBoost && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="absolute -top-1 -left-1 bg-green-500 rounded-full p-0.5 ring-2 ring-background shadow-sm z-10">
+            <div className="absolute -top-1 -left-1 bg-emerald-500 rounded-full p-0.5 ring-2 ring-background shadow-sm z-10">
               <Tag className="h-3 w-3 text-white" />
             </div>
           </TooltipTrigger>
@@ -69,7 +73,7 @@ export const BusinessBoostBadges = ({
         </Tooltip>
       )}
 
-      {/* Student discount - bottom left */}
+      {/* Student discount - bottom left - ONLY when filter is active */}
       {hasStudentDiscount && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -87,4 +91,3 @@ export const BusinessBoostBadges = ({
 };
 
 export default BusinessBoostBadges;
-
