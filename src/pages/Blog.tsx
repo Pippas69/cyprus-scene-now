@@ -116,10 +116,10 @@ const Blog = () => {
       <InfoNavbar />
 
       {/* Hero Section - Premium Design */}
-      <section className="pt-32 pb-16 px-4 relative overflow-hidden">
+      <section className="pt-32 pb-16 px-4 relative">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-        
+
         <div className="container mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -127,22 +127,22 @@ const Blog = () => {
             className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-6"
           >
             <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-            {language === 'el' ? 'Τελευταία Άρθρα' : 'Latest Articles'}
+            {language === "el" ? "Τελευταία Άρθρα" : "Latest Articles"}
           </motion.div>
-          
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="font-urbanist text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
+            className="font-urbanist text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[0.95] break-words"
           >
-            {language === 'el' ? 'ΦΟΜΟ Blog' : 'FOMO Blog'}
+            {language === "el" ? "ΦΟΜΟ Blog" : "FOMO Blog"}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+            className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
           >
             {t.heroSubtitle}
           </motion.p>

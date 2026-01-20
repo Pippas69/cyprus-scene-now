@@ -15,8 +15,7 @@ const InfoNavbar = () => {
   const text = {
     el: {
       home: "Αρχική",
-      features: "Χαρακτηριστικά",
-      pricing: "Τιμοκατάλογος",
+      explore: "Εξερεύνηση",
       blog: "Blog",
       contact: "Επικοινωνία",
       login: "Σύνδεση",
@@ -24,8 +23,7 @@ const InfoNavbar = () => {
     },
     en: {
       home: "Home",
-      features: "Features",
-      pricing: "Pricing",
+      explore: "Explore",
       blog: "Blog",
       contact: "Contact",
       login: "Login",
@@ -37,8 +35,7 @@ const InfoNavbar = () => {
 
   const navLinks = [
     { href: "/", label: t.home },
-    { href: "/features", label: t.features },
-    { href: "/pricing", label: t.pricing },
+    { href: "/feed", label: t.explore },
     { href: "/blog", label: t.blog },
     { href: "/contact", label: t.contact },
   ];
