@@ -667,9 +667,18 @@ const ForBusinesses = () => {
             <p className="text-xl text-muted-foreground mb-8">
               {content.cta.subtitle}
             </p>
-            <Button asChild size="lg" className="text-lg px-6 md:px-8 gap-2 whitespace-nowrap w-full sm:w-auto">
-              <Link to="/signup-business">
-                {content.cta.button}
+            <Button
+              asChild
+              size="lg"
+              className="w-full sm:w-auto px-5 sm:px-8 text-base sm:text-lg !whitespace-normal h-auto py-4"
+            >
+              <Link
+                to="/signup-business"
+                className="flex items-center justify-center gap-2 flex-wrap text-center"
+              >
+                <span className="whitespace-normal leading-tight">
+                  {content.cta.button}
+                </span>
                 <ArrowRight className="w-5 h-5 flex-shrink-0" />
               </Link>
             </Button>
