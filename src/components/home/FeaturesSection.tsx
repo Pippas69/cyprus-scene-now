@@ -16,26 +16,26 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
         {
           icon: MapPin,
           title: "Ανακαλύψτε",
-          description: "Βρείτε εκδηλώσεις κοντά σας σε πραγματικό χρόνο. Από beach parties μέχρι wine tastings.",
-          detail: "Με χάρτη και GPS εντοπισμό",
-          color: "aegean",
-          gradient: "from-aegean to-aegean/60",
+          description: "Εξερευνήστε εκδηλώσεις γύρω σας σε πραγματικό χρόνο. Beach parties, live music, tastings — όλα σε ένα μέρος.",
+          detail: "Χάρτης & GPS εντοπισμός",
+          color: "seafoam",
+          gradient: "from-seafoam to-aegean",
         },
         {
           icon: Users,
           title: "Συμμετέχετε",
-          description: "Δείτε ποιοι πάνε, κάντε RSVP με ένα tap και μην χάσετε τίποτα.",
-          detail: "Συνδεθείτε με φίλους",
+          description: "Δείτε ποιοι θα είναι εκεί, επιβεβαιώστε την παρουσία σας και ζήστε κάθε στιγμή.",
+          detail: "RSVP με ένα tap",
           color: "aegean",
-          gradient: "from-aegean to-aegean/60",
+          gradient: "from-aegean to-seafoam",
         },
         {
           icon: QrCode,
           title: "Κερδίστε",
-          description: "Αποκλειστικές εκπτώσεις QR από συνεργαζόμενες επιχειρήσεις. Σκανάρετε και εξοικονομήστε.",
-          detail: "Αποκλειστικές προσφορές",
+          description: "Αποκλειστικές εκπτώσεις και προσφορές QR. Σκανάρετε και εξοικονομήστε στις αγαπημένες σας επιχειρήσεις.",
+          detail: "Προνόμια μόνο για μέλη",
           color: "seafoam",
-          gradient: "from-seafoam to-seafoam/60",
+          gradient: "from-seafoam to-aegean",
         },
       ],
     },
@@ -45,26 +45,26 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
         {
           icon: MapPin,
           title: "Discover",
-          description: "Find events near you in real-time. From beach parties to wine tastings.",
-          detail: "With map and GPS tracking",
-          color: "aegean",
-          gradient: "from-aegean to-aegean/60",
+          description: "Explore events around you in real-time. Beach parties, live music, tastings — all in one place.",
+          detail: "Map & GPS tracking",
+          color: "seafoam",
+          gradient: "from-seafoam to-aegean",
         },
         {
           icon: Users,
           title: "Join",
-          description: "See who's going, RSVP with one tap, and never miss out.",
-          detail: "Connect with friends",
+          description: "See who's going, confirm your attendance and live every moment.",
+          detail: "RSVP with one tap",
           color: "aegean",
-          gradient: "from-aegean to-aegean/60",
+          gradient: "from-aegean to-seafoam",
         },
         {
           icon: QrCode,
           title: "Save",
-          description: "Exclusive QR discounts from partner businesses. Scan and save.",
-          detail: "Exclusive offers",
+          description: "Exclusive QR discounts and offers. Scan and save at your favorite businesses.",
+          detail: "Members-only perks",
           color: "seafoam",
-          gradient: "from-seafoam to-seafoam/60",
+          gradient: "from-seafoam to-aegean",
         },
       ],
     },
@@ -96,7 +96,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="font-cinzel text-4xl md:text-5xl font-bold text-center mb-16 text-foreground"
+          className="font-cinzel text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent tracking-tight"
         >
           {t.title}
         </motion.h2>
@@ -116,7 +116,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
               onMouseLeave={() => setHoveredIndex(null)}
               whileHover={{ y: -12, scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="group relative bg-card rounded-3xl p-8 shadow-sm border border-border hover:shadow-xl transition-all duration-300"
+              className="group relative bg-card rounded-3xl p-8 shadow-sm border border-border hover:shadow-xl hover:border-seafoam/30 transition-all duration-300"
               style={{ perspective: 1000, transformStyle: "preserve-3d" }}
             >
               {/* Glow ring effect on hover */}
@@ -131,7 +131,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
               <div className="relative z-10">
                 {/* Icon container with animation */}
                 <motion.div 
-                  className={`w-16 h-16 rounded-2xl bg-${feature.color}/10 flex items-center justify-center mb-6 transition-all duration-300`}
+                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 transition-all duration-300`}
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   animate={{
                     y: hoveredIndex === index ? [0, -4, 0] : 0,
@@ -140,7 +140,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
                     y: { duration: 1.5, repeat: Infinity, ease: "easeInOut" },
                   }}
                 >
-                  <feature.icon className={`w-8 h-8 text-${feature.color}`} />
+                  <feature.icon className="w-8 h-8 text-white" />
                 </motion.div>
                 
                 <h3 className="font-poppins text-2xl font-bold mb-3 text-foreground">

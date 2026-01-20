@@ -18,9 +18,9 @@ const MarqueeSection = () => {
   ];
 
   return (
-    <section className="py-8 bg-muted/30 overflow-hidden border-y border-border">
+    <section className="py-10 bg-gradient-to-r from-seafoam/5 via-aegean/5 to-seafoam/5 overflow-hidden">
       {/* Top marquee - left to right */}
-      <div className="relative flex overflow-hidden mb-4">
+      <div className="relative flex overflow-hidden mb-6">
         <motion.div
           animate={{ x: ["0%", "-50%"] }}
           transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
@@ -29,10 +29,10 @@ const MarqueeSection = () => {
           {[...topItems, ...topItems].map((item, i) => (
             <span
               key={i}
-              className="text-lg md:text-xl font-medium text-foreground/70 flex items-center gap-4"
+              className="text-lg md:text-xl font-medium text-foreground/80 flex items-center gap-4"
             >
               {item}
-              <span className="text-aegean">✦</span>
+              <span className="text-seafoam">✦</span>
             </span>
           ))}
         </motion.div>
@@ -48,10 +48,10 @@ const MarqueeSection = () => {
           {[...bottomItems, ...bottomItems].map((item, i) => (
             <span
               key={i}
-              className="text-lg md:text-xl font-medium text-foreground/70 flex items-center gap-4"
+              className="text-lg md:text-xl font-medium text-foreground/80 flex items-center gap-4"
             >
               {item}
-              <span className="text-seafoam">✦</span>
+              <span className="text-aegean">✦</span>
             </span>
           ))}
         </motion.div>

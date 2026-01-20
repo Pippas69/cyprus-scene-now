@@ -13,22 +13,22 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const navigate = useNavigate();
 
   const phrases = {
-    el: ["απλά εν τες ξέρεις", "τζιαιρός να τες μάθεις", "τζαι περιμένουν σε", "δε που αξίζει να είσαι"],
-    en: ["happening now", "worth attending", "trending nearby", "waiting for you"],
+    el: ["απλά εν τες ξέρεις", "τζαιρός να τες μάθεις", "δες που αξίζει να είσαι"],
+    en: ["you just don't know them yet", "time to discover them", "see where it's worth being"],
   };
 
   const text = {
     el: {
       tagline: "Φόβος of Missing Out",
       heroMain: "Επιλογές υπάρχουν,",
-      description: "Πλατφόρμα ζωντανής κοινωνικής ανακάλυψης — δείτε πού πηγαίνουν οι άνθρωποι, συμμετάσχετε σε trending εκδηλώσεις και αποκτήστε αποκλειστικές εκπτώσεις QR.",
+      description: "Η πύλη σου στην κοινωνική ζωή της Κύπρου. Ανακάλυψε τι συμβαίνει γύρω σου, κάνε RSVP με ένα tap και απόλαυσε αποκλειστικά προνόμια.",
       joinBtn: "Εγγραφή στο ΦΟΜΟ",
       exploreBtn: "Εξερεύνηση",
     },
     en: {
       tagline: "Fear of Missing Out",
-      heroMain: "Discover what's",
-      description: "Live social discovery platform — see where people are going, join trending events, and get exclusive QR discounts from partner businesses.",
+      heroMain: "Options exist,",
+      description: "Your gateway to Cyprus social life. Discover what's happening around you, RSVP with one tap and enjoy exclusive privileges.",
       joinBtn: "Join ΦΟΜΟ",
       exploreBtn: "Explore",
     },
@@ -37,41 +37,42 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const t = text[language];
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/30">
+    <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-background via-background to-seafoam/5">
       {/* Particle background */}
       <ParticleBackground particleCount={25} className="z-0" />
-      {/* Floating decorative shapes */}
+      
+      {/* Premium floating decorative shapes */}
       <motion.div
         animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 left-[10%] w-32 h-32 rounded-full bg-aegean/20 blur-2xl"
+        className="absolute top-20 left-[10%] w-32 h-32 rounded-full bg-seafoam/20 blur-2xl"
       />
       <motion.div
         animate={{ y: [0, 20, 0], rotate: [0, -5, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-40 right-[15%] w-40 h-40 rounded-full bg-seafoam/20 blur-2xl"
+        className="absolute top-40 right-[15%] w-40 h-40 rounded-full bg-aegean/20 blur-2xl"
       />
       <motion.div
         animate={{ y: [0, 15, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-32 left-[20%] w-24 h-24 rounded-full bg-aegean/20 blur-2xl"
+        className="absolute bottom-32 left-[20%] w-24 h-24 rounded-full bg-seafoam/15 blur-2xl"
       />
       
       {/* Small floating circles */}
       <motion.div
         animate={{ y: [0, -30, 0], x: [0, 10, 0] }}
         transition={{ duration: 5, repeat: Infinity }}
-        className="absolute top-[30%] left-[5%] w-4 h-4 rounded-full bg-aegean/60"
+        className="absolute top-[30%] left-[5%] w-4 h-4 rounded-full bg-seafoam/60"
       />
       <motion.div
         animate={{ y: [0, 20, 0], x: [0, -15, 0] }}
         transition={{ duration: 6, repeat: Infinity }}
-        className="absolute top-[20%] right-[10%] w-3 h-3 rounded-full bg-seafoam/60"
+        className="absolute top-[20%] right-[10%] w-3 h-3 rounded-full bg-aegean/60"
       />
       <motion.div
         animate={{ y: [0, -15, 0] }}
         transition={{ duration: 4, repeat: Infinity }}
-        className="absolute bottom-[40%] right-[5%] w-5 h-5 rounded-full bg-aegean/60"
+        className="absolute bottom-[40%] right-[5%] w-5 h-5 rounded-full bg-seafoam/60"
       />
 
       <div className="container mx-auto px-4 py-20">
@@ -83,8 +84,10 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <span className="inline-block px-4 py-2 rounded-full bg-aegean/10 text-aegean font-medium text-sm mb-6">
-                {t.tagline}
+              <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-seafoam/10 to-aegean/10 border border-seafoam/20 font-cinzel font-semibold text-sm tracking-wide">
+                <span className="bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent">
+                  {t.tagline}
+                </span>
               </span>
             </motion.div>
 
@@ -94,24 +97,24 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="space-y-2"
             >
-              <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black text-foreground leading-tight">
+              <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent leading-tight tracking-tight">
                 {t.heroMain}
               </h1>
               <div className="relative inline-block">
-                <h1 className="font-cinzel text-5xl md:text-6xl lg:text-7xl font-black">
+                <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold">
                   <Typewriter 
                     phrases={phrases[language]} 
                     typingSpeed={70}
                     deletingSpeed={40}
                     pauseDuration={2500}
-                    className="text-gradient-ocean"
+                    className="bg-gradient-to-r from-aegean via-seafoam to-aegean bg-clip-text text-transparent"
                   />
                 </h1>
                 <motion.div
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
                   transition={{ duration: 0.8, delay: 0.5 }}
-                  className="absolute -bottom-2 left-0 right-0 h-1.5 bg-gradient-ocean rounded-full origin-left"
+                  className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-seafoam via-aegean to-seafoam rounded-full origin-left"
                 />
               </div>
             </motion.div>
@@ -120,7 +123,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0"
+              className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
               {t.description}
             </motion.p>
@@ -134,7 +137,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               <Button
                 size="lg"
                 onClick={() => navigate("/signup")}
-                className="text-lg px-8 py-6 bg-gradient-ocean hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl text-white"
+                className="text-lg px-8 py-6 bg-seafoam hover:bg-seafoam/90 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl text-white"
               >
                 {t.joinBtn}
               </Button>
@@ -142,7 +145,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                 size="lg"
                 variant="outline"
                 onClick={() => navigate("/feed")}
-                className="text-lg px-8 py-6 border-2 hover:bg-muted/50 transition-all duration-300"
+                className="text-lg px-8 py-6 border-2 border-aegean/30 text-aegean hover:bg-aegean/5 transition-all duration-300"
               >
                 {t.exploreBtn}
               </Button>
