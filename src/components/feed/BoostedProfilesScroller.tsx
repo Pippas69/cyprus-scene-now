@@ -46,7 +46,7 @@ export const BoostedProfilesScroller = ({
     <div className="w-full">
       {/* No header - profiles display directly below paid content */}
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-2 pb-1">
+        <div className="flex gap-1.5 sm:gap-2 pb-1">
           {profiles.map((profile, index) => (
             <motion.div
               key={profile.id}
@@ -56,16 +56,16 @@ export const BoostedProfilesScroller = ({
             >
               <Link
                 to={`/business/${profile.business_id}`}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 min-w-[100px] group"
+                className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 min-w-[80px] sm:min-w-[100px] group"
               >
                 {/* Avatar with premium ring for premium tier */}
                 <div className={`relative ${profile.boost_tier === 'premium' ? 'ring-2 ring-primary ring-offset-2 ring-offset-background rounded-full' : ''}`}>
-                  <Avatar className="h-14 w-14">
+                  <Avatar className="h-10 w-10 sm:h-14 sm:w-14">
                     <AvatarImage 
                       src={profile.businesses.logo_url || undefined} 
                       alt={profile.businesses.name} 
                     />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs sm:text-sm">
                       {profile.businesses.name.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -77,26 +77,26 @@ export const BoostedProfilesScroller = ({
                     language={language}
                   />
                   {profile.businesses.verified && (
-                    <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
-                      <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
+                    <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 bg-background rounded-full p-0.5">
+                      <BadgeCheck className="h-3 w-3 sm:h-4 sm:w-4 text-primary fill-primary/20" />
                     </div>
                   )}
                 </div>
 
                 {/* Premium indicator */}
                 {profile.boost_tier === 'premium' && (
-                  <div className="absolute top-1 right-1">
-                    <Sparkles className="h-3 w-3 text-accent" />
+                  <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1">
+                    <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-accent" />
                   </div>
                 )}
 
                 {/* Business name + City - combined on one line */}
-                <span className="text-xs font-medium text-center line-clamp-1 max-w-[90px] group-hover:text-primary transition-colors">
+                <span className="text-[10px] sm:text-xs font-medium text-center line-clamp-1 max-w-[70px] sm:max-w-[90px] group-hover:text-primary transition-colors">
                   {profile.businesses.name}
                 </span>
 
                 {/* City only - no category */}
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[9px] sm:text-[10px] text-muted-foreground">
                   {profile.businesses.city}
                 </span>
               </Link>
