@@ -552,7 +552,7 @@ export default function EventDetail() {
             {similarEvents.length > 0 && (
               <div className="mt-4">
                 <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
-                {/* Mobile: stacked full-width cards */}
+                {/* Mobile: mobileFixed matches MyOffers card dimensions */}
                 <motion.div
                   className="grid gap-3 md:hidden"
                   variants={containerVariants}
@@ -561,7 +561,7 @@ export default function EventDetail() {
                 >
                   {similarEvents.map((similar) => (
                     <motion.div key={similar.id} variants={itemVariants}>
-                      <UnifiedEventCard event={similar} language={language} size="full" />
+                      <UnifiedEventCard event={similar} language={language} size="mobileFixed" />
                     </motion.div>
                   ))}
                 </motion.div>
