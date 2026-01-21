@@ -354,26 +354,26 @@ const BusinessProfile = () => {
           )}
         </motion.div>
 
-        {/* Contact Info Cards - responsive columns */}
+        {/* Contact Info Cards - inline row on mobile, prevent wrapping */}
         <motion.div 
-          className="flex flex-wrap justify-center gap-3 mb-6 max-w-2xl mx-auto"
+          className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 mb-4 sm:mb-6 max-w-2xl mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* City Card - Clickable to map */}
-          <motion.div variants={itemVariants} className="flex-1 min-w-[120px] max-w-[200px]">
+          <motion.div variants={itemVariants} className="sm:flex-1 sm:min-w-[120px] sm:max-w-[200px]">
             <Card 
               variant="glass" 
               className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer h-full"
               onClick={handleCityClick}
             >
-              <CardContent className="flex flex-col items-center text-center p-4">
-                <MapPin className="h-5 w-5 text-muted-foreground mb-1" />
-                <p className="text-xs text-muted-foreground">{t.city}</p>
-                <p className="font-medium text-sm">{business.city}</p>
+              <CardContent className="flex flex-col items-center text-center p-2 sm:p-4">
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-0.5 sm:mb-1" />
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.city}</p>
+                <p className="font-medium text-xs sm:text-sm truncate max-w-full">{business.city}</p>
                 {business.address && (
-                  <p className="text-xs text-muted-foreground line-clamp-1">{business.address}</p>
+                  <p className="text-[9px] sm:text-xs text-muted-foreground line-clamp-1 hidden sm:block">{business.address}</p>
                 )}
               </CardContent>
             </Card>
@@ -381,13 +381,13 @@ const BusinessProfile = () => {
 
           {/* Phone Card */}
           {business.phone && (
-            <motion.div variants={itemVariants} className="flex-1 min-w-[120px] max-w-[200px]">
+            <motion.div variants={itemVariants} className="sm:flex-1 sm:min-w-[120px] sm:max-w-[200px]">
               <a href={`tel:${business.phone}`} onClick={() => trackEngagement(business.id, 'phone_click', 'business', business.id)}>
                 <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer h-full">
-                  <CardContent className="flex flex-col items-center text-center p-4">
-                    <Phone className="h-5 w-5 text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">{t.phone}</p>
-                    <p className="font-medium text-sm">{business.phone}</p>
+                  <CardContent className="flex flex-col items-center text-center p-2 sm:p-4">
+                    <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-0.5 sm:mb-1" />
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{t.phone}</p>
+                    <p className="font-medium text-xs sm:text-sm truncate max-w-full">{business.phone}</p>
                   </CardContent>
                 </Card>
               </a>
@@ -396,7 +396,7 @@ const BusinessProfile = () => {
 
           {/* Website Card - Clickable to external site */}
           {business.website && (
-            <motion.div variants={itemVariants} className="flex-1 min-w-[120px] max-w-[200px]">
+            <motion.div variants={itemVariants} className="sm:flex-1 sm:min-w-[120px] sm:max-w-[200px]">
               <a 
                 href={getWebsiteUrl(business.website)} 
                 target="_blank" 
@@ -404,10 +404,10 @@ const BusinessProfile = () => {
                 onClick={() => trackEngagement(business.id, 'website_click', 'business', business.id)}
               >
                 <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer h-full">
-                  <CardContent className="flex flex-col items-center text-center p-4">
-                    <Globe className="h-5 w-5 text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">{t.website}</p>
-                    <p className="font-medium text-sm truncate max-w-full">
+                  <CardContent className="flex flex-col items-center text-center p-2 sm:p-4">
+                    <Globe className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-0.5 sm:mb-1" />
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{t.website}</p>
+                    <p className="font-medium text-xs sm:text-sm truncate max-w-full">
                       {business.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                     </p>
                   </CardContent>

@@ -508,23 +508,26 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           </div>
         </CardHeader>
         <CardContent className="space-y-3 pt-2 pb-4 px-4">
-          {/* For offer-based reservations, show notice about QR in Offers - compact */}
+          {/* For offer-based reservations, show notice about QR in Offers - ultra compact mobile */}
           {isOfferBased && !isPast && (
-            <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
-              <div className="flex items-center gap-2">
-                <QrCode className="h-4 w-4 text-orange-600 shrink-0" />
-                <p className="text-xs font-medium text-orange-800 dark:text-orange-300 flex-1">
-                  {t.qrInOffers}
-                </p>
+            <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <QrCode className="h-3.5 w-3.5 text-orange-600 shrink-0" />
+                  <p className="text-[10px] sm:text-xs text-orange-700 dark:text-orange-300 truncate">
+                    {language === 'el' ? 'QR στις Προσφορές' : 'QR in Offers'}
+                  </p>
+                </div>
                 <Button
                   asChild
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-300"
+                  className="h-6 sm:h-7 text-[10px] sm:text-xs px-2 border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-300 shrink-0"
                 >
                   <Link to="/dashboard-user?tab=offers">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {t.goToOffers}
+                    <Tag className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                    <span className="hidden sm:inline">{t.goToOffers}</span>
+                    <span className="sm:hidden">{language === 'el' ? 'Άνοιγμα' : 'Open'}</span>
                   </Link>
                 </Button>
               </div>
