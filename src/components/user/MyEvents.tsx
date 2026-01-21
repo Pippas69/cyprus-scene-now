@@ -253,34 +253,34 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="going" className="w-full">
-        <TabsList className="w-full h-auto p-1.5 bg-muted/40 rounded-xl gap-1.5">
+        <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
           <TabsTrigger 
             value="going" 
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
           >
-            <CalendarCheck className="h-4 w-4" />
-            <span>{t.going}</span>
-            <span className="text-xs text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded-full">
+            <CalendarCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">{t.going}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
               {going.length}
             </span>
           </TabsTrigger>
           <TabsTrigger 
             value="interested" 
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
           >
-            <Star className="h-4 w-4" />
-            <span>{t.interested}</span>
-            <span className="text-xs text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded-full">
+            <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">{t.interested}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
               {interested.length}
             </span>
           </TabsTrigger>
           <TabsTrigger 
             value="tickets" 
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
           >
-            <Ticket className="h-4 w-4" />
-            <span>{t.tickets}</span>
-            <span className="text-xs text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded-full">
+            <Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">{t.tickets}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
               {upcomingTickets.length}
             </span>
           </TabsTrigger>

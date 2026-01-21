@@ -468,10 +468,126 @@ export default function EventDetail() {
                   </Card>
                 )}
 
+                {/* Mobile-only: Event info (RSVP, Share, Date, Location, Organizer) - shown before Similar Events */}
+                <div className="md:hidden space-y-4">
+                  {/* RSVP Buttons */}
+                  {user && (
+                    <Card variant="glass" className="backdrop-blur-md">
+                      <CardContent className="pt-4 pb-4">
+                        <div className="grid grid-cols-2 gap-2">
+                          <RippleButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRSVP('interested')}
+                            disabled={rsvpLoading}
+                            className={`gap-1.5 text-xs transition-all ${
+                              isInterested
+                                ? 'border-ocean text-ocean bg-ocean/5'
+                                : 'border-border text-muted-foreground hover:border-ocean/50'
+                            }`}
+                          >
+                            <Heart className="h-3.5 w-3.5" />
+                            {text.interested}
+                          </RippleButton>
+                          <RippleButton
+                            size="sm"
+                            onClick={() => handleRSVP('going')}
+                            disabled={rsvpLoading}
+                            className={`gap-1.5 text-xs transition-all ${
+                              isGoing
+                                ? 'bg-ocean hover:bg-ocean/90 text-white'
+                                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                            }`}
+                          >
+                            <Users className="h-3.5 w-3.5" />
+                            {text.going}
+                          </RippleButton>
+                        </div>
+                        
+                        {/* RSVP Counts */}
+                        <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Heart className="h-3.5 w-3.5" />
+                            <span>{interestedCount}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="h-3.5 w-3.5" />
+                            <span>{goingCount}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Share Button */}
+                  <RippleButton
+                    variant="outline"
+                    className="w-full gap-2 h-9"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="h-4 w-4" />
+                    {text.share}
+                  </RippleButton>
+
+                  {/* Event Details Card */}
+                  <Card variant="glass" className="backdrop-blur-md">
+                    <CardContent className="pt-4 pb-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <p className="font-medium text-sm">
+                            {format(new Date(event.start_at), 'EEEE, MMMM d, yyyy')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(event.start_at), 'HH:mm')} -{' '}
+                            {format(new Date(event.end_at), 'HH:mm')}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <p className="font-medium text-sm">{event.location}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Business Card */}
+                  <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
+                    <CardContent className="pt-4 pb-4">
+                      <p className="text-xs text-muted-foreground mb-2">{text.hostedBy}</p>
+                      <Link
+                        to={`/business/${event.businesses.id}`}
+                        className="flex items-center gap-3 hover:bg-accent p-2 -mx-2 rounded-lg transition-colors"
+                      >
+                        <Avatar className="h-10 w-10 border">
+                          <AvatarImage src={event.businesses.logo_url || ''} />
+                          <AvatarFallback>
+                            <Building2 className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
+                            {event.businesses.verified && (
+                              <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {event.businesses.city}
+                          </p>
+                        </div>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 {/* Similar Events */}
                 {similarEvents.length > 0 && (
                   <div>
-                    <h2 className="text-2xl font-bold mb-4">{text.similarEvents}</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold mb-4">{text.similarEvents}</h2>
                     <motion.div 
                       className="grid gap-4"
                       variants={containerVariants}
@@ -506,9 +622,9 @@ export default function EventDetail() {
             </Tabs>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - hidden on mobile, shown on tablet+ */}
           <motion.div 
-            className="space-y-4"
+            className="hidden md:block space-y-4"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
@@ -665,8 +781,10 @@ export default function EventDetail() {
               </CardContent>
             </Card>
 
-            {/* Event Attendees */}
-            <EventAttendees eventId={eventId!} />
+            {/* Event Attendees - hidden on mobile */}
+            <div className="hidden lg:block">
+              <EventAttendees eventId={eventId!} />
+            </div>
           </motion.div>
         </div>
       </div>

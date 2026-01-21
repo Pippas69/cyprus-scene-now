@@ -369,30 +369,30 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           </div>
         </div>
 
-        {/* BADGES - Top Right */}
-        <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1">
+        {/* BADGES - Top Right - positioned inside card bounds on mobile */}
+        <div className="absolute top-2 right-2 sm:-top-2 sm:-right-2 z-10 flex items-center gap-1">
           {isDepleted ? (
-            <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
-              <TrendingDown className="h-3 w-3 mr-0.5" />
-              {t.depleted}
+            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 shadow-sm">
+              <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
+              <span className="hidden sm:inline">{t.depleted}</span>
             </Badge>
           ) : isCredit ? (
-            <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5 bg-emerald-600">
-              <Wallet className="h-3 w-3 mr-0.5" />
+            <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 bg-emerald-600 shadow-sm">
+              <Wallet className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
               €{(balanceRemaining / 100).toFixed(0)}
             </Badge>
           ) : isRedeemed ? (
-            <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
-              <CheckCircle className="h-3 w-3 mr-0.5" />
-              {language === "el" ? "Χρησιμ." : "Used"}
+            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 shadow-sm">
+              <CheckCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
+              <span className="hidden sm:inline">{language === "el" ? "Χρησιμ." : "Used"}</span>
             </Badge>
           ) : isExpired ? (
-            <Badge variant="destructive" className="text-xs px-1.5 py-0.5 h-5">
-              <AlertCircle className="h-3 w-3 mr-0.5" />
-              {language === "el" ? "Έληξε" : "Expired"}
+            <Badge variant="destructive" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 shadow-sm">
+              <AlertCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
+              <span className="hidden sm:inline">{language === "el" ? "Έληξε" : "Expired"}</span>
             </Badge>
           ) : purchase.discount_percent > 0 && (
-            <Badge variant="default" className="text-xs px-1.5 py-0.5 h-5">
+            <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 shadow-sm">
               -{purchase.discount_percent}%
             </Badge>
           )}
@@ -404,23 +404,23 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   return (
     <div className="w-full max-w-6xl mx-auto overflow-hidden">
       <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm bg-muted/50 p-1">
-          <TabsTrigger value="active" className="px-2 sm:px-3">
-            {t.active}
+        <TabsList className="grid w-full grid-cols-3 text-[11px] sm:text-sm bg-muted/50 p-1 gap-0.5">
+          <TabsTrigger value="active" className="px-1.5 sm:px-3 py-2 gap-0.5">
+            <span className="truncate">{t.active}</span>
             {activePurchases.length > 0 && (
-              <span className="ml-1.5 text-muted-foreground">({activePurchases.length})</span>
+              <span className="text-muted-foreground shrink-0">({activePurchases.length})</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="redeemed" className="px-2 sm:px-3">
-            {t.redeemed}
+          <TabsTrigger value="redeemed" className="px-1.5 sm:px-3 py-2 gap-0.5">
+            <span className="truncate">{t.redeemed}</span>
             {redeemedPurchases.length > 0 && (
-              <span className="ml-1.5 text-muted-foreground">({redeemedPurchases.length})</span>
+              <span className="text-muted-foreground shrink-0">({redeemedPurchases.length})</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="expired" className="px-2 sm:px-3">
-            {t.expired}
+          <TabsTrigger value="expired" className="px-1.5 sm:px-3 py-2 gap-0.5">
+            <span className="truncate">{t.expired}</span>
             {expiredPurchases.length > 0 && (
-              <span className="ml-1.5 text-muted-foreground">({expiredPurchases.length})</span>
+              <span className="text-muted-foreground shrink-0">({expiredPurchases.length})</span>
             )}
           </TabsTrigger>
         </TabsList>
