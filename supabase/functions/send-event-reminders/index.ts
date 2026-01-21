@@ -16,7 +16,7 @@ interface UserEvent {
   event_location: string;
   user_email: string;
   user_name: string;
-  reminder_type: '1_day' | '3_hours';
+  reminder_type: '1_day' | '2_hours';
   interaction_type: 'rsvp' | 'ticket' | 'reservation';
 }
 
@@ -32,13 +32,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const now = new Date();
     const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const threeHoursFromNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     
     // Time windows (30 min buffer for cron timing)
     const oneDayStart = new Date(oneDayFromNow.getTime() - 15 * 60 * 1000);
     const oneDayEnd = new Date(oneDayFromNow.getTime() + 15 * 60 * 1000);
-    const threeHoursStart = new Date(threeHoursFromNow.getTime() - 15 * 60 * 1000);
-    const threeHoursEnd = new Date(threeHoursFromNow.getTime() + 15 * 60 * 1000);
+    const twoHoursStart = new Date(twoHoursFromNow.getTime() - 15 * 60 * 1000);
+    const twoHoursEnd = new Date(twoHoursFromNow.getTime() + 15 * 60 * 1000);
 
     const usersToNotify: UserEvent[] = [];
 
@@ -50,7 +50,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         events!inner(id, title, start_at, location)
       `)
       .eq('status', 'going')
-      .or(`start_at.gte.${oneDayStart.toISOString()}.and.start_at.lte.${oneDayEnd.toISOString()},start_at.gte.${threeHoursStart.toISOString()}.and.start_at.lte.${threeHoursEnd.toISOString()}`, { foreignTable: 'events' });
+      .or(`start_at.gte.${oneDayStart.toISOString()}.and.start_at.lte.${oneDayEnd.toISOString()},start_at.gte.${twoHoursStart.toISOString()}.and.start_at.lte.${twoHoursEnd.toISOString()}`, { foreignTable: 'events' });
 
     // 2. Get ticket holders for events starting in 1 day or 3 hours
     const { data: tickets } = await supabase
@@ -60,7 +60,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         events!inner(id, title, start_at, location)
       `)
       .eq('payment_status', 'completed')
-      .or(`start_at.gte.${oneDayStart.toISOString()}.and.start_at.lte.${oneDayEnd.toISOString()},start_at.gte.${threeHoursStart.toISOString()}.and.start_at.lte.${threeHoursEnd.toISOString()}`, { foreignTable: 'events' });
+      .or(`start_at.gte.${oneDayStart.toISOString()}.and.start_at.lte.${oneDayEnd.toISOString()},start_at.gte.${twoHoursStart.toISOString()}.and.start_at.lte.${twoHoursEnd.toISOString()}`, { foreignTable: 'events' });
 
     // 3. Get reservations for events starting in 1 day or 3 hours
     const { data: reservations } = await supabase
@@ -70,7 +70,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         events!inner(id, title, start_at, location)
       `)
       .eq('status', 'accepted')
-      .or(`start_at.gte.${oneDayStart.toISOString()}.and.start_at.lte.${oneDayEnd.toISOString()},start_at.gte.${threeHoursStart.toISOString()}.and.start_at.lte.${threeHoursEnd.toISOString()}`, { foreignTable: 'events' });
+      .or(`start_at.gte.${oneDayStart.toISOString()}.and.start_at.lte.${oneDayEnd.toISOString()},start_at.gte.${twoHoursStart.toISOString()}.and.start_at.lte.${twoHoursEnd.toISOString()}`, { foreignTable: 'events' });
 
     // Collect all user IDs
     const allUserIds = new Set<string>();
@@ -93,10 +93,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const prefMap = new Map(prefs?.map(p => [p.user_id, p]) || []);
 
     // Helper to determine reminder type
-    const getReminderType = (eventStart: string): '1_day' | '3_hours' | null => {
+    const getReminderType = (eventStart: string): '1_day' | '2_hours' | null => {
       const start = new Date(eventStart);
       if (start >= oneDayStart && start <= oneDayEnd) return '1_day';
-      if (start >= threeHoursStart && start <= threeHoursEnd) return '3_hours';
+      if (start >= twoHoursStart && start <= twoHoursEnd) return '2_hours';
       return null;
     };
 
@@ -204,7 +204,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const eventDate = new Date(notification.event_start);
       const timeText = notification.reminder_type === '1_day' 
         ? 'αύριο' 
-        : 'σε 3 ώρες';
+        : 'σε 2 ώρες';
 
       const interactionText = {
         rsvp: 'που δήλωσες ενδιαφέρον',
