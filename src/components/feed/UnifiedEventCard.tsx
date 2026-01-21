@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
-import { MapPin, Clock, Calendar } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { MapPin, Calendar, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PremiumBadge } from "@/components/ui/premium-badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { format, differenceInMinutes } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -35,6 +36,7 @@ interface UnifiedEventCardProps {
   size?: "compact" | "default" | "boosted" | "full" | "mobileFixed";
   className?: string;
 }
+
 const translations = {
   el: {
     today: "Σήμερα",
@@ -62,6 +64,7 @@ const greekDays: Record<string, string> = {
   Sat: "Σάβ",
   Sun: "Κυρ"
 };
+
 export const UnifiedEventCard = ({
   event,
   language,
@@ -70,18 +73,19 @@ export const UnifiedEventCard = ({
   size = "default",
   className
 }: UnifiedEventCardProps) => {
+  const navigate = useNavigate();
   const t = translations[language];
   const eventDate = new Date(event.start_at);
   const now = new Date();
 
-  // View = card became visible to the user (NOT a click)
-  const cardRef = useRef<HTMLAnchorElement | null>(null);
+  // View tracking
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const handleView = useCallback(() => {
     trackEventView(event.id, 'feed');
   }, [event.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
 
-  // Interaction = click to open event (NOT a view)
+  // Interaction = click to open event
   const handleCardClick = useCallback(() => {
     if (!event.business_id) return;
     trackEngagement(event.business_id, 'click', 'event', event.id, { source: 'feed' });
@@ -96,19 +100,12 @@ export const UnifiedEventCard = ({
   } else if (isTomorrow) {
     dateLabel = `${t.tomorrow} · ${format(eventDate, "HH:mm")}`;
   } else {
-    // Use Greek day abbreviation for Greek language
-    const dayName = format(eventDate, "EEE", {
-      locale: enUS
-    });
+    const dayName = format(eventDate, "EEE", { locale: enUS });
     const dayLabel = language === "el" ? greekDays[dayName] || dayName : dayName;
     dateLabel = `${dayLabel} · ${format(eventDate, "HH:mm")}`;
   }
 
-  // Time proximity (only show if event starts in < 1 hour)
-  const minutesUntilStart = differenceInMinutes(eventDate, now);
-  const showTimeProximity = minutesUntilStart > 0 && minutesUntilStart < 60;
-
-  // Location line: Spot · City · Business
+  // Location line
   const locationParts: string[] = [];
   if (event.location) locationParts.push(event.location);
   if (event.businesses?.city && event.businesses.city !== event.location) {
@@ -121,94 +118,201 @@ export const UnifiedEventCard = ({
   const interestedCount = event.interested_count || 0;
   const goingCount = event.going_count || 0;
 
-  // Size variants - smaller on mobile
-  const sizeClasses = {
-    compact: "min-w-[160px] max-w-[160px] sm:min-w-[200px] sm:max-w-[200px]",
-    default: "min-w-[180px] max-w-[180px] sm:min-w-[220px] sm:max-w-[220px]",
-    boosted: "min-w-[200px] max-w-[200px] sm:min-w-[240px] sm:max-w-[240px]",
-    full: "w-full", // For grid layouts
-    // NEW: Matches MyOffers card dimensions exactly (h-[220px], image h-28)
-    mobileFixed: "w-full h-[220px] sm:h-[240px]"
+  // Free badge check
+  const showFreeBadge = isFree || event.price_tier === "free";
+
+  // Handle map click
+  const handleMapClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/xartis?business=${event.business_id}`);
   };
 
-  // Check if event is free
-  const showFreeBadge = isFree || event.price_tier === "free";
-  
-  // Image height: mobileFixed uses the same as MyOffers (h-28 sm:h-32), others use h-32 sm:h-40
-  const imageHeightClass = size === "mobileFixed" ? "h-28 sm:h-32" : "h-32 sm:h-40";
-  
-  return <Link
-      ref={cardRef}
-      to={`/event/${event.id}`}
-      onClick={handleCardClick}
-      className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "overflow-visible group", sizeClasses[size], className)}>
-      {/* TOP - Image section - responsive height */}
-      <div className={cn("relative overflow-visible", imageHeightClass)}>
-        {/* Image container - clipped */}
-        <div className="absolute inset-0 overflow-hidden rounded-t-xl">
-          {event.cover_image_url ? <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-primary/50" />
-            </div>}
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+  // For Feed cards (compact, default, boosted) - keep horizontal scroller style
+  if (size === "compact" || size === "default" || size === "boosted") {
+    const sizeClasses = {
+      compact: "min-w-[160px] max-w-[160px] sm:min-w-[200px] sm:max-w-[200px]",
+      default: "min-w-[180px] max-w-[180px] sm:min-w-[220px] sm:max-w-[220px]",
+      boosted: "min-w-[200px] max-w-[200px] sm:min-w-[240px] sm:max-w-[240px]"
+    };
+
+    return (
+      <Link
+        ref={cardRef as any}
+        to={`/event/${event.id}`}
+        onClick={handleCardClick}
+        className={cn(
+          "flex flex-col rounded-xl bg-card border border-border",
+          "hover:border-primary/50 hover:shadow-lg transition-all duration-200",
+          "overflow-visible group",
+          sizeClasses[size],
+          className
+        )}
+      >
+        {/* Image section */}
+        <div className="relative overflow-visible h-32 sm:h-40">
+          <div className="absolute inset-0 overflow-hidden rounded-t-xl">
+            {event.cover_image_url ? (
+              <img
+                src={event.cover_image_url}
+                alt={event.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-primary/50" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          </div>
+
+          {isBoosted && (
+            <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
+              <PremiumBadge type="event" />
+            </div>
+          )}
+
+          {showFreeBadge && (
+            <Badge className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 border-0 z-10">
+              {t.free}
+            </Badge>
+          )}
         </div>
 
-        {/* Boosted Badge - protruding */}
-        {isBoosted && <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
-            <PremiumBadge type="event" />
-          </div>}
-
-        {/* Free Badge */}
-        {showFreeBadge && <Badge className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 border-0 z-10">
-            {t.free}
-          </Badge>}
-      </div>
-
-      {/* BOTTOM HALF - Details - reduced spacing */}
-      <div className="flex-1 p-2 sm:p-3 flex flex-col justify-between min-h-0 gap-0.5">
-        {/* 1. Title (max 1 line) */}
-        <h4 className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
-          {event.title}
-        </h4>
-
-        {/* 2. Date · Time */}
-        <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
-          <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-          <span className="text-[10px] sm:text-xs truncate">{dateLabel}</span>
+        {/* Content section */}
+        <div className="flex-1 p-2 sm:p-3 flex flex-col justify-between min-h-0 gap-0.5">
+          <h4 className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
+            {event.title}
+          </h4>
+          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+            <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+            <span className="text-[10px] sm:text-xs truncate">{dateLabel}</span>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+            <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+            <span className="text-[10px] sm:text-xs truncate">{locationLine || event.location}</span>
+          </div>
+          <CardActionBar
+            entityId={event.id}
+            entityType="event"
+            interestedCount={interestedCount}
+            goingCount={goingCount}
+            language={language}
+            shareData={{
+              title: event.title,
+              location: event.location,
+              start_at: event.start_at,
+              cover_image_url: event.cover_image_url || undefined,
+              businesses: event.businesses ? {
+                id: event.business_id || event.businesses.id || event.businesses.name,
+                name: event.businesses.name,
+              } : undefined,
+            }}
+          />
         </div>
+      </Link>
+    );
+  }
 
-        {/* 3. Location · City · Business */}
-        <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
-          <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-          <span className="text-[10px] sm:text-xs truncate">
-            {locationLine || event.location}
-          </span>
+  // For mobileFixed and full - use Card style matching OfferCard exactly
+  return (
+    <Card
+      ref={cardRef as any}
+      variant="glass"
+      interactive
+      className={cn(
+        "overflow-visible transition-all duration-300",
+        size === "mobileFixed" && "h-[220px] sm:h-[240px]",
+        className
+      )}
+    >
+      <CardContent className="p-0 h-full flex flex-col">
+        {/* Image section - fixed height like OfferCard (h-40) */}
+        <Link
+          to={`/event/${event.id}`}
+          onClick={handleCardClick}
+          className="block relative h-40 overflow-hidden rounded-t-xl flex-shrink-0"
+        >
+          {event.cover_image_url ? (
+            <img
+              src={event.cover_image_url}
+              alt={event.title}
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+              <Calendar className="h-8 w-8 text-primary/50" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+
+          {/* Boosted badge */}
+          {isBoosted && (
+            <div className="absolute -top-2 -right-2 z-10">
+              <PremiumBadge type="event" />
+            </div>
+          )}
+
+          {/* Free badge */}
+          {showFreeBadge && (
+            <Badge className="absolute bottom-3 right-3 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
+              {t.free}
+            </Badge>
+          )}
+        </Link>
+
+        {/* Content section - matching OfferCard layout */}
+        <div className="p-3 space-y-1 flex-1 flex flex-col">
+          {/* Title */}
+          <Link to={`/event/${event.id}`} onClick={handleCardClick}>
+            <h3 className="font-bold text-sm leading-tight line-clamp-1 hover:text-primary transition-colors">
+              {event.title}
+            </h3>
+          </Link>
+
+          {/* Date/Time */}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="h-3.5 w-3.5 shrink-0" />
+            <span className="text-xs">{dateLabel}</span>
+          </div>
+
+          {/* Location */}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <button
+              onClick={handleMapClick}
+              className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+              title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-xs truncate">{locationLine || event.location}</span>
+          </div>
+
+          {/* Action Bar */}
+          <div className="mt-auto pt-1">
+            <CardActionBar
+              entityId={event.id}
+              entityType="event"
+              interestedCount={interestedCount}
+              goingCount={goingCount}
+              language={language}
+              shareData={{
+                title: event.title,
+                location: event.location,
+                start_at: event.start_at,
+                cover_image_url: event.cover_image_url || undefined,
+                businesses: event.businesses ? {
+                  id: event.business_id || event.businesses.id || event.businesses.name,
+                  name: event.businesses.name,
+                } : undefined,
+              }}
+            />
+          </div>
         </div>
-
-        {/* 4. Time Proximity (only if < 1 hour) */}
-        {showTimeProximity && <p className="text-[10px] text-primary font-medium">
-            {t.startsIn} {minutesUntilStart} {t.minutes}
-          </p>}
-
-        {/* 5. Interactive Action Bar - slightly smaller gap */}
-        <CardActionBar
-          entityId={event.id}
-          entityType="event"
-          interestedCount={interestedCount}
-          goingCount={goingCount}
-          language={language}
-          shareData={{
-            title: event.title,
-            location: event.location,
-            start_at: event.start_at,
-            cover_image_url: event.cover_image_url || undefined,
-            businesses: event.businesses ? {
-              id: event.business_id || event.businesses.id || event.businesses.name,
-              name: event.businesses.name,
-            } : undefined,
-          }}
-        />
-      </div>
-    </Link>;
+      </CardContent>
+    </Card>
+  );
 };
+
 export default UnifiedEventCard;

@@ -593,7 +593,7 @@ export default function EventDetail() {
                 <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
                 {/* Mobile: mobileFixed matches MyOffers card dimensions */}
                 <motion.div
-                  className="grid gap-3 md:hidden"
+                  className="grid gap-2 md:hidden"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"

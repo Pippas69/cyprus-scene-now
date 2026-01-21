@@ -281,9 +281,10 @@ const BusinessProfile = () => {
           {t.back}
         </RippleButton>
 
-        {/* Avatar + Follow/Share row - centered */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-[calc(50%-20px)] translate-y-1/2 flex items-center gap-3">
+        {/* Avatar centered with icons to the right */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 flex items-center gap-3">
           <motion.div
+            className="relative"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
@@ -294,6 +295,16 @@ const BusinessProfile = () => {
                 {business.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
+            
+            {/* Student Discount Badge overlaid on avatar */}
+            {business.student_discount_enabled && business.student_discount_percent && (
+              <div className="absolute -top-1 -right-1 z-10">
+                <div className="bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-7 w-7 flex items-center justify-center border-2 border-background shadow-md">
+                  <GraduationCap className="h-3 w-3 mr-0.5" />
+                  {business.student_discount_percent}%
+                </div>
+              </div>
+            )}
           </motion.div>
           
           {/* Follow + Share icons to the right of avatar */}
@@ -319,13 +330,13 @@ const BusinessProfile = () => {
       {/* Business Info - centered below avatar */}
       <div className="container mx-auto px-4 pt-16 md:pt-20 pb-24 md:pb-8">
         <motion.div 
-          className="text-center mb-6"
+          className="text-center mb-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
           {/* Name + Verified - centered */}
-          <div className="flex items-center justify-center gap-2 mb-2 -ml-4">
+          <div className="flex items-center justify-center gap-2 mb-1">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {business.name}
             </h1>
@@ -334,29 +345,46 @@ const BusinessProfile = () => {
             )}
           </div>
 
-          {/* Category Badges - centered */}
-          <div className="flex flex-wrap justify-center gap-2 mb-2 -ml-6">
-            {business.category.map((cat) => (
-              <Badge 
-                key={cat} 
-                className="bg-accent hover:bg-accent/90 text-accent-foreground border-0 px-3 py-1 text-xs"
-              >
-                {cat}
-              </Badge>
-            ))}
-          </div>
+          {/* Category as plain text (not badges) */}
+          <p className="text-sm text-muted-foreground mb-1">
+            {business.category.join(" & ")}
+          </p>
           
           {/* Description - centered */}
           {business.description && (
-            <p className="text-muted-foreground text-sm max-w-md mx-auto text-center -translate-x-6">
+            <p className="text-muted-foreground text-sm max-w-md mx-auto text-center">
               {business.description}
             </p>
           )}
         </motion.div>
 
-        {/* Contact Info Cards - inline row on mobile, prevent wrapping */}
+        {/* Reservation Button - above contact cards */}
+        {business.accepts_direct_reservations && (
+          <motion.div 
+            className="flex justify-center mb-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <RippleButton
+              onClick={() => {
+                if (!user) {
+                  toast.error(t.loginToReserve);
+                  return;
+                }
+                setReservationDialogOpen(true);
+              }}
+              className="gap-2"
+            >
+              <CalendarCheck className="h-4 w-4" />
+              {t.reserveTable}
+            </RippleButton>
+          </motion.div>
+        )}
+
+        {/* Contact Info Cards - 3-column row on mobile */}
         <motion.div 
-          className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 mb-4 sm:mb-6 max-w-2xl mx-auto"
+          className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 mb-6 max-w-2xl mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -372,9 +400,6 @@ const BusinessProfile = () => {
                 <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-0.5 sm:mb-1" />
                 <p className="text-[10px] sm:text-xs text-muted-foreground">{t.city}</p>
                 <p className="font-medium text-xs sm:text-sm truncate max-w-full">{business.city}</p>
-                {business.address && (
-                  <p className="text-[9px] sm:text-xs text-muted-foreground line-clamp-1 hidden sm:block">{business.address}</p>
-                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -394,7 +419,7 @@ const BusinessProfile = () => {
             </motion.div>
           )}
 
-          {/* Website Card - Clickable to external site */}
+          {/* Website Card */}
           {business.website && (
             <motion.div variants={itemVariants} className="sm:flex-1 sm:min-w-[120px] sm:max-w-[200px]">
               <a 
@@ -417,45 +442,6 @@ const BusinessProfile = () => {
           )}
         </motion.div>
 
-        {/* Action Buttons - Reserve Table & Student Discount */}
-        {business.id && (business.accepts_direct_reservations || (business.student_discount_enabled && business.student_discount_percent)) && (
-          <motion.div 
-            className="flex justify-center gap-3 flex-wrap mb-6"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            {/* Direct Reservation Button */}
-            {business.accepts_direct_reservations && (
-              <RippleButton
-                onClick={() => {
-                  if (!user) {
-                    toast.error(t.loginToReserve);
-                    return;
-                  }
-                  setReservationDialogOpen(true);
-                }}
-                className="gap-2"
-              >
-                <CalendarCheck className="h-4 w-4" />
-                {t.reserveTable}
-              </RippleButton>
-            )}
-
-            {/* Student Discount Button */}
-            {business.student_discount_enabled && business.student_discount_percent && (
-              <StudentDiscountButton
-                businessId={business.id}
-                businessName={business.name}
-                discountPercent={business.student_discount_percent}
-                discountMode={business.student_discount_mode === 'unlimited' ? 'unlimited' : 'one_time'}
-                userId={user?.id || null}
-                language={language}
-              />
-            )}
-          </motion.div>
-        )}
-
 
         {/* Unified Events & Offers List */}
         <motion.div
@@ -473,7 +459,7 @@ const BusinessProfile = () => {
             </Card>
           ) : (
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
