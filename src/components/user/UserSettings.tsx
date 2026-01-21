@@ -457,24 +457,29 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Mandatory: Email Confirmations - Always ON, no toggle */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-primary" />
-              <div>
-                <span className="font-semibold">{t.emailConfirmationsTitle}</span>
-                <span className="text-primary font-medium ml-2">{t.emailConfirmationsMandatory}</span>
-              </div>
+          {/* Mandatory: Email Confirmations - Always ON */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>{t.emailConfirmationsTitle}</Label>
+              <p className="text-xs text-muted-foreground">{t.emailConfirmationsDesc}</p>
             </div>
-            <p className="text-sm text-muted-foreground ml-7">{t.emailConfirmationsDesc}</p>
-            
-            <div className="flex items-start gap-3 ml-7 p-3 bg-muted/50 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-sm">{t.confirmationsTitle}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{t.confirmationsDesc}</p>
-              </div>
+            <Switch
+              checked={true}
+              disabled
+              className="data-[state=checked]:bg-primary cursor-default"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>{t.confirmationsTitle}</Label>
+              <p className="text-xs text-muted-foreground">{t.confirmationsDesc}</p>
             </div>
+            <Switch
+              checked={true}
+              disabled
+              className="data-[state=checked]:bg-primary cursor-default"
+            />
           </div>
 
           <Separator />
