@@ -543,10 +543,13 @@ export default function EventDetail() {
 
                   <Separator />
 
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <p className="font-medium text-sm">{event.location}</p>
-                  </div>
+                  <button
+                    onClick={() => navigate(`/xartis?business=${event.business_id}`)}
+                    className="flex items-start gap-2 w-full text-left hover:bg-accent/50 -mx-1 px-1 py-0.5 rounded-md transition-colors cursor-pointer group"
+                  >
+                    <MapPin className="h-4 w-4 text-muted-foreground group-hover:text-primary mt-0.5 shrink-0 transition-colors" />
+                    <p className="font-medium text-sm group-hover:text-primary transition-colors">{event.location}</p>
+                  </button>
                 </CardContent>
               </Card>
 

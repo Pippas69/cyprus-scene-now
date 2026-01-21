@@ -92,10 +92,17 @@ const EventListItem = ({
                 <Calendar className="h-3 w-3" />
                 {format(new Date(event.start_at), "MMM d, HH:mm")}
               </span>
-              <span className="flex items-center gap-1 truncate">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(`/xartis?business=${event.business_id}`);
+                }}
+                className="flex items-center gap-1 truncate text-muted-foreground hover:text-primary transition-colors"
+              >
                 <MapPin className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">{event.location}</span>
-              </span>
+              </button>
             </div>
 
             {/* Category & Price */}

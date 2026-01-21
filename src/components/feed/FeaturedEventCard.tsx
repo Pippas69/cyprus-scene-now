@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Calendar, MapPin, Users, Heart } from "lucide-react";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ interface FeaturedEventCardProps {
 }
 
 const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) => {
+  const navigate = useNavigate();
   const translations = {
     el: {
       viewDetails: "Δείτε Λεπτομέρειες",
@@ -109,10 +110,17 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
               <Calendar size={16} />
               <span>{formatEventTime(event.start_at, event.end_at, language)}</span>
             </div>
-            <div className="flex items-center gap-1.5">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigate(`/xartis?business=${event.business_id || event.businesses?.id}`);
+              }}
+              className="flex items-center gap-1.5 hover:text-white transition-colors"
+            >
               <MapPin size={16} />
               <span>{event.location}</span>
-            </div>
+            </button>
           </div>
 
           {/* Stats & CTA */}
