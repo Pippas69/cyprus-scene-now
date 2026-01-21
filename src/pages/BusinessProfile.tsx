@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackEngagement } from "@/lib/analyticsTracking";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -365,7 +366,7 @@ const BusinessProfile = () => {
 
           {/* Category as plain text (not badges) */}
           <p className="text-sm text-muted-foreground mb-1">
-            {business.category.join(" & ")}
+            {business.category.map(cat => getCategoryLabel(cat, language)).join(" & ")}
           </p>
           
           {/* Description - centered */}
