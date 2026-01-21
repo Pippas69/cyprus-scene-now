@@ -38,6 +38,7 @@ import { ShareDialog } from '@/components/sharing/ShareDialog';
 import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
 import { useTicketTiers } from '@/hooks/useTicketTiers';
 import { ErrorState } from '@/components/ErrorState';
+import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 
 // Staggered animation variants for similar events
 const containerVariants = {
@@ -435,20 +436,6 @@ export default function EventDetail() {
 
             {/* Tabs for Details and Live Feed */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="details" className="gap-2">
-                  {text.details}
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="livefeed" 
-                  disabled={!isAttendee}
-                  className="gap-2"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  {text.liveFeed}
-                </TabsTrigger>
-              </TabsList>
-
               <TabsContent value="details" className="space-y-4 mt-4">
                 {/* Description */}
                 {event.description && (
@@ -575,9 +562,24 @@ export default function EventDetail() {
                     <Share2 className="h-3.5 w-3.5" />
                     {text.share}
                   </RippleButton>
+
+                  {/* Details / Live Feed tabs - must be directly under Share */}
+                  <TabsList className="grid w-full grid-cols-2 mt-2">
+                    <TabsTrigger value="details" className="gap-2">
+                      {text.details}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="livefeed"
+                      disabled={!isAttendee}
+                      className="gap-2"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      {text.liveFeed}
+                    </TabsTrigger>
+                  </TabsList>
                 </div>
 
-                {/* Similar Events - with reduced image height */}
+                {/* Similar Events - use the SAME card as feed */}
                 {similarEvents.length > 0 && (
                   <div className="mt-4">
                     <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
@@ -589,11 +591,10 @@ export default function EventDetail() {
                     >
                       {similarEvents.map((similar) => (
                         <motion.div key={similar.id} variants={itemVariants}>
-                          <EventCard
+                          <UnifiedEventCard
                             event={similar}
                             language={language}
-                            user={user}
-                            className="[&_.relative.h-36]:h-28 [&_.relative.h-36]:sm:h-32"
+                            size="full"
                           />
                         </motion.div>
                       ))}

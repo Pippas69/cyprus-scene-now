@@ -304,11 +304,11 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       return language === "el" ? `${t.purchasedOn} ${day} ${month}` : `${t.purchasedOn} ${month} ${day}`;
     };
 
-    return (
-      <Card className="overflow-hidden aspect-square relative">
-        <div className="h-full flex flex-col">
-          {/* TOP HALF: Image */}
-          <div className="h-1/2 relative overflow-hidden rounded-t-xl">
+     return (
+       <Card className="overflow-hidden relative h-[220px] sm:h-[240px]">
+         <div className="h-full flex flex-col">
+           {/* TOP: Image */}
+           <div className="h-28 sm:h-32 relative overflow-hidden rounded-t-xl">
             {purchase.discounts.businesses.logo_url ? (
               <img
                 src={purchase.discounts.businesses.logo_url}
@@ -348,8 +348,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </div>
           </div>
 
-          {/* BOTTOM HALF: Info */}
-          <div className="h-1/2 p-3 flex flex-col bg-background rounded-b-xl">
+           {/* BOTTOM: Info */}
+           <div className="flex-1 p-3 flex flex-col bg-background rounded-b-xl min-h-0">
             {/* LINE 1: Title */}
             <h4 className="text-sm font-semibold line-clamp-1">
               {purchase.discounts.title}
@@ -367,8 +367,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
             </div>
 
-            {/* LINE 4: Show QR button - reduced spacing */}
-            <div className="flex items-center justify-end gap-2 mt-2">
+             {/* LINE 4: Show QR button - tight spacing */}
+             <div className="flex items-center justify-end gap-2 mt-1">
               {showQR && !isExpired && !isRedeemed && !isDepleted && (
                 <Button 
                   onClick={() => setSelectedPurchase(purchase)}
