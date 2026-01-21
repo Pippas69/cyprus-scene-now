@@ -5,9 +5,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MyEvents } from '@/components/user/MyEvents';
 import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
-import { Compass, Map, Percent } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { UserSettings } from '@/components/user/UserSettings';
 
 const DashboardUser = () => {
@@ -135,34 +133,7 @@ const DashboardUser = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Quick Actions FAB */}
-      <FloatingActionButton
-        icon={<Compass size={24} />}
-        onClick={() => navigate('/feed')}
-        actions={[
-          {
-            icon: <Compass size={20} />,
-            label: t.browseEvents,
-            onClick: () => navigate('/feed')
-          },
-          {
-            icon: <Map size={20} />,
-            label: t.exploreMap,
-            onClick: () => navigate('/xartis')
-          },
-          {
-            icon: <Percent size={20} />,
-            label: t.offers,
-            onClick: () => {
-              setActiveTab('offers');
-              navigate('/dashboard-user?tab=offers', { replace: true });
-            }
-          }
-        ]}
-        position="bottom-right"
-        size="large"
-        variant="primary"
-      />
+      {/* Quick Actions FAB - REMOVED per user request */}
     </div>
   );
 };

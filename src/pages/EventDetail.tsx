@@ -546,6 +546,45 @@ export default function EventDetail() {
                     <Share2 className="h-3.5 w-3.5" />
                     {text.share}
                   </RippleButton>
+
+                  {/* Mobile Ticket Purchase Button */}
+                  {hasNativeTickets && (
+                    <TicketPurchaseCard
+                      eventId={event.id}
+                      eventTitle={event.title}
+                      tiers={ticketTiers}
+                      onSuccess={(orderId, isFree) => {
+                        if (isFree) {
+                          toast.success(language === 'el' 
+                            ? 'Τα εισιτήριά σας είναι έτοιμα!' 
+                            : 'Your tickets are ready!'
+                          );
+                        }
+                      }}
+                    />
+                  )}
+
+                  {/* Mobile Reservation Button for Reservation Events */}
+                  {eventType === 'reservation' && event.event_type === 'reservation' && user && (
+                    <RippleButton
+                      className="w-full gap-2 h-9 text-sm"
+                      onClick={() => setShowReservationCheckout(true)}
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                      {text.makeReservation}
+                    </RippleButton>
+                  )}
+
+                  {/* Mobile Legacy Reservation Button */}
+                  {user && event.accepts_reservations && event.event_type !== 'reservation' && (
+                    <RippleButton
+                      className="w-full gap-2 h-9 text-sm"
+                      onClick={() => setShowReservationDialog(true)}
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                      {text.makeReservation}
+                    </RippleButton>
+                  )}
             </div>
 
             {/* Similar Events - use the SAME card as feed */}
@@ -565,9 +604,9 @@ export default function EventDetail() {
                     </motion.div>
                   ))}
                 </motion.div>
-                {/* Desktop/Tablet: 2-column grid like "My Events" */}
+                {/* Desktop/Tablet: 2-column grid like "My Events" - minimal gap */}
                 <motion.div
-                  className="hidden md:grid md:grid-cols-2 gap-4"
+                  className="hidden md:grid md:grid-cols-2 gap-2"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
