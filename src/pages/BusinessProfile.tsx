@@ -481,12 +481,23 @@ const BusinessProfile = () => {
               {/* Render all events */}
               {events.map((event) => (
                 <motion.div key={`event-${event.id}`} variants={itemVariants}>
-                  <UnifiedEventCard 
-                    event={event} 
-                    language={language} 
-                    size="full"
-                    isFree={event.price_tier === "free"}
-                  />
+                  {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
+                  <div className="md:hidden">
+                    <UnifiedEventCard 
+                      event={event} 
+                      language={language} 
+                      size="mobileFixed"
+                      isFree={event.price_tier === "free"}
+                    />
+                  </div>
+                  <div className="hidden md:block">
+                    <UnifiedEventCard 
+                      event={event} 
+                      language={language} 
+                      size="full"
+                      isFree={event.price_tier === "free"}
+                    />
+                  </div>
                 </motion.div>
               ))}
               {/* Render all offers */}

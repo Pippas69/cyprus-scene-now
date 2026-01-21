@@ -32,7 +32,7 @@ interface UnifiedEventCardProps {
   language: "el" | "en";
   isBoosted?: boolean;
   isFree?: boolean;
-  size?: "compact" | "default" | "boosted" | "full";
+  size?: "compact" | "default" | "boosted" | "full" | "mobileFixed";
   className?: string;
 }
 const translations = {
@@ -126,11 +126,16 @@ export const UnifiedEventCard = ({
     compact: "min-w-[160px] max-w-[160px] sm:min-w-[200px] sm:max-w-[200px]",
     default: "min-w-[180px] max-w-[180px] sm:min-w-[220px] sm:max-w-[220px]",
     boosted: "min-w-[200px] max-w-[200px] sm:min-w-[240px] sm:max-w-[240px]",
-    full: "w-full" // For grid layouts
+    full: "w-full", // For grid layouts
+    // NEW: Matches MyOffers card dimensions exactly (h-[220px], image h-28)
+    mobileFixed: "w-full h-[220px] sm:h-[240px]"
   };
 
   // Check if event is free
   const showFreeBadge = isFree || event.price_tier === "free";
+  
+  // Image height: mobileFixed uses the same as MyOffers (h-28 sm:h-32), others use h-32 sm:h-40
+  const imageHeightClass = size === "mobileFixed" ? "h-28 sm:h-32" : "h-32 sm:h-40";
   
   return <Link
       ref={cardRef}
@@ -138,7 +143,7 @@ export const UnifiedEventCard = ({
       onClick={handleCardClick}
       className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "overflow-visible group", sizeClasses[size], className)}>
       {/* TOP - Image section - responsive height */}
-      <div className="relative h-32 sm:h-40 overflow-visible">
+      <div className={cn("relative overflow-visible", imageHeightClass)}>
         {/* Image container - clipped */}
         <div className="absolute inset-0 overflow-hidden rounded-t-xl">
           {event.cover_image_url ? <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">

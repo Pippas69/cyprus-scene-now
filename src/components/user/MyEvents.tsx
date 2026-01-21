@@ -125,7 +125,13 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           const key = isRsvp ? item.id : event.id;
           return (
             <div key={key} className="relative">
-              <UnifiedEventCard event={event} language={language} size="full" />
+              {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
+              <div className="md:hidden">
+                <UnifiedEventCard event={event} language={language} size="mobileFixed" />
+              </div>
+              <div className="hidden md:block">
+                <UnifiedEventCard event={event} language={language} size="full" />
+              </div>
             </div>
           );
         })}
@@ -144,7 +150,13 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           const key = isRsvp ? item.id : event.id;
           return (
             <div key={key} className="relative opacity-60">
-              <UnifiedEventCard event={event} language={language} size="full" />
+              {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
+              <div className="md:hidden">
+                <UnifiedEventCard event={event} language={language} size="mobileFixed" />
+              </div>
+              <div className="hidden md:block">
+                <UnifiedEventCard event={event} language={language} size="full" />
+              </div>
               <Badge variant="secondary" className="absolute top-2 right-2 bg-background/90 backdrop-blur text-xs z-20">
                 <Clock className="h-3 w-3 mr-1" />
                 {t.eventEnded}
