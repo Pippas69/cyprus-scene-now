@@ -128,14 +128,14 @@ const Navbar = () => {
     )}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo - Desktop: simple button, Mobile: dropdown with navigation */}
-          {/* Desktop Logo */}
-          <button onClick={() => navigate("/")} className="hidden md:block hover:opacity-80 transition-opacity">
+          {/* Logo - Desktop: simple button, Tablet/Mobile: dropdown with navigation */}
+          {/* Desktop Logo (lg+) */}
+          <button onClick={() => navigate("/")} className="hidden lg:block hover:opacity-80 transition-opacity">
             <Logo size="md" />
           </button>
 
-          {/* Mobile Logo with Dropdown */}
-          <div className="md:hidden">
+          {/* Tablet/Mobile Logo with Dropdown (<lg) */}
+          <div className="lg:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
@@ -160,8 +160,8 @@ const Navbar = () => {
             </DropdownMenu>
           </div>
 
-          {/* Desktop Horizontal Navigation Links */}
-          <div className="hidden md:flex items-center gap-4 ml-8 mr-6">
+          {/* Desktop Horizontal Navigation Links (lg+) */}
+          <div className="hidden lg:flex items-center gap-4 ml-8 mr-6">
             <button 
               onClick={() => navigate("/")} 
               className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
@@ -188,24 +188,27 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Desktop Search - Separated from login button */}
-          <div className="hidden md:flex items-center">
-            <div className="relative">
-              <Search 
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" 
-              />
-              <input
-                type="text"
-                placeholder={language === "el" ? "Αναζήτηση..." : "Search..."}
-                className="h-9 w-40 lg:w-56 pl-9 pr-3 rounded-full border border-border bg-muted/50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                onClick={() => navigate("/feed")}
-                readOnly
-              />
-            </div>
+          {/* Desktop Search Icon (lg+) - opens functional search, no text */}
+          <div className="hidden lg:flex items-center">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-foreground"
+                  aria-label={language === "el" ? "Αναζήτηση" : "Search"}
+                >
+                  <Search className="h-5 w-5" aria-hidden="true" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="top" className="h-full">
+                <GlobalSearch language={language} fullscreen resultTypes={['business']} />
+              </SheetContent>
+            </Sheet>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Desktop Navigation (lg+) */}
+          <div className="hidden lg:flex items-center gap-4">
             
             {/* Messages Icon (only for logged-in users) */}
             {user && (
@@ -228,12 +231,14 @@ const Navbar = () => {
             {/* Notification Bell (only for logged-in users) */}
             {user && <NotificationBell userId={user.id} />}
             
-            {!user && <Button 
+            {!user && (
+              <Button 
                 onClick={() => navigate("/login")}
                 className="font-inter font-semibold bg-aegean text-white hover:bg-aegean/90 border-2 border-aegean transition-all"
               >
                 {t.login}
-              </Button>}
+              </Button>
+            )}
 
             {/* Language Toggle */}
             <LanguageToggle />
@@ -294,8 +299,8 @@ const Navbar = () => {
               </DropdownMenu>}
           </div>
 
-          {/* Mobile Menu */}
-          <div className="md:hidden flex items-center gap-2">
+          {/* Tablet/Mobile Menu (<lg) */}
+          <div className="lg:hidden flex items-center gap-2">
             {/* Search Icon - Opens full screen search */}
             <Sheet>
               <SheetTrigger asChild>
@@ -309,7 +314,7 @@ const Navbar = () => {
                 </Button>
               </SheetTrigger>
               <SheetContent side="top" className="h-full">
-                <GlobalSearch language={language} fullscreen />
+                <GlobalSearch language={language} fullscreen resultTypes={['business']} />
               </SheetContent>
             </Sheet>
 
