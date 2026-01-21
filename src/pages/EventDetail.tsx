@@ -346,9 +346,9 @@ export default function EventDetail() {
         );
       case 'free_entry':
         return (
-          <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
+          <Badge variant="outline" className="gap-1 text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
             <PartyPopper className="h-3 w-3" />
-            {text.freeEntry}
+            {language === 'el' ? 'Ελεύθερη Είσοδος (Event)' : 'Free Entry (Event)'}
           </Badge>
         );
       default:
@@ -429,11 +429,12 @@ export default function EventDetail() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <h1 className="text-4xl font-bold mb-4">{event.title}</h1>
+              {/* Title - smaller on mobile to fit in one line */}
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 line-clamp-1">{event.title}</h1>
               <div className="flex flex-wrap gap-2 items-center">
                 {getEventTypeBadge()}
                 {event.category?.map((cat: string) => (
-                  <Badge key={cat} variant="secondary">
+                  <Badge key={cat} variant="secondary" className="text-xs">
                     {cat}
                   </Badge>
                 ))}
@@ -456,31 +457,31 @@ export default function EventDetail() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="details" className="space-y-6 mt-6">
+              <TabsContent value="details" className="space-y-4 mt-4">
                 {/* Description */}
                 {event.description && (
                   <Card variant="glass">
-                    <CardContent className="pt-6">
-                      <p className="text-muted-foreground whitespace-pre-wrap">
+                    <CardContent className="pt-4 pb-4">
+                      <p className="text-muted-foreground whitespace-pre-wrap text-sm">
                         {event.description}
                       </p>
                     </CardContent>
                   </Card>
                 )}
 
-                {/* Mobile-only: Event info (RSVP, Share, Date, Location, Organizer) - shown before Similar Events */}
-                <div className="md:hidden space-y-4">
+                {/* Mobile-only: Organizer first, then tabs, then share */}
+                <div className="md:hidden space-y-3">
                   {/* RSVP Buttons */}
                   {user && (
                     <Card variant="glass" className="backdrop-blur-md">
-                      <CardContent className="pt-4 pb-4">
+                      <CardContent className="py-3">
                         <div className="grid grid-cols-2 gap-2">
                           <RippleButton
                             variant="outline"
                             size="sm"
                             onClick={() => handleRSVP('interested')}
                             disabled={rsvpLoading}
-                            className={`gap-1.5 text-xs transition-all ${
+                            className={`gap-1.5 text-xs h-8 transition-all ${
                               isInterested
                                 ? 'border-ocean text-ocean bg-ocean/5'
                                 : 'border-border text-muted-foreground hover:border-ocean/50'
@@ -493,7 +494,7 @@ export default function EventDetail() {
                             size="sm"
                             onClick={() => handleRSVP('going')}
                             disabled={rsvpLoading}
-                            className={`gap-1.5 text-xs transition-all ${
+                            className={`gap-1.5 text-xs h-8 transition-all ${
                               isGoing
                                 ? 'bg-ocean hover:bg-ocean/90 text-white'
                                 : 'bg-muted hover:bg-muted/80 text-muted-foreground'
@@ -505,13 +506,13 @@ export default function EventDetail() {
                         </div>
                         
                         {/* RSVP Counts */}
-                        <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground">
+                        <div className="flex items-center justify-center gap-4 mt-2 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <Heart className="h-3.5 w-3.5" />
+                            <Heart className="h-3 w-3" />
                             <span>{interestedCount}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Users className="h-3.5 w-3.5" />
+                            <Users className="h-3 w-3" />
                             <span>{goingCount}</span>
                           </div>
                         </div>
@@ -519,20 +520,10 @@ export default function EventDetail() {
                     </Card>
                   )}
 
-                  {/* Share Button */}
-                  <RippleButton
-                    variant="outline"
-                    className="w-full gap-2 h-9"
-                    onClick={handleShare}
-                  >
-                    <Share2 className="h-4 w-4" />
-                    {text.share}
-                  </RippleButton>
-
-                  {/* Event Details Card */}
+                  {/* Event Details Card - Date & Location */}
                   <Card variant="glass" className="backdrop-blur-md">
-                    <CardContent className="pt-4 pb-4 space-y-3">
-                      <div className="flex items-start gap-3">
+                    <CardContent className="py-3 space-y-2">
+                      <div className="flex items-start gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                         <div>
                           <p className="font-medium text-sm">
@@ -547,7 +538,7 @@ export default function EventDetail() {
 
                       <Separator />
 
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                         <p className="font-medium text-sm">{event.location}</p>
                       </div>
@@ -555,33 +546,43 @@ export default function EventDetail() {
                   </Card>
 
                   {/* Business Card */}
-                  <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
-                    <CardContent className="pt-4 pb-4">
-                      <p className="text-xs text-muted-foreground mb-2">{text.hostedBy}</p>
+                  <Card variant="glass" className="backdrop-blur-md">
+                    <CardContent className="py-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">{text.hostedBy}</p>
                       <Link
                         to={`/business/${event.businesses.id}`}
-                        className="flex items-center gap-3 hover:bg-accent p-2 -mx-2 rounded-lg transition-colors"
+                        className="flex items-center gap-2 hover:bg-accent p-1.5 -mx-1.5 rounded-lg transition-colors"
                       >
-                        <Avatar className="h-10 w-10 border">
+                        <Avatar className="h-8 w-8 border">
                           <AvatarImage src={event.businesses.logo_url || ''} />
                           <AvatarFallback>
-                            <Building2 className="h-5 w-5" />
+                            <Building2 className="h-4 w-4" />
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
                             {event.businesses.verified && (
-                              <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                              <CheckCircle className="h-3 w-3 text-primary flex-shrink-0" />
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-[10px] text-muted-foreground truncate">
                             {event.businesses.city}
                           </p>
                         </div>
                       </Link>
                     </CardContent>
                   </Card>
+
+                  {/* Share Button - after business */}
+                  <RippleButton
+                    variant="outline"
+                    className="w-full gap-2 h-8 text-sm"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    {text.share}
+                  </RippleButton>
                 </div>
 
                 {/* Similar Events */}
