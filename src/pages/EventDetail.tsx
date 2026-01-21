@@ -397,194 +397,190 @@ export default function EventDetail() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="md:col-span-2 space-y-6">
-            {/* Hero Image */}
-            {event.cover_image_url && (
-              <motion.div 
-                className="aspect-video rounded-lg overflow-hidden shadow-lg"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
+            {/* Hero Image with Event Type Badge */}
+            <motion.div 
+              className="relative aspect-video rounded-xl overflow-hidden shadow-lg"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              {event.cover_image_url ? (
                 <img
                   src={event.cover_image_url}
                   alt={event.title}
                   className="w-full h-full object-cover"
                 />
-              </motion.div>
-            )}
+              ) : (
+                <div className="w-full h-full bg-muted flex items-center justify-center">
+                  <PartyPopper className="h-16 w-16 text-muted-foreground/40" />
+                </div>
+              )}
+              {/* Event Type Badge - Bottom Right of Image */}
+              <div className="absolute bottom-3 right-3">
+                {getEventTypeBadge()}
+              </div>
+            </motion.div>
 
-            {/* Title and Categories */}
+            {/* Title and Description - tight spacing to image */}
             <motion.div
+              className="mt-2 space-y-0.5"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              {/* Title - smaller on mobile to fit in one line */}
-              <h1 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2 line-clamp-1">{event.title}</h1>
-              <div className="flex flex-wrap gap-2 items-center">
-                {getEventTypeBadge()}
-              </div>
-              {/* Description - small text directly under title (no box) */}
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold line-clamp-1">{event.title}</h1>
               {event.description && (
-                <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">
+                <p className="text-xs text-muted-foreground line-clamp-2">
                   {event.description}
                 </p>
               )}
             </motion.div>
 
-            {/* Mobile-only info section - directly under header (no Details/Live Feed section) */}
-            <div className="md:hidden space-y-3 mt-4">
-                  {/* RSVP Buttons */}
-                  {user && (
-                    <Card variant="glass" className="backdrop-blur-md">
-                      <CardContent className="py-3">
-                        <div className="grid grid-cols-2 gap-2">
-                          <RippleButton
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRSVP('interested')}
-                            disabled={rsvpLoading}
-                            className={`gap-1.5 text-xs h-8 transition-all ${
-                              isInterested
-                                ? 'border-ocean text-ocean bg-ocean/5'
-                                : 'border-border text-muted-foreground hover:border-ocean/50'
-                            }`}
-                          >
-                            <Heart className="h-3.5 w-3.5" />
-                            {text.interested}
-                          </RippleButton>
-                          <RippleButton
-                            size="sm"
-                            onClick={() => handleRSVP('going')}
-                            disabled={rsvpLoading}
-                            className={`gap-1.5 text-xs h-8 transition-all ${
-                              isGoing
-                                ? 'bg-ocean hover:bg-ocean/90 text-white'
-                                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                            }`}
-                          >
-                            <Users className="h-3.5 w-3.5" />
-                            {text.going}
-                          </RippleButton>
-                        </div>
-                        
-                        {/* RSVP Counts */}
-                        <div className="flex items-center justify-center gap-4 mt-2 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Heart className="h-3 w-3" />
-                            <span>{interestedCount}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            <span>{goingCount}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+            {/* Mobile-only info section */}
+            <div className="md:hidden space-y-3 mt-3">
+              {/* RSVP Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <RippleButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRSVP('interested')}
+                  disabled={rsvpLoading || !user}
+                  className={`gap-1.5 text-xs h-9 transition-all ${
+                    isInterested
+                      ? 'border-ocean text-ocean bg-ocean/5'
+                      : 'border-border text-muted-foreground hover:border-ocean/50'
+                  }`}
+                >
+                  <Heart className="h-3.5 w-3.5" />
+                  {text.interested}
+                </RippleButton>
+                <RippleButton
+                  size="sm"
+                  onClick={() => handleRSVP('going')}
+                  disabled={rsvpLoading || !user}
+                  className={`gap-1.5 text-xs h-9 transition-all ${
+                    isGoing
+                      ? 'bg-ocean hover:bg-ocean/90 text-white'
+                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                  }`}
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  {text.going}
+                </RippleButton>
+              </div>
+              
+              {/* RSVP Counts */}
+              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Heart className="h-3 w-3" />
+                  <span>{interestedCount}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  <span>{goingCount}</span>
+                </div>
+              </div>
 
-                  {/* Event Details Card - Date & Location */}
-                  <Card variant="glass" className="backdrop-blur-md">
-                    <CardContent className="py-3 space-y-2">
-                      <div className="flex items-start gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                        <div>
-                          <p className="font-medium text-sm">
-                            {format(new Date(event.start_at), 'EEEE, MMMM d, yyyy')}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(event.start_at), 'HH:mm')} -{' '}
-                            {format(new Date(event.end_at), 'HH:mm')}
-                          </p>
-                        </div>
-                      </div>
+              {/* Tickets/Reservations - DIRECTLY after RSVP buttons (before date) */}
+              {hasNativeTickets && (
+                <TicketPurchaseCard
+                  eventId={event.id}
+                  eventTitle={event.title}
+                  tiers={ticketTiers}
+                  onSuccess={(orderId, isFree) => {
+                    if (isFree) {
+                      toast.success(language === 'el' 
+                        ? 'Τα εισιτήριά σας είναι έτοιμα!' 
+                        : 'Your tickets are ready!'
+                      );
+                    }
+                  }}
+                />
+              )}
 
-                      <Separator />
+              {eventType === 'reservation' && event.event_type === 'reservation' && user && (
+                <RippleButton
+                  className="w-full gap-2 h-9 text-sm"
+                  onClick={() => setShowReservationCheckout(true)}
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  {text.makeReservation}
+                </RippleButton>
+              )}
 
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                        <p className="font-medium text-sm">{event.location}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+              {user && event.accepts_reservations && event.event_type !== 'reservation' && (
+                <RippleButton
+                  className="w-full gap-2 h-9 text-sm"
+                  onClick={() => setShowReservationDialog(true)}
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  {text.makeReservation}
+                </RippleButton>
+              )}
 
-                  {/* Business Card */}
-                  <Card variant="glass" className="backdrop-blur-md">
-                    <CardContent className="py-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">{text.hostedBy}</p>
-                      <Link
-                        to={`/business/${event.businesses.id}`}
-                        className="flex items-center gap-2 hover:bg-accent p-1.5 -mx-1.5 rounded-lg transition-colors"
-                      >
-                        <Avatar className="h-8 w-8 border">
-                          <AvatarImage src={event.businesses.logo_url || ''} />
-                          <AvatarFallback>
-                            <Building2 className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
-                            {event.businesses.verified && (
-                              <CheckCircle className="h-3 w-3 text-primary flex-shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-[10px] text-muted-foreground truncate">
-                            {event.businesses.city}
-                          </p>
-                        </div>
-                      </Link>
-                    </CardContent>
-                  </Card>
+              {/* Event Details Card - Date & Location (AFTER tickets) */}
+              <Card variant="glass" className="backdrop-blur-md">
+                <CardContent className="py-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">
+                        {format(new Date(event.start_at), 'EEEE, MMMM d, yyyy')}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(event.start_at), 'HH:mm')} -{' '}
+                        {format(new Date(event.end_at), 'HH:mm')}
+                      </p>
+                    </div>
+                  </div>
 
-                  {/* Share Button - after business */}
-                  <RippleButton
-                    variant="outline"
-                    className="w-full gap-2 h-8 text-sm"
-                    onClick={handleShare}
+                  <Separator />
+
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <p className="font-medium text-sm">{event.location}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Business Card */}
+              <Card variant="glass" className="backdrop-blur-md">
+                <CardContent className="py-3">
+                  <p className="text-[10px] text-muted-foreground mb-1">{text.hostedBy}</p>
+                  <Link
+                    to={`/business/${event.businesses.id}`}
+                    className="flex items-center gap-2 hover:bg-accent p-1.5 -mx-1.5 rounded-lg transition-colors"
                   >
-                    <Share2 className="h-3.5 w-3.5" />
-                    {text.share}
-                  </RippleButton>
+                    <Avatar className="h-8 w-8 border">
+                      <AvatarImage src={event.businesses.logo_url || ''} />
+                      <AvatarFallback>
+                        <Building2 className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
+                        {event.businesses.verified && (
+                          <CheckCircle className="h-3 w-3 text-primary flex-shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {event.businesses.city}
+                      </p>
+                    </div>
+                  </Link>
+                </CardContent>
+              </Card>
 
-                  {/* Mobile Ticket Purchase Button */}
-                  {hasNativeTickets && (
-                    <TicketPurchaseCard
-                      eventId={event.id}
-                      eventTitle={event.title}
-                      tiers={ticketTiers}
-                      onSuccess={(orderId, isFree) => {
-                        if (isFree) {
-                          toast.success(language === 'el' 
-                            ? 'Τα εισιτήριά σας είναι έτοιμα!' 
-                            : 'Your tickets are ready!'
-                          );
-                        }
-                      }}
-                    />
-                  )}
-
-                  {/* Mobile Reservation Button for Reservation Events */}
-                  {eventType === 'reservation' && event.event_type === 'reservation' && user && (
-                    <RippleButton
-                      className="w-full gap-2 h-9 text-sm"
-                      onClick={() => setShowReservationCheckout(true)}
-                    >
-                      <Calendar className="h-3.5 w-3.5" />
-                      {text.makeReservation}
-                    </RippleButton>
-                  )}
-
-                  {/* Mobile Legacy Reservation Button */}
-                  {user && event.accepts_reservations && event.event_type !== 'reservation' && (
-                    <RippleButton
-                      className="w-full gap-2 h-9 text-sm"
-                      onClick={() => setShowReservationDialog(true)}
-                    >
-                      <Calendar className="h-3.5 w-3.5" />
-                      {text.makeReservation}
-                    </RippleButton>
-                  )}
+              {/* Share Button */}
+              <RippleButton
+                variant="outline"
+                className="w-full gap-2 h-8 text-sm"
+                onClick={handleShare}
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                {text.share}
+              </RippleButton>
             </div>
 
             {/* Similar Events - use the SAME card as feed */}
@@ -629,55 +625,53 @@ export default function EventDetail() {
             transition={{ delay: 0.3 }}
           >
             {/* RSVP Buttons */}
-            {user && (
-              <Card variant="glass" className="backdrop-blur-md">
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-2 gap-2">
-                    <RippleButton
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRSVP('interested')}
-                      disabled={rsvpLoading}
-                      className={`gap-2 transition-all ${
-                        status === 'interested'
-                          ? 'border-ocean text-ocean bg-ocean/5'
-                          : 'border-border text-muted-foreground hover:border-ocean/50'
-                      }`}
-                    >
-                      <Heart className="h-4 w-4" />
-                      {text.interested}
-                    </RippleButton>
-                    <RippleButton
-                      size="sm"
-                      onClick={() => handleRSVP('going')}
-                      disabled={rsvpLoading}
-                      className={`gap-2 transition-all ${
-                        status === 'going'
-                          ? 'bg-ocean hover:bg-ocean/90 text-white'
-                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                      }`}
-                    >
-                      <Users className="h-4 w-4" />
-                      {text.going}
-                    </RippleButton>
+            <Card variant="glass" className="backdrop-blur-md">
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 gap-2">
+                  <RippleButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRSVP('interested')}
+                    disabled={rsvpLoading || !user}
+                    className={`gap-2 transition-all ${
+                      isInterested
+                        ? 'border-ocean text-ocean bg-ocean/5'
+                        : 'border-border text-muted-foreground hover:border-ocean/50'
+                    }`}
+                  >
+                    <Heart className="h-4 w-4" />
+                    {text.interested}
+                  </RippleButton>
+                  <RippleButton
+                    size="sm"
+                    onClick={() => handleRSVP('going')}
+                    disabled={rsvpLoading || !user}
+                    className={`gap-2 transition-all ${
+                      isGoing
+                        ? 'bg-ocean hover:bg-ocean/90 text-white'
+                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                    }`}
+                  >
+                    <Users className="h-4 w-4" />
+                    {text.going}
+                  </RippleButton>
+                </div>
+                
+                {/* RSVP Counts */}
+                <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Heart className="h-4 w-4" />
+                    <span>{interestedCount}</span>
                   </div>
-                  
-                  {/* RSVP Counts */}
-                  <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Heart className="h-4 w-4" />
-                      <span>{interestedCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>{goingCount}</span>
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span>{goingCount}</span>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Native Ticket Purchase */}
+            {/* Tickets/Reservations - DIRECTLY after RSVP buttons */}
             {hasNativeTickets && (
               <TicketPurchaseCard
                 eventId={event.id}
@@ -694,7 +688,6 @@ export default function EventDetail() {
               />
             )}
 
-            {/* Reservation Checkout for Reservation Events with Seating Types */}
             {eventType === 'reservation' && event.event_type === 'reservation' && user && (
               <RippleButton
                 className="w-full gap-2"
@@ -705,7 +698,6 @@ export default function EventDetail() {
               </RippleButton>
             )}
 
-            {/* Legacy Reservation Button (for events without new event_type) */}
             {user && event.accepts_reservations && event.event_type !== 'reservation' && (
               <RippleButton
                 className="w-full gap-2"
@@ -716,17 +708,7 @@ export default function EventDetail() {
               </RippleButton>
             )}
 
-            {/* Share Button */}
-            <RippleButton
-              variant="outline"
-              className="w-full gap-2"
-              onClick={handleShare}
-            >
-              <Share2 className="h-4 w-4" />
-              {text.share}
-            </RippleButton>
-
-            {/* Event Details Card */}
+            {/* Event Details Card - Date & Location (AFTER tickets) */}
             <Card variant="glass" className="backdrop-blur-md">
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-start gap-3">
@@ -780,7 +762,15 @@ export default function EventDetail() {
               </CardContent>
             </Card>
 
-            {/* Event Attendees - REMOVED per user request for desktop/tablet */}
+            {/* Share Button */}
+            <RippleButton
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleShare}
+            >
+              <Share2 className="h-4 w-4" />
+              {text.share}
+            </RippleButton>
           </motion.div>
         </div>
       </div>
