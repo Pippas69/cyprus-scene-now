@@ -222,7 +222,7 @@ export const UnifiedEventCard = ({
       interactive
       className={cn(
         "overflow-visible transition-all duration-300",
-        size === "mobileFixed" && "h-[235px] sm:h-[255px]",
+        size === "mobileFixed" && "h-[260px] sm:h-[270px]",
         className
       )}
     >
@@ -231,7 +231,7 @@ export const UnifiedEventCard = ({
         <Link
           to={`/event/${event.id}`}
           onClick={handleCardClick}
-          className="block relative h-36 sm:h-40 overflow-visible rounded-t-xl flex-shrink-0"
+          className="block relative h-40 overflow-visible rounded-t-xl flex-shrink-0"
         >
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
