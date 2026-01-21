@@ -80,51 +80,59 @@ export const DateRangePicker = ({ value, onChange, language }: DateRangePickerPr
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          size="sm"
           className={cn(
-            'justify-start text-left font-normal',
+            'justify-start text-left font-normal text-xs sm:text-sm h-9 sm:h-10 px-2 sm:px-3 w-full sm:w-auto',
             !value && 'text-muted-foreground'
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value?.from ? (
-            value.to ? (
-              <>
-                {format(value.from, 'dd/MM/yyyy', { locale })} -{' '}
-                {format(value.to, 'dd/MM/yyyy', { locale })}
-              </>
+          <CalendarIcon className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+          <span className="truncate">
+            {value?.from ? (
+              value.to ? (
+                <>
+                  {format(value.from, 'dd/MM', { locale })} - {format(value.to, 'dd/MM', { locale })}
+                </>
+              ) : (
+                format(value.from, 'dd/MM/yyyy', { locale })
+              )
             ) : (
-              format(value.from, 'dd/MM/yyyy', { locale })
-            )
-          ) : (
-            <span>{t.selectRange}</span>
-          )}
+              <span>{t.selectRange}</span>
+            )}
+          </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <div className="flex">
-          <div className="flex flex-col gap-1 border-r p-2">
-            {presets.map((preset) => (
-              <Button
-                key={preset.label}
-                variant="ghost"
-                size="sm"
-                className="justify-start"
-                onClick={() => {
-                  onChange(preset.range);
-                  setOpen(false);
-                }}
-              >
-                {preset.label}
-              </Button>
-            ))}
+      <PopoverContent className="w-auto p-0 max-w-[95vw]" align="end" sideOffset={4}>
+        {/* Mobile: Stack layout, Desktop: Side by side */}
+        <div className="flex flex-col sm:flex-row max-h-[80vh] overflow-auto">
+          {/* Presets */}
+          <div className="flex sm:flex-col gap-1 p-2 border-b sm:border-b-0 sm:border-r overflow-x-auto sm:overflow-visible">
+            <div className="flex sm:flex-col gap-1 min-w-max sm:min-w-0">
+              {presets.map((preset) => (
+                <Button
+                  key={preset.label}
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start text-xs sm:text-sm whitespace-nowrap h-8 sm:h-9"
+                  onClick={() => {
+                    onChange(preset.range);
+                    setOpen(false);
+                  }}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
           </div>
+          {/* Calendar - single month on mobile */}
           <div className="p-2">
             <Calendar
               mode="range"
               selected={value}
-              onSelect={onChange}
-              numberOfMonths={2}
+              onSelect={onChange} 
+              numberOfMonths={typeof window !== 'undefined' && window.innerWidth < 640 ? 1 : 2}
               locale={locale}
+              className="text-sm"
             />
           </div>
         </div>

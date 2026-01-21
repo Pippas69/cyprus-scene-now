@@ -121,11 +121,11 @@ export const UnifiedEventCard = ({
   const interestedCount = event.interested_count || 0;
   const goingCount = event.going_count || 0;
 
-  // Size variants
+  // Size variants - smaller on mobile
   const sizeClasses = {
-    compact: "min-w-[200px] max-w-[200px]",
-    default: "min-w-[220px] max-w-[220px]",
-    boosted: "min-w-[240px] max-w-[240px]",
+    compact: "min-w-[160px] max-w-[160px] sm:min-w-[200px] sm:max-w-[200px]",
+    default: "min-w-[180px] max-w-[180px] sm:min-w-[220px] sm:max-w-[220px]",
+    boosted: "min-w-[200px] max-w-[200px] sm:min-w-[240px] sm:max-w-[240px]",
     full: "w-full" // For grid layouts
   };
 
@@ -137,45 +137,45 @@ export const UnifiedEventCard = ({
       to={`/event/${event.id}`}
       onClick={handleCardClick}
       className={cn("flex flex-col rounded-xl bg-card border border-border", "hover:border-primary/50 hover:shadow-lg transition-all duration-200", "overflow-visible group", sizeClasses[size], className)}>
-      {/* TOP - Image section - fixed height */}
-      <div className="relative h-40 overflow-visible">
+      {/* TOP - Image section - responsive height */}
+      <div className="relative h-32 sm:h-40 overflow-visible">
         {/* Image container - clipped */}
         <div className="absolute inset-0 overflow-hidden rounded-t-xl">
           {event.cover_image_url ? <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-              <Calendar className="h-8 w-8 text-primary/50" />
+              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-primary/50" />
             </div>}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </div>
 
         {/* Boosted Badge - protruding */}
-        {isBoosted && <div className="absolute -top-2 -right-2 z-10">
+        {isBoosted && <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
             <PremiumBadge type="event" />
           </div>}
 
         {/* Free Badge */}
-        {showFreeBadge && <Badge className="absolute bottom-2 right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
+        {showFreeBadge && <Badge className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 border-0 z-10">
             {t.free}
           </Badge>}
       </div>
 
       {/* BOTTOM HALF - Details - reduced spacing */}
-      <div className="flex-1 p-3 flex flex-col justify-between min-h-0 gap-0.5">
+      <div className="flex-1 p-2 sm:p-3 flex flex-col justify-between min-h-0 gap-0.5">
         {/* 1. Title (max 1 line) */}
-        <h4 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+        <h4 className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
           {event.title}
         </h4>
 
         {/* 2. Date · Time */}
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-          <span className="text-xs truncate">{dateLabel}</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+          <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+          <span className="text-[10px] sm:text-xs truncate">{dateLabel}</span>
         </div>
 
         {/* 3. Location · City · Business */}
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-          <span className="text-xs truncate">
+        <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+          <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+          <span className="text-[10px] sm:text-xs truncate">
             {locationLine || event.location}
           </span>
         </div>

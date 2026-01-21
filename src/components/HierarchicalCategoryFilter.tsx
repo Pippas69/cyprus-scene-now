@@ -200,14 +200,14 @@ const HierarchicalCategoryFilter = ({
       className="w-full overflow-x-auto scrollbar-hide touch-pan-x"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
-      <div className="flex gap-2 pb-2 pr-4 pl-1">
+      <div className="flex gap-1.5 sm:gap-2 pb-1.5 sm:pb-2 pr-4 pl-0.5 sm:pl-1">
         {categories[language].map((category) => (
           <div
             key={category.id}
             className="relative flex-shrink-0"
             ref={(el) => (badgeRefs.current[category.id] = el)}
           >
-            {/* Category Badge */}
+            {/* Category Badge - smaller on mobile */}
             <Badge
               variant={
                 category.hasDropdown
@@ -218,7 +218,7 @@ const HierarchicalCategoryFilter = ({
                   ? "default"
                   : "outline"
               }
-              className={`cursor-pointer transition-all duration-200 hover:scale-105 px-4 py-2.5 text-sm font-medium min-h-[44px] flex items-center gap-2 rounded-full select-none ${
+              className={`cursor-pointer transition-all duration-200 hover:scale-105 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium min-h-[36px] sm:min-h-[44px] flex items-center gap-1 sm:gap-2 rounded-full select-none ${
                 category.hasDropdown
                   ? hasAnySubOptionSelected(category)
                     ? "bg-ocean text-white border-ocean shadow-md"
@@ -235,17 +235,17 @@ const HierarchicalCategoryFilter = ({
                 }
               }}
             >
-              <span className="text-base">{category.icon}</span>
-              <span>{category.label}</span>
+              <span className="text-sm sm:text-base">{category.icon}</span>
+              <span className="whitespace-nowrap">{category.label}</span>
               {category.hasDropdown && (
                 <>
                   {getSelectedSubOptionsCount(category) > 0 && (
-                    <span className="bg-white/20 px-1.5 py-0.5 rounded-full text-xs font-semibold">
+                    <span className="bg-white/20 px-1 sm:px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold">
                       {getSelectedSubOptionsCount(category)}
                     </span>
                   )}
                   <ChevronDown
-                    size={16}
+                    size={14}
                     className={`transition-transform duration-200 ${
                       openDropdown === category.id ? "rotate-180" : ""
                     }`}
@@ -254,7 +254,7 @@ const HierarchicalCategoryFilter = ({
               )}
               {!category.hasDropdown &&
                 selectedCategories.includes(category.id) && (
-                  <Check size={16} className="ml-1" />
+                  <Check size={14} className="ml-0.5 sm:ml-1" />
                 )}
             </Badge>
           </div>

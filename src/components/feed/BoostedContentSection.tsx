@@ -221,13 +221,13 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
 
   return (
     <>
-      {/* Matching UnifiedEventCard boosted size exactly: 240px width, h-40 image */}
+      {/* Matching UnifiedEventCard boosted size - responsive */}
       <div
         ref={cardRef as any}
-        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[240px] max-w-[240px] overflow-visible"
+        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[200px] max-w-[200px] sm:min-w-[240px] sm:max-w-[240px] overflow-visible"
       >
-        {/* TOP - Image section - fixed h-40 like UnifiedEventCard */}
-        <div className="relative h-40 overflow-visible">
+        {/* TOP - Image section - responsive height */}
+        <div className="relative h-32 sm:h-40 overflow-visible">
           {/* Image container - clipped */}
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {coverImage ? (
@@ -245,43 +245,43 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           </div>
 
           {/* BADGE - Top Right - Premium only for boosted */}
-          <div className="absolute -top-2 -right-2 z-10">
+          <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
             <PremiumBadge type="offer" />
           </div>
         </div>
 
-        {/* BOTTOM HALF - Offer Details - tuned to close at same height as boosted events */}
-        <div className="flex-1 px-3 pt-3 pb-2 flex flex-col justify-between min-h-0 gap-0.5">
+        {/* BOTTOM HALF - Offer Details - responsive */}
+        <div className="flex-1 px-2 sm:px-3 pt-2 sm:pt-3 pb-1.5 sm:pb-2 flex flex-col justify-between min-h-0 gap-0.5">
           {/* LINE 1: Title - aligned with event title */}
-          <h4 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+          <h4 className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
             {offer.title}
           </h4>
           
-          {/* LINE 2: Expiry with calendar icon - aligned with event date/time */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="text-xs truncate">{getExpiryLabel()}</span>
+          {/* LINE 2: Expiry with calendar icon */}
+          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+            <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+            <span className="text-[10px] sm:text-xs truncate">{getExpiryLabel()}</span>
           </div>
 
-          {/* LINE 3: Location + Business - aligned with event location */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
+          {/* LINE 3: Location + Business */}
+          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
             <button 
               onClick={handleMapClick}
               className="flex items-center text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
               title={language === "el" ? "Δες στο χάρτη" : "View on map"}
             >
-              <MapPin className="h-3.5 w-3.5" />
+              <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </button>
-            <span className="text-xs truncate">
+            <span className="text-[10px] sm:text-xs truncate">
               {offer.businesses?.city} · {offer.businesses?.name}
             </span>
           </div>
 
-          {/* LINE 4: Discount badge + Redeem button - bottom row (slightly smaller + tighter) */}
-          <div className="flex items-center justify-between">
+          {/* LINE 4: Discount badge + Redeem button */}
+          <div className="flex items-center justify-between mt-0.5">
             {/* Discount badge on left - smaller */}
             {offer.percent_off && offer.percent_off > 0 && (
-              <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
+              <Badge variant="default" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5">
                 -{offer.percent_off}%
               </Badge>
             )}
@@ -290,7 +290,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
               onClick={handleRedeemClick}
               size="sm" 
               variant="default"
-              className="text-[10px] h-5 px-2 ml-auto"
+              className="text-[9px] sm:text-[10px] h-4 sm:h-5 px-1.5 sm:px-2 ml-auto"
             >
               {t.redeem}
             </Button>

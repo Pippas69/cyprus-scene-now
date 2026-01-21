@@ -242,14 +242,14 @@ const DashboardBusiness = () => {
         <BusinessSidebar />
         
         <div className="flex-1 flex flex-col min-h-0 min-w-0 max-w-full">
-          {/* Header */}
+          {/* Header - Mobile optimized */}
           <header className="sticky top-0 z-40 bg-background border-b border-border">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger />
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+            <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 gap-2">
+              <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                <SidebarTrigger className="flex-shrink-0" />
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm sm:text-base">
                       {businessName?.charAt(0)?.toUpperCase() || 'B'}
                     </AvatarFallback>
                     {businessLogoUrl && (
@@ -259,19 +259,19 @@ const DashboardBusiness = () => {
                       />
                     )}
                   </Avatar>
-                  <div>
-                    <h1 className="text-lg font-semibold text-foreground">{businessName}</h1>
-                    <p className="text-xs text-muted-foreground">{t.businessDashboard}</p>
+                  <div className="min-w-0 hidden xs:block">
+                    <h1 className="text-sm sm:text-lg font-semibold text-foreground truncate">{businessName}</h1>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">{t.businessDashboard}</p>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
                 {/* Search (mobile-first) */}
-                <div className="md:hidden">
+                <div className="sm:hidden">
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
-                        <Search className="h-5 w-5" aria-hidden="true" />
+                      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
+                        <Search className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </SheetTrigger>
                     <SheetContent side="top" className="h-full">
@@ -279,14 +279,16 @@ const DashboardBusiness = () => {
                     </SheetContent>
                   </Sheet>
                 </div>
-                <LanguageToggle />
+                <div className="hidden sm:block">
+                  <LanguageToggle />
+                </div>
                 
                 {/* User Profile Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
+                    <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full p-0">
+                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                           {userName?.charAt(0)?.toUpperCase() || 'U'}
                         </AvatarFallback>
                         {userAvatarUrl && (
@@ -298,17 +300,17 @@ const DashboardBusiness = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => navigate('/dashboard-user')}>
+                  <DropdownMenuContent align="end" className="w-48 sm:w-56">
+                    <DropdownMenuItem onClick={() => navigate('/dashboard-user')} className="text-sm">
                       <User className="mr-2 h-4 w-4" />
                       {t.myProfile}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/dashboard-business/settings')}>
+                    <DropdownMenuItem onClick={() => navigate('/dashboard-business/settings')} className="text-sm">
                       <Settings className="mr-2 h-4 w-4" />
                       {t.settings}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
+                    <DropdownMenuItem onClick={handleSignOut} className="text-sm">
                       <LogOut className="mr-2 h-4 w-4" />
                       {t.signOut}
                     </DropdownMenuItem>
@@ -316,11 +318,10 @@ const DashboardBusiness = () => {
                 </DropdownMenu>
               </div>
             </div>
-
           </header>
 
-          {/* Main Content */}
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [-webkit-overflow-scrolling:touch]">
+          {/* Main Content - with proper mobile padding */}
+          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [-webkit-overflow-scrolling:touch] px-0 sm:px-2">
             <Routes>
               <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />

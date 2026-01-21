@@ -295,9 +295,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           )}
         </div>
 
-        {/* Location Dropdown Header (no FOMO box) */}
-        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 pt-3">
-          <div className="flex items-center mb-2">
+        {/* Location Dropdown Header - tighter on mobile */}
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 pt-2 sm:pt-3">
+          <div className="flex items-center mb-1.5 sm:mb-2">
             <CompactLocationDropdown
               language={language}
               selectedCity={selectedCity}
@@ -306,8 +306,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           </div>
         </div>
 
-        {/* PRIORITY 1: Paid content at the very top (above everything) - ALWAYS render container */}
-        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 overflow-hidden">
+        {/* PRIORITY 1: Paid content at the very top */}
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-hidden">
           <BoostedContentSection 
             events={boostedEvents || []} 
             offers={boostedOffers || []} 
@@ -318,14 +318,14 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
         {/* Smart Search Bar */}
         {showNavbar && (
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 mt-3 mb-3 relative z-30">
+          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-2 sm:mb-3 relative z-30">
             <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
           </div>
         )}
 
-        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 overflow-hidden">
-          <div className="space-y-4">
-            {/* POSITION #2: Featured Businesses (no header, just profiles) */}
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 overflow-hidden">
+          <div className="space-y-3 sm:space-y-4">
+            {/* POSITION #2: Featured Businesses */}
             {profileBoosts && profileBoosts.length > 0 && (
               <BoostedProfilesScroller
                 profiles={profileBoosts}
@@ -335,9 +335,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-            {/* Filters (categories + student discount) - directly above businesses */}
+            {/* Filters (categories + student discount) - more compact on mobile */}
             <div data-filters className="w-full">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5 sm:gap-2">
                 {/* Categories row */}
                 <div className="flex items-center gap-2">
                   <HierarchicalCategoryFilter
@@ -353,9 +353,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                     variant={showStudentDiscounts ? "default" : "outline"}
                     size="sm"
                     onClick={() => setShowStudentDiscounts(!showStudentDiscounts)}
-                    className="h-8 px-4 text-xs gap-1.5"
+                    className="h-7 sm:h-8 px-3 sm:px-4 text-[11px] sm:text-xs gap-1 sm:gap-1.5"
                   >
-                    <GraduationCap className="h-3.5 w-3.5" />
+                    <GraduationCap className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
                   </Button>
                 </div>

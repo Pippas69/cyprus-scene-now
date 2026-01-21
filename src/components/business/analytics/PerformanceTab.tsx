@@ -353,11 +353,11 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   const regionTotal = regionArray.reduce((sum, r) => sum + r.count, 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Performance Section */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">{t.performanceTitle}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">{t.performanceTitle}</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <MetricCard
             icon={User}
             title={t.profile}
@@ -393,21 +393,21 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
 
       {/* Audience Section */}
       <div>
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-3 sm:mb-4">
           <div>
-            <h3 className="text-lg font-semibold">{t.audienceTitle}</h3>
-            <p className="text-sm text-muted-foreground">{t.audienceSubtitle}</p>
+            <h3 className="text-base sm:text-lg font-semibold">{t.audienceTitle}</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t.audienceSubtitle}</p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{t.totalVisitsLabel}:</span>
-            <span className="text-sm font-semibold text-foreground">{genderTotal.toLocaleString()}</span>
+          <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-2 sm:px-3 py-1.5 sm:py-2 self-start sm:self-auto">
+            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+            <span className="text-xs sm:text-sm text-muted-foreground">{t.totalVisitsLabel}:</span>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">{genderTotal.toLocaleString()}</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <AudienceCard icon={Users} title={t.gender} explanation={t.genderExplanation}>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               <MetricBar label={t.male} value={audience?.gender?.male || 0} total={genderTotal} />
               <MetricBar label={t.female} value={audience?.gender?.female || 0} total={genderTotal} />
               <MetricBar label={t.other} value={audience?.gender?.other || 0} total={genderTotal} />
@@ -415,7 +415,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
           </AudienceCard>
 
           <AudienceCard icon={Calendar} title={t.age} explanation={t.ageExplanation}>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {(['18-24', '25-34', '35-44', '45-54', '55+', 'Άγνωστο'] as const)
                 .filter((key) => (audience?.age?.[key] ?? 0) > 0 || key === 'Άγνωστο')
                 .map((key) => (
@@ -425,13 +425,13 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
           </AudienceCard>
 
           <AudienceCard icon={MapPin} title={t.region} explanation={t.regionExplanation}>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {regionArray.length > 0 ? (
                 regionArray.slice(0, 6).map((r) => (
                   <MetricBar key={r.name} label={r.name} value={r.count} total={regionTotal} />
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground italic">{t.regionNoData}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground italic">{t.regionNoData}</p>
               )}
             </div>
           </AudienceCard>
