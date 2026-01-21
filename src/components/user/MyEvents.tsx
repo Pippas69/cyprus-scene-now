@@ -178,82 +178,83 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           const businessName = (ticket.events as any)?.businesses?.name;
           return (
             <Card key={ticket.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
-              <div className="flex">
-                {ticket.events?.cover_image_url && (
-                  <div className="w-20 sm:w-24 flex-shrink-0">
-                    <img
-                      src={ticket.events.cover_image_url}
-                      alt={ticket.events.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+              {/* Image section - same as event/offer cards */}
+              {ticket.events?.cover_image_url && (
+                <div className="relative h-40 overflow-hidden rounded-t-xl">
+                  <img
+                    src={ticket.events.cover_image_url}
+                    alt={ticket.events.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+                  
+                  {/* Status badge */}
+                  <Badge 
+                    variant={ticket.status === 'valid' ? 'default' : 'secondary'} 
+                    className="absolute top-2 right-2 text-[10px] px-1.5 py-0"
+                  >
+                    {ticket.status === 'valid' ? t.valid : t.used}
+                  </Badge>
+                </div>
+              )}
+              
+              {/* Content section - below image */}
+              <CardContent className="p-2.5 space-y-1">
+                <h4 className="font-semibold text-sm line-clamp-1">{ticket.events?.title}</h4>
+                
+                {businessName && (
+                  <p className="text-xs text-muted-foreground line-clamp-1">{businessName}</p>
                 )}
-                <CardContent className="flex-1 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm truncate">{ticket.events?.title}</h4>
-                      {businessName && (
-                        <p className="text-xs text-muted-foreground truncate">{businessName}</p>
-                      )}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="text-xs text-muted-foreground">
-                          {ticket.ticket_tiers?.name}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">•</span>
-                        <span className={`text-[10px] font-medium ${ticket.ticket_tiers?.price_cents === 0 ? 'text-emerald-600' : 'text-primary'}`}>
-                          {ticket.ticket_tiers?.price_cents === 0 ? t.free : formatPrice(ticket.ticket_tiers?.price_cents)}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-muted-foreground">
-                        {ticket.events?.start_at && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {format(new Date(ticket.events.start_at), "dd MMM, HH:mm", { locale: dateLocale })}
-                          </span>
-                        )}
-                        {ticket.events?.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            <span className="truncate max-w-[100px]">{ticket.events.location}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5">
-                      <Badge 
-                        variant={ticket.status === 'valid' ? 'default' : 'secondary'} 
-                        className="text-xs px-1.5 py-0"
-                      >
-                        {ticket.status === 'valid' ? t.valid : t.used}
-                      </Badge>
-                      {ticket.status === 'valid' && !isPast && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => setSelectedTicket({
-                            id: ticket.id,
-                            qrToken: ticket.qr_code_token,
-                            tierName: ticket.ticket_tiers?.name || "",
-                            eventTitle: ticket.events?.title || "",
-                            eventDate: ticket.events?.start_at || "",
-                            eventLocation: ticket.events?.location || "",
-                            customerName: ticket.ticket_orders?.customer_name || "",
-                            purchaseDate: ticket.created_at,
-                            pricePaid: formatPrice(ticket.ticket_tiers?.price_cents),
-                            businessName: businessName,
-                            eventCoverImage: ticket.events?.cover_image_url,
-                            eventTime: ticket.events?.start_at,
-                          })}
-                        >
-                          <QrCode className="h-3 w-3 mr-1" />
-                          {t.showQR}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
+                
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">{ticket.ticket_tiers?.name}</span>
+                  <span className="text-[10px] text-muted-foreground">•</span>
+                  <span className={`text-xs font-medium ${ticket.ticket_tiers?.price_cents === 0 ? 'text-emerald-600' : 'text-primary'}`}>
+                    {ticket.ticket_tiers?.price_cents === 0 ? t.free : formatPrice(ticket.ticket_tiers?.price_cents)}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  {ticket.events?.start_at && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-primary" />
+                      {format(new Date(ticket.events.start_at), "dd MMM, HH:mm", { locale: dateLocale })}
+                    </span>
+                  )}
+                  {ticket.events?.location && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-primary" />
+                      <span className="truncate max-w-[80px]">{ticket.events.location}</span>
+                    </span>
+                  )}
+                </div>
+                
+                {/* QR Button */}
+                {ticket.status === 'valid' && !isPast && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-7 mt-1.5 text-xs"
+                    onClick={() => setSelectedTicket({
+                      id: ticket.id,
+                      qrToken: ticket.qr_code_token,
+                      tierName: ticket.ticket_tiers?.name || "",
+                      eventTitle: ticket.events?.title || "",
+                      eventDate: ticket.events?.start_at || "",
+                      eventLocation: ticket.events?.location || "",
+                      customerName: ticket.ticket_orders?.customer_name || "",
+                      purchaseDate: ticket.created_at,
+                      pricePaid: formatPrice(ticket.ticket_tiers?.price_cents),
+                      businessName: businessName,
+                      eventCoverImage: ticket.events?.cover_image_url,
+                      eventTime: ticket.events?.start_at,
+                    })}
+                  >
+                    <QrCode className="h-3 w-3 mr-1" />
+                    {t.showQR}
+                  </Button>
+                )}
+              </CardContent>
             </Card>
           );
         })}
