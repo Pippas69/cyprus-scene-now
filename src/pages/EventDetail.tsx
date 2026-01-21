@@ -631,47 +631,47 @@ export default function EventDetail() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {/* RSVP Buttons */}
+            {/* RSVP Buttons - Tablet optimized: larger buttons, smaller text */}
             <Card variant="glass" className="backdrop-blur-md">
-              <CardContent className="pt-6">
+              <CardContent className="pt-4 md:pt-5 lg:pt-6">
                 <div className="grid grid-cols-2 gap-2">
                   <RippleButton
                     variant="outline"
                     size="sm"
                     onClick={() => handleRSVP('interested')}
                     disabled={rsvpLoading || !user}
-                    className={`gap-2 transition-all ${
+                    className={`gap-1.5 md:gap-2 text-[11px] md:text-xs lg:text-sm h-10 md:h-11 lg:h-10 transition-all ${
                       isInterested
                         ? 'border-ocean text-ocean bg-ocean/5'
                         : 'border-border text-muted-foreground hover:border-ocean/50'
                     }`}
                   >
-                    <Heart className="h-4 w-4" />
-                    {text.interested}
+                    <Heart className="h-4 w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 shrink-0" />
+                    <span className="truncate">{text.interested}</span>
                   </RippleButton>
                   <RippleButton
                     size="sm"
                     onClick={() => handleRSVP('going')}
                     disabled={rsvpLoading || !user}
-                    className={`gap-2 transition-all ${
+                    className={`gap-1.5 md:gap-2 text-[11px] md:text-xs lg:text-sm h-10 md:h-11 lg:h-10 transition-all ${
                       isGoing
                         ? 'bg-ocean hover:bg-ocean/90 text-white'
                         : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                     }`}
                   >
-                    <Users className="h-4 w-4" />
-                    {text.going}
+                    <Users className="h-4 w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 shrink-0" />
+                    <span className="truncate">{text.going}</span>
                   </RippleButton>
                 </div>
                 
                 {/* RSVP Counts */}
-                <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
+                <div className="flex items-center justify-center gap-4 mt-3 md:mt-4 text-xs md:text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <Heart className="h-4 w-4" />
+                    <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     <span>{interestedCount}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
+                    <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     <span>{goingCount}</span>
                   </div>
                 </div>
