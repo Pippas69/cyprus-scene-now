@@ -128,14 +128,14 @@ const Navbar = () => {
     )}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo - Desktop: simple button, Tablet/Mobile: dropdown with navigation */}
-          {/* Desktop Logo (lg+) */}
-          <button onClick={() => navigate("/")} className="hidden lg:block hover:opacity-80 transition-opacity">
+          {/* Logo - Desktop/Tablet: simple button, Mobile: dropdown with navigation */}
+          {/* Desktop/Tablet Logo (md+) */}
+          <button onClick={() => navigate("/")} className="hidden md:block hover:opacity-80 transition-opacity">
             <Logo size="md" />
           </button>
 
-          {/* Tablet/Mobile Logo with Dropdown (<lg) */}
-          <div className="lg:hidden">
+          {/* Mobile Logo with Dropdown (<md) */}
+          <div className="md:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
@@ -158,6 +158,34 @@ const Navbar = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+
+          {/* Tablet Horizontal Navigation Links (md to lg) - smaller text */}
+          <div className="hidden md:flex lg:hidden items-center gap-2 ml-4">
+            <button 
+              onClick={() => navigate("/")} 
+              className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+            >
+              {language === "el" ? "Αρχική" : "Home"}
+            </button>
+            <button 
+              onClick={() => navigate("/feed")} 
+              className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+            >
+              {language === "el" ? "Εξερεύνηση" : "Explore"}
+            </button>
+            <button 
+              onClick={() => navigate("/for-visitors")} 
+              className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+            >
+              {language === "el" ? "Επισκέπτες" : "Visitors"}
+            </button>
+            <button 
+              onClick={() => navigate("/for-businesses")} 
+              className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+            >
+              {language === "el" ? "Επιχειρήσεις" : "Businesses"}
+            </button>
           </div>
 
           {/* Desktop Horizontal Navigation Links (lg+) */}
