@@ -604,7 +604,7 @@ export default function EventDetail() {
                     </motion.div>
                   ))}
                 </motion.div>
-                {/* Desktop/Tablet: 2-column grid like "My Events" - minimal gap */}
+                {/* Desktop/Tablet: 2-column grid - minimal gap and full-width cards */}
                 <motion.div
                   className="hidden md:grid md:grid-cols-2 gap-2"
                   variants={containerVariants}
@@ -613,7 +613,7 @@ export default function EventDetail() {
                 >
                   {similarEvents.map((similar) => (
                     <motion.div key={similar.id} variants={itemVariants}>
-                      <UnifiedEventCard event={similar} language={language} size="default" />
+                      <UnifiedEventCard event={similar} language={language} size="full" />
                     </motion.div>
                   ))}
                 </motion.div>
