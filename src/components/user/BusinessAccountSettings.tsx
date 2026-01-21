@@ -495,7 +495,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl space-y-6">
+    <div className="container mx-auto p-4 sm:p-6 max-w-4xl space-y-6">
       {/* Unified Business Profile Card */}
       <form onSubmit={businessProfileForm.handleSubmit(onBusinessProfileSubmit)}>
         <Card>

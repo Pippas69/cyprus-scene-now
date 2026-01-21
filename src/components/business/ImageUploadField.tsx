@@ -13,6 +13,20 @@ interface ImageUploadFieldProps {
   language: 'el' | 'en';
 }
 
+const getPreviewClasses = (aspectRatio: string) => {
+  // Desktop should remain as before (lg+): 32x32
+  const isSquare = aspectRatio === "1/1";
+
+  if (isSquare) {
+    // Slightly larger on mobile/tablet, unchanged on desktop
+    return "w-36 h-36 md:w-40 md:h-40 lg:w-32 lg:h-32";
+  }
+
+  // Covers / banners: keep a compact but clearer preview on mobile/tablet,
+  // and revert to the previous square footprint on desktop to avoid changing desktop layout.
+  return "w-full max-w-[420px] h-40 md:h-48 lg:w-32 lg:h-32";
+};
+
 export const ImageUploadField = ({
   label,
   currentImageUrl,
@@ -53,6 +67,7 @@ export const ImageUploadField = ({
   };
 
   const displayImage = preview || currentImageUrl;
+  const previewClasses = getPreviewClasses(aspectRatio);
 
   return (
     <div className="space-y-2">
@@ -63,7 +78,7 @@ export const ImageUploadField = ({
             <img
               src={displayImage}
               alt={label}
-              className="w-32 h-32 object-cover rounded-lg border"
+              className={`${previewClasses} object-cover rounded-lg border`}
               style={{ aspectRatio }}
             />
             <Button
@@ -78,7 +93,7 @@ export const ImageUploadField = ({
           </div>
         ) : (
           <div 
-            className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/10"
+            className={`${previewClasses} border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/10`}
             style={{ aspectRatio }}
           >
             <Upload className="h-8 w-8 text-muted-foreground" />
@@ -94,10 +109,17 @@ export const ImageUploadField = ({
             id={`upload-${label.replace(/\s/g, '-')}`}
           />
           <Label htmlFor={`upload-${label.replace(/\s/g, '-')}`}>
-            <Button type="button" variant="outline" asChild>
-              <span>
-                <Upload className="mr-2 h-4 w-4" />
-                {language === 'el' ? 'Επιλέξτε Αρχείο' : 'Select File'}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto h-10 text-sm lg:h-10 lg:text-sm"
+              asChild
+            >
+              <span className="inline-flex items-center">
+                <Upload className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs md:text-sm">
+                  {language === 'el' ? 'Επιλέξτε Αρχείο' : 'Select File'}
+                </span>
               </span>
             </Button>
           </Label>
