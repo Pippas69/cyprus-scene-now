@@ -676,9 +676,9 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       {/* App Preferences */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <SettingsIcon className="h-5 w-5" />
-            {t.appPreferences}
+          <CardTitle className="flex items-center gap-2 whitespace-nowrap">
+            <SettingsIcon className="h-5 w-5 flex-shrink-0" />
+            <span className="text-base">{t.appPreferences}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
