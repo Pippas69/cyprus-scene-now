@@ -7,9 +7,10 @@ interface MapWrapperProps {
   city: string;
   neighborhood: string;
   selectedCategories: string[];
+  focusBusinessId?: string | null;
 }
 
-export default function MapWrapper({ city, neighborhood, selectedCategories }: MapWrapperProps) {
+export default function MapWrapper({ city, neighborhood, selectedCategories, focusBusinessId }: MapWrapperProps) {
   const { language } = useLanguage();
   
   const translations = {
@@ -34,6 +35,7 @@ export default function MapWrapper({ city, neighborhood, selectedCategories }: M
         city={city} 
         neighborhood={neighborhood} 
         selectedCategories={selectedCategories}
+        focusBusinessId={focusBusinessId}
       />
     </Suspense>
   );

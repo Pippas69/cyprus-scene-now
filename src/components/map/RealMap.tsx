@@ -16,6 +16,7 @@ interface RealMapProps {
   city: string;
   neighborhood: string;
   selectedCategories: string[];
+  focusBusinessId?: string | null;
 }
 
 // Dynamic ocean theme application - styles ALL road layers by matching keywords
@@ -133,12 +134,13 @@ const MIN_ZOOM_FOR_PLAN: Record<'free' | 'basic' | 'pro' | 'elite', number> = {
   elite: 7,   
 };
 
-const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
+const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: RealMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const viewedPinsRef = useRef<Set<string>>(new Set());
+  const lastFocusedRef = useRef<string | null>(null);
   const { language } = useLanguage();
 
   // Use the new businesses hook instead of events
@@ -191,9 +193,51 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    // Ensure we start with a view that can actually show the businesses.
-    const doBoundsAndMarkers = () => {
+    const openBusinessPopup = (business: any) => {
       if (!map.current) return;
+      const [lng, lat] = business.coordinates;
+
+      if (popupRef.current) popupRef.current.remove();
+      const popupDiv = document.createElement('div');
+      const popupRoot = ReactDOM.createRoot(popupDiv);
+      popupRoot.render(
+        <BusinessPopup
+          business={business}
+          onClose={() => popupRef.current?.remove()}
+          language={language}
+        />
+      );
+      popupRef.current = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        maxWidth: 'none',
+        offset: 25,
+      })
+        .setLngLat([lng, lat])
+        .setDOMContent(popupDiv)
+        .addTo(map.current);
+    };
+
+    // Initial camera: if we have a focusBusinessId, center exactly there.
+    // Otherwise fit bounds to visible businesses.
+    const doInitialCamera = () => {
+      if (!map.current) return;
+
+      if (focusBusinessId) {
+        const target = businesses.find((b) => b.id === focusBusinessId);
+        if (target && lastFocusedRef.current !== focusBusinessId) {
+          lastFocusedRef.current = focusBusinessId;
+          const [lng, lat] = target.coordinates;
+
+          // Match marker click behavior
+          trackEngagement(target.id, 'profile_click', 'business', target.id, { source: 'map_link' });
+          map.current.flyTo({ center: [lng, lat], zoom: 15, duration: 800, essential: true });
+          setTimeout(() => openBusinessPopup(target), 500);
+          return;
+        }
+      }
+
+      // Default behavior
       try {
         const lngs = businesses.map((b) => b.coordinates[0]);
         const lats = businesses.map((b) => b.coordinates[1]);
@@ -201,14 +245,15 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
         const ne: [number, number] = [Math.max(...lngs), Math.max(...lats)];
         map.current.fitBounds([sw, ne], {
           padding: 80,
-          duration: 0, // Instant so markers render immediately
-          maxZoom: 11, // Ensure most pins are visible
+          duration: 0,
+          maxZoom: 11,
         });
       } catch {
         // ignore
       }
     };
-    doBoundsAndMarkers();
+
+    doInitialCamera();
 
     /**
      * PREMIUM PIN RENDERING - NO CLUSTERING
@@ -272,25 +317,7 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
 
               // Show popup after zoom completes
               setTimeout(() => {
-                if (popupRef.current) popupRef.current.remove();
-                const popupDiv = document.createElement('div');
-                const popupRoot = ReactDOM.createRoot(popupDiv);
-                popupRoot.render(
-                  <BusinessPopup
-                    business={business}
-                    onClose={() => popupRef.current?.remove()}
-                    language={language}
-                  />
-                );
-                popupRef.current = new mapboxgl.Popup({
-                  closeButton: false,
-                  closeOnClick: false,
-                  maxWidth: 'none',
-                  offset: 25,
-                })
-                  .setLngLat([lng, lat])
-                  .setDOMContent(popupDiv)
-                  .addTo(map.current!);
+                openBusinessPopup(business);
               }, 500);
             }}
           />
@@ -308,7 +335,7 @@ const RealMap = ({ city, neighborhood, selectedCategories }: RealMapProps) => {
       map.current?.off('moveend', updateMarkers); 
       map.current?.off('zoomend', updateMarkers); 
     };
-  }, [businesses, language]);
+  }, [businesses, language, focusBusinessId]);
 
   useEffect(() => {
     if (!map.current || !city) return;

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import MapWrapper from "@/components/map/MapWrapper";
@@ -6,6 +7,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import { FilterChips } from "@/components/feed/FilterChips";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * ΚΑΝΟΝΑΣ ΧΑΡΤΗ – FOMO (ΑΠΑΡΑΒΑΤΟΣ)
@@ -21,8 +23,64 @@ import { FilterChips } from "@/components/feed/FilterChips";
  */
 const Xartis = () => {
   const { language } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [focusBusinessId, setFocusBusinessId] = useState<string | null>(null);
+
+  const targetParams = useMemo(() => {
+    const business = searchParams.get("business");
+    const event = searchParams.get("event");
+    const offer = searchParams.get("offer") || searchParams.get("discount");
+    return { business, event, offer };
+  }, [searchParams]);
+
+  // If the map is opened with a ?business=, ?event=, or ?offer= param, resolve it to a business id
+  // and forward it to the map so it can center exactly on that pin.
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveFocus = async () => {
+      if (targetParams.business) {
+        setFocusBusinessId(targetParams.business);
+        return;
+      }
+
+      // Map is business-only; event/offer params are resolved to their business.
+      try {
+        if (targetParams.event) {
+          const { data, error } = await supabase
+            .from("events")
+            .select("business_id")
+            .eq("id", targetParams.event)
+            .maybeSingle();
+          if (error) throw error;
+          if (!cancelled) setFocusBusinessId(data?.business_id ?? null);
+          return;
+        }
+
+        if (targetParams.offer) {
+          const { data, error } = await supabase
+            .from("discounts")
+            .select("business_id")
+            .eq("id", targetParams.offer)
+            .maybeSingle();
+          if (error) throw error;
+          if (!cancelled) setFocusBusinessId(data?.business_id ?? null);
+          return;
+        }
+
+        setFocusBusinessId(null);
+      } catch {
+        if (!cancelled) setFocusBusinessId(null);
+      }
+    };
+
+    resolveFocus();
+    return () => {
+      cancelled = true;
+    };
+  }, [targetParams.business, targetParams.event, targetParams.offer]);
 
   const text = {
     el: {
@@ -105,6 +163,7 @@ const Xartis = () => {
           city={selectedCity || ""} 
           neighborhood="" 
           selectedCategories={selectedCategories}
+          focusBusinessId={focusBusinessId}
         />
       </div>
     </div>
