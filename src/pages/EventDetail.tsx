@@ -415,26 +415,21 @@ export default function EventDetail() {
                   <PartyPopper className="h-16 w-16 text-muted-foreground/40" />
                 </div>
               )}
-              {/* Event Type Badge - Bottom Right of Image */}
-              <div className="absolute bottom-3 right-3">
+              {/* Event Type Badge - Bottom Right overlapping edge */}
+              <div className="absolute bottom-2 right-2">
                 {getEventTypeBadge()}
               </div>
             </motion.div>
 
-            {/* Title and Description - tight spacing to image */}
-            <motion.div
-              className="mt-2 space-y-0.5"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold line-clamp-1">{event.title}</h1>
+            {/* Title and Description - minimal gap to image */}
+            <div className="mt-1">
+              <h1 className="text-lg font-bold line-clamp-1">{event.title}</h1>
               {event.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-0">
                   {event.description}
                 </p>
               )}
-            </motion.div>
+            </div>
 
             {/* Mobile-only info section */}
             <div className="md:hidden space-y-3 mt-3">
