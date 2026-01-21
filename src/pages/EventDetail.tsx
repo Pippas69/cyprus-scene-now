@@ -594,9 +594,9 @@ export default function EventDetail() {
             {similarEvents.length > 0 && (
               <div className="mt-4">
                 <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
-                {/* Mobile/Tablet: mobileFixed matches MyOffers card dimensions */}
+                {/* Mobile only: single column */}
                 <motion.div
-                  className="grid gap-2 lg:hidden"
+                  className="grid gap-2 md:hidden"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
@@ -607,9 +607,9 @@ export default function EventDetail() {
                     </motion.div>
                   ))}
                 </motion.div>
-                {/* Desktop: 2-column grid - minimal gap and full-width cards */}
+                {/* Tablet/Desktop: 2-column grid */}
                 <motion.div
-                  className="hidden lg:grid lg:grid-cols-2 gap-2"
+                  className="hidden md:grid md:grid-cols-2 gap-2"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
