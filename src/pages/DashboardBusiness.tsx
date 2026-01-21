@@ -1,6 +1,6 @@
-import { useNavigate, Routes, Route } from "react-router-dom";
+import { useNavigate, Routes, Route, useLocation } from "react-router-dom";
 import { BusinessAccountSettings } from "@/components/user/BusinessAccountSettings";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -38,8 +38,10 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguage();
   const toastT = toastTranslations[language];
+  const scrollRef = useRef<HTMLElement | null>(null);
   const [verified, setVerified] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -78,6 +80,16 @@ const DashboardBusiness = () => {
   useEffect(() => {
     checkVerificationStatus();
   }, []);
+
+  // Always jump to top when switching dashboard sections
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && typeof (el as any).scrollTo === 'function') {
+      (el as any).scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     // Handle subscription and boost success/cancel URL parameters
@@ -321,7 +333,12 @@ const DashboardBusiness = () => {
           </header>
 
           {/* Main Content - with proper mobile padding */}
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [-webkit-overflow-scrolling:touch] px-0 sm:px-2">
+          <main
+            ref={(node) => {
+              scrollRef.current = node as unknown as HTMLElement | null;
+            }}
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [-webkit-overflow-scrolling:touch] px-0 sm:px-2"
+          >
             <Routes>
               <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />

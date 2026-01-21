@@ -321,8 +321,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
             
-            {/* BADGES - Inside image, top right */}
-            <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+             {/* BADGES - Inside image, top right (kept slightly inset so it never clips) */}
+             <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1">
               {isDepleted ? (
                 <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
                   <TrendingDown className="h-2.5 w-2.5 mr-0.5" />
@@ -332,10 +332,11 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                   <Wallet className="h-2.5 w-2.5 mr-0.5" />
                   €{(balanceRemaining / 100).toFixed(0)}
                 </Badge>
-              ) : isRedeemed ? (
-                <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
-                  <CheckCircle className="h-2.5 w-2.5" />
-                </Badge>
+               ) : isRedeemed ? (
+                 <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm flex items-center gap-1 whitespace-nowrap">
+                   <CheckCircle className="h-2.5 w-2.5" />
+                   <span className="leading-none">{language === "el" ? "Χρησιμοποιημένο" : "Used"}</span>
+                 </Badge>
               ) : isExpired ? (
                 <Badge variant="destructive" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
                   <AlertCircle className="h-2.5 w-2.5" />

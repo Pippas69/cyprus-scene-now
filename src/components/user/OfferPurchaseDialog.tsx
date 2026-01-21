@@ -957,10 +957,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onClose}>
-        <DrawerContent className="h-[90vh] flex flex-col">
+          <DrawerContent className="h-[90vh] flex flex-col">
           {/* Header */}
           <DrawerHeader className="flex-shrink-0 border-b pb-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 pr-1">
               {offer.businesses.logo_url ? (
                 <img
                   src={offer.businesses.logo_url}
@@ -973,11 +973,14 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <DrawerTitle className="text-left truncate">{offer.title}</DrawerTitle>
+                {/* One-line title, no ellipsis */}
+                <DrawerTitle className="text-left text-[13px] font-semibold leading-tight whitespace-nowrap overflow-hidden">
+                  {offer.title}
+                </DrawerTitle>
                 <p className="text-sm text-muted-foreground truncate">{offer.businesses.name}</p>
               </div>
               {discountDisplay && (
-                <Badge className="bg-primary text-primary-foreground shrink-0">
+                <Badge className="bg-primary text-primary-foreground shrink-0 text-xs h-6 px-2 mr-1">
                   {discountDisplay}
                 </Badge>
               )}
@@ -1125,11 +1128,14 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-left">{offer.title}</DialogTitle>
+              {/* One-line title, no ellipsis */}
+              <DialogTitle className="text-left text-base sm:text-lg whitespace-nowrap overflow-hidden">
+                {offer.title}
+              </DialogTitle>
               <DialogDescription className="text-left">{offer.businesses.name}</DialogDescription>
             </div>
             {discountDisplay && (
-              <Badge className="text-lg py-2 px-4 bg-primary text-primary-foreground shrink-0">
+              <Badge className="bg-primary text-primary-foreground shrink-0 text-base sm:text-lg py-1.5 px-3 mr-1">
                 {discountDisplay}
               </Badge>
             )}

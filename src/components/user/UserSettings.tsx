@@ -472,7 +472,16 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>{t.confirmationsTitle}</Label>
+              <Label>
+                {language === 'el' ? (
+                  <span className="inline">
+                    <span>Επιβεβαιώσεις Κρατήσεων, </span>
+                    <span className="text-[13px] sm:text-sm">Εισιτηρίων & Προσφορών</span>
+                  </span>
+                ) : (
+                  t.confirmationsTitle
+                )}
+              </Label>
               <p className="text-xs text-muted-foreground">{t.confirmationsDesc}</p>
             </div>
             <Switch

@@ -1,5 +1,5 @@
-import { ReactNode, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { ReactNode, useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { UserSidebar } from '@/components/user/UserSidebar';
 import { Button } from '@/components/ui/button';
@@ -20,10 +20,22 @@ interface UserLayoutProps {
 
 export function UserLayout({ children }: UserLayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const scrollRef = useRef<HTMLElement | null>(null);
+
+  // Always jump to top when switching dashboard sections (user/business nav, tabs, etc.)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && typeof (el as any).scrollTo === 'function') {
+      (el as any).scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     checkUser();
@@ -168,6 +180,10 @@ export function UserLayout({ children }: UserLayoutProps) {
           
           <main
             data-scroll-container
+            ref={(node) => {
+              // React Router may remount content; keep a stable scroll target
+              scrollRef.current = node as unknown as HTMLElement | null;
+            }}
             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background relative z-10 max-w-full [-webkit-overflow-scrolling:touch]"
           >
             {children}
