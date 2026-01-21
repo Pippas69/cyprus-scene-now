@@ -305,98 +305,96 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     };
 
      return (
-       <Card className="overflow-hidden relative h-[220px] sm:h-[240px]">
-         <div className="h-full flex flex-col">
-           {/* TOP: Image */}
-           <div className="h-28 sm:h-32 relative overflow-hidden rounded-t-xl">
-            {purchase.discounts.businesses.logo_url ? (
-              <img
-                src={purchase.discounts.businesses.logo_url}
-                alt={purchase.discounts.businesses.name}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-muted" />
-            )}
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
-            
-             {/* BADGES - Inside image, top right (kept slightly inset so it never clips) */}
-             <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1">
-              {isDepleted ? (
-                <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
-                  <TrendingDown className="h-2.5 w-2.5 mr-0.5" />
-                </Badge>
-              ) : isCredit ? (
-                <Badge variant="default" className="text-[9px] px-1.5 py-0.5 h-4 bg-emerald-600 shadow-sm">
-                  <Wallet className="h-2.5 w-2.5 mr-0.5" />
-                  €{(balanceRemaining / 100).toFixed(0)}
-                </Badge>
-               ) : isRedeemed ? (
-                 <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm flex items-center gap-1 whitespace-nowrap">
-                   <CheckCircle className="h-2.5 w-2.5" />
-                   <span className="leading-none">{language === "el" ? "Χρησιμοποιημένο" : "Used"}</span>
-                 </Badge>
-              ) : isExpired ? (
-                <Badge variant="destructive" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
-                  <AlertCircle className="h-2.5 w-2.5" />
-                </Badge>
-              ) : purchase.discount_percent > 0 && (
-                <Badge variant="default" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
-                  -{purchase.discount_percent}%
-                </Badge>
-              )}
-            </div>
-          </div>
+       <Card className="overflow-hidden relative">
+         {/* Image section - h-40 like event/offer cards */}
+         <div className="h-40 relative overflow-hidden rounded-t-xl">
+           {purchase.discounts.businesses.logo_url ? (
+             <img
+               src={purchase.discounts.businesses.logo_url}
+               alt={purchase.discounts.businesses.name}
+               className="absolute inset-0 h-full w-full object-cover"
+             />
+           ) : (
+             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-muted" />
+           )}
+           {/* Gradient overlay */}
+           <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+           
+           {/* BADGES - Inside image, top right */}
+           <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+             {isDepleted ? (
+               <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow-sm">
+                 <TrendingDown className="h-3 w-3 mr-0.5" />
+               </Badge>
+             ) : isCredit ? (
+               <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-emerald-600 shadow-sm">
+                 <Wallet className="h-3 w-3 mr-0.5" />
+                 €{(balanceRemaining / 100).toFixed(0)}
+               </Badge>
+             ) : isRedeemed ? (
+               <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow-sm flex items-center gap-1 whitespace-nowrap">
+                 <CheckCircle className="h-3 w-3" />
+                 <span>{language === "el" ? "Χρησιμοποιημένο" : "Used"}</span>
+               </Badge>
+             ) : isExpired ? (
+               <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 shadow-sm">
+                 <AlertCircle className="h-3 w-3" />
+               </Badge>
+             ) : purchase.discount_percent > 0 && (
+               <Badge variant="default" className="text-[10px] px-1.5 py-0.5 shadow-sm">
+                 -{purchase.discount_percent}%
+               </Badge>
+             )}
+           </div>
+         </div>
 
-           {/* BOTTOM: Info */}
-           <div className="flex-1 p-3 flex flex-col bg-background rounded-b-xl min-h-0">
-            {/* LINE 1: Title */}
-            <h4 className="text-sm font-semibold line-clamp-1">
-              {purchase.discounts.title}
-            </h4>
+         {/* Content section - below image */}
+         <div className="p-2.5 space-y-1">
+           {/* Title */}
+           <h4 className="text-sm font-semibold line-clamp-1">
+             {purchase.discounts.title}
+           </h4>
 
-            {/* LINE 2: Purchased date */}
-            <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
-              <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
-              <span className="text-xs">{formatPurchaseDate(purchase.created_at)}</span>
-            </div>
+           {/* Purchased date */}
+           <div className="flex items-center gap-1.5 text-muted-foreground">
+             <ShoppingBag className="h-3 w-3 text-primary" />
+             <span className="text-xs">{formatPurchaseDate(purchase.created_at)}</span>
+           </div>
 
-            {/* LINE 3: Expiry date */}
-            <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
-              <Calendar className="h-3.5 w-3.5 shrink-0" />
-              <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
-            </div>
+           {/* Expiry date */}
+           <div className="flex items-center gap-1.5 text-muted-foreground">
+             <Calendar className="h-3 w-3 text-primary" />
+             <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
+           </div>
 
-             {/* LINE 4: Show QR button - tight spacing */}
-             <div className="flex items-center justify-end gap-2 mt-1">
-              {showQR && !isExpired && !isRedeemed && !isDepleted && (
-                <Button 
-                  onClick={() => setSelectedPurchase(purchase)}
-                  size="sm" 
-                  variant="default"
-                  className="text-xs h-7 px-3"
-                >
-                  <QrCode className="h-3.5 w-3.5 mr-1" />
-                  {t.viewQR}
-                </Button>
-              )}
-              {isCredit && (
-                <Button
-                  onClick={() => setShowHistory(purchase.id)}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs h-7 px-3"
-                >
-                  <History className="h-3.5 w-3.5 mr-1" />
-                  {t.viewHistory}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
+           {/* Action buttons */}
+           <div className="flex items-center gap-2 pt-1">
+             {showQR && !isExpired && !isRedeemed && !isDepleted && (
+               <Button 
+                 onClick={() => setSelectedPurchase(purchase)}
+                 size="sm" 
+                 variant="default"
+                 className="flex-1 text-xs h-7"
+               >
+                 <QrCode className="h-3 w-3 mr-1" />
+                 {t.viewQR}
+               </Button>
+             )}
+             {isCredit && (
+               <Button
+                 onClick={() => setShowHistory(purchase.id)}
+                 variant="outline"
+                 size="sm"
+                 className="flex-1 text-xs h-7"
+               >
+                 <History className="h-3 w-3 mr-1" />
+                 {t.viewHistory}
+               </Button>
+             )}
+           </div>
+         </div>
+       </Card>
+     );
   };
 
   return (
