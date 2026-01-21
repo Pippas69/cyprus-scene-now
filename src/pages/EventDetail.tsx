@@ -12,7 +12,7 @@ import { RippleButton } from '@/components/ui/ripple-button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// Tabs removed from Event Detail (Details/Live Feed section removed)
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -26,14 +26,11 @@ import {
   ArrowLeft,
   Heart,
   CheckCircle,
-  MessageSquare,
   Ticket,
   PartyPopper,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import EventCard from '@/components/EventCard';
 import { EventAttendees } from '@/components/EventAttendees';
-import { LiveEventFeed } from '@/components/feed/LiveEventFeed';
 import { ShareDialog } from '@/components/sharing/ShareDialog';
 import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
 import { useTicketTiers } from '@/hooks/useTicketTiers';
@@ -83,7 +80,6 @@ export default function EventDetail() {
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showReservationCheckout, setShowReservationCheckout] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
   
   // Fetch ticket tiers for this event
   const { data: ticketTiers = [], isLoading: ticketsLoading } = useTicketTiers(eventId || '');
@@ -286,7 +282,7 @@ export default function EventDetail() {
     }
   };
 
-  const isAttendee = isInterested || isGoing;
+  // NOTE: Details/Live Feed section removed; keep RSVP state for buttons/eligibility elsewhere.
 
   const t = {
     el: {
@@ -296,8 +292,6 @@ export default function EventDetail() {
       similarEvents: 'Παρόμοια Events',
       interested: 'Ενδιαφέρομαι',
       going: 'Θα πάω',
-      details: 'Λεπτομέρειες',
-      liveFeed: 'Live Feed',
       makeReservation: 'Κράτηση',
       buyTickets: 'Αγοράστε εισιτήρια',
       ticketEvent: 'Εκδήλωση με Εισιτήρια',
@@ -311,8 +305,6 @@ export default function EventDetail() {
       similarEvents: 'Similar Events',
       interested: 'Interested',
       going: 'Going',
-      details: 'Details',
-      liveFeed: 'Live Feed',
       makeReservation: 'Make Reservation',
       buyTickets: 'Buy tickets',
       ticketEvent: 'Ticket Event',
@@ -428,28 +420,20 @@ export default function EventDetail() {
               transition={{ delay: 0.2 }}
             >
               {/* Title - smaller on mobile to fit in one line */}
-              <h1 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold mb-3 line-clamp-1">{event.title}</h1>
+              <h1 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2 line-clamp-1">{event.title}</h1>
               <div className="flex flex-wrap gap-2 items-center">
                 {getEventTypeBadge()}
               </div>
+              {/* Description - small text directly under title (no box) */}
+              {event.description && (
+                <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">
+                  {event.description}
+                </p>
+              )}
             </motion.div>
 
-            {/* Tabs for Details and Live Feed */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsContent value="details" className="space-y-4 mt-4">
-                {/* Description */}
-                {event.description && (
-                  <Card variant="glass">
-                    <CardContent className="pt-4 pb-4">
-                      <p className="text-muted-foreground whitespace-pre-wrap text-sm">
-                        {event.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Mobile-only info section - after description, before similar events */}
-                <div className="md:hidden space-y-3">
+            {/* Mobile-only info section - directly under header (no Details/Live Feed section) */}
+            <div className="md:hidden space-y-3 mt-4">
                   {/* RSVP Buttons */}
                   {user && (
                     <Card variant="glass" className="backdrop-blur-md">
@@ -562,59 +546,26 @@ export default function EventDetail() {
                     <Share2 className="h-3.5 w-3.5" />
                     {text.share}
                   </RippleButton>
+            </div>
 
-                  {/* Details / Live Feed tabs - must be directly under Share */}
-                  <TabsList className="grid w-full grid-cols-2 mt-2">
-                    <TabsTrigger value="details" className="gap-2">
-                      {text.details}
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="livefeed"
-                      disabled={!isAttendee}
-                      className="gap-2"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      {text.liveFeed}
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-
-                {/* Similar Events - use the SAME card as feed */}
-                {similarEvents.length > 0 && (
-                  <div className="mt-4">
-                    <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
-                    <motion.div 
-                      className="grid gap-3"
-                      variants={containerVariants}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      {similarEvents.map((similar) => (
-                        <motion.div key={similar.id} variants={itemVariants}>
-                          <UnifiedEventCard
-                            event={similar}
-                            language={language}
-                            size="full"
-                          />
-                        </motion.div>
-                      ))}
+            {/* Similar Events - use the SAME card as feed */}
+            {similarEvents.length > 0 && (
+              <div className="mt-4">
+                <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
+                <motion.div
+                  className="grid gap-3"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {similarEvents.map((similar) => (
+                    <motion.div key={similar.id} variants={itemVariants}>
+                      <UnifiedEventCard event={similar} language={language} size="full" />
                     </motion.div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="livefeed" className="mt-6">
-                {isAttendee && (
-                  <LiveEventFeed
-                    eventId={eventId!}
-                    userId={user?.id}
-                    userAvatar={userProfile?.avatar_url}
-                    userName={[userProfile?.first_name, userProfile?.last_name].filter(Boolean).join(' ')}
-                    language={language}
-                  />
-                )}
-              </TabsContent>
-            </Tabs>
+                  ))}
+                </motion.div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar - hidden on mobile, shown on tablet+ */}
