@@ -119,9 +119,9 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       {/* Events cards on white background */}
       <div className="bg-background py-8 md:py-12">
         <div className="container mx-auto px-4">
-          {/* Mobile: show only 1 event, Desktop: show all */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {events.map((event, index) => (
+          {/* Mobile: show only 1 event, Tablet/Desktop: show only 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-4xl mx-auto">
+            {events.slice(0, 2).map((event, index) => (
               <motion.div
                 key={event.id}
                 initial={{ opacity: 0, y: 20 }}

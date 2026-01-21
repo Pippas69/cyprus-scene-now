@@ -151,10 +151,10 @@ const Navbar = () => {
                   {language === "el" ? "Εξερεύνηση" : "Explore"}
                 </DropdownMenuItem>
                 <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-visitors")}>
-                  {language === "el" ? "Για Επισκέπτες" : "For Visitors"}
+                  {language === "el" ? "Επισκέπτες" : "Visitors"}
                 </DropdownMenuItem>
                 <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-businesses")}>
-                  {language === "el" ? "Για Επιχειρήσεις" : "For Businesses"}
+                  {language === "el" ? "Επιχειρήσεις" : "Businesses"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -178,19 +178,30 @@ const Navbar = () => {
               onClick={() => navigate("/for-visitors")} 
               className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
             >
-              {language === "el" ? "Για Επισκέπτες" : "For Visitors"}
+              {language === "el" ? "Επισκέπτες" : "Visitors"}
             </button>
             <button 
               onClick={() => navigate("/for-businesses")} 
               className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
             >
-              {language === "el" ? "Για Επιχειρήσεις" : "For Businesses"}
+              {language === "el" ? "Επιχειρήσεις" : "Businesses"}
             </button>
           </div>
 
-          {/* Desktop Search */}
-          <div className="hidden md:flex flex-1 max-w-sm mx-4 min-w-0">
-            <GlobalSearch language={language} resultTypes={['business']} />
+          {/* Desktop Search - Separated from login button */}
+          <div className="hidden md:flex items-center">
+            <div className="relative">
+              <Search 
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" 
+              />
+              <input
+                type="text"
+                placeholder={language === "el" ? "Αναζήτηση..." : "Search..."}
+                className="h-9 w-40 lg:w-56 pl-9 pr-3 rounded-full border border-border bg-muted/50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                onClick={() => navigate("/feed")}
+                readOnly
+              />
+            </div>
           </div>
 
           {/* Desktop Navigation */}
