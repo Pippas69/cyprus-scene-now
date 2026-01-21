@@ -14,7 +14,7 @@ import { usePasswordChange } from '@/hooks/usePasswordChange';
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from '@/hooks/use-toast';
 import { toastTranslations } from '@/translations/toastTranslations';
-import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Settings as SettingsIcon, Save, Sparkles, Clock, Gift, Ticket, Calendar, TrendingUp } from 'lucide-react';
+import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getMainCategories } from '@/lib/unifiedCategories';
 
@@ -82,34 +82,23 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       confirmPassword: 'Επιβεβαίωση Κωδικού',
       changePassword: 'Αλλαγή Κωδικού',
       notifications: 'Ειδοποιήσεις',
-      generalSettings: 'Γενικές Ρυθμίσεις',
-      emailNotifications: 'Ειδοποιήσεις Email',
-      emailNotificationsDesc: 'Λήψη ειδοποιήσεων μέσω email',
-      fomoRecommendations: 'Προτάσεις FOMO',
-      fomoRecommendationsDesc: 'Εξατομικευμένες προτάσεις βάσει των ενδιαφερόντων σου',
-      personalizedContent: 'Προσωποποιημένο Περιεχόμενο',
-      personalizedEvents: 'Νέες Εκδηλώσεις για Εσένα',
-      personalizedEventsDesc: 'Εκδηλώσεις στις κατηγορίες που σε ενδιαφέρουν',
-      personalizedOffers: 'Νέες Προσφορές για Εσένα',
-      personalizedOffersDesc: 'Προσφορές στις κατηγορίες που σε ενδιαφέρουν',
-      boostedContent: 'Προωθημένο Περιεχόμενο',
-      boostedContentDesc: 'Boosted events/offers που ταιριάζουν στα ενδιαφέροντά σου',
+      // Mandatory section
+      emailConfirmationsTitle: 'Email για Επιβεβαιώσεις',
+      emailConfirmationsMandatory: '(Υποχρεωτικό)',
+      emailConfirmationsDesc: 'Αποστέλλεται για κρατήσεις/εισιτήρια/εξαργυρώσεις.',
+      confirmationsTitle: 'Επιβεβαιώσεις Κρατήσεων, Εισιτηρίων & Προσφορών',
+      confirmationsDesc: 'Απαραίτητες ειδοποιήσεις για τη λειτουργία του λογαριασμού σου.',
+      // Suggestions section
+      suggestionsForYou: 'Προτάσεις για Σένα',
+      suggestionsForYouDesc: 'Εκδηλώσεις και προσφορές που ταιριάζουν στα ενδιαφέροντά σου',
+      // Reminders section
       reminders: 'Υπενθυμίσεις',
       eventReminders: 'Υπενθυμίσεις Εκδηλώσεων',
-      eventRemindersDesc: '1 μέρα πριν & 3 ώρες πριν (για events με RSVP/εισιτήριο/κράτηση)',
+      eventRemindersDesc: '1 μέρα & 2 ώρες πριν (κρατήσεις, εισιτήρια, RSVP)',
       reservationReminders: 'Υπενθυμίσεις Κρατήσεων',
-      reservationRemindersDesc: 'Πριν την ώρα της κράτησής σου',
-      expiringOffers: 'Προσφορές που Λήγουν',
-      expiringOffersDesc: 'Πριν λήξουν προσφορές που σε ενδιαφέρουν',
-      confirmationsUpdates: 'Επιβεβαιώσεις & Ενημερώσεις',
-      reservationConfirmations: 'Επιβεβαιώσεις Κρατήσεων',
-      reservationConfirmationsDesc: 'Κρατήσεις σε εκδηλώσεις, προσφορές, επιχειρήσεις',
-      ticketConfirmations: 'Επιβεβαιώσεις Εισιτηρίων',
-      ticketConfirmationsDesc: 'Αγορά εισιτηρίων',
-      offerConfirmations: 'Επιβεβαιώσεις Προσφορών',
-      offerConfirmationsDesc: 'Εξαργύρωση προσφορών',
-      rsvpUpdates: 'Ενημερώσεις RSVP',
-      rsvpUpdatesDesc: 'Αλλαγές σε εκδηλώσεις που έχεις δηλώσει ενδιαφέρον',
+      reservationRemindersDesc: '2 ώρες πριν την ώρα της κράτησής σου',
+      expiringOffers: 'Υπενθυμίσεις Προσφορών',
+      expiringOffersDesc: '2 ώρες πριν λήξουν οι προσφορές που εξαργύρωσες',
       privacy: 'Απόρρητο & Δεδομένα',
       profileVisibility: 'Ορατότητα Προφίλ',
       public: 'Δημόσιο',
@@ -150,34 +139,23 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       confirmPassword: 'Confirm Password',
       changePassword: 'Change Password',
       notifications: 'Notifications',
-      generalSettings: 'General Settings',
-      emailNotifications: 'Email Notifications',
-      emailNotificationsDesc: 'Receive notifications via email',
-      fomoRecommendations: 'FOMO Recommendations',
-      fomoRecommendationsDesc: 'Personalized recommendations based on your interests',
-      personalizedContent: 'Personalized Content',
-      personalizedEvents: 'New Events for You',
-      personalizedEventsDesc: 'Events in categories that interest you',
-      personalizedOffers: 'New Offers for You',
-      personalizedOffersDesc: 'Offers in categories that interest you',
-      boostedContent: 'Promoted Content',
-      boostedContentDesc: 'Boosted events/offers matching your interests',
+      // Mandatory section
+      emailConfirmationsTitle: 'Email for Confirmations',
+      emailConfirmationsMandatory: '(Mandatory)',
+      emailConfirmationsDesc: 'Sent for reservations/tickets/redemptions.',
+      confirmationsTitle: 'Reservation, Ticket & Offer Confirmations',
+      confirmationsDesc: 'Essential notifications for your account functionality.',
+      // Suggestions section
+      suggestionsForYou: 'Suggestions for You',
+      suggestionsForYouDesc: 'Events and offers that match your interests',
+      // Reminders section
       reminders: 'Reminders',
       eventReminders: 'Event Reminders',
-      eventRemindersDesc: '1 day before & 3 hours before (for events with RSVP/ticket/reservation)',
+      eventRemindersDesc: '1 day & 2 hours before (reservations, tickets, RSVP)',
       reservationReminders: 'Reservation Reminders',
-      reservationRemindersDesc: 'Before your reservation time',
-      expiringOffers: 'Expiring Offers',
-      expiringOffersDesc: 'Before offers you\'re interested in expire',
-      confirmationsUpdates: 'Confirmations & Updates',
-      reservationConfirmations: 'Reservation Confirmations',
-      reservationConfirmationsDesc: 'Reservations for events, offers, businesses',
-      ticketConfirmations: 'Ticket Confirmations',
-      ticketConfirmationsDesc: 'Ticket purchases',
-      offerConfirmations: 'Offer Confirmations',
-      offerConfirmationsDesc: 'Offer redemptions',
-      rsvpUpdates: 'RSVP Updates',
-      rsvpUpdatesDesc: 'Changes to events you\'ve shown interest in',
+      reservationRemindersDesc: '2 hours before your reservation time',
+      expiringOffers: 'Offer Reminders',
+      expiringOffersDesc: '2 hours before your redeemed offers expire',
       privacy: 'Privacy & Data',
       profileVisibility: 'Profile Visibility',
       public: 'Public',
@@ -479,84 +457,41 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* General Settings */}
+          {/* Mandatory: Email Confirmations - Always ON, no toggle */}
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <SettingsIcon className="h-4 w-4" />
-              {t.generalSettings}
-            </h4>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="email-notifications">{t.emailNotifications}</Label>
-                <p className="text-xs text-muted-foreground">{t.emailNotificationsDesc}</p>
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <div>
+                <span className="font-semibold">{t.emailConfirmationsTitle}</span>
+                <span className="text-primary font-medium ml-2">{t.emailConfirmationsMandatory}</span>
               </div>
-              <Switch
-                id="email-notifications"
-                checked={preferences.email_notifications_enabled}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ email_notifications_enabled: checked })
-                }
-              />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="fomo-recommendations" className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  {t.fomoRecommendations}
-                </Label>
-                <p className="text-xs text-muted-foreground">{t.fomoRecommendationsDesc}</p>
+            <p className="text-sm text-muted-foreground ml-7">{t.emailConfirmationsDesc}</p>
+            
+            <div className="flex items-start gap-3 ml-7 p-3 bg-muted/50 rounded-lg">
+              <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-sm">{t.confirmationsTitle}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t.confirmationsDesc}</p>
               </div>
-              <Switch
-                id="fomo-recommendations"
-                checked={preferences.notification_fomo_recommendations ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_fomo_recommendations: checked })
-                }
-              />
             </div>
           </div>
 
           <Separator />
 
-          {/* Personalized Content */}
+          {/* Suggestions for You - Optional toggle */}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              {t.personalizedContent}
+              <Sparkles className="h-4 w-4" />
+              {t.suggestionsForYou}
             </h4>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="personalized-events">{t.personalizedEvents}</Label>
-                <p className="text-xs text-muted-foreground">{t.personalizedEventsDesc}</p>
+                <Label htmlFor="suggestions-toggle">{t.suggestionsForYou}</Label>
+                <p className="text-xs text-muted-foreground">{t.suggestionsForYouDesc}</p>
               </div>
               <Switch
-                id="personalized-events"
-                checked={preferences.notification_personalized_events ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_personalized_events: checked })
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="personalized-offers">{t.personalizedOffers}</Label>
-                <p className="text-xs text-muted-foreground">{t.personalizedOffersDesc}</p>
-              </div>
-              <Switch
-                id="personalized-offers"
-                checked={preferences.notification_personalized_offers ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_personalized_offers: checked })
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="boosted-content">{t.boostedContent}</Label>
-                <p className="text-xs text-muted-foreground">{t.boostedContentDesc}</p>
-              </div>
-              <Switch
-                id="boosted-content"
+                id="suggestions-toggle"
                 checked={preferences.notification_boosted_content ?? true}
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_boosted_content: checked })
@@ -609,74 +544,6 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 checked={preferences.notification_expiring_offers ?? true}
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_expiring_offers: checked })
-                }
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Confirmations & Updates */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              {t.confirmationsUpdates}
-            </h4>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="reservation-confirmations">{t.reservationConfirmations}</Label>
-                <p className="text-xs text-muted-foreground">{t.reservationConfirmationsDesc}</p>
-              </div>
-              <Switch
-                id="reservation-confirmations"
-                checked={preferences.notification_reservations}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_reservations: checked })
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="ticket-confirmations" className="flex items-center gap-2">
-                  <Ticket className="h-4 w-4 text-primary" />
-                  {t.ticketConfirmations}
-                </Label>
-                <p className="text-xs text-muted-foreground">{t.ticketConfirmationsDesc}</p>
-              </div>
-              <Switch
-                id="ticket-confirmations"
-                checked={preferences.notification_ticket_confirmations ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_ticket_confirmations: checked })
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="offer-confirmations" className="flex items-center gap-2">
-                  <Gift className="h-4 w-4 text-primary" />
-                  {t.offerConfirmations}
-                </Label>
-                <p className="text-xs text-muted-foreground">{t.offerConfirmationsDesc}</p>
-              </div>
-              <Switch
-                id="offer-confirmations"
-                checked={preferences.notification_offer_confirmations ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_offer_confirmations: checked })
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="rsvp-updates">{t.rsvpUpdates}</Label>
-                <p className="text-xs text-muted-foreground">{t.rsvpUpdatesDesc}</p>
-              </div>
-              <Switch
-                id="rsvp-updates"
-                checked={preferences.notification_rsvp_updates}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_rsvp_updates: checked })
                 }
               />
             </div>
