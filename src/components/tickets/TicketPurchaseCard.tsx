@@ -200,37 +200,37 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Ticket className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-2 md:pb-3 lg:pb-4">
+        <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <Ticket className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
           {text.tickets}
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 md:space-y-4">
         {tiers.map((tier) => {
           const available = tier.quantity_total - tier.quantity_sold;
           const isSoldOut = available <= 0;
           const qty = quantities[tier.id] || 0;
 
           return (
-            <div key={tier.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{tier.name}</span>
+            <div key={tier.id} className="flex items-center justify-between p-2.5 md:p-3 rounded-lg border bg-muted/30">
+              <div className="flex-1 min-w-0 pr-2">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <span className="font-medium text-sm md:text-base truncate">{tier.name}</span>
                   {isSoldOut && (
-                    <Badge variant="destructive" className="text-xs">{text.soldOut}</Badge>
+                    <Badge variant="destructive" className="text-[10px] md:text-xs shrink-0">{text.soldOut}</Badge>
                   )}
                 </div>
                 {tier.description && (
-                  <p className="text-sm text-muted-foreground">{tier.description}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{tier.description}</p>
                 )}
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="font-semibold text-primary">
+                <div className="flex items-center gap-1.5 md:gap-2 mt-0.5 md:mt-1">
+                  <span className="font-semibold text-primary text-sm md:text-base">
                     {formatPrice(tier.price_cents)}
                   </span>
                   {!isSoldOut && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">
                       ({available} {text.available})
                     </span>
                   )}
@@ -238,27 +238,27 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
               </div>
 
               {!isSoldOut && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-7 w-7 md:h-8 md:w-8"
                     onClick={() => updateQuantity(tier.id, -1)}
                     disabled={qty === 0}
                   >
-                    <Minus className="h-4 w-4" />
+                    <Minus className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   </Button>
-                  <span className="w-8 text-center font-medium">{qty}</span>
+                  <span className="w-6 md:w-8 text-center font-medium text-sm md:text-base">{qty}</span>
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-7 w-7 md:h-8 md:w-8"
                     onClick={() => updateQuantity(tier.id, 1)}
                     disabled={qty >= tier.max_per_order || qty >= available}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   </Button>
                 </div>
               )}
