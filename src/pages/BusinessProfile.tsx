@@ -281,49 +281,67 @@ const BusinessProfile = () => {
           {t.back}
         </RippleButton>
 
-        {/* Avatar centered with icons to the right */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 flex items-center gap-3">
-          <motion.div
-            className="relative"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
-          >
-            <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg ring-2 ring-primary/20">
-              <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
-              <AvatarFallback className="text-3xl font-bold bg-muted">
-                {business.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            
-            {/* Student Discount Badge overlaid on avatar */}
-            {business.student_discount_enabled && business.student_discount_percent && (
-              <div className="absolute -top-1 -right-1 z-10">
-                <div className="bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-7 w-7 flex items-center justify-center border-2 border-background shadow-md">
-                  <GraduationCap className="h-3 w-3 mr-0.5" />
-                  {business.student_discount_percent}%
-                </div>
-              </div>
-            )}
-          </motion.div>
-          
-          {/* Follow + Share icons to the right of avatar */}
-          <motion.div 
-            className="flex items-center gap-1"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <FollowButton businessId={business.id} language={language} variant="compact" />
-            <button
-              type="button"
-              onClick={handleShareProfile}
-              className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
-              title={t.share}
+        {/* Avatar exactly centered, icons offset to the right */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
+          <div className="flex items-center gap-3">
+            {/* Avatar - this is the center point */}
+            <motion.div
+              className="relative"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
             >
-              <Share2 className="h-4 w-4" />
-            </button>
-          </motion.div>
+              <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg ring-2 ring-primary/20">
+                <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
+                <AvatarFallback className="text-3xl font-bold bg-muted">
+                  {business.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              
+              {/* Student Discount Badge overlaid on avatar - clickable with icon + percentage */}
+              {business.student_discount_enabled && business.student_discount_percent && user && (
+                <div className="absolute -top-1 -right-1 z-10">
+                  <StudentDiscountButton
+                    businessId={business.id}
+                    businessName={business.name}
+                    discountPercent={business.student_discount_percent}
+                    discountMode={business.student_discount_mode === 'unlimited' ? 'unlimited' : 'one_time'}
+                    userId={user?.id || null}
+                    language={language}
+                    variant="badge"
+                  />
+                </div>
+              )}
+              
+              {/* Non-clickable badge when not logged in */}
+              {business.student_discount_enabled && business.student_discount_percent && !user && (
+                <div className="absolute -top-1 -right-1 z-10">
+                  <div className="bg-accent text-accent-foreground text-[9px] font-bold rounded-full h-7 w-7 flex flex-col items-center justify-center border-2 border-background shadow-md">
+                    <GraduationCap className="h-3 w-3" />
+                    <span className="-mt-0.5">{business.student_discount_percent}%</span>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+            
+            {/* Follow + Share icons to the right of avatar */}
+            <motion.div 
+              className="flex items-center gap-1"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <FollowButton businessId={business.id} language={language} variant="compact" />
+              <button
+                type="button"
+                onClick={handleShareProfile}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                title={t.share}
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            </motion.div>
+          </div>
         </div>
       </div>
 

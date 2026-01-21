@@ -214,7 +214,7 @@ export const UnifiedEventCard = ({
     );
   }
 
-  // For mobileFixed and full - use Card style matching OfferCard exactly
+  // For mobileFixed and full - use Card style matching reference image exactly
   return (
     <Card
       ref={cardRef as any}
@@ -227,70 +227,72 @@ export const UnifiedEventCard = ({
       )}
     >
       <CardContent className="p-0 h-full flex flex-col">
-        {/* Image section - fixed height like OfferCard (h-40) */}
+        {/* Image section - fixed height matching reference */}
         <Link
           to={`/event/${event.id}`}
           onClick={handleCardClick}
-          className="block relative h-40 overflow-hidden rounded-t-xl flex-shrink-0"
+          className="block relative h-32 sm:h-36 overflow-visible rounded-t-xl flex-shrink-0"
         >
-          {event.cover_image_url ? (
-            <img
-              src={event.cover_image_url}
-              alt={event.title}
-              className="absolute inset-0 h-full w-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-              <Calendar className="h-8 w-8 text-primary/50" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+          <div className="absolute inset-0 overflow-hidden rounded-t-xl">
+            {event.cover_image_url ? (
+              <img
+                src={event.cover_image_url}
+                alt={event.title}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                <Calendar className="h-8 w-8 text-primary/50" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+          </div>
 
-          {/* Boosted badge */}
+          {/* Boosted badge - protrudes outside card like feed */}
           {isBoosted && (
-            <div className="absolute -top-2 -right-2 z-10">
+            <div className="absolute -top-2 -right-2 z-20">
               <PremiumBadge type="event" />
             </div>
           )}
 
           {/* Free badge */}
           {showFreeBadge && (
-            <Badge className="absolute bottom-3 right-3 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
+            <Badge className="absolute bottom-2 right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
               {t.free}
             </Badge>
           )}
         </Link>
 
-        {/* Content section - matching OfferCard layout */}
-        <div className="p-3 space-y-1 flex-1 flex flex-col">
+        {/* Content section - matching reference image layout */}
+        <div className="p-2.5 sm:p-3 flex-1 flex flex-col gap-0.5">
           {/* Title */}
           <Link to={`/event/${event.id}`} onClick={handleCardClick}>
-            <h3 className="font-bold text-sm leading-tight line-clamp-1 hover:text-primary transition-colors">
+            <h3 className="font-semibold text-sm leading-tight line-clamp-1 hover:text-primary transition-colors">
               {event.title}
             </h3>
           </Link>
 
-          {/* Date/Time */}
+          {/* Date/Time with clock icon */}
           <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Clock className="h-3.5 w-3.5 shrink-0" />
+            <Clock className="h-3 w-3 shrink-0 text-primary" />
             <span className="text-xs">{dateLabel}</span>
           </div>
 
-          {/* Location */}
+          {/* Location with pin icon */}
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <button
               onClick={handleMapClick}
-              className="flex items-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+              className="flex items-center text-primary hover:text-primary/80 transition-colors shrink-0"
               title={language === "el" ? "Δες στο χάρτη" : "View on map"}
             >
-              <MapPin className="h-3.5 w-3.5" />
+              <MapPin className="h-3 w-3" />
             </button>
             <span className="text-xs truncate">{locationLine || event.location}</span>
           </div>
 
-          {/* Action Bar */}
-          <div className="mt-auto pt-1">
+          {/* Action Bar - heart, people, share at bottom */}
+          <div className="mt-auto pt-0.5">
             <CardActionBar
               entityId={event.id}
               entityType="event"

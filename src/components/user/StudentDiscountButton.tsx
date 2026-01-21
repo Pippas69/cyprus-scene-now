@@ -16,6 +16,7 @@ interface StudentDiscountButtonProps {
   discountMode: 'one_time' | 'unlimited';
   userId: string | null;
   language: 'en' | 'el';
+  variant?: 'button' | 'badge';
 }
 
 const translations = {
@@ -58,6 +59,7 @@ export function StudentDiscountButton({
   discountMode,
   userId,
   language,
+  variant = 'button',
 }: StudentDiscountButtonProps) {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,6 +105,109 @@ export function StudentDiscountButton({
     navigate('/signup');
   };
 
+  // Badge variant - small circular badge for avatar overlay
+  if (variant === 'badge') {
+    if (isLoading) {
+      return (
+        <div className="bg-accent/50 text-accent-foreground text-[9px] font-bold rounded-full h-7 w-7 flex flex-col items-center justify-center border-2 border-background shadow-md opacity-50">
+          <GraduationCap className="h-3 w-3" />
+          <span className="-mt-0.5">{discountPercent}%</span>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div 
+          onClick={handleClick}
+          className="bg-accent text-accent-foreground text-[9px] font-bold rounded-full h-7 w-7 flex flex-col items-center justify-center border-2 border-background shadow-md hover:scale-110 transition-transform cursor-pointer"
+        >
+          <GraduationCap className="h-3 w-3" />
+          <span className="-mt-0.5">{discountPercent}%</span>
+        </div>
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-primary" />
+                {t.studentDiscountTitle}
+              </DialogTitle>
+              <DialogDescription>
+                {businessName} - {discountPercent}% {t.off}
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Not logged in */}
+            {!userId && (
+              <div className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{t.loginRequired}</AlertDescription>
+                </Alert>
+                <Button onClick={handleLogin} className="w-full gap-2">
+                  {t.login}
+                </Button>
+              </div>
+            )}
+
+            {/* Logged in but not verified */}
+            {userId && !verification && (
+              <div className="space-y-4">
+                <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <AlertDescription className="text-amber-700 dark:text-amber-400">
+                    {t.verificationRequired}
+                  </AlertDescription>
+                </Alert>
+                <p className="text-sm text-muted-foreground">
+                  {t.verifyDescription}
+                </p>
+                <Button onClick={handleVerify} className="w-full gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  {t.verifyNow}
+                </Button>
+              </div>
+            )}
+
+            {/* Pending verification */}
+            {userId && isPendingVerification && (
+              <div className="space-y-4">
+                <Alert variant="default" className="border-blue-500/50 bg-blue-500/10">
+                  <AlertCircle className="h-4 w-4 text-blue-500" />
+                  <AlertDescription className="text-blue-700 dark:text-blue-400">
+                    {t.pendingVerification}
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
+
+            {/* Verified - show QR */}
+            {userId && isVerifiedStudent && verification && (
+              <div className="space-y-4">
+                <StudentQRCard 
+                  verification={verification} 
+                  language={language}
+                  discountMode={discountMode === 'one_time' ? 'once' : 'unlimited'}
+                  isRedeemed={isRedeemed}
+                />
+
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDialogOpen(false)} 
+                  className="w-full"
+                >
+                  {t.close}
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // Default button variant
   if (isLoading) {
     return (
       <RippleButton disabled className="gap-2 opacity-50">
