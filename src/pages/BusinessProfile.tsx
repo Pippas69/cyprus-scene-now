@@ -282,7 +282,7 @@ const BusinessProfile = () => {
         </RippleButton>
 
         {/* Avatar centered, follow/share icons positioned to the right */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-[calc(50%-20px)] translate-y-1/2">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-[calc(50%-56px)] translate-y-1/2">
           <div className="flex items-center gap-3">
             {/* Avatar - centered with icons offset to the right */}
             <motion.div
