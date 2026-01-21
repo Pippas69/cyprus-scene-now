@@ -33,12 +33,24 @@ const InfoNavbar = () => {
 
   const t = text[language];
 
-  const navLinks = [
+  // Desktop nav links
+  const desktopNavLinks = [
     { href: "/", label: t.home },
     { href: "/feed", label: t.explore },
     { href: "/blog", label: t.blog },
     { href: "/contact", label: t.contact },
   ];
+
+  // Tablet nav links (different from desktop)
+  const tabletNavLinks = [
+    { href: "/", label: t.home },
+    { href: "/feed", label: t.explore },
+    { href: "/for-visitors", label: language === "el" ? "Επισκέπτες" : "Visitors" },
+    { href: "/for-businesses", label: language === "el" ? "Επιχειρήσεις" : "Businesses" },
+  ];
+
+  // Mobile nav links (same as desktop)
+  const mobileNavLinks = desktopNavLinks;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -51,9 +63,26 @@ const InfoNavbar = () => {
             <Logo size="md" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+          {/* Tablet Navigation (md to lg) - Different links */}
+          <div className="hidden md:flex lg:hidden items-center gap-4 ml-4">
+            {tabletNavLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`text-sm font-medium transition-colors hover:text-primary whitespace-nowrap ${
+                  isActive(link.href)
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop Navigation (lg+) */}
+          <div className="hidden lg:flex items-center gap-8">
+            {desktopNavLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
@@ -68,8 +97,23 @@ const InfoNavbar = () => {
             ))}
           </div>
 
-          {/* Right Side */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Tablet Right Side (md to lg) - Language toggle + hamburger */}
+          <div className="hidden md:flex lg:hidden items-center gap-3">
+            <LanguageToggle />
+            <button
+              className="p-2"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
+
+          {/* Desktop Right Side (lg+) */}
+          <div className="hidden lg:flex items-center gap-4">
             <LanguageToggle />
             <Link to="/login">
               <Button variant="ghost" size="sm">
@@ -98,16 +142,17 @@ const InfoNavbar = () => {
       </div>
 
       {/* Mobile Menu */}
+      {/* Mobile Menu (< md) */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background border-b border-border"
+            className="lg:hidden bg-background border-b border-border"
           >
             <div className="container mx-auto px-4 py-4 space-y-4">
-              {navLinks.map((link) => (
+              {mobileNavLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
