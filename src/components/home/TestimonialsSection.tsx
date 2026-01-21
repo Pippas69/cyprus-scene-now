@@ -81,21 +81,21 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
   };
 
   return (
-    <section className="relative py-12 md:py-16 overflow-hidden">
+    <section className="relative py-10 sm:py-12 md:py-16 overflow-hidden">
       {/* Background with gradient transition to seafoam */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-[#4dd4c4]" />
       
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-3 sm:px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
+          className="text-center mb-6 sm:mb-8 md:mb-10"
         >
-          <h2 className="font-display text-3xl md:text-5xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-4">
+          <h2 className="font-display text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-2 sm:mb-4">
             {content[language].title}
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
             {content[language].subtitle}
           </p>
         </motion.div>
@@ -108,34 +108,34 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
           <AnimatePresence mode="wait">
             <motion.div
               key={current}
-              initial={{ opacity: 0, x: 100 }}
+              initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-8 md:p-12 shadow-card"
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="bg-card/80 backdrop-blur-md border border-border/50 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-10 lg:p-12 shadow-card"
             >
-              <Quote className="w-12 h-12 text-aegean/30 mb-6" />
+              <Quote className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-aegean/30 mb-4 sm:mb-5 md:mb-6" />
               
-              <p className="text-lg md:text-xl text-foreground mb-8 leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-foreground mb-5 sm:mb-6 md:mb-8 leading-relaxed">
                 "{testimonials[current].text[language]}"
               </p>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <img
                   src={testimonials[current].avatar}
                   alt={testimonials[current].name}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-aegean/30"
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-aegean/30"
                 />
                 <div>
-                  <h4 className="font-semibold text-foreground">
+                  <h4 className="font-semibold text-foreground text-sm sm:text-base">
                     {testimonials[current].name}
                   </h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {testimonials[current].role[language]}
                   </p>
-                  <div className="flex gap-1 mt-1">
+                  <div className="flex gap-0.5 sm:gap-1 mt-1">
                     {Array.from({ length: testimonials[current].rating }).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-aegean text-aegean" />
+                      <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-aegean text-aegean" />
                     ))}
                   </div>
                 </div>
@@ -144,15 +144,15 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
           </AnimatePresence>
 
           {/* Dots only - no arrows, auto-scrolls */}
-          <div className="flex items-center justify-center gap-2 mt-8">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-5 sm:mt-6 md:mt-8">
             {testimonials.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
                   i === current
-                    ? "bg-aegean w-6"
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-2"
+                    ? "bg-aegean w-4 sm:w-6"
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5 sm:w-2"
                 }`}
               />
             ))}
@@ -161,7 +161,7 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
       </div>
       
       {/* Smooth gradient transition to seafoam section */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-[#4dd4c4]" />
+      <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-b from-transparent to-[#4dd4c4]" />
     </section>
   );
 };

@@ -18,22 +18,22 @@ const MarqueeSection = () => {
   ];
 
   return (
-    <section className="relative py-12 overflow-hidden">
+    <section className="relative py-6 sm:py-8 md:py-12 overflow-hidden">
       {/* Gradient from white (top) to seafoam (bottom) - covering the marquee */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-[#c5f0ea] to-[#4dd4c4]" />
 
-      <div className="py-6 relative z-10">
+      <div className="py-3 sm:py-4 md:py-6 relative z-10">
         {/* Top marquee - left to right */}
-        <div className="relative flex overflow-hidden mb-6">
+        <div className="relative flex overflow-hidden mb-3 sm:mb-4 md:mb-6">
           <motion.div
             animate={{ x: ["0%", "-50%"] }}
             transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="flex gap-8 whitespace-nowrap"
+            className="flex gap-4 sm:gap-6 md:gap-8 whitespace-nowrap"
           >
             {[...topItems, ...topItems].map((item, i) => (
               <span
                 key={i}
-                className="text-lg md:text-xl font-medium text-foreground/80 flex items-center gap-4"
+                className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-foreground/80 flex items-center gap-2 sm:gap-3 md:gap-4"
               >
                 {item}
                 <span className="text-seafoam">✦</span>
@@ -47,12 +47,12 @@ const MarqueeSection = () => {
           <motion.div
             animate={{ x: ["-50%", "0%"] }}
             transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-            className="flex gap-8 whitespace-nowrap"
+            className="flex gap-4 sm:gap-6 md:gap-8 whitespace-nowrap"
           >
             {[...bottomItems, ...bottomItems].map((item, i) => (
               <span
                 key={i}
-                className="text-lg md:text-xl font-medium text-foreground/80 flex items-center gap-4"
+                className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-foreground/80 flex items-center gap-2 sm:gap-3 md:gap-4"
               >
                 {item}
                 <span className="text-aegean">✦</span>
