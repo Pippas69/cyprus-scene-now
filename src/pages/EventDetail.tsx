@@ -403,9 +403,9 @@ export default function EventDetail() {
           {text.backToEvents}
         </RippleButton>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Content */}
-          <div className="md:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             {/* Hero Image with Event Type Badge (half-overlapping like reference) */}
             <motion.div
               className="relative rounded-xl shadow-lg"
@@ -443,8 +443,8 @@ export default function EventDetail() {
               )}
             </div>
 
-            {/* Mobile-only info section */}
-            <div className="md:hidden space-y-3 mt-3">
+            {/* Mobile/Tablet info section - shown below lg breakpoint */}
+            <div className="lg:hidden space-y-3 mt-3">
               {/* RSVP Buttons */}
               <div className="grid grid-cols-2 gap-2">
                 <RippleButton
@@ -594,9 +594,9 @@ export default function EventDetail() {
             {similarEvents.length > 0 && (
               <div className="mt-4">
                 <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
-                {/* Mobile: mobileFixed matches MyOffers card dimensions */}
+                {/* Mobile/Tablet: mobileFixed matches MyOffers card dimensions */}
                 <motion.div
-                  className="grid gap-2 md:hidden"
+                  className="grid gap-2 lg:hidden"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
@@ -607,9 +607,9 @@ export default function EventDetail() {
                     </motion.div>
                   ))}
                 </motion.div>
-                {/* Desktop/Tablet: 2-column grid - minimal gap and full-width cards */}
+                {/* Desktop: 2-column grid - minimal gap and full-width cards */}
                 <motion.div
-                  className="hidden md:grid md:grid-cols-2 gap-2"
+                  className="hidden lg:grid lg:grid-cols-2 gap-2"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
@@ -624,9 +624,9 @@ export default function EventDetail() {
             )}
           </div>
 
-          {/* Sidebar - hidden on mobile, shown on tablet+ */}
+          {/* Sidebar - hidden on mobile/tablet, shown on desktop (lg+) */}
           <motion.div 
-            className="hidden md:block space-y-4"
+            className="hidden lg:block space-y-4"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
