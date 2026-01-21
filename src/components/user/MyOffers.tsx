@@ -4,12 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Store, CheckCircle, Calendar, Clock, QrCode, Download, ShoppingBag, AlertCircle, Wallet, History, TrendingDown } from "lucide-react";
+import { Loader2, Store, CheckCircle, Calendar, Clock, QrCode, ShoppingBag, AlertCircle, Wallet, History, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import QRCodeLib from "qrcode";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { CreditTransactionHistory } from "./CreditTransactionHistory";
+import { OfferQRCard } from "./OfferQRCard";
 
 interface MyOffersProps {
   userId: string;
@@ -46,9 +45,6 @@ interface OfferPurchase {
 
 export function MyOffers({ userId, language }: MyOffersProps) {
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-  const [qrLoading, setQrLoading] = useState(false);
-  const [qrError, setQrError] = useState<string | null>(null);
 
   const [showHistory, setShowHistory] = useState<string | null>(null);
 
@@ -246,48 +242,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     return p.status === 'expired' || (p.status === 'paid' && isExpired);
   }) || [];
 
-  // Generate QR code when purchase is selected
-  useEffect(() => {
-    if (!selectedPurchase || !selectedPurchase.qr_code_token) {
-      setQrCodeUrl(null);
-      setQrError(null);
-      return;
-    }
-
-    setQrLoading(true);
-    setQrError(null);
-
-    setTimeout(() => {
-      QRCodeLib.toDataURL(selectedPurchase.qr_code_token!, { 
-        width: 300,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      })
-        .then(url => {
-          setQrCodeUrl(url);
-          setQrLoading(false);
-        })
-        .catch(err => {
-          console.error('Error generating QR code:', err);
-          setQrError(t.qrError);
-          setQrLoading(false);
-        });
-    }, 100);
-  }, [selectedPurchase, t.qrError]);
-
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), language === "el" ? "dd/MM/yyyy" : "MM/dd/yyyy");
-  };
-
-  const handleDownloadQR = () => {
-    if (!qrCodeUrl || !selectedPurchase) return;
-    const link = document.createElement('a');
-    link.download = `offer-${selectedPurchase.id}.png`;
-    link.href = qrCodeUrl;
-    link.click();
   };
 
   if (isLoading) {
@@ -534,65 +490,22 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         />
       )}
 
-      <Dialog open={!!selectedPurchase} onOpenChange={() => setSelectedPurchase(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t.qrCodeTitle}</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4 py-4">
-            {selectedPurchase && (
-              <>
-                <div className="text-center">
-                  <p className="font-semibold text-lg">{selectedPurchase.discounts.title}</p>
-                  <p className="text-sm text-muted-foreground">{selectedPurchase.discounts.businesses.name}</p>
-                  {selectedPurchase.discounts?.offer_type === 'credit' ? (
-                    <div className="mt-2 space-y-1">
-                      <Badge variant="default" className="bg-emerald-600">
-                        <Wallet className="h-3 w-3 mr-1" />
-                        {t.storeCredit}
-                      </Badge>
-                      <p className="text-2xl font-bold text-primary mt-2">
-                        €{((selectedPurchase.balance_remaining_cents ?? 0) / 100).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{t.balance}</p>
-                    </div>
-                  ) : (
-                    <Badge variant="default" className="text-xl font-bold mt-2">
-                      -{selectedPurchase.discount_percent}%
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="bg-white p-4 rounded-lg shadow-lg">
-                  {qrLoading ? (
-                    <div className="w-[300px] h-[300px] flex items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  ) : qrError ? (
-                    <div className="w-[300px] h-[300px] flex flex-col items-center justify-center gap-2">
-                      <p className="text-destructive text-sm">{qrError}</p>
-                      <Button size="sm" variant="outline" onClick={() => setSelectedPurchase({...selectedPurchase})}>
-                        {t.retry}
-                      </Button>
-                    </div>
-                  ) : qrCodeUrl ? (
-                    <img src={qrCodeUrl} alt="QR Code" className="w-[300px] h-[300px]" />
-                  ) : null}
-                </div>
-
-                <p className="text-sm text-muted-foreground text-center">{t.showAtVenue}</p>
-
-                {qrCodeUrl && (
-                  <Button onClick={handleDownloadQR} variant="outline" className="w-full">
-                    <Download className="h-4 w-4 mr-2" />
-                    {t.downloadQR}
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <OfferQRCard
+        offer={selectedPurchase ? {
+          id: selectedPurchase.id,
+          qrToken: selectedPurchase.qr_code_token || '',
+          title: selectedPurchase.discounts.title,
+          businessName: selectedPurchase.discounts.businesses.name,
+          businessLogo: selectedPurchase.discounts.businesses.logo_url,
+          discountPercent: selectedPurchase.discount_percent,
+          expiresAt: selectedPurchase.expires_at,
+          purchasedAt: selectedPurchase.created_at,
+          isCredit: selectedPurchase.discounts?.offer_type === 'credit',
+          balanceRemaining: selectedPurchase.balance_remaining_cents ?? 0,
+        } : null}
+        language={language}
+        onClose={() => setSelectedPurchase(null)}
+      />
     </div>
   );
 }
