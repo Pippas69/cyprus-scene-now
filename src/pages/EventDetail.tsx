@@ -552,8 +552,9 @@ export default function EventDetail() {
             {similarEvents.length > 0 && (
               <div className="mt-4">
                 <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
+                {/* Mobile: stacked full-width cards */}
                 <motion.div
-                  className="grid gap-3"
+                  className="grid gap-3 md:hidden"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
@@ -561,6 +562,19 @@ export default function EventDetail() {
                   {similarEvents.map((similar) => (
                     <motion.div key={similar.id} variants={itemVariants}>
                       <UnifiedEventCard event={similar} language={language} size="full" />
+                    </motion.div>
+                  ))}
+                </motion.div>
+                {/* Desktop/Tablet: 2-column grid like "My Events" */}
+                <motion.div
+                  className="hidden md:grid md:grid-cols-2 gap-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {similarEvents.map((similar) => (
+                    <motion.div key={similar.id} variants={itemVariants}>
+                      <UnifiedEventCard event={similar} language={language} size="default" />
                     </motion.div>
                   ))}
                 </motion.div>
@@ -727,10 +741,7 @@ export default function EventDetail() {
               </CardContent>
             </Card>
 
-            {/* Event Attendees - hidden on mobile */}
-            <div className="hidden lg:block">
-              <EventAttendees eventId={eventId!} />
-            </div>
+            {/* Event Attendees - REMOVED per user request for desktop/tablet */}
           </motion.div>
         </div>
       </div>
