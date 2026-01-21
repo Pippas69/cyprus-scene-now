@@ -325,19 +325,28 @@ export default function EventDetail() {
     switch (eventType) {
       case 'ticket':
         return (
-          <Badge variant="outline" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
+          <Badge
+            variant="outline"
+            className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border"
+          >
             {language === 'el' ? 'Με Εισιτήριο (Event)' : 'Ticketed (Event)'}
           </Badge>
         );
       case 'reservation':
         return (
-          <Badge variant="outline" className="gap-1 text-xs bg-secondary/10 text-secondary-foreground border-secondary/20">
+          <Badge
+            variant="outline"
+            className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border"
+          >
             {language === 'el' ? 'Με Κράτηση (Event)' : 'Reservation (Event)'}
           </Badge>
         );
       case 'free_entry':
         return (
-          <Badge variant="outline" className="gap-1 text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
+          <Badge
+            variant="outline"
+            className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border"
+          >
             {language === 'el' ? 'Ελεύθερη Είσοδος (Event)' : 'Free Entry (Event)'}
           </Badge>
         );
@@ -397,32 +406,35 @@ export default function EventDetail() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="md:col-span-2 space-y-6">
-            {/* Hero Image with Event Type Badge */}
-            <motion.div 
-              className="relative aspect-video rounded-xl overflow-hidden shadow-lg"
+            {/* Hero Image with Event Type Badge (half-overlapping like reference) */}
+            <motion.div
+              className="relative rounded-xl shadow-lg"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              {event.cover_image_url ? (
-                <img
-                  src={event.cover_image_url}
-                  alt={event.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-muted flex items-center justify-center">
-                  <PartyPopper className="h-16 w-16 text-muted-foreground/40" />
-                </div>
-              )}
-              {/* Event Type Badge - Bottom Right overlapping edge */}
-              <div className="absolute bottom-2 right-2">
+              <div className="aspect-video rounded-xl overflow-hidden">
+                {event.cover_image_url ? (
+                  <img
+                    src={event.cover_image_url}
+                    alt={event.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                    <PartyPopper className="h-16 w-16 text-muted-foreground/40" />
+                  </div>
+                )}
+              </div>
+
+              {/* Badge overlaps the bottom edge (like screenshot) */}
+              <div className="absolute right-4 bottom-0 translate-y-1/2">
                 {getEventTypeBadge()}
               </div>
             </motion.div>
 
-            {/* Title and Description - minimal gap to image */}
-            <div className="mt-1">
+            {/* Title and Description - close to image */}
+            <div className="mt-2">
               <h1 className="text-lg font-bold line-clamp-1">{event.title}</h1>
               {event.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-0">
