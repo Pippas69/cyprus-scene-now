@@ -442,7 +442,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const renderReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
     const isDirectReservation = !reservation.events;
-    const title = isDirectReservation ? t.tableReservation : reservation.events?.title;
+    // Always show "Κράτηση Τραπεζιού" / "Table Reservation" for all reservation types
+    const title = t.tableReservation;
     const businessInfo = isDirectReservation ? reservation.businesses : reservation.events?.businesses;
     const dateTime = isDirectReservation ? reservation.preferred_time : reservation.events?.start_at;
     const location = isDirectReservation ? reservation.businesses?.address : reservation.events?.location;
@@ -452,16 +453,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     return (
       <Card key={reservation.id} className={`overflow-hidden ${isPast ? 'opacity-70' : ''}`}>
         <CardHeader className="pb-2 pt-3 px-4">
-          {/* Status badge - top right */}
+          {/* Status badge - top right, positioned within bounds */}
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base">{title}</CardTitle>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {isPast && (
-                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                  <Clock className="h-2.5 w-2.5 mr-0.5" />
-                  {t.eventEnded}
-                </Badge>
-              )}
+            <CardTitle className="text-base line-clamp-1">{title}</CardTitle>
+            <div className="shrink-0">
               {getStatusBadge(reservation)}
             </div>
           </div>

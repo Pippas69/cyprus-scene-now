@@ -187,13 +187,10 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                         <span className="text-xs text-muted-foreground">
                           {ticket.ticket_tiers?.name}
                         </span>
-                        {ticket.ticket_tiers?.price_cents === 0 ? (
-                          <span className="text-xs text-green-600 font-medium">{t.free}</span>
-                        ) : (
-                          <span className="text-xs font-medium text-primary">
-                            {formatPrice(ticket.ticket_tiers?.price_cents)}
-                          </span>
-                        )}
+                        <span className="text-[10px] text-muted-foreground">•</span>
+                        <span className={`text-[10px] font-medium ${ticket.ticket_tiers?.price_cents === 0 ? 'text-emerald-600' : 'text-primary'}`}>
+                          {ticket.ticket_tiers?.price_cents === 0 ? t.free : formatPrice(ticket.ticket_tiers?.price_cents)}
+                        </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-muted-foreground">
                         {ticket.events?.start_at && (
