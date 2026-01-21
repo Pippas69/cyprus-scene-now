@@ -90,7 +90,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       confirmationsDesc: 'Απαραίτητες ειδοποιήσεις για τη λειτουργία του λογαριασμού σου.',
       // Suggestions section
       suggestionsForYou: 'Προτάσεις για Σένα',
-      suggestionsForYouDesc: 'Εκδηλώσεις και προσφορές που ταιριάζουν στα ενδιαφέροντά σου',
+      suggestionsForYouDesc: 'Επιλεγμένες Εκδηλώσεις και Προσφορές που ταιριάζουν στα ενδιαφέροντά σου',
       // Reminders section
       reminders: 'Υπενθυμίσεις',
       eventReminders: 'Υπενθυμίσεις Εκδηλώσεων',
@@ -147,7 +147,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       confirmationsDesc: 'Essential notifications for your account functionality.',
       // Suggestions section
       suggestionsForYou: 'Suggestions for You',
-      suggestionsForYouDesc: 'Events and offers that match your interests',
+      suggestionsForYouDesc: 'Selected Events and Offers that match your interests',
       // Reminders section
       reminders: 'Reminders',
       eventReminders: 'Event Reminders',
