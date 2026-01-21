@@ -221,13 +221,13 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
   const text = {
     el: {
       today: "Σήμερα",
-      week: "Επόμενες 7 Μέρες",
-      month: "Επόμενες 30 Μέρες",
+      week: "Σε 7 Μέρες",
+      month: "Σε 30 Μέρες",
     },
     en: {
       today: "Today",
-      week: "Next 7 Days",
-      month: "Next 30 Days",
+      week: "In 7 Days",
+      month: "In 30 Days",
     },
   };
 
