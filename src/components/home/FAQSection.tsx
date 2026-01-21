@@ -23,7 +23,7 @@ const userFaqs = {
     },
     {
       question: "Πώς λειτουργούν οι εκδηλώσεις και οι προσφορές;",
-      answer: "Απλά περιηγηθείτε στις διαθέσιμες προσφορές, πατήστε για αποθήκευση και δείξτε τον κωδικό QR στο μαγαζί. Η επιχείρηση θα σκανάρει τον κωδικό σας για επαλήθευση.",
+      answer: "🎉 Εκδηλώσεις: Περιηγηθείτε στις διαθέσιμες εκδηλώσεις, κάντε RSVP (Going/Interested), κλείστε θέση ή αγοράστε εισιτήρια. Λάβετε υπενθύμιση και παρουσιάστε το QR code σας στην είσοδο. 🎁 Προσφορές: Βρείτε αποκλειστικές εκπτώσεις, αποθηκεύστε την προσφορά και δείξτε τον κωδικό QR στο μαγαζί. Η επιχείρηση θα τον σκανάρει και η έκπτωση εφαρμόζεται αυτόματα!",
     },
   ],
   en: [
@@ -41,7 +41,7 @@ const userFaqs = {
     },
     {
       question: "How do events and offers work?",
-      answer: "Simply browse available offers, tap to save them, and show the QR code at the venue. The business will scan your code to verify and apply the discount instantly.",
+      answer: "🎉 Events: Browse available events, RSVP (Going/Interested), book a spot or purchase tickets. Get a reminder and present your QR code at the entrance. 🎁 Offers: Find exclusive discounts, save the offer and show the QR code at the venue. The business scans it and the discount is applied instantly!",
     },
   ],
 };
