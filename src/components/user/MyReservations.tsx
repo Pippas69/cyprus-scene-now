@@ -434,34 +434,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     );
   };
 
-  const getTypeBadge = (reservation: ReservationData) => {
-    const type = getReservationType(reservation);
-    
-    if (type === 'offer') {
-      return (
-        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800">
-          <Tag className="h-3 w-3 mr-1" />
-          {t.offerReservation}
-        </Badge>
-      );
-    }
-    
-    if (type === 'event') {
-      return (
-        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
-          <Ticket className="h-3 w-3 mr-1" />
-          {t.eventReservation}
-        </Badge>
-      );
-    }
-    
-    return (
-      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
-        <Building2 className="h-3 w-3 mr-1" />
-        {t.directReservation}
-      </Badge>
-    );
-  };
+  // Type badges removed - sections already indicate reservation type
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
@@ -478,28 +451,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     return (
       <Card key={reservation.id} className={`overflow-hidden ${isPast ? 'opacity-70' : ''}`}>
-        <CardHeader className="pb-2 pt-4 px-4">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <CardTitle className="text-lg">{title}</CardTitle>
-                {getTypeBadge(reservation)}
-              </div>
-              <CardDescription className="mt-1 flex items-center gap-2">
-                {businessInfo?.logo_url && (
-                  <img
-                    src={businessInfo.logo_url}
-                    alt={businessInfo.name}
-                    className="h-4 w-4 rounded-full object-cover"
-                  />
-                )}
-                <span className="text-sm">{businessInfo?.name}</span>
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
+        <CardHeader className="pb-2 pt-3 px-4">
+          {/* Status badge - top right */}
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-base">{title}</CardTitle>
+            <div className="flex items-center gap-1.5 shrink-0">
               {isPast && (
-                <Badge variant="secondary" className="bg-background/80 backdrop-blur text-xs">
-                  <Clock className="h-3 w-3 mr-1" />
+                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                  <Clock className="h-2.5 w-2.5 mr-0.5" />
                   {t.eventEnded}
                 </Badge>
               )}
@@ -507,47 +466,64 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3 pt-2 pb-4 px-4">
-          {/* For offer-based reservations, show notice about QR in Offers - ultra compact mobile */}
-          {isOfferBased && !isPast && (
-            <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <QrCode className="h-3.5 w-3.5 text-orange-600 shrink-0" />
-                  <p className="text-[10px] sm:text-xs text-orange-700 dark:text-orange-300 truncate">
-                    {language === 'el' ? 'QR στις Προσφορές' : 'QR in Offers'}
-                  </p>
-                </div>
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="h-6 sm:h-7 text-[10px] sm:text-xs px-2 border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-300 shrink-0"
-                >
-                  <Link to="/dashboard-user?tab=offers">
-                    <Tag className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                    <span className="hidden sm:inline">{t.goToOffers}</span>
-                    <span className="sm:hidden">{language === 'el' ? 'Άνοιγμα' : 'Open'}</span>
-                  </Link>
-                </Button>
+        <CardContent className="space-y-2 pt-0 pb-3 px-4">
+          {/* Business name */}
+          <div className="flex items-center gap-2">
+            {businessInfo?.logo_url && (
+              <img
+                src={businessInfo.logo_url}
+                alt={businessInfo.name}
+                className="h-4 w-4 rounded-full object-cover"
+              />
+            )}
+            <span className="text-sm font-medium">{businessInfo?.name}</span>
+          </div>
+          {/* Date, Time, Party size */}
+          <div className="space-y-1.5 text-xs text-muted-foreground">
+            {dateTime && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  {format(new Date(dateTime), 'PPP')}
+                  {isDirectReservation && `, ${format(new Date(dateTime), 'HH:mm')}`}
+                </span>
               </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Users className="h-3.5 w-3.5 shrink-0" />
+              <span>{reservation.party_size} {t.people}</span>
             </div>
+            {location && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{location}</span>
+              </div>
+            )}
+          </div>
+
+          {/* QR in Offers - ultra compact for offer-based reservations */}
+          {isOfferBased && !isPast && (
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="w-full h-7 text-xs border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300"
+            >
+              <Link to="/dashboard-user?tab=offers">
+                <QrCode className="h-3 w-3 mr-1.5" />
+                {language === 'el' ? 'QR στις Προσφορές' : 'QR in Offers'}
+              </Link>
+            </Button>
           )}
 
-          {/* Confirmation Code & QR Code - only for non-offer reservations - compact */}
+          {/* Confirmation Code & QR Code - only for non-offer reservations */}
           {reservation.confirmation_code && !isPast && !isOfferBased && (
             <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-muted-foreground">{t.confirmationCode}</p>
-                  <p className="text-xl font-bold text-primary tracking-wider">
+                  <p className="text-lg font-bold text-primary tracking-wider">
                     {reservation.confirmation_code}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {language === 'el' 
-                      ? 'Παρουσιάστε αυτόν τον κωδικό ή το QR κατά την άφιξή σας'
-                      : 'Present this code or QR upon arrival'
-                    }
                   </p>
                 </div>
                 {qrCodes[reservation.id] && (
@@ -559,57 +535,15 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                       confirmationCode: reservation.confirmation_code || '',
                       businessName: businessInfo?.name || ''
                     })}
-                    className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity group shrink-0"
+                    className="flex items-center gap-1 text-xs text-primary hover:underline shrink-0"
                   >
-                    <img 
-                      src={qrCodes[reservation.id]} 
-                      alt="QR Code" 
-                      className="w-16 h-16 rounded border border-primary/20 group-hover:border-primary/50 transition-colors"
-                    />
-                    <span className="text-[10px] text-muted-foreground group-hover:text-primary mt-0.5">
-                      {language === 'el' ? 'Μεγέθυνση' : 'Enlarge'}
-                    </span>
+                    <QrCode className="h-4 w-4" />
+                    {language === 'el' ? 'QR' : 'QR'}
                   </button>
                 )}
               </div>
             </div>
           )}
-
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {dateTime && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="text-xs">
-                  {isDirectReservation 
-                    ? format(new Date(dateTime), 'PPP p')
-                    : format(new Date(dateTime), 'PPP')
-                  }
-                </span>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="text-xs">{reservation.party_size} {t.people}</span>
-            </div>
-            {location && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="text-xs truncate">{location}</span>
-              </div>
-            )}
-            {reservation.seating_preference && reservation.seating_preference !== 'no_preference' && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="text-xs">{t[reservation.seating_preference as keyof typeof t]}</span>
-              </div>
-            )}
-            {reservation.phone_number && (
-              <div className="flex items-center gap-2 col-span-2">
-                <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="text-xs">{reservation.phone_number}</span>
-              </div>
-            )}
-          </div>
 
           {/* Prepaid reservation info - for event reservations - compact */}
           {reservation.seating_type_id && reservation.prepaid_min_charge_cents && reservation.prepaid_min_charge_cents > 0 && !isPast && (

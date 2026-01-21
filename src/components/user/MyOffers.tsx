@@ -341,8 +341,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
             </div>
 
-            {/* LINE 4: Show QR button - bottom right */}
-            <div className="flex-1 flex items-end justify-end mt-1">
+            {/* LINE 4: Show QR button - fixed spacing */}
+            <div className="flex items-center justify-end gap-2 mt-auto">
               {showQR && !isExpired && !isRedeemed && !isDepleted && (
                 <Button 
                   onClick={() => setSelectedPurchase(purchase)}
@@ -359,7 +359,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                   onClick={() => setShowHistory(purchase.id)}
                   variant="outline"
                   size="sm"
-                  className="text-xs h-7 px-3 ml-2"
+                  className="text-xs h-7 px-3"
                 >
                   <History className="h-3.5 w-3.5 mr-1" />
                   {t.viewHistory}
