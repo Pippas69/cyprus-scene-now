@@ -305,7 +305,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     };
 
     return (
-      <Card className="overflow-visible aspect-square relative">
+      <Card className="overflow-hidden aspect-square relative">
         <div className="h-full flex flex-col">
           {/* TOP HALF: Image */}
           <div className="h-1/2 relative overflow-hidden rounded-t-xl">
@@ -320,6 +320,32 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             )}
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+            
+            {/* BADGES - Inside image, top right */}
+            <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+              {isDepleted ? (
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
+                  <TrendingDown className="h-2.5 w-2.5 mr-0.5" />
+                </Badge>
+              ) : isCredit ? (
+                <Badge variant="default" className="text-[9px] px-1.5 py-0.5 h-4 bg-emerald-600 shadow-sm">
+                  <Wallet className="h-2.5 w-2.5 mr-0.5" />
+                  €{(balanceRemaining / 100).toFixed(0)}
+                </Badge>
+              ) : isRedeemed ? (
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
+                  <CheckCircle className="h-2.5 w-2.5" />
+                </Badge>
+              ) : isExpired ? (
+                <Badge variant="destructive" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
+                  <AlertCircle className="h-2.5 w-2.5" />
+                </Badge>
+              ) : purchase.discount_percent > 0 && (
+                <Badge variant="default" className="text-[9px] px-1.5 py-0.5 h-4 shadow-sm">
+                  -{purchase.discount_percent}%
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* BOTTOM HALF: Info */}
@@ -341,8 +367,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
             </div>
 
-            {/* LINE 4: Show QR button - fixed spacing */}
-            <div className="flex items-center justify-end gap-2 mt-auto">
+            {/* LINE 4: Show QR button - reduced spacing */}
+            <div className="flex items-center justify-end gap-2 mt-2">
               {showQR && !isExpired && !isRedeemed && !isDepleted && (
                 <Button 
                   onClick={() => setSelectedPurchase(purchase)}
@@ -367,35 +393,6 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               )}
             </div>
           </div>
-        </div>
-
-        {/* BADGES - Top Right - positioned inside card bounds on mobile */}
-        <div className="absolute top-2 right-2 sm:-top-2 sm:-right-2 z-10 flex items-center gap-1">
-          {isDepleted ? (
-            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 shadow-sm">
-              <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
-              <span className="hidden sm:inline">{t.depleted}</span>
-            </Badge>
-          ) : isCredit ? (
-            <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 bg-emerald-600 shadow-sm">
-              <Wallet className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
-              €{(balanceRemaining / 100).toFixed(0)}
-            </Badge>
-          ) : isRedeemed ? (
-            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 shadow-sm">
-              <CheckCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
-              <span className="hidden sm:inline">{language === "el" ? "Χρησιμ." : "Used"}</span>
-            </Badge>
-          ) : isExpired ? (
-            <Badge variant="destructive" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 shadow-sm">
-              <AlertCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
-              <span className="hidden sm:inline">{language === "el" ? "Έληξε" : "Expired"}</span>
-            </Badge>
-          ) : purchase.discount_percent > 0 && (
-            <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 py-0.5 h-5 shadow-sm">
-              -{purchase.discount_percent}%
-            </Badge>
-          )}
         </div>
       </Card>
     );

@@ -23,8 +23,10 @@ interface BusinessMarkerProps {
  * Free/Basic/Pro/Elite all use the SAME teardrop silhouette as in the reference.
  * Pro/Elite are distinguished by color + icon.
  */
+// Mobile-responsive sizes (smaller on mobile)
 const PIN_CONFIG: Record<PlanSlug, {
   size: number;
+  mobileSize: number; // Smaller on mobile
   opacity: number;
   shadowBlur: number;
   strokeWidth: number;
@@ -35,6 +37,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   // Free stays EXACTLY as-is per request
   free: {
     size: 16,
+    mobileSize: 12,
     opacity: 0.7,
     shadowBlur: 2,
     strokeWidth: 1,
@@ -45,6 +48,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   basic: {
     // Like the screenshot: slightly larger than Free, same teardrop shape
     size: 20,
+    mobileSize: 14,
     opacity: 1,
     shadowBlur: 3,
     strokeWidth: 1.5,
@@ -55,6 +59,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   pro: {
     // Purple teardrop + star icon
     size: 24,
+    mobileSize: 16,
     opacity: 1,
     shadowBlur: 4,
     strokeWidth: 2,
@@ -65,6 +70,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   elite: {
     // Gold teardrop + crown icon
     size: 26,
+    mobileSize: 18,
     opacity: 1,
     shadowBlur: 4,
     strokeWidth: 2,
@@ -132,7 +138,11 @@ const PremiumPinPath = () => (
 export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMarkerProps) => {
   const config = PIN_CONFIG[planSlug];
   const colors = PIN_COLORS[planSlug];
-  const { size, opacity, shadowBlur, strokeWidth, glowRadius, isPremiumShape, hasPulseAnimation } = config;
+  const { opacity, shadowBlur, strokeWidth, glowRadius, isPremiumShape, hasPulseAnimation, mobileSize } = config;
+  
+  // Use smaller size on mobile (window width check with fallback)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const size = isMobile ? mobileSize : config.size;
 
   const safeId = toSvgSafeId(`${planSlug}-${markerId}`);
 
@@ -146,7 +156,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
       className="relative cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:-translate-y-1"
       style={{
         opacity,
-        filter: `drop-shadow(0 ${shadowBlur}px ${shadowBlur * 2}px rgba(0,0,0,0.25))`,
+        filter: `drop-shadow(0 ${shadowBlur}px ${shadowBlur * 2}px rgba(0,0,0,0.2))`,
         zIndex,
       }}
       title={name}

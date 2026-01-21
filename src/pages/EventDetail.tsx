@@ -332,22 +332,19 @@ export default function EventDetail() {
     switch (eventType) {
       case 'ticket':
         return (
-          <Badge variant="default" className="gap-1">
-            <Ticket className="h-3 w-3" />
-            {text.ticketEvent}
+          <Badge variant="outline" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
+            {language === 'el' ? 'Με Εισιτήριο (Event)' : 'Ticketed (Event)'}
           </Badge>
         );
       case 'reservation':
         return (
-          <Badge variant="secondary" className="gap-1">
-            <Calendar className="h-3 w-3" />
-            {text.reservationEvent}
+          <Badge variant="outline" className="gap-1 text-xs bg-secondary/10 text-secondary-foreground border-secondary/20">
+            {language === 'el' ? 'Με Κράτηση (Event)' : 'Reservation (Event)'}
           </Badge>
         );
       case 'free_entry':
         return (
           <Badge variant="outline" className="gap-1 text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
-            <PartyPopper className="h-3 w-3" />
             {language === 'el' ? 'Ελεύθερη Είσοδος (Event)' : 'Free Entry (Event)'}
           </Badge>
         );
@@ -430,14 +427,9 @@ export default function EventDetail() {
               transition={{ delay: 0.2 }}
             >
               {/* Title - smaller on mobile to fit in one line */}
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 line-clamp-1">{event.title}</h1>
+              <h1 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold mb-3 line-clamp-1">{event.title}</h1>
               <div className="flex flex-wrap gap-2 items-center">
                 {getEventTypeBadge()}
-                {event.category?.map((cat: string) => (
-                  <Badge key={cat} variant="secondary" className="text-xs">
-                    {cat}
-                  </Badge>
-                ))}
               </div>
             </motion.div>
 
@@ -469,7 +461,7 @@ export default function EventDetail() {
                   </Card>
                 )}
 
-                {/* Mobile-only: Organizer first, then tabs, then share */}
+                {/* Mobile-only info section - after description, before similar events */}
                 <div className="md:hidden space-y-3">
                   {/* RSVP Buttons */}
                   {user && (
@@ -585,12 +577,12 @@ export default function EventDetail() {
                   </RippleButton>
                 </div>
 
-                {/* Similar Events */}
+                {/* Similar Events - with reduced image height */}
                 {similarEvents.length > 0 && (
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-bold mb-4">{text.similarEvents}</h2>
+                  <div className="mt-4">
+                    <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
                     <motion.div 
-                      className="grid gap-4"
+                      className="grid gap-3"
                       variants={containerVariants}
                       initial="hidden"
                       animate="visible"
@@ -601,6 +593,7 @@ export default function EventDetail() {
                             event={similar}
                             language={language}
                             user={user}
+                            className="[&_.relative.h-36]:h-28 [&_.relative.h-36]:sm:h-32"
                           />
                         </motion.div>
                       ))}
