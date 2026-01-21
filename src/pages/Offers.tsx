@@ -342,12 +342,12 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
       </div>
 
       {/* Time Filter Chips - At top */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-1.5 sm:gap-2">
         {(['today', 'week', 'month'] as const).map((filter) => (
           <button
             key={filter}
             onClick={() => handleFilterClick(filter)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap ${
               timeFilter === filter
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted hover:bg-muted/80 text-muted-foreground'
