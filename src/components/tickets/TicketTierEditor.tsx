@@ -188,12 +188,12 @@ export const TicketTierEditor = ({
       )}
 
       {/* Toggle for enabling tickets */}
-      <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+      <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg border bg-muted/30">
         <div className="flex items-center gap-3">
-          <Ticket className="h-5 w-5 text-primary" />
+          <Ticket className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           <div>
-            <p className="font-medium">{text.enableTickets}</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="font-medium text-sm sm:text-base">{text.enableTickets}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {ticketsEnabled 
                 ? (language === 'el' ? "Οι χρήστες θα μπορούν να αγοράσουν εισιτήρια" : "Users will be able to purchase tickets")
                 : text.noTickets
@@ -212,7 +212,7 @@ export const TicketTierEditor = ({
           {/* Commission info */}
           {commissionPercent > 0 && (
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm">
+              <p className="text-xs sm:text-sm">
                 <span className="font-medium">{text.commission}:</span>{" "}
                 {commissionPercent}%
                 <span className="text-muted-foreground ml-2">
@@ -242,7 +242,10 @@ export const TicketTierEditor = ({
                 <CardContent className="pt-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className={touchedTiers.has(index) && isTierInvalid(index) ? "text-destructive" : ""}>
+                      <Label className={
+                        (touchedTiers.has(index) && isTierInvalid(index) ? "text-destructive " : "") +
+                        "text-xs sm:text-sm"
+                      }>
                         {text.tierName} *
                       </Label>
                       <Input
@@ -250,7 +253,12 @@ export const TicketTierEditor = ({
                         onChange={(e) => updateTier(index, { name: e.target.value })}
                         onBlur={() => markTierTouched(index)}
                         placeholder={text.tierNamePlaceholder}
-                        className={touchedTiers.has(index) && isTierInvalid(index) ? "border-destructive focus-visible:ring-destructive" : ""}
+                        className={
+                          "h-8 sm:h-10 text-xs sm:text-sm " +
+                          (touchedTiers.has(index) && isTierInvalid(index)
+                            ? "border-destructive focus-visible:ring-destructive"
+                            : "")
+                        }
                       />
                       {touchedTiers.has(index) && isTierInvalid(index) && (
                         <p className="text-xs text-destructive">{text.tierNameRequired}</p>
@@ -258,18 +266,19 @@ export const TicketTierEditor = ({
                     </div>
                     
                     <div className="space-y-2">
-                      <Label>{text.description}</Label>
+                      <Label className="text-xs sm:text-sm">{text.description}</Label>
                       <Input
                         value={tier.description || ""}
                         onChange={(e) => updateTier(index, { description: e.target.value })}
                         placeholder={text.descriptionPlaceholder}
+                        className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-1">
+                      <Label className="flex items-center gap-1 text-xs sm:text-sm">
                         <Euro className="h-3 w-3" />
                         {text.price}
                       </Label>
@@ -281,16 +290,17 @@ export const TicketTierEditor = ({
                         onChange={(e) => updateTier(index, { 
                           price_cents: Math.round(parseFloat(e.target.value || "0") * 100) 
                         })}
+                        className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                       {tier.price_cents > 0 && commissionPercent > 0 && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                           {text.youReceive}: €{formatPrice(calculateNetRevenue(tier.price_cents))}
                         </p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-1">
+                      <Label className="flex items-center gap-1 text-xs sm:text-sm">
                         <Users className="h-3 w-3" />
                         {text.quantity}
                       </Label>
@@ -301,11 +311,12 @@ export const TicketTierEditor = ({
                         onChange={(e) => updateTier(index, { 
                           quantity_total: parseInt(e.target.value || "1") 
                         })}
+                        className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label>{text.maxPerOrder}</Label>
+                      <Label className="text-xs sm:text-sm whitespace-nowrap">{text.maxPerOrder}</Label>
                       <Input
                         type="number"
                         min="1"
@@ -314,13 +325,14 @@ export const TicketTierEditor = ({
                         onChange={(e) => updateTier(index, { 
                           max_per_order: parseInt(e.target.value || "1") 
                         })}
+                        className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                     </div>
                   </div>
 
                   {/* Dress Code Selector */}
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-1">
+                    <Label className="flex items-center gap-1 text-xs sm:text-sm">
                       <Shirt className="h-3 w-3" />
                       {text.dressCode}
                     </Label>
@@ -334,7 +346,7 @@ export const TicketTierEditor = ({
                         }
                       }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
                         <SelectValue placeholder={text.selectDressCode} />
                       </SelectTrigger>
                       <SelectContent>
@@ -355,7 +367,7 @@ export const TicketTierEditor = ({
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full h-9 sm:h-10 text-xs sm:text-sm"
             onClick={addTier}
           >
             <Plus className="h-4 w-4 mr-2" />
