@@ -60,8 +60,7 @@ const InfoNavbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/">
-            <Logo size="md" className="lg:hidden" />
-            <Logo size="lg" className="hidden lg:block" />
+            <Logo size="md" />
           </Link>
 
           {/* Tablet Navigation (md to lg) - Different links */}

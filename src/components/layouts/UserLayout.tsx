@@ -111,8 +111,7 @@ export function UserLayout({ children }: UserLayoutProps) {
           {/* Logo */}
           <button onClick={() => navigate("/")} className="mr-auto shrink-0">
             <Logo size="sm" className="sm:hidden" />
-            <Logo size="md" className="hidden sm:block lg:hidden" />
-            <Logo size="lg" className="hidden lg:block" />
+            <Logo size="md" className="hidden sm:block" />
           </button>
 
           {/* Search - Desktop only in header */}
