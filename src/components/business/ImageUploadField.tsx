@@ -224,16 +224,6 @@ export const ImageUploadField = ({
             </div>
           )}
 
-          {/* Feed Preview - only for Cover images, positioned to the right */}
-          {showContextPreviews && isCover && displayImage && (
-            <div className="text-center flex-shrink-0">
-              <p className="text-[8px] sm:text-[9px] text-muted-foreground mb-0.5">{t.feedPreview}</p>
-              <div 
-                className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-md border overflow-hidden bg-cover bg-center"
-                style={{ backgroundImage: `url(${displayImage})` }}
-              />
-            </div>
-          )}
         </div>
 
         {/* Upload Button & Info - Compact and aligned */}
