@@ -282,11 +282,10 @@ const BusinessCard = ({
         {/* Gradient overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         
-        {/* Boost badges - top right */}
+        {/* Plan badges - top right (Pro=Star, Elite=Crown) */}
         <div className="absolute top-2 right-2">
           <BusinessBoostBadges
-            hasEventBoost={business.hasEventBoost}
-            hasOfferBoost={business.hasOfferBoost}
+            planSlug={business.planSlug}
             showStudentDiscount={showStudentDiscountBadges}
             studentDiscountPercent={business.student_discount_percent}
             studentDiscountMode={business.student_discount_mode}
