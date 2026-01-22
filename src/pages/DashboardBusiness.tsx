@@ -277,7 +277,7 @@ const DashboardBusiness = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 {/* Unified QR Scanner - next to business avatar */}
                 {businessId && (
                   <UnifiedQRScanner businessId={businessId} language={language} />
@@ -286,8 +286,8 @@ const DashboardBusiness = () => {
                 {/* Search - all device sizes */}
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
-                      <Search className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
+                      <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="top" className="h-full">
