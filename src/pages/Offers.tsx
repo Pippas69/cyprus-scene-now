@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
-import SignupModal from "@/components/SignupModal";
 import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
 
 const Offers = () => {
@@ -16,7 +15,6 @@ const Offers = () => {
   const { language } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showSignupModal, setShowSignupModal] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -65,7 +63,7 @@ const Offers = () => {
           <LimitedOffersView 
             language={language} 
             t={t}
-            onSignupClick={() => setShowSignupModal(true)}
+            onSignupClick={() => navigate("/signup?redirect=/offers")}
           />
         ) : (
           <motion.div
@@ -77,13 +75,6 @@ const Offers = () => {
           </motion.div>
         )}
       </div>
-
-      {showSignupModal && (
-        <SignupModal 
-          onClose={() => setShowSignupModal(false)} 
-          language={language}
-        />
-      )}
     </div>
   );
 };

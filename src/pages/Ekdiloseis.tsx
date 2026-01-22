@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import SignupModal from "@/components/SignupModal";
 import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
 import { Loader2 } from "lucide-react";
 import { PremiumBadge } from "@/components/ui/premium-badge";
@@ -17,7 +16,6 @@ const Ekdiloseis = () => {
   const { language } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showSignupModal, setShowSignupModal] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -67,7 +65,7 @@ const Ekdiloseis = () => {
             language={language} 
             navigate={navigate} 
             t={t}
-            onSignupClick={() => setShowSignupModal(true)}
+            onSignupClick={() => navigate("/signup?redirect=/ekdiloseis")}
           />
         ) : (
           <motion.div
@@ -79,13 +77,6 @@ const Ekdiloseis = () => {
           </motion.div>
         )}
       </div>
-
-      {showSignupModal && (
-        <SignupModal 
-          onClose={() => setShowSignupModal(false)} 
-          language={language}
-        />
-      )}
     </div>
   );
 };
