@@ -120,6 +120,16 @@ export interface UserPreferences {
   notification_ticket_sales: boolean | null;
   notification_daily_sales_summary: boolean | null;
   notification_push_enabled: boolean | null;
+  notification_weekly_summary: boolean | null;
+  notification_almost_sold_out: boolean | null;
+  notification_sold_out: boolean | null;
+  notification_creation_success: boolean | null;
+  notification_boost_success: boolean | null;
+  notification_plan_change: boolean | null;
+  notification_reservation_cancelled: boolean | null;
+  notification_new_message: boolean | null;
+  notification_new_follower: boolean | null;
+  notification_offer_redemption: boolean | null;
   created_at: string | null;
   updated_at: string | null;
 }

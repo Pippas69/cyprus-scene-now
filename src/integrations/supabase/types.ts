@@ -4083,22 +4083,31 @@ export type Database = {
           email_notifications_enabled: boolean | null
           feed_view_mode: string | null
           id: string
+          notification_almost_sold_out: boolean | null
+          notification_boost_success: boolean | null
           notification_boosted_content: boolean | null
           notification_business_updates: boolean | null
+          notification_creation_success: boolean | null
           notification_daily_sales_summary: boolean | null
           notification_event_reminders: boolean | null
           notification_expiring_offers: boolean | null
           notification_fomo_recommendations: boolean | null
           notification_new_events: boolean | null
+          notification_new_follower: boolean | null
+          notification_new_message: boolean | null
           notification_offer_confirmations: boolean | null
           notification_offer_redemption: boolean | null
           notification_personalized_events: boolean | null
           notification_personalized_offers: boolean | null
+          notification_plan_change: boolean | null
           notification_push_enabled: boolean | null
+          notification_reservation_cancelled: boolean | null
           notification_reservations: boolean | null
           notification_rsvp_updates: boolean | null
+          notification_sold_out: boolean | null
           notification_ticket_confirmations: boolean | null
           notification_ticket_sales: boolean | null
+          notification_weekly_summary: boolean | null
           profile_visibility: string | null
           theme_preference: string | null
           updated_at: string | null
@@ -4110,22 +4119,31 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           feed_view_mode?: string | null
           id?: string
+          notification_almost_sold_out?: boolean | null
+          notification_boost_success?: boolean | null
           notification_boosted_content?: boolean | null
           notification_business_updates?: boolean | null
+          notification_creation_success?: boolean | null
           notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_expiring_offers?: boolean | null
           notification_fomo_recommendations?: boolean | null
           notification_new_events?: boolean | null
+          notification_new_follower?: boolean | null
+          notification_new_message?: boolean | null
           notification_offer_confirmations?: boolean | null
           notification_offer_redemption?: boolean | null
           notification_personalized_events?: boolean | null
           notification_personalized_offers?: boolean | null
+          notification_plan_change?: boolean | null
           notification_push_enabled?: boolean | null
+          notification_reservation_cancelled?: boolean | null
           notification_reservations?: boolean | null
           notification_rsvp_updates?: boolean | null
+          notification_sold_out?: boolean | null
           notification_ticket_confirmations?: boolean | null
           notification_ticket_sales?: boolean | null
+          notification_weekly_summary?: boolean | null
           profile_visibility?: string | null
           theme_preference?: string | null
           updated_at?: string | null
@@ -4137,22 +4155,31 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           feed_view_mode?: string | null
           id?: string
+          notification_almost_sold_out?: boolean | null
+          notification_boost_success?: boolean | null
           notification_boosted_content?: boolean | null
           notification_business_updates?: boolean | null
+          notification_creation_success?: boolean | null
           notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_expiring_offers?: boolean | null
           notification_fomo_recommendations?: boolean | null
           notification_new_events?: boolean | null
+          notification_new_follower?: boolean | null
+          notification_new_message?: boolean | null
           notification_offer_confirmations?: boolean | null
           notification_offer_redemption?: boolean | null
           notification_personalized_events?: boolean | null
           notification_personalized_offers?: boolean | null
+          notification_plan_change?: boolean | null
           notification_push_enabled?: boolean | null
+          notification_reservation_cancelled?: boolean | null
           notification_reservations?: boolean | null
           notification_rsvp_updates?: boolean | null
+          notification_sold_out?: boolean | null
           notification_ticket_confirmations?: boolean | null
           notification_ticket_sales?: boolean | null
+          notification_weekly_summary?: boolean | null
           profile_visibility?: string | null
           theme_preference?: string | null
           updated_at?: string | null
