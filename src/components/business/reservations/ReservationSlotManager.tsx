@@ -403,7 +403,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
           <div className="relative flex items-center gap-2 sm:gap-3">
             {/* Badge top-right - absolute corner position */}
             {settings.accepts_direct_reservations && (
-              <Badge variant="default" className="absolute -top-1 -right-1 sm:top-0 sm:right-0 bg-green-500 text-[9px] sm:text-xs">
+               <Badge variant="default" className="absolute right-2 top-0 -translate-y-1/2 bg-green-500 text-[9px] sm:text-xs">
                 {language === 'el' ? 'Ενεργό' : 'Active'}
               </Badge>
             )}
@@ -586,7 +586,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
 
                         {/* Capacity */}
                         <div>
-                          <Label className="text-sm font-medium">{t.slotCapacity}</Label>
+                          <Label className="text-[10px] sm:text-sm font-medium">{t.slotCapacity}</Label>
                           <div className="flex items-center gap-2 mt-1">
                             <Input
                               type="number"
@@ -596,7 +596,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                               className="max-w-[120px]"
                             />
                             <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap">
                               {language === 'el' ? 'μέγιστες κρατήσεις' : 'max reservations'}
                             </span>
                           </div>

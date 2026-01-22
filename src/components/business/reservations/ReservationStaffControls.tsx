@@ -209,7 +209,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
             {/* Badge top-right - absolute corner position */}
             <Badge 
               variant={isPaused ? 'destructive' : 'default'} 
-              className={`absolute -top-1 -right-1 sm:top-0 sm:right-0 text-[9px] sm:text-xs ${!isPaused ? 'bg-green-500' : ''}`}
+              className={`absolute right-2 top-0 -translate-y-1/2 text-[9px] sm:text-xs ${!isPaused ? 'bg-green-500' : ''}`}
             >
               {isPaused ? t.paused : t.active}
             </Badge>
@@ -240,10 +240,10 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
               size="sm" 
               onClick={handleRefresh} 
               disabled={refreshing}
-              className="absolute -top-1 -right-1 sm:top-0 sm:right-0 h-6 sm:h-8 w-6 sm:w-auto px-1.5 sm:px-3 text-[10px] sm:text-xs"
+              className="absolute right-2 top-0 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-auto px-1.5 lg:px-3 text-[10px] sm:text-xs"
             >
-              <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline ml-1.5">{t.refresh}</span>
+              <RefreshCw className={`h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden lg:inline ml-1.5">{t.refresh}</span>
             </Button>
             
             <CardTitle className="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-base whitespace-nowrap pr-10 sm:pr-20">
