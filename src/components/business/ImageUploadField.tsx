@@ -177,9 +177,9 @@ export const ImageUploadField = ({
               </div>
             </div>
 
-            {/* Context Previews for Cover Images */}
+            {/* Context Previews for Cover Images - Only Feed and Profile */}
             {showContextPreviews && isCover && (
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+              <div className="flex flex-wrap gap-3 pt-2 border-t border-border/50">
                 {/* Feed Preview (1:1 square) */}
                 <div className="text-center">
                   <p className="text-[9px] text-muted-foreground mb-0.5">{t.feedPreview}</p>
@@ -193,14 +193,6 @@ export const ImageUploadField = ({
                   <p className="text-[9px] text-muted-foreground mb-0.5">{t.profilePreview}</p>
                   <div 
                     className="w-20 h-12 rounded-md border overflow-hidden bg-cover bg-center"
-                    style={{ backgroundImage: `url(${displayImage})` }}
-                  />
-                </div>
-                {/* Offer Card Preview */}
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground mb-0.5">{t.offerPreview}</p>
-                  <div 
-                    className="w-16 h-10 rounded-md border overflow-hidden bg-cover bg-center"
                     style={{ backgroundImage: `url(${displayImage})` }}
                   />
                 </div>
