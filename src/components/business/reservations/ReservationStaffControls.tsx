@@ -29,6 +29,8 @@ interface SlotAvailability {
 export const ReservationStaffControls = ({ businessId, language }: ReservationStaffControlsProps) => {
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
+  const [acceptsReservations, setAcceptsReservations] = useState<boolean | null>(null);
+  const [globallyPaused, setGloballyPaused] = useState<boolean | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [slots, setSlots] = useState<SlotAvailability[]>([]);
   const [updatingSlot, setUpdatingSlot] = useState<string | null>(null);
@@ -53,6 +55,8 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
       error: 'Σφάλμα',
       today: 'Σήμερα',
       liveView: 'Live Προβολή',
+      reservationsDisabled: 'Οι κρατήσεις είναι απενεργοποιημένες από τις Ρυθμίσεις.',
+      reservationsPaused: 'Οι κρατήσεις είναι προσωρινά σε παύση.',
     },
     en: {
       title: 'Staff Controls',
@@ -72,6 +76,8 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
       error: 'Error',
       today: 'Today',
       liveView: 'Live View',
+      reservationsDisabled: 'Reservations are disabled from Settings.',
+      reservationsPaused: 'Reservations are temporarily paused.',
     },
   };
 
@@ -84,6 +90,28 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Fetch business reservation master switches
+      const { data: business, error: businessError } = await supabase
+        .from('businesses')
+        .select('accepts_direct_reservations, reservations_globally_paused')
+        .eq('id', businessId)
+        .maybeSingle();
+
+      if (businessError) {
+        console.error('Error fetching business reservation flags:', businessError);
+      }
+
+      const accepts = business?.accepts_direct_reservations === true;
+      const paused = business?.reservations_globally_paused === true;
+      setAcceptsReservations(accepts);
+      setGloballyPaused(paused);
+
+      // If reservations are disabled/paused, show no slots (master switch)
+      if (!accepts || paused) {
+        setSlots([]);
+        return;
+      }
+
       // Fetch slots availability using RPC
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       const { data: slotsData, error } = await supabase.rpc('get_slots_availability', {
@@ -234,7 +262,13 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
           {slots.length === 0 ? (
             <div className="text-center py-6 sm:py-8 bg-muted/50 rounded-lg">
               <Clock className="h-8 w-8 sm:h-10 sm:w-10 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-xs sm:text-sm text-muted-foreground">{t.noSlots}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {acceptsReservations === false
+                  ? t.reservationsDisabled
+                  : globallyPaused === true
+                  ? t.reservationsPaused
+                  : t.noSlots}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4">
