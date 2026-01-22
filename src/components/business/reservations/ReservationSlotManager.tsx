@@ -400,14 +400,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       {/* Main Toggle */}
       <Card>
         <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 lg:pt-6 lg:pb-6">
-          <div className="relative flex items-center gap-2 sm:gap-3">
-            {/* Badge top-right - absolute corner position */}
-            {settings.accepts_direct_reservations && (
-               <Badge variant="default" className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10 bg-green-500 text-[9px] sm:text-xs">
-                {language === 'el' ? 'Ενεργό' : 'Active'}
-              </Badge>
-            )}
-            
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex-1 min-w-0 pr-12 sm:pr-14">
               <Label htmlFor="enable-reservations" className="text-[11px] sm:text-sm lg:text-base font-semibold whitespace-nowrap">
                 {t.enableReservations}
