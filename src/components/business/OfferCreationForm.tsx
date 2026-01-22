@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Tag, Clock, Calendar, AlertTriangle, Check, Info, Percent, Users, QrCode, CalendarCheck } from "lucide-react";
+import { Loader2, Tag, Clock, Calendar, AlertTriangle, Check, Info, Percent, Users, QrCode, CalendarCheck, ImageIcon, Upload } from "lucide-react";
+import { ImageCropDialog } from "./ImageCropDialog";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
@@ -32,11 +33,16 @@ type OfferCategory = 'drink' | 'food' | 'account_total';
 type DiscountType = 'percentage' | 'special_deal';
 type AppearanceMode = 'hours' | 'days';
 
+type ImageSourceType = 'profile' | 'custom';
+
 interface FormData {
   // Section 1: Title
   title: string;
   // Section 2: Description
   description: string;
+  // Section 2.5: Image Source
+  imageSource: ImageSourceType;
+  customImageBlob: Blob | null;
   // Section 3: Category
   category: OfferCategory;
   // Section 4: Discount/Benefit
@@ -132,6 +138,12 @@ const translations = {
     noHold: "Χωρίς κράτηση θέσης",
     noCommission: "Χωρίς προμήθεια",
     walkInNote: "Η προσφορά ισχύει για walk-in πελάτες και δεν εγγυάται θέση",
+    // Image Source
+    imageSourceTitle: "2.5. Εικόνα Προσφοράς",
+    useProfileImage: "Χρήση Εικόνας Προφίλ",
+    useCustomImage: "Ανέβασμα Νέας Εικόνας",
+    profileImageDesc: "Θα χρησιμοποιηθεί η εικόνα εξωφύλλου της επιχείρησής σας",
+    customImageDesc: "Ανεβάστε μια ξεχωριστή εικόνα για αυτή την προσφορά",
     // Reservation CTA
     reservationCtaLabel: "Εμφάνιση επιλογής κράτησης μετά το QR",
     reservationCtaDesc: "Μετά την εμφάνιση του QR Code, εμφανίζεται η επιλογή: 'Θέλετε να κάνετε κράτηση;'",
@@ -208,6 +220,12 @@ const translations = {
     noHold: "No hold",
     noCommission: "No commission",
     walkInNote: "This offer is for walk-in customers and does not guarantee a seat",
+    // Image Source
+    imageSourceTitle: "2.5. Offer Image",
+    useProfileImage: "Use Profile Image",
+    useCustomImage: "Upload Custom Image",
+    profileImageDesc: "Your business cover image will be used",
+    customImageDesc: "Upload a specific image for this offer",
     // Reservation CTA
     reservationCtaLabel: "Show reservation option after QR",
     reservationCtaDesc: "After the QR Code appears, show option: 'Would you like to make a reservation?'",
@@ -284,6 +302,62 @@ const SectionCard = ({
   </Card>
 );
 
+// Helper component for custom image upload in offer form
+const ImageSourceCustomUpload = ({ 
+  language, 
+  onImageReady, 
+  preview 
+}: { 
+  language: 'el' | 'en'; 
+  onImageReady: (blob: Blob | null) => void;
+  preview: string | null;
+}) => {
+  const [showCrop, setShowCrop] = useState(false);
+  const [rawSrc, setRawSrc] = useState<string | null>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert(language === 'el' ? 'Μέγιστο 5MB' : 'Max 5MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setRawSrc(reader.result as string);
+      setShowCrop(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="space-y-3">
+      {preview ? (
+        <div className="relative inline-block">
+          <img src={preview} alt="Custom" className="w-full max-w-[200px] h-auto rounded-lg border object-cover" style={{ aspectRatio: '16/9' }} />
+          <button type="button" onClick={() => onImageReady(null)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs">✕</button>
+        </div>
+      ) : (
+        <label className="flex flex-col items-center justify-center w-full max-w-[200px] h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/20">
+          <Upload className="h-6 w-6 text-muted-foreground mb-1" />
+          <span className="text-xs text-muted-foreground">{language === 'el' ? 'Επιλέξτε' : 'Select'}</span>
+          <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
+        </label>
+      )}
+      {rawSrc && (
+        <ImageCropDialog
+          open={showCrop}
+          onClose={() => { setShowCrop(false); setRawSrc(null); }}
+          imageSrc={rawSrc}
+          onCropComplete={(blob) => { onImageReady(blob); setShowCrop(false); setRawSrc(null); }}
+          aspectRatio="16:9"
+          language={language}
+        />
+      )}
+    </div>
+  );
+};
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -301,6 +375,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
+    imageSource: 'profile',
+    customImageBlob: null,
     category: 'account_total',
     discountType: 'percentage',
     percentOff: 10,
@@ -320,6 +396,8 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     onePerUser: true,
     showReservationCta: false,
   });
+  
+  const [customImagePreview, setCustomImagePreview] = useState<string | null>(null);
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -342,13 +420,13 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
   } | null>(null);
 
 
-  // Fetch business data
+  // Fetch business data including cover image
   const { data: businessData } = useQuery({
-    queryKey: ["business-verification", businessId],
+    queryKey: ["business-data", businessId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("businesses")
-        .select("verified, name, accepts_direct_reservations")
+        .select("verified, name, accepts_direct_reservations, cover_url, logo_url")
         .eq("id", businessId)
         .single();
       if (error) throw error;
@@ -599,6 +677,77 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               : `${Math.abs(wordsRemaining)} ${t.wordsOver}`
             }
           </p>
+        </div>
+      </SectionCard>
+
+      {/* Section 2.5: Image Source */}
+      <SectionCard title={t.imageSourceTitle}>
+        <div className="space-y-4">
+          {/* Image Source Toggle */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => updateField('imageSource', 'profile')}
+              className={cn(
+                "p-4 rounded-xl border-2 transition-all text-left",
+                formData.imageSource === 'profile'
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+              )}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                <span className="font-medium text-sm">{t.useProfileImage}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{t.profileImageDesc}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => updateField('imageSource', 'custom')}
+              className={cn(
+                "p-4 rounded-xl border-2 transition-all text-left",
+                formData.imageSource === 'custom'
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+              )}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Upload className="w-5 h-5 text-primary" />
+                <span className="font-medium text-sm">{t.useCustomImage}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{t.customImageDesc}</p>
+            </button>
+          </div>
+
+          {/* Preview based on selection */}
+          {formData.imageSource === 'profile' && (businessData?.cover_url || businessData?.logo_url) && (
+            <div className="p-3 rounded-lg bg-muted/30 border">
+              <p className="text-xs text-muted-foreground mb-2">
+                {language === 'el' ? 'Προεπισκόπηση:' : 'Preview:'}
+              </p>
+              <img
+                src={(businessData.cover_url || businessData.logo_url) as string}
+                alt="Profile"
+                className="w-full max-w-[200px] h-auto rounded-lg border object-cover"
+                style={{ aspectRatio: '16/9' }}
+              />
+            </div>
+          )}
+
+          {formData.imageSource === 'custom' && (
+            <ImageSourceCustomUpload
+              language={language}
+              onImageReady={(blob) => {
+                updateField('customImageBlob', blob);
+                if (blob) {
+                  setCustomImagePreview(URL.createObjectURL(blob));
+                } else {
+                  setCustomImagePreview(null);
+                }
+              }}
+              preview={customImagePreview}
+            />
+          )}
         </div>
       </SectionCard>
 

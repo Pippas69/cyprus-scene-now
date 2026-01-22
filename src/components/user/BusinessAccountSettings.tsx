@@ -503,8 +503,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             <CardTitle>{businessT.basicInfo}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Images Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Images - Stacked on mobile/tablet, side-by-side on desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <ImageUploadField
                 label={businessT.businessLogo}
                 currentImageUrl={currentLogoUrl}
@@ -512,6 +512,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 aspectRatio="1/1"
                 maxSizeMB={2}
                 language={language}
+                enableCrop={true}
+                cropAspectRatio="1:1"
               />
               <ImageUploadField
                 label={businessT.businessCover}
@@ -520,6 +522,9 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 aspectRatio="16/9"
                 maxSizeMB={5}
                 language={language}
+                enableCrop={true}
+                cropAspectRatio="16:9"
+                showContextPreviews={true}
               />
             </div>
 
