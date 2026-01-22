@@ -33,6 +33,7 @@ import {
 import { ShareableBusinessCard } from './ShareableBusinessCard';
 import { useShareProfile, SharePlatform } from '@/hooks/useShareProfile';
 import { cn } from '@/lib/utils';
+import { translateCity } from '@/lib/cityTranslations';
 
 interface ShareProfileDialogProps {
   open: boolean;
@@ -135,7 +136,7 @@ export const ShareProfileDialog = ({ open, onOpenChange, business, language }: S
     }
   };
 
-  const locationLabel = [business.city, business.address].filter(Boolean).join(' • ');
+  const locationLabel = [translateCity(business.city, language), business.address].filter(Boolean).join(' • ');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

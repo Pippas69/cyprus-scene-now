@@ -24,8 +24,7 @@ import { OceanLoader } from "@/components/ui/ocean-loader";
 import { getMainCategories } from "@/lib/unifiedCategories";
 import { CYPRUS_UNIVERSITIES, getUniversityByDomain, isValidUniversityEmail } from "@/lib/cyprusUniversities";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
+import { getCityOptions, translateCity, cyprusCities } from "@/lib/cityTranslations";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -457,8 +456,8 @@ const Signup = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {towns.map(town => <SelectItem key={town} value={town}>
-                            {town}
+                        {getCityOptions(language).map(city => <SelectItem key={city.value} value={city.value}>
+                            {city.label}
                           </SelectItem>)}
                       </SelectContent>
                     </Select>

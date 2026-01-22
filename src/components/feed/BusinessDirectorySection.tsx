@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/businessRanking";
 import { useCallback, useRef } from "react";
 import { trackEngagement, useViewTracking } from "@/lib/analyticsTracking";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface Business {
   id: string;
@@ -306,7 +307,7 @@ const BusinessCard = ({
             {business.name}
           </h4>
           <p className="text-xs text-white/80 mt-1">
-            {business.city}
+            {translateCity(business.city, language)}
           </p>
         </div>
       </Link>

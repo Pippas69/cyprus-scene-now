@@ -31,6 +31,7 @@ import {
 } from "@/lib/personalization";
 import { useActiveProfileBoosts } from "@/hooks/useActiveProfileBoosts";
 import { useLanguage } from "@/hooks/useLanguage";
+import { translateCity } from "@/lib/cityTranslations";
 interface FeedProps {
   showNavbar?: boolean;
 }
@@ -419,7 +420,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                           {business.name}
                         </h4>
                         <p className="text-xs text-white/80 mt-0.5">
-                          {business.city}
+                          {translateCity(business.city, language)}
                         </p>
                         {business.student_discount_mode === "once" && (
                           <span className="text-[10px] text-white/60">

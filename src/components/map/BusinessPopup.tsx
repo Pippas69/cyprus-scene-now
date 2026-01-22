@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { getDirectionsUrl } from "@/lib/mapUtils";
 import { trackEngagement } from "@/lib/analyticsTracking";
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface BusinessPopupProps {
   business: BusinessLocation;
@@ -99,7 +100,7 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
           <h3 className="font-semibold text-lg leading-tight">{business.name}</h3>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
             <MapPin size={14} />
-            <span>{business.city}</span>
+            <span>{translateCity(business.city, language)}</span>
           </div>
         </div>
 

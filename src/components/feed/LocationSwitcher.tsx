@@ -2,6 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { translateCity, allCyprusLabel, cyprusCities } from "@/lib/cityTranslations";
 
 interface LocationSwitcherProps {
   language: "el" | "en";
@@ -11,39 +12,6 @@ interface LocationSwitcherProps {
 
 const LocationSwitcher = ({ language, selectedCity, onCityChange }: LocationSwitcherProps) => {
   const [availableCities, setAvailableCities] = useState<string[]>([]);
-
-  const translations = {
-    el: {
-      allCyprus: "Όλη η Κύπρος",
-      nicosia: "Λευκωσία",
-      limassol: "Λεμεσός",
-      larnaca: "Λάρνακα",
-      paphos: "Πάφος",
-      famagusta: "Αμμόχωστος",
-      paralimni: "Παραλίμνι",
-    },
-    en: {
-      allCyprus: "All Cyprus",
-      nicosia: "Nicosia",
-      limassol: "Limassol",
-      larnaca: "Larnaca",
-      paphos: "Paphos",
-      famagusta: "Famagusta",
-      paralimni: "Paralimni",
-    },
-  };
-
-  const t = translations[language];
-
-  // Map of city names to translations
-  const cityTranslations: Record<string, { el: string; en: string }> = {
-    "Λευκωσία": { el: "Λευκωσία", en: "Nicosia" },
-    "Λεμεσός": { el: "Λεμεσός", en: "Limassol" },
-    "Λάρνακα": { el: "Λάρνακα", en: "Larnaca" },
-    "Πάφος": { el: "Πάφος", en: "Paphos" },
-    "Αμμόχωστος": { el: "Αμμόχωστος", en: "Famagusta" },
-    "Παραλίμνι": { el: "Παραλίμνι", en: "Paralimni" },
-  };
 
   useEffect(() => {
     fetchAvailableCities();
@@ -63,15 +31,15 @@ const LocationSwitcher = ({ language, selectedCity, onCityChange }: LocationSwit
     } catch (error) {
       console.error("Error fetching cities:", error);
       // Fallback to default cities
-      setAvailableCities(["Λευκωσία", "Λάρνακα", "Παραλίμνι"]);
+      setAvailableCities(cyprusCities.el);
     }
   };
 
   const cities = [
-    { value: null, label: t.allCyprus },
+    { value: null, label: allCyprusLabel[language] },
     ...availableCities.map((city) => ({
       value: city,
-      label: cityTranslations[city]?.[language] || city,
+      label: translateCity(city, language),
     })),
   ];
 

@@ -17,13 +17,12 @@ import { toastTranslations } from '@/translations/toastTranslations';
 import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getMainCategories } from '@/lib/unifiedCategories';
+import { getCityOptions, translateCity } from '@/lib/cityTranslations';
 
 interface UserSettingsProps {
   userId: string;
   language: 'el' | 'en';
 }
-
-const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 
 export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   const navigate = useNavigate();
@@ -384,8 +383,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                   <SelectValue placeholder={t.townPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
-                  {towns.map(town => (
-                    <SelectItem key={town} value={town}>{town}</SelectItem>
+                  {getCityOptions(language).map(city => (
+                    <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

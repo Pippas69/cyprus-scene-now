@@ -2,6 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { translateCity, allCyprusLabel, cyprusCities } from "@/lib/cityTranslations";
 
 interface CompactLocationDropdownProps {
   language: "el" | "en";
@@ -9,44 +10,8 @@ interface CompactLocationDropdownProps {
   onCityChange: (city: string | null) => void;
 }
 
-const translations = {
-  el: {
-    allCyprus: "Όλη η Κύπρος",
-    nicosia: "Λευκωσία",
-    limassol: "Λεμεσός",
-    larnaca: "Λάρνακα",
-    paphos: "Πάφος",
-    famagusta: "Αμμόχωστος",
-    paralimni: "Παραλίμνι",
-    ayiaNapa: "Αγία Νάπα",
-  },
-  en: {
-    allCyprus: "All Cyprus",
-    nicosia: "Nicosia",
-    limassol: "Limassol",
-    larnaca: "Larnaca",
-    paphos: "Paphos",
-    famagusta: "Famagusta",
-    paralimni: "Paralimni",
-    ayiaNapa: "Ayia Napa",
-  },
-};
-
-// Map of city names (Greek) to translations
-const cityTranslations: Record<string, { el: string; en: string }> = {
-  "Λευκωσία": { el: "Λευκωσία", en: "Nicosia" },
-  "Λεμεσός": { el: "Λεμεσός", en: "Limassol" },
-  "Λάρνακα": { el: "Λάρνακα", en: "Larnaca" },
-  "Πάφος": { el: "Πάφος", en: "Paphos" },
-  "Αμμόχωστος": { el: "Αμμόχωστος", en: "Famagusta" },
-  "Παραλίμνι": { el: "Παραλίμνι", en: "Paralimni" },
-  "Αγία Νάπα": { el: "Αγία Νάπα", en: "Ayia Napa" },
-};
-
 const CompactLocationDropdown = ({ language, selectedCity, onCityChange }: CompactLocationDropdownProps) => {
   const [availableCities, setAvailableCities] = useState<string[]>([]);
-
-  const t = translations[language];
 
   useEffect(() => {
     fetchAvailableCities();
@@ -66,8 +31,8 @@ const CompactLocationDropdown = ({ language, selectedCity, onCityChange }: Compa
       
       // Sort cities alphabetically
       uniqueCities.sort((a, b) => {
-        const labelA = cityTranslations[a]?.[language] || a;
-        const labelB = cityTranslations[b]?.[language] || b;
+        const labelA = translateCity(a, language);
+        const labelB = translateCity(b, language);
         return labelA.localeCompare(labelB, language === "el" ? "el" : "en");
       });
       
@@ -75,21 +40,21 @@ const CompactLocationDropdown = ({ language, selectedCity, onCityChange }: Compa
     } catch (error) {
       console.error("Error fetching cities:", error);
       // Fallback to default cities
-      setAvailableCities(["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"]);
+      setAvailableCities(cyprusCities.el);
     }
   };
 
   const cities = [
-    { value: "all", label: t.allCyprus },
+    { value: "all", label: allCyprusLabel[language] },
     ...availableCities.map((city) => ({
       value: city,
-      label: cityTranslations[city]?.[language] || city,
+      label: translateCity(city, language),
     })),
   ];
 
   const selectedLabel = selectedCity 
-    ? (cityTranslations[selectedCity]?.[language] || selectedCity)
-    : t.allCyprus;
+    ? translateCity(selectedCity, language)
+    : allCyprusLabel[language];
 
   return (
     <Select 

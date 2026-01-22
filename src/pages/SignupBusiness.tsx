@@ -15,8 +15,7 @@ import { MAPBOX_CONFIG } from "@/config/mapbox";
 import { useBetaMode, validateInviteCode } from "@/hooks/useBetaMode";
 import { useLanguage } from "@/hooks/useLanguage";
 import { BusinessCategorySelector } from "@/components/business/BusinessCategorySelector";
-
-const cities = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
+import { getCityOptions, cyprusCities } from "@/lib/cityTranslations";
 
 const SignupBusiness = () => {
   const navigate = useNavigate();
@@ -469,7 +468,7 @@ const SignupBusiness = () => {
               <Label htmlFor="city">{language === 'el' ? 'Τοποθεσία / Πόλη *' : 'Location / City *'}</Label>
               <select id="city" {...register("city")} className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm">
                 <option value="">{language === 'el' ? 'Επιλέξτε πόλη' : 'Select city'}</option>
-                {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                {getCityOptions(language).map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
               {errors.city && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
             </div>
