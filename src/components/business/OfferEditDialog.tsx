@@ -140,7 +140,7 @@ const translations = {
     step3: "3. Offer Category",
     step4: "4. Discount / Benefit",
     step5: "5. When Discount Applies",
-    step6: "6. FOMO Appearance Duration",
+    step6: "6. ΦΟΜΟ Appearance Duration",
     step7: "7. Availability (People)",
     step9: "8. Optional Booking",
     required: "Required",

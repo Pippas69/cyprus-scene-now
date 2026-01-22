@@ -12,6 +12,7 @@ import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { OfferItemsDisplay } from "@/components/business/offers/OfferItemsDisplay";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface OfferItem {
   id: string;
@@ -240,7 +241,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               <MapPin className="h-3.5 w-3.5" />
             </button>
             <span className="text-xs truncate">
-              {offerData.businesses.city} · {offerData.businesses.name}
+              {translateCity(offerData.businesses.city, language)} · {offerData.businesses.name}
             </span>
           </div>
 
