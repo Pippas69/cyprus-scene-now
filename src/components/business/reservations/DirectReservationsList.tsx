@@ -257,26 +257,34 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-full">
         <Card className="min-w-0">
           <CardContent className="py-3">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-sm text-muted-foreground">{t.total}</div>
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-[11px] md:text-xs text-muted-foreground whitespace-nowrap">{t.total}</div>
+            </div>
           </CardContent>
         </Card>
         <Card className="min-w-0">
           <CardContent className="py-3">
-            <div className="text-2xl font-bold text-blue-600">{stats.today}</div>
-            <div className="text-sm text-muted-foreground">{t.today}</div>
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="text-2xl font-bold text-blue-600">{stats.today}</div>
+              <div className="text-[11px] md:text-xs text-muted-foreground whitespace-nowrap">{t.today}</div>
+            </div>
           </CardContent>
         </Card>
         <Card className="min-w-0">
           <CardContent className="py-3">
-            <div className="text-2xl font-bold text-orange-600">{stats.upcoming}</div>
-            <div className="text-sm text-muted-foreground">{t.upcoming}</div>
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="text-2xl font-bold text-orange-600">{stats.upcoming}</div>
+              <div className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">{t.upcoming}</div>
+            </div>
           </CardContent>
         </Card>
         <Card className="min-w-0">
           <CardContent className="py-3">
-            <div className="text-2xl font-bold text-green-600">{stats.checkedIn}</div>
-            <div className="text-sm text-muted-foreground">{t.checkedInCount}</div>
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="text-2xl font-bold text-green-600">{stats.checkedIn}</div>
+              <div className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">{t.checkedInCount}</div>
+            </div>
           </CardContent>
         </Card>
       </div>

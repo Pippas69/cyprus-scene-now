@@ -204,27 +204,27 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     <div className="space-y-4 sm:space-y-6">
       {/* Global Pause Control */}
       <Card className={isPaused ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30' : 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30'}>
-        <CardContent className="pt-4 pb-4 sm:pt-6 sm:pb-6">
-          <div className="relative flex items-center gap-3 sm:gap-4">
-            {/* Badge top-right */}
+        <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
+          <div className="relative flex items-center gap-2 sm:gap-3">
+            {/* Badge top-right - absolute corner position */}
             <Badge 
               variant={isPaused ? 'destructive' : 'default'} 
-              className={`absolute top-0 right-0 text-[10px] sm:text-xs ${!isPaused ? 'bg-green-500' : ''}`}
+              className={`absolute -top-1 -right-1 sm:top-0 sm:right-0 text-[9px] sm:text-xs ${!isPaused ? 'bg-green-500' : ''}`}
             >
               {isPaused ? t.paused : t.active}
             </Badge>
             
-            <div className={`h-9 w-9 sm:h-12 sm:w-12 rounded-full flex-shrink-0 flex items-center justify-center ${isPaused ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
-              <Power className={`h-4 w-4 sm:h-6 sm:w-6 ${isPaused ? 'text-red-600' : 'text-green-600'}`} />
+            <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full flex-shrink-0 flex items-center justify-center ${isPaused ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
+              <Power className={`h-3.5 w-3.5 sm:h-5 sm:w-5 ${isPaused ? 'text-red-600' : 'text-green-600'}`} />
             </div>
-            <div className="flex-1 min-w-0 pr-12 sm:pr-16">
-              <Label className="text-[11px] sm:text-sm font-semibold whitespace-nowrap">{t.globalPause}</Label>
-              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.globalPauseDescription}</p>
+            <div className="flex-1 min-w-0 pr-14 sm:pr-16">
+              <Label className="text-[10px] sm:text-sm font-semibold whitespace-nowrap">{t.globalPause}</Label>
+              <p className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.globalPauseDescription}</p>
             </div>
             <Switch
               checked={isPaused}
               onCheckedChange={handleGlobalPauseToggle}
-              className="flex-shrink-0"
+              className="flex-shrink-0 scale-90 sm:scale-100"
             />
           </div>
         </CardContent>
@@ -234,28 +234,28 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
       <Card>
         <CardHeader className="pb-3 sm:pb-4">
           <div className="relative">
-            {/* Refresh button top-right */}
+            {/* Refresh button top-right - absolute corner position */}
             <Button 
               variant="outline" 
               size="sm" 
               onClick={handleRefresh} 
               disabled={refreshing}
-              className="absolute top-0 right-0 h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
+              className="absolute -top-1 -right-1 sm:top-0 sm:right-0 h-6 sm:h-8 w-6 sm:w-auto px-1.5 sm:px-3 text-[10px] sm:text-xs"
             >
               <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline ml-1.5">{t.refresh}</span>
             </Button>
             
-            <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base whitespace-nowrap pr-16 sm:pr-20">
-              <Clock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            <CardTitle className="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-base whitespace-nowrap pr-10 sm:pr-20">
+              <Clock className="h-3.5 w-3.5 sm:h-5 sm:w-5 flex-shrink-0" />
               <span>{t.slotStatus}</span>
               {isToday && (
-                <Badge variant="outline" className="ml-1 bg-primary/10 text-[9px] sm:text-xs px-1.5 py-0">
+                <Badge variant="outline" className="ml-0.5 sm:ml-1 bg-primary/10 text-[8px] sm:text-xs px-1 sm:px-1.5 py-0">
                   {t.liveView}
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription className="text-[10px] sm:text-xs whitespace-nowrap mt-1">{t.description}</CardDescription>
+            <CardDescription className="text-[9px] sm:text-xs whitespace-nowrap mt-0.5 sm:mt-1">{t.description}</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
