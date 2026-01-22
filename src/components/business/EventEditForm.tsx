@@ -64,14 +64,14 @@ const CommissionBanner: React.FC<CommissionBannerProps> = ({
   commissionPercent, 
   upgradeHint 
 }) => (
-  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-    <div className="flex items-start gap-3">
-      <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-2 sm:p-4">
+    <div className="flex items-start gap-2 sm:gap-3">
+      <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mt-0.5 flex-shrink-0" />
       <div>
-        <p className="font-medium text-amber-900 dark:text-amber-100">
+        <p className="font-medium text-[11px] sm:text-base text-amber-900 dark:text-amber-100">
           {platformFeeLabel} {commissionPercent}%
         </p>
-        <p className="text-sm text-amber-700 dark:text-amber-300">
+        <p className="text-[10px] sm:text-sm text-amber-700 dark:text-amber-300">
           {upgradeHint}
         </p>
       </div>
