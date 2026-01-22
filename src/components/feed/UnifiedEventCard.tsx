@@ -9,6 +9,7 @@ import { enUS } from "date-fns/locale";
 import { CardActionBar } from "./CardActionBar";
 import { useCallback, useRef } from "react";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface UnifiedEventCardProps {
   event: {
@@ -105,11 +106,11 @@ export const UnifiedEventCard = ({
     dateLabel = `${dayLabel} · ${format(eventDate, "HH:mm")}`;
   }
 
-  // Location line
+  // Location line - translate city name
   const locationParts: string[] = [];
   if (event.location) locationParts.push(event.location);
   if (event.businesses?.city && event.businesses.city !== event.location) {
-    locationParts.push(event.businesses.city);
+    locationParts.push(translateCity(event.businesses.city, language));
   }
   if (event.businesses?.name) locationParts.push(event.businesses.name);
   const locationLine = locationParts.join(" · ");

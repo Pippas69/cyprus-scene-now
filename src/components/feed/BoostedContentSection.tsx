@@ -11,6 +11,7 @@ import { useCallback, useRef, useState } from "react";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
 import { getCityDistance } from "@/lib/businessRanking";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface BoostedEvent {
   id: string;
@@ -276,7 +277,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
               <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </button>
             <span className="text-[10px] sm:text-xs truncate">
-              {offer.businesses?.city} · {offer.businesses?.name}
+              {translateCity(offer.businesses?.city, language)} · {offer.businesses?.name}
             </span>
           </div>
 
