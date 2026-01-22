@@ -7,6 +7,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import type { ActiveProfileBoost } from "@/hooks/useActiveProfileBoosts";
 import { DISPLAY_CAPS } from "@/lib/personalization";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface BoostedProfilesScrollerProps {
   profiles: ActiveProfileBoost[];
@@ -97,7 +98,7 @@ export const BoostedProfilesScroller = ({
 
                 {/* City only - no category */}
                 <span className="text-[9px] sm:text-[10px] text-muted-foreground">
-                  {profile.businesses.city}
+                  {translateCity(profile.businesses.city, language)}
                 </span>
               </Link>
             </motion.div>

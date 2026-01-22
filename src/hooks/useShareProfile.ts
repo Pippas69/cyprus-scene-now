@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { trackEngagement } from '@/lib/analyticsTracking';
+import { useLanguage } from '@/hooks/useLanguage';
+import { translateCity } from '@/lib/cityTranslations';
 
 export type SharePlatform =
   | 'instagram-story'
@@ -44,6 +46,7 @@ const getShareType = (platform: SharePlatform): ShareType => {
 
 export const useShareProfile = (): UseShareProfileReturn => {
   const [isSharing, setIsSharing] = useState(false);
+  const { language } = useLanguage();
 
   const generateShareImage = useCallback(async (elementRef: React.RefObject<HTMLElement>): Promise<string | null> => {
     if (!elementRef.current) return null;
@@ -75,7 +78,8 @@ export const useShareProfile = (): UseShareProfileReturn => {
 
   const formatShareText = (business: ShareBusinessData, language: 'el' | 'en' = 'el') => {
     const prefix = language === 'el' ? 'Δες αυτό το προφίλ επιχείρησης!' : 'Check out this business profile!';
-    const location = [business.city, business.address].filter(Boolean).join(' • ');
+    const city = business.city ? translateCity(business.city, language) : undefined;
+    const location = [city, business.address].filter(Boolean).join(' • ');
     return location ? `${prefix} ${business.name} - ${location}` : `${prefix} ${business.name}`;
   };
 
@@ -84,7 +88,7 @@ export const useShareProfile = (): UseShareProfileReturn => {
 
     const url = getBusinessUrl(business.id);
     const shareType = getShareType(platform);
-    const shareText = formatShareText(business, 'el');
+    const shareText = formatShareText(business, language);
     const encodedText = encodeURIComponent(shareText);
     const encodedUrl = encodeURIComponent(url);
 
@@ -189,7 +193,7 @@ export const useShareProfile = (): UseShareProfileReturn => {
     } finally {
       setIsSharing(false);
     }
-  }, []);
+  }, [language]);
 
   return { isSharing, shareToPlatform, generateShareImage, downloadImage };
 };

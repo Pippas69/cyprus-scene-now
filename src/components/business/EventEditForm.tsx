@@ -203,7 +203,7 @@ const translations = {
     step1: "1. Event Title",
     step2: "2. Event Description",
     step3: "3. Start Date & Time",
-    step4: "4. Duration of Appearance in FOMO",
+    step4: "4. Duration of Appearance in ΦΟΜΟ",
     step5: "5. Venue / Location",
     step6: "6. Event Picture",
     step7: "7. Event Type",

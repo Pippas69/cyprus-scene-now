@@ -5,6 +5,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface FeaturedOffer {
   id: string;
@@ -103,7 +104,7 @@ export const FeaturedOffersScroller = ({
                   
                   {/* LINE 2: Where (business · city) */}
                   <p className="text-xs text-muted-foreground truncate mb-auto">
-                    {offer.businesses.name} · {offer.businesses.city}
+                    {offer.businesses.name} · {translateCity(offer.businesses.city, language)}
                   </p>
 
                   {/* LINE 3: Expiry chip */}
