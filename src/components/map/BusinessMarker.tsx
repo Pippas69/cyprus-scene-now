@@ -106,9 +106,10 @@ const PIN_COLORS: Record<PlanSlug, {
     glow: 'transparent',
   },
   pro: {
-    primary: 'hsl(var(--plan-pro))',
-    secondary: 'hsl(var(--plan-pro) / 0.9)',
-    accent: 'hsl(var(--plan-pro) / 0.75)',
+    // Matches subscription Pro gradient: from-primary to-sunset-coral
+    primary: 'hsl(var(--sunset-coral))',
+    secondary: 'hsl(var(--primary))',
+    accent: 'hsl(var(--primary))',
     glow: 'transparent',
   },
   elite: {
