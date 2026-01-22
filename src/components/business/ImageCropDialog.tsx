@@ -12,25 +12,55 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
+export type AspectRatioType = '16:9' | '1:1' | '4:3';
+
 interface ImageCropDialogProps {
   open: boolean;
   onClose: () => void;
   imageSrc: string;
   onCropComplete: (croppedBlob: Blob) => void;
+  aspectRatio?: AspectRatioType;
+  language?: 'el' | 'en';
 }
+
+const aspectRatioValues: Record<AspectRatioType, number> = {
+  '16:9': 16 / 9,
+  '1:1': 1,
+  '4:3': 4 / 3,
+};
+
+const translations = {
+  el: {
+    title: 'Περικοπή Εικόνας',
+    reset: 'Επαναφορά',
+    cancel: 'Ακύρωση',
+    apply: 'Εφαρμογή Περικοπής',
+  },
+  en: {
+    title: 'Crop Image',
+    reset: 'Reset',
+    cancel: 'Cancel',
+    apply: 'Apply Crop',
+  },
+};
 
 export const ImageCropDialog = ({
   open,
   onClose,
   imageSrc,
   onCropComplete,
+  aspectRatio = '16:9',
+  language = 'el',
 }: ImageCropDialogProps) => {
+  const t = translations[language];
+  const ratio = aspectRatioValues[aspectRatio];
+  
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
     width: 90,
-    height: 50.625, // 90 * (9/16) for 16:9 ratio
+    height: 90 / ratio,
     x: 5,
-    y: 24.6875,
+    y: (100 - 90 / ratio) / 2,
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [zoom, setZoom] = useState(1);
@@ -38,15 +68,14 @@ export const ImageCropDialog = ({
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
-    const aspectRatio = 16 / 9;
 
-    // Calculate initial crop to fit 16:9 in the center
+    // Calculate initial crop to fit aspect ratio in the center
     let cropWidth = width;
-    let cropHeight = width / aspectRatio;
+    let cropHeight = width / ratio;
 
     if (cropHeight > height) {
       cropHeight = height;
-      cropWidth = height * aspectRatio;
+      cropWidth = height * ratio;
     }
 
     const x = (width - cropWidth) / 2;
@@ -59,16 +88,20 @@ export const ImageCropDialog = ({
       x,
       y,
     });
-  }, []);
+  }, [ratio]);
 
   const getCroppedImage = useCallback(
-    async (image: HTMLImageElement, crop: PixelCrop): Promise<Blob> => {
+    async (image: HTMLImageElement, pixelCrop: PixelCrop): Promise<Blob> => {
       const canvas = document.createElement("canvas");
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
 
-      canvas.width = crop.width;
-      canvas.height = crop.height;
+      // Use a higher resolution output for better quality
+      const outputWidth = pixelCrop.width * scaleX;
+      const outputHeight = pixelCrop.height * scaleY;
+      
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
       const ctx = canvas.getContext("2d");
 
       if (!ctx) {
@@ -77,14 +110,14 @@ export const ImageCropDialog = ({
 
       ctx.drawImage(
         image,
-        crop.x * scaleX,
-        crop.y * scaleY,
-        crop.width * scaleX,
-        crop.height * scaleY,
+        pixelCrop.x * scaleX,
+        pixelCrop.y * scaleY,
+        pixelCrop.width * scaleX,
+        pixelCrop.height * scaleY,
         0,
         0,
-        crop.width,
-        crop.height
+        outputWidth,
+        outputHeight
       );
 
       return new Promise((resolve, reject) => {
@@ -97,7 +130,7 @@ export const ImageCropDialog = ({
             }
           },
           "image/jpeg",
-          0.95
+          0.92
         );
       });
     },
@@ -108,14 +141,13 @@ export const ImageCropDialog = ({
     setZoom(1);
     if (imgRef.current) {
       const { width, height } = imgRef.current;
-      const aspectRatio = 16 / 9;
 
       let cropWidth = width;
-      let cropHeight = width / aspectRatio;
+      let cropHeight = width / ratio;
 
       if (cropHeight > height) {
         cropHeight = height;
-        cropWidth = height * aspectRatio;
+        cropWidth = height * ratio;
       }
 
       const x = (width - cropWidth) / 2;
@@ -139,25 +171,26 @@ export const ImageCropDialog = ({
       onCropComplete(croppedBlob);
       onClose();
     } catch (error) {
-      // Silent fail - crop error is not critical
+      console.error("Crop error:", error);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-[95vw] lg:max-w-5xl max-h-[95vh] overflow-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Περικοπή Εικόνας (16:9)</DialogTitle>
+          <DialogTitle>{t.title} ({aspectRatio})</DialogTitle>
         </DialogHeader>
         
         {/* Zoom Controls */}
-        <div className="flex items-center gap-4 px-4">
+        <div className="flex items-center gap-3 px-2 py-2 bg-muted/30 rounded-lg">
           <Button
             type="button"
             variant="outline"
             size="icon"
             onClick={handleReset}
-            title="Επαναφορά"
+            title={t.reset}
+            className="h-9 w-9"
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
@@ -167,6 +200,7 @@ export const ImageCropDialog = ({
             size="icon"
             onClick={() => setZoom(Math.max(1, zoom - 0.1))}
             disabled={zoom <= 1}
+            className="h-9 w-9"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -191,17 +225,19 @@ export const ImageCropDialog = ({
             size="icon"
             onClick={() => setZoom(Math.min(3, zoom + 0.1))}
             disabled={zoom >= 3}
+            className="h-9 w-9"
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="flex justify-center items-center overflow-hidden">
+        {/* Crop Area - Made larger */}
+        <div className="flex justify-center items-center overflow-auto bg-muted/20 rounded-lg p-4 min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]">
           <ReactCrop
             crop={crop}
             onChange={(c) => setCrop(c)}
             onComplete={(c) => setCompletedCrop(c)}
-            aspect={16 / 9}
+            aspect={ratio}
             className="max-w-full"
           >
             <img
@@ -213,17 +249,19 @@ export const ImageCropDialog = ({
                 transform: `scale(${zoom})`,
                 transformOrigin: "center",
                 maxWidth: "100%",
+                maxHeight: "60vh",
                 height: "auto",
               }}
             />
           </ReactCrop>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Ακύρωση
+        
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+            {t.cancel}
           </Button>
-          <Button onClick={handleCropConfirm} disabled={!completedCrop}>
-            Εφαρμογή Περικοπής
+          <Button onClick={handleCropConfirm} disabled={!completedCrop} className="w-full sm:w-auto">
+            {t.apply}
           </Button>
         </DialogFooter>
       </DialogContent>
