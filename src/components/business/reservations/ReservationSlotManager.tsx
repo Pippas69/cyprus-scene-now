@@ -403,7 +403,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
           <div className="relative flex items-center gap-2 sm:gap-3">
             {/* Badge top-right - absolute corner position */}
             {settings.accepts_direct_reservations && (
-               <Badge variant="default" className="absolute right-2 top-0 -translate-y-1/2 bg-green-500 text-[9px] sm:text-xs">
+               <Badge variant="default" className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10 bg-green-500 text-[9px] sm:text-xs">
                 {language === 'el' ? 'Ενεργό' : 'Active'}
               </Badge>
             )}
@@ -593,7 +593,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                               min="1"
                               value={slot.capacity}
                               onChange={(e) => updateTimeSlot(slot.id, 'capacity', parseInt(e.target.value) || 1)}
-                              className="max-w-[120px]"
+                              className="max-w-[120px] h-8 sm:h-10 text-[11px] sm:text-sm"
                             />
                             <Users className="h-4 w-4 text-muted-foreground" />
                             <span className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap">
