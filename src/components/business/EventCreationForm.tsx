@@ -38,16 +38,16 @@ const SectionCard: React.FC<SectionCardProps> = ({
   requiredLabel,
   children 
 }) => (
-  <div className="space-y-4">
-    <div className="flex items-center gap-3 pb-2 border-b">
-      <h3 className="font-semibold text-lg">{title}</h3>
+  <div className="space-y-3 sm:space-y-4">
+    <div className="flex items-center gap-2 sm:gap-3 pb-2 border-b">
+      <h3 className="font-semibold text-sm sm:text-lg whitespace-nowrap">{title}</h3>
       {required && (
-        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+        <span className="text-[9px] sm:text-xs bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded-full">
           {requiredLabel}
         </span>
       )}
     </div>
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {children}
     </div>
   </div>
@@ -144,7 +144,7 @@ const translations = {
     step1: "1. Τίτλος Εκδήλωσης",
     step2: "2. Περιγραφή Εκδήλωσης",
     step3: "3. Ημερομηνία & Ώρα Έναρξης",
-    step4: "4. Διάρκεια Εμφάνισης στο FOMO",
+    step4: "4. Διάρκεια Εμφάνισης στο ΦΟΜΟ",
     step5: "5. Τοποθεσία / Χώρος",
     step6: "6. Εικόνα Εκδήλωσης",
     step7: "7. Τύπος Εκδήλωσης",
@@ -225,7 +225,7 @@ const translations = {
     step1: "1. Event Title",
     step2: "2. Event Description",
     step3: "3. Start Date & Time",
-    step4: "4. Duration of Appearance in FOMO",
+    step4: "4. Duration of Appearance in ΦΟΜΟ",
     step5: "5. Venue / Location",
     step6: "6. Event Picture",
     step7: "7. Event Type",

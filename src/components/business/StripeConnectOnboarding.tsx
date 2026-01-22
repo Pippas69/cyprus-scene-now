@@ -15,7 +15,7 @@ interface StripeConnectOnboardingProps {
 const translations = {
   el: {
     title: 'Πληρωμές & Εκταμιεύσεις',
-    description: 'Συνδέστε τον τραπεζικό σας λογαριασμό για να λαμβάνετε πληρωμές από πωλήσεις εισιτηρίων',
+    description: 'Συνδέστε τον τραπεζικό σας λογαριασμό για να λαμβάνετε πληρωμές',
     notConnected: 'Δεν έχει συνδεθεί',
     pendingOnboarding: 'Εκκρεμεί ολοκλήρωση',
     connected: 'Συνδεδεμένο',
@@ -24,9 +24,9 @@ const translations = {
     connectAccount: 'Σύνδεση Τραπεζικού Λογαριασμού',
     completeSetup: 'Ολοκλήρωση Ρύθμισης',
     viewDashboard: 'Προβολή Πίνακα Πληρωμών',
-    connectDescription: 'Για να λαμβάνετε πληρωμές από πωλήσεις εισιτηρίων, πρέπει να συνδέσετε τον τραπεζικό σας λογαριασμό. Η διαδικασία διαρκεί λίγα λεπτά.',
+    connectDescription: 'Για να λαμβάνετε πληρωμές, πρέπει να συνδέσετε τον τραπεζικό σας λογαριασμό. Η διαδικασία διαρκεί λίγα λεπτά.',
     pendingDescription: 'Η ρύθμιση του λογαριασμού σας δεν έχει ολοκληρωθεί. Κάντε κλικ παρακάτω για να συνεχίσετε.',
-    connectedDescription: 'Ο λογαριασμός σας είναι έτοιμος να λάβει πληρωμές. Τα έσοδα από πωλήσεις εισιτηρίων θα κατατίθενται αυτόματα.',
+    connectedDescription: 'Ο λογαριασμός σας είναι έτοιμος να λάβει πληρωμές. Τα έσοδα θα κατατίθενται αυτόματα.',
     loading: 'Φόρτωση...',
     error: 'Σφάλμα κατά τη φόρτωση της κατάστασης πληρωμών',
     redirecting: 'Μεταφορά στη ρύθμιση πληρωμών...',
@@ -38,7 +38,7 @@ const translations = {
   },
   en: {
     title: 'Payments & Payouts',
-    description: 'Connect your bank account to receive payments from ticket sales',
+    description: 'Connect your bank account to receive payments',
     notConnected: 'Not connected',
     pendingOnboarding: 'Setup pending',
     connected: 'Connected',
@@ -47,9 +47,9 @@ const translations = {
     connectAccount: 'Connect Bank Account',
     completeSetup: 'Complete Setup',
     viewDashboard: 'View Payment Dashboard',
-    connectDescription: 'To receive payments from ticket sales, you need to connect your bank account. This process takes just a few minutes.',
+    connectDescription: 'To receive payments, you need to connect your bank account. This process takes just a few minutes.',
     pendingDescription: 'Your account setup is not complete. Click below to continue.',
-    connectedDescription: 'Your account is ready to receive payments. Ticket sale revenue will be deposited automatically.',
+    connectedDescription: 'Your account is ready to receive payments. Revenue will be deposited automatically.',
     loading: 'Loading...',
     error: 'Error loading payment status',
     redirecting: 'Redirecting to payment setup...',
@@ -364,20 +364,29 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Banknote className="h-5 w-5 text-primary" />
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 hidden sm:block">
+              <Banknote className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-lg">{t.title}</CardTitle>
-              <CardDescription>{t.description}</CardDescription>
+              <CardTitle className="text-sm sm:text-lg whitespace-nowrap">{t.title}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">{t.description}</CardDescription>
+            </div>
+          </div>
+          {/* Icons on mobile below the text */}
+          <div className="flex sm:hidden items-center gap-2 mt-1">
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <CreditCard className="h-3 w-3 text-primary" />
+            </div>
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <CheckCircle2 className="h-3 w-3 text-primary" />
             </div>
           </div>
           <Badge 
             variant={status === 'connected' ? 'default' : status === 'pending' ? 'secondary' : 'outline'}
-            className={status === 'connected' && payoutsEnabled ? 'bg-green-500 hover:bg-green-600' : ''}
+            className={`text-[10px] sm:text-xs ${status === 'connected' && payoutsEnabled ? 'bg-green-500 hover:bg-green-600' : ''}`}
           >
             {status === 'not_connected' && t.notConnected}
             {status === 'pending' && t.pendingOnboarding}
@@ -385,24 +394,24 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
         {status === 'not_connected' && (
           <>
-            <p className="text-sm text-muted-foreground">{t.connectDescription}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t.connectDescription}</p>
             
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-medium">{t.whatYouNeed}</p>
-              <ul className="text-sm text-muted-foreground space-y-1">
+            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2">
+              <p className="text-xs sm:text-sm font-medium">{t.whatYouNeed}</p>
+              <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
                 <li className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
+                  <CreditCard className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.bankAccount}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
+                  <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.idVerification}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
+                  <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.businessInfo}
                 </li>
               </ul>
@@ -411,13 +420,13 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
             <Button 
               onClick={handleConnectOrContinue} 
               disabled={actionLoading}
-              className="w-full"
+              className="w-full text-xs sm:text-sm h-9 sm:h-10"
               size="lg"
             >
               {actionLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-spin" />
               ) : (
-                <ArrowRight className="h-4 w-4 mr-2" />
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               )}
               {t.connectAccount}
             </Button>

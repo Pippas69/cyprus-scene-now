@@ -618,18 +618,22 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step6}</Label>
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <div className="space-y-1 sm:space-y-2">
-                  <Label className="text-[10px] sm:text-xs text-muted-foreground">{t.fromDate}</Label>
-                  <DateTimePicker
-                    value={formData.appearanceStartDate || undefined}
-                    onChange={(date) => updateField('appearanceStartDate', date || null)}
-                  />
+                  <Label className="text-[8px] sm:text-xs text-muted-foreground">{t.fromDate}</Label>
+                  <div className="[&_button]:text-[10px] [&_button]:sm:text-sm [&_button]:h-8 [&_button]:sm:h-10 [&_button]:px-2 [&_button]:sm:px-3">
+                    <DateTimePicker
+                      value={formData.appearanceStartDate || undefined}
+                      onChange={(date) => updateField('appearanceStartDate', date || null)}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1 sm:space-y-2">
-                  <Label className="text-[10px] sm:text-xs text-muted-foreground">{t.toDate}</Label>
-                  <DateTimePicker
-                    value={formData.appearanceEndDate || undefined}
-                    onChange={(date) => updateField('appearanceEndDate', date || null)}
-                  />
+                  <Label className="text-[8px] sm:text-xs text-muted-foreground">{t.toDate}</Label>
+                  <div className="[&_button]:text-[10px] [&_button]:sm:text-sm [&_button]:h-8 [&_button]:sm:h-10 [&_button]:px-2 [&_button]:sm:px-3">
+                    <DateTimePicker
+                      value={formData.appearanceEndDate || undefined}
+                      onChange={(date) => updateField('appearanceEndDate', date || null)}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -639,7 +643,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step7}</Label>
               <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 <div className="space-y-1 sm:space-y-2">
-                  <Label className="text-[10px] sm:text-sm">{t.totalPeopleLabel}</Label>
+                  <Label className="text-[9px] sm:text-sm whitespace-nowrap">{t.totalPeopleLabel}</Label>
                   <Input
                     type="number"
                     min={1}
@@ -649,7 +653,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
                   />
                 </div>
                 <div className="space-y-1 sm:space-y-2">
-                  <Label className="text-[10px] sm:text-sm">{t.maxPerRedemptionLabel}</Label>
+                  <Label className="text-[9px] sm:text-sm whitespace-nowrap">{t.maxPerRedemptionLabel}</Label>
                   <Input
                     type="number"
                     min={1}

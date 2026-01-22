@@ -286,17 +286,17 @@ const SectionCard = ({
   children: React.ReactNode;
 }) => (
   <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-    <CardHeader className="pb-4">
-      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+    <CardHeader className="pb-3 sm:pb-4 p-3 sm:p-6">
+      <CardTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2 whitespace-nowrap">
         {title}
         {required && (
-          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+          <span className="text-[9px] sm:text-xs font-medium text-primary bg-primary/10 px-1.5 sm:px-2 py-0.5 rounded-full">
             {translations.en.required}
           </span>
         )}
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-4">
+    <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6 pt-0">
       {children}
     </CardContent>
   </Card>
