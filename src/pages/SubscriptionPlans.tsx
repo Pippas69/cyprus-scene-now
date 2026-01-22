@@ -613,12 +613,12 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
           </div>
         </motion.div>
 
-        {/* Title & Billing Toggle - Compact */}
+        {/* Title & Billing Toggle - Stacked on mobile/tablet, row on desktop */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6"
+          className="flex flex-col items-center gap-4 mb-6 lg:flex-row lg:justify-between"
         >
           <h2 className="text-xl font-semibold text-foreground">{t.selectPlan}</h2>
           
@@ -652,9 +652,9 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
         </motion.div>
       </div>
 
-      {/* Plans Grid - 3 Cards: Basic, Pro, Elite */}
+      {/* Plans Grid - Single column on mobile/tablet, 3 columns on desktop */}
       <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-8`}>
-        <div className="grid md:grid-cols-3 gap-5 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
           {plans.map((planSlug, index) => {
             const config = PLAN_CONFIG[planSlug];
             const price = billingCycle === 'monthly' ? config.monthlyPrice : config.annualMonthlyPrice;
@@ -768,7 +768,7 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
           transition={{ duration: 0.5, delay: 0.4 }}
         >
           <div className="p-5 rounded-xl bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 border border-border/50">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col items-center gap-4 lg:flex-row lg:justify-between">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
                   <Building2 className="w-6 h-6" />
