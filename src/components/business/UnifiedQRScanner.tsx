@@ -377,13 +377,15 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
   return (
     <>
       <Button
+        size="sm"
         onClick={() => {
           setIsOpen(true);
           setTimeout(() => startScanning(), 100);
         }}
-        className="gap-2 bg-aegean hover:bg-aegean-deep text-white"
+        className="gap-1 sm:gap-1.5 bg-aegean hover:bg-aegean-deep text-white h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs"
       >
-        <Camera className="h-4 w-4" />
+        <Camera className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+        <span className="sm:hidden">QR</span>
         <span className="hidden sm:inline">{t.scanQR}</span>
       </Button>
 

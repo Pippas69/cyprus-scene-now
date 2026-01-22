@@ -108,10 +108,9 @@ export function UserLayout({ children }: UserLayoutProps) {
         <header className="h-12 sm:h-14 border-b flex items-center px-2 sm:px-4 bg-background sticky top-0 z-50 overflow-hidden">
           <SidebarTrigger className="mr-2 sm:mr-4 shrink-0" />
           
-          {/* Logo */}
+          {/* Logo - consistent with business dashboard */}
           <button onClick={() => navigate("/")} className="mr-auto shrink-0">
-            <Logo size="sm" className="sm:hidden" />
-            <Logo size="md" className="hidden sm:block" />
+            <Logo size="sm" />
           </button>
 
           {/* Search - Desktop only in header */}
@@ -120,11 +119,11 @@ export function UserLayout({ children }: UserLayoutProps) {
           </div>
 
           {/* Mobile Search Button */}
-          <div className="md:hidden mr-1 sm:mr-2 shrink-0">
+          <div className="md:hidden mr-1 shrink-0">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
-                  <Search className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
+                  <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="top" className="h-full">
@@ -133,8 +132,8 @@ export function UserLayout({ children }: UserLayoutProps) {
             </Sheet>
           </div>
 
-          {/* Language Toggle - Hidden on mobile */}
-          <div className="hidden sm:block mr-2 sm:mr-4 shrink-0">
+          {/* Language Toggle - All device sizes */}
+          <div className="mr-1 sm:mr-2 shrink-0">
             <LanguageToggle />
           </div>
 

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, ScanLine, Grid3X3, Gift } from "lucide-react";
+import { Trash2, Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift } from "lucide-react";
 import EventEditForm from "./EventEditForm";
 import EventBoostDialog from "./EventBoostDialog";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
 import { EventReservationOverview } from "./EventReservationOverview";
-import { TicketScanner } from "@/components/tickets/TicketScanner";
+
 
 interface EventsListProps {
   businessId: string;
@@ -63,7 +63,6 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
   const [ticketSalesEvent, setTicketSalesEvent] = useState<{ id: string; title: string } | null>(null);
   const [reservationEvent, setReservationEvent] = useState<{ id: string; title: string } | null>(null);
-  const [scannerOpen, setScannerOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
 
   // Fetch subscription status
@@ -317,17 +316,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
   return (
     <>
-      {/* Header with title and scanner button */}
+      {/* Header with title only - scanner removed, use Unified QR Scanner in dashboard header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{t.title}</h1>
-        <Button
-          variant="outline"
-          onClick={() => setScannerOpen(true)}
-          className="gap-1.5 h-8 md:h-9 lg:h-10 px-2 md:px-3"
-        >
-          <ScanLine className="h-3.5 w-3.5 md:h-4 md:w-4" />
-          <span className="text-xs md:text-sm">{t.scanner}</span>
-        </Button>
       </div>
 
       {/* Filter tabs */}
@@ -585,21 +576,6 @@ const EventsList = ({ businessId }: EventsListProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Unified Events Scanner Dialog */}
-      <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ScanLine className="h-5 w-5" />
-              {t.scanner}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="mt-4">
-            <TicketScanner />
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
