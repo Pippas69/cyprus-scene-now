@@ -16,6 +16,8 @@ interface DateTimePickerProps {
   disabled?: boolean;
   minDate?: Date;
   maxDate?: Date;
+  /** If true, only shows date without time in the button display (mobile optimization) */
+  dateOnlyDisplay?: boolean;
 }
 
 // Helper to get a safe timestamp, treating invalid dates as undefined
@@ -34,6 +36,7 @@ export function DateTimePicker({
   disabled,
   minDate,
   maxDate,
+  dateOnlyDisplay = false,
 }: DateTimePickerProps) {
   const { language } = useLanguage();
   const [open, setOpen] = React.useState(false);
@@ -182,16 +185,18 @@ export function DateTimePicker({
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "w-full justify-start text-left font-normal truncate",
             !displayValue && "text-muted-foreground"
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
           {displayValue ? (
-            format(displayValue, "PPP, HH:mm", { locale })
+            <span className="truncate">
+              {format(displayValue, dateOnlyDisplay ? "PPP" : "PPP, HH:mm", { locale })}
+            </span>
           ) : (
-            <span>{placeholder || (language === 'el' ? 'Επιλέξτε ημερομηνία' : 'Select date')}</span>
+            <span className="truncate">{placeholder || (language === 'el' ? 'Επιλέξτε ημερομηνία' : 'Select date')}</span>
           )}
         </Button>
       </PopoverTrigger>
