@@ -844,20 +844,20 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
         {/* Step 7: Event Type */}
         <SectionCard title={t.step7} required requiredLabel={t.required}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {/* Ticket */}
             <button
               type="button"
               onClick={() => updateField('eventType', 'ticket')}
               className={cn(
-                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
+                "p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3",
                 formData.eventType === 'ticket'
                   ? "border-primary bg-primary/5"
                   : "border-muted hover:border-primary/50"
               )}
             >
-              <Ticket className="h-8 w-8 mx-auto text-primary" />
-              <p className="font-medium">{t.withTicket}</p>
+              <Ticket className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+              <p className="font-medium text-xs sm:text-base">{t.withTicket}</p>
             </button>
 
             {/* Reservation */}
@@ -865,14 +865,14 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               type="button"
               onClick={() => updateField('eventType', 'reservation')}
               className={cn(
-                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
+                "p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3",
                 formData.eventType === 'reservation'
                   ? "border-primary bg-primary/5"
                   : "border-muted hover:border-primary/50"
               )}
             >
-              <Users className="h-8 w-8 mx-auto text-primary" />
-              <p className="font-medium">{t.withReservation}</p>
+              <Users className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+              <p className="font-medium text-xs sm:text-base">{t.withReservation}</p>
             </button>
 
             {/* Free Entry */}
@@ -880,22 +880,22 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               type="button"
               onClick={() => updateField('eventType', 'free_entry')}
               className={cn(
-                "p-6 rounded-xl border-2 transition-all text-center space-y-3",
+                "p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3",
                 formData.eventType === 'free_entry'
                   ? "border-primary bg-primary/5"
                   : "border-muted hover:border-primary/50"
               )}
             >
-              <Gift className="h-8 w-8 mx-auto text-primary" />
-              <p className="font-medium">{t.freeEntry}</p>
+              <Gift className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+              <p className="font-medium text-xs sm:text-base">{t.freeEntry}</p>
             </button>
           </div>
 
           {/* TICKET CONFIG */}
           {formData.eventType === 'ticket' && (
-            <div className="mt-6 space-y-4 p-4 bg-muted/30 rounded-lg">
-              <h4 className="font-semibold flex items-center gap-2">
-                <Ticket className="h-4 w-4" />
+            <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
+              <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
+                <Ticket className="h-3 w-3 sm:h-4 sm:w-4" />
                 {t.ticketConfig}
               </h4>
               
@@ -910,9 +910,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
           {/* RESERVATION CONFIG */}
           {formData.eventType === 'reservation' && (
-            <div className="mt-6 space-y-6 p-4 bg-muted/30 rounded-lg">
-              <h4 className="font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4" />
+            <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6 p-3 sm:p-4 bg-muted/30 rounded-lg">
+              <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
                 {t.reservationConfig}
               </h4>
               
@@ -920,34 +920,34 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               
               {/* Reservation Hours */}
               <div className="space-y-2">
-                <Label>{t.reservationHours}</Label>
-                <div className="flex items-center gap-4">
+                <Label className="text-xs sm:text-sm">{t.reservationHours}</Label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">{t.from}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">{t.from}</span>
                     <Input
                       type="time"
                       value={formData.reservationFromTime}
                       onChange={(e) => updateField('reservationFromTime', e.target.value)}
-                      className="w-32"
+                      className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm"
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">{t.to}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">{t.to}</span>
                     <Input
                       type="time"
                       value={formData.reservationToTime}
                       onChange={(e) => updateField('reservationToTime', e.target.value)}
-                      className="w-32"
+                      className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Seating Types Selection */}
-              <div className="space-y-3">
-                <Label>{t.seatingTypes}</Label>
-                <p className="text-sm text-muted-foreground">{t.selectSeatingTypes}</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-2 sm:space-y-3">
+                <Label className="text-xs sm:text-sm">{t.seatingTypes}</Label>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">{t.selectSeatingTypes}</p>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {(['bar', 'table', 'vip', 'sofa'] as SeatingType[]).map((type) => (
                     <Button
                       key={type}
@@ -955,8 +955,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                       variant={formData.selectedSeatingTypes.includes(type) ? "default" : "outline"}
                       size="sm"
                       onClick={() => toggleSeatingType(type)}
+                      className="text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3"
                     >
-                      {formData.selectedSeatingTypes.includes(type) && <Check className="h-3 w-3 mr-1" />}
+                      {formData.selectedSeatingTypes.includes(type) && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />}
                       {t[type]}
                     </Button>
                   ))}
@@ -967,75 +968,76 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               {formData.selectedSeatingTypes.map((type) => {
                 const config = formData.seatingConfigs[type];
                 return (
-                  <div key={type} className="border rounded-lg p-4 space-y-4">
+                  <div key={type} className="border rounded-lg p-2 sm:p-4 space-y-3 sm:space-y-4">
                     <div className="flex items-center justify-between">
-                      <h5 className="font-medium capitalize">{t[type]}</h5>
+                      <h5 className="font-medium capitalize text-xs sm:text-base">{t[type]}</h5>
                     </div>
                     
                     {/* Available Slots */}
-                    <div className="space-y-2">
-                      <Label>{t.availableBookings}</Label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
                       <Input
                         type="number"
                         value={config.availableSlots}
                         onChange={(e) => updateSeatingConfig(type, { availableSlots: parseInt(e.target.value) || 1 })}
                         min={1}
-                        className="w-32"
+                        className="w-24 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm"
                       />
                     </div>
                     
                     {/* Person Tiers */}
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label>{t.personRanges}</Label>
+                        <Label className="text-xs sm:text-sm">{t.personRanges}</Label>
                         {config.tiers.length < 3 && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => addTier(type)}
+                            className="text-[10px] sm:text-sm h-7 sm:h-9"
                           >
-                            <Plus className="h-4 w-4 mr-1" />
+                            <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {t.addRange}
                           </Button>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">{t.rangeHint}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">{t.rangeHint}</p>
                       
                       {config.tiers.map((tier, index) => (
-                        <div key={index} className="flex items-center gap-3 bg-background p-3 rounded-lg">
-                          <div className="flex items-center gap-2">
+                        <div key={index} className="flex flex-wrap items-center gap-1.5 sm:gap-3 bg-background p-2 sm:p-3 rounded-lg">
+                          <div className="flex items-center gap-1 sm:gap-2">
                             <Input
                               type="number"
                               value={tier.minPeople}
                               onChange={(e) => updateTier(type, index, { minPeople: parseInt(e.target.value) || 1 })}
                               min={1}
-                              className="w-16"
+                              className="w-12 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm"
                               placeholder={t.fromPersons}
                             />
-                            <span className="text-muted-foreground">-</span>
+                            <span className="text-muted-foreground text-xs">-</span>
                             <Input
                               type="number"
                               value={tier.maxPeople}
                               onChange={(e) => updateTier(type, index, { maxPeople: parseInt(e.target.value) || 1 })}
                               min={tier.minPeople}
-                              className="w-16"
+                              className="w-12 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm"
                               placeholder={t.toPersons}
                             />
-                            <span className="text-sm text-muted-foreground whitespace-nowrap">
-                              {language === 'el' ? 'άτομα' : 'people'}
+                            <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">
+                              {language === 'el' ? 'άτ.' : 'ppl'}
                             </span>
                           </div>
-                          <span className="text-muted-foreground">→</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">€</span>
+                          <span className="text-muted-foreground text-xs">→</span>
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <span className="text-muted-foreground text-xs">€</span>
                             <Input
                               type="number"
                               value={tier.prepaidChargeCents / 100}
                               onChange={(e) => updateTier(type, index, { prepaidChargeCents: Math.round(parseFloat(e.target.value || '0') * 100) })}
                               min={0}
                               step={5}
-                              className="w-24"
+                              className="w-16 sm:w-24 h-7 sm:h-10 text-xs sm:text-sm"
                             />
                           </div>
                           {config.tiers.length > 1 && (
@@ -1044,9 +1046,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                               variant="ghost"
                               size="icon"
                               onClick={() => removeTier(type, index)}
-                              className="h-8 w-8 text-destructive"
+                              className="h-6 w-6 sm:h-8 sm:w-8 text-destructive"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           )}
                         </div>
@@ -1057,15 +1059,15 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               })}
 
               {/* Cancellation Policy */}
-              <div className="space-y-3 pt-4 border-t">
-                <Label>{t.cancellationPolicy}</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">{t.freeCancellationUpTo}</span>
+              <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
+                <Label className="text-xs sm:text-sm">{t.cancellationPolicy}</Label>
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <span className="text-[10px] sm:text-sm text-muted-foreground">{t.freeCancellationUpTo}</span>
                   <Select
                     value={String(formData.cancellationHours)}
                     onValueChange={(v) => updateField('cancellationHours', parseInt(v))}
                   >
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-16 sm:w-24 h-7 sm:h-10 text-xs sm:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1075,25 +1077,25 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                       <SelectItem value="48">48</SelectItem>
                     </SelectContent>
                   </Select>
-                  <span className="text-sm text-muted-foreground">{t.hoursBeforeEvent}</span>
+                  <span className="text-[10px] sm:text-sm text-muted-foreground">{t.hoursBeforeEvent}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">{t.cancellationNote}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.cancellationNote}</p>
               </div>
             </div>
           )}
 
           {/* FREE ENTRY CONFIG */}
           {formData.eventType === 'free_entry' && (
-            <div className="mt-6 space-y-4 p-4 bg-muted/30 rounded-lg">
-              <h4 className="font-semibold flex items-center gap-2">
-                <Gift className="h-4 w-4" />
+            <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
+              <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
+                <Gift className="h-3 w-3 sm:h-4 sm:w-4" />
                 {t.freeEntryConfig}
               </h4>
               
-              <p className="text-sm font-medium">{t.freeEntryDeclarations}</p>
+              <p className="text-xs sm:text-sm font-medium">{t.freeEntryDeclarations}</p>
               
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <Checkbox
                     id="noTicket"
                     checked={formData.freeEntryAccepted.noTicket}
@@ -1101,9 +1103,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                       updateField('freeEntryAccepted', { ...formData.freeEntryAccepted, noTicket: !!checked })
                     }
                   />
-                  <Label htmlFor="noTicket" className="cursor-pointer">{t.noTicketRequired}</Label>
+                  <Label htmlFor="noTicket" className="cursor-pointer text-xs sm:text-sm">{t.noTicketRequired}</Label>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <Checkbox
                     id="noMinSpend"
                     checked={formData.freeEntryAccepted.noMinSpend}
@@ -1111,9 +1113,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                       updateField('freeEntryAccepted', { ...formData.freeEntryAccepted, noMinSpend: !!checked })
                     }
                   />
-                  <Label htmlFor="noMinSpend" className="cursor-pointer">{t.noMinSpend}</Label>
+                  <Label htmlFor="noMinSpend" className="cursor-pointer text-xs sm:text-sm">{t.noMinSpend}</Label>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <Checkbox
                     id="noReservation"
                     checked={formData.freeEntryAccepted.noReservation}
@@ -1121,7 +1123,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                       updateField('freeEntryAccepted', { ...formData.freeEntryAccepted, noReservation: !!checked })
                     }
                   />
-                  <Label htmlFor="noReservation" className="cursor-pointer">{t.noReservationRequired}</Label>
+                  <Label htmlFor="noReservation" className="cursor-pointer text-xs sm:text-sm">{t.noReservationRequired}</Label>
                 </div>
               </div>
               
@@ -1134,7 +1136,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="w-full h-12 text-lg"
+          className="w-full h-10 sm:h-12 text-sm sm:text-lg"
           size="lg"
         >
           {isSubmitting ? (
