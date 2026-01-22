@@ -268,14 +268,14 @@ const BusinessCard = ({
         }}
         className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
       >
-        {/* Full cover background image */}
+        {/* Full background image - uses logo */}
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ 
-            backgroundImage: business.cover_url || business.logo_url 
-              ? `url(${business.cover_url || business.logo_url})` 
+            backgroundImage: business.logo_url 
+              ? `url(${business.logo_url})` 
               : undefined,
-            backgroundColor: !business.cover_url && !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined
+            backgroundColor: !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined
           }}
         />
         
