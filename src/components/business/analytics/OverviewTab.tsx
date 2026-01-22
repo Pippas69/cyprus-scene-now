@@ -177,7 +177,7 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
     <div className="space-y-6">
       <div className="space-y-2">
         <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-        <p className="text-sm text-muted-foreground">{t.subtitle}</p>
+        <p className="text-sm text-muted-foreground whitespace-pre-line">{t.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
