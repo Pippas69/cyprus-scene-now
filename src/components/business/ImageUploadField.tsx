@@ -102,6 +102,16 @@ export const ImageUploadField = ({
   const handleCropComplete = (croppedBlob: Blob) => {
     const url = URL.createObjectURL(croppedBlob);
     setPreview(url);
+
+    // IMPORTANT: Persist crop by also updating the parent File state.
+    // Otherwise the UI preview changes, but "Save" will not upload anything.
+    const fileType = croppedBlob.type || "image/jpeg";
+    const ext = fileType.includes("png") ? "png" : fileType.includes("webp") ? "webp" : "jpg";
+    const croppedFile = new File([croppedBlob], `cropped-${Date.now()}.${ext}`, {
+      type: fileType,
+    });
+    onFileSelect(croppedFile);
+
     if (onCroppedImage) {
       onCroppedImage(croppedBlob);
     }
