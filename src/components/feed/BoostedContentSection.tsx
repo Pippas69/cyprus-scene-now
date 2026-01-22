@@ -221,15 +221,18 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
 
   return (
     <>
-      {/* Matching UnifiedEventCard boosted size - responsive */}
+      {/* Matching UnifiedEventCard boosted size - responsive, slightly larger than business cards on mobile */}
       <div
         ref={cardRef as any}
-        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[200px] max-w-[200px] sm:min-w-[240px] sm:max-w-[240px] overflow-visible"
+        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[220px] max-w-[220px] sm:min-w-[240px] sm:max-w-[240px] overflow-visible"
       >
-        {/* TOP - Image section - responsive height */}
-        <div className="relative h-32 sm:h-40 overflow-visible">
-          {/* Image container - clipped */}
-          <div className="absolute inset-0 overflow-hidden rounded-t-xl">
+        {/* TOP - Image section - responsive height, larger on mobile */}
+        <div className="relative h-36 sm:h-40 overflow-visible">
+          {/* Image container - clipped, clickable to business profile */}
+          <Link
+            to={`/business/${offer.business_id}`}
+            className="absolute inset-0 overflow-hidden rounded-t-xl"
+          >
             {coverImage ? (
               <img
                 src={coverImage}
@@ -242,7 +245,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
             )}
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          </div>
+          </Link>
 
           {/* BADGE - Top Right - Premium only for boosted */}
           <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">

@@ -130,10 +130,11 @@ export const UnifiedEventCard = ({
 
   // For Feed cards (compact, default, boosted) - keep horizontal scroller style
   if (size === "compact" || size === "default" || size === "boosted") {
+    // Boosted cards are slightly larger on mobile than business cards
     const sizeClasses = {
       compact: "min-w-[160px] max-w-[160px] sm:min-w-[200px] sm:max-w-[200px]",
       default: "min-w-[180px] max-w-[180px] sm:min-w-[220px] sm:max-w-[220px]",
-      boosted: "min-w-[200px] max-w-[200px] sm:min-w-[240px] sm:max-w-[240px]"
+      boosted: "min-w-[220px] max-w-[220px] sm:min-w-[240px] sm:max-w-[240px]"
     };
 
     return (
@@ -149,8 +150,8 @@ export const UnifiedEventCard = ({
           className
         )}
       >
-        {/* Image section */}
-        <div className="relative overflow-visible h-32 sm:h-40">
+        {/* Image section - larger on mobile for boosted */}
+        <div className={cn("relative overflow-visible", size === "boosted" ? "h-36 sm:h-40" : "h-32 sm:h-40")}>
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
@@ -222,16 +223,16 @@ export const UnifiedEventCard = ({
       interactive
       className={cn(
         "overflow-visible transition-all duration-300",
-        size === "mobileFixed" && "h-[260px] sm:h-[270px]",
+        size === "mobileFixed" && "h-[280px] sm:h-[270px]",
         className
       )}
     >
       <CardContent className="p-0 h-full flex flex-col">
-        {/* Image section - fixed height matching reference */}
+        {/* Image section - increased height for mobile (h-44 instead of h-40) */}
         <Link
           to={`/event/${event.id}`}
           onClick={handleCardClick}
-          className="block relative h-40 overflow-visible rounded-t-xl flex-shrink-0"
+          className="block relative h-44 sm:h-40 overflow-visible rounded-t-xl flex-shrink-0"
         >
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
