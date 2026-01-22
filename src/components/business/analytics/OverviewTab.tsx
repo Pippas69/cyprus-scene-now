@@ -186,18 +186,46 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
             <DialogTrigger asChild>
               <Card className="hover:shadow-md transition-shadow cursor-pointer group">
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{label}</p>
-                      <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Icon className="h-5 w-5 text-primary" />
+                  {/* First card (views) - horizontal layout */}
+                  {key === "views" ? (
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">{label}</p>
+                        <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
                       </div>
-                      <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Icon className="h-5 w-5 text-primary" />
+                        </div>
+                        <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* Other cards (customers, recurring, etc.) - centered layout for tablet/mobile, horizontal for desktop */
+                    <>
+                      {/* Mobile/Tablet: Centered vertical layout */}
+                      <div className="flex flex-col items-center text-center lg:hidden">
+                        <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">{label}</p>
+                        <p className="text-2xl font-bold text-foreground my-1">{value.toLocaleString()}</p>
+                        <div className="p-1.5 bg-primary/10 rounded-lg">
+                          <Icon className="h-4 w-4 text-primary" />
+                        </div>
+                      </div>
+                      {/* Desktop: Original horizontal layout */}
+                      <div className="hidden lg:flex items-start justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">{label}</p>
+                          <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="p-2 bg-primary/10 rounded-lg">
+                            <Icon className="h-5 w-5 text-primary" />
+                          </div>
+                          <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </DialogTrigger>
