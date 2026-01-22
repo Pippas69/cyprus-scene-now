@@ -3,12 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { Loader2, Power, Calendar as CalendarIcon, Clock, Users, XCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Clock, XCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -31,7 +29,6 @@ interface SlotAvailability {
 export const ReservationStaffControls = ({ businessId, language }: ReservationStaffControlsProps) => {
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [slots, setSlots] = useState<SlotAvailability[]>([]);
   const [updatingSlot, setUpdatingSlot] = useState<string | null>(null);
@@ -41,10 +38,6 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     el: {
       title: 'Έλεγχος Staff',
       description: 'Διαχειριστείτε τη διαθεσιμότητα σε πραγματικό χρόνο',
-      globalPause: 'Παύση Όλων των Κρατήσεων',
-      globalPauseDescription: 'Κλείστε προσωρινά όλες τις κρατήσεις',
-      paused: 'ΚΛΕΙΣΤΟ',
-      active: 'ΑΝΟΙΧΤΟ',
       selectDate: 'Επιλέξτε Ημερομηνία',
       slotStatus: 'Κατάσταση Slots',
       capacity: 'Χωρητικότητα',
@@ -64,10 +57,6 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     en: {
       title: 'Staff Controls',
       description: 'Manage availability in real-time',
-      globalPause: 'Pause All Reservations',
-      globalPauseDescription: 'Temporarily close all reservations',
-      paused: 'CLOSED',
-      active: 'OPEN',
       selectDate: 'Select Date',
       slotStatus: 'Slot Status',
       capacity: 'Capacity',
@@ -95,17 +84,6 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch business pause status
-      const { data: business } = await supabase
-        .from('businesses')
-        .select('reservations_globally_paused')
-        .eq('id', businessId)
-        .single();
-
-      if (business) {
-        setIsPaused(business.reservations_globally_paused ?? false);
-      }
-
       // Fetch slots availability using RPC
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       const { data: slotsData, error } = await supabase.rpc('get_slots_availability', {
@@ -130,26 +108,6 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
-  };
-
-  const handleGlobalPauseToggle = async (paused: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('businesses')
-        .update({ 
-          reservations_globally_paused: paused,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', businessId);
-
-      if (error) throw error;
-
-      setIsPaused(paused);
-      toast.success(paused ? t.paused : t.active);
-    } catch (error) {
-      console.error('Error updating pause status:', error);
-      toast.error(t.error);
-    }
   };
 
   const handleSlotToggle = async (slotTime: string, isClosed: boolean) => {
@@ -204,27 +162,6 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Global Pause Control */}
-      <Card className={isPaused ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30' : 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30'}>
-        <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            
-            <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full flex-shrink-0 flex items-center justify-center ${isPaused ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
-              <Power className={`h-3.5 w-3.5 sm:h-5 sm:w-5 ${isPaused ? 'text-red-600' : 'text-green-600'}`} />
-            </div>
-            <div className="flex-1 min-w-0 pr-14 sm:pr-16">
-              <Label className="text-[10px] sm:text-sm font-semibold whitespace-nowrap">{t.globalPause}</Label>
-              <p className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.globalPauseDescription}</p>
-            </div>
-            <Switch
-              checked={isPaused}
-              onCheckedChange={handleGlobalPauseToggle}
-              className="flex-shrink-0 scale-90 sm:scale-100"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Date Selection & Slots */}
       <Card>
         <CardHeader className="pb-3 sm:pb-4">
