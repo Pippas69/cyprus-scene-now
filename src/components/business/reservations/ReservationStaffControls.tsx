@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Loader2, Power, Calendar as CalendarIcon, Clock, Users, XCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ReservationStaffControlsProps {
   businessId: string;
@@ -28,6 +29,7 @@ interface SlotAvailability {
 }
 
 export const ReservationStaffControls = ({ businessId, language }: ReservationStaffControlsProps) => {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -209,7 +211,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
             {/* Badge top-right - absolute corner position */}
             <Badge 
               variant={isPaused ? 'destructive' : 'default'} 
-              className={`absolute right-2 top-0 -translate-y-1/2 text-[9px] sm:text-xs ${!isPaused ? 'bg-green-500' : ''}`}
+              className={`absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10 text-[9px] sm:text-xs ${!isPaused ? 'bg-green-500' : ''}`}
             >
               {isPaused ? t.paused : t.active}
             </Badge>
@@ -263,9 +265,18 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
           <div className="flex items-center gap-3">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(selectedDate, 'PPP', { locale: language === 'el' ? el : enUS })}
+                <Button
+                  variant="outline"
+                  className="justify-start text-left font-normal h-8 sm:h-10 px-2 sm:px-3 flex-1 min-w-0"
+                >
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="truncate text-[11px] sm:text-sm">
+                    {format(
+                      selectedDate,
+                      isMobile ? 'dd MMM yyyy' : 'PPP',
+                      { locale: language === 'el' ? el : enUS }
+                    )}
+                  </span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -282,6 +293,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
                 variant="ghost" 
                 size="sm"
                 onClick={() => setSelectedDate(new Date())}
+                className="h-8 sm:h-10 px-2 sm:px-3 text-[11px] sm:text-sm whitespace-nowrap"
               >
                 {t.today}
               </Button>
