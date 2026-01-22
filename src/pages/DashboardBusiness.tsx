@@ -34,7 +34,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Search, User, Settings, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
-// TicketSales moved into EventsList as a dialog
+import { UnifiedQRScanner } from "@/components/business/UnifiedQRScanner";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
@@ -278,22 +278,25 @@ const DashboardBusiness = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-                {/* Search (mobile-first) */}
-                <div className="sm:hidden">
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
-                        <Search className="h-4 w-4" aria-hidden="true" />
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="top" className="h-full">
-                      <GlobalSearch language={language} fullscreen resultTypes={['business']} />
-                    </SheetContent>
-                  </Sheet>
-                </div>
-                <div className="hidden sm:block">
-                  <LanguageToggle />
-                </div>
+                {/* Unified QR Scanner - next to business avatar */}
+                {businessId && (
+                  <UnifiedQRScanner businessId={businessId} language={language} />
+                )}
+                
+                {/* Search - all device sizes */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
+                      <Search className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="top" className="h-full">
+                    <GlobalSearch language={language} fullscreen resultTypes={['business']} />
+                  </SheetContent>
+                </Sheet>
+                
+                {/* Language Toggle - all device sizes */}
+                <LanguageToggle />
                 
                 {/* User Profile Dropdown */}
                 <DropdownMenu>
