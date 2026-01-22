@@ -128,7 +128,8 @@ const Navbar = () => {
           {/* Logo - Desktop/Tablet: simple button, Mobile: dropdown with navigation */}
           {/* Desktop/Tablet Logo (md+) */}
           <button onClick={() => navigate("/")} className="hidden md:block hover:opacity-80 transition-opacity">
-            <Logo size="md" />
+            <Logo size="md" className="lg:hidden" />
+            <Logo size="lg" className="hidden lg:block" />
           </button>
 
           {/* Mobile Logo with Dropdown (<md) */}
