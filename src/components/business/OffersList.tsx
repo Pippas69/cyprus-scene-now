@@ -262,85 +262,82 @@ const OffersList = ({ businessId }: OffersListProps) => {
         {offers.map((offer) => (
           <Card key={offer.id} className="bg-card/50 border-border/50">
             <CardContent className="p-3 md:p-4">
-              <div className="flex items-start justify-between gap-2 md:gap-4">
-                {/* Left side content */}
-                <div className="flex-1 min-w-0">
-                  {/* Title row with boost badge */}
-                  <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 flex-wrap">
+              {/* 2-row grid to match mockup: (title+date) / (badges+actions) */}
+              <div className="grid grid-cols-[1fr_auto] gap-x-2 md:gap-x-4 gap-y-2">
+                {/* Row 1 - Left: Title + boost badge */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
                     <h3 className="text-sm md:text-base lg:text-lg font-semibold truncate">{offer.title}</h3>
                     <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
                   </div>
 
-                  {/* Date and badges row */}
-                  <div className="flex flex-wrap items-center gap-x-2 md:gap-x-4 gap-y-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1.5 md:mb-2">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                      <span className="whitespace-nowrap">{formatOfferDates(offer.start_at, offer.end_at)}</span>
-                    </div>
-                    
-                    {/* Discount percentage badge */}
-                    {offer.percent_off && (
-                      <Badge 
-                        variant="outline" 
-                        className="text-primary border-primary/30 bg-primary/5 font-semibold text-[10px] md:text-xs"
-                      >
-                        {offer.percent_off}% OFF
-                      </Badge>
-                    )}
-                    
-                    {/* Active/Inactive status badge */}
-                    <Badge 
-                      variant={offer.active ? "default" : "secondary"}
-                      className={`text-[10px] md:text-xs ${offer.active ? "bg-primary text-primary-foreground" : ""}`}
-                    >
-                      {offer.active ? t.active : t.inactive}
-                    </Badge>
+                  {/* Date row */}
+                  <div className="mt-1 flex items-center gap-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground">
+                    <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                    <span className="whitespace-nowrap">{formatOfferDates(offer.start_at, offer.end_at)}</span>
                   </div>
                 </div>
 
-                {/* Right side actions - aligned in rows */}
-                <div className="flex flex-col items-end gap-1.5 md:gap-2">
-                  {/* Top row: Boost + Edit icons */}
-                  <div className="flex items-center gap-0.5 md:gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
-                      title={t.boost}
-                      className="h-6 w-6 md:h-8 md:w-8 text-primary hover:text-primary"
-                    >
-                      <Rocket className="h-3 w-3 md:h-4 md:w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingOffer(offer)}
-                      title={t.edit}
-                      className="h-6 w-6 md:h-8 md:w-8"
-                    >
-                      <Pencil className="h-3 w-3 md:h-4 md:w-4" />
-                    </Button>
-                  </div>
-                  {/* Bottom row: Deactivate + Delete - aligned */}
-                  <div className="flex items-center gap-0.5 md:gap-1">
-                    <Button
+                {/* Row 1 - Right: Boost + Edit icons */}
+                <div className="flex items-start justify-end gap-0.5 md:gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
+                    title={t.boost}
+                    className="h-7 w-7 md:h-8 md:w-8 text-primary hover:text-primary"
+                  >
+                    <Rocket className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setEditingOffer(offer)}
+                    title={t.edit}
+                    className="h-7 w-7 md:h-8 md:w-8"
+                  >
+                    <Pencil className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                  </Button>
+                </div>
+
+                {/* Row 2 - Left: Status + %OFF (always side-by-side) */}
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={offer.active ? "default" : "secondary"}
+                    className={`h-7 px-3 text-xs md:h-8 md:text-sm ${offer.active ? "bg-primary text-primary-foreground" : ""}`}
+                  >
+                    {offer.active ? t.active : t.inactive}
+                  </Badge>
+
+                  {offer.percent_off && (
+                    <Badge
                       variant="outline"
-                      size="sm"
-                      onClick={() => toggleActive(offer.id, offer.active || false)}
-                      className="text-[9px] md:text-xs h-6 md:h-8 px-1.5 md:px-2"
+                      className="h-7 px-3 text-xs md:h-8 md:text-sm text-primary border-primary/30 bg-primary/5 font-semibold"
                     >
-                      {offer.active ? t.deactivate : t.activate}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(offer.id)}
-                      className="h-6 w-6 md:h-8 md:w-8 text-destructive hover:text-destructive"
-                      title={t.delete}
-                    >
-                      <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
-                    </Button>
-                  </div>
+                      {offer.percent_off}% OFF
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Row 2 - Right: Deactivate + Delete aligned on same baseline */}
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleActive(offer.id, offer.active || false)}
+                    className="h-7 px-3 text-xs md:h-8 md:text-sm"
+                  >
+                    {offer.active ? t.deactivate : t.activate}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(offer.id)}
+                    className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive"
+                    title={t.delete}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                  </Button>
                 </div>
               </div>
             </CardContent>

@@ -395,20 +395,16 @@ const EventsList = ({ businessId }: EventsListProps) => {
             return (
               <Card key={event.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    {/* Left content */}
-                    <div className="flex-1 min-w-0">
-                      {/* Title row with boost badge */}
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  {/* 2-row grid so delete icon aligns with RSVP counts line (tablet+mobile) */}
+                  <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2">
+                    {/* Row 1 - Left: Title + boost badge + meta */}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-lg font-semibold truncate">{event.title}</h3>
-                        <ActiveBoostBadge 
-                          eventId={event.id} 
-                          label={t.boosted}
-                        />
+                        <ActiveBoostBadge eventId={event.id} label={t.boosted} />
                       </div>
 
-                      {/* Date and venue row */}
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mb-2">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
                           <span>{formatDate(event.start_at)}</span>
@@ -417,10 +413,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
                           <MapPin className="h-4 w-4" />
                           <span className="truncate max-w-[200px]">{event.venue_name || event.location}</span>
                         </div>
-                        
-                        {/* Event type badge - clickable for ticket/reservation */}
+
                         {eventType === 'ticket' && (
-                          <Badge 
+                          <Badge
                             className="bg-teal-600 hover:bg-teal-700 text-white cursor-pointer flex items-center gap-1"
                             onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}
                           >
@@ -429,7 +424,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                           </Badge>
                         )}
                         {eventType === 'reservation' && (
-                          <Badge 
+                          <Badge
                             className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer flex items-center gap-1"
                             onClick={() => setReservationEvent({ id: event.id, title: event.title })}
                           >
@@ -444,41 +439,41 @@ const EventsList = ({ businessId }: EventsListProps) => {
                           </Badge>
                         )}
                       </div>
-
-                      {/* RSVP counts */}
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span>
-                          {event.rsvp_counts?.interested_count || 0} {t.interested}, {' '}
-                          {event.rsvp_counts?.going_count || 0} {t.going}
-                        </span>
-                      </div>
                     </div>
 
-                    {/* Right side actions */}
-                    <div className="flex flex-col items-end gap-1">
-                      {/* Top row: Boost + Edit */}
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setBoostingEvent(event)}
-                          title={t.boost}
-                          className="h-8 w-8 text-primary hover:text-primary"
-                        >
-                          <Rocket className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingEvent(event)}
-                          title={t.edit}
-                          className="h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {/* Delete button */}
+                    {/* Row 1 - Right: Boost + Edit icons */}
+                    <div className="flex items-start justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setBoostingEvent(event)}
+                        title={t.boost}
+                        className="h-8 w-8 text-primary hover:text-primary"
+                      >
+                        <Rocket className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingEvent(event)}
+                        title={t.edit}
+                        className="h-8 w-8"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Row 2 - Left: RSVP counts (last line) */}
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      <span>
+                        {event.rsvp_counts?.interested_count || 0} {t.interested}, {" "}
+                        {event.rsvp_counts?.going_count || 0} {t.going}
+                      </span>
+                    </div>
+
+                    {/* Row 2 - Right: Delete icon aligned with RSVP line */}
+                    <div className="flex items-center justify-end">
                       <Button
                         variant="ghost"
                         size="icon"
