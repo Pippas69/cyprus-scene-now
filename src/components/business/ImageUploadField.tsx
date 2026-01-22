@@ -29,6 +29,7 @@ const translations = {
     types: 'JPEG, PNG, WebP',
     fileTooLarge: 'Το αρχείο πρέπει να είναι μικρότερο από',
     cropImage: 'Περικοπή',
+    cropFetchError: 'Δεν ήταν δυνατή η φόρτωση της εικόνας για περικοπή. Δοκιμάστε ξανά ή ανεβάστε την εικόνα εκ νέου.',
     feedPreview: 'Feed',
     profilePreview: 'Προφίλ',
     offerPreview: 'Προσφορά',
@@ -39,6 +40,7 @@ const translations = {
     types: 'JPEG, PNG, WebP',
     fileTooLarge: 'File must be smaller than',
     cropImage: 'Crop',
+    cropFetchError: 'Could not load image for cropping. Please try again or re-upload the image.',
     feedPreview: 'Feed',
     profilePreview: 'Profile',
     offerPreview: 'Offer',
@@ -119,9 +121,31 @@ export const ImageUploadField = ({
   };
 
   const handleCropExisting = () => {
-    if (displayImage) {
-      setRawImageSrc(displayImage);
+    const openWithSrc = async (src: string) => {
+      // If it's an external URL, fetch it as a blob first to avoid "tainted canvas" errors.
+      // (Happens when we try to export a canvas drawn with a cross-origin image.)
+      if (/^https?:\/\//i.test(src)) {
+        try {
+          const res = await fetch(src, { mode: 'cors', credentials: 'omit' });
+          if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          setRawImageSrc(objectUrl);
+          setShowCropDialog(true);
+          return;
+        } catch (e) {
+          console.error('Crop fetch error:', e);
+          alert(t.cropFetchError);
+          return;
+        }
+      }
+
+      setRawImageSrc(src);
       setShowCropDialog(true);
+    };
+
+    if (displayImage) {
+      void openWithSrc(displayImage);
     }
   };
 
