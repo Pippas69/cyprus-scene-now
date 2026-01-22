@@ -35,12 +35,14 @@ const translations = {
     reset: 'Επαναφορά',
     cancel: 'Ακύρωση',
     apply: 'Εφαρμογή Περικοπής',
+    taintedError: 'Δεν ήταν δυνατή η εφαρμογή περικοπής λόγω περιορισμών ασφαλείας της εικόνας. Δοκιμάστε να ανεβάσετε ξανά την εικόνα.',
   },
   en: {
     title: 'Crop Image',
     reset: 'Reset',
     cancel: 'Cancel',
     apply: 'Apply Crop',
+    taintedError: 'Unable to apply crop due to image security restrictions. Please re-upload the image.',
   },
 };
 
@@ -183,6 +185,9 @@ export const ImageCropDialog = ({
       onClose();
     } catch (error) {
       console.error("Crop error:", error);
+      if (error instanceof Error && error.name === 'SecurityError') {
+        alert(t.taintedError);
+      }
     }
   };
 
@@ -255,6 +260,7 @@ export const ImageCropDialog = ({
               ref={imgRef}
               src={imageSrc}
               alt="Crop preview"
+              crossOrigin="anonymous"
               onLoad={onImageLoad}
               style={{
                 transform: `scale(${zoom})`,
