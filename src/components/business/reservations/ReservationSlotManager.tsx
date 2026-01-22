@@ -399,25 +399,27 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
     <div className="space-y-4 sm:space-y-6">
       {/* Main Toggle */}
       <Card>
-        <CardContent className="pt-4 pb-4 sm:pt-6 sm:pb-6">
-          <div className="relative flex items-center gap-3">
-            {/* Badge top-right */}
+        <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 lg:pt-6 lg:pb-6">
+          <div className="relative flex items-center gap-2 sm:gap-3">
+            {/* Badge top-right - absolute corner position */}
             {settings.accepts_direct_reservations && (
-              <Badge variant="default" className="absolute top-0 right-0 bg-green-500 text-[10px] sm:text-xs">
+              <Badge variant="default" className="absolute -top-1 -right-1 sm:top-0 sm:right-0 bg-green-500 text-[9px] sm:text-xs">
                 {language === 'el' ? 'Ενεργό' : 'Active'}
               </Badge>
             )}
             
-            <div className="flex-1 min-w-0 pr-10 sm:pr-14">
-              <Label htmlFor="enable-reservations" className="text-[11px] sm:text-sm font-semibold whitespace-nowrap">
+            <div className="flex-1 min-w-0 pr-12 sm:pr-14">
+              <Label htmlFor="enable-reservations" className="text-[11px] sm:text-sm lg:text-base font-semibold whitespace-nowrap">
                 {t.enableReservations}
               </Label>
-              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.enableDescription}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">{t.enableDescriptionSub}</p>
+              <p className="text-[9px] sm:text-xs lg:text-sm text-muted-foreground lg:whitespace-nowrap">
+                {t.enableDescription} <span className="lg:inline hidden">{t.enableDescriptionSub}</span>
+              </p>
+              <p className="text-[9px] sm:text-xs text-muted-foreground lg:hidden">{t.enableDescriptionSub}</p>
             </div>
             <Switch
               id="enable-reservations"
-              className="flex-shrink-0"
+              className="flex-shrink-0 scale-90 sm:scale-100"
               checked={settings.accepts_direct_reservations}
               onCheckedChange={async (checked) => {
                 setSettings((prev) => ({ ...prev, accepts_direct_reservations: checked }));
@@ -559,25 +561,25 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                     </CollapsibleTrigger>
                     
                     <CollapsibleContent>
-                      <div className="px-4 pb-4 pt-2 border-t space-y-4">
+                      <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t space-y-3 sm:space-y-4">
                         {/* Time Range */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-4">
                           <div>
-                            <Label className="text-sm font-medium">{t.slotFrom}</Label>
+                            <Label className="text-[10px] sm:text-sm font-medium">{t.slotFrom}</Label>
                             <Input
                               type="time"
                               value={slot.timeFrom}
                               onChange={(e) => updateTimeSlot(slot.id, 'timeFrom', e.target.value)}
-                              className="mt-1"
+                              className="mt-1 h-8 sm:h-10 text-[11px] sm:text-sm"
                             />
                           </div>
                           <div>
-                            <Label className="text-sm font-medium">{t.slotTo}</Label>
+                            <Label className="text-[10px] sm:text-sm font-medium">{t.slotTo}</Label>
                             <Input
                               type="time"
                               value={slot.timeTo}
                               onChange={(e) => updateTimeSlot(slot.id, 'timeTo', e.target.value)}
-                              className="mt-1"
+                              className="mt-1 h-8 sm:h-10 text-[11px] sm:text-sm"
                             />
                           </div>
                         </div>
@@ -638,15 +640,15 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center justify-between pt-2 border-t">
+                        <div className="flex items-center justify-between pt-2 border-t gap-2">
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => duplicateSlot(slot)}
-                            className="text-xs"
+                            className="text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3"
                           >
-                            <Copy className="h-3 w-3 mr-1" />
+                            <Copy className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
                             {t.copySlot}
                           </Button>
                           <Button
@@ -654,10 +656,11 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                             variant="ghost"
                             size="sm"
                             onClick={() => removeTimeSlot(slot.id)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3"
                           >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            {t.removeSlot}
+                            <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
+                            <span className="hidden sm:inline">{t.removeSlot}</span>
+                            <span className="sm:hidden">{language === 'el' ? 'Διαγραφή' : 'Delete'}</span>
                           </Button>
                         </div>
                       </div>
@@ -675,33 +678,35 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
 
           {/* Seating Options */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Armchair className="h-5 w-5" />
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm lg:text-base">
+                <Armchair className="h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
                 {t.seatingOptions}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {settings.reservation_seating_options.length === 0 && (
-                <p className="text-sm text-orange-600 mb-3 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
+                <p className="text-[10px] sm:text-sm text-orange-600 mb-3 flex items-center gap-1.5 sm:gap-2">
+                  <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.noSeatingSelected}
                 </p>
               )}
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex flex-wrap gap-3 sm:gap-4">
+                <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer">
                   <Checkbox
                     checked={settings.reservation_seating_options.includes('indoor')}
                     onCheckedChange={() => toggleSeating('indoor')}
+                    className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                   />
-                  <span className="text-sm">{t.indoor}</span>
+                  <span className="text-[11px] sm:text-sm">{t.indoor}</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer">
                   <Checkbox
                     checked={settings.reservation_seating_options.includes('outdoor')}
                     onCheckedChange={() => toggleSeating('outdoor')}
+                    className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                   />
-                  <span className="text-sm">{t.outdoor}</span>
+                  <span className="text-[11px] sm:text-sm">{t.outdoor}</span>
                 </label>
               </div>
             </CardContent>
