@@ -203,13 +203,13 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
                   ) : (
                     /* Other cards (customers, recurring, etc.) - centered layout for tablet/mobile, horizontal for desktop */
                     <>
-                      {/* Mobile/Tablet: Centered vertical layout */}
+                      {/* Mobile/Tablet: Centered vertical layout - label, icon, then number */}
                       <div className="flex flex-col items-center text-center lg:hidden">
                         <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">{label}</p>
-                        <p className="text-2xl font-bold text-foreground my-1">{value.toLocaleString()}</p>
-                        <div className="p-1.5 bg-primary/10 rounded-lg">
+                        <div className="p-1.5 bg-primary/10 rounded-lg my-1">
                           <Icon className="h-4 w-4 text-primary" />
                         </div>
+                        <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
                       </div>
                       {/* Desktop: Original horizontal layout */}
                       <div className="hidden lg:flex items-start justify-between">

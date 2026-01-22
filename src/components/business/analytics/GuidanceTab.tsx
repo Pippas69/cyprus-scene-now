@@ -346,8 +346,8 @@ const MetricRow: React.FC<{
           <td className="text-right py-3 font-medium text-xs md:text-sm">
             {/* Desktop: single line */}
             <span className="hidden lg:inline">{formatWindowsWithLanguage(windows, language)}</span>
-            {/* Tablet/Mobile: each day on separate line */}
-            <span className="lg:hidden flex flex-col items-end">
+            {/* Tablet/Mobile: each day on separate line with smaller text */}
+            <span className="lg:hidden flex flex-col items-end text-[10px] md:text-xs whitespace-nowrap">
               <span>{formatWindowsResponsive(windows, language).line1}</span>
               {formatWindowsResponsive(windows, language).line2 && (
                 <span>{formatWindowsResponsive(windows, language).line2}</span>
@@ -984,7 +984,14 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
               <p className="font-semibold text-xs md:text-sm lg:text-base">{getDayName(data.recommendedPlan.publish.dayIndex, language)} {data.recommendedPlan.publish.hours}</p>
             </div>
             <div className="p-4 bg-background rounded-lg border">
-              <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1 whitespace-nowrap">{t.targetInteractions}</p>
+              <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1">
+                {/* Tablet/Mobile: Split Στόχευση / Αλληλεπιδράσεων */}
+                <span className="lg:hidden flex flex-col items-start">
+                  <span>{language === 'el' ? 'Στόχευση' : 'Target'}</span>
+                  <span>{language === 'el' ? 'Αλληλεπιδράσεων' : 'Interactions'}</span>
+                </span>
+                <span className="hidden lg:inline">{t.targetInteractions}</span>
+              </p>
               <p className="font-semibold text-xs md:text-sm lg:text-base">{getDayName(data.recommendedPlan.interactions.dayIndex, language)} {data.recommendedPlan.interactions.hours}</p>
             </div>
             <div className="p-4 bg-background rounded-lg border">
