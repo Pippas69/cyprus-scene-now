@@ -20,7 +20,7 @@ export const Logo = ({ size = "md", className }: LogoProps) => {
         className
       )}
     >
-      <span className="leading-none translate-y-[2px]">ΦΟΜΟ</span>
+      <span className="leading-none flex items-center justify-center">ΦΟΜΟ</span>
     </div>
   );
 };
