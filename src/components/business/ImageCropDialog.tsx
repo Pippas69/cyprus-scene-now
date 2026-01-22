@@ -62,7 +62,7 @@ export const ImageCropDialog = ({
     x: 5,
     y: (100 - 90 / ratio) / 2,
   });
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | undefined>();
   const [zoom, setZoom] = useState(1);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -81,12 +81,23 @@ export const ImageCropDialog = ({
     const x = (width - cropWidth) / 2;
     const y = (height - cropHeight) / 2;
 
-    setCrop({
-      unit: "px",
+    const newCrop = {
+      unit: "px" as const,
       width: cropWidth,
       height: cropHeight,
       x,
       y,
+    };
+
+    setCrop(newCrop);
+    
+    // Initialize completedCrop immediately so button is enabled
+    setCompletedCrop({
+      width: cropWidth,
+      height: cropHeight,
+      x,
+      y,
+      unit: 'px',
     });
   }, [ratio]);
 

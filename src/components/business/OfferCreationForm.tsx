@@ -139,7 +139,7 @@ const translations = {
     noCommission: "Χωρίς προμήθεια",
     walkInNote: "Η προσφορά ισχύει για walk-in πελάτες και δεν εγγυάται θέση",
     // Image Source
-    imageSourceTitle: "2.5. Εικόνα Προσφοράς",
+    offerImage: 'Εικόνα Προσφοράς',
     useProfileImage: "Χρήση Εικόνας Προφίλ",
     useCustomImage: "Ανέβασμα Νέας Εικόνας",
     profileImageDesc: "Θα χρησιμοποιηθεί η εικόνα εξωφύλλου της επιχείρησής σας",
@@ -221,7 +221,7 @@ const translations = {
     noCommission: "No commission",
     walkInNote: "This offer is for walk-in customers and does not guarantee a seat",
     // Image Source
-    imageSourceTitle: "2.5. Offer Image",
+    offerImage: 'Offer Image',
     useProfileImage: "Use Profile Image",
     useCustomImage: "Upload Custom Image",
     profileImageDesc: "Your business cover image will be used",
@@ -658,96 +658,99 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         />
       </SectionCard>
 
-      {/* Section 2: Offer Description */}
+      {/* Section 2: Offer Description + Image */}
       <SectionCard title={t.step2} required>
-        <div className="space-y-2">
-          <Textarea
-            value={formData.description}
-            onChange={(e) => updateField('description', e.target.value)}
-            placeholder={t.descriptionPlaceholder}
-            rows={3}
-            className="resize-none"
-          />
-          <p className={cn(
-            "text-xs text-right",
-            wordsRemaining < 0 ? "text-destructive" : "text-muted-foreground"
-          )}>
-            {wordsRemaining >= 0 
-              ? `${wordsRemaining} ${t.wordsRemaining}`
-              : `${Math.abs(wordsRemaining)} ${t.wordsOver}`
-            }
-          </p>
-        </div>
-      </SectionCard>
-
-      {/* Section 2.5: Image Source */}
-      <SectionCard title={t.imageSourceTitle}>
         <div className="space-y-4">
-          {/* Image Source Toggle */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => updateField('imageSource', 'profile')}
-              className={cn(
-                "p-4 rounded-xl border-2 transition-all text-left",
-                formData.imageSource === 'profile'
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-              )}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <ImageIcon className="w-5 h-5 text-primary" />
-                <span className="font-medium text-sm">{t.useProfileImage}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">{t.profileImageDesc}</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => updateField('imageSource', 'custom')}
-              className={cn(
-                "p-4 rounded-xl border-2 transition-all text-left",
-                formData.imageSource === 'custom'
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-              )}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Upload className="w-5 h-5 text-primary" />
-                <span className="font-medium text-sm">{t.useCustomImage}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">{t.customImageDesc}</p>
-            </button>
+          {/* Description */}
+          <div className="space-y-2">
+            <Textarea
+              value={formData.description}
+              onChange={(e) => updateField('description', e.target.value)}
+              placeholder={t.descriptionPlaceholder}
+              rows={3}
+              className="resize-none"
+            />
+            <p className={cn(
+              "text-xs text-right",
+              wordsRemaining < 0 ? "text-destructive" : "text-muted-foreground"
+            )}>
+              {wordsRemaining >= 0 
+                ? `${wordsRemaining} ${t.wordsRemaining}`
+                : `${Math.abs(wordsRemaining)} ${t.wordsOver}`
+              }
+            </p>
           </div>
 
-          {/* Preview based on selection */}
-          {formData.imageSource === 'profile' && (businessData?.cover_url || businessData?.logo_url) && (
-            <div className="p-3 rounded-lg bg-muted/30 border">
-              <p className="text-xs text-muted-foreground mb-2">
-                {language === 'el' ? 'Προεπισκόπηση:' : 'Preview:'}
-              </p>
-              <img
-                src={(businessData.cover_url || businessData.logo_url) as string}
-                alt="Profile"
-                className="w-full max-w-[200px] h-auto rounded-lg border object-cover"
-                style={{ aspectRatio: '16/9' }}
-              />
+          {/* Image Source - Integrated into Description section */}
+          <div className="pt-4 border-t border-border/50 space-y-4">
+            <Label className="text-sm font-semibold">{t.offerImage}</Label>
+            
+            {/* Image Source Toggle */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => updateField('imageSource', 'profile')}
+                className={cn(
+                  "p-3 sm:p-4 rounded-xl border-2 transition-all text-left",
+                  formData.imageSource === 'profile'
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-xs sm:text-sm">{t.useProfileImage}</span>
+                </div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.profileImageDesc}</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateField('imageSource', 'custom')}
+                className={cn(
+                  "p-3 sm:p-4 rounded-xl border-2 transition-all text-left",
+                  formData.imageSource === 'custom'
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Upload className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-xs sm:text-sm">{t.useCustomImage}</span>
+                </div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.customImageDesc}</p>
+              </button>
             </div>
-          )}
 
-          {formData.imageSource === 'custom' && (
-            <ImageSourceCustomUpload
-              language={language}
-              onImageReady={(blob) => {
-                updateField('customImageBlob', blob);
-                if (blob) {
-                  setCustomImagePreview(URL.createObjectURL(blob));
-                } else {
-                  setCustomImagePreview(null);
-                }
-              }}
-              preview={customImagePreview}
-            />
-          )}
+            {/* Preview based on selection */}
+            {formData.imageSource === 'profile' && (businessData?.cover_url || businessData?.logo_url) && (
+              <div className="p-3 rounded-lg bg-muted/30 border">
+                <p className="text-xs text-muted-foreground mb-2">
+                  {language === 'el' ? 'Προεπισκόπηση:' : 'Preview:'}
+                </p>
+                <img
+                  src={(businessData.cover_url || businessData.logo_url) as string}
+                  alt="Profile"
+                  className="w-full max-w-[200px] h-auto rounded-lg border object-cover"
+                  style={{ aspectRatio: '16/9' }}
+                />
+              </div>
+            )}
+
+            {formData.imageSource === 'custom' && (
+              <ImageSourceCustomUpload
+                language={language}
+                onImageReady={(blob) => {
+                  updateField('customImageBlob', blob);
+                  if (blob) {
+                    setCustomImagePreview(URL.createObjectURL(blob));
+                  } else {
+                    setCustomImagePreview(null);
+                  }
+                }}
+                preview={customImagePreview}
+              />
+            )}
+          </div>
         </div>
       </SectionCard>
 

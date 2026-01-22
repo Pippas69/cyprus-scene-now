@@ -503,8 +503,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             <CardTitle>{businessT.basicInfo}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Images - Stacked on mobile/tablet, side-by-side on desktop */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Images - Always side-by-side on ALL devices */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
               <ImageUploadField
                 label={businessT.businessLogo}
                 currentImageUrl={currentLogoUrl}
