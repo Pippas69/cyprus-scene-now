@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReservationSlotManager } from './ReservationSlotManager';
 import { ReservationStaffControls } from './ReservationStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
-import { QRScanner } from '../QRScanner';
 import { Settings2, Power, List } from 'lucide-react';
 
 interface ReservationDashboardProps {
@@ -39,22 +38,9 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
-      {/* Header: title + QR scan on the same row (description below) */}
+      {/* Header */}
       <div className="min-w-0">
-        <div className="flex items-center justify-between gap-3 min-w-0">
-          <h1 className="text-2xl md:text-3xl font-bold truncate">{t.reservations}</h1>
-
-          {activeTab === 'list' ? (
-            <div className="shrink-0">
-              <QRScanner
-                businessId={businessId}
-                language={language}
-                onReservationVerified={() => setRefreshNonce((n) => n + 1)}
-              />
-            </div>
-          ) : null}
-        </div>
-
+        <h1 className="text-2xl md:text-3xl font-bold truncate">{t.reservations}</h1>
         <p className="text-muted-foreground mt-1 text-sm md:text-base">{t.description}</p>
       </div>
 
