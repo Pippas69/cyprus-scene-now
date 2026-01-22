@@ -66,7 +66,8 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       title: 'Ρυθμίσεις Διαθεσιμότητας',
       description: 'Ορίστε τα χρονικά slots και τη χωρητικότητα για τις κρατήσεις σας',
       enableReservations: 'Αποδοχή Κρατήσεων',
-      enableDescription: 'Επιτρέψτε κρατήσεις μέσω FOMO (προφίλ & προσφορές)',
+      enableDescription: 'Επιτρέψτε κρατήσεις μέσω ΦΟΜΟ',
+      enableDescriptionSub: '(Προφίλ & Προσφορές)',
       paused: 'Προσωρινή Παύση',
       pausedDescription: 'Οι κρατήσεις είναι προσωρινά κλειστές',
       timeSlots: 'Χρονικά Slots Κρατήσεων',
@@ -119,7 +120,8 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       title: 'Availability Settings',
       description: 'Set up your time slots and capacity for reservations',
       enableReservations: 'Accept Reservations',
-      enableDescription: 'Allow reservations via FOMO (profile & offers)',
+      enableDescription: 'Allow reservations via FOMO',
+      enableDescriptionSub: '(Profile & Offers)',
       paused: 'Temporarily Paused',
       pausedDescription: 'Reservations are temporarily closed',
       timeSlots: 'Reservation Time Slots',
@@ -394,26 +396,28 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Main Toggle */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="enable-reservations" className="text-base font-semibold">
-                  {t.enableReservations}
-                </Label>
-                {settings.accepts_direct_reservations && (
-                  <Badge variant="default" className="bg-green-500">
-                    {language === 'el' ? 'Ενεργό' : 'Active'}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{t.enableDescription}</p>
+        <CardContent className="pt-4 pb-4 sm:pt-6 sm:pb-6">
+          <div className="relative flex items-center gap-3">
+            {/* Badge top-right */}
+            {settings.accepts_direct_reservations && (
+              <Badge variant="default" className="absolute top-0 right-0 bg-green-500 text-[10px] sm:text-xs">
+                {language === 'el' ? 'Ενεργό' : 'Active'}
+              </Badge>
+            )}
+            
+            <div className="flex-1 min-w-0 pr-10 sm:pr-14">
+              <Label htmlFor="enable-reservations" className="text-[11px] sm:text-sm font-semibold whitespace-nowrap">
+                {t.enableReservations}
+              </Label>
+              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.enableDescription}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{t.enableDescriptionSub}</p>
             </div>
             <Switch
               id="enable-reservations"
+              className="flex-shrink-0"
               checked={settings.accepts_direct_reservations}
               onCheckedChange={async (checked) => {
                 setSettings((prev) => ({ ...prev, accepts_direct_reservations: checked }));
@@ -441,52 +445,50 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
               }}
             />
           </div>
-
-          {/* Pause toggle removed - now only in Staff Controls tab */}
         </CardContent>
       </Card>
 
       {settings.accepts_direct_reservations && (
         <>
-          {/* Policy Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Policy Info Cards - compact on mobile/tablet */}
+          <div className="grid grid-cols-1 gap-2 sm:gap-3">
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <div>
-                    <h4 className="font-medium text-green-800 dark:text-green-200">{t.instantConfirmation}</h4>
-                    <p className="text-xs text-green-700 dark:text-green-300 mt-1">{t.instantConfirmationDescription}</p>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-[11px] sm:text-sm text-green-800 dark:text-green-200">{t.instantConfirmation}</h4>
+                    <p className="text-[9px] sm:text-xs text-green-700 dark:text-green-300">{t.instantConfirmationDescription}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600 dark:text-orange-400" />
                   </div>
-                  <div>
-                    <h4 className="font-medium text-orange-800 dark:text-orange-200">{t.noShowPolicy}</h4>
-                    <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">{t.noShowPolicyDescription}</p>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-[11px] sm:text-sm text-orange-800 dark:text-orange-200">{t.noShowPolicy}</h4>
+                    <p className="text-[9px] sm:text-xs text-orange-700 dark:text-orange-300">{t.noShowPolicyDescription}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div>
-                    <h4 className="font-medium text-blue-800 dark:text-blue-200">{t.cancellationPolicy}</h4>
-                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">{t.cancellationPolicyDescription}</p>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-[11px] sm:text-sm text-blue-800 dark:text-blue-200">{t.cancellationPolicy}</h4>
+                    <p className="text-[9px] sm:text-xs text-blue-700 dark:text-blue-300">{t.cancellationPolicyDescription}</p>
                   </div>
                 </div>
               </CardContent>
@@ -495,12 +497,12 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
 
           {/* Time Slots */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base whitespace-nowrap">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                 {t.timeSlots}
               </CardTitle>
-              <CardDescription>{t.timeSlotsDescription}</CardDescription>
+              <CardDescription className="text-[10px] sm:text-xs">{t.timeSlotsDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {(!settings.reservation_time_slots || settings.reservation_time_slots.length === 0) && (
@@ -518,38 +520,38 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                 >
                   <Card className="border-2">
                     <CollapsibleTrigger asChild>
-                      <div className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <Clock className="h-5 w-5 text-primary" />
+                      <div className="p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                             </div>
-                            <div>
-                              <div className="font-semibold text-base">
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-sm sm:text-base whitespace-nowrap">
                                 {formatTimeRange(slot.timeFrom, slot.timeTo)}
                               </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="text-xs">
-                                  <Users className="h-3 w-3 mr-1" />
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 mt-0.5 sm:mt-1">
+                                <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
+                                  <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                                   {slot.capacity} {language === 'el' ? 'άτομα' : 'people'}
                                 </Badge>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
                                   {getDaysLabel(slot.days)}
                                 </span>
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                             {slot.days.length === 0 && (
-                              <Badge variant="destructive" className="text-xs">
-                                <AlertTriangle className="h-3 w-3 mr-1" />
+                              <Badge variant="destructive" className="text-[9px] sm:text-xs hidden sm:flex">
+                                <AlertTriangle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                                 {t.noDaysWarning}
                               </Badge>
                             )}
                             {expandedSlots[slot.id] ? (
-                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                              <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                             ) : (
-                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                              <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                             )}
                           </div>
                         </div>

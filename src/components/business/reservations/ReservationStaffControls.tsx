@@ -201,28 +201,30 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Global Pause Control */}
       <Card className={isPaused ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30' : 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30'}>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`h-12 w-12 rounded-full flex items-center justify-center ${isPaused ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
-                <Power className={`h-6 w-6 ${isPaused ? 'text-red-600' : 'text-green-600'}`} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-base font-semibold">{t.globalPause}</Label>
-                  <Badge variant={isPaused ? 'destructive' : 'default'} className={!isPaused ? 'bg-green-500' : ''}>
-                    {isPaused ? t.paused : t.active}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{t.globalPauseDescription}</p>
-              </div>
+        <CardContent className="pt-4 pb-4 sm:pt-6 sm:pb-6">
+          <div className="relative flex items-center gap-3 sm:gap-4">
+            {/* Badge top-right */}
+            <Badge 
+              variant={isPaused ? 'destructive' : 'default'} 
+              className={`absolute top-0 right-0 text-[10px] sm:text-xs ${!isPaused ? 'bg-green-500' : ''}`}
+            >
+              {isPaused ? t.paused : t.active}
+            </Badge>
+            
+            <div className={`h-9 w-9 sm:h-12 sm:w-12 rounded-full flex-shrink-0 flex items-center justify-center ${isPaused ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
+              <Power className={`h-4 w-4 sm:h-6 sm:w-6 ${isPaused ? 'text-red-600' : 'text-green-600'}`} />
+            </div>
+            <div className="flex-1 min-w-0 pr-12 sm:pr-16">
+              <Label className="text-[11px] sm:text-sm font-semibold whitespace-nowrap">{t.globalPause}</Label>
+              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.globalPauseDescription}</p>
             </div>
             <Switch
               checked={isPaused}
               onCheckedChange={handleGlobalPauseToggle}
+              className="flex-shrink-0"
             />
           </div>
         </CardContent>
@@ -230,24 +232,30 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
 
       {/* Date Selection & Slots */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                {t.slotStatus}
-                {isToday && (
-                  <Badge variant="outline" className="ml-2 bg-primary/10">
-                    {t.liveView}
-                  </Badge>
-                )}
-              </CardTitle>
-              <CardDescription>{t.description}</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              {t.refresh}
+        <CardHeader className="pb-3 sm:pb-4">
+          <div className="relative">
+            {/* Refresh button top-right */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh} 
+              disabled={refreshing}
+              className="absolute top-0 right-0 h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
+            >
+              <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline ml-1.5">{t.refresh}</span>
             </Button>
+            
+            <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base whitespace-nowrap pr-16 sm:pr-20">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span>{t.slotStatus}</span>
+              {isToday && (
+                <Badge variant="outline" className="ml-1 bg-primary/10 text-[9px] sm:text-xs px-1.5 py-0">
+                  {t.liveView}
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="text-[10px] sm:text-xs whitespace-nowrap mt-1">{t.description}</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -282,12 +290,12 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
 
           {/* Slots Grid */}
           {slots.length === 0 ? (
-            <div className="text-center py-8 bg-muted/50 rounded-lg">
-              <Clock className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-sm text-muted-foreground">{t.noSlots}</p>
+            <div className="text-center py-6 sm:py-8 bg-muted/50 rounded-lg">
+              <Clock className="h-8 w-8 sm:h-10 sm:w-10 mx-auto text-muted-foreground/50 mb-2" />
+              <p className="text-xs sm:text-sm text-muted-foreground">{t.noSlots}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4">
               {slots.map((slot) => {
                 const timeDisplay = slot.time_from && slot.time_to 
                   ? `${slot.time_from} - ${slot.time_to}`
@@ -296,7 +304,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
                 return (
                   <div
                     key={slot.slot_time}
-                    className={`relative rounded-xl border-2 transition-all shadow-sm overflow-hidden ${
+                    className={`relative rounded-lg sm:rounded-xl border-2 transition-all shadow-sm overflow-hidden ${
                       slot.is_closed
                         ? 'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-700'
                         : slot.available === 0
@@ -305,7 +313,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
                     }`}
                   >
                     {/* Header with time */}
-                    <div className={`px-4 py-3 ${
+                    <div className={`px-3 py-2 sm:px-4 sm:py-3 ${
                       slot.is_closed 
                         ? 'bg-red-100 dark:bg-red-900/50' 
                         : slot.available === 0
@@ -313,26 +321,26 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
                         : 'bg-green-100 dark:bg-green-900/50'
                     }`}>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Clock className={`h-5 w-5 ${
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <Clock className={`h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 ${
                             slot.is_closed 
                               ? 'text-red-600 dark:text-red-400' 
                               : slot.available === 0
                               ? 'text-amber-600 dark:text-amber-400'
                               : 'text-green-600 dark:text-green-400'
                           }`} />
-                          <span className="font-bold text-lg">{timeDisplay}</span>
+                          <span className="font-bold text-sm sm:text-lg whitespace-nowrap">{timeDisplay}</span>
                         </div>
                         {slot.is_closed ? (
-                          <Badge variant="destructive" className="text-xs font-semibold">
+                          <Badge variant="destructive" className="text-[9px] sm:text-xs font-semibold">
                             {t.closed}
                           </Badge>
                         ) : slot.available === 0 ? (
-                          <Badge variant="secondary" className="bg-amber-500 text-white text-xs font-semibold">
+                          <Badge variant="secondary" className="bg-amber-500 text-white text-[9px] sm:text-xs font-semibold">
                             Full
                           </Badge>
                         ) : (
-                          <Badge className="bg-green-500 text-white text-xs font-semibold">
+                          <Badge className="bg-green-500 text-white text-[9px] sm:text-xs font-semibold whitespace-nowrap">
                             {slot.available} {t.available}
                           </Badge>
                         )}
@@ -340,32 +348,32 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
                     </div>
 
                     {/* Stats */}
-                    <div className="p-4">
-                      <div className="grid grid-cols-3 gap-3 mb-4">
-                        <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/50">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
+                    <div className="p-3 sm:p-4">
+                      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
+                        <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg border border-border/50">
+                          <p className="text-[8px] sm:text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5 sm:mb-1 whitespace-nowrap">
                             {t.capacity}
                           </p>
-                          <p className="font-bold text-xl">{slot.capacity}</p>
+                          <p className="font-bold text-base sm:text-xl">{slot.capacity}</p>
                         </div>
-                        <div className="text-center p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
-                          <p className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium mb-1">
+                        <div className="text-center p-2 sm:p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                          <p className="text-[8px] sm:text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium mb-0.5 sm:mb-1 whitespace-nowrap">
                             {t.booked}
                           </p>
-                          <p className="font-bold text-xl text-amber-600 dark:text-amber-400">{slot.booked}</p>
+                          <p className="font-bold text-base sm:text-xl text-amber-600 dark:text-amber-400">{slot.booked}</p>
                         </div>
-                        <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
-                          <p className="text-[10px] uppercase tracking-wider text-green-600 dark:text-green-400 font-medium mb-1">
+                        <div className="text-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                          <p className="text-[8px] sm:text-[10px] uppercase tracking-wider text-green-600 dark:text-green-400 font-medium mb-0.5 sm:mb-1 whitespace-nowrap">
                             {t.available}
                           </p>
-                          <p className="font-bold text-xl text-green-600 dark:text-green-400">{slot.available}</p>
+                          <p className="font-bold text-base sm:text-xl text-green-600 dark:text-green-400">{slot.available}</p>
                         </div>
                       </div>
 
                       <Button
                         variant={slot.is_closed ? 'default' : 'outline'}
                         size="sm"
-                        className={`w-full font-semibold ${
+                        className={`w-full font-semibold text-xs sm:text-sm h-8 sm:h-9 ${
                           slot.is_closed 
                             ? 'bg-green-600 hover:bg-green-700 text-white' 
                             : 'border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/50'
@@ -374,15 +382,15 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
                         disabled={updatingSlot === slot.slot_time}
                       >
                         {updatingSlot === slot.slot_time ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                         ) : slot.is_closed ? (
                           <>
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                             {t.openSlot}
                           </>
                         ) : (
                           <>
-                            <XCircle className="h-4 w-4 mr-2" />
+                            <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                             {t.closeSlot}
                           </>
                         )}
