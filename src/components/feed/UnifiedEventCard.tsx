@@ -228,11 +228,11 @@ export const UnifiedEventCard = ({
       )}
     >
       <CardContent className="p-0 h-full flex flex-col">
-        {/* Image section - increased height for mobile (h-44 instead of h-40) */}
+        {/* Image section - increased height for mobile (h-48 instead of h-40) */}
         <Link
           to={`/event/${event.id}`}
           onClick={handleCardClick}
-          className="block relative h-44 sm:h-40 overflow-visible rounded-t-xl flex-shrink-0"
+          className="block relative h-48 sm:h-40 overflow-visible rounded-t-xl flex-shrink-0"
         >
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (

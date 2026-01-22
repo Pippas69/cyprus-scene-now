@@ -15,12 +15,12 @@ export const Logo = ({ size = "md", className }: LogoProps) => {
   return (
     <div
       className={cn(
-        "inline-flex items-center justify-center rounded-xl bg-gradient-ocean font-cinzel font-black tracking-tight text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-primary/20 hover:scale-[1.02] leading-none",
+        "inline-flex items-center justify-center rounded-xl bg-gradient-ocean font-cinzel font-black tracking-tight text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-primary/20 hover:scale-[1.02]",
         sizeClasses[size],
         className
       )}
     >
-      <span className="translate-y-[1px]">ΦΟΜΟ</span>
+      <span className="leading-none translate-y-[2px]">ΦΟΜΟ</span>
     </div>
   );
 };
