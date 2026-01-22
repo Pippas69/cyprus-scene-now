@@ -166,7 +166,7 @@ const OfferBoostDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
         <DialogHeader>
           <DialogTitle>
             {language === "el" ? "Προώθηση Προσφοράς" : "Boost Offer"}
@@ -244,32 +244,32 @@ const OfferBoostDialog = ({
 
               {/* Boost Tiers */}
               <div className="space-y-3">
-                <Label>{language === "el" ? "Επιλέξτε Tier" : "Select Tier"}</Label>
+                <Label className="text-xs md:text-sm">{language === "el" ? "Επιλέξτε Tier" : "Select Tier"}</Label>
                 <RadioGroup value={tier} onValueChange={(v: any) => setTier(v)}>
                   {Object.entries(tiers).map(([key, { dailyRate, hourlyRate, icon: Icon, quality, color }]) => (
                     <div
                       key={key}
                       className={cn(
-                        "flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all",
+                        "flex items-center space-x-2 md:space-x-3 p-3 md:p-4 border-2 rounded-lg cursor-pointer transition-all",
                         tier === key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50",
                       )}
                       onClick={() => setTier(key as any)}
                     >
                       <RadioGroupItem value={key} id={`offer-boost-${key}`} />
-                      <Icon className={cn("h-5 w-5", color)} />
-                      <div className="flex-1">
-                        <Label htmlFor={`offer-boost-${key}`} className="cursor-pointer font-semibold capitalize">
+                      <Icon className={cn("h-4 w-4 md:h-5 md:w-5 flex-shrink-0", color)} />
+                      <div className="flex-1 min-w-0">
+                        <Label htmlFor={`offer-boost-${key}`} className="cursor-pointer font-semibold capitalize text-xs md:text-sm">
                           {key}
                         </Label>
-                        <p className="text-sm text-muted-foreground">
-                          {language === "el" ? "Ποιότητα στόχευσης" : "Targeting Quality"}: {quality}%
+                        <p className="text-[10px] md:text-xs text-muted-foreground">
+                          {language === "el" ? "Ποιότητα" : "Quality"}: {quality}%
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold">
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-xs md:text-sm">
                           €{durationMode === "hourly" ? hourlyRate : dailyRate}/{durationMode === "hourly" 
                             ? (language === "el" ? "ώρα" : "hour") 
-                            : (language === "el" ? "ημέρα" : "day")}
+                            : (language === "el" ? "ημ" : "day")}
                         </p>
                       </div>
                     </div>
@@ -321,14 +321,20 @@ const OfferBoostDialog = ({
 
               {/* Daily Date Range */}
               {durationMode === "daily" && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
+                    <Label className="text-xs md:text-sm">
+                      <span className="lg:hidden flex flex-col">
+                        <span>{language === "el" ? "Ημ/νία" : "Start"}</span>
+                        <span>{language === "el" ? "Έναρξης" : "Date"}</span>
+                      </span>
+                      <span className="hidden lg:inline">{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</span>
+                    </Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {format(startDate, "PPP")}
+                        <Button variant="outline" className="w-full justify-start text-left text-xs md:text-sm">
+                          <CalendarIcon className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+                          {format(startDate, "PP")}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -343,12 +349,18 @@ const OfferBoostDialog = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label>{language === "el" ? "Ημερομηνία Λήξης" : "End Date"}</Label>
+                    <Label className="text-xs md:text-sm">
+                      <span className="lg:hidden flex flex-col">
+                        <span>{language === "el" ? "Ημ/νία" : "End"}</span>
+                        <span>{language === "el" ? "Λήξης" : "Date"}</span>
+                      </span>
+                      <span className="hidden lg:inline">{language === "el" ? "Ημερομηνία Λήξης" : "End Date"}</span>
+                    </Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {format(endDate, "PPP")}
+                        <Button variant="outline" className="w-full justify-start text-left text-xs md:text-sm">
+                          <CalendarIcon className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+                          {format(endDate, "PP")}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -365,38 +377,38 @@ const OfferBoostDialog = ({
               )}
 
               {/* Cost Summary */}
-              <div className="p-4 bg-muted rounded-lg space-y-2">
-                <div className="flex justify-between text-sm">
+              <div className="p-3 md:p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex justify-between text-xs md:text-sm">
                   <span>{language === "el" ? "Διάρκεια" : "Duration"}:</span>
                   <span className="font-semibold">
                     {durationMode === "hourly" 
                       ? `${durationHours} ${language === "el" ? "ώρες" : "hours"}`
-                      : `${days} ${language === "el" ? "ημέρες" : "days"}`
+                      : `${days} ${language === "el" ? "ημ." : "days"}`
                     }
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-xs md:text-sm">
                   <span>{durationMode === "hourly" 
-                    ? (language === "el" ? "Ωριαία Τιμή" : "Hourly Rate") 
-                    : (language === "el" ? "Ημερήσια Τιμή" : "Daily Rate")}:</span>
+                    ? (language === "el" ? "Τιμή/ώρα" : "Per Hour") 
+                    : (language === "el" ? "Τιμή/ημ." : "Per Day")}:</span>
                   <span className="font-semibold">
                     €{durationMode === "hourly" ? selectedTier.hourlyRate : selectedTier.dailyRate}
                   </span>
                 </div>
-                <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                  <span>{language === "el" ? "Συνολικό Κόστος" : "Total Cost"}:</span>
+                <div className="flex justify-between text-sm md:text-lg font-bold pt-2 border-t">
+                  <span>{language === "el" ? "Σύνολο" : "Total"}:</span>
                   <span>€{totalCost}</span>
                 </div>
 
                 {hasActiveSubscription && (
-                  <p className="text-xs text-muted-foreground pt-2">
+                  <p className="text-[10px] md:text-xs text-muted-foreground pt-2">
                     {canUseSubscriptionBudget
                       ? language === "el"
-                        ? "✓ Θα χρησιμοποιηθεί το υπόλοιπο budget της συνδρομής σας"
-                        : "✓ Will be deducted from your subscription budget"
+                        ? "✓ Θα χρησιμοποιηθεί το budget συνδρομής"
+                        : "✓ Will use subscription budget"
                       : language === "el"
-                        ? "⚠ Ανεπαρκές budget συνδρομής - θα χρεωθείτε μέσω Stripe"
-                        : "⚠ Insufficient subscription budget - will be charged via Stripe"}
+                        ? "⚠ Ανεπαρκές budget - χρέωση Stripe"
+                        : "⚠ Insufficient budget - Stripe charge"}
                   </p>
                 )}
               </div>

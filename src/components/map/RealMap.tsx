@@ -156,8 +156,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       container: mapContainer.current,
       style: MAPBOX_CONFIG.mapStyle,
       center: MAPBOX_CONFIG.defaultCenter,
-      zoom: MAPBOX_CONFIG.defaultZoom,
-      pitch: MAPBOX_CONFIG.defaultPitch,
+      zoom: 8, // Lower zoom to show full Cyprus
+      pitch: 0, // Flat view to show full map
       maxBounds: MAPBOX_CONFIG.maxBounds,
       minZoom: MAPBOX_CONFIG.minZoom,
     });
@@ -352,7 +352,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
   if (isTokenMissing) {
     return (
-      <div className="h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
+      <div className="h-[50vh] md:h-[60vh] lg:h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
         <div className="text-center space-y-2">
           <p className="text-muted-foreground">Mapbox token not configured</p>
         </div>
@@ -361,7 +361,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   }
 
   return (
-    <div className="relative w-full h-[70vh] rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20">
+    <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20">
       <div className="absolute top-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)]">
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
       </div>

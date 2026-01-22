@@ -21,10 +21,12 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
     el: {
       viewProfile: "Προφίλ",
       verified: "Επαληθευμένο",
+      directions: "Οδηγίες",
     },
     en: {
       viewProfile: "Profile",
       verified: "Verified",
+      directions: "Directions",
     },
   };
 
@@ -127,8 +129,9 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
             <ExternalLink size={14} className="mr-1.5" />
             {t.viewProfile}
           </Button>
-          <Button size="sm" variant="outline" onClick={handleDirections}>
-            <Navigation size={14} />
+          <Button size="sm" variant="outline" className="flex-1" onClick={handleDirections}>
+            <Navigation size={14} className="mr-1.5" />
+            {t.directions}
           </Button>
         </div>
       </div>

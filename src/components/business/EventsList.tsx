@@ -323,20 +323,20 @@ const EventsList = ({ businessId }: EventsListProps) => {
         <Button
           variant="outline"
           onClick={() => setScannerOpen(true)}
-          className="gap-2"
+          className="gap-1.5 h-8 md:h-9 lg:h-10 px-2 md:px-3"
         >
-          <ScanLine className="h-4 w-4" />
-          {t.scanner}
+          <ScanLine className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <span className="text-xs md:text-sm">{t.scanner}</span>
         </Button>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap md:flex-nowrap gap-1.5 md:gap-2 mb-6">
         <Button
           variant={activeFilter === 'all' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('all')}
-          className={activeFilter === 'all' ? 'bg-primary text-primary-foreground' : ''}
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 ${activeFilter === 'all' ? 'bg-primary text-primary-foreground' : ''}`}
         >
           {t.filterAll}
         </Button>
@@ -344,27 +344,27 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'ticket' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('ticket')}
-          className={activeFilter === 'ticket' ? 'bg-teal-600 text-white hover:bg-teal-700' : ''}
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 ${activeFilter === 'ticket' ? 'bg-teal-600 text-white hover:bg-teal-700' : ''}`}
         >
-          <Ticket className="h-3.5 w-3.5 mr-1.5" />
+          <Ticket className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1" />
           {t.filterTicket}
         </Button>
         <Button
           variant={activeFilter === 'reservation' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('reservation')}
-          className={activeFilter === 'reservation' ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 ${activeFilter === 'reservation' ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}
         >
-          <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />
+          <Grid3X3 className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1" />
           {t.filterReservation}
         </Button>
         <Button
           variant={activeFilter === 'free_entry' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('free_entry')}
-          className={activeFilter === 'free_entry' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90' : ''}
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 ${activeFilter === 'free_entry' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90' : ''}`}
         >
-          <Gift className="h-3.5 w-3.5 mr-1.5" />
+          <Gift className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1" />
           {t.filterFreeEntry}
         </Button>
       </div>
