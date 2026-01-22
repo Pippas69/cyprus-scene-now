@@ -302,13 +302,23 @@ const generateTips = (
   }
 };
 
-// Format time windows for display with language
+// Format time windows for display with language - returns array for responsive display
 const formatWindowsWithLanguage = (windows: TimeWindow[], language: 'el' | 'en'): string => {
   if (!windows || windows.length === 0) return '—';
   return windows
     .slice(0, 2)
     .map((w) => `${getDayName(w.dayIndex, language)} ${w.hours}`)
     .join(' / ');
+};
+
+// Format time windows for tablet/mobile - each on separate line
+const formatWindowsResponsive = (windows: TimeWindow[], language: 'el' | 'en'): { line1: string; line2: string } => {
+  if (!windows || windows.length === 0) return { line1: '—', line2: '' };
+  const formatted = windows.slice(0, 2).map((w) => `${getDayName(w.dayIndex, language)} ${w.hours}`);
+  return {
+    line1: formatted[0] || '—',
+    line2: formatted[1] || '',
+  };
 };
 
 // Metric row with click-to-dialog (same pattern as other Analytics tabs)
@@ -333,7 +343,17 @@ const MetricRow: React.FC<{
               </span>
             </span>
           </td>
-          <td className="text-right py-3 font-medium">{formatWindowsWithLanguage(windows, language)}</td>
+          <td className="text-right py-3 font-medium text-xs md:text-sm">
+            {/* Desktop: single line */}
+            <span className="hidden lg:inline">{formatWindowsWithLanguage(windows, language)}</span>
+            {/* Tablet/Mobile: each day on separate line */}
+            <span className="lg:hidden flex flex-col items-end">
+              <span>{formatWindowsResponsive(windows, language).line1}</span>
+              {formatWindowsResponsive(windows, language).line2 && (
+                <span>{formatWindowsResponsive(windows, language).line2}</span>
+              )}
+            </span>
+          </td>
         </tr>
       </DialogTrigger>
 
@@ -360,12 +380,12 @@ const TipsSection: React.FC<{ tip1: string; tip2: string }> = ({ tip1, tip2 }) =
   
   return (
     <div className="mt-4 pt-4 border-t space-y-2">
-      <div className="flex items-start gap-2 text-sm">
+      <div className="flex items-start gap-2 text-xs md:text-sm">
         <span className="text-primary font-medium">1.</span>
         <p className="text-foreground">{tip1}</p>
       </div>
       {tip2 && (
-        <div className="flex items-start gap-2 text-sm">
+        <div className="flex items-start gap-2 text-xs md:text-sm">
           <span className="text-primary font-medium">2.</span>
           <p className="text-foreground">{tip2}</p>
         </div>
@@ -400,8 +420,8 @@ const GuidanceTable: React.FC<{
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-2 font-medium text-muted-foreground">{t.metric}</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">{t.bestTimes}</th>
+                <th className="text-left py-2 font-medium text-muted-foreground text-xs md:text-sm">{t.metric}</th>
+                <th className="text-right py-2 font-medium text-muted-foreground text-[10px] md:text-xs lg:text-sm whitespace-nowrap">{t.bestTimes}</th>
               </tr>
             </thead>
             <tbody>
@@ -953,16 +973,23 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-background rounded-lg border">
-              <p className="text-sm text-muted-foreground mb-1">{t.publish}</p>
-              <p className="font-semibold">{getDayName(data.recommendedPlan.publish.dayIndex, language)} {data.recommendedPlan.publish.hours}</p>
+              <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1">
+                {/* Tablet/Mobile: Split Δημοσίευση / Προβολή */}
+                <span className="lg:hidden flex flex-col items-start">
+                  <span>{t.publish.split(' / ')[0]}</span>
+                  <span>{t.publish.split(' / ')[1]}</span>
+                </span>
+                <span className="hidden lg:inline">{t.publish}</span>
+              </p>
+              <p className="font-semibold text-xs md:text-sm lg:text-base">{getDayName(data.recommendedPlan.publish.dayIndex, language)} {data.recommendedPlan.publish.hours}</p>
             </div>
             <div className="p-4 bg-background rounded-lg border">
-              <p className="text-sm text-muted-foreground mb-1">{t.targetInteractions}</p>
-              <p className="font-semibold">{getDayName(data.recommendedPlan.interactions.dayIndex, language)} {data.recommendedPlan.interactions.hours}</p>
+              <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1 whitespace-nowrap">{t.targetInteractions}</p>
+              <p className="font-semibold text-xs md:text-sm lg:text-base">{getDayName(data.recommendedPlan.interactions.dayIndex, language)} {data.recommendedPlan.interactions.hours}</p>
             </div>
             <div className="p-4 bg-background rounded-lg border">
-              <p className="text-sm text-muted-foreground mb-1">{t.targetVisits}</p>
-              <p className="font-semibold">{getDayName(data.recommendedPlan.visits.dayIndex, language)} {data.recommendedPlan.visits.hours}</p>
+              <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1">{t.targetVisits}</p>
+              <p className="font-semibold text-xs md:text-sm lg:text-base">{getDayName(data.recommendedPlan.visits.dayIndex, language)} {data.recommendedPlan.visits.hours}</p>
             </div>
           </div>
           <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">

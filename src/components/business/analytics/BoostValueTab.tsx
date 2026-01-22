@@ -233,15 +233,15 @@ const ClickableMetricRow: React.FC<ClickableMetricRowProps> = ({
     <Dialog>
       <DialogTrigger asChild>
         <tr className="border-b cursor-pointer hover:bg-muted/50 transition-colors group">
-          <td className="py-3">
+          <td className="py-3 text-xs md:text-sm">
             <span className="flex items-center gap-1">
               {label}
               <Info className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
             </span>
           </td>
-          <td className="text-right py-3">{without.toLocaleString()}</td>
-          <td className="text-right py-3 font-semibold">{withBoost.toLocaleString()}</td>
-          <td className="text-right py-3"><ChangeIndicator change={change} /></td>
+          <td className="text-center py-3 text-xs md:text-sm">{without.toLocaleString()}</td>
+          <td className="text-center py-3 font-semibold text-xs md:text-sm">{withBoost.toLocaleString()}</td>
+          <td className="text-right py-3 text-xs md:text-sm"><ChangeIndicator change={change} /></td>
         </tr>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -325,10 +325,38 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-2 font-medium text-muted-foreground">{t.metric}</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">{withoutLabel}</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">{withLabel}</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">{t.change}</th>
+                <th className="text-left py-2 font-medium text-muted-foreground text-xs md:text-sm">{t.metric}</th>
+                <th className="text-center py-2 font-medium text-muted-foreground text-[10px] md:text-xs lg:text-sm px-1">
+                  {/* Mobile/Tablet: Stack "Μη/Χωρίς" on top */}
+                  {withoutLabel.includes('Μη') || withoutLabel.includes('Non') ? (
+                    <span className="flex flex-col items-center lg:block">
+                      <span className="lg:hidden">{withoutLabel.split(' ')[0]}</span>
+                      <span className="lg:hidden">{withoutLabel.split(' ').slice(1).join(' ')}</span>
+                      <span className="hidden lg:inline">{withoutLabel}</span>
+                    </span>
+                  ) : withoutLabel.includes('Χωρίς') || withoutLabel.includes('Without') ? (
+                    <span className="flex flex-col items-center lg:block">
+                      <span className="lg:hidden">{withoutLabel.split(' ')[0]}</span>
+                      <span className="lg:hidden">{withoutLabel.split(' ').slice(1).join(' ')}</span>
+                      <span className="hidden lg:inline">{withoutLabel}</span>
+                    </span>
+                  ) : (
+                    withoutLabel
+                  )}
+                </th>
+                <th className="text-center py-2 font-medium text-muted-foreground text-[10px] md:text-xs lg:text-sm px-1">
+                  {/* Mobile/Tablet: Stack "Με" on top for consistency */}
+                  {withLabel.includes('Με ') || withLabel.includes('With ') ? (
+                    <span className="flex flex-col items-center lg:block">
+                      <span className="lg:hidden">{withLabel.split(' ')[0]}</span>
+                      <span className="lg:hidden">{withLabel.split(' ').slice(1).join(' ')}</span>
+                      <span className="hidden lg:inline">{withLabel}</span>
+                    </span>
+                  ) : (
+                    withLabel
+                  )}
+                </th>
+                <th className="text-right py-2 font-medium text-muted-foreground text-[10px] md:text-xs lg:text-sm">{t.change}</th>
               </tr>
             </thead>
             <tbody>
@@ -365,20 +393,20 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({
 
         {/* Tips */}
         <div className="border-t pt-4 space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs md:text-sm font-medium text-muted-foreground">
             <Lightbulb className="h-4 w-4" />
             {t.tips}
           </div>
           {hasData ? (
             <div className="space-y-2">
               {tips.map((tip, index) => (
-                <p key={index} className="text-sm text-muted-foreground pl-6">
+                <p key={index} className="text-xs md:text-sm text-muted-foreground pl-6">
                   {index + 1}. {tip}
                 </p>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground italic pl-6">{t.noData}</p>
+            <p className="text-xs md:text-sm text-muted-foreground italic pl-6">{t.noData}</p>
           )}
         </div>
       </CardContent>
