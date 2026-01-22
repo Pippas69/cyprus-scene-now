@@ -15,8 +15,8 @@ const textOffsetClasses = {
   // Mobile is already visually correct.
   sm: "",
   // On tablet/desktop, Cinzel's metrics render a touch high; nudge down slightly.
-  md: "relative top-[0.11em] md:top-[0.12em]",
-  lg: "relative top-[0.12em]",
+  md: "translate-y-[2px]",
+  lg: "translate-y-[3px]",
 } as const;
 
 export const Logo = ({ size = "md", className }: LogoProps) => {
