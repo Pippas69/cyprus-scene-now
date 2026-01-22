@@ -59,6 +59,7 @@ const EventBoostDialog = ({
       dailyRate: 35, 
       hourlyRate: 7, 
       hourlyRateCents: 700, 
+      dailyRateCents: 3500,
       icon: Target, 
       quality: 70, 
       color: "text-purple-500" 
@@ -66,7 +67,8 @@ const EventBoostDialog = ({
     premium: { 
       dailyRate: 50, 
       hourlyRate: 10, 
-      hourlyRateCents: 1000, 
+      hourlyRateCents: 1000,
+      dailyRateCents: 5000, 
       icon: Rocket, 
       quality: 100, 
       color: "text-rose-500" 
@@ -270,10 +272,10 @@ const EventBoostDialog = ({
                       )}
                       onClick={() => setTier(key as any)}
                     >
-                      <RadioGroupItem value={key} id={key} />
+                      <RadioGroupItem value={key} id={`event-boost-${key}`} />
                       <Icon className={cn("h-4 w-4 md:h-5 md:w-5 flex-shrink-0", color)} />
                       <div className="flex-1 min-w-0">
-                        <Label htmlFor={key} className="cursor-pointer font-semibold capitalize text-xs md:text-sm">
+                        <Label htmlFor={`event-boost-${key}`} className="cursor-pointer font-semibold capitalize text-xs md:text-sm">
                           {key}
                         </Label>
                         <p className="text-[10px] md:text-xs text-muted-foreground">
@@ -429,16 +431,25 @@ const EventBoostDialog = ({
                   onClick={() => onOpenChange(false)}
                   disabled={isSubmitting}
                 >
-                  {language === "el" ? "Ακύρωση" : "Cancel"}
+                  {language === "el" ? "Αργότερα" : "Later"}
                 </Button>
-                <Button 
-                  type="button" 
-                  className="flex-1" 
-                  onClick={handleBoost} 
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={handleBoost}
                   disabled={isSubmitting || (durationMode === "daily" && days < 1)}
                 >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {language === "el" ? "Προώθηση Εκδήλωσης" : "Boost Event"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {language === "el" ? "Επεξεργασία..." : "Processing..."}
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="mr-2 h-4 w-4" />
+                      {language === "el" ? "Προώθηση" : "Boost"}
+                    </>
+                  )}
                 </Button>
               </div>
             </>

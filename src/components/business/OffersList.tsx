@@ -245,13 +245,13 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header with scanners */}
-      <div className="flex items-center justify-between gap-2 md:gap-4">
-        <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{t.title}</h1>
-        <div className="flex items-center gap-1 md:gap-2">
-          <StudentDiscountScanner businessId={businessId} language={language} />
-          <OfferQRScanner businessId={businessId} language={language} />
-        </div>
+      {/* Header */}
+      <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{t.title}</h1>
+      
+      {/* Scanners row - below title */}
+      <div className="flex items-center gap-2">
+        <StudentDiscountScanner businessId={businessId} language={language} />
+        <OfferQRScanner businessId={businessId} language={language} />
       </div>
       
       {/* Student Discount Stats */}
@@ -298,10 +298,10 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   </div>
                 </div>
 
-                {/* Right side actions */}
-                <div className="flex flex-col items-end gap-1">
-                  {/* Top row: Boost + Edit */}
-                  <div className="flex gap-0.5 md:gap-1">
+                {/* Right side actions - aligned in rows */}
+                <div className="flex flex-col items-end gap-1.5 md:gap-2">
+                  {/* Top row: Boost + Edit icons */}
+                  <div className="flex items-center gap-0.5 md:gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -321,7 +321,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                       <Pencil className="h-3 w-3 md:h-4 md:w-4" />
                     </Button>
                   </div>
-                  {/* Bottom row: Deactivate + Delete */}
+                  {/* Bottom row: Deactivate + Delete - aligned */}
                   <div className="flex items-center gap-0.5 md:gap-1">
                     <Button
                       variant="outline"
