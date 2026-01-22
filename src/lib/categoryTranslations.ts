@@ -45,12 +45,25 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'entertainment': { el: 'Ψυχαγωγία', en: 'Entertainment' },
   'concert': { el: 'Συναυλία', en: 'Concert' },
   
-  // Greek values (for backward compatibility)
+  // Greek values (for backward compatibility with database values)
   'νυχτερινή ζωή': { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
+  'νυχτερινή διασκέδαση': { el: 'Νυχτερινή Διασκέδαση', en: 'Nightlife' },
+  'νυχτερινή διασκέδαση & live music': { el: 'Νυχτερινή Διασκέδαση & Live Music', en: 'Nightlife & Live Music' },
   'φαγητό & ποτό': { el: 'Φαγητό & Ποτό', en: 'Food & Drinks' },
   'καφέ': { el: 'Καφέ', en: 'Cafe' },
   'τέχνη': { el: 'Τέχνη', en: 'Art' },
   'μουσική': { el: 'Μουσική', en: 'Music' },
+  'ζωντανή μουσική': { el: 'Ζωντανή Μουσική', en: 'Live Music' },
+  'εστίαση': { el: 'Εστίαση', en: 'Dining' },
+  'καφετέριες & εστιατόρια': { el: 'Καφετέριες & Εστιατόρια', en: 'Cafes & Restaurants' },
+  'τέχνη & πολιτισμός': { el: 'Τέχνη & Πολιτισμός', en: 'Art & Culture' },
+  'fitness & wellness': { el: 'Fitness & Wellness', en: 'Fitness & Wellness' },
+  'οικογένεια & κοινότητα': { el: 'Οικογένεια & Κοινότητα', en: 'Family & Community' },
+  'επιχειρηματικότητα & networking': { el: 'Επιχειρηματικότητα & Networking', en: 'Business & Networking' },
+  'εξωτερικές δραστηριότητες': { el: 'Εξωτερικές Δραστηριότητες', en: 'Outdoor Activities' },
+  'αγορές & lifestyle': { el: 'Αγορές & Lifestyle', en: 'Shopping & Lifestyle' },
+  'παραλία/καλοκαίρι': { el: 'Παραλία/Καλοκαίρι', en: 'Beach/Summer' },
+  'gay': { el: 'Gay', en: 'Gay' },
 };
 
 export function getCategoryLabel(category: string | null | undefined, language: Language): string {
