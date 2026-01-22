@@ -8,7 +8,6 @@ import { Trash2, Ticket, Calendar, Sparkles, Rocket, Pencil } from "lucide-react
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { StudentDiscountStats } from "./StudentDiscountStats";
-import { StudentDiscountStats } from "./StudentDiscountStats";
 import OfferBoostDialog from "./OfferBoostDialog";
 import OfferEditDialog from "./OfferEditDialog";
 
@@ -247,11 +246,6 @@ const OffersList = ({ businessId }: OffersListProps) => {
       {/* Header */}
       <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{t.title}</h1>
       
-      {/* Scanners row - below title */}
-      <div className="flex items-center gap-2">
-        <StudentDiscountScanner businessId={businessId} language={language} />
-        <OfferQRScanner businessId={businessId} language={language} />
-      </div>
       
       {/* Student Discount Stats */}
       <StudentDiscountStats businessId={businessId} language={language} />
