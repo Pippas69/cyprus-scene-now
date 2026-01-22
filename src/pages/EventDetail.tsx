@@ -397,7 +397,7 @@ export default function EventDetail() {
         <RippleButton
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-4 gap-2"
+          className="mb-4 gap-2 relative z-20"
         >
           <ArrowLeft className="h-4 w-4" />
           {text.backToEvents}
