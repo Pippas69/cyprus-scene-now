@@ -209,12 +209,12 @@ const BusinessProfile = () => {
       if (eventsError) throw eventsError;
       setEvents(eventsData || []);
 
-      // Fetch offers
+      // Fetch offers - include full business details for OfferPurchaseDialog
       const { data: offersData, error: offersError } = await supabase
         .from("discounts")
         .select(`
           *,
-          businesses!inner(name, logo_url, city)
+          businesses!inner(name, logo_url, city, cover_url, accepts_direct_reservations, reservation_time_slots, reservation_days)
         `)
         .eq("business_id", businessId)
         .eq("active", true)
