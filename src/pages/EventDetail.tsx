@@ -36,6 +36,7 @@ import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
 import { useTicketTiers } from '@/hooks/useTicketTiers';
 import { ErrorState } from '@/components/ErrorState';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
+import { translateCity } from '@/lib/cityTranslations';
 
 // Staggered animation variants for similar events
 const containerVariants = {
@@ -575,7 +576,7 @@ export default function EventDetail() {
                         )}
                       </div>
                       <p className="text-[10px] text-muted-foreground truncate">
-                        {event.businesses.city}
+                        {translateCity(event.businesses.city, language)}
                       </p>
                     </div>
                   </Link>

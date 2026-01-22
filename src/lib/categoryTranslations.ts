@@ -63,7 +63,15 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'εξωτερικές δραστηριότητες': { el: 'Εξωτερικές Δραστηριότητες', en: 'Outdoor Activities' },
   'αγορές & lifestyle': { el: 'Αγορές & Lifestyle', en: 'Shopping & Lifestyle' },
   'παραλία/καλοκαίρι': { el: 'Παραλία/Καλοκαίρι', en: 'Beach/Summer' },
+  'παραλία / καλοκαίρι': { el: 'Παραλία / Καλοκαίρι', en: 'Beach / Summer' },
   'gay': { el: 'Gay', en: 'Gay' },
+  // Mixed language categories from database
+  'clubs & παραλία / καλοκαίρι': { el: 'Clubs & Παραλία / Καλοκαίρι', en: 'Clubs & Beach / Summer' },
+  'clubs & παραλία/καλοκαίρι': { el: 'Clubs & Παραλία/Καλοκαίρι', en: 'Clubs & Beach/Summer' },
+  'bars & νυχτερινή διασκέδαση': { el: 'Bars & Νυχτερινή Διασκέδαση', en: 'Bars & Nightlife' },
+  'clubs & νυχτερινή διασκέδαση': { el: 'Clubs & Νυχτερινή Διασκέδαση', en: 'Clubs & Nightlife' },
+  'εστίαση & καφέ': { el: 'Εστίαση & Καφέ', en: 'Dining & Cafe' },
+  'nightlife & bars': { el: 'Νυχτερινή Διασκέδαση & Bars', en: 'Nightlife & Bars' },
 };
 
 export function getCategoryLabel(category: string | null | undefined, language: Language): string {

@@ -612,7 +612,10 @@ const OfferBoostMetricsSection: React.FC<{
         <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg text-sm">
           <TrendingUp className="h-4 w-4 text-primary" />
           <span>
-            Με περίπου <strong>{formatCurrency(Math.round(boostSpentCents / totalVisits))}</strong> σε boost αποκτήθηκε <strong>1</strong> επίσκεψη.
+            {language === 'el' 
+              ? <>Με περίπου <strong>{formatCurrency(Math.round(boostSpentCents / totalVisits))}</strong> σε boost αποκτήθηκε <strong>1</strong> επίσκεψη.</>
+              : <>With about <strong>{formatCurrency(Math.round(boostSpentCents / totalVisits))}</strong> in boost, <strong>1</strong> visit was acquired.</>
+            }
           </span>
         </div>
       )}
