@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar } from 'lucide-react';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { Skeleton } from '@/components/ui/skeleton';
+import { translateCity } from '@/lib/cityTranslations';
 
 interface PublicUserCardProps {
   userId: string;
@@ -69,7 +70,7 @@ export const PublicUserCard = ({ userId, showDetails = true }: PublicUserCardPro
                 {profile.city && (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <MapPin className="h-3 w-3" />
-                    <span>{profile.city}{profile.town && `, ${profile.town}`}</span>
+                    <span>{translateCity(profile.city, 'en')}{profile.town && `, ${translateCity(profile.town, 'en')}`}</span>
                   </div>
                 )}
                 

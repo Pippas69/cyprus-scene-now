@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Users, Heart, CheckCircle, Radio } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { translateCity } from '@/lib/cityTranslations';
 
 interface EventAttendeesProps {
   eventId: string;
@@ -129,7 +130,7 @@ const AttendeeItem = ({ attendee }: { attendee: any }) => {
         <p className="font-medium text-sm truncate">{displayName}</p>
         {attendee.city && (
           <p className="text-xs text-muted-foreground truncate">
-            {attendee.city}{attendee.town && `, ${attendee.town}`}
+            {translateCity(attendee.city, 'en')}{attendee.town && `, ${translateCity(attendee.town, 'en')}`}
           </p>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { MapPin } from 'lucide-react';
+import { translateCity } from '@/lib/cityTranslations';
 
 interface ShareableBusinessCardProps {
   business: {
@@ -16,7 +17,7 @@ interface ShareableBusinessCardProps {
 
 export const ShareableBusinessCard = forwardRef<HTMLDivElement, ShareableBusinessCardProps>(
   ({ business, variant, language }, ref) => {
-    const location = [business.city, business.address].filter(Boolean).join(' • ');
+    const location = [translateCity(business.city, language), business.address].filter(Boolean).join(' • ');
 
     if (variant === 'story') {
       return (

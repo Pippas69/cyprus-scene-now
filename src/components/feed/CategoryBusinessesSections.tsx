@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/businessRanking";
+import { translateCity } from "@/lib/cityTranslations";
 
 type CategoryKey = "nightlife" | "clubs" | "dining" | "beach";
 
@@ -243,7 +244,7 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
                       {business.name}
                     </span>
 
-                    <span className="text-[10px] text-muted-foreground">{business.city}</span>
+                    <span className="text-[10px] text-muted-foreground">{translateCity(business.city, language)}</span>
 
                     {business.category?.[0] && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">

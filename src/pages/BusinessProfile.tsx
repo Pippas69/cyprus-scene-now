@@ -20,6 +20,7 @@ import { DirectReservationDialog } from "@/components/business/DirectReservation
 import { StudentDiscountButton } from "@/components/user/StudentDiscountButton";
 import { ShareProfileDialog } from "@/components/sharing/ShareProfileDialog";
 import { useLanguage } from "@/hooks/useLanguage";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface Business {
   id: string;
@@ -472,7 +473,7 @@ const BusinessProfile = () => {
               <CardContent className="flex flex-col items-center text-center p-2 sm:p-4">
                 <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-0.5 sm:mb-1" />
                 <p className="text-[10px] sm:text-xs text-muted-foreground">{t.city}</p>
-                <p className="font-medium text-xs sm:text-sm truncate max-w-full">{business.city}</p>
+                <p className="font-medium text-xs sm:text-sm truncate max-w-full">{translateCity(business.city, language)}</p>
               </CardContent>
             </Card>
           </motion.div>

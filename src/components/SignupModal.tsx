@@ -19,13 +19,12 @@ import { getMainCategories } from "@/lib/unifiedCategories";
 import { CYPRUS_UNIVERSITIES, isValidUniversityEmail } from "@/lib/cyprusUniversities";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getCityOptions, cyprusCities } from "@/lib/cityTranslations";
 
 interface SignupModalProps {
   onClose: () => void;
   language: "el" | "en";
 }
-
-const towns = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 
 const createSignupSchema = (language: "el" | "en") => {
   const vt = validationTranslations[language];
@@ -398,9 +397,9 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
                   <SelectValue placeholder={t.townPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
-                  {towns.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
+                  {getCityOptions(language).map((city) => (
+                    <SelectItem key={city.value} value={city.value}>
+                      {city.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

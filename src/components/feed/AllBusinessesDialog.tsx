@@ -17,6 +17,7 @@ import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/businessRanking";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface Business {
   id: string;
@@ -260,7 +261,7 @@ export const AllBusinessesDialog = ({
                         {business.name}
                       </h4>
                       <p className="text-xs text-muted-foreground truncate">
-                        {business.city}
+                        {translateCity(business.city, language)}
                         {business.description && ` • ${business.description.substring(0, 50)}...`}
                       </p>
                     </div>
