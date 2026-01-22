@@ -55,7 +55,7 @@ All colors MUST be HSL.
 
     /* Map Plan Pins (HSL) */
     --plan-basic: 200 90% 48%; /* vivid blue-cyan */
-    --plan-pro: 270 70% 58%; /* premium purple */
+    --plan-pro: 12 90% 60%; /* coral - matches Pro subscription branding */
     --plan-elite: 45 95% 55%; /* premium gold */
     
     /* Mediterranean Gradients */
