@@ -981,7 +981,11 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
                 </span>
                 <span className="hidden lg:inline">{t.publish}</span>
               </p>
-              <p className="font-semibold text-xs md:text-sm lg:text-base whitespace-nowrap">{getDayName(data.recommendedPlan.publish.dayIndex, language)} {data.recommendedPlan.publish.hours}</p>
+              <div className="font-semibold text-xs md:text-sm lg:text-base flex flex-row md:flex-col lg:flex-row gap-0 md:gap-0 lg:gap-1">
+                <span className="whitespace-nowrap">{getDayName(data.recommendedPlan.publish.dayIndex, language)}</span>
+                <span className="hidden md:hidden lg:inline">&nbsp;</span>
+                <span className="whitespace-nowrap">{data.recommendedPlan.publish.hours}</span>
+              </div>
             </div>
             <div className="p-4 bg-background rounded-lg border">
               <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1">
