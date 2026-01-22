@@ -344,7 +344,60 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
           ))}
         </div>
       ) : (
-        <div className="rounded-md border w-full max-w-full overflow-x-auto">
+        /* Tablet uses mobile card layout */
+        <div className="space-y-3 lg:hidden">
+          {filteredReservations.map((reservation) => (
+            <Card key={reservation.id} className="min-w-0">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start gap-3 min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
+                      {getTypeBadge(reservation)}
+                    </div>
+                    {reservation.profiles?.email && (
+                      <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
+                    )}
+                  </div>
+                  {getStatusBadge(reservation)}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">{reservation.party_size} {t.people}</span>
+                  </div>
+                  {reservation.preferred_time && (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">
+                        {format(new Date(reservation.preferred_time), 'MMM dd, HH:mm', { locale: language === 'el' ? el : enUS })}
+                      </span>
+                    </div>
+                  )}
+                  {reservation.phone_number && (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">{reservation.phone_number}</span>
+                    </div>
+                  )}
+                  {reservation.confirmation_code && (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <QrCode className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="font-mono truncate">{reservation.confirmation_code}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      
+      {/* Desktop table - only on lg+ */}
+      {filteredReservations.length > 0 && (
+        <div className="rounded-md border w-full max-w-full overflow-x-auto hidden lg:block">
           <Table className="w-full min-w-[980px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
@@ -405,8 +458,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
               ))}
             </TableBody>
           </Table>
-        </div>
-      )}
+          </div>
+        )}
+      
 
     </div>
   );
