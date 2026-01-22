@@ -128,21 +128,22 @@ export const ImageUploadField = ({
   // Preview classes - larger previews
   const getPreviewClasses = () => {
     if (isSquare) {
-      return "w-24 h-24 md:w-28 md:h-28";
+      return "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28";
     }
-    // Cover images - wider preview
-    return "w-full max-w-[260px] h-[100px] md:h-[120px]";
+    // Cover images - adjusted to leave room for Feed preview
+    return "w-[100px] h-[80px] sm:w-[140px] sm:h-[90px] lg:w-[200px] lg:h-[110px]";
   };
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
+    <div className="space-y-1.5">
+      <Label className="text-xs sm:text-sm font-medium">{label}</Label>
       
-      <div className="flex flex-col gap-3">
-        {/* Image Preview */}
-        {displayImage ? (
-          <div className="space-y-3">
-            <div className="relative inline-block">
+      <div className="flex flex-col gap-2">
+        {/* Main content row - image preview + feed preview side by side */}
+        <div className="flex items-start gap-2">
+          {/* Image Preview */}
+          {displayImage ? (
+            <div className="relative flex-shrink-0">
               <img
                 src={displayImage}
                 alt={label}
@@ -152,68 +153,57 @@ export const ImageUploadField = ({
                 )}
                 style={{ aspectRatio }}
               />
-              <div className="absolute top-1 right-1 flex gap-1">
+              <div className="absolute top-0.5 right-0.5 flex gap-0.5">
                 {enableCrop && (
                   <Button
                     type="button"
                     variant="secondary"
                     size="icon"
-                    className="h-6 w-6 rounded-full bg-background/80 backdrop-blur-sm"
+                    className="h-5 w-5 rounded-full bg-background/80 backdrop-blur-sm"
                     onClick={handleCropExisting}
                     title={t.cropImage}
                   >
-                    <Crop className="h-3 w-3" />
+                    <Crop className="h-2.5 w-2.5" />
                   </Button>
                 )}
                 <Button
                   type="button"
                   variant="destructive"
                   size="icon"
-                  className="h-6 w-6 rounded-full"
+                  className="h-5 w-5 rounded-full"
                   onClick={handleRemove}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-2.5 w-2.5" />
                 </Button>
               </div>
             </div>
+          ) : (
+            <div 
+              className={cn(
+                "border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors flex-shrink-0",
+                isSquare ? "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28" : "w-[100px] h-[80px] sm:w-[140px] sm:h-[90px] lg:w-[200px] lg:h-[110px]"
+              )}
+              onClick={() => inputRef.current?.click()}
+            >
+              <ImageIcon className="h-5 w-5 text-muted-foreground mb-0.5" />
+              <span className="text-[9px] text-muted-foreground">{t.selectFile}</span>
+            </div>
+          )}
 
-            {/* Context Previews for Cover Images - Only Feed and Profile */}
-            {showContextPreviews && isCover && (
-              <div className="flex flex-wrap gap-3 pt-2 border-t border-border/50">
-                {/* Feed Preview (1:1 square) */}
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground mb-0.5">{t.feedPreview}</p>
-                  <div 
-                    className="w-12 h-12 rounded-md border overflow-hidden bg-cover bg-center"
-                    style={{ backgroundImage: `url(${displayImage})` }}
-                  />
-                </div>
-                {/* Profile Hero Preview */}
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground mb-0.5">{t.profilePreview}</p>
-                  <div 
-                    className="w-20 h-12 rounded-md border overflow-hidden bg-cover bg-center"
-                    style={{ backgroundImage: `url(${displayImage})` }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div 
-            className={cn(
-              "border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors",
-              isSquare ? "w-24 h-24 md:w-28 md:h-28" : "w-full max-w-[260px] h-[100px] md:h-[120px]"
-            )}
-            onClick={() => inputRef.current?.click()}
-          >
-            <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
-            <span className="text-[10px] text-muted-foreground">{t.selectFile}</span>
-          </div>
-        )}
+          {/* Feed Preview - only for Cover images, positioned to the right */}
+          {showContextPreviews && isCover && displayImage && (
+            <div className="text-center flex-shrink-0">
+              <p className="text-[8px] sm:text-[9px] text-muted-foreground mb-0.5">{t.feedPreview}</p>
+              <div 
+                className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-md border overflow-hidden bg-cover bg-center"
+                style={{ backgroundImage: `url(${displayImage})` }}
+              />
+            </div>
+          )}
+        </div>
 
-        {/* Upload Button & Info - Compact */}
-        <div className="flex items-center gap-2">
+        {/* Upload Button & Info - Compact and aligned */}
+        <div className="flex items-center gap-1.5">
           <input
             ref={inputRef}
             type="file"
@@ -226,13 +216,13 @@ export const ImageUploadField = ({
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-[11px]"
+            className="h-6 px-1.5 text-[10px] sm:h-7 sm:px-2 sm:text-[11px]"
             onClick={() => inputRef.current?.click()}
           >
-            <Upload className="mr-1 h-3 w-3" />
+            <Upload className="mr-0.5 h-2.5 w-2.5 sm:mr-1 sm:h-3 sm:w-3" />
             {t.selectFile}
           </Button>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[9px] sm:text-[10px] text-muted-foreground whitespace-nowrap">
             {t.maxSize}: {maxSizeMB}MB
           </span>
         </div>
