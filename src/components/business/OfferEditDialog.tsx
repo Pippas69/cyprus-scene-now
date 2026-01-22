@@ -6,10 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Clock, Calendar, Check, Percent, Users } from "lucide-react";
+import { Loader2, Clock, Calendar, Check, Percent, Users, Image as ImageIcon } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
+import { ImageUploadField } from "./ImageUploadField";
+import { ImageCropDialog } from "./ImageCropDialog";
+import { compressImage } from "@/lib/imageCompression";
 import {
   Dialog,
   DialogContent,
@@ -75,6 +78,7 @@ const translations = {
     editOffer: "Επεξεργασία Προσφοράς",
     step1: "1. Τίτλος Προσφοράς",
     step2: "2. Περιγραφή Προσφοράς",
+    step2b: "2β. Εικόνα Προσφοράς",
     step3: "3. Εφαρμογή Προσφοράς",
     step4: "4. Έκπτωση / Όφελος",
     step5: "5. Πότε Ισχύει η Έκπτωση",
@@ -125,11 +129,14 @@ const translations = {
     offerUpdateFailed: "Αποτυχία ενημέρωσης προσφοράς",
     cancel: "Ακύρωση",
     loading: "Φόρτωση...",
+    offerImage: "Εικόνα Προσφοράς",
+    currentImage: "Τρέχουσα εικόνα",
   },
   en: {
     editOffer: "Edit Offer",
     step1: "1. Offer Title",
     step2: "2. Offer Description",
+    step2b: "2b. Offer Image",
     step3: "3. Offer Category",
     step4: "4. Discount / Benefit",
     step5: "5. When Discount Applies",
@@ -180,6 +187,8 @@ const translations = {
     offerUpdateFailed: "Failed to update offer",
     cancel: "Cancel",
     loading: "Loading...",
+    offerImage: "Offer Image",
+    currentImage: "Current image",
   },
 };
 
@@ -193,6 +202,11 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customImage, setCustomImage] = useState<File | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [tempImageSrc, setTempImageSrc] = useState<string>("");
+  const [tempImageFile, setTempImageFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -221,11 +235,31 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
     }
   }, [open, offer]);
 
-  const loadOfferData = () => {
+  // Reset image states when dialog opens
+  useEffect(() => {
+    if (open && offer) {
+      setCustomImage(null);
+      setExistingImageUrl(null);
+      setCropDialogOpen(false);
+      setTempImageSrc("");
+      setTempImageFile(null);
+    }
+  }, [open, offer]);
+
+  const loadOfferData = async () => {
     setIsLoading(true);
     try {
       const allDays = !offer.valid_days || offer.valid_days.length === 7;
       const allDay = !offer.valid_start_time || (offer.valid_start_time === '00:00' && offer.valid_end_time === '23:59');
+      
+      // Fetch business cover image as fallback
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('cover_url')
+        .eq('id', offer.business_id)
+        .single();
+      
+      setExistingImageUrl(business?.cover_url || null);
       
       setFormData({
         title: offer.title || '',
@@ -250,6 +284,29 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFileSelect = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setTempImageSrc(reader.result as string);
+      setTempImageFile(file);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    const croppedFile = new File(
+      [croppedBlob],
+      tempImageFile?.name || "cropped-image.jpg",
+      { type: "image/jpeg" }
+    );
+    setCustomImage(croppedFile);
+    setCropDialogOpen(false);
+    setTempImageSrc("");
+    setTempImageFile(null);
   };
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
@@ -323,42 +380,44 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
   if (!open) return null;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[calc(100%-1rem)] sm:w-full mx-auto p-3 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{t.editOffer}</DialogTitle>
+          <DialogTitle className="text-sm sm:text-lg whitespace-nowrap">{t.editOffer}</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">{t.loading}</span>
+            <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary" />
+            <span className="ml-2 text-sm sm:text-base">{t.loading}</span>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Section 1: Title */}
-            <div className="space-y-2">
-              <Label className="font-semibold">{t.step1}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step1}</Label>
               <Input
                 value={formData.title}
                 onChange={(e) => updateField('title', e.target.value)}
                 placeholder={t.titlePlaceholder}
                 maxLength={100}
+                className="h-9 sm:h-10 text-sm"
               />
             </div>
 
             {/* Section 2: Description */}
-            <div className="space-y-2">
-              <Label className="font-semibold">{t.step2}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step2}</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => updateField('description', e.target.value)}
                 placeholder={t.descriptionPlaceholder}
                 rows={3}
-                className="resize-none"
+                className="resize-none text-sm"
               />
               <p className={cn(
-                "text-xs text-right",
+                "text-[10px] sm:text-xs text-right",
                 wordsRemaining < 0 ? "text-destructive" : "text-muted-foreground"
               )}>
                 {wordsRemaining >= 0 
@@ -368,14 +427,45 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               </p>
             </div>
 
+            {/* Section 2b: Image */}
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step2b}</Label>
+              {existingImageUrl && !customImage && (
+                <div className="mb-3">
+                  <img 
+                    src={existingImageUrl} 
+                    alt="Current" 
+                    className="w-full h-32 sm:h-48 object-cover rounded-lg"
+                  />
+                  <p className="text-[10px] sm:text-sm text-muted-foreground mt-1">{t.currentImage}</p>
+                </div>
+              )}
+              {customImage && (
+                <div className="mb-3">
+                  <img 
+                    src={URL.createObjectURL(customImage)} 
+                    alt="New" 
+                    className="w-full h-32 sm:h-48 object-cover rounded-lg"
+                  />
+                </div>
+              )}
+              <ImageUploadField
+                label={t.offerImage}
+                language={language}
+                onFileSelect={handleFileSelect}
+                aspectRatio="16/9"
+                maxSizeMB={5}
+              />
+            </div>
+
             {/* Section 3: Category */}
-            <div className="space-y-2">
-              <Label className="font-semibold">{t.step3}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step3}</Label>
               <Select
                 value={formData.category}
                 onValueChange={(value: OfferCategory) => updateField('category', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9 sm:h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -387,72 +477,74 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
             </div>
 
             {/* Section 4: Discount Type */}
-            <div className="space-y-3">
-              <Label className="font-semibold">{t.step4}</Label>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step4}</Label>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => updateField('discountType', 'percentage')}
                   className={cn(
-                    "p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2",
+                    "p-2 sm:p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-1 sm:gap-2",
                     formData.discountType === 'percentage'
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
                   )}
                 >
-                  <Percent className="w-4 h-4" />
-                  <span className="font-medium">{t.percentageDiscount}</span>
+                  <Percent className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="font-medium text-[10px] sm:text-sm">{t.percentageDiscount}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => updateField('discountType', 'special_deal')}
                   className={cn(
-                    "p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2",
+                    "p-2 sm:p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-1 sm:gap-2",
                     formData.discountType === 'special_deal'
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
                   )}
                 >
-                  <Check className="w-4 h-4" />
-                  <span className="font-medium">{t.specialDeal}</span>
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="font-medium text-[10px] sm:text-sm">{t.specialDeal}</span>
                 </button>
               </div>
 
               {formData.discountType === 'percentage' && (
-                <div className="space-y-2">
-                  <Label>{t.percentOffLabel}</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label className="text-xs sm:text-sm">{t.percentOffLabel}</Label>
                   <Input
                     type="number"
                     min={1}
                     max={100}
                     value={formData.percentOff}
                     onChange={(e) => updateField('percentOff', parseInt(e.target.value) || 0)}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
               )}
 
               {formData.discountType === 'special_deal' && (
-                <div className="space-y-2">
-                  <Label>{t.specialDealLabel}</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label className="text-xs sm:text-sm">{t.specialDealLabel}</Label>
                   <Input
                     value={formData.specialDealText}
                     onChange={(e) => updateField('specialDealText', e.target.value)}
                     placeholder={t.specialDealPlaceholder}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
               )}
             </div>
 
             {/* Section 5: When Discount Applies */}
-            <div className="space-y-4">
-              <Label className="font-semibold">{t.step5}</Label>
+            <div className="space-y-3 sm:space-y-4">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step5}</Label>
               
               {/* Valid Days */}
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm">{t.validDaysLabel}</Label>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="all-days" className="text-sm text-muted-foreground">{t.allDays}</Label>
+                  <Label className="text-[10px] sm:text-sm">{t.validDaysLabel}</Label>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Label htmlFor="all-days" className="text-[10px] sm:text-sm text-muted-foreground">{t.allDays}</Label>
                     <Switch
                       id="all-days"
                       checked={formData.allDays}
@@ -461,7 +553,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                   {DAYS_OF_WEEK.map((day) => (
                     <button
                       key={day}
@@ -469,7 +561,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
                       onClick={() => toggleDay(day)}
                       disabled={formData.allDays}
                       className={cn(
-                        "py-2 px-1 rounded-lg text-xs font-medium transition-all",
+                        "py-1.5 sm:py-2 px-0.5 sm:px-1 rounded-lg text-[9px] sm:text-xs font-medium transition-all",
                         formData.validDays.includes(day)
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80",
@@ -483,11 +575,11 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               </div>
 
               {/* Valid Hours */}
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm">{t.validHoursLabel}</Label>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="all-day" className="text-sm text-muted-foreground">{t.allDay}</Label>
+                  <Label className="text-[10px] sm:text-sm">{t.validHoursLabel}</Label>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Label htmlFor="all-day" className="text-[10px] sm:text-sm text-muted-foreground">{t.allDay}</Label>
                     <Switch
                       id="all-day"
                       checked={formData.allDay}
@@ -497,22 +589,24 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
                 </div>
                 
                 {!formData.allDay && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground mb-1">{t.fromTime}</Label>
+                      <Label className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t.fromTime}</Label>
                       <Input
                         type="time"
                         value={formData.validStartTime}
                         onChange={(e) => updateField('validStartTime', e.target.value)}
+                        className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                     </div>
-                    <span className="text-muted-foreground mt-5">→</span>
+                    <span className="text-muted-foreground mt-5 text-xs">→</span>
                     <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground mb-1">{t.toTime}</Label>
+                      <Label className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t.toTime}</Label>
                       <Input
                         type="time"
                         value={formData.validEndTime}
                         onChange={(e) => updateField('validEndTime', e.target.value)}
+                        className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                     </div>
                   </div>
@@ -520,18 +614,18 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label className="font-semibold">{t.step6}</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">{t.fromDate}</Label>
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step6}</Label>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label className="text-[10px] sm:text-xs text-muted-foreground">{t.fromDate}</Label>
                   <DateTimePicker
                     value={formData.appearanceStartDate || undefined}
                     onChange={(date) => updateField('appearanceStartDate', date || null)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">{t.toDate}</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label className="text-[10px] sm:text-xs text-muted-foreground">{t.toDate}</Label>
                   <DateTimePicker
                     value={formData.appearanceEndDate || undefined}
                     onChange={(date) => updateField('appearanceEndDate', date || null)}
@@ -541,34 +635,36 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
             </div>
 
             {/* Section 7: Availability */}
-            <div className="space-y-4">
-              <Label className="font-semibold">{t.step7}</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm">{t.totalPeopleLabel}</Label>
+            <div className="space-y-3 sm:space-y-4">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step7}</Label>
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label className="text-[10px] sm:text-sm">{t.totalPeopleLabel}</Label>
                   <Input
                     type="number"
                     min={1}
                     value={formData.totalPeople}
                     onChange={(e) => updateField('totalPeople', parseInt(e.target.value) || 1)}
+                    className="h-8 sm:h-10 text-xs sm:text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm">{t.maxPerRedemptionLabel}</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label className="text-[10px] sm:text-sm">{t.maxPerRedemptionLabel}</Label>
                   <Input
                     type="number"
                     min={1}
                     max={20}
                     value={formData.maxPeoplePerRedemption}
                     onChange={(e) => updateField('maxPeoplePerRedemption', parseInt(e.target.value) || 1)}
+                    className="h-8 sm:h-10 text-xs sm:text-sm"
                   />
                 </div>
               </div>
               
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-muted/50">
                 <div>
-                  <p className="font-medium text-sm">{t.onePerUserLabel}</p>
-                  <p className="text-xs text-muted-foreground">{t.onePerUserDesc}</p>
+                  <p className="font-medium text-xs sm:text-sm">{t.onePerUserLabel}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">{t.onePerUserDesc}</p>
                 </div>
                 <Switch
                   checked={formData.onePerUser}
@@ -578,12 +674,12 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
             </div>
 
             {/* Section 9: Optional Booking CTA */}
-            <div className="space-y-3">
-              <Label className="font-semibold">{t.step9}</Label>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="font-semibold text-xs sm:text-sm whitespace-nowrap">{t.step9}</Label>
+              <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-muted/50">
                 <div>
-                  <p className="font-medium text-sm">{t.showReservationCta}</p>
-                  <p className="text-xs text-muted-foreground">{t.showReservationCtaDesc}</p>
+                  <p className="font-medium text-xs sm:text-sm">{t.showReservationCta}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">{t.showReservationCtaDesc}</p>
                 </div>
                 <Switch
                   checked={formData.showReservationCta}
@@ -593,11 +689,11 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4 border-t">
+            <div className="flex gap-2 sm:gap-3 pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="flex-1"
+                className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                 disabled={isSubmitting}
               >
                 {t.cancel}
@@ -605,11 +701,11 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="flex-1"
+                className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                     {t.updating}
                   </>
                 ) : (
@@ -621,6 +717,15 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
         )}
       </DialogContent>
     </Dialog>
+    
+    <ImageCropDialog
+      open={cropDialogOpen}
+      onClose={() => setCropDialogOpen(false)}
+      imageSrc={tempImageSrc}
+      onCropComplete={handleCropComplete}
+      aspectRatio="16:9"
+    />
+    </>
   );
 };
 
