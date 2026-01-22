@@ -619,19 +619,21 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <div className="space-y-1 sm:space-y-2">
                   <Label className="text-[8px] sm:text-xs text-muted-foreground">{t.fromDate}</Label>
-                  <div className="[&_button]:text-[10px] [&_button]:sm:text-sm [&_button]:h-8 [&_button]:sm:h-10 [&_button]:px-2 [&_button]:sm:px-3">
+                  <div className="[&_button]:text-[9px] [&_button]:sm:text-sm [&_button]:h-8 [&_button]:sm:h-10 [&_button]:px-1.5 [&_button]:sm:px-3">
                     <DateTimePicker
                       value={formData.appearanceStartDate || undefined}
                       onChange={(date) => updateField('appearanceStartDate', date || null)}
+                      dateOnlyDisplay
                     />
                   </div>
                 </div>
                 <div className="space-y-1 sm:space-y-2">
                   <Label className="text-[8px] sm:text-xs text-muted-foreground">{t.toDate}</Label>
-                  <div className="[&_button]:text-[10px] [&_button]:sm:text-sm [&_button]:h-8 [&_button]:sm:h-10 [&_button]:px-2 [&_button]:sm:px-3">
+                  <div className="[&_button]:text-[9px] [&_button]:sm:text-sm [&_button]:h-8 [&_button]:sm:h-10 [&_button]:px-1.5 [&_button]:sm:px-3">
                     <DateTimePicker
                       value={formData.appearanceEndDate || undefined}
                       onChange={(date) => updateField('appearanceEndDate', date || null)}
+                      dateOnlyDisplay
                     />
                   </div>
                 </div>
