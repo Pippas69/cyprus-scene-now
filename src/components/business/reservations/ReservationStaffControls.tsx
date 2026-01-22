@@ -207,14 +207,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
       {/* Global Pause Control */}
       <Card className={isPaused ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30' : 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30'}>
         <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
-          <div className="relative flex items-center gap-2 sm:gap-3">
-            {/* Badge top-right - absolute corner position */}
-            <Badge 
-              variant={isPaused ? 'destructive' : 'default'} 
-              className={`absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10 text-[9px] sm:text-xs ${!isPaused ? 'bg-green-500' : ''}`}
-            >
-              {isPaused ? t.paused : t.active}
-            </Badge>
+          <div className="flex items-center gap-2 sm:gap-3">
             
             <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full flex-shrink-0 flex items-center justify-center ${isPaused ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
               <Power className={`h-3.5 w-3.5 sm:h-5 sm:w-5 ${isPaused ? 'text-red-600' : 'text-green-600'}`} />
