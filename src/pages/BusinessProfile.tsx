@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackEngagement } from "@/lib/analyticsTracking";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ const itemVariants = {
 const BusinessProfile = () => {
   const { businessId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguage();
   const [business, setBusiness] = useState<Business | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -108,6 +110,10 @@ const BusinessProfile = () => {
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [imageViewerSrc, setImageViewerSrc] = useState<string | null>(null);
+  const [imageViewerAlt, setImageViewerAlt] = useState<string>("");
 
   const translations = {
     el: {
@@ -147,6 +153,27 @@ const BusinessProfile = () => {
   };
 
   const t = translations[language];
+
+  const openImageViewer = (src: string | null, alt: string) => {
+    if (!src) return;
+    setImageViewerSrc(src);
+    setImageViewerAlt(alt);
+    setImageViewerOpen(true);
+  };
+
+  const handleBack = () => {
+    const from = (location.state as any)?.from as string | undefined;
+    if (from) {
+      navigate(from);
+      return;
+    }
+    // Prefer history back when possible to keep user within their current context (user vs business dashboard).
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate("/feed");
+  };
 
   const handleShareProfile = () => {
     if (!businessId) return;
@@ -261,12 +288,16 @@ const BusinessProfile = () => {
       {/* Hero Section with Cover Image */}
       <div className="relative h-56 md:h-72">
         {business.cover_url ? (
-          <div
-            className="absolute inset-0 bg-cover bg-center overflow-hidden pointer-events-none"
+          <button
+            type="button"
+            aria-label={language === 'el' ? 'Προβολή εικόνας εξωφύλλου' : 'View cover image'}
+            onClick={() => openImageViewer(business.cover_url, `${business.name} cover`)}
+            className="absolute inset-0 bg-cover bg-center overflow-hidden cursor-zoom-in"
             style={{ backgroundImage: `url(${business.cover_url})` }}
           >
+            <span className="sr-only">cover</span>
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-background pointer-events-none" />
-          </div>
+          </button>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/10 to-background pointer-events-none" />
         )}
@@ -275,7 +306,7 @@ const BusinessProfile = () => {
         <RippleButton
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/feed")}
+          onClick={handleBack}
           className="absolute top-4 left-4 z-[60] bg-background/80 backdrop-blur-sm hover:bg-background safe-area-top"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -292,12 +323,19 @@ const BusinessProfile = () => {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
             >
-              <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg ring-2 ring-primary/20">
-                <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
-                <AvatarFallback className="text-3xl font-bold bg-muted">
-                  {business.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <button
+                type="button"
+                aria-label={language === 'el' ? 'Προβολή λογότυπου' : 'View logo'}
+                onClick={() => openImageViewer(business.logo_url, `${business.name} logo`)}
+                className="rounded-full cursor-zoom-in"
+              >
+                <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg ring-2 ring-primary/20">
+                  <AvatarImage src={business.logo_url || undefined} alt={`${business.name} logo`} />
+                  <AvatarFallback className="text-3xl font-bold bg-muted">
+                    {business.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
               
               {/* Student Discount Badge overlaid on avatar - clickable with icon + percentage */}
               {business.student_discount_enabled && business.student_discount_percent && user && (
@@ -345,6 +383,22 @@ const BusinessProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Image Viewer */}
+      <Dialog open={imageViewerOpen} onOpenChange={setImageViewerOpen}>
+        <DialogContent className="max-w-[96vw] sm:max-w-4xl p-0 overflow-hidden">
+          <div className="bg-background">
+            {imageViewerSrc && (
+              <img
+                src={imageViewerSrc}
+                alt={imageViewerAlt}
+                className="w-full h-auto max-h-[85vh] object-contain"
+                loading="eager"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Business Info - centered below avatar */}
       <div className="container mx-auto px-4 pt-16 md:pt-20 pb-24 md:pb-8">
