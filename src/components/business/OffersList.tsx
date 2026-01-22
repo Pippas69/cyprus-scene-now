@@ -244,11 +244,11 @@ const OffersList = ({ businessId }: OffersListProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header with scanners */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold">{t.title}</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 md:gap-4">
+        <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{t.title}</h1>
+        <div className="flex items-center gap-1 md:gap-2">
           <StudentDiscountScanner businessId={businessId} language={language} />
           <OfferQRScanner businessId={businessId} language={language} />
         </div>
@@ -258,31 +258,31 @@ const OffersList = ({ businessId }: OffersListProps) => {
       <StudentDiscountStats businessId={businessId} language={language} />
       
       {/* Offers list - redesigned cards with tighter spacing */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {offers.map((offer) => (
           <Card key={offer.id} className="bg-card/50 border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-4">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-start justify-between gap-2 md:gap-4">
                 {/* Left side content */}
                 <div className="flex-1 min-w-0">
                   {/* Title row with boost badge */}
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <h3 className="text-lg font-semibold truncate">{offer.title}</h3>
+                  <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 flex-wrap">
+                    <h3 className="text-sm md:text-base lg:text-lg font-semibold truncate">{offer.title}</h3>
                     <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
                   </div>
 
                   {/* Date and badges row */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mb-2">
+                  <div className="flex flex-wrap items-center gap-x-2 md:gap-x-4 gap-y-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1.5 md:mb-2">
                     <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>{formatOfferDates(offer.start_at, offer.end_at)}</span>
+                      <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{formatOfferDates(offer.start_at, offer.end_at)}</span>
                     </div>
                     
                     {/* Discount percentage badge */}
                     {offer.percent_off && (
                       <Badge 
                         variant="outline" 
-                        className="text-primary border-primary/30 bg-primary/5 font-semibold"
+                        className="text-primary border-primary/30 bg-primary/5 font-semibold text-[10px] md:text-xs"
                       >
                         {offer.percent_off}% OFF
                       </Badge>
@@ -291,7 +291,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     {/* Active/Inactive status badge */}
                     <Badge 
                       variant={offer.active ? "default" : "secondary"}
-                      className={offer.active ? "bg-primary text-primary-foreground" : ""}
+                      className={`text-[10px] md:text-xs ${offer.active ? "bg-primary text-primary-foreground" : ""}`}
                     >
                       {offer.active ? t.active : t.inactive}
                     </Badge>
@@ -301,33 +301,33 @@ const OffersList = ({ businessId }: OffersListProps) => {
                 {/* Right side actions */}
                 <div className="flex flex-col items-end gap-1">
                   {/* Top row: Boost + Edit */}
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5 md:gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
                       title={t.boost}
-                      className="h-8 w-8 text-primary hover:text-primary"
+                      className="h-6 w-6 md:h-8 md:w-8 text-primary hover:text-primary"
                     >
-                      <Rocket className="h-4 w-4" />
+                      <Rocket className="h-3 w-3 md:h-4 md:w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setEditingOffer(offer)}
                       title={t.edit}
-                      className="h-8 w-8"
+                      className="h-6 w-6 md:h-8 md:w-8"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3 w-3 md:h-4 md:w-4" />
                     </Button>
                   </div>
                   {/* Bottom row: Deactivate + Delete */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 md:gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => toggleActive(offer.id, offer.active || false)}
-                      className="text-xs h-8"
+                      className="text-[9px] md:text-xs h-6 md:h-8 px-1.5 md:px-2"
                     >
                       {offer.active ? t.deactivate : t.activate}
                     </Button>
@@ -335,10 +335,10 @@ const OffersList = ({ businessId }: OffersListProps) => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(offer.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-6 w-6 md:h-8 md:w-8 text-destructive hover:text-destructive"
                       title={t.delete}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
                     </Button>
                   </div>
                 </div>

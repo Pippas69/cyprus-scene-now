@@ -342,9 +342,9 @@ export function OfferQRScanner({ businessId, language }: OfferQRScannerProps) {
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} variant="outline" className="w-full sm:w-auto">
-        <QrCode className="h-4 w-4 mr-2" />
-        {t.scanButton}
+      <Button onClick={() => setIsOpen(true)} variant="outline" className="w-auto gap-1 md:gap-2 h-7 md:h-8 lg:h-9 px-2 md:px-3">
+        <QrCode className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+        <span className="text-[9px] md:text-xs lg:text-sm">{t.scanButton}</span>
       </Button>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>

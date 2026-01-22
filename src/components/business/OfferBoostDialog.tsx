@@ -321,20 +321,16 @@ const OfferBoostDialog = ({
 
               {/* Daily Date Range */}
               {durationMode === "daily" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <div className="space-y-2">
-                    <Label className="text-xs md:text-sm">
-                      <span className="lg:hidden flex flex-col">
-                        <span>{language === "el" ? "Ημ/νία" : "Start"}</span>
-                        <span>{language === "el" ? "Έναρξης" : "Date"}</span>
-                      </span>
-                      <span className="hidden lg:inline">{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</span>
+                    <Label className="text-[10px] md:text-xs lg:text-sm whitespace-nowrap">
+                      {language === "el" ? "Ημ/νία Έναρξης" : "Start Date"}
                     </Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left text-xs md:text-sm">
-                          <CalendarIcon className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
-                          {format(startDate, "PP")}
+                        <Button variant="outline" className="w-full justify-start text-left text-[10px] md:text-xs lg:text-sm px-2 md:px-3">
+                          <CalendarIcon className="mr-1.5 h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
+                          <span className="truncate">{format(startDate, "dd/MM/yy")}</span>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -349,18 +345,14 @@ const OfferBoostDialog = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs md:text-sm">
-                      <span className="lg:hidden flex flex-col">
-                        <span>{language === "el" ? "Ημ/νία" : "End"}</span>
-                        <span>{language === "el" ? "Λήξης" : "Date"}</span>
-                      </span>
-                      <span className="hidden lg:inline">{language === "el" ? "Ημερομηνία Λήξης" : "End Date"}</span>
+                    <Label className="text-[10px] md:text-xs lg:text-sm whitespace-nowrap">
+                      {language === "el" ? "Ημ/νία Λήξης" : "End Date"}
                     </Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left text-xs md:text-sm">
-                          <CalendarIcon className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
-                          {format(endDate, "PP")}
+                        <Button variant="outline" className="w-full justify-start text-left text-[10px] md:text-xs lg:text-sm px-2 md:px-3">
+                          <CalendarIcon className="mr-1.5 h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
+                          <span className="truncate">{format(endDate, "dd/MM/yy")}</span>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -395,7 +387,7 @@ const OfferBoostDialog = ({
                     €{durationMode === "hourly" ? selectedTier.hourlyRate : selectedTier.dailyRate}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm md:text-lg font-bold pt-2 border-t">
+                <div className="flex justify-between text-xs md:text-sm font-bold pt-2 border-t">
                   <span>{language === "el" ? "Σύνολο" : "Total"}:</span>
                   <span>€{totalCost}</span>
                 </div>

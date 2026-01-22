@@ -259,9 +259,9 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
   return (
     <Dialog open={isOpen} onOpenChange={(open) => open ? setIsOpen(true) : handleClose()}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <GraduationCap className="h-4 w-4" />
-          {t.openScanner}
+        <Button variant="outline" className="gap-1 md:gap-2 h-7 md:h-8 lg:h-9 px-2 md:px-3">
+          <GraduationCap className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+          <span className="text-[9px] md:text-xs lg:text-sm">{t.openScanner}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
