@@ -2,7 +2,14 @@ import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Crown, Gift, Ticket, Star, CheckCircle, XCircle, FileText, Mail, Eye, MousePointer, MapPin, AlertCircle, Info, Users, Euro, TrendingUp, Wallet } from 'lucide-react';
 import { useGuidanceData } from '@/hooks/useGuidanceData';
 import { useGuidanceMetrics } from '@/hooks/useGuidanceMetrics';
@@ -10,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import { ensureNotoSansFont } from '@/lib/jspdfNotoSans';
+
 const dayNamesEl: Record<number, string> = {
   0: 'Κυριακή',
   1: 'Δευτέρα',
@@ -17,8 +25,9 @@ const dayNamesEl: Record<number, string> = {
   3: 'Τετάρτη',
   4: 'Πέμπτη',
   5: 'Παρασκευή',
-  6: 'Σάββατο'
+  6: 'Σάββατο',
 };
+
 const dayNamesEn: Record<number, string> = {
   0: 'Sunday',
   1: 'Monday',
@@ -26,13 +35,15 @@ const dayNamesEn: Record<number, string> = {
   3: 'Wednesday',
   4: 'Thursday',
   5: 'Friday',
-  6: 'Saturday'
+  6: 'Saturday',
 };
+
 const getDayName = (dayIndex: unknown, language: 'el' | 'en'): string => {
   const idx = Number(dayIndex);
   if (!Number.isFinite(idx) || idx < 0 || idx > 6) return '—';
   return language === 'el' ? dayNamesEl[idx] : dayNamesEn[idx];
 };
+
 const translations = {
   el: {
     title: 'Καθοδήγηση',
@@ -113,7 +124,7 @@ const translations = {
     onlyPaidEvents: 'Περιλαμβάνονται μόνο paid tickets και κρατήσεις με πληρωμή (minimum charge).',
     noNewCustomersYet: 'Δεν υπάρχουν ακόμα νέοι πελάτες.',
     noBoostData: 'Δεν υπάρχουν δεδομένα boost.',
-    noPaidEventsData: 'Δεν υπάρχουν δεδομένα από paid events.'
+    noPaidEventsData: 'Δεν υπάρχουν δεδομένα από paid events.',
   },
   en: {
     title: 'Guidance',
@@ -194,18 +205,21 @@ const translations = {
     onlyPaidEvents: 'Includes only paid tickets and reservations with payment (minimum charge).',
     noNewCustomersYet: 'No new customers yet.',
     noBoostData: 'No boost data available.',
-    noPaidEventsData: 'No data from paid events.'
-  }
+    noPaidEventsData: 'No data from paid events.',
+  },
 };
+
 interface GuidanceTabProps {
   businessId: string;
   language: 'el' | 'en';
 }
+
 interface TimeWindow {
   dayIndex: number;
   hours: string;
   count: number;
 }
+
 interface GuidanceSection {
   views: TimeWindow[];
   interactions: TimeWindow[];
@@ -213,15 +227,19 @@ interface GuidanceSection {
 }
 
 // Generate dynamic tips based on actual data
-const generateTips = (section: GuidanceSection, sectionType: 'profile' | 'offers' | 'events', language: 'el' | 'en'): {
-  tip1: string;
-  tip2: string;
-} => {
-  const hasData = section.views.some(w => w.count > 0) || section.interactions.some(w => w.count > 0) || section.visits.some(w => w.count > 0);
+const generateTips = (
+  section: GuidanceSection,
+  sectionType: 'profile' | 'offers' | 'events',
+  language: 'el' | 'en'
+): { tip1: string; tip2: string } => {
+  const hasData = section.views.some(w => w.count > 0) || 
+                  section.interactions.some(w => w.count > 0) || 
+                  section.visits.some(w => w.count > 0);
+  
   if (!hasData) {
     return {
       tip1: language === 'el' ? 'Χρειάζονται περισσότερα δεδομένα για αξιόπιστες συμβουλές.' : 'More data needed for reliable tips.',
-      tip2: ''
+      tip2: '',
     };
   }
 
@@ -231,56 +249,54 @@ const generateTips = (section: GuidanceSection, sectionType: 'profile' | 'offers
   const bestVisit = section.visits[0];
 
   // Pick the metric with highest count for tip 1
-  const metrics = [{
-    type: 'views',
-    data: bestView
-  }, {
-    type: 'interactions',
-    data: bestInteraction
-  }, {
-    type: 'visits',
-    data: bestVisit
-  }].filter(m => m.data && m.data.count > 0);
+  const metrics = [
+    { type: 'views', data: bestView },
+    { type: 'interactions', data: bestInteraction },
+    { type: 'visits', data: bestVisit },
+  ].filter(m => m.data && m.data.count > 0);
+
   if (metrics.length === 0) {
     return {
       tip1: language === 'el' ? 'Χρειάζονται περισσότερα δεδομένα για αξιόπιστες συμβουλές.' : 'More data needed for reliable tips.',
-      tip2: ''
+      tip2: '',
     };
   }
-  const viewDay = bestView ? getDayName(bestView.dayIndex, language) : language === 'el' ? 'Παρασκευή' : 'Friday';
-  const visitDay = bestVisit ? getDayName(bestVisit.dayIndex, language) : language === 'el' ? 'Σάββατο' : 'Saturday';
+
+  const viewDay = bestView ? getDayName(bestView.dayIndex, language) : (language === 'el' ? 'Παρασκευή' : 'Friday');
+  const visitDay = bestVisit ? getDayName(bestVisit.dayIndex, language) : (language === 'el' ? 'Σάββατο' : 'Saturday');
+
   if (language === 'el') {
     if (sectionType === 'profile') {
       return {
         tip1: `Το προφίλ σου βλέπεται περισσότερο την ${viewDay}, κυρίως ${bestView?.hours || '20:00–22:00'}.`,
-        tip2: 'Αυτές είναι οι καλύτερες ώρες για να ανεβάζεις νέα προσφορά ή εκδήλωση.'
+        tip2: 'Αυτές είναι οι καλύτερες ώρες για να ανεβάζεις νέα προσφορά ή εκδήλωση.',
       };
     } else if (sectionType === 'offers') {
       return {
         tip1: `Οι προσφορές αποδίδουν καλύτερα την ${viewDay}, κυρίως ${bestView?.hours || '18:00–20:00'}.`,
-        tip2: 'Ρύθμισε τη διάρκεια της προσφοράς να καλύπτει αυτά τα διαστήματα για περισσότερες επισκέψεις.'
+        tip2: 'Ρύθμισε τη διάρκεια της προσφοράς να καλύπτει αυτά τα διαστήματα για περισσότερες επισκέψεις.',
       };
     } else {
       return {
         tip1: `Οι εκδηλώσεις συγκεντρώνουν περισσότερους επισκέπτες την ${visitDay}, κυρίως ${bestVisit?.hours || '19:00–21:00'}.`,
-        tip2: 'Προγραμμάτισε την έναρξη ή την κορύφωση της εκδήλωσης κοντά σε αυτά τα διαστήματα.'
+        tip2: 'Προγραμμάτισε την έναρξη ή την κορύφωση της εκδήλωσης κοντά σε αυτά τα διαστήματα.',
       };
     }
   } else {
     if (sectionType === 'profile') {
       return {
         tip1: `Your profile gets the most views on ${viewDay}, mainly ${bestView?.hours || '20:00–22:00'}.`,
-        tip2: 'These are the best hours to post a new offer or event.'
+        tip2: 'These are the best hours to post a new offer or event.',
       };
     } else if (sectionType === 'offers') {
       return {
         tip1: `Offers perform best on ${viewDay}, mainly ${bestView?.hours || '18:00–20:00'}.`,
-        tip2: 'Set the offer duration to cover these periods for more visits.'
+        tip2: 'Set the offer duration to cover these periods for more visits.',
       };
     } else {
       return {
         tip1: `Events attract the most visitors on ${visitDay}, mainly ${bestVisit?.hours || '19:00–21:00'}.`,
-        tip2: 'Schedule the start or peak of the event near these periods.'
+        tip2: 'Schedule the start or peak of the event near these periods.',
       };
     }
   }
@@ -289,22 +305,19 @@ const generateTips = (section: GuidanceSection, sectionType: 'profile' | 'offers
 // Format time windows for display with language - returns array for responsive display
 const formatWindowsWithLanguage = (windows: TimeWindow[], language: 'el' | 'en'): string => {
   if (!windows || windows.length === 0) return '—';
-  return windows.slice(0, 2).map(w => `${getDayName(w.dayIndex, language)} ${w.hours}`).join(' / ');
+  return windows
+    .slice(0, 2)
+    .map((w) => `${getDayName(w.dayIndex, language)} ${w.hours}`)
+    .join(' / ');
 };
 
 // Format time windows for tablet/mobile - each on separate line
-const formatWindowsResponsive = (windows: TimeWindow[], language: 'el' | 'en'): {
-  line1: string;
-  line2: string;
-} => {
-  if (!windows || windows.length === 0) return {
-    line1: '—',
-    line2: ''
-  };
-  const formatted = windows.slice(0, 2).map(w => `${getDayName(w.dayIndex, language)} ${w.hours}`);
+const formatWindowsResponsive = (windows: TimeWindow[], language: 'el' | 'en'): { line1: string; line2: string } => {
+  if (!windows || windows.length === 0) return { line1: '—', line2: '' };
+  const formatted = windows.slice(0, 2).map((w) => `${getDayName(w.dayIndex, language)} ${w.hours}`);
   return {
     line1: formatted[0] || '—',
-    line2: formatted[1] || ''
+    line2: formatted[1] || '',
   };
 };
 
@@ -316,15 +329,9 @@ const MetricRow: React.FC<{
   tooltipTitle: string;
   tooltipText: string;
   language: 'el' | 'en';
-}> = ({
-  label,
-  icon: Icon,
-  windows,
-  tooltipTitle,
-  tooltipText,
-  language
-}) => {
-  return <Dialog>
+}> = ({ label, icon: Icon, windows, tooltipTitle, tooltipText, language }) => {
+  return (
+    <Dialog>
       <DialogTrigger asChild>
         <tr className="border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors group">
           <td className="py-3">
@@ -342,7 +349,9 @@ const MetricRow: React.FC<{
             {/* Tablet/Mobile: each day on separate line with smaller text */}
             <span className="lg:hidden flex flex-col items-end text-[10px] md:text-xs whitespace-nowrap">
               <span>{formatWindowsResponsive(windows, language).line1}</span>
-              {formatWindowsResponsive(windows, language).line2 && <span>{formatWindowsResponsive(windows, language).line2}</span>}
+              {formatWindowsResponsive(windows, language).line2 && (
+                <span>{formatWindowsResponsive(windows, language).line2}</span>
+              )}
             </span>
           </td>
         </tr>
@@ -361,28 +370,28 @@ const MetricRow: React.FC<{
           </div>
         </DialogHeader>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
 
 // Tips section component
-const TipsSection: React.FC<{
-  tip1: string;
-  tip2: string;
-}> = ({
-  tip1,
-  tip2
-}) => {
+const TipsSection: React.FC<{ tip1: string; tip2: string }> = ({ tip1, tip2 }) => {
   if (!tip1) return null;
-  return <div className="mt-4 pt-4 border-t space-y-2">
+  
+  return (
+    <div className="mt-4 pt-4 border-t space-y-2">
       <div className="flex items-start gap-2 text-xs md:text-sm">
         <span className="text-primary font-medium">1.</span>
         <p className="text-foreground">{tip1}</p>
       </div>
-      {tip2 && <div className="flex items-start gap-2 text-xs md:text-sm">
+      {tip2 && (
+        <div className="flex items-start gap-2 text-xs md:text-sm">
           <span className="text-primary font-medium">2.</span>
           <p className="text-foreground">{tip2}</p>
-        </div>}
-    </div>;
+        </div>
+      )}
+    </div>
+  );
 };
 
 // Guidance table for each section
@@ -394,18 +403,12 @@ const GuidanceTable: React.FC<{
   sectionType: 'profile' | 'offers' | 'events';
   language: 'el' | 'en';
   metricsContent?: React.ReactNode;
-}> = ({
-  title,
-  icon: Icon,
-  iconColor,
-  data,
-  sectionType,
-  language,
-  metricsContent
-}) => {
+}> = ({ title, icon: Icon, iconColor, data, sectionType, language, metricsContent }) => {
   const t = translations[language];
   const tips = generateTips(data, sectionType, language);
-  return <Card>
+
+  return (
+    <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Icon className={`h-5 w-5 ${iconColor}`} />
@@ -422,20 +425,62 @@ const GuidanceTable: React.FC<{
               </tr>
             </thead>
             <tbody>
-              <MetricRow label={t.views} icon={Eye} windows={data.views} tooltipTitle={t.viewsTooltipTitle} tooltipText={sectionType === 'profile' ? (t as any).profileViewsTooltipText : sectionType === 'offers' ? (t as any).offersViewsTooltipText : (t as any).eventsViewsTooltipText} language={language} />
-              <MetricRow label={t.interactions} icon={MousePointer} windows={data.interactions} tooltipTitle={t.interactionsTooltipTitle} tooltipText={sectionType === 'profile' ? (t as any).profileInteractionsTooltipText : sectionType === 'offers' ? (t as any).offersInteractionsTooltipText : (t as any).eventsInteractionsTooltipText} language={language} />
-              <MetricRow label={t.visits} icon={MapPin} windows={data.visits} tooltipTitle={t.visitsTooltipTitle} tooltipText={sectionType === 'profile' ? (t as any).profileVisitsTooltipText : sectionType === 'offers' ? (t as any).offersVisitsTooltipText : (t as any).eventsVisitsTooltipText} language={language} />
+              <MetricRow
+                label={t.views}
+                icon={Eye}
+                windows={data.views}
+                tooltipTitle={t.viewsTooltipTitle}
+                tooltipText={
+                  sectionType === 'profile'
+                    ? (t as any).profileViewsTooltipText
+                    : sectionType === 'offers'
+                      ? (t as any).offersViewsTooltipText
+                      : (t as any).eventsViewsTooltipText
+                }
+                language={language}
+              />
+              <MetricRow
+                label={t.interactions}
+                icon={MousePointer}
+                windows={data.interactions}
+                tooltipTitle={t.interactionsTooltipTitle}
+                tooltipText={
+                  sectionType === 'profile'
+                    ? (t as any).profileInteractionsTooltipText
+                    : sectionType === 'offers'
+                      ? (t as any).offersInteractionsTooltipText
+                      : (t as any).eventsInteractionsTooltipText
+                }
+                language={language}
+              />
+              <MetricRow
+                label={t.visits}
+                icon={MapPin}
+                windows={data.visits}
+                tooltipTitle={t.visitsTooltipTitle}
+                tooltipText={
+                  sectionType === 'profile'
+                    ? (t as any).profileVisitsTooltipText
+                    : sectionType === 'offers'
+                      ? (t as any).offersVisitsTooltipText
+                      : (t as any).eventsVisitsTooltipText
+                }
+                language={language}
+              />
             </tbody>
           </table>
         </div>
         <TipsSection tip1={tips.tip1} tip2={tips.tip2} />
         
         {/* New Metrics Content */}
-        {metricsContent && <div className="pt-2 border-t">
+        {metricsContent && (
+          <div className="pt-2 border-t">
             {metricsContent}
-          </div>}
+          </div>
+        )}
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
 
 // Helper to format currency
@@ -448,16 +493,15 @@ const ProfileMetricsSection: React.FC<{
   newCustomers: number;
   hasPaidPlan: boolean;
   language: 'el' | 'en';
-}> = ({
-  newCustomers,
-  hasPaidPlan,
-  language
-}) => {
+}> = ({ newCustomers, hasPaidPlan, language }) => {
   const t = translations[language];
+  
   if (!hasPaidPlan) {
     return null; // Don't show if no paid plan
   }
-  return <div className="space-y-3">
+
+  return (
+    <div className="space-y-3">
       <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 rounded-lg border border-yellow-200/50 dark:border-yellow-800/30">
         <Users className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -483,11 +527,14 @@ const ProfileMetricsSection: React.FC<{
             {newCustomers > 0 ? newCustomers : '—'}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {newCustomers > 0 ? (t as any).newCustomersDescription : (t as any).noNewCustomersYet}
+            {newCustomers > 0 
+              ? (t as any).newCustomersDescription 
+              : (t as any).noNewCustomersYet}
           </p>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 // Offer Boost Metrics Section
@@ -495,16 +542,17 @@ const OfferBoostMetricsSection: React.FC<{
   boostSpentCents: number;
   totalVisits: number;
   language: 'el' | 'en';
-}> = ({
-  boostSpentCents,
-  totalVisits,
-  language
-}) => {
+}> = ({ boostSpentCents, totalVisits, language }) => {
   const t = translations[language];
+
   if (boostSpentCents === 0) {
-    return <p className="text-sm text-muted-foreground italic">{(t as any).noBoostData}</p>;
+    return (
+      <p className="text-sm text-muted-foreground italic">{(t as any).noBoostData}</p>
+    );
   }
-  return <div className="space-y-3">
+
+  return (
+    <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         {/* Boost Spent */}
         <div className="p-3 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 rounded-lg border border-orange-200/50 dark:border-orange-800/30">
@@ -560,13 +608,16 @@ const OfferBoostMetricsSection: React.FC<{
       </div>
 
       {/* Cost per visit note (boost spend / visits from boost) */}
-      {totalVisits > 0 && <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg text-sm">
+      {totalVisits > 0 && (
+        <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg text-sm">
           <TrendingUp className="h-4 w-4 text-primary" />
           <span>
             Με περίπου <strong>{formatCurrency(Math.round(boostSpentCents / totalVisits))}</strong> σε boost αποκτήθηκε <strong>1</strong> επίσκεψη.
           </span>
-        </div>}
-    </div>;
+        </div>
+      )}
+    </div>
+  );
 };
 
 // Event Boost Metrics Section
@@ -576,20 +627,18 @@ const EventBoostMetricsSection: React.FC<{
   netRevenueCents: number;
   commissionPercent: number;
   language: 'el' | 'en';
-}> = ({
-  boostSpentCents,
-  revenueWithCommissionCents,
-  netRevenueCents,
-  commissionPercent,
-  language
-}) => {
+}> = ({ boostSpentCents, revenueWithCommissionCents, netRevenueCents, commissionPercent, language }) => {
   const t = translations[language];
-
+  
   // Only show if there's actual revenue (paid events)
   if (revenueWithCommissionCents === 0 && boostSpentCents === 0) {
-    return <p className="text-sm text-muted-foreground italic">{(t as any).noPaidEventsData}</p>;
+    return (
+      <p className="text-sm text-muted-foreground italic">{(t as any).noPaidEventsData}</p>
+    );
   }
-  return <div className="space-y-3">
+
+  return (
+    <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
         {/* Boost Spent */}
         <div className="p-3 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
@@ -660,44 +709,43 @@ const EventBoostMetricsSection: React.FC<{
         <Info className="h-3 w-3" />
         {(t as any).onlyPaidEvents}
       </p>
-    </div>;
+    </div>
+  );
 };
+
 export const GuidanceTab: React.FC<GuidanceTabProps> = ({
   businessId,
-  language
+  language,
 }) => {
   const t = translations[language];
-  const {
-    data,
-    isLoading
-  } = useGuidanceData(businessId);
-  const {
-    data: metrics,
-    isLoading: metricsLoading
-  } = useGuidanceMetrics(businessId);
-  const {
-    toast
-  } = useToast();
+  const { data, isLoading } = useGuidanceData(businessId);
+  const { data: metrics, isLoading: metricsLoading } = useGuidanceMetrics(businessId);
+  const { toast } = useToast();
   const [feedbackGiven, setFeedbackGiven] = useState<boolean | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+
   const handleFeedback = async (applied: boolean) => {
     setFeedbackGiven(applied);
     toast({
-      title: t.feedbackSaved
+      title: t.feedbackSaved,
     });
   };
+
   const generatePdfContent = async (): Promise<jsPDF> => {
     const doc = new jsPDF();
     await ensureNotoSansFont(doc);
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
+
     let yPos = 20;
     const lineHeight = 6;
     const sectionGap = 10;
     const leftX = 18;
     const indentX = 24;
     const maxWidth = pageWidth - leftX * 2;
+
     const ensureSpace = (neededLines = 1) => {
       const neededHeight = neededLines * lineHeight + 6;
       if (yPos + neededHeight > pageHeight - 18) {
@@ -706,6 +754,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         doc.setFont('NotoSans', 'normal');
       }
     };
+
     const write = (text: string, x = leftX, fontSize = 10) => {
       doc.setFontSize(fontSize);
       const lines = doc.splitTextToSize(text, maxWidth - (x - leftX));
@@ -713,6 +762,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
       doc.text(lines, x, yPos);
       yPos += lines.length * lineHeight;
     };
+
     const heading = (text: string) => {
       ensureSpace(2);
       doc.setFontSize(14);
@@ -722,31 +772,35 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
 
     // Title
     doc.setFontSize(18);
-    doc.text(t.pdfTitle, pageWidth / 2, yPos, {
-      align: 'center'
-    });
+    doc.text(t.pdfTitle, pageWidth / 2, yPos, { align: 'center' });
     yPos += lineHeight * 2;
 
     // Date
     const dateStr = new Date().toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US');
     write(`${t.pdfDate}: ${dateStr}`, leftX, 10);
     yPos += sectionGap;
+
     if (!data) {
       write(t.noData, leftX, 11);
       return doc;
     }
+
     const addGuidanceSection = (title: string, sectionData: GuidanceSection, sectionType: 'profile' | 'offers' | 'events') => {
       heading(title);
+
       write(`${t.pdfTimeWindows}:`, leftX, 11);
       write(`${t.views}: ${formatWindowsWithLanguage(sectionData.views, language)}`, indentX);
       write(`${t.interactions}: ${formatWindowsWithLanguage(sectionData.interactions, language)}`, indentX);
       write(`${t.visits}: ${formatWindowsWithLanguage(sectionData.visits, language)}`, indentX);
       yPos += 4;
+
       const tips = generateTips(sectionData, sectionType, language);
       if (tips.tip1) write(`1. ${tips.tip1}`, indentX);
       if (tips.tip2) write(`2. ${tips.tip2}`, indentX);
+
       yPos += sectionGap;
     };
+
     addGuidanceSection(t.featuredProfile, data.profile, 'profile');
     addGuidanceSection(t.boostedOffers, data.offers, 'offers');
     addGuidanceSection(t.boostedEvents, data.events, 'events');
@@ -761,46 +815,49 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
 
     // Application status
     heading(t.pdfPlanStatus);
-    const statusText = feedbackGiven === null ? t.pdfPending : feedbackGiven ? t.pdfApplied : t.pdfNotApplied;
+    const statusText =
+      feedbackGiven === null
+        ? t.pdfPending
+        : feedbackGiven
+          ? t.pdfApplied
+          : t.pdfNotApplied;
     write(statusText, indentX);
     yPos += 6;
 
     // Summary / conclusions
     heading(t.pdfConclusion);
-    const conclusionText = feedbackGiven === null ? t.pdfConclusionPending : feedbackGiven ? t.pdfConclusionApplied : t.pdfConclusionNotApplied;
+    const conclusionText =
+      feedbackGiven === null
+        ? t.pdfConclusionPending
+        : feedbackGiven
+          ? t.pdfConclusionApplied
+          : t.pdfConclusionNotApplied;
     write(conclusionText, indentX);
+
     return doc;
   };
+
   const handleDownloadPdf = async () => {
     setIsGeneratingPdf(true);
     try {
       const doc = await generatePdfContent();
       doc.save(`guidance-report-${new Date().toISOString().split('T')[0]}.pdf`);
-      toast({
-        title: t.pdfGenerated
-      });
+      toast({ title: t.pdfGenerated });
     } catch (error) {
       console.error('PDF generation error:', error);
-      toast({
-        title: 'Error generating PDF',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error generating PDF', variant: 'destructive' });
     } finally {
       setIsGeneratingPdf(false);
     }
   };
+
   const handleSendEmail = async () => {
     setIsSendingEmail(true);
     try {
       // Get current user's email
-      const {
-        data: userData
-      } = await supabase.auth.getUser();
+      const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.email) {
-        toast({
-          title: t.emailError,
-          variant: 'destructive'
-        });
+        toast({ title: t.emailError, variant: 'destructive' });
         return;
       }
 
@@ -811,30 +868,35 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
       // For now, just show success - in production, you'd send this to a backend function
       // that handles email sending with the PDF attachment
       void pdfBase64;
-      toast({
-        title: t.emailSent
-      });
+      toast({ title: t.emailSent });
     } catch (error) {
       console.error('Email sending error:', error);
-      toast({
-        title: t.emailError,
-        variant: 'destructive'
-      });
+      toast({ title: t.emailError, variant: 'destructive' });
     } finally {
       setIsSendingEmail(false);
     }
   };
+
   if (isLoading) {
-    return <div className="space-y-6">
-        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-48" />)}
-      </div>;
+    return (
+      <div className="space-y-6">
+        {[1, 2, 3, 4, 5].map(i => (
+          <Skeleton key={i} className="h-48" />
+        ))}
+      </div>
+    );
   }
+
   if (!data) {
-    return <div className="text-center py-12 text-muted-foreground">
+    return (
+      <div className="text-center py-12 text-muted-foreground">
         {t.noData}
-      </div>;
+      </div>
+    );
   }
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold">{t.title}</h2>
@@ -842,13 +904,63 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
       </div>
 
       {/* 1. Featured Profile */}
-      <GuidanceTable title={t.featuredProfile} icon={Crown} iconColor="text-yellow-500" data={data.profile} sectionType="profile" language={language} metricsContent={metrics && <ProfileMetricsSection newCustomers={metrics.profile.newCustomers} hasPaidPlan={!!metrics.profile.paidPlanStartDate} language={language} />} />
+      <GuidanceTable
+        title={t.featuredProfile}
+        icon={Crown}
+        iconColor="text-yellow-500"
+        data={data.profile}
+        sectionType="profile"
+        language={language}
+        metricsContent={
+          metrics && (
+            <ProfileMetricsSection
+              newCustomers={metrics.profile.newCustomers}
+              hasPaidPlan={!!metrics.profile.paidPlanStartDate}
+              language={language}
+            />
+          )
+        }
+      />
 
       {/* 2. Boosted Offers */}
-      <GuidanceTable title={t.boostedOffers} icon={Gift} iconColor="text-orange-500" data={data.offers} sectionType="offers" language={language} metricsContent={metrics && <OfferBoostMetricsSection boostSpentCents={metrics.offers.boostSpentCents} totalVisits={metrics.offers.totalVisits} language={language} />} />
+      <GuidanceTable
+        title={t.boostedOffers}
+        icon={Gift}
+        iconColor="text-orange-500"
+        data={data.offers}
+        sectionType="offers"
+        language={language}
+          metricsContent={
+            metrics && (
+              <OfferBoostMetricsSection
+                boostSpentCents={metrics.offers.boostSpentCents}
+                totalVisits={metrics.offers.totalVisits}
+                language={language}
+              />
+            )
+          }
+      />
 
       {/* 3. Boosted Events */}
-      <GuidanceTable title={t.boostedEvents} icon={Ticket} iconColor="text-purple-500" data={data.events} sectionType="events" language={language} metricsContent={metrics && <EventBoostMetricsSection boostSpentCents={metrics.events.boostSpentCents} revenueWithCommissionCents={metrics.events.revenueWithCommissionCents} netRevenueCents={metrics.events.netRevenueCents} commissionPercent={metrics.events.commissionPercent} language={language} />} />
+      <GuidanceTable
+        title={t.boostedEvents}
+        icon={Ticket}
+        iconColor="text-purple-500"
+        data={data.events}
+        sectionType="events"
+        language={language}
+        metricsContent={
+          metrics && (
+            <EventBoostMetricsSection
+              boostSpentCents={metrics.events.boostSpentCents}
+              revenueWithCommissionCents={metrics.events.revenueWithCommissionCents}
+              netRevenueCents={metrics.events.netRevenueCents}
+              commissionPercent={metrics.events.commissionPercent}
+              language={language}
+            />
+          )
+        }
+      />
 
       {/* 4. Recommended Plan */}
       <Card className="border-primary/50 bg-primary/5">
@@ -869,9 +981,23 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
                 </span>
                 <span className="hidden lg:inline">{t.publish}</span>
               </p>
-              <p className="font-semibold text-xs md:text-sm lg:text-base whitespace-nowrap">{getDayName(data.recommendedPlan.publish.dayIndex, language)} {data.recommendedPlan.publish.hours}</p>
+              <div className="font-semibold text-xs md:text-sm lg:text-base flex flex-row md:flex-col lg:flex-row gap-0 md:gap-0 lg:gap-1">
+                <span className="whitespace-nowrap">{getDayName(data.recommendedPlan.publish.dayIndex, language)}</span>
+                <span className="hidden md:hidden lg:inline">&nbsp;</span>
+                <span className="whitespace-nowrap">{data.recommendedPlan.publish.hours}</span>
+              </div>
             </div>
-            
+            <div className="p-4 bg-background rounded-lg border">
+              <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1">
+                {/* Tablet/Mobile: Split Στόχευση / Αλληλεπιδράσεων */}
+                <span className="lg:hidden flex flex-col items-start">
+                  <span>{language === 'el' ? 'Στόχευση' : 'Target'}</span>
+                  <span>{language === 'el' ? 'Αλληλεπιδράσεων' : 'Interactions'}</span>
+                </span>
+                <span className="hidden lg:inline">{t.targetInteractions}</span>
+              </p>
+              <p className="font-semibold text-xs md:text-sm lg:text-base">{getDayName(data.recommendedPlan.interactions.dayIndex, language)} {data.recommendedPlan.interactions.hours}</p>
+            </div>
             <div className="p-4 bg-background rounded-lg border">
               <p className="text-[10px] md:text-xs lg:text-sm text-muted-foreground mb-1">{t.targetVisits}</p>
               <p className="font-semibold text-xs md:text-sm lg:text-base">{getDayName(data.recommendedPlan.visits.dayIndex, language)} {data.recommendedPlan.visits.hours}</p>
@@ -891,19 +1017,29 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-3">
-            <Button variant={feedbackGiven === true ? 'default' : 'outline'} onClick={() => handleFeedback(true)} className="gap-2">
+            <Button
+              variant={feedbackGiven === true ? 'default' : 'outline'}
+              onClick={() => handleFeedback(true)}
+              className="gap-2"
+            >
               <CheckCircle className="h-4 w-4" />
               {t.applied}
             </Button>
-            <Button variant={feedbackGiven === false ? 'destructive' : 'outline'} onClick={() => handleFeedback(false)} className="gap-2">
+            <Button
+              variant={feedbackGiven === false ? 'destructive' : 'outline'}
+              onClick={() => handleFeedback(false)}
+              className="gap-2"
+            >
               <XCircle className="h-4 w-4" />
               {t.notApplied}
             </Button>
           </div>
-          {feedbackGiven === false && <div className="flex items-start gap-2 p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
+          {feedbackGiven === false && (
+            <div className="flex items-start gap-2 p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
               <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <p>{t.notAppliedMessage}</p>
-            </div>}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -913,15 +1049,26 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
           <CardTitle className="text-lg">{t.report}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={handleDownloadPdf} className="gap-2" disabled={isGeneratingPdf}>
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadPdf} 
+            className="gap-2"
+            disabled={isGeneratingPdf}
+          >
             <FileText className="h-4 w-4" />
             {t.downloadPdf}
           </Button>
-          <Button variant="outline" onClick={handleSendEmail} className="gap-2" disabled={isSendingEmail}>
+          <Button 
+            variant="outline" 
+            onClick={handleSendEmail} 
+            className="gap-2"
+            disabled={isSendingEmail}
+          >
             <Mail className="h-4 w-4" />
             {t.sendEmail}
           </Button>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
