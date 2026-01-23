@@ -30,11 +30,11 @@ import { BusinessPostsList } from "@/components/business/posting/BusinessPostsLi
 import { BusinessPostForm } from "@/components/business/posting/BusinessPostForm";
 import { Button } from "@/components/ui/button";
 import { toastTranslations } from "@/translations/toastTranslations";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Search, User, Settings, LogOut } from "lucide-react";
+import { Search } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { UnifiedQRScanner } from "@/components/business/UnifiedQRScanner";
+import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
@@ -59,9 +59,6 @@ const DashboardBusiness = () => {
       verificationMessage:
         "Η επιχείρησή σας βρίσκεται υπό επαλήθευση. Θα ειδοποιηθείτε όταν ολοκληρωθεί η διαδικασία.",
       contactSupport: "Επικοινωνήστε με την υποστήριξη εάν έχετε ερωτήσεις.",
-      myProfile: "Το Προφίλ μου",
-      settings: "Ρυθμίσεις",
-      signOut: "Αποσύνδεση",
     },
     en: {
       businessDashboard: "Business Dashboard",
@@ -69,9 +66,6 @@ const DashboardBusiness = () => {
       verificationMessage:
         "Your business is currently under verification. You will be notified once the process is complete.",
       contactSupport: "Contact support if you have any questions.",
-      myProfile: "My Profile",
-      settings: "Settings",
-      signOut: "Sign Out",
     },
   };
 
@@ -181,11 +175,6 @@ const DashboardBusiness = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
   };
 
   if (loading) {
@@ -298,39 +287,14 @@ const DashboardBusiness = () => {
                 {/* Language Toggle - all device sizes */}
                 <LanguageToggle />
                 
-                {/* User Profile Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full p-0">
-                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                        <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                          {userName?.charAt(0)?.toUpperCase() || 'U'}
-                        </AvatarFallback>
-                        {userAvatarUrl && (
-                          <AvatarImage 
-                            src={userAvatarUrl} 
-                            alt={userName} 
-                          />
-                        )}
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 sm:w-56">
-                    <DropdownMenuItem onClick={() => navigate('/dashboard-user')} className="text-sm">
-                      <User className="mr-2 h-4 w-4" />
-                      {t.myProfile}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/dashboard-business/settings')} className="text-sm">
-                      <Settings className="mr-2 h-4 w-4" />
-                      {t.settings}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="text-sm">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      {t.signOut}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* User Profile Dropdown - Unified 3 options: My Account, Notifications, Sign Out */}
+                {userId && (
+                  <UserAccountDropdown
+                    userId={userId}
+                    userName={userName}
+                    avatarUrl={userAvatarUrl}
+                  />
+                )}
               </div>
             </div>
           </header>
