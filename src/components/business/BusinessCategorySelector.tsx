@@ -34,8 +34,9 @@ export const BusinessCategorySelector = ({
   const canSelectMore = () => getTotalSelections() < maxSelections;
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
+    // If trying to add and already at max, don't allow
     if (checked && !canSelectMore()) {
-      return; // Already at max - don't allow
+      return;
     }
     onCategoryChange(categoryId, checked);
   };
@@ -55,8 +56,8 @@ export const BusinessCategorySelector = ({
   };
 
   const text = {
-    el: { label: 'Κατηγορίες (επιλέξτε μέχρι 2 κατηγορίες)' },
-    en: { label: 'Categories (select up to 2 categories)' },
+    el: { label: 'Κατηγορίες (επιλέξτε μέχρι 2)' },
+    en: { label: 'Categories (select up to 2)' },
   };
 
   const t = text[language];
@@ -73,8 +74,6 @@ export const BusinessCategorySelector = ({
           const subCount = getSelectedSubOptionsCount(category.id);
           const isSelected = isMainCategorySelected(category.id);
           const hasSubSelected = hasAnySubOptionSelected(category.id);
-          // Only disable if at max AND this item is not already selected
-          const isDisabledByMax = !canSelectMore() && !isSelected && !hasSubSelected;
 
           return (
             <div key={category.id} className="border border-border rounded-lg overflow-hidden">
@@ -91,7 +90,6 @@ export const BusinessCategorySelector = ({
                     <Checkbox
                       id={category.id}
                       checked={isSelected}
-                      disabled={isDisabledByMax}
                       onCheckedChange={(checked) => handleCategoryChange(category.id, checked as boolean)}
                     />
                   )}
@@ -133,22 +131,17 @@ export const BusinessCategorySelector = ({
                 <div className="border-t border-border bg-muted/30 p-3 pl-6 space-y-2">
                   {category.subOptions.map(subOption => {
                     const subIsSelected = selectedCategories.includes(subOption.id);
-                    const subIsDisabled = !canSelectMore() && !subIsSelected;
 
                     return (
                       <div key={subOption.id} className="flex items-center gap-2">
                         <Checkbox
                           id={subOption.id}
                           checked={subIsSelected}
-                          disabled={subIsDisabled}
                           onCheckedChange={(checked) => handleCategoryChange(subOption.id, checked as boolean)}
                         />
                         <label
                           htmlFor={subOption.id}
-                          className={cn(
-                            "text-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors",
-                            subIsDisabled && "cursor-not-allowed opacity-50"
-                          )}
+                          className="text-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
                         >
                           {subOption.label}
                         </label>
