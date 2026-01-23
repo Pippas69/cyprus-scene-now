@@ -182,9 +182,40 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       }
     });
     
-    map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: false }), 'bottom-right');
+    // Add navigation control with smaller buttons on mobile
+    const navControl = new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: false });
+    map.current.addControl(navControl, 'bottom-right');
     
-    return () => { map.current?.remove(); };
+    // Apply smaller styling to zoom controls on mobile/tablet
+    const applyZoomControlStyles = () => {
+      const controls = mapContainer.current?.querySelectorAll('.mapboxgl-ctrl-zoom-in, .mapboxgl-ctrl-zoom-out');
+      if (controls) {
+        const isMobile = window.innerWidth < 768;
+        const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+        controls.forEach((btn) => {
+          const el = btn as HTMLElement;
+          if (isMobile) {
+            el.style.width = '26px';
+            el.style.height = '26px';
+          } else if (isTablet) {
+            el.style.width = '28px';
+            el.style.height = '28px';
+          } else {
+            el.style.width = '29px';
+            el.style.height = '29px';
+          }
+        });
+      }
+    };
+    
+    // Apply on load and resize
+    setTimeout(applyZoomControlStyles, 100);
+    window.addEventListener('resize', applyZoomControlStyles);
+    
+    return () => { 
+      window.removeEventListener('resize', applyZoomControlStyles);
+      map.current?.remove(); 
+    };
   }, [MAPBOX_TOKEN]);
 
   // Show directions icon below the business pin - icon only, responsive size

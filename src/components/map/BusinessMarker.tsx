@@ -23,10 +23,12 @@ interface BusinessMarkerProps {
  * Free/Basic/Pro/Elite all use the SAME teardrop silhouette as in the reference.
  * Pro/Elite are distinguished by color + icon.
  */
-// Mobile-responsive sizes (smaller on mobile)
+// Responsive sizes: desktop / tablet / mobile (progressively smaller at initial zoom)
+// When user clicks a pin and zooms in, sizes feel good - these are for initial overview
 const PIN_CONFIG: Record<PlanSlug, {
-  size: number;
-  mobileSize: number; // Smaller on mobile
+  desktopSize: number;  // lg+
+  tabletSize: number;   // md-lg
+  mobileSize: number;   // <md
   opacity: number;
   shadowBlur: number;
   strokeWidth: number;
@@ -36,7 +38,8 @@ const PIN_CONFIG: Record<PlanSlug, {
 }> = {
   // Free stays EXACTLY as-is per request
   free: {
-    size: 16,
+    desktopSize: 14,
+    tabletSize: 11,
     mobileSize: 12,
     opacity: 0.7,
     shadowBlur: 2,
@@ -47,7 +50,8 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   basic: {
     // Like the screenshot: slightly larger than Free, same teardrop shape
-    size: 19,
+    desktopSize: 17,
+    tabletSize: 12,
     mobileSize: 13,
     opacity: 1,
     shadowBlur: 3,
@@ -58,7 +62,8 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   pro: {
     // Purple teardrop + star icon
-    size: 23,
+    desktopSize: 20,
+    tabletSize: 14,
     mobileSize: 15,
     opacity: 1,
     shadowBlur: 4,
@@ -69,7 +74,8 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   elite: {
     // Gold teardrop + crown icon
-    size: 25,
+    desktopSize: 22,
+    tabletSize: 15,
     mobileSize: 17,
     opacity: 1,
     shadowBlur: 4,
@@ -139,11 +145,17 @@ const PremiumPinPath = () => (
 export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMarkerProps) => {
   const config = PIN_CONFIG[planSlug];
   const colors = PIN_COLORS[planSlug];
-  const { opacity, shadowBlur, strokeWidth, glowRadius, isPremiumShape, hasPulseAnimation, mobileSize } = config;
+  const { opacity, shadowBlur, strokeWidth, glowRadius, isPremiumShape, hasPulseAnimation, desktopSize, tabletSize, mobileSize } = config;
   
-  // Use smaller size on mobile (window width check with fallback)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const size = isMobile ? mobileSize : config.size;
+  // Responsive size: mobile < 768, tablet 768-1024, desktop 1024+
+  const getResponsiveSize = () => {
+    if (typeof window === 'undefined') return desktopSize;
+    const width = window.innerWidth;
+    if (width < 768) return mobileSize;
+    if (width < 1024) return tabletSize;
+    return desktopSize;
+  };
+  const size = getResponsiveSize();
 
   const safeId = toSvgSafeId(`${planSlug}-${markerId}`);
 
