@@ -39,6 +39,7 @@ export const UserAccountDropdown = ({
   const { language } = useLanguage();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(userId);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const translations = {
     el: {
@@ -65,14 +66,31 @@ export const UserAccountDropdown = ({
   };
 
   const handleMyAccount = () => {
+    setDropdownOpen(false);
     navigate('/feed');
   };
 
+  // Badge component for reuse
+  const NotificationBadge = ({ className = '' }: { className?: string }) => {
+    if (unreadCount <= 0) return null;
+    return (
+      <Badge
+        variant="destructive"
+        className={cn(
+          "absolute h-5 min-w-5 flex items-center justify-center p-0 px-1.5 text-xs font-bold",
+          className
+        )}
+      >
+        {unreadCount > 9 ? '9+' : unreadCount}
+      </Badge>
+    );
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
         {variant === 'button' ? (
-          <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border-none">
+          <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border-none relative">
             <Avatar className="h-6 w-6">
               <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                 {userName?.substring(0, 2)?.toUpperCase() || 'U'}
@@ -80,6 +98,8 @@ export const UserAccountDropdown = ({
               {avatarUrl && <AvatarImage src={avatarUrl} alt={userName || 'User'} />}
             </Avatar>
             <span className="hidden lg:inline font-medium">{userName}</span>
+            {/* Badge on button variant */}
+            <NotificationBadge className="-top-1 -right-1" />
           </Button>
         ) : (
           <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full p-0">
@@ -89,6 +109,8 @@ export const UserAccountDropdown = ({
               </AvatarFallback>
               {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
             </Avatar>
+            {/* Badge on avatar */}
+            <NotificationBadge className="-top-1 -right-1" />
           </Button>
         )}
       </DropdownMenuTrigger>
@@ -99,7 +121,7 @@ export const UserAccountDropdown = ({
           {t.myAccount}
         </DropdownMenuItem>
 
-        {/* 2. Notifications - Opens Popover with in-app notifications */}
+        {/* 2. Notifications - Opens Popover with in-app notifications (click-based) */}
         <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
           <PopoverTrigger asChild>
             <DropdownMenuItem
@@ -109,7 +131,12 @@ export const UserAccountDropdown = ({
                 setNotificationsOpen(true);
               }}
             >
-              <Bell className="mr-2 h-4 w-4" />
+              <div className="relative mr-2">
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-3 w-3 bg-destructive rounded-full" />
+                )}
+              </div>
               {t.notifications}
               {unreadCount > 0 && (
                 <Badge
@@ -121,7 +148,13 @@ export const UserAccountDropdown = ({
               )}
             </DropdownMenuItem>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="end" side="left" sideOffset={8}>
+          <PopoverContent 
+            className="w-80 p-0" 
+            align="end" 
+            side="left" 
+            sideOffset={8}
+            onInteractOutside={() => setNotificationsOpen(false)}
+          >
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="font-semibold">{t.notifications}</h3>
               {unreadCount > 0 && (
