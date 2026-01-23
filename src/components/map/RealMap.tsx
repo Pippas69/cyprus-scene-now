@@ -7,8 +7,8 @@ import { useMapBusinesses } from '@/hooks/useMapBusinesses';
 import { BusinessMarker } from './BusinessMarker';
 import { BusinessPopup } from './BusinessPopup';
 import { MapSearch } from './MapSearch';
-import { MapControls } from './MapControls';
-import { Loader2, Building2 } from 'lucide-react';
+import { BusinessListSheet } from './BusinessListSheet';
+import { Loader2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { trackEngagement } from '@/lib/analyticsTracking';
 
@@ -179,11 +179,36 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       }
     });
     
-    map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
-    map.current.addControl(new mapboxgl.FullscreenControl(), 'top-left');
-    map.current.addControl(new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true }), 'top-left');
+    // Only add zoom controls (NavigationControl without compass/pitch)
+    map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: false }), 'bottom-right');
+    
     return () => { map.current?.remove(); };
   }, [MAPBOX_TOKEN]);
+
+  const openBusinessPopup = (business: any) => {
+    if (!map.current) return;
+    const [lng, lat] = business.coordinates;
+
+    if (popupRef.current) popupRef.current.remove();
+    const popupDiv = document.createElement('div');
+    const popupRoot = ReactDOM.createRoot(popupDiv);
+    popupRoot.render(
+      <BusinessPopup
+        business={business}
+        onClose={() => popupRef.current?.remove()}
+        language={language}
+      />
+    );
+    popupRef.current = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      maxWidth: 'none',
+      offset: 25,
+    })
+      .setLngLat([lng, lat])
+      .setDOMContent(popupDiv)
+      .addTo(map.current);
+  };
 
   // Update markers when businesses change or map moves
   useEffect(() => {
@@ -192,31 +217,6 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     // Clear existing markers
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
-
-    const openBusinessPopup = (business: any) => {
-      if (!map.current) return;
-      const [lng, lat] = business.coordinates;
-
-      if (popupRef.current) popupRef.current.remove();
-      const popupDiv = document.createElement('div');
-      const popupRoot = ReactDOM.createRoot(popupDiv);
-      popupRoot.render(
-        <BusinessPopup
-          business={business}
-          onClose={() => popupRef.current?.remove()}
-          language={language}
-        />
-      );
-      popupRef.current = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false,
-        maxWidth: 'none',
-        offset: 25,
-      })
-        .setLngLat([lng, lat])
-        .setDOMContent(popupDiv)
-        .addTo(map.current);
-    };
 
     // Initial camera: if we have a focusBusinessId, center exactly there.
     // Otherwise fit bounds to visible businesses.
@@ -350,6 +350,14 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     map.current?.flyTo({ center: coords, zoom: 15, duration: 1000 });
   };
 
+  const handleBusinessListClick = (business: any) => {
+    if (!map.current) return;
+    const [lng, lat] = business.coordinates;
+    trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map_list' });
+    map.current.flyTo({ center: [lng, lat], zoom: 15, duration: 800, essential: true });
+    setTimeout(() => openBusinessPopup(business), 500);
+  };
+
   if (isTokenMissing) {
     return (
       <div className="h-[50vh] md:h-[60vh] lg:h-[70vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl">
@@ -362,16 +370,10 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
   return (
     <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20">
-      <div className="absolute top-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)]">
+      {/* Search bar - top left corner, compact */}
+      <div className="absolute top-2 left-2 z-10">
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
       </div>
-      
-      <MapControls 
-        onResetView={() => map.current?.flyTo({ center: MAPBOX_CONFIG.defaultCenter, zoom: MAPBOX_CONFIG.defaultZoom, duration: 1000 })} 
-        onToggleView={() => {}} 
-        onLocate={() => navigator.geolocation?.getCurrentPosition(p => map.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 13, duration: 1000 }))} 
-        isListView={false} 
-      />
       
       {loading && (
         <div className="absolute inset-0 z-20 bg-background/50 backdrop-blur-sm flex items-center justify-center">
@@ -387,15 +389,14 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       {/* Ocean gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-aegean/5 via-transparent to-seafoam/5 rounded-2xl" />
       
-      {/* Business count indicator */}
+      {/* Business count indicator - bottom left corner, compact & clickable */}
       {!loading && businesses.length > 0 && (
-        <div className="absolute bottom-4 left-4 z-10 bg-gradient-to-r from-aegean to-seafoam text-white px-4 py-2 rounded-lg shadow-lg">
-          <div className="flex items-center gap-2">
-            <Building2 size={16} />
-            <p className="text-sm font-medium">
-              {businesses.length} {language === 'el' ? (businesses.length === 1 ? 'επιχείρηση' : 'επιχειρήσεις') : (businesses.length === 1 ? 'business' : 'businesses')}
-            </p>
-          </div>
+        <div className="absolute bottom-2 left-2 z-10">
+          <BusinessListSheet
+            businesses={businesses}
+            language={language}
+            onBusinessClick={handleBusinessListClick}
+          />
         </div>
       )}
     </div>

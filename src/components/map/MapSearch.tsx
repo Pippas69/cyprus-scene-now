@@ -3,6 +3,7 @@ import { Search, MapPin, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { formatEventTime } from "@/lib/mapUtils";
+import { cn } from "@/lib/utils";
 
 interface SearchResult {
   id: string;
@@ -21,8 +22,8 @@ interface MapSearchProps {
 
 export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
   const text = {
-    el: { placeholder: "Αναζήτηση εκδηλώσεων..." },
-    en: { placeholder: "Search for events..." },
+    el: { placeholder: "Αναζήτηση..." },
+    en: { placeholder: "Search..." },
   };
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -99,7 +100,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+        <Search className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4" />
         <Input
           type="text"
           placeholder={text[language].placeholder}
@@ -107,13 +108,18 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-          className="pl-10 bg-background"
+          className={cn(
+            "pl-7 md:pl-10 bg-background/95 backdrop-blur-sm shadow-lg",
+            "h-8 md:h-9 lg:h-10",
+            "text-xs md:text-sm",
+            "w-[120px] md:w-[180px] lg:w-[240px]"
+          )}
         />
       </div>
 
       {/* Results dropdown */}
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full mt-2 w-full bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+        <div className="absolute top-full mt-2 w-full min-w-[200px] bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
           {results.map((result) => (
             <div
               key={result.id}
@@ -124,21 +130,21 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
                   setQuery("");
                 }
               }}
-              className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors"
+              className="p-2 md:p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors"
             >
-              <h4 className="font-medium text-sm mb-1">{result.title}</h4>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <h4 className="font-medium text-xs md:text-sm mb-1 line-clamp-1">{result.title}</h4>
+              <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <Calendar size={12} />
-                  <span>{formatEventTime(result.start_at, result.end_at)}</span>
+                  <Calendar size={10} className="md:w-3 md:h-3" />
+                  <span className="line-clamp-1">{formatEventTime(result.start_at, result.end_at)}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <MapPin size={12} />
-                  <span>{result.location}</span>
+                  <MapPin size={10} className="md:w-3 md:h-3" />
+                  <span className="line-clamp-1">{result.location}</span>
                 </div>
               </div>
               {result.business_name && (
-                <p className="text-xs text-muted-foreground mt-1">{result.business_name}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-1 line-clamp-1">{result.business_name}</p>
               )}
             </div>
           ))}
@@ -146,7 +152,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
       )}
 
       {isLoading && (
-        <div className="absolute top-full mt-2 w-full bg-background border rounded-lg shadow-lg p-4 text-center text-sm text-muted-foreground">
+        <div className="absolute top-full mt-2 w-full bg-background border rounded-lg shadow-lg p-3 text-center text-xs text-muted-foreground">
           {language === 'el' ? 'Αναζήτηση...' : 'Searching...'}
         </div>
       )}

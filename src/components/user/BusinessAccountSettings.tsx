@@ -665,28 +665,28 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             
             {/* Email Notifications - Always ON */}
             <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-lg border border-border/50">
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-primary" />
-                <div>
-                  <Label className="font-medium">{t.emailNotifications}</Label>
-                  <p className="text-xs text-muted-foreground">{t.emailNotificationsSubtext}</p>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Mail className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <Label className="font-medium text-sm">{t.emailNotifications}</Label>
+                  <p className="text-xs text-muted-foreground hidden sm:block">{t.emailNotificationsSubtext}</p>
                 </div>
               </div>
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
+              <span className="text-[10px] md:text-xs font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 md:px-2 py-0.5 md:py-1 rounded whitespace-nowrap shrink-0 ml-2">
                 {t.alwaysOn}
               </span>
             </div>
 
             {/* ΦΟΜΟ Notifications - Always ON */}
             <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-lg border border-border/50">
-              <div className="flex items-center gap-3">
-                <BellRing className="h-4 w-4 text-primary" />
-                <div>
-                  <Label className="font-medium">{t.fomoNotifications}</Label>
-                  <p className="text-xs text-muted-foreground">{t.fomoNotificationsSubtext}</p>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <BellRing className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <Label className="font-medium text-sm">{t.fomoNotifications}</Label>
+                  <p className="text-xs text-muted-foreground hidden sm:block">{t.fomoNotificationsSubtext}</p>
                 </div>
               </div>
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
+              <span className="text-[10px] md:text-xs font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 md:px-2 py-0.5 md:py-1 rounded whitespace-nowrap shrink-0 ml-2">
                 {t.alwaysOn}
               </span>
             </div>
