@@ -492,12 +492,13 @@ const Signup = () => {
                     <FormMessage />
                   </FormItem>} />
 
+              {/* Interests / Preferences (unlimited selection for users - plural forms) */}
               <div className="space-y-3">
                 <FormLabel className="flex items-center gap-2">
                   <Heart className="h-4 w-4 text-primary" />
-                  {language === "el" ? "Τι σου αρέσει περισσότερο; (προαιρετικό)" : "What do you like most? (optional)"}
+                  {language === "el" ? "Ενδιαφέροντα (απεριόριστες επιλογές)" : "Interests (unlimited choices)"}
                 </FormLabel>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {getMainCategories(language).map(category => (
                     <div key={category.id} className="flex items-center space-x-2">
                       <Checkbox 

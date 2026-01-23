@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { unifiedCategories } from "@/lib/unifiedCategories";
 
 interface SubOption {
   id: string;
@@ -34,80 +35,17 @@ const HierarchicalCategoryFilter = ({
   const badgeRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // 4 core categories
-  // Order: Nightlife → Clubs → Dining → Beach & Summer
-  const categories: { el: Category[]; en: Category[] } = {
-    el: [
-      {
-        id: "nightlife",
-        label: "Νυχτερινή Ζωή",
-        icon: "🍸",
-        hasDropdown: true,
-        subOptions: [
-          { id: "bars", label: "Bars" },
-          { id: "wine-cocktail-bars", label: "Κρασί & Cocktail Bars" },
-          { id: "live-music", label: "Ζωντανή Μουσική" },
-        ],
-      },
-      { id: "clubs", label: "Clubs", icon: "🎉", hasDropdown: false },
-      {
-        id: "dining",
-        label: "Εστίαση",
-        icon: "🍽️",
-        hasDropdown: true,
-        subOptions: [
-          { id: "fine-dining", label: "Επίσημη Εστίαση" },
-          { id: "casual-dining", label: "Χαλαρή Εστίαση" },
-        ],
-      },
-      {
-        id: "beach-summer",
-        label: "Παραλία/Καλοκαίρι",
-        icon: "🏖️",
-        hasDropdown: true,
-        subOptions: [
-          { id: "beach-bars", label: "Beach Bars" },
-          { id: "summer-events", label: "Καλοκαιρινές Εκδηλώσεις" },
-          { id: "seaside-restaurants", label: "Παραθαλάσσια Εστιατόρια" },
-        ],
-      },
-    ],
-    en: [
-      {
-        id: "nightlife",
-        label: "Nightlife",
-        icon: "🍸",
-        hasDropdown: true,
-        subOptions: [
-          { id: "bars", label: "Bars" },
-          { id: "wine-cocktail-bars", label: "Wine & Cocktail Bars" },
-          { id: "live-music", label: "Live Music" },
-        ],
-      },
-      { id: "clubs", label: "Clubs", icon: "🎉", hasDropdown: false },
-      {
-        id: "dining",
-        label: "Dining",
-        icon: "🍽️",
-        hasDropdown: true,
-        subOptions: [
-          { id: "fine-dining", label: "Fine Dining" },
-          { id: "casual-dining", label: "Casual Dining" },
-        ],
-      },
-      {
-        id: "beach-summer",
-        label: "Beach/Summer",
-        icon: "🏖️",
-        hasDropdown: true,
-        subOptions: [
-          { id: "beach-bars", label: "Beach Bars" },
-          { id: "summer-events", label: "Summer Events" },
-          { id: "seaside-restaurants", label: "Seaside Restaurants" },
-        ],
-      },
-    ],
-  };
+  // Build categories from unified source (plural forms for users/feed)
+  const categories: Category[] = unifiedCategories.map(cat => ({
+    id: cat.id,
+    label: cat.label[language],
+    icon: cat.icon,
+    hasDropdown: cat.hasDropdown,
+    subOptions: cat.subOptions?.map(sub => ({
+      id: sub.id,
+      label: sub.label[language],
+    })),
+  }));
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -196,18 +134,16 @@ const HierarchicalCategoryFilter = ({
   };
 
   return (
-    <div
-      className="w-full overflow-x-auto scrollbar-hide touch-pan-x"
-      style={{ WebkitOverflowScrolling: "touch" }}
-    >
-      <div className="flex gap-1.5 sm:gap-2 pb-1.5 sm:pb-2 pr-4 pl-0.5 sm:pl-1">
-        {categories[language].map((category) => (
+    <div className="w-full">
+      {/* Responsive container: no scroll on tablet/mobile, all items fit */}
+      <div className="flex flex-wrap md:flex-nowrap gap-1 md:gap-1.5 lg:gap-2 pb-1.5 sm:pb-2">
+        {categories.map((category) => (
           <div
             key={category.id}
-            className="relative flex-shrink-0"
+            className="relative flex-1 min-w-0 md:flex-initial md:flex-shrink-0"
             ref={(el) => (badgeRefs.current[category.id] = el)}
           >
-            {/* Category Badge - smaller on mobile */}
+            {/* Category Badge - responsive sizing to fit all in one row */}
             <Badge
               variant={
                 category.hasDropdown
@@ -218,7 +154,7 @@ const HierarchicalCategoryFilter = ({
                   ? "default"
                   : "outline"
               }
-              className={`cursor-pointer transition-all duration-200 hover:scale-105 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium min-h-[36px] sm:min-h-[44px] flex items-center gap-1 sm:gap-2 rounded-full select-none ${
+              className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] w-full md:w-auto px-2 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-[11px] md:text-xs lg:text-sm font-medium min-h-[36px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center md:justify-start gap-1 md:gap-1.5 lg:gap-2 rounded-full select-none ${
                 category.hasDropdown
                   ? hasAnySubOptionSelected(category)
                     ? "bg-ocean text-white border-ocean shadow-md"
@@ -235,18 +171,18 @@ const HierarchicalCategoryFilter = ({
                 }
               }}
             >
-              <span className="text-sm sm:text-base">{category.icon}</span>
-              <span className="whitespace-nowrap">{category.label}</span>
+              <span className="text-sm md:text-base">{category.icon}</span>
+              <span className="whitespace-nowrap truncate">{category.label}</span>
               {category.hasDropdown && (
                 <>
                   {getSelectedSubOptionsCount(category) > 0 && (
-                    <span className="bg-white/20 px-1 sm:px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold">
+                    <span className="bg-white/20 px-1 md:px-1.5 py-0.5 rounded-full text-[9px] md:text-[10px] lg:text-xs font-semibold flex-shrink-0">
                       {getSelectedSubOptionsCount(category)}
                     </span>
                   )}
                   <ChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${
+                    size={12}
+                    className={`transition-transform duration-200 flex-shrink-0 ${
                       openDropdown === category.id ? "rotate-180" : ""
                     }`}
                   />
@@ -254,7 +190,7 @@ const HierarchicalCategoryFilter = ({
               )}
               {!category.hasDropdown &&
                 selectedCategories.includes(category.id) && (
-                  <Check size={14} className="ml-0.5 sm:ml-1" />
+                  <Check size={12} className="flex-shrink-0" />
                 )}
             </Badge>
           </div>
@@ -263,7 +199,7 @@ const HierarchicalCategoryFilter = ({
         {/* Portal Dropdown Menu */}
         {openDropdown && dropdownPosition && createPortal(
           <AnimatePresence>
-            {categories[language].map((category) => (
+            {categories.map((category) => (
               category.hasDropdown && openDropdown === category.id && (
                 <motion.div
                   key={category.id}
@@ -275,17 +211,17 @@ const HierarchicalCategoryFilter = ({
                   style={{
                     position: 'fixed',
                     top: dropdownPosition.top,
-                    left: dropdownPosition.left,
+                    left: Math.min(dropdownPosition.left, window.innerWidth - 220),
                     zIndex: 9999,
                   }}
-                  className="min-w-[200px] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+                  className="min-w-[180px] max-w-[calc(100vw-32px)] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
                 >
                   <div className="p-2 space-y-1">
                     {category.subOptions?.map((subOption) => (
                       <label
                         key={subOption.id}
                         htmlFor={subOption.id}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                        className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg cursor-pointer transition-colors ${
                           selectedCategories.includes(subOption.id)
                             ? "bg-ocean/10 text-ocean"
                             : "hover:bg-muted"
@@ -295,9 +231,9 @@ const HierarchicalCategoryFilter = ({
                           id={subOption.id}
                           checked={selectedCategories.includes(subOption.id)}
                           onCheckedChange={() => toggleSubOption(subOption.id)}
-                          className="data-[state=checked]:bg-ocean data-[state=checked]:border-ocean"
+                          className="data-[state=checked]:bg-ocean data-[state=checked]:border-ocean flex-shrink-0"
                         />
-                        <span className="text-sm font-medium">
+                        <span className="text-xs md:text-sm font-medium">
                           {subOption.label}
                         </span>
                       </label>
