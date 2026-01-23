@@ -155,8 +155,8 @@ const HierarchicalCategoryFilter = ({
           }`}
           onClick={onToggleStudentDiscounts}
         >
-          {/* Smaller icon on mobile/tablet, and smaller overall size on desktop */}
-          <GraduationCap className="h-2 w-2 md:h-2.5 md:w-2.5 lg:h-2 lg:w-2" />
+          {/* Smaller icon ONLY on mobile/tablet */}
+          <GraduationCap className="h-2 w-2 md:h-2 md:w-2 lg:h-4 lg:w-4" />
           <span className="text-[10px] md:text-[11px] lg:text-[11px]">
             {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
           </span>
