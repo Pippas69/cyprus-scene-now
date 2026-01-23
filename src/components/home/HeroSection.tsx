@@ -14,13 +14,15 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   const text = {
     el: {
-      tagline: "ΦΟΒΟΣ OF MISSING OUT",
+      taglinePart1: "ΦΟΒΟΣ",
+      taglinePart2: "OF MISSING OUT",
       heroMain: "Επιλογές υπάρχουν,",
       subText: '"Μα ένειξερω που να πάω πόψε"',
       downloadCta: "Κατέβαστο τζαι μάθε.",
     },
     en: {
-      tagline: "Fear OF MISSING OUT",
+      taglinePart1: "FEAR",
+      taglinePart2: "OF MISSING OUT",
       heroMain: "Options exist,",
       subText: '"But I don\'t know where to go tonight"',
       downloadCta: "Download it and find out",
@@ -76,9 +78,12 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-seafoam/15 to-aegean/15 border border-seafoam/30 font-cinzel font-bold text-xs sm:text-base md:text-lg tracking-wider shadow-lg">
+            <span className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-seafoam/15 to-aegean/15 border border-seafoam/30 font-cinzel font-bold text-xs sm:text-base md:text-lg tracking-wider shadow-lg">
               <span className="bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase">
-                {t.tagline}
+                {t.taglinePart1}
+              </span>
+              <span className="bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase">
+                {t.taglinePart2}
               </span>
             </span>
           </motion.div>
