@@ -239,7 +239,7 @@ const HierarchicalCategoryFilter = ({
         <div className="flex gap-2 justify-start">
           {firstRow.map(renderBadge)}
         </div>
-        <div className="flex gap-2 justify-start">
+        <div className="flex gap-2 justify-start items-center">
           {secondRow.map(renderBadge)}
           {renderStudentDiscountBadge()}
         </div>
