@@ -39,6 +39,8 @@ const HierarchicalCategoryFilter = ({
   mapMode = false,
 }: HierarchicalCategoryFilterProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // NOTE: We store document coordinates (page), not viewport coordinates.
+  // This avoids edge-cases where `position: fixed` inside portals can appear misaligned.
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const badgeRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -83,11 +85,14 @@ const HierarchicalCategoryFilter = ({
       if (badgeEl) {
         const rect = badgeEl.getBoundingClientRect();
         setDropdownPosition({
-          top: rect.bottom + 8,
-          left: rect.left,
+          top: rect.bottom + window.scrollY + 8,
+          left: rect.left + window.scrollX,
         });
       }
     };
+
+     // Run after layout to avoid occasional 0,0 measurements.
+     requestAnimationFrame(updatePosition);
 
     window.addEventListener("scroll", updatePosition, true);
     window.addEventListener("resize", updatePosition);
@@ -106,8 +111,8 @@ const HierarchicalCategoryFilter = ({
       if (badgeEl) {
         const rect = badgeEl.getBoundingClientRect();
         setDropdownPosition({
-          top: rect.bottom + 8,
-          left: rect.left,
+          top: rect.bottom + window.scrollY + 8,
+          left: rect.left + window.scrollX,
         });
       }
       setOpenDropdown(categoryId);
@@ -230,87 +235,93 @@ const HierarchicalCategoryFilter = ({
     </div>
   );
 
-  // Map mode: all 4 categories inline, no student discount
-  if (mapMode || mapCompact) {
-    return (
-      <div className="flex gap-1.5 md:gap-2 lg:gap-2.5 items-center">
-        {categories.map(cat => renderBadge(cat, true))}
-      </div>
+  const renderDropdownPortal = () => {
+    if (!openDropdown || !dropdownPosition) return null;
+
+    // Clamp against viewport (converted to page coordinates)
+    const maxLeft = window.scrollX + window.innerWidth - 220;
+    const left = Math.min(dropdownPosition.left, maxLeft);
+
+    return createPortal(
+      <AnimatePresence>
+        {categories.map((category) => (
+          category.hasDropdown && openDropdown === category.id && (
+            <motion.div
+              key={category.id}
+              ref={dropdownRef}
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{
+                position: "absolute",
+                top: dropdownPosition.top,
+                left,
+                zIndex: 9999,
+              }}
+              className="min-w-[180px] max-w-[calc(100vw-32px)] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+            >
+              <div className="p-2 space-y-1">
+                {category.subOptions?.map((subOption) => (
+                  <label
+                    key={subOption.id}
+                    htmlFor={subOption.id}
+                    className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg cursor-pointer transition-colors ${
+                      selectedCategories.includes(subOption.id)
+                        ? "bg-ocean/10 text-ocean"
+                        : "hover:bg-muted"
+                    }`}
+                  >
+                    <Checkbox
+                      id={subOption.id}
+                      checked={selectedCategories.includes(subOption.id)}
+                      onCheckedChange={() => toggleSubOption(subOption.id)}
+                      className="data-[state=checked]:bg-ocean data-[state=checked]:border-ocean flex-shrink-0"
+                    />
+                    <span className="text-xs md:text-sm font-medium">{subOption.label}</span>
+                  </label>
+                ))}
+              </div>
+            </motion.div>
+          )
+        ))}
+      </AnimatePresence>,
+      document.body
     );
-  }
+  };
 
   return (
     <div className="w-full">
-      {/* Desktop: 4 categories in one row, Student Discount on the next row centered */}
-      <div className="hidden lg:flex flex-col gap-2 pb-2">
-        <div className="flex gap-2">
-          {categories.map(cat => renderBadge(cat))}
+      {/* Map mode: all 4 categories inline, no student discount */}
+      {mapMode || mapCompact ? (
+        <div className="flex gap-1.5 md:gap-2 lg:gap-2.5 items-center">
+          {categories.map((cat) => renderBadge(cat, true))}
         </div>
-        <div className="flex justify-center">
-          {renderStudentDiscountBadge()}
-        </div>
-      </div>
-      
-      {/* Mobile/Tablet: Summer + Student Discount on the same row (as per mock) */}
-      <div className="lg:hidden space-y-1.5 pb-1.5">
-        <div className="flex gap-1.5 justify-start">
-          {firstRow.map(cat => renderBadge(cat))}
-        </div>
-        <div className="flex gap-1.5 justify-start items-center">
-          {secondRow.map(cat => renderBadge(cat))}
-          {renderStudentDiscountBadge()}
-        </div>
-      </div>
+      ) : (
+        <>
+          {/* Desktop: 4 categories in one row, Student Discount on the next row centered */}
+          <div className="hidden lg:flex flex-col gap-2 pb-2">
+            <div className="flex gap-2">
+              {categories.map((cat) => renderBadge(cat))}
+            </div>
+            <div className="flex justify-center">{renderStudentDiscountBadge()}</div>
+          </div>
 
-      {/* Portal Dropdown Menu */}
-      {openDropdown && dropdownPosition && createPortal(
-        <AnimatePresence>
-          {categories.map((category) => (
-            category.hasDropdown && openDropdown === category.id && (
-              <motion.div
-                key={category.id}
-                ref={dropdownRef}
-                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                style={{
-                  position: 'fixed',
-                  top: dropdownPosition.top,
-                  left: Math.min(dropdownPosition.left, window.innerWidth - 220),
-                  zIndex: 9999,
-                }}
-                className="min-w-[180px] max-w-[calc(100vw-32px)] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
-              >
-                <div className="p-2 space-y-1">
-                  {category.subOptions?.map((subOption) => (
-                    <label
-                      key={subOption.id}
-                      htmlFor={subOption.id}
-                      className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg cursor-pointer transition-colors ${
-                        selectedCategories.includes(subOption.id)
-                          ? "bg-ocean/10 text-ocean"
-                          : "hover:bg-muted"
-                      }`}
-                    >
-                      <Checkbox
-                        id={subOption.id}
-                        checked={selectedCategories.includes(subOption.id)}
-                        onCheckedChange={() => toggleSubOption(subOption.id)}
-                        className="data-[state=checked]:bg-ocean data-[state=checked]:border-ocean flex-shrink-0"
-                      />
-                      <span className="text-xs md:text-sm font-medium">
-                        {subOption.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </motion.div>
-            )
-          ))}
-        </AnimatePresence>,
-        document.body
+          {/* Mobile/Tablet: Summer + Student Discount on the same row (as per mock) */}
+          <div className="lg:hidden space-y-1.5 pb-1.5">
+            <div className="flex gap-1.5 justify-start">
+              {firstRow.map((cat) => renderBadge(cat))}
+            </div>
+            <div className="flex gap-1.5 justify-start items-center">
+              {secondRow.map((cat) => renderBadge(cat))}
+              {renderStudentDiscountBadge()}
+            </div>
+          </div>
+        </>
       )}
+
+      {/* Portal Dropdown Menu (must render for BOTH feed & map) */}
+      {renderDropdownPortal()}
     </div>
   );
 };
