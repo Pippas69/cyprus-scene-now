@@ -25,6 +25,7 @@ interface HierarchicalCategoryFilterProps {
   language: "el" | "en";
   showStudentDiscounts?: boolean;
   onToggleStudentDiscounts?: () => void;
+  mapCompact?: boolean;
 }
 
 const HierarchicalCategoryFilter = ({
@@ -33,6 +34,7 @@ const HierarchicalCategoryFilter = ({
   language,
   showStudentDiscounts,
   onToggleStudentDiscounts,
+  mapCompact = false,
 }: HierarchicalCategoryFilterProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
@@ -164,7 +166,7 @@ const HierarchicalCategoryFilter = ({
     );
   };
 
-  const renderBadge = (category: Category) => (
+  const renderBadge = (category: Category, isMapCompact: boolean = false) => (
     <div
       key={category.id}
       className="relative"
@@ -180,7 +182,11 @@ const HierarchicalCategoryFilter = ({
             ? "default"
             : "outline"
         }
-        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2.5 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-xs md:text-xs lg:text-sm font-medium min-h-[32px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-1.5 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
+        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+          isMapCompact 
+            ? "px-2 py-1 text-[10px] min-h-[28px] gap-1" 
+            : "px-2.5 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-xs md:text-xs lg:text-sm min-h-[32px] md:min-h-[40px] lg:min-h-[44px] gap-1.5 md:gap-1.5 lg:gap-2"
+        } font-medium flex items-center justify-center rounded-full select-none whitespace-nowrap ${
           category.hasDropdown
             ? hasAnySubOptionSelected(category)
               ? "bg-ocean text-white border-ocean shadow-md"
@@ -197,18 +203,18 @@ const HierarchicalCategoryFilter = ({
           }
         }}
       >
-        <span className="text-xs md:text-sm lg:text-base">{category.icon}</span>
+        <span className={isMapCompact ? "text-[10px]" : "text-xs md:text-sm lg:text-base"}>{category.icon}</span>
         <span>{category.label}</span>
         {category.hasDropdown && (
           <>
             {getSelectedSubOptionsCount(category) > 0 && (
-              <span className="bg-white/20 px-1 md:px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] lg:text-xs font-semibold flex-shrink-0">
+              <span className={`bg-white/20 rounded-full font-semibold flex-shrink-0 ${isMapCompact ? "px-1 py-0.5 text-[7px]" : "px-1 md:px-1.5 py-0.5 text-[8px] md:text-[10px] lg:text-xs"}`}>
                 {getSelectedSubOptionsCount(category)}
               </span>
             )}
             <ChevronDown
-              size={10}
-              className={`transition-transform duration-200 flex-shrink-0 md:w-3 md:h-3 ${
+              size={isMapCompact ? 8 : 10}
+              className={`transition-transform duration-200 flex-shrink-0 ${isMapCompact ? "" : "md:w-3 md:h-3"} ${
                 openDropdown === category.id ? "rotate-180" : ""
               }`}
             />
@@ -216,18 +222,27 @@ const HierarchicalCategoryFilter = ({
         )}
         {!category.hasDropdown &&
           selectedCategories.includes(category.id) && (
-            <Check size={10} className="flex-shrink-0 md:w-3 md:h-3" />
+            <Check size={isMapCompact ? 8 : 10} className={`flex-shrink-0 ${isMapCompact ? "" : "md:w-3 md:h-3"}`} />
           )}
       </Badge>
     </div>
   );
+
+  // Map compact mode: all 4 categories in one row, no student discount
+  if (mapCompact) {
+    return (
+      <div className="flex gap-1.5 items-center">
+        {categories.map(cat => renderBadge(cat, true))}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
       {/* Desktop: 4 categories in one row, Student Discount on the next row centered */}
       <div className="hidden lg:flex flex-col gap-2 pb-2">
         <div className="flex gap-2">
-          {categories.map(renderBadge)}
+          {categories.map(cat => renderBadge(cat))}
         </div>
         <div className="flex justify-center">
           {renderStudentDiscountBadge()}
@@ -237,10 +252,10 @@ const HierarchicalCategoryFilter = ({
       {/* Mobile/Tablet: Summer + Student Discount on the same row (as per mock) */}
       <div className="lg:hidden space-y-1.5 pb-1.5">
         <div className="flex gap-1.5 justify-start">
-          {firstRow.map(renderBadge)}
+          {firstRow.map(cat => renderBadge(cat))}
         </div>
         <div className="flex gap-1.5 justify-start items-center">
-          {secondRow.map(renderBadge)}
+          {secondRow.map(cat => renderBadge(cat))}
           {renderStudentDiscountBadge()}
         </div>
       </div>

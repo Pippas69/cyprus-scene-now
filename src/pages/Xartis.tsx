@@ -111,17 +111,17 @@ const Xartis = () => {
   return (
     <div className="flex flex-col h-full w-full">
       {/* Filters Section */}
-      <div className="bg-background border-b border-border p-4">
-        <div className="space-y-4">
-          {/* Location and Category Filters */}
-          <div className="flex flex-wrap items-center gap-3">
+      <div className="bg-background border-b border-border p-3 lg:p-4">
+        <div className="space-y-2 lg:space-y-4">
+          {/* Desktop: All in one row */}
+          <div className="hidden lg:flex items-center gap-3">
             <LocationSwitcher 
               language={language} 
               selectedCity={selectedCity} 
               onCityChange={setSelectedCity} 
             />
             
-            <div className="flex-1 overflow-x-auto">
+            <div className="flex-1">
               <HierarchicalCategoryFilter
                 selectedCategories={selectedCategories}
                 onCategoryChange={setSelectedCategories}
@@ -141,6 +141,42 @@ const Xartis = () => {
                 {t.clearFilters}
               </Button>
             )}
+          </div>
+
+          {/* Mobile/Tablet: Location on top, categories below */}
+          <div className="flex flex-col gap-2 lg:hidden">
+            {/* Row 1: Location selector */}
+            <div className="flex items-center gap-2">
+              <LocationSwitcher 
+                language={language} 
+                selectedCity={selectedCity} 
+                onCityChange={setSelectedCity}
+                compact={true}
+              />
+              
+              {/* Clear Filters - mobile */}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="gap-1.5 whitespace-nowrap shrink-0 h-8 px-2 text-xs"
+                >
+                  <X size={14} />
+                  {t.clearFilters}
+                </Button>
+              )}
+            </div>
+            
+            {/* Row 2: All 4 categories in one line */}
+            <div className="flex items-center">
+              <HierarchicalCategoryFilter
+                selectedCategories={selectedCategories}
+                onCategoryChange={setSelectedCategories}
+                language={language}
+                mapCompact={true}
+              />
+            </div>
           </div>
 
           {/* Filter Chips */}
