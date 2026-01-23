@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
+// Push notifications are always enabled - no separate toggle needed
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { usePasswordChange } from '@/hooks/usePasswordChange';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -61,7 +61,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const { data: userProfile } = useUserProfile(userId);
   const { changePassword, isChanging } = usePasswordChange();
   const { resetOnboarding } = useOnboardingStatus(businessId);
-  const { isSupported: pushSupported, isSubscribed: pushSubscribed, isLoading: pushLoading, subscribe: subscribePush, unsubscribe: unsubscribePush, permissionState } = usePushNotifications(userId);
+  // Push notifications are always enabled for all notification types
   
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -105,14 +105,14 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       confirmPassword: 'Επιβεβαίωση Κωδικού',
       changePassword: 'Αλλαγή Κωδικού',
       businessNotifications: 'Ειδοποιήσεις Επιχείρησης',
-      businessNotificationsDescription: 'Διαχειριστείτε τις ειδοποιήσεις για την επιχείρησή σας',
+      businessNotificationsDescription: 'Όλες οι ειδοποιήσεις είναι push notifications από το ΦΟΜΟ',
       
       // Must-have section
       mustHaveNotifications: 'Βασικές Ειδοποιήσεις',
       mustHaveDescription: 'Αυτές οι ειδοποιήσεις είναι πάντα ενεργές για να μην χάσετε σημαντικές ενημερώσεις',
       emailNotifications: 'Ειδοποιήσεις Email',
       emailNotificationsSubtext: 'Για νέες κρατήσεις, πωλήσεις εισιτηρίων και εξαργυρώσεις προσφοράς',
-      fomoNotifications: 'Ειδοποιήσεις FOMO',
+      fomoNotifications: 'Ειδοποιήσεις ΦΟΜΟ',
       fomoNotificationsSubtext: 'Για νέες κρατήσεις, πωλήσεις εισιτηρίων και εξαργυρώσεις προσφοράς',
       alwaysOn: 'Πάντα ενεργό',
       
@@ -120,38 +120,19 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       optionalNotifications: 'Προαιρετικές Ειδοποιήσεις',
       optionalDescription: 'Επιλέξτε ποιες επιπλέον ειδοποιήσεις θέλετε να λαμβάνετε',
       
-      // Inventory alerts
-      almostSoldOut: 'Σχεδόν Εξαντλήθηκε',
-      almostSoldOutDescription: 'Ειδοποίηση όταν απομένουν μόνο 2 διαθέσιμες θέσεις/εισιτήρια/προσφορές',
-      soldOut: 'Εξαντλήθηκε',
-      soldOutDescription: 'Ειδοποίηση όταν εξαντληθούν οι κρατήσεις, τα εισιτήρια ή οι προσφορές',
-      
-      // Activity alerts
-      creationSuccess: 'Επιτυχής Δημιουργία',
-      creationSuccessDescription: 'Ειδοποίηση όταν δημιουργείται επιτυχώς εκδήλωση ή προσφορά',
-      boostSuccess: 'Επιτυχές Boost',
-      boostSuccessDescription: 'Ειδοποίηση όταν ενεργοποιείται boost σε εκδήλωση ή προσφορά',
-      planChange: 'Αλλαγή Πλάνου',
-      planChangeDescription: 'Ειδοποίηση όταν αλλάζει το πλάνο συνδρομής σας',
-      
-      // User activity alerts
-      reservationCancelled: 'Ακύρωση Κράτησης',
-      reservationCancelledDescription: 'Ειδοποίηση όταν πελάτης ακυρώνει κράτηση',
-      newMessage: 'Νέο Μήνυμα',
-      newMessageDescription: 'Ειδοποίηση όταν λαμβάνετε νέο μήνυμα',
-      newFollower: 'Νέος Ακόλουθος',
-      newFollowerDescription: 'Ειδοποίηση όταν κάποιος ακολουθήσει την επιχείρησή σας',
+      // Grouped toggles
+      creationAndBoost: 'Επιτυχής Δημιουργία & Boost',
+      creationAndBoostDescription: 'Ειδοποίηση όταν δημιουργείται επιτυχώς εκδήλωση, προσφορά ή boost',
+      inventoryAlerts: 'Σχεδόν Εξαντλήθηκε & Εξαντλήθηκε',
+      inventoryAlertsDescription: 'Ειδοποίηση όταν απομένουν 2 θέσεις ή εξαντληθούν κρατήσεις/εισιτήρια/προσφορές',
+      reservationStatus: 'Ακύρωση / No-show / Check-in',
+      reservationStatusDescription: 'Ειδοποίηση όταν πελάτης ακυρώσει, δεν εμφανιστεί ή κάνει check-in',
+      userEngagement: 'Αλληλεπίδραση Χρηστών',
+      userEngagementDescription: 'Αλλαγή πλάνου, νέα μηνύματα, νέοι ακόλουθοι, RSVP',
       
       // Weekly summary
       weeklySummary: 'Εβδομαδιαία Σύνοψη',
       weeklySummaryDescription: 'Λάβετε email με σύνοψη της εβδομάδας: κρατήσεις, εισιτήρια, προσφορές, QR check-ins και καλύτερη μέρα',
-      
-      // Push notifications
-      pushNotifications: 'Push Ειδοποιήσεις',
-      pushNotificationsDescription: 'Λάβετε ειδοποιήσεις ακόμα και όταν δεν χρησιμοποιείτε το FOMO',
-      pushNotSupported: 'Ο browser σας δεν υποστηρίζει push ειδοποιήσεις',
-      pushPermissionDenied: 'Ενεργοποιήστε τις ειδοποιήσεις στις ρυθμίσεις του browser',
-      enablePush: 'Ενεργοποίηση',
       
       privacy: 'Απόρρητο & Δεδομένα',
       downloadData: 'Λήψη Δεδομένων Επιχείρησης',
@@ -184,14 +165,14 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       confirmPassword: 'Confirm Password',
       changePassword: 'Change Password',
       businessNotifications: 'Business Notifications',
-      businessNotificationsDescription: 'Manage notifications for your business',
+      businessNotificationsDescription: 'All notifications are push notifications from ΦΟΜΟ',
       
       // Must-have section
       mustHaveNotifications: 'Essential Notifications',
       mustHaveDescription: 'These notifications are always active so you never miss important updates',
       emailNotifications: 'Email Notifications',
       emailNotificationsSubtext: 'For new reservations, ticket sales and offer redemptions',
-      fomoNotifications: 'FOMO Notifications',
+      fomoNotifications: 'ΦΟΜΟ Notifications',
       fomoNotificationsSubtext: 'For new reservations, ticket sales and offer redemptions',
       alwaysOn: 'Always on',
       
@@ -199,38 +180,19 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       optionalNotifications: 'Optional Notifications',
       optionalDescription: 'Choose which additional notifications you want to receive',
       
-      // Inventory alerts
-      almostSoldOut: 'Almost Sold Out',
-      almostSoldOutDescription: 'Get notified when only 2 spots/tickets/offers remain',
-      soldOut: 'Sold Out',
-      soldOutDescription: 'Get notified when reservations, tickets or offers are exhausted',
-      
-      // Activity alerts
-      creationSuccess: 'Creation Success',
-      creationSuccessDescription: 'Get notified when an event or offer is created successfully',
-      boostSuccess: 'Boost Success',
-      boostSuccessDescription: 'Get notified when a boost is activated on an event or offer',
-      planChange: 'Plan Change',
-      planChangeDescription: 'Get notified when your subscription plan changes',
-      
-      // User activity alerts
-      reservationCancelled: 'Reservation Cancelled',
-      reservationCancelledDescription: 'Get notified when a customer cancels a reservation',
-      newMessage: 'New Message',
-      newMessageDescription: 'Get notified when you receive a new message',
-      newFollower: 'New Follower',
-      newFollowerDescription: 'Get notified when someone follows your business',
+      // Grouped toggles
+      creationAndBoost: 'Creation & Boost Success',
+      creationAndBoostDescription: 'Get notified when an event, offer or boost is created successfully',
+      inventoryAlerts: 'Almost Sold Out & Sold Out',
+      inventoryAlertsDescription: 'Get notified when only 2 spots remain or when fully sold out',
+      reservationStatus: 'Cancellation / No-show / Check-in',
+      reservationStatusDescription: 'Get notified when a customer cancels, no-shows or checks in',
+      userEngagement: 'User Engagement',
+      userEngagementDescription: 'Plan changes, new messages, new followers, RSVPs',
       
       // Weekly summary
       weeklySummary: 'Weekly Summary',
       weeklySummaryDescription: 'Receive weekly email with summary: reservations, tickets, offers, QR check-ins and best day',
-      
-      // Push notifications
-      pushNotifications: 'Push Notifications',
-      pushNotificationsDescription: 'Receive notifications even when you\'re not using FOMO',
-      pushNotSupported: 'Your browser does not support push notifications',
-      pushPermissionDenied: 'Enable notifications in your browser settings',
-      enablePush: 'Enable',
       
       privacy: 'Privacy & Data',
       downloadData: 'Download Business Data',
@@ -680,7 +642,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       {/* Stripe Connect - Payments & Payouts */}
       <StripeConnectOnboarding businessId={businessId} language={language} />
 
-      {/* Business Notifications - Completely Redesigned */}
+      {/* Business Notifications - Grouped Toggles */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -696,7 +658,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           {/* MUST-HAVE SECTION - Always ON */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500"></div>
+              <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
               <h4 className="font-semibold text-sm">{t.mustHaveNotifications}</h4>
             </div>
             <p className="text-xs text-muted-foreground pl-4">{t.mustHaveDescription}</p>
@@ -710,12 +672,12 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                   <p className="text-xs text-muted-foreground">{t.emailNotificationsSubtext}</p>
                 </div>
               </div>
-              <span className="text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
                 {t.alwaysOn}
               </span>
             </div>
 
-            {/* FOMO Notifications - Always ON */}
+            {/* ΦΟΜΟ Notifications - Always ON */}
             <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-lg border border-border/50">
               <div className="flex items-center gap-3">
                 <BellRing className="h-4 w-4 text-primary" />
@@ -724,7 +686,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                   <p className="text-xs text-muted-foreground">{t.fomoNotificationsSubtext}</p>
                 </div>
               </div>
-              <span className="text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
                 {t.alwaysOn}
               </span>
             </div>
@@ -732,7 +694,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
           <Separator />
 
-          {/* OPTIONAL SECTION - Toggleable */}
+          {/* OPTIONAL SECTION - Grouped Toggleable */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <SettingsIcon className="h-4 w-4 text-muted-foreground" />
@@ -740,144 +702,10 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             </div>
             <p className="text-xs text-muted-foreground pl-6">{t.optionalDescription}</p>
             
-            {/* Almost Sold Out */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div>
-                <Label htmlFor="almost-sold-out" className="font-medium">{t.almostSoldOut}</Label>
-                <p className="text-xs text-muted-foreground">{t.almostSoldOutDescription}</p>
-              </div>
-              <Switch
-                id="almost-sold-out"
-                checked={preferences.notification_almost_sold_out ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_almost_sold_out: checked })
-                }
-                className="data-[state=checked]:bg-ocean"
-              />
-            </div>
-
-            {/* Sold Out */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div>
-                <Label htmlFor="sold-out" className="font-medium">{t.soldOut}</Label>
-                <p className="text-xs text-muted-foreground">{t.soldOutDescription}</p>
-              </div>
-              <Switch
-                id="sold-out"
-                checked={preferences.notification_sold_out ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_sold_out: checked })
-                }
-                className="data-[state=checked]:bg-ocean"
-              />
-            </div>
-
-            {/* Creation Success */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div>
-                <Label htmlFor="creation-success" className="font-medium">{t.creationSuccess}</Label>
-                <p className="text-xs text-muted-foreground">{t.creationSuccessDescription}</p>
-              </div>
-              <Switch
-                id="creation-success"
-                checked={preferences.notification_creation_success ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_creation_success: checked })
-                }
-                className="data-[state=checked]:bg-ocean"
-              />
-            </div>
-
-            {/* Boost Success */}
+            {/* Weekly Summary - First */}
             <div className="flex items-center justify-between py-3 border-b border-border">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-amber-500" />
-                <div>
-                  <Label htmlFor="boost-success" className="font-medium">{t.boostSuccess}</Label>
-                  <p className="text-xs text-muted-foreground">{t.boostSuccessDescription}</p>
-                </div>
-              </div>
-              <Switch
-                id="boost-success"
-                checked={preferences.notification_boost_success ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_boost_success: checked })
-                }
-                className="data-[state=checked]:bg-ocean"
-              />
-            </div>
-
-            {/* Plan Change */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div>
-                <Label htmlFor="plan-change" className="font-medium">{t.planChange}</Label>
-                <p className="text-xs text-muted-foreground">{t.planChangeDescription}</p>
-              </div>
-              <Switch
-                id="plan-change"
-                checked={preferences.notification_plan_change ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_plan_change: checked })
-                }
-                className="data-[state=checked]:bg-ocean"
-              />
-            </div>
-
-            {/* Reservation Cancelled */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div>
-                <Label htmlFor="reservation-cancelled" className="font-medium">{t.reservationCancelled}</Label>
-                <p className="text-xs text-muted-foreground">{t.reservationCancelledDescription}</p>
-              </div>
-              <Switch
-                id="reservation-cancelled"
-                checked={preferences.notification_reservation_cancelled ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_reservation_cancelled: checked })
-                }
-                className="data-[state=checked]:bg-ocean"
-              />
-            </div>
-
-            {/* New Message */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div>
-                <Label htmlFor="new-message" className="font-medium">{t.newMessage}</Label>
-                <p className="text-xs text-muted-foreground">{t.newMessageDescription}</p>
-              </div>
-              <Switch
-                id="new-message"
-                checked={preferences.notification_new_message ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_new_message: checked })
-                }
-                className="data-[state=checked]:bg-ocean"
-              />
-            </div>
-
-            {/* New Follower */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-blue-500" />
-                <div>
-                  <Label htmlFor="new-follower" className="font-medium">{t.newFollower}</Label>
-                  <p className="text-xs text-muted-foreground">{t.newFollowerDescription}</p>
-                </div>
-              </div>
-              <Switch
-                id="new-follower"
-                checked={preferences.notification_new_follower ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_new_follower: checked })
-                }
-                className="data-[state=checked]:bg-ocean"
-              />
-            </div>
-
-            {/* Weekly Summary */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-purple-500" />
+                <BarChart3 className="h-4 w-4 text-primary" />
                 <div>
                   <Label htmlFor="weekly-summary" className="font-medium">{t.weeklySummary}</Label>
                   <p className="text-xs text-muted-foreground">{t.weeklySummaryDescription}</p>
@@ -889,52 +717,99 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_weekly_summary: checked })
                 }
-                className="data-[state=checked]:bg-ocean"
+                className="data-[state=checked]:bg-primary"
               />
             </div>
-          </div>
 
-          <Separator />
-
-          {/* Push Notifications */}
-          <div className="flex items-center justify-between py-3">
-            <div className="flex items-center gap-3">
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <Label htmlFor="push-notifications" className="font-medium">{t.pushNotifications}</Label>
-                <p className="text-xs text-muted-foreground">
-                  {!pushSupported 
-                    ? t.pushNotSupported 
-                    : permissionState === 'denied' 
-                      ? t.pushPermissionDenied 
-                      : t.pushNotificationsDescription}
-                </p>
+            {/* Creation & Boost Success (grouped) */}
+            <div className="flex items-center justify-between py-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <div>
+                  <Label htmlFor="creation-boost" className="font-medium">{t.creationAndBoost}</Label>
+                  <p className="text-xs text-muted-foreground">{t.creationAndBoostDescription}</p>
+                </div>
               </div>
-            </div>
-            {pushSubscribed ? (
               <Switch
-                id="push-notifications"
-                disabled={pushLoading}
-                checked={pushSubscribed}
-                onCheckedChange={async () => {
-                  await unsubscribePush();
-                }}
-                className="data-[state=checked]:bg-ocean"
+                id="creation-boost"
+                checked={(preferences.notification_creation_success ?? true) && (preferences.notification_boost_success ?? true)}
+                onCheckedChange={(checked) =>
+                  updatePreferences({ 
+                    notification_creation_success: checked,
+                    notification_boost_success: checked 
+                  })
+                }
+                className="data-[state=checked]:bg-primary"
               />
-            ) : (
-              <Button
-                variant="default"
-                size="sm"
-                disabled={pushLoading || !pushSupported || permissionState === 'denied'}
-                onClick={async () => {
-                  console.log('[Settings] Push Enable clicked, calling subscribePush...');
-                  await subscribePush();
-                }}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                {pushLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.enablePush}
-              </Button>
-            )}
+            </div>
+
+            {/* Almost Sold Out & Sold Out (grouped) */}
+            <div className="flex items-center justify-between py-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Ticket className="h-4 w-4 text-primary" />
+                <div>
+                  <Label htmlFor="inventory-alerts" className="font-medium">{t.inventoryAlerts}</Label>
+                  <p className="text-xs text-muted-foreground">{t.inventoryAlertsDescription}</p>
+                </div>
+              </div>
+              <Switch
+                id="inventory-alerts"
+                checked={(preferences.notification_almost_sold_out ?? true) && (preferences.notification_sold_out ?? true)}
+                onCheckedChange={(checked) =>
+                  updatePreferences({ 
+                    notification_almost_sold_out: checked,
+                    notification_sold_out: checked 
+                  })
+                }
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+
+            {/* Cancellation / No-show / Check-in (grouped) */}
+            <div className="flex items-center justify-between py-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <CalendarCheck className="h-4 w-4 text-primary" />
+                <div>
+                  <Label htmlFor="reservation-status" className="font-medium">{t.reservationStatus}</Label>
+                  <p className="text-xs text-muted-foreground">{t.reservationStatusDescription}</p>
+                </div>
+              </div>
+              <Switch
+                id="reservation-status"
+                checked={preferences.notification_reservation_cancelled ?? true}
+                onCheckedChange={(checked) =>
+                  updatePreferences({ notification_reservation_cancelled: checked })
+                }
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+
+            {/* User Engagement: plan change, messages, followers, RSVPs (grouped) */}
+            <div className="flex items-center justify-between py-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                <div>
+                  <Label htmlFor="user-engagement" className="font-medium">{t.userEngagement}</Label>
+                  <p className="text-xs text-muted-foreground">{t.userEngagementDescription}</p>
+                </div>
+              </div>
+              <Switch
+                id="user-engagement"
+                checked={
+                  (preferences.notification_plan_change ?? true) && 
+                  (preferences.notification_new_message ?? true) && 
+                  (preferences.notification_new_follower ?? true)
+                }
+                onCheckedChange={(checked) =>
+                  updatePreferences({ 
+                    notification_plan_change: checked,
+                    notification_new_message: checked,
+                    notification_new_follower: checked
+                  })
+                }
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
