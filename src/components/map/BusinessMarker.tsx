@@ -39,7 +39,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   // Free stays EXACTLY as-is per request
   free: {
     desktopSize: 14,
-    tabletSize: 11,
+    tabletSize: 13,
     mobileSize: 12,
     opacity: 0.7,
     shadowBlur: 2,
@@ -49,9 +49,8 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   basic: {
-    // Like the screenshot: slightly larger than Free, same teardrop shape
     desktopSize: 17,
-    tabletSize: 12,
+    tabletSize: 15,
     mobileSize: 13,
     opacity: 1,
     shadowBlur: 3,
@@ -61,9 +60,8 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   pro: {
-    // Purple teardrop + star icon
     desktopSize: 20,
-    tabletSize: 14,
+    tabletSize: 17,
     mobileSize: 15,
     opacity: 1,
     shadowBlur: 4,
@@ -73,9 +71,8 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   elite: {
-    // Gold teardrop + crown icon
     desktopSize: 22,
-    tabletSize: 15,
+    tabletSize: 18,
     mobileSize: 17,
     opacity: 1,
     shadowBlur: 4,
