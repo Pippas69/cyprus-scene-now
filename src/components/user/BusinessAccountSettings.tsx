@@ -702,48 +702,26 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             </div>
             <p className="text-xs text-muted-foreground pl-6">{t.optionalDescription}</p>
             
-            {/* Weekly Summary - First */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                <div>
-                  <Label htmlFor="weekly-summary" className="font-medium">{t.weeklySummary}</Label>
-                  <p className="text-xs text-muted-foreground">{t.weeklySummaryDescription}</p>
-                </div>
-              </div>
-              <Switch
-                id="weekly-summary"
-                checked={preferences.notification_weekly_summary ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_weekly_summary: checked })
-                }
-                className="data-[state=checked]:bg-primary"
-              />
-            </div>
+             {/* Cancellation / No-show / Check-in (FIRST) */}
+             <div className="flex items-center justify-between py-3 border-b border-border">
+               <div className="flex items-center gap-2">
+                 <CalendarCheck className="h-4 w-4 text-primary" />
+                 <div>
+                   <Label htmlFor="reservation-status" className="font-medium">{t.reservationStatus}</Label>
+                   <p className="text-xs text-muted-foreground">{t.reservationStatusDescription}</p>
+                 </div>
+               </div>
+               <Switch
+                 id="reservation-status"
+                 checked={preferences.notification_reservation_cancelled ?? true}
+                 onCheckedChange={(checked) =>
+                   updatePreferences({ notification_reservation_cancelled: checked })
+                 }
+                 className="data-[state=checked]:bg-primary"
+               />
+             </div>
 
-            {/* Creation & Boost Success (grouped) */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <div>
-                  <Label htmlFor="creation-boost" className="font-medium">{t.creationAndBoost}</Label>
-                  <p className="text-xs text-muted-foreground">{t.creationAndBoostDescription}</p>
-                </div>
-              </div>
-              <Switch
-                id="creation-boost"
-                checked={(preferences.notification_creation_success ?? true) && (preferences.notification_boost_success ?? true)}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ 
-                    notification_creation_success: checked,
-                    notification_boost_success: checked 
-                  })
-                }
-                className="data-[state=checked]:bg-primary"
-              />
-            </div>
-
-            {/* Almost Sold Out & Sold Out (grouped) */}
+             {/* Almost Sold Out & Sold Out (SECOND) */}
             <div className="flex items-center justify-between py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Ticket className="h-4 w-4 text-primary" />
@@ -765,32 +743,42 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               />
             </div>
 
-            {/* Cancellation / No-show / Check-in (grouped) */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <CalendarCheck className="h-4 w-4 text-primary" />
-                <div>
-                  <Label htmlFor="reservation-status" className="font-medium">{t.reservationStatus}</Label>
-                  <p className="text-xs text-muted-foreground">{t.reservationStatusDescription}</p>
-                </div>
-              </div>
-              <Switch
-                id="reservation-status"
-                checked={preferences.notification_reservation_cancelled ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_reservation_cancelled: checked })
-                }
-                className="data-[state=checked]:bg-primary"
-              />
-            </div>
+             {/* Weekly Summary (THIRD) */}
+             <div className="flex items-center justify-between py-3 border-b border-border">
+               <div className="flex items-center gap-2">
+                 <BarChart3 className="h-4 w-4 text-primary" />
+                 <div>
+                   <Label htmlFor="weekly-summary" className="font-medium">{t.weeklySummary}</Label>
+                   <p className="text-xs text-muted-foreground">
+                     {language === 'el'
+                       ? 'Λάβετε email με σύνοψη της εβδομάδας: κρατήσεις, εισιτήρια, προσφορές, QR check-ins και καλύτερη μέρα επισκέψεων'
+                       : t.weeklySummaryDescription}
+                   </p>
+                 </div>
+               </div>
+               <Switch
+                 id="weekly-summary"
+                 checked={preferences.notification_weekly_summary ?? true}
+                 onCheckedChange={(checked) =>
+                   updatePreferences({ notification_weekly_summary: checked })
+                 }
+                 className="data-[state=checked]:bg-primary"
+               />
+             </div>
 
-            {/* User Engagement: plan change, messages, followers, RSVPs (grouped) */}
+             {/* All other notifications (LAST) */}
             <div className="flex items-center justify-between py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
                 <div>
-                  <Label htmlFor="user-engagement" className="font-medium">{t.userEngagement}</Label>
-                  <p className="text-xs text-muted-foreground">{t.userEngagementDescription}</p>
+                   <Label htmlFor="user-engagement" className="font-medium">
+                     {language === 'el' ? 'Όλες οι υπόλοιπες ειδοποιήσεις' : t.userEngagement}
+                   </Label>
+                   <p className="text-xs text-muted-foreground">
+                     {language === 'el'
+                       ? 'Δημιουργία/boost, αλλαγή πλάνου, νέα μηνύματα, νέοι ακόλουθοι, RSVP'
+                       : t.userEngagementDescription}
+                   </p>
                 </div>
               </div>
               <Switch
@@ -798,13 +786,19 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 checked={
                   (preferences.notification_plan_change ?? true) && 
                   (preferences.notification_new_message ?? true) && 
-                  (preferences.notification_new_follower ?? true)
+                   (preferences.notification_new_follower ?? true) &&
+                   (preferences.notification_creation_success ?? true) &&
+                   (preferences.notification_boost_success ?? true) &&
+                   (preferences.notification_rsvp_updates ?? true)
                 }
                 onCheckedChange={(checked) =>
                   updatePreferences({ 
                     notification_plan_change: checked,
                     notification_new_message: checked,
-                    notification_new_follower: checked
+                     notification_new_follower: checked,
+                     notification_creation_success: checked,
+                     notification_boost_success: checked,
+                     notification_rsvp_updates: checked
                   })
                 }
                 className="data-[state=checked]:bg-primary"
