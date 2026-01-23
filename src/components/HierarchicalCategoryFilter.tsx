@@ -236,10 +236,10 @@ const HierarchicalCategoryFilter = ({
       
       {/* Mobile/Tablet: Summer + Student Discount on the same row (as per mock) */}
       <div className="lg:hidden space-y-1.5 pb-1.5">
-        <div className="flex gap-1.5 justify-start">
+        <div className="flex gap-1.5 justify-start flex-wrap">
           {firstRow.map(renderBadge)}
         </div>
-        <div className="flex gap-1.5 justify-start items-center">
+        <div className="flex gap-1.5 justify-start items-center flex-wrap">
           {secondRow.map(renderBadge)}
           {renderStudentDiscountBadge()}
         </div>
