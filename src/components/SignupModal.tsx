@@ -15,7 +15,7 @@ import { X, Loader2, MapPin, Heart, GraduationCap, Mail, CheckCircle } from "luc
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
-import { getMainCategories } from "@/lib/unifiedCategories";
+import { getCategoriesForUser } from "@/lib/unifiedCategories";
 import { CYPRUS_UNIVERSITIES, isValidUniversityEmail } from "@/lib/cyprusUniversities";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -425,31 +425,73 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
               </Select>
             </div>
 
-            {/* Preferences */}
+            {/* Preferences - with subcategories */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
                 {t.interests}
               </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {getMainCategories(language).map(category => (
-                  <div key={category.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`modal-${category.id}`} 
-                      checked={selectedPreferences.includes(category.id)} 
-                      onCheckedChange={() => togglePreference(category.id)} 
-                      className="rounded"
-                      disabled={loading}
-                    />
-                    <label 
-                      htmlFor={`modal-${category.id}`} 
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
-                    >
-                      <span>{category.icon}</span>
-                      <span>{category.label}</span>
-                    </label>
-                  </div>
-                ))}
+              <p className="text-sm text-muted-foreground">
+                {language === "el" ? "Επιλέξτε όσα θέλετε" : "Select as many as you like"}
+              </p>
+              <div className="space-y-2">
+                {getCategoriesForUser(language).map(category => {
+                  const hasSubOptions = category.hasDropdown && category.subOptions;
+                  const selectedSubCount = category.subOptions?.filter(
+                    sub => selectedPreferences.includes(sub.id)
+                  ).length || 0;
+                  const isMainSelected = selectedPreferences.includes(category.id);
+
+                  return (
+                    <div key={category.id} className="border border-border rounded-xl overflow-hidden">
+                      <div className={`flex items-center justify-between p-2.5 transition-colors ${(isMainSelected || selectedSubCount > 0) ? "bg-primary/10" : "bg-background hover:bg-muted/50"}`}>
+                        <div className="flex items-center gap-2 flex-1">
+                          {!hasSubOptions && (
+                            <Checkbox
+                              id={`modal-${category.id}`}
+                              checked={isMainSelected}
+                              onCheckedChange={() => togglePreference(category.id)}
+                              className="rounded"
+                              disabled={loading}
+                            />
+                          )}
+                          <label
+                            htmlFor={!hasSubOptions ? `modal-${category.id}` : undefined}
+                            className={`flex items-center gap-2 text-sm font-medium flex-1 ${!hasSubOptions ? "cursor-pointer" : ""}`}
+                          >
+                            <span>{category.icon}</span>
+                            <span>{category.label}</span>
+                            {selectedSubCount > 0 && (
+                              <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">+{selectedSubCount}</span>
+                            )}
+                          </label>
+                        </div>
+                      </div>
+                      
+                      {hasSubOptions && category.subOptions && (
+                        <div className="border-t border-border bg-muted/30 p-2 pl-5 space-y-1.5">
+                          {category.subOptions.map(subOption => (
+                            <div key={subOption.id} className="flex items-center gap-2">
+                              <Checkbox
+                                id={`modal-${subOption.id}`}
+                                checked={selectedPreferences.includes(subOption.id)}
+                                onCheckedChange={() => togglePreference(subOption.id)}
+                                className="rounded"
+                                disabled={loading}
+                              />
+                              <label
+                                htmlFor={`modal-${subOption.id}`}
+                                className="text-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                {subOption.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

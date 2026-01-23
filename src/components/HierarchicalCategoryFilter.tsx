@@ -133,119 +133,134 @@ const HierarchicalCategoryFilter = ({
     return getSelectedSubOptionsCount(category) > 0;
   };
 
+  // Separate first 3 categories (Nightlife, Clubs, Dining) and Summer for mobile/tablet layout
+  const firstRow = categories.slice(0, 3);
+  const secondRow = categories.slice(3); // Summer goes to second row on mobile/tablet
+
+  const renderBadge = (category: Category) => (
+    <div
+      key={category.id}
+      className="relative"
+      ref={(el) => (badgeRefs.current[category.id] = el)}
+    >
+      <Badge
+        variant={
+          category.hasDropdown
+            ? hasAnySubOptionSelected(category)
+              ? "default"
+              : "outline"
+            : selectedCategories.includes(category.id)
+            ? "default"
+            : "outline"
+        }
+        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-[10px] md:text-xs lg:text-sm font-medium min-h-[34px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-1 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
+          category.hasDropdown
+            ? hasAnySubOptionSelected(category)
+              ? "bg-ocean text-white border-ocean shadow-md"
+              : "bg-card text-foreground border-border hover:bg-ocean/10 hover:border-ocean/30 hover:shadow-sm"
+            : selectedCategories.includes(category.id)
+            ? "bg-ocean text-white border-ocean shadow-md"
+            : "bg-card text-foreground border-border hover:bg-ocean/10 hover:border-ocean/30 hover:shadow-sm"
+        }`}
+        onClick={() => {
+          if (category.hasDropdown) {
+            handleToggleDropdown(category.id);
+          } else {
+            toggleSimpleCategory(category.id);
+          }
+        }}
+      >
+        <span className="text-xs md:text-sm lg:text-base">{category.icon}</span>
+        <span>{category.label}</span>
+        {category.hasDropdown && (
+          <>
+            {getSelectedSubOptionsCount(category) > 0 && (
+              <span className="bg-white/20 px-1 md:px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] lg:text-xs font-semibold flex-shrink-0">
+                {getSelectedSubOptionsCount(category)}
+              </span>
+            )}
+            <ChevronDown
+              size={10}
+              className={`transition-transform duration-200 flex-shrink-0 md:w-3 md:h-3 ${
+                openDropdown === category.id ? "rotate-180" : ""
+              }`}
+            />
+          </>
+        )}
+        {!category.hasDropdown &&
+          selectedCategories.includes(category.id) && (
+            <Check size={10} className="flex-shrink-0 md:w-3 md:h-3" />
+          )}
+      </Badge>
+    </div>
+  );
+
   return (
     <div className="w-full">
-      {/* Responsive container: no scroll on tablet/mobile, all items fit */}
-      <div className="flex flex-wrap md:flex-nowrap gap-1 md:gap-1.5 lg:gap-2 pb-1.5 sm:pb-2">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            className="relative flex-1 min-w-0 md:flex-initial md:flex-shrink-0"
-            ref={(el) => (badgeRefs.current[category.id] = el)}
-          >
-            {/* Category Badge - responsive sizing to fit all in one row */}
-            <Badge
-              variant={
-                category.hasDropdown
-                  ? hasAnySubOptionSelected(category)
-                    ? "default"
-                    : "outline"
-                  : selectedCategories.includes(category.id)
-                  ? "default"
-                  : "outline"
-              }
-              className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] w-full md:w-auto px-2 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-[11px] md:text-xs lg:text-sm font-medium min-h-[36px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center md:justify-start gap-1 md:gap-1.5 lg:gap-2 rounded-full select-none ${
-                category.hasDropdown
-                  ? hasAnySubOptionSelected(category)
-                    ? "bg-ocean text-white border-ocean shadow-md"
-                    : "bg-card text-foreground border-border hover:bg-ocean/10 hover:border-ocean/30 hover:shadow-sm"
-                  : selectedCategories.includes(category.id)
-                  ? "bg-ocean text-white border-ocean shadow-md"
-                  : "bg-card text-foreground border-border hover:bg-ocean/10 hover:border-ocean/30 hover:shadow-sm"
-              }`}
-              onClick={() => {
-                if (category.hasDropdown) {
-                  handleToggleDropdown(category.id);
-                } else {
-                  toggleSimpleCategory(category.id);
-                }
-              }}
-            >
-              <span className="text-sm md:text-base">{category.icon}</span>
-              <span className="whitespace-nowrap truncate">{category.label}</span>
-              {category.hasDropdown && (
-                <>
-                  {getSelectedSubOptionsCount(category) > 0 && (
-                    <span className="bg-white/20 px-1 md:px-1.5 py-0.5 rounded-full text-[9px] md:text-[10px] lg:text-xs font-semibold flex-shrink-0">
-                      {getSelectedSubOptionsCount(category)}
-                    </span>
-                  )}
-                  <ChevronDown
-                    size={12}
-                    className={`transition-transform duration-200 flex-shrink-0 ${
-                      openDropdown === category.id ? "rotate-180" : ""
-                    }`}
-                  />
-                </>
-              )}
-              {!category.hasDropdown &&
-                selectedCategories.includes(category.id) && (
-                  <Check size={12} className="flex-shrink-0" />
-                )}
-            </Badge>
-          </div>
-        ))}
-
-        {/* Portal Dropdown Menu */}
-        {openDropdown && dropdownPosition && createPortal(
-          <AnimatePresence>
-            {categories.map((category) => (
-              category.hasDropdown && openDropdown === category.id && (
-                <motion.div
-                  key={category.id}
-                  ref={dropdownRef}
-                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                  style={{
-                    position: 'fixed',
-                    top: dropdownPosition.top,
-                    left: Math.min(dropdownPosition.left, window.innerWidth - 220),
-                    zIndex: 9999,
-                  }}
-                  className="min-w-[180px] max-w-[calc(100vw-32px)] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
-                >
-                  <div className="p-2 space-y-1">
-                    {category.subOptions?.map((subOption) => (
-                      <label
-                        key={subOption.id}
-                        htmlFor={subOption.id}
-                        className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg cursor-pointer transition-colors ${
-                          selectedCategories.includes(subOption.id)
-                            ? "bg-ocean/10 text-ocean"
-                            : "hover:bg-muted"
-                        }`}
-                      >
-                        <Checkbox
-                          id={subOption.id}
-                          checked={selectedCategories.includes(subOption.id)}
-                          onCheckedChange={() => toggleSubOption(subOption.id)}
-                          className="data-[state=checked]:bg-ocean data-[state=checked]:border-ocean flex-shrink-0"
-                        />
-                        <span className="text-xs md:text-sm font-medium">
-                          {subOption.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </motion.div>
-              )
-            ))}
-          </AnimatePresence>,
-          document.body
-        )}
+      {/* Desktop: all in one row */}
+      <div className="hidden lg:flex gap-2 pb-2">
+        {categories.map(renderBadge)}
       </div>
+      
+      {/* Mobile/Tablet: First 3 in row 1, Summer in row 2 (with student discount) */}
+      <div className="lg:hidden space-y-1.5 pb-1.5">
+        <div className="flex gap-1 justify-between">
+          {firstRow.map(renderBadge)}
+        </div>
+        <div className="flex gap-1">
+          {secondRow.map(renderBadge)}
+        </div>
+      </div>
+
+      {/* Portal Dropdown Menu */}
+      {openDropdown && dropdownPosition && createPortal(
+        <AnimatePresence>
+          {categories.map((category) => (
+            category.hasDropdown && openDropdown === category.id && (
+              <motion.div
+                key={category.id}
+                ref={dropdownRef}
+                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                style={{
+                  position: 'fixed',
+                  top: dropdownPosition.top,
+                  left: Math.min(dropdownPosition.left, window.innerWidth - 220),
+                  zIndex: 9999,
+                }}
+                className="min-w-[180px] max-w-[calc(100vw-32px)] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+              >
+                <div className="p-2 space-y-1">
+                  {category.subOptions?.map((subOption) => (
+                    <label
+                      key={subOption.id}
+                      htmlFor={subOption.id}
+                      className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg cursor-pointer transition-colors ${
+                        selectedCategories.includes(subOption.id)
+                          ? "bg-ocean/10 text-ocean"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      <Checkbox
+                        id={subOption.id}
+                        checked={selectedCategories.includes(subOption.id)}
+                        onCheckedChange={() => toggleSubOption(subOption.id)}
+                        className="data-[state=checked]:bg-ocean data-[state=checked]:border-ocean flex-shrink-0"
+                      />
+                      <span className="text-xs md:text-sm font-medium">
+                        {subOption.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </motion.div>
+            )
+          ))}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };
