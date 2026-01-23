@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatEventTime, getDirectionsUrl, shareEvent } from "@/lib/mapUtils";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { toast } from "sonner";
 
 interface EventPopupProps {
@@ -117,7 +118,7 @@ export const EventPopup = ({ event, onClose, language }: EventPopupProps) => {
         <div className="flex flex-wrap gap-1.5">
           {event.category.map((cat) => (
             <Badge key={cat} variant="secondary" className="text-xs">
-              {cat}
+              {getCategoryLabel(cat, language)}
             </Badge>
           ))}
         </div>

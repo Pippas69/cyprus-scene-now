@@ -189,10 +189,13 @@ export const UnifiedEventCard = ({
             <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
             <span className="text-[10px] sm:text-xs truncate">{dateLabel}</span>
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+          <button 
+            onClick={handleMapClick}
+            className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground hover:text-primary transition-colors w-full text-left"
+          >
             <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
             <span className="text-[10px] sm:text-xs truncate">{locationLine || event.location}</span>
-          </div>
+          </button>
           <CardActionBar
             entityId={event.id}
             entityType="event"
@@ -280,17 +283,15 @@ export const UnifiedEventCard = ({
             <span className="text-xs">{dateLabel}</span>
           </div>
 
-          {/* Location with pin icon */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <button
-              onClick={handleMapClick}
-              className="flex items-center text-primary hover:text-primary/80 transition-colors shrink-0"
-              title={language === "el" ? "Δες στο χάρτη" : "View on map"}
-            >
-              <MapPin className="h-3 w-3" />
-            </button>
+          {/* Location with pin icon - fully clickable */}
+          <button
+            onClick={handleMapClick}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors w-full text-left"
+            title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+          >
+            <MapPin className="h-3 w-3 shrink-0" />
             <span className="text-xs truncate">{locationLine || event.location}</span>
-          </div>
+          </button>
 
           {/* Action Bar - heart, people, share at bottom */}
           <div className="mt-auto pt-0.5">
