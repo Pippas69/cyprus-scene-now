@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { unifiedCategories } from "@/lib/unifiedCategories";
 
 interface CategoryFilterProps {
   selectedCategories: string[];
@@ -11,22 +12,12 @@ const CategoryFilter = ({
   onCategoryChange,
   language,
 }: CategoryFilterProps) => {
-  // 4 core categories
-  // Order: Nightlife → Clubs → Dining → Beach & Summer
-  const categories = {
-    el: [
-      { id: "nightlife", label: "Νυχτερινή Ζωή", icon: "🍸" },
-      { id: "clubs", label: "Clubs", icon: "🎉" },
-      { id: "dining", label: "Εστίαση", icon: "🍽️" },
-      { id: "beach-summer", label: "Παραλία/Καλοκαίρι", icon: "🏖️" },
-    ],
-    en: [
-      { id: "nightlife", label: "Nightlife", icon: "🍸" },
-      { id: "clubs", label: "Clubs", icon: "🎉" },
-      { id: "dining", label: "Dining", icon: "🍽️" },
-      { id: "beach-summer", label: "Beach/Summer", icon: "🏖️" },
-    ],
-  };
+  // Build categories from unified source with correct icons
+  const categories = unifiedCategories.map(cat => ({
+    id: cat.id,
+    label: cat.label[language],
+    icon: cat.icon,
+  }));
 
   const toggleCategory = (categoryId: string) => {
     if (selectedCategories.includes(categoryId)) {
@@ -39,7 +30,7 @@ const CategoryFilter = ({
   return (
     <div className="w-full overflow-x-auto scrollbar-hide touch-pan-x" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="flex gap-2 pb-2 pr-4 pl-1">
-        {categories[language].map((category) => (
+        {categories.map((category) => (
           <Badge
             key={category.id}
             variant={selectedCategories.includes(category.id) ? "default" : "outline"}

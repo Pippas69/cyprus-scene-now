@@ -8,8 +8,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toastTranslations } from '@/translations/toastTranslations';
-import { getMainCategories } from '@/lib/unifiedCategories';
-import { Heart } from 'lucide-react';
+import { getCategoriesForUser, unifiedCategories } from '@/lib/unifiedCategories';
+import { Heart, ChevronDown, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProfileSettingsProps {
   userId: string;
@@ -19,6 +20,7 @@ interface ProfileSettingsProps {
 export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const { toast } = useToast();
   const t = toastTranslations[language];
 
@@ -75,6 +77,14 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
     setProfile({ ...profile, preferences: newPreferences });
   };
 
+  const toggleExpand = (categoryId: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
   const text = {
     el: {
       title: 'Ρυθμίσεις Προφίλ',
@@ -89,7 +99,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
       other: 'Άλλο',
       save: 'Αποθήκευση',
       interests: 'Ενδιαφέροντα',
-      interestsDescription: 'Επιλέξτε τι σας αρέσει για καλύτερες προτάσεις',
+      interestsDescription: 'Επιλέξτε τι σας αρέσει για καλύτερες προτάσεις (απεριόριστες επιλογές)',
     },
     en: {
       title: 'Profile Settings',
@@ -104,12 +114,12 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
       other: 'Other',
       save: 'Save Changes',
       interests: 'Interests',
-      interestsDescription: 'Select what you like for better recommendations',
+      interestsDescription: 'Select what you like for better recommendations (unlimited choices)',
     },
   };
 
   const labels = text[language];
-  const categories = getMainCategories(language);
+  const categories = getCategoriesForUser(language);
 
   if (!profile) return null;
 
@@ -171,7 +181,7 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
               </Select>
             </div>
 
-            {/* Category Preferences */}
+            {/* Category Preferences with hierarchical structure (unlimited selection) */}
             <div className="space-y-3 pt-4 border-t">
               <div>
                 <Label className="flex items-center gap-2 text-base">
@@ -182,24 +192,86 @@ export const ProfileSettings = ({ userId, language }: ProfileSettingsProps) => {
                   {labels.interestsDescription}
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {categories.map((category) => (
-                  <div key={category.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`pref-${category.id}`}
-                      checked={(profile.preferences || []).includes(category.id)}
-                      onCheckedChange={() => togglePreference(category.id)}
-                      className="rounded"
-                    />
-                    <label
-                      htmlFor={`pref-${category.id}`}
-                      className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
-                    >
-                      <span>{category.icon}</span>
-                      <span>{category.label}</span>
-                    </label>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                {categories.map((category) => {
+                  const isExpanded = expandedCategories.includes(category.id);
+                  const hasSubOptions = category.hasDropdown && category.subOptions;
+                  const selectedSubCount = category.subOptions?.filter(
+                    sub => (profile.preferences || []).includes(sub.id)
+                  ).length || 0;
+                  const isMainSelected = (profile.preferences || []).includes(category.id);
+
+                  return (
+                    <div key={category.id} className="border border-border rounded-lg overflow-hidden">
+                      <div
+                        className={cn(
+                          "flex items-center justify-between p-2.5 transition-colors",
+                          (isMainSelected || selectedSubCount > 0) ? "bg-primary/10" : "bg-background hover:bg-muted/50"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          {!hasSubOptions && (
+                            <Checkbox
+                              id={`pref-${category.id}`}
+                              checked={isMainSelected}
+                              onCheckedChange={() => togglePreference(category.id)}
+                            />
+                          )}
+                          <label
+                            htmlFor={hasSubOptions ? undefined : `pref-${category.id}`}
+                            className={cn(
+                              "flex items-center gap-2 text-sm font-medium flex-1",
+                              !hasSubOptions && "cursor-pointer"
+                            )}
+                            onClick={hasSubOptions ? () => toggleExpand(category.id) : undefined}
+                          >
+                            <span>{category.icon}</span>
+                            <span>{category.label}</span>
+                            {selectedSubCount > 0 && (
+                              <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                                +{selectedSubCount}
+                              </span>
+                            )}
+                          </label>
+                        </div>
+                        
+                        {hasSubOptions && (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(category.id)}
+                            className="p-1 hover:bg-muted rounded transition-colors"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      {hasSubOptions && isExpanded && category.subOptions && (
+                        <div className="border-t border-border bg-muted/30 p-2 pl-6 space-y-1.5">
+                          {category.subOptions.map(subOption => (
+                            <div key={subOption.id} className="flex items-center gap-2">
+                              <Checkbox
+                                id={`pref-${subOption.id}`}
+                                checked={(profile.preferences || []).includes(subOption.id)}
+                                onCheckedChange={() => togglePreference(subOption.id)}
+                              />
+                              <label
+                                htmlFor={`pref-${subOption.id}`}
+                                className="text-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                {subOption.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
