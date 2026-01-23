@@ -47,8 +47,8 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   basic: {
     // Like the screenshot: slightly larger than Free, same teardrop shape
-    size: 20,
-    mobileSize: 14,
+    size: 19,
+    mobileSize: 13,
     opacity: 1,
     shadowBlur: 3,
     strokeWidth: 1.5,
@@ -58,8 +58,8 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   pro: {
     // Purple teardrop + star icon
-    size: 24,
-    mobileSize: 16,
+    size: 23,
+    mobileSize: 15,
     opacity: 1,
     shadowBlur: 4,
     strokeWidth: 2,
@@ -69,8 +69,8 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   elite: {
     // Gold teardrop + crown icon
-    size: 26,
-    mobileSize: 18,
+    size: 25,
+    mobileSize: 17,
     opacity: 1,
     shadowBlur: 4,
     strokeWidth: 2,

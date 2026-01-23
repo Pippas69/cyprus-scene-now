@@ -18,23 +18,7 @@ interface BusinessListSheetProps {
 
 const PLAN_TIER_ORDER = ['elite', 'pro', 'basic', 'free'] as const;
 
-const getPlanIcon = (plan: string) => {
-  switch (plan) {
-    case 'elite': return <Crown className="h-3 w-3 text-amber-500" />;
-    case 'pro': return <Star className="h-3 w-3 text-primary" />;
-    case 'basic': return <Zap className="h-3 w-3 text-cyan-500" />;
-    default: return null;
-  }
-};
-
-const getPlanBadgeStyle = (plan: string) => {
-  switch (plan) {
-    case 'elite': return "bg-gradient-to-r from-amber-500 to-yellow-400 text-white";
-    case 'pro': return "bg-gradient-to-r from-primary to-coral text-white";
-    case 'basic': return "bg-cyan-500 text-white";
-    default: return "bg-muted text-muted-foreground";
-  }
-};
+// Plan UI disclosure intentionally removed (ordering still uses PLAN_TIER_ORDER).
 
 export const BusinessListSheet = ({ businesses, language, onBusinessClick }: BusinessListSheetProps) => {
   const navigate = useNavigate();
@@ -135,12 +119,6 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold text-sm line-clamp-1">{business.name}</h4>
-                        {getPlanIcon(business.planSlug)}
-                        {business.planSlug !== 'free' && (
-                          <Badge className={cn("text-[9px] px-1.5 py-0", getPlanBadgeStyle(business.planSlug))}>
-                            {business.planSlug.toUpperCase()}
-                          </Badge>
-                        )}
                       </div>
                       
                       <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
