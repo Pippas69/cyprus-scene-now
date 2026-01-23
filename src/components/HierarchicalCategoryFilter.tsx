@@ -180,7 +180,7 @@ const HierarchicalCategoryFilter = ({
             ? "default"
             : "outline"
         }
-        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-3 md:px-3 lg:px-4 py-2 md:py-2 lg:py-2.5 text-[13px] md:text-xs lg:text-sm font-medium min-h-[40px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-2 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
+        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2.5 md:px-3 lg:px-4 py-2 md:py-2 lg:py-2.5 text-[12px] md:text-xs lg:text-sm font-medium min-h-[38px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-1.5 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
           category.hasDropdown
             ? hasAnySubOptionSelected(category)
               ? "bg-ocean text-white border-ocean shadow-md"
