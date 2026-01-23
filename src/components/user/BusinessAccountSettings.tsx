@@ -42,7 +42,8 @@ const createBusinessProfileSchema = (language: 'el' | 'en') => {
     website: z.string().url(v.invalidUrl).optional().or(z.literal('')),
     address: z.string().optional(),
     city: z.string().min(1, v.cityRequired),
-    category: z.array(z.string()).min(1, v.categoryRequired),
+    // In settings we allow 0..2 categories (no "select at least one" message)
+    category: z.array(z.string()).max(2),
   });
 };
 
@@ -404,9 +405,21 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const handleCategoryChange = (category: string, checked: boolean) => {
     const current = selectedCategories;
     if (checked) {
-      businessProfileForm.setValue("category", [...current, category]);
+      businessProfileForm.setValue("category", [...current, category], {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
     } else {
-      businessProfileForm.setValue("category", current.filter(c => c !== category));
+      businessProfileForm.setValue(
+        "category",
+        current.filter((c) => c !== category),
+        {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        }
+      );
     }
   };
 
@@ -593,7 +606,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
             {/* Categories - Hierarchical Selector */}
             <div>
-              <Label>Κατηγορίες (επιλέξτε μέχρι δύο)</Label>
+              <Label>Κατηγορίες (επιλέξτε μέχρι 2)</Label>
               <div className="mt-2">
                 <BusinessCategorySelector
                   selectedCategories={selectedCategories}

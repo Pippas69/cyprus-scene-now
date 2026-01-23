@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { unifiedCategories, getCategoriesForBusiness } from "@/lib/unifiedCategories";
+import {
+  getCategorySingularLabelById,
+  getCategoriesForBusiness,
+  unifiedCategories,
+} from "@/lib/unifiedCategories";
 import { cn } from "@/lib/utils";
 
 interface BusinessCategorySelectorProps {
@@ -20,6 +24,13 @@ export const BusinessCategorySelector = ({
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   const categories = getCategoriesForBusiness(language);
+
+  const selectedLabels = useMemo(() => {
+    return selectedCategories
+      .slice(0, maxSelections)
+      .map((id) => ({ id, label: getCategorySingularLabelById(id, language) }))
+      .filter((x) => x.label);
+  }, [selectedCategories, maxSelections, language]);
 
   const toggleExpand = (categoryId: string) => {
     setExpandedCategories(prev =>
@@ -55,16 +66,20 @@ export const BusinessCategorySelector = ({
     return category.subOptions.filter(sub => selectedCategories.includes(sub.id)).length;
   };
 
-  const text = {
-    el: { label: 'Κατηγορίες (επιλέξτε μέχρι 2)' },
-    en: { label: 'Categories (select up to 2)' },
-  };
-
-  const t = text[language];
-
   return (
     <div className="space-y-3">
-      <label className="text-sm font-medium text-foreground">{t.label}</label>
+      {selectedLabels.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedLabels.map((x) => (
+            <span
+              key={x.id}
+              className="inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
+            >
+              {x.label}
+            </span>
+          ))}
+        </div>
+      )}
       
       <div className="space-y-2">
         {categories.map((category, index) => {
@@ -141,7 +156,10 @@ export const BusinessCategorySelector = ({
                         />
                         <label
                           htmlFor={subOption.id}
-                          className="text-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                          className={cn(
+                            "text-sm cursor-pointer transition-colors",
+                            subIsSelected ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                          )}
                         >
                           {subOption.label}
                         </label>
