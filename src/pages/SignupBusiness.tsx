@@ -454,7 +454,6 @@ const SignupBusiness = () => {
 
             {/* Category */}
             <div>
-              <Label className="mb-2 block">{language === 'el' ? 'Κατηγορία * (επιλέξτε κύριες κατηγορίες ή υποκατηγορίες)' : 'Category * (select main categories or sub-categories)'}</Label>
               <BusinessCategorySelector
                 selectedCategories={selectedCategories}
                 onCategoryChange={handleCategoryChange}

@@ -153,7 +153,7 @@ const HierarchicalCategoryFilter = ({
             ? "default"
             : "outline"
         }
-        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-[10px] md:text-xs lg:text-sm font-medium min-h-[34px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-1 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
+        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2.5 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-[11px] md:text-xs lg:text-sm font-medium min-h-[36px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-1.5 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
           category.hasDropdown
             ? hasAnySubOptionSelected(category)
               ? "bg-ocean text-white border-ocean shadow-md"
@@ -202,12 +202,12 @@ const HierarchicalCategoryFilter = ({
         {categories.map(renderBadge)}
       </div>
       
-      {/* Mobile/Tablet: First 3 in row 1, Summer in row 2 (with student discount) */}
-      <div className="lg:hidden space-y-1.5 pb-1.5">
-        <div className="flex gap-1 justify-between">
+      {/* Mobile/Tablet: First 3 in row 1, Summer in row 2 (aligned with student discount) */}
+      <div className="lg:hidden space-y-2 pb-1.5">
+        <div className="flex gap-2 justify-start">
           {firstRow.map(renderBadge)}
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-2 justify-start">
           {secondRow.map(renderBadge)}
         </div>
       </div>
