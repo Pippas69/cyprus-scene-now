@@ -52,8 +52,8 @@ const BottomNav = () => {
 
   const navItems = useMemo(() => [
     { icon: Home, label: "Home", path: "/feed" },
-    { icon: Calendar, label: "Events", path: "/ekdiloseis" },
     { icon: MapPin, label: "Map", path: "/xartis" },
+    { icon: Calendar, label: "Events", path: "/ekdiloseis" },
     { icon: Tag, label: "Offers", path: "/offers" },
     { 
       icon: User, 

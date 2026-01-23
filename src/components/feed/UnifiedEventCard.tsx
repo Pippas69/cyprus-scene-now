@@ -5,7 +5,7 @@ import { PremiumBadge } from "@/components/ui/premium-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { format, differenceInMinutes } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { enUS, el } from "date-fns/locale";
 import { CardActionBar } from "./CardActionBar";
 import { useCallback, useRef } from "react";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
@@ -93,6 +93,7 @@ export const UnifiedEventCard = ({
   }, [event.business_id, event.id]);
 
   // Date/Time formatting
+  const dateLocale = language === "el" ? el : enUS;
   const isToday = eventDate.toDateString() === now.toDateString();
   const isTomorrow = eventDate.toDateString() === new Date(now.getTime() + 86400000).toDateString();
   let dateLabel: string;
@@ -101,9 +102,7 @@ export const UnifiedEventCard = ({
   } else if (isTomorrow) {
     dateLabel = `${t.tomorrow} · ${format(eventDate, "HH:mm")}`;
   } else {
-    const dayName = format(eventDate, "EEE", { locale: enUS });
-    const dayLabel = language === "el" ? greekDays[dayName] || dayName : dayName;
-    dateLabel = `${dayLabel} · ${format(eventDate, "HH:mm")}`;
+    dateLabel = `${format(eventDate, "EEEE, d MMMM", { locale: dateLocale })} · ${format(eventDate, "HH:mm")}`;
   }
 
   // Location line - translate city name
