@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { unifiedCategories } from "@/lib/unifiedCategories";
 
@@ -23,12 +23,16 @@ interface HierarchicalCategoryFilterProps {
   selectedCategories: string[];
   onCategoryChange: (categories: string[]) => void;
   language: "el" | "en";
+  showStudentDiscounts?: boolean;
+  onToggleStudentDiscounts?: () => void;
 }
 
 const HierarchicalCategoryFilter = ({
   selectedCategories,
   onCategoryChange,
   language,
+  showStudentDiscounts,
+  onToggleStudentDiscounts,
 }: HierarchicalCategoryFilterProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
@@ -135,7 +139,28 @@ const HierarchicalCategoryFilter = ({
 
   // Separate first 3 categories (Nightlife, Clubs, Dining) and Summer for mobile/tablet layout
   const firstRow = categories.slice(0, 3);
-  const secondRow = categories.slice(3); // Summer goes to second row on mobile/tablet
+  const secondRow = categories.slice(3); // Summer on row 2 (mobile/tablet)
+
+  const renderStudentDiscountBadge = () => {
+    if (!onToggleStudentDiscounts) return null;
+    const isActive = !!showStudentDiscounts;
+    return (
+      <div className="relative">
+        <Badge
+          variant={isActive ? "default" : "outline"}
+          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2.5 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-[11px] md:text-xs lg:text-sm font-medium min-h-[36px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-1.5 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
+            isActive
+              ? "bg-ocean text-white border-ocean shadow-md"
+              : "bg-card text-foreground border-border hover:bg-ocean/10 hover:border-ocean/30 hover:shadow-sm"
+          }`}
+          onClick={onToggleStudentDiscounts}
+        >
+          <GraduationCap className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+          <span>{language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}</span>
+        </Badge>
+      </div>
+    );
+  };
 
   const renderBadge = (category: Category) => (
     <div
@@ -197,18 +222,21 @@ const HierarchicalCategoryFilter = ({
 
   return (
     <div className="w-full">
-      {/* Desktop: all in one row */}
+      {/* Desktop: Student Discount centered between categories */}
       <div className="hidden lg:flex gap-2 pb-2">
-        {categories.map(renderBadge)}
+        {categories.slice(0, 2).map(renderBadge)}
+        {renderStudentDiscountBadge()}
+        {categories.slice(2).map(renderBadge)}
       </div>
       
-      {/* Mobile/Tablet: First 3 in row 1, Summer in row 2 (aligned with student discount) */}
+      {/* Mobile/Tablet: Summer + Student Discount on the same row (as per mock) */}
       <div className="lg:hidden space-y-2 pb-1.5">
         <div className="flex gap-2 justify-start">
           {firstRow.map(renderBadge)}
         </div>
         <div className="flex gap-2 justify-start">
           {secondRow.map(renderBadge)}
+          {renderStudentDiscountBadge()}
         </div>
       </div>
 

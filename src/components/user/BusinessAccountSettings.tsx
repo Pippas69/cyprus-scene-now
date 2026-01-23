@@ -593,7 +593,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
             {/* Categories - Hierarchical Selector */}
             <div>
-              <Label>{businessT.categories} * ({businessT.selectAtLeastOne})</Label>
+              <Label>Κατηγορίες (επιλέξτε μέχρι δύο)</Label>
               <div className="mt-2">
                 <BusinessCategorySelector
                   selectedCategories={selectedCategories}
@@ -601,9 +601,6 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                   language={language}
                 />
               </div>
-              {businessProfileForm.formState.errors.category && (
-                <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.category.message}</p>
-              )}
             </div>
 
             {/* Email */}

@@ -25,6 +25,7 @@ import { getCategoriesForUser } from "@/lib/unifiedCategories";
 import { CYPRUS_UNIVERSITIES, getUniversityByDomain, isValidUniversityEmail } from "@/lib/cyprusUniversities";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getCityOptions, translateCity, cyprusCities } from "@/lib/cityTranslations";
+import { InterestSelectorList } from "@/components/categories/InterestSelectorList";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -492,7 +493,7 @@ const Signup = () => {
                     <FormMessage />
                   </FormItem>} />
 
-              {/* Category Preferences - with subcategories */}
+              {/* Category Preferences - list rows (as per mock) */}
               <div className="space-y-3">
                 <FormLabel className="flex items-center gap-2">
                   <Heart className="h-4 w-4 text-primary" />
@@ -501,63 +502,12 @@ const Signup = () => {
                 <p className="text-sm text-muted-foreground">
                   {language === "el" ? "Επιλέξτε όσα θέλετε για καλύτερες προτάσεις" : "Select as many as you like for better recommendations"}
                 </p>
-                <div className="space-y-2">
-                  {getCategoriesForUser(language).map(category => {
-                    const hasSubOptions = category.hasDropdown && category.subOptions;
-                    const selectedSubCount = category.subOptions?.filter(
-                      sub => selectedPreferences.includes(sub.id)
-                    ).length || 0;
-                    const isMainSelected = selectedPreferences.includes(category.id);
 
-                    return (
-                      <div key={category.id} className="border border-border rounded-xl overflow-hidden">
-                        <div className={`flex items-center justify-between p-3 transition-colors ${(isMainSelected || selectedSubCount > 0) ? "bg-primary/10" : "bg-background hover:bg-muted/50"}`}>
-                          <div className="flex items-center gap-3 flex-1">
-                            {!hasSubOptions && (
-                              <Checkbox
-                                id={`signup-${category.id}`}
-                                checked={isMainSelected}
-                                onCheckedChange={() => togglePreference(category.id)}
-                                className="rounded"
-                              />
-                            )}
-                            <label
-                              htmlFor={!hasSubOptions ? `signup-${category.id}` : undefined}
-                              className={`flex items-center gap-2 text-sm font-medium flex-1 ${!hasSubOptions ? "cursor-pointer" : ""}`}
-                            >
-                              <span>{category.icon}</span>
-                              <span>{category.label}</span>
-                              {selectedSubCount > 0 && (
-                                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">+{selectedSubCount}</span>
-                              )}
-                            </label>
-                          </div>
-                        </div>
-                        
-                        {hasSubOptions && category.subOptions && (
-                          <div className="border-t border-border bg-muted/30 p-3 pl-6 space-y-2">
-                            {category.subOptions.map(subOption => (
-                              <div key={subOption.id} className="flex items-center gap-2">
-                                <Checkbox
-                                  id={`signup-${subOption.id}`}
-                                  checked={selectedPreferences.includes(subOption.id)}
-                                  onCheckedChange={() => togglePreference(subOption.id)}
-                                  className="rounded"
-                                />
-                                <label
-                                  htmlFor={`signup-${subOption.id}`}
-                                  className="text-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                  {subOption.label}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <InterestSelectorList
+                  categories={getCategoriesForUser(language)}
+                  selectedIds={selectedPreferences}
+                  onToggle={togglePreference}
+                />
               </div>
 
               {/* Student Verification Section */}
