@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { useNavigate } from "react-router-dom";
-import { Menu, ChevronDown, User as UserIcon, Settings, LogOut, Search } from "lucide-react";
+import { Menu, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageToggle from "@/components/LanguageToggle";
+import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 import type { User } from "@supabase/supabase-js";
 
 const Navbar = () => {
@@ -19,7 +19,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
@@ -43,35 +43,21 @@ const Navbar = () => {
       } = await supabase.auth.getUser();
       setUser(user);
       if (user) {
-        // Optimize: Fetch business and profile in parallel
-        const [businessResult, profileResult] = await Promise.all([
-          supabase.from('businesses').select('id').eq('user_id', user.id).maybeSingle(),
-          supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single()
-        ]);
+        const profileResult = await supabase
+          .from('profiles')
+          .select('name, avatar_url')
+          .eq('id', user.id)
+          .single();
         
-        setUserRole(businessResult.data ? 'business' : 'user');
         setUserName(profileResult.data?.name || user.email?.split('@')[0] || 'User');
+        setUserAvatarUrl(profileResult.data?.avatar_url || user?.user_metadata?.avatar_url || null);
       } else {
-        setUserRole(null);
         setUserName("");
+        setUserAvatarUrl(null);
       }
     } catch (error) {
       console.warn('Error fetching user data:', error);
       setUserName('User');
-      setUserRole('user');
-    }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-
-  const handleDashboardClick = () => {
-    if (userRole === 'business') {
-      navigate('/dashboard-business');
-    } else {
-      navigate('/dashboard-user');
     }
   };
 
@@ -85,36 +71,30 @@ const Navbar = () => {
 
   const text = {
     el: {
-      events: "Εκδηλώσεις",
-      map: "Χάρτης",
-      discounts: "Εκπτώσεις",
       login: "Σύνδεση",
       signup: "Εγγραφή",
       joinFomo: "Εγγραφή στο ΦΟΜΟ",
       forBusinesses: "Για Επιχειρήσεις",
-      myDashboard: "Ο Λογαριασμός μου",
-      profile: "Προφίλ",
-      settings: "Ρυθμίσεις",
+      myAccount: "Ο λογαριασμός μου",
       signOut: "Αποσύνδεση",
-      messages: "Μηνύματα"
     },
     en: {
-      events: "Events",
-      map: "Map",
-      discounts: "Discounts",
       login: "Login",
       signup: "Sign Up",
       joinFomo: "Join ΦΟΜΟ",
       forBusinesses: "For Businesses",
-      myDashboard: "My Dashboard",
-      profile: "Profile",
-      settings: "Settings",
+      myAccount: "My Account",
       signOut: "Sign Out",
-      messages: "Messages"
     }
   };
 
   const t = text[language];
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+    setMobileOpen(false);
+  };
 
   return (
     <nav className={cn(
@@ -234,8 +214,6 @@ const Navbar = () => {
 
           {/* Desktop Navigation (lg+) */}
           <div className="hidden lg:flex items-center gap-2">
-            {/* Desktop top icons (messages/notifications) removed per user request */}
-            
             {!user && (
               <Button 
                 onClick={() => navigate("/login")}
@@ -248,52 +226,22 @@ const Navbar = () => {
             {/* Language Toggle */}
             <LanguageToggle />
 
-            {/* User Profile Menu or Join Dropdown */}
-            {user ? <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border-none">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                        {userName?.substring(0, 2)?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                      {user?.user_metadata?.avatar_url && (
-                        <AvatarImage 
-                          src={user.user_metadata.avatar_url} 
-                          alt={userName || 'User'} 
-                        />
-                      )}
-                    </Avatar>
-                    <span className="hidden lg:inline font-medium">{userName}</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {
-                    const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
-                    navigate(`${basePath}?tab=profile`);
-                  }}>
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    {userRole === 'business' ? t.myDashboard : t.profile}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => {
-                    const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
-                    navigate(`${basePath}?tab=settings`);
-                  }}>
-                    <Settings className="w-4 h-4 mr-2" />
-                    {t.settings}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="font-medium cursor-pointer text-destructive" onClick={handleSignOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {t.signOut}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu> : <DropdownMenu>
+            {/* User Profile Menu or Join Dropdown - Unified 3 options */}
+            {user ? (
+              <UserAccountDropdown
+                userId={user.id}
+                userName={userName}
+                avatarUrl={userAvatarUrl}
+                variant="button"
+              />
+            ) : (
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="gradient" className="gap-1">
                     {t.signup} <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-48 bg-background">
                   <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/signup")}>
                     {t.joinFomo}
                   </DropdownMenuItem>
@@ -301,7 +249,8 @@ const Navbar = () => {
                     {t.forBusinesses}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>}
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Tablet/Mobile Menu (<lg) */}
@@ -326,12 +275,13 @@ const Navbar = () => {
             {/* Language Toggle Mobile */}
             <LanguageToggle />
 
+            {/* Mobile Menu Sheet */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className={scrolled ? "text-foreground" : "text-foreground"}
+                  className="text-foreground"
                   aria-label="Open menu"
                 >
                   <Menu aria-hidden="true" />
@@ -343,19 +293,15 @@ const Navbar = () => {
                     <>
                       <button 
                         onClick={() => {
-                          const basePath = userRole === 'business' ? '/dashboard-business' : '/dashboard-user';
-                          navigate(`${basePath}?tab=profile`);
+                          navigate('/feed');
                           setMobileOpen(false);
                         }} 
                         className="text-foreground font-inter font-medium text-lg hover:text-secondary transition-colors"
                       >
-                        {userRole === 'business' ? t.myDashboard : t.profile}
+                        {t.myAccount}
                       </button>
                       <button 
-                        onClick={() => {
-                          handleSignOut();
-                          setMobileOpen(false);
-                        }} 
+                        onClick={handleSignOut} 
                         className="text-destructive font-inter font-medium text-lg hover:text-destructive/80 transition-colors"
                       >
                         {t.signOut}

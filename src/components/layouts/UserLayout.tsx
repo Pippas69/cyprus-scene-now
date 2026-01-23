@@ -4,14 +4,13 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { UserSidebar } from '@/components/user/UserSidebar';
 import { Button } from '@/components/ui/button';
 import { GlobalSearch } from '@/components/search/GlobalSearch';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, User as UserIcon, Settings, LogOut } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
 import LanguageToggle from '@/components/LanguageToggle';
 import Logo from '@/components/Logo';
+import { UserAccountDropdown } from '@/components/UserAccountDropdown';
 import type { User } from '@supabase/supabase-js';
 
 interface UserLayoutProps {
@@ -71,35 +70,24 @@ export function UserLayout({ children }: UserLayoutProps) {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-
-  const handleDashboardClick = () => {
-    if (userRole === 'business') {
-      navigate('/dashboard-business');
-    } else {
-      navigate('/dashboard-user');
-    }
-  };
-
-  const text = {
-    el: {
-      myDashboard: "Ο Λογαριασμός μου",
-      profile: "Προφίλ",
-      settings: "Ρυθμίσεις",
-      signOut: "Αποσύνδεση"
-    },
-    en: {
-      myDashboard: "My Dashboard",
-      profile: "Profile",
-      settings: "Settings",
-      signOut: "Sign Out"
-    }
-  };
-
-  const t = text[language];
+  // Get user avatar URL
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+        if (data?.avatar_url) {
+          setUserAvatarUrl(data.avatar_url);
+        }
+      }
+    };
+    fetchAvatar();
+  }, [user]);
 
   return (
     <SidebarProvider>
@@ -137,40 +125,14 @@ export function UserLayout({ children }: UserLayoutProps) {
             <LanguageToggle />
           </div>
 
-          {/* User Menu */}
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full p-0">
-                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                      {userName?.charAt(0)?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                    {user?.user_metadata?.avatar_url && (
-                      <AvatarImage 
-                        src={user.user_metadata.avatar_url} 
-                        alt={userName || 'User'} 
-                      />
-                    )}
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-background border-border z-50">
-                <DropdownMenuItem onClick={handleDashboardClick} className="text-sm">
-                  <UserIcon className="mr-2 h-4 w-4" />
-                  {t.myDashboard}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/dashboard-user?tab=settings')} className="text-sm">
-                  <Settings className="mr-2 h-4 w-4" />
-                  {t.settings}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut} className="text-sm">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  {t.signOut}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
+          {/* User Menu - Unified 3 options: My Account, Notifications, Sign Out */}
+          {user && (
+            <UserAccountDropdown
+              userId={user.id}
+              userName={userName}
+              avatarUrl={userAvatarUrl || user?.user_metadata?.avatar_url}
+            />
+          )}
         </header>
 
         {/* Main Layout with Sidebar and Content */}
