@@ -76,8 +76,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-seafoam/15 to-aegean/15 border border-seafoam/30 font-cinzel font-bold text-xs sm:text-base md:text-lg tracking-wider shadow-lg">
-              <span className="bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase">
+            <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-seafoam/10 border border-seafoam/30 font-cinzel font-bold text-xs sm:text-base md:text-lg tracking-wider shadow-lg">
+              <span className="text-seafoam uppercase">
                 {t.tagline}
               </span>
             </span>
