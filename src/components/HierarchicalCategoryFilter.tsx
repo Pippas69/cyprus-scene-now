@@ -145,18 +145,18 @@ const HierarchicalCategoryFilter = ({
     if (!onToggleStudentDiscounts) return null;
     const isActive = !!showStudentDiscounts;
     return (
-      <div className="relative mt-0.5 md:mt-0 lg:mt-0 lg:-ml-32">
+      <div className="relative mt-0 lg:-ml-32">
         <Badge
           variant={isActive ? "default" : "outline"}
-          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2.5 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-[11px] md:text-[10px] lg:text-xs font-medium min-h-[32px] md:min-h-[28px] lg:min-h-[36px] flex items-center justify-center gap-1.5 md:gap-1 lg:gap-1.5 rounded-full select-none whitespace-nowrap ${
+          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-[10px] md:text-[10px] lg:text-xs font-medium min-h-[28px] md:min-h-[28px] lg:min-h-[36px] flex items-center justify-center gap-1 md:gap-1 lg:gap-1.5 rounded-full select-none whitespace-nowrap ${
             isActive
               ? "bg-ocean text-white border-ocean shadow-md"
               : "bg-card text-foreground border-border hover:bg-ocean/10 hover:border-ocean/30 hover:shadow-sm"
           }`}
           onClick={onToggleStudentDiscounts}
         >
-          <GraduationCap className="h-3.5 w-3.5 md:h-3.5 md:w-3.5 lg:h-3 lg:w-3" />
-          <span className="text-[11px] md:text-[10px] lg:text-[11px]">
+          <GraduationCap className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-3 lg:w-3" />
+          <span className="text-[10px] md:text-[10px] lg:text-[11px]">
             {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
           </span>
         </Badge>
@@ -180,7 +180,7 @@ const HierarchicalCategoryFilter = ({
             ? "default"
             : "outline"
         }
-        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-3 md:px-3 lg:px-4 py-2 md:py-2 lg:py-2.5 text-[13px] md:text-xs lg:text-sm font-medium min-h-[40px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-2 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
+        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2.5 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-xs md:text-xs lg:text-sm font-medium min-h-[32px] md:min-h-[40px] lg:min-h-[44px] flex items-center justify-center gap-1.5 md:gap-1.5 lg:gap-2 rounded-full select-none whitespace-nowrap ${
           category.hasDropdown
             ? hasAnySubOptionSelected(category)
               ? "bg-ocean text-white border-ocean shadow-md"
@@ -197,7 +197,7 @@ const HierarchicalCategoryFilter = ({
           }
         }}
       >
-        <span className="text-sm md:text-sm lg:text-base">{category.icon}</span>
+        <span className="text-xs md:text-sm lg:text-base">{category.icon}</span>
         <span>{category.label}</span>
         {category.hasDropdown && (
           <>
