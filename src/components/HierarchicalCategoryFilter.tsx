@@ -26,6 +26,7 @@ interface HierarchicalCategoryFilterProps {
   showStudentDiscounts?: boolean;
   onToggleStudentDiscounts?: () => void;
   mapCompact?: boolean;
+  mapMode?: boolean;
 }
 
 const HierarchicalCategoryFilter = ({
@@ -35,6 +36,7 @@ const HierarchicalCategoryFilter = ({
   showStudentDiscounts,
   onToggleStudentDiscounts,
   mapCompact = false,
+  mapMode = false,
 }: HierarchicalCategoryFilterProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
@@ -166,10 +168,11 @@ const HierarchicalCategoryFilter = ({
     );
   };
 
-  const renderBadge = (category: Category, isMapCompact: boolean = false) => (
+  // Badge rendering with mapMode support
+  const renderBadge = (category: Category, isMapStyle: boolean = false) => (
     <div
       key={category.id}
-      className="relative"
+      className="relative shrink-0"
       ref={(el) => (badgeRefs.current[category.id] = el)}
     >
       <Badge
@@ -183,8 +186,8 @@ const HierarchicalCategoryFilter = ({
             : "outline"
         }
         className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
-          isMapCompact 
-            ? "px-2 py-1 text-[10px] min-h-[28px] gap-1" 
+          isMapStyle 
+            ? "px-2 md:px-2.5 lg:px-3 py-1 md:py-1.5 lg:py-2 text-[10px] md:text-xs lg:text-sm min-h-[28px] md:min-h-[32px] lg:min-h-[36px] gap-1 md:gap-1.5 lg:gap-2" 
             : "px-2.5 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-xs md:text-xs lg:text-sm min-h-[32px] md:min-h-[40px] lg:min-h-[44px] gap-1.5 md:gap-1.5 lg:gap-2"
         } font-medium flex items-center justify-center rounded-full select-none whitespace-nowrap ${
           category.hasDropdown
@@ -203,18 +206,17 @@ const HierarchicalCategoryFilter = ({
           }
         }}
       >
-        <span className={isMapCompact ? "text-[10px]" : "text-xs md:text-sm lg:text-base"}>{category.icon}</span>
+        <span className={isMapStyle ? "text-[10px] md:text-xs lg:text-sm" : "text-xs md:text-sm lg:text-base"}>{category.icon}</span>
         <span>{category.label}</span>
         {category.hasDropdown && (
           <>
             {getSelectedSubOptionsCount(category) > 0 && (
-              <span className={`bg-white/20 rounded-full font-semibold flex-shrink-0 ${isMapCompact ? "px-1 py-0.5 text-[7px]" : "px-1 md:px-1.5 py-0.5 text-[8px] md:text-[10px] lg:text-xs"}`}>
+              <span className={`bg-white/20 rounded-full font-semibold flex-shrink-0 ${isMapStyle ? "px-1 py-0.5 text-[7px] md:text-[8px] lg:text-[10px]" : "px-1 md:px-1.5 py-0.5 text-[8px] md:text-[10px] lg:text-xs"}`}>
                 {getSelectedSubOptionsCount(category)}
               </span>
             )}
             <ChevronDown
-              size={isMapCompact ? 8 : 10}
-              className={`transition-transform duration-200 flex-shrink-0 ${isMapCompact ? "" : "md:w-3 md:h-3"} ${
+              className={`transition-transform duration-200 flex-shrink-0 ${isMapStyle ? "h-2 w-2 md:h-2.5 md:w-2.5 lg:h-3 lg:w-3" : "h-2.5 w-2.5 md:h-3 md:w-3"} ${
                 openDropdown === category.id ? "rotate-180" : ""
               }`}
             />
@@ -222,16 +224,16 @@ const HierarchicalCategoryFilter = ({
         )}
         {!category.hasDropdown &&
           selectedCategories.includes(category.id) && (
-            <Check size={isMapCompact ? 8 : 10} className={`flex-shrink-0 ${isMapCompact ? "" : "md:w-3 md:h-3"}`} />
+            <Check className={`flex-shrink-0 ${isMapStyle ? "h-2 w-2 md:h-2.5 md:w-2.5 lg:h-3 lg:w-3" : "h-2.5 w-2.5 md:h-3 md:w-3"}`} />
           )}
       </Badge>
     </div>
   );
 
-  // Map compact mode: all 4 categories in one row, no student discount
-  if (mapCompact) {
+  // Map mode: all 4 categories inline, no student discount
+  if (mapMode || mapCompact) {
     return (
-      <div className="flex gap-1.5 items-center">
+      <div className="flex gap-1.5 md:gap-2 lg:gap-2.5 items-center">
         {categories.map(cat => renderBadge(cat, true))}
       </div>
     );
