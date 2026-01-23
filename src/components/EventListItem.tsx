@@ -1,5 +1,6 @@
 import { Heart, Users, MapPin, Calendar, Building2 } from "lucide-react";
 import { format } from "date-fns";
+import { el, enUS } from "date-fns/locale";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,7 @@ const EventListItem = ({
             <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {format(new Date(event.start_at), "MMM d, HH:mm")}
+                {format(new Date(event.start_at), "d MMM, HH:mm", { locale: language === 'el' ? el : enUS })}
               </span>
               <button
                 onClick={(e) => {

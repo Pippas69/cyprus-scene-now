@@ -1,29 +1,29 @@
 import { useState, useEffect } from "react";
-import { Search, MapPin, Calendar } from "lucide-react";
+import { Search, MapPin, Building2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { formatEventTime } from "@/lib/mapUtils";
 import { cn } from "@/lib/utils";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { translateCity } from "@/lib/cityTranslations";
 
 interface SearchResult {
   id: string;
-  title: string;
-  location: string;
-  start_at: string;
-  end_at: string;
-  business_name?: string;
+  name: string;
+  city: string;
+  category: string[];
   coordinates?: [number, number];
+  type: 'business';
 }
 
 interface MapSearchProps {
-  onResultClick: (coordinates: [number, number], eventId: string) => void;
+  onResultClick: (coordinates: [number, number], businessId: string) => void;
   language: "el" | "en";
 }
 
 export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
   const text = {
-    el: { placeholder: "Αναζήτηση..." },
-    en: { placeholder: "Search..." },
+    el: { placeholder: "Αναζήτηση...", noResults: "Δεν βρέθηκαν αποτελέσματα" },
+    en: { placeholder: "Search...", noResults: "No results found" },
   };
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -37,30 +37,21 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
       return;
     }
 
-    const searchEvents = async () => {
+    const searchBusinesses = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("events")
-          .select(`
-            id,
-            title,
-            location,
-            start_at,
-            end_at,
-            business_id,
-            businesses (
-              name,
-              id
-            )
-          `)
-          .or(`title.ilike.%${query}%,location.ilike.%${query}%`)
-          .gte('end_at', new Date().toISOString())
-          .limit(5);
+        // Search businesses by name
+        const { data: businessData, error } = await supabase
+          .from("businesses")
+          .select("id, name, city, category")
+          .ilike("name", `%${query}%`)
+          .limit(8);
 
-        if (!error && data) {
+        if (error) throw error;
+
+        if (businessData && businessData.length > 0) {
           // Get coordinates for results
-          const businessIds = [...new Set(data.map(e => e.business_id))];
+          const businessIds = businessData.map(b => b.id);
           const { data: coordsData } = await supabase
             .rpc('get_business_coordinates', { business_ids: businessIds });
 
@@ -71,29 +62,32 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
             ]) || []
           );
 
-          const searchResults: SearchResult[] = data
-            .filter(e => coordsMap.has(e.business_id))
-            .map(e => ({
-              id: e.id,
-              title: e.title,
-              location: e.location,
-              start_at: e.start_at,
-              end_at: e.end_at,
-              business_name: e.businesses?.name,
-              coordinates: coordsMap.get(e.business_id),
+          const searchResults: SearchResult[] = businessData
+            .filter(b => coordsMap.has(b.id))
+            .map(b => ({
+              id: b.id,
+              name: b.name,
+              city: b.city,
+              category: b.category || [],
+              coordinates: coordsMap.get(b.id),
+              type: 'business' as const,
             }));
 
           setResults(searchResults);
           setIsOpen(true);
+        } else {
+          setResults([]);
+          setIsOpen(true);
         }
       } catch (err) {
-        // Silent fail - search errors are not critical
+        console.error('Search error:', err);
+        setResults([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    const debounce = setTimeout(searchEvents, 300);
+    const debounce = setTimeout(searchBusinesses, 300);
     return () => clearTimeout(debounce);
   }, [query]);
 
@@ -118,36 +112,43 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
       </div>
 
       {/* Results dropdown */}
-      {isOpen && results.length > 0 && (
+      {isOpen && (
         <div className="absolute top-full mt-2 w-full min-w-[200px] bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-          {results.map((result) => (
-            <div
-              key={result.id}
-              onClick={() => {
-                if (result.coordinates) {
-                  onResultClick(result.coordinates, result.id);
-                  setIsOpen(false);
-                  setQuery("");
-                }
-              }}
-              className="p-2 md:p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors"
-            >
-              <h4 className="font-medium text-xs md:text-sm mb-1 line-clamp-1">{result.title}</h4>
-              <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Calendar size={10} className="md:w-3 md:h-3" />
-                  <span className="line-clamp-1">{formatEventTime(result.start_at, result.end_at)}</span>
+          {results.length > 0 ? (
+            results.map((result) => (
+              <button
+                key={result.id}
+                onClick={() => {
+                  if (result.coordinates) {
+                    onResultClick(result.coordinates, result.id);
+                    setIsOpen(false);
+                    setQuery("");
+                  }
+                }}
+                className="w-full p-2 md:p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors text-left"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <h4 className="font-medium text-xs md:text-sm line-clamp-1">{result.name}</h4>
                 </div>
-                <div className="flex items-center gap-1">
-                  <MapPin size={10} className="md:w-3 md:h-3" />
-                  <span className="line-clamp-1">{result.location}</span>
+                <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <MapPin size={10} className="md:w-3 md:h-3" />
+                    <span className="line-clamp-1">{translateCity(result.city, language)}</span>
+                  </div>
+                  {result.category[0] && (
+                    <span className="text-muted-foreground">
+                      · {getCategoryLabel(result.category[0], language)}
+                    </span>
+                  )}
                 </div>
-              </div>
-              {result.business_name && (
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-1 line-clamp-1">{result.business_name}</p>
-              )}
+              </button>
+            ))
+          ) : (
+            <div className="p-3 text-center text-xs text-muted-foreground">
+              {text[language].noResults}
             </div>
-          ))}
+          )}
         </div>
       )}
 

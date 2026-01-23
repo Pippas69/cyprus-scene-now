@@ -30,6 +30,7 @@ import {
   PartyPopper,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { el, enUS } from 'date-fns/locale';
 import { EventAttendees } from '@/components/EventAttendees';
 import { ShareDialog } from '@/components/sharing/ShareDialog';
 import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
@@ -533,7 +534,7 @@ export default function EventDetail() {
                     <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div>
                       <p className="font-medium text-sm">
-                        {format(new Date(event.start_at), 'EEEE, MMMM d, yyyy')}
+                        {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {format(new Date(event.start_at), 'HH:mm')} -{' '}

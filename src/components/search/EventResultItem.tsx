@@ -1,5 +1,6 @@
 import { Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
+import { el, enUS } from 'date-fns/locale';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface EventResult {
@@ -17,7 +18,9 @@ interface EventResultItemProps {
   onClick: () => void;
 }
 
-export function EventResultItem({ result, onClick }: EventResultItemProps) {
+export function EventResultItem({ result, language, onClick }: EventResultItemProps) {
+  const dateLocale = language === 'el' ? el : enUS;
+  
   return (
     <button
       onClick={onClick}
@@ -43,7 +46,7 @@ export function EventResultItem({ result, onClick }: EventResultItemProps) {
             {result.start_at && (
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {format(new Date(result.start_at), 'MMM d, HH:mm')}
+                {format(new Date(result.start_at), 'd MMM, HH:mm', { locale: dateLocale })}
               </span>
             )}
             {result.location && (
