@@ -26,11 +26,18 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
   const style = mapInstance.getStyle();
   if (!style?.layers) return;
 
+  // Convert CSS variable to proper HSL format for Mapbox (requires commas)
   const cssVarToHsl = (varName: string, fallback: string) => {
     const raw = getComputedStyle(document.documentElement)
       .getPropertyValue(varName)
       .trim();
-    return raw ? `hsl(${raw})` : fallback;
+    if (!raw) return fallback;
+    // Ensure proper HSL format with commas: "207 72% 22%" -> "hsl(207, 72%, 22%)"
+    const parts = raw.split(/\s+/);
+    if (parts.length === 3) {
+      return `hsl(${parts[0]}, ${parts[1]}, ${parts[2]})`;
+    }
+    return `hsl(${raw})`;
   };
 
   const COLORS = {
@@ -180,7 +187,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     return () => { map.current?.remove(); };
   }, [MAPBOX_TOKEN]);
 
-  // Show directions icon below the business pin
+  // Show directions icon below the business pin - icon only, responsive size
   const showDirectionsIcon = (business: any) => {
     if (!map.current) return;
     
@@ -192,29 +199,27 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
     const [lng, lat] = business.coordinates;
     
-    // Create directions button element
+    // Create directions icon-only button element
     const div = document.createElement('div');
     div.className = 'directions-marker';
     const root = ReactDOM.createRoot(div);
     root.render(
-      <Button
-        size="sm"
-        variant="outline"
-        className="bg-background/95 backdrop-blur-sm shadow-lg text-xs h-7 px-2 gap-1"
+      <button
+        className="flex items-center justify-center bg-background/95 backdrop-blur-sm shadow-lg rounded-full border border-border hover:bg-accent transition-colors h-6 w-6 md:h-7 md:w-7"
         onClick={() => {
           window.open(getDirectionsUrl(lat, lng), "_blank");
         }}
+        aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
       >
-        <Navigation className="h-3 w-3" />
-        {language === 'el' ? 'Οδηγίες' : 'Directions'}
-      </Button>
+        <Navigation className="h-3 w-3 md:h-3.5 md:w-3.5 text-foreground" />
+      </button>
     );
 
     // Position the marker below the pin (offset by ~30px)
     directionsMarkerRef.current = new mapboxgl.Marker({ 
       element: div,
       anchor: 'top',
-      offset: [0, 10]
+      offset: [0, 8]
     })
       .setLngLat([lng, lat])
       .addTo(map.current);

@@ -727,7 +727,7 @@ export default function EventDetail() {
                   <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="font-medium">
-                      {format(new Date(event.start_at), 'EEEE, MMMM d, yyyy')}
+                      {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {format(new Date(event.start_at), 'HH:mm')} -{' '}
@@ -738,10 +738,13 @@ export default function EventDetail() {
 
                 <Separator />
 
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <p className="font-medium">{event.location}</p>
-                </div>
+                <button
+                  onClick={() => navigate(`/xartis?business=${event.business_id}`)}
+                  className="flex items-start gap-3 w-full text-left hover:bg-accent/50 -mx-1 px-1 py-0.5 rounded-md transition-colors cursor-pointer group"
+                >
+                  <MapPin className="h-5 w-5 text-muted-foreground group-hover:text-primary mt-0.5 transition-colors" />
+                  <p className="font-medium group-hover:text-primary transition-colors">{event.location}</p>
+                </button>
               </CardContent>
             </Card>
 
