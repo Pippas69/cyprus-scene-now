@@ -18,6 +18,7 @@ import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkl
 import { useNavigate } from 'react-router-dom';
 import { getCategoriesForUser } from '@/lib/unifiedCategories';
 import { getCityOptions, translateCity } from '@/lib/cityTranslations';
+import { InterestSelectorList } from '@/components/categories/InterestSelectorList';
 
 interface UserSettingsProps {
   userId: string;
@@ -407,74 +408,21 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </Select>
             </div>
 
-            {/* Category Preferences - with subcategories */}
+            {/* Interests - list rows (match Signup mock) */}
             <div className="space-y-3 pt-4 border-t">
               <div>
                 <Label className="flex items-center gap-2 text-base">
                   <Heart className="h-4 w-4 text-primary" />
                   {t.interests}
                 </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t.interestsDescription}
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">{t.interestsDescription}</p>
               </div>
-              <div className="space-y-2">
-                {categories.map((category) => {
-                  const hasSubOptions = category.hasDropdown && category.subOptions;
-                  const selectedSubCount = category.subOptions?.filter(
-                    (sub: any) => (profile.preferences || []).includes(sub.id)
-                  ).length || 0;
-                  const isMainSelected = (profile.preferences || []).includes(category.id);
 
-                  return (
-                    <div key={category.id} className="border border-border rounded-xl overflow-hidden">
-                      <div className={`flex items-center justify-between p-2.5 transition-colors ${(isMainSelected || selectedSubCount > 0) ? "bg-primary/10" : "bg-background hover:bg-muted/50"}`}>
-                        <div className="flex items-center gap-2 flex-1">
-                          {!hasSubOptions && (
-                            <Checkbox
-                              id={`pref-${category.id}`}
-                              checked={isMainSelected}
-                              onCheckedChange={() => togglePreference(category.id)}
-                              className="rounded"
-                            />
-                          )}
-                          <label
-                            htmlFor={!hasSubOptions ? `pref-${category.id}` : undefined}
-                            className={`flex items-center gap-2 text-sm font-medium flex-1 ${!hasSubOptions ? "cursor-pointer" : ""}`}
-                          >
-                            <span>{category.icon}</span>
-                            <span>{category.label}</span>
-                            {selectedSubCount > 0 && (
-                              <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">+{selectedSubCount}</span>
-                            )}
-                          </label>
-                        </div>
-                      </div>
-                      
-                      {hasSubOptions && category.subOptions && (
-                        <div className="border-t border-border bg-muted/30 p-2 pl-5 space-y-1.5">
-                          {category.subOptions.map((subOption: any) => (
-                            <div key={subOption.id} className="flex items-center gap-2">
-                              <Checkbox
-                                id={`pref-${subOption.id}`}
-                                checked={(profile.preferences || []).includes(subOption.id)}
-                                onCheckedChange={() => togglePreference(subOption.id)}
-                                className="rounded"
-                              />
-                              <label
-                                htmlFor={`pref-${subOption.id}`}
-                                className="text-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
-                              >
-                                {subOption.label}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <InterestSelectorList
+                categories={categories}
+                selectedIds={profile.preferences || []}
+                onToggle={togglePreference}
+              />
             </div>
 
             <Button type="submit" disabled={profileLoading} className="mt-4 gap-2">

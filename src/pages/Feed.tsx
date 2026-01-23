@@ -339,26 +339,14 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
             {/* Filters (categories + student discount) - more compact on mobile */}
             <div data-filters className="w-full">
               <div className="flex flex-col gap-1.5 sm:gap-2">
-                {/* Categories row */}
                 <div className="flex items-center gap-2">
                   <HierarchicalCategoryFilter
                     language={language}
                     selectedCategories={selectedCategories}
                     onCategoryChange={setSelectedCategories}
+                    showStudentDiscounts={showStudentDiscounts}
+                    onToggleStudentDiscounts={() => setShowStudentDiscounts(!showStudentDiscounts)}
                   />
-                </div>
-
-                {/* Student Discount button - centered below categories */}
-                <div className="flex justify-center w-full">
-                  <Button
-                    variant={showStudentDiscounts ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowStudentDiscounts(!showStudentDiscounts)}
-                    className="h-7 sm:h-8 px-3 sm:px-4 text-[11px] sm:text-xs gap-1 sm:gap-1.5"
-                  >
-                    <GraduationCap className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    {language === "el" ? "Φοιτητική Έκπτωση" : "Student Discount"}
-                  </Button>
                 </div>
 
                 {(selectedCategories.length > 0 || selectedCity) && (
