@@ -203,23 +203,27 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     const div = document.createElement('div');
     div.className = 'directions-marker';
     const root = ReactDOM.createRoot(div);
-    root.render(
-      <button
-        className="flex items-center justify-center bg-background/95 backdrop-blur-sm shadow-lg rounded-full border border-border hover:bg-accent transition-colors h-6 w-6 md:h-7 md:w-7"
-        onClick={() => {
-          window.open(getDirectionsUrl(lat, lng), "_blank");
-        }}
-        aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
-      >
-        <Navigation className="h-3 w-3 md:h-3.5 md:w-3.5 text-foreground" />
-      </button>
-    );
+     root.render(
+       <button
+         className={
+           "flex items-center justify-center bg-background/95 backdrop-blur-sm shadow-lg rounded-full border border-border hover:bg-accent transition-colors " +
+           // Smaller than pins; slightly smaller on mobile.
+           "h-4 w-4 md:h-5 md:w-5"
+         }
+         onClick={() => {
+           window.open(getDirectionsUrl(lat, lng), "_blank");
+         }}
+         aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
+       >
+         <Navigation className="h-2.5 w-2.5 md:h-3 md:w-3 text-foreground" />
+       </button>
+     );
 
-    // Position the marker below the pin (offset by ~30px)
+    // Position the marker slightly down-left from the pin
     directionsMarkerRef.current = new mapboxgl.Marker({ 
       element: div,
       anchor: 'top',
-      offset: [0, 8]
+      offset: [-14, 22]
     })
       .setLngLat([lng, lat])
       .addTo(map.current);

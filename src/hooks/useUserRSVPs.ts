@@ -15,6 +15,7 @@ interface RSVPWithEvent {
     category: string[];
     price_tier: string | null;
     cover_image_url: string | null;
+    business_id?: string;
     business: {
       id: string;
       name: string;
@@ -62,6 +63,7 @@ export const useUserRSVPs = (userId: string | null) => {
           category,
           price_tier,
           cover_image_url,
+          business_id,
           business:businesses(id, name, logo_url)
         )
       `)
