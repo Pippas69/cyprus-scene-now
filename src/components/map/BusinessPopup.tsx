@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getDirectionsUrl } from "@/lib/mapUtils";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { trackEngagement } from "@/lib/analyticsTracking";
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
 import { translateCity } from "@/lib/cityTranslations";
@@ -109,7 +110,7 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
           <div className="flex flex-wrap gap-1.5">
             {business.category.slice(0, 3).map((cat) => (
               <Badge key={cat} variant="secondary" className="text-xs">
-                {cat}
+                {getCategoryLabel(cat, language)}
               </Badge>
             ))}
           </div>

@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/businessRanking";
 import { translateCity } from "@/lib/cityTranslations";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 
 type CategoryKey = "nightlife" | "clubs" | "dining" | "beach";
 
@@ -248,7 +249,7 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
 
                     {business.category?.[0] && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                        {business.category[0]}
+                        {getCategoryLabel(business.category[0], language)}
                       </Badge>
                     )}
                   </Link>

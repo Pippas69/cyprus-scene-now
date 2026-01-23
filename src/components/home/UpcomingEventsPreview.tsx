@@ -4,8 +4,10 @@ import { Calendar, MapPin, Clock, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { el, enUS } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 
 interface UpcomingEventsPreviewProps {
   language: "en" | "el";
@@ -144,7 +146,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
                     
                     {event.category?.[0] && (
                       <span className="absolute top-2 sm:top-3 left-2 sm:left-3 px-2 sm:px-3 py-0.5 sm:py-1 bg-seafoam text-white text-[10px] sm:text-xs font-medium rounded-full">
-                        {event.category[0]}
+                        {getCategoryLabel(event.category[0], language)}
                       </span>
                     )}
                   </div>

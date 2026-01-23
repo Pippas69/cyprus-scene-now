@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, MapPin, ChevronRight, Crown, Star, Zap, Navigation } from "lucide-react";
 import { translateCity } from "@/lib/cityTranslations";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { getDirectionsUrl } from "@/lib/mapUtils";
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
 import { cn } from "@/lib/utils";
@@ -152,7 +153,7 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                         <div className="flex flex-wrap gap-1 mb-2">
                           {business.category.slice(0, 2).map((cat) => (
                             <Badge key={cat} variant="secondary" className="text-[10px] px-1.5 py-0">
-                              {cat}
+                              {getCategoryLabel(cat, language)}
                             </Badge>
                           ))}
                         </div>
