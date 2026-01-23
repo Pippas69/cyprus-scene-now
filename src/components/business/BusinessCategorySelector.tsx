@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { unifiedCategories, getCategoriesForBusiness } from "@/lib/unifiedCategories";
 import { cn } from "@/lib/utils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BusinessCategorySelectorProps {
   selectedCategories: string[];
@@ -16,11 +15,10 @@ export const BusinessCategorySelector = ({
   selectedCategories,
   onCategoryChange,
   language,
-  maxSelections = 2, // Default max 2 selections for businesses
+  maxSelections = 2,
 }: BusinessCategorySelectorProps) => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
-  // Get categories with singular labels for business context
   const categories = getCategoriesForBusiness(language);
 
   const toggleExpand = (categoryId: string) => {
@@ -31,25 +29,18 @@ export const BusinessCategorySelector = ({
     );
   };
 
-  // Count total selections (main categories + sub-options)
-  const getTotalSelections = () => {
-    return selectedCategories.length;
-  };
+  const getTotalSelections = () => selectedCategories.length;
 
-  const canSelect = () => {
-    return getTotalSelections() < maxSelections;
-  };
+  const canSelectMore = () => getTotalSelections() < maxSelections;
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    if (checked && !canSelect()) {
-      return; // Don't allow more selections
+    if (checked && !canSelectMore()) {
+      return; // Already at max - don't allow
     }
     onCategoryChange(categoryId, checked);
   };
 
-  const isMainCategorySelected = (categoryId: string) => {
-    return selectedCategories.includes(categoryId);
-  };
+  const isMainCategorySelected = (categoryId: string) => selectedCategories.includes(categoryId);
 
   const hasAnySubOptionSelected = (categoryId: string) => {
     const category = unifiedCategories.find(c => c.id === categoryId);
@@ -64,35 +55,16 @@ export const BusinessCategorySelector = ({
   };
 
   const text = {
-    el: {
-      maxSelectionsWarning: `Μπορείτε να επιλέξετε μέχρι ${maxSelections} κατηγορίες`,
-      selected: 'επιλεγμένες',
-    },
-    en: {
-      maxSelectionsWarning: `You can select up to ${maxSelections} categories`,
-      selected: 'selected',
-    },
+    el: { label: 'Κατηγορίες (επιλέξτε μέχρι 2 κατηγορίες)' },
+    en: { label: 'Categories (select up to 2 categories)' },
   };
 
   const t = text[language];
 
   return (
     <div className="space-y-3">
-      {/* Selection counter and warning */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">
-          {getTotalSelections()}/{maxSelections} {t.selected}
-        </span>
-        {!canSelect() && (
-          <Alert variant="default" className="py-1 px-2 border-amber-500/50 bg-amber-500/10">
-            <AlertCircle className="h-3 w-3 text-amber-500" />
-            <AlertDescription className="text-xs text-amber-600 dark:text-amber-400 ml-1">
-              {t.maxSelectionsWarning}
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-
+      <label className="text-sm font-medium text-foreground">{t.label}</label>
+      
       <div className="space-y-2">
         {categories.map((category, index) => {
           const originalCategory = unifiedCategories[index];
@@ -101,7 +73,8 @@ export const BusinessCategorySelector = ({
           const subCount = getSelectedSubOptionsCount(category.id);
           const isSelected = isMainCategorySelected(category.id);
           const hasSubSelected = hasAnySubOptionSelected(category.id);
-          const isDisabled = !canSelect() && !isSelected && !hasSubSelected;
+          // Only disable if at max AND this item is not already selected
+          const isDisabledByMax = !canSelectMore() && !isSelected && !hasSubSelected;
 
           return (
             <div key={category.id} className="border border-border rounded-lg overflow-hidden">
@@ -109,8 +82,7 @@ export const BusinessCategorySelector = ({
               <div
                 className={cn(
                   "flex items-center justify-between p-3 transition-colors",
-                  (isSelected || hasSubSelected) ? "bg-primary/10" : "bg-background hover:bg-muted/50",
-                  isDisabled && "opacity-50"
+                  (isSelected || hasSubSelected) ? "bg-primary/10" : "bg-background hover:bg-muted/50"
                 )}
               >
                 <div className="flex items-center gap-3 flex-1">
@@ -119,7 +91,7 @@ export const BusinessCategorySelector = ({
                     <Checkbox
                       id={category.id}
                       checked={isSelected}
-                      disabled={isDisabled && !isSelected}
+                      disabled={isDisabledByMax}
                       onCheckedChange={(checked) => handleCategoryChange(category.id, checked as boolean)}
                     />
                   )}
@@ -156,18 +128,15 @@ export const BusinessCategorySelector = ({
                 )}
               </div>
 
-              {/* Sub-options (required selection for categories with dropdowns) */}
+              {/* Sub-options */}
               {hasSubOptions && isExpanded && category.subOptions && (
                 <div className="border-t border-border bg-muted/30 p-3 pl-6 space-y-2">
                   {category.subOptions.map(subOption => {
                     const subIsSelected = selectedCategories.includes(subOption.id);
-                    const subIsDisabled = !canSelect() && !subIsSelected;
+                    const subIsDisabled = !canSelectMore() && !subIsSelected;
 
                     return (
-                      <div key={subOption.id} className={cn(
-                        "flex items-center gap-2",
-                        subIsDisabled && "opacity-50"
-                      )}>
+                      <div key={subOption.id} className="flex items-center gap-2">
                         <Checkbox
                           id={subOption.id}
                           checked={subIsSelected}
@@ -178,7 +147,7 @@ export const BusinessCategorySelector = ({
                           htmlFor={subOption.id}
                           className={cn(
                             "text-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors",
-                            subIsDisabled && "cursor-not-allowed"
+                            subIsDisabled && "cursor-not-allowed opacity-50"
                           )}
                         >
                           {subOption.label}

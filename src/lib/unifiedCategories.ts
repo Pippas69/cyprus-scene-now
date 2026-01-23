@@ -27,7 +27,7 @@ export const unifiedCategories: UnifiedCategory[] = [
     id: "nightlife",
     label: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
     singularLabel: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
-    icon: "🍷",
+    icon: "🌙",
     hasDropdown: true,
     subOptions: [
       { 
@@ -56,7 +56,7 @@ export const unifiedCategories: UnifiedCategory[] = [
     id: "clubs", 
     label: { el: "Clubs", en: "Clubs" },
     singularLabel: { el: "Club", en: "Club" },
-    icon: "🎵",
+    icon: "🎧",
     hasDropdown: false 
   },
   {
