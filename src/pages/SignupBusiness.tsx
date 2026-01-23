@@ -392,7 +392,7 @@ const SignupBusiness = () => {
             <h1 className="font-cinzel text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-2">
               {language === 'el' ? 'Εγγραφή Επιχείρησης στο ΦΟΜΟ' : 'Business Registration to ΦΟΜΟ'}
             </h1>
-            <p className="font-inter text-lg text-muted-foreground">
+            <p className="font-inter text-sm sm:text-base md:text-lg text-muted-foreground">
               {language === 'el'
                 ? 'Καταχώρησε την επιχείρησή σου και έλα σε επαφή με νέο κοινό στην Κύπρο.'
                 : 'Register your business and connect with new audiences in Cyprus.'

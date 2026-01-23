@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import ReactDOM from 'react-dom/client';
@@ -8,9 +8,11 @@ import { BusinessMarker } from './BusinessMarker';
 import { BusinessPopup } from './BusinessPopup';
 import { MapSearch } from './MapSearch';
 import { BusinessListSheet } from './BusinessListSheet';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Maximize2, Minimize2, Navigation } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { trackEngagement } from '@/lib/analyticsTracking';
+import { Button } from '@/components/ui/button';
+import { getDirectionsUrl } from '@/lib/mapUtils';
 
 interface RealMapProps {
   city: string;
@@ -20,8 +22,6 @@ interface RealMapProps {
 }
 
 // Dynamic ocean theme application - styles ALL road layers by matching keywords
-// IMPORTANT: Mapbox paint properties do NOT understand CSS variables, so we must
-// resolve our design tokens (CSS vars) into concrete HSL strings at runtime.
 const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
   const style = mapInstance.getStyle();
   if (!style?.layers) return;
@@ -30,16 +30,15 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
     const raw = getComputedStyle(document.documentElement)
       .getPropertyValue(varName)
       .trim();
-    // Our tokens are stored like: "207 72% 12%" (no "hsl(...)" wrapper).
     return raw ? `hsl(${raw})` : fallback;
   };
 
   const COLORS = {
-    aegean: cssVarToHsl('--aegean', 'hsl(207 72% 22%)'),
-    ocean: cssVarToHsl('--ocean', 'hsl(207 72% 35%)'),
-    sand: cssVarToHsl('--sand-white', 'hsl(45 60% 95%)'),
-    seafoam: cssVarToHsl('--seafoam', 'hsl(174 62% 56%)'),
-    accent: cssVarToHsl('--accent', 'hsl(207 40% 40%)'),
+    aegean: cssVarToHsl('--aegean', 'hsl(207, 72%, 22%)'),
+    ocean: cssVarToHsl('--ocean', 'hsl(207, 72%, 35%)'),
+    sand: cssVarToHsl('--sand-white', 'hsl(45, 60%, 95%)'),
+    seafoam: cssVarToHsl('--seafoam', 'hsl(174, 62%, 56%)'),
+    accent: cssVarToHsl('--accent', 'hsl(207, 40%, 40%)'),
   };
 
   const roadKeywords = ['road', 'street', 'highway', 'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'link', 'path', 'bridge', 'tunnel'];
@@ -112,7 +111,7 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
       }
     }
 
-    // Style road labels for visibility
+    // Style road labels for visibility - using proper HSL format for Mapbox
     if (layer.type === 'symbol' && layerId.includes('road') && layerId.includes('label')) {
       try {
         mapInstance.setPaintProperty(layer.id, 'text-color', COLORS.aegean);
@@ -126,12 +125,11 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
 };
 
 // Minimum zoom levels for each plan to appear
-// All pins visible at default Cyprus view
 const MIN_ZOOM_FOR_PLAN: Record<'free' | 'basic' | 'pro' | 'elite', number> = {
-  free: 7,    // All visible at island view
-  basic: 7,   
-  pro: 7,     
-  elite: 7,   
+  free: 7,
+  basic: 7,
+  pro: 7,
+  elite: 7,
 };
 
 const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: RealMapProps) => {
@@ -139,11 +137,12 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const directionsMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const viewedPinsRef = useRef<Set<string>>(new Set());
   const lastFocusedRef = useRef<string | null>(null);
   const { language } = useLanguage();
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Use the new businesses hook instead of events
   const { businesses, loading } = useMapBusinesses(selectedCategories, city || null);
 
   const MAPBOX_TOKEN = MAPBOX_CONFIG.publicToken;
@@ -156,15 +155,13 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       container: mapContainer.current,
       style: MAPBOX_CONFIG.mapStyle,
       center: MAPBOX_CONFIG.defaultCenter,
-      zoom: 8, // Lower zoom to show full Cyprus
-      pitch: 0, // Flat view to show full map
+      zoom: 8,
+      pitch: 0,
       maxBounds: MAPBOX_CONFIG.maxBounds,
       minZoom: MAPBOX_CONFIG.minZoom,
     });
     
-    // Apply Mediterranean styling on style load
     map.current.on('style.load', () => {
-      // Apply fog/atmosphere
       map.current?.setFog({
         color: MAPBOX_CONFIG.fog.color,
         'high-color': MAPBOX_CONFIG.fog.highColor,
@@ -173,17 +170,55 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         'star-intensity': MAPBOX_CONFIG.fog.starIntensity,
       });
       
-      // Apply ocean theme to all map layers dynamically
       if (map.current) {
         applyOceanMapTheme(map.current);
       }
     });
     
-    // Only add zoom controls (NavigationControl without compass/pitch)
     map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: false }), 'bottom-right');
     
     return () => { map.current?.remove(); };
   }, [MAPBOX_TOKEN]);
+
+  // Show directions icon below the business pin
+  const showDirectionsIcon = (business: any) => {
+    if (!map.current) return;
+    
+    // Remove existing directions marker
+    if (directionsMarkerRef.current) {
+      directionsMarkerRef.current.remove();
+      directionsMarkerRef.current = null;
+    }
+
+    const [lng, lat] = business.coordinates;
+    
+    // Create directions button element
+    const div = document.createElement('div');
+    div.className = 'directions-marker';
+    const root = ReactDOM.createRoot(div);
+    root.render(
+      <Button
+        size="sm"
+        variant="outline"
+        className="bg-background/95 backdrop-blur-sm shadow-lg text-xs h-7 px-2 gap-1"
+        onClick={() => {
+          window.open(getDirectionsUrl(lat, lng), "_blank");
+        }}
+      >
+        <Navigation className="h-3 w-3" />
+        {language === 'el' ? 'Οδηγίες' : 'Directions'}
+      </Button>
+    );
+
+    // Position the marker below the pin (offset by ~30px)
+    directionsMarkerRef.current = new mapboxgl.Marker({ 
+      element: div,
+      anchor: 'top',
+      offset: [0, 10]
+    })
+      .setLngLat([lng, lat])
+      .addTo(map.current);
+  };
 
   const openBusinessPopup = (business: any) => {
     if (!map.current) return;
@@ -195,7 +230,13 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     popupRoot.render(
       <BusinessPopup
         business={business}
-        onClose={() => popupRef.current?.remove()}
+        onClose={() => {
+          popupRef.current?.remove();
+          if (directionsMarkerRef.current) {
+            directionsMarkerRef.current.remove();
+            directionsMarkerRef.current = null;
+          }
+        }}
         language={language}
       />
     );
@@ -208,18 +249,18 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       .setLngLat([lng, lat])
       .setDOMContent(popupDiv)
       .addTo(map.current);
+    
+    // Show directions icon below the pin
+    showDirectionsIcon(business);
   };
 
   // Update markers when businesses change or map moves
   useEffect(() => {
     if (!map.current || !businesses.length) return;
 
-    // Clear existing markers
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    // Initial camera: if we have a focusBusinessId, center exactly there.
-    // Otherwise fit bounds to visible businesses.
     const doInitialCamera = () => {
       if (!map.current) return;
 
@@ -229,7 +270,6 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
           lastFocusedRef.current = focusBusinessId;
           const [lng, lat] = target.coordinates;
 
-          // Match marker click behavior
           trackEngagement(target.id, 'profile_click', 'business', target.id, { source: 'map_link' });
           map.current.flyTo({ center: [lng, lat], zoom: 15, duration: 800, essential: true });
           setTimeout(() => openBusinessPopup(target), 500);
@@ -237,7 +277,6 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         }
       }
 
-      // Default behavior
       try {
         const lngs = businesses.map((b) => b.coordinates[0]);
         const lats = businesses.map((b) => b.coordinates[1]);
@@ -255,35 +294,23 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
     doInitialCamera();
 
-    /**
-     * PREMIUM PIN RENDERING - NO CLUSTERING
-     * Each business gets its own custom pin based on subscription plan.
-     * Visibility is controlled by zoom level per plan tier.
-     */
     const updateMarkers = () => {
       if (!map.current) return;
       const zoom = map.current.getZoom();
 
-      // Clear existing markers
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
 
-      // IMPORTANT: Do NOT hide pins via viewport bounds; they must be visible whenever they are on-screen.
-      // We only gate by zoom tier here.
       const visibleBusinesses = businesses
         .filter((business) => {
           const minZoom = MIN_ZOOM_FOR_PLAN[business.planSlug];
           return zoom >= minZoom;
         })
-        // Render higher tiers LAST so they appear ON TOP (z-index stacking)
-        // Elite (index 0) should render LAST to be visually on top
-        // Sort by planTierIndex DESCENDING: Free (3) first, Elite (0) last
         .sort((a, b) => b.planTierIndex - a.planTierIndex);
 
       visibleBusinesses.forEach((business) => {
         const [lng, lat] = business.coordinates;
 
-        // View = the pin is actually within the current map viewport (NOT a click)
         try {
           const bounds = map.current?.getBounds();
           const isInViewport = bounds ? bounds.contains([lng, lat]) : false;
@@ -304,10 +331,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
             markerId={business.id}
             name={business.name}
             onClick={() => {
-              // IMPORTANT: A marker click is an interaction (NOT a view).
               trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map' });
 
-              // ZOOM TO BUSINESS LOCATION - center and zoom in
               map.current?.flyTo({
                 center: [lng, lat],
                 zoom: 15,
@@ -315,7 +340,6 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
                 essential: true,
               });
 
-              // Show popup after zoom completes
               setTimeout(() => {
                 openBusinessPopup(business);
               }, 500);
@@ -346,8 +370,18 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     if (coords[city]) map.current.flyTo({ center: coords[city], zoom: neighborhood ? 13 : 11, duration: 1000 });
   }, [city, neighborhood]);
 
-  const handleSearchResultClick = (coords: [number, number], id: string) => {
-    map.current?.flyTo({ center: coords, zoom: 15, duration: 1000 });
+  const handleSearchResultClick = (coords: [number, number], businessId: string) => {
+    if (!map.current) return;
+    
+    // Find the business
+    const business = businesses.find(b => b.id === businessId);
+    
+    map.current.flyTo({ center: coords, zoom: 15, duration: 1000 });
+    
+    // Show popup after zoom
+    if (business) {
+      setTimeout(() => openBusinessPopup(business), 800);
+    }
   };
 
   const handleBusinessListClick = (business: any) => {
@@ -356,6 +390,14 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map_list' });
     map.current.flyTo({ center: [lng, lat], zoom: 15, duration: 800, essential: true });
     setTimeout(() => openBusinessPopup(business), 500);
+  };
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+    // Trigger map resize after state change
+    setTimeout(() => {
+      map.current?.resize();
+    }, 100);
   };
 
   if (isTokenMissing) {
@@ -369,11 +411,27 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   }
 
   return (
-    <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20">
+    <div className={`relative w-full rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20 transition-all duration-300 ${
+      isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-[50vh] md:h-[60vh] lg:h-[70vh]'
+    }`}>
       {/* Search bar - top left corner, compact */}
       <div className="absolute top-2 left-2 z-10">
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
       </div>
+
+      {/* Expand/Collapse button - top right corner */}
+      <Button
+        size="icon"
+        variant="outline"
+        className="absolute top-2 right-2 z-10 h-8 w-8 md:h-9 md:w-9 bg-background/95 backdrop-blur-sm shadow-lg"
+        onClick={toggleExpand}
+      >
+        {isExpanded ? (
+          <Minimize2 className="h-4 w-4" />
+        ) : (
+          <Maximize2 className="h-4 w-4" />
+        )}
+      </Button>
       
       {loading && (
         <div className="absolute inset-0 z-20 bg-background/50 backdrop-blur-sm flex items-center justify-center">

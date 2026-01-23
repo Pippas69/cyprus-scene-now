@@ -50,17 +50,19 @@ const BottomNav = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Compute profile path as a separate variable to fix reactivity issues
+  const profilePath = useMemo(() => {
+    if (!user) return "/login";
+    return userRole === "business" ? "/dashboard-business" : "/dashboard-user";
+  }, [user, userRole]);
+
   const navItems = useMemo(() => [
     { icon: Home, label: "Home", path: "/feed" },
     { icon: MapPin, label: "Map", path: "/xartis" },
     { icon: Calendar, label: "Events", path: "/ekdiloseis" },
     { icon: Tag, label: "Offers", path: "/offers" },
-    { 
-      icon: User, 
-      label: "Profile", 
-      path: user ? (userRole === "business" ? "/dashboard-business" : "/dashboard-user") : "/login" 
-    },
-  ], [user, userRole]);
+    { icon: User, label: "Profile", path: profilePath },
+  ], [profilePath]);
 
   const activeIndex = navItems.findIndex(item => location.pathname === item.path);
 

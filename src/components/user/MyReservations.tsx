@@ -5,8 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Users, Phone, X, QrCode, Clock, ChevronDown, Building2, CreditCard, Wallet, Tag, Ticket } from 'lucide-react';
 import { format } from 'date-fns';
+import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
+import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { Link } from 'react-router-dom';
 import {
@@ -75,6 +77,8 @@ interface ReservationData {
 type ReservationType = 'direct' | 'offer' | 'event';
 
 export const MyReservations = ({ userId, language }: MyReservationsProps) => {
+  const navigate = useNavigate();
+  const dateLocale = language === 'el' ? el : enUS;
   const [upcomingReservations, setUpcomingReservations] = useState<ReservationData[]>([]);
   const [pastReservations, setPastReservations] = useState<ReservationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -479,7 +483,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               <div className="flex items-center gap-2">
                 <Calendar className="h-3.5 w-3.5 shrink-0" />
                 <span>
-                  {format(new Date(dateTime), 'PPP')}
+                  {format(new Date(dateTime), 'd MMMM yyyy', { locale: dateLocale })}
                   {isDirectReservation && `, ${format(new Date(dateTime), 'HH:mm')}`}
                 </span>
               </div>
@@ -489,10 +493,18 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               <span>{reservation.party_size} {t.people}</span>
             </div>
             {location && (
-              <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const businessId = isDirectReservation ? reservation.business_id : reservation.events?.id ? reservation.events?.businesses?.name : null;
+                  if (reservation.business_id) {
+                    navigate(`/xartis?business=${reservation.business_id}`);
+                  }
+                }}
+                className="flex items-center gap-2 hover:text-primary transition-colors text-left"
+              >
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{location}</span>
-              </div>
+              </button>
             )}
           </div>
 

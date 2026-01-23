@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUserRSVPs } from '@/hooks/useUserRSVPs';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +21,7 @@ interface MyEventsProps {
 }
 
 export const MyEvents = ({ userId, language }: MyEventsProps) => {
+  const navigate = useNavigate();
   const { interested, going, pastInterested, pastGoing, loading: rsvpLoading } = useUserRSVPs(userId);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -38,7 +40,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           checked_in_at,
           created_at,
           ticket_tiers(name, price_cents, currency),
-          events(id, title, start_at, end_at, location, cover_image_url, businesses(name)),
+          events(id, title, start_at, end_at, location, cover_image_url, business_id, businesses(name)),
           ticket_orders(customer_name, total_cents)
         `)
         .eq("user_id", userId)
@@ -222,10 +224,17 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                     </span>
                   )}
                   {ticket.events?.location && (
-                    <span className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        if (ticket.events?.business_id) {
+                          navigate(`/xartis?business=${ticket.events.business_id}`);
+                        }
+                      }}
+                      className="flex items-center gap-1 hover:text-primary transition-colors"
+                    >
                       <MapPin className="h-3 w-3 text-primary" />
                       <span className="truncate max-w-[80px]">{ticket.events.location}</span>
-                    </span>
+                    </button>
                   )}
                 </div>
                 
