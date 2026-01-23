@@ -8,10 +8,11 @@ import { BusinessMarker } from './BusinessMarker';
 import { BusinessPopup } from './BusinessPopup';
 import { MapSearch } from './MapSearch';
 import { BusinessListSheet } from './BusinessListSheet';
-import { Loader2, Maximize2, Minimize2 } from 'lucide-react';
+import { Loader2, Maximize2, Minimize2, Navigation } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { trackEngagement } from '@/lib/analyticsTracking';
 import { Button } from '@/components/ui/button';
+import { getDirectionsUrl } from '@/lib/mapUtils';
 
 interface RealMapProps {
   city: string;
@@ -217,45 +218,43 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     };
   }, [MAPBOX_TOKEN]);
 
-  // Show business name label above the pin - premium styling
-  const showBusinessLabel = (business: any) => {
+  // Show directions icon below the business pin - icon only, responsive size
+  const showDirectionsIcon = (business: any) => {
     if (!map.current) return;
     
-    // Remove existing directions marker (now label marker)
+    // Remove existing directions marker
     if (directionsMarkerRef.current) {
       directionsMarkerRef.current.remove();
       directionsMarkerRef.current = null;
     }
 
     const [lng, lat] = business.coordinates;
-    const cityText = business.city || '';
     
-    // Create business name label element
+    // Create directions icon-only button element
     const div = document.createElement('div');
-    div.className = 'business-label-marker';
+    div.className = 'directions-marker';
     const root = ReactDOM.createRoot(div);
-    root.render(
-      <div className="flex flex-col items-center text-center pointer-events-none">
-        <div className="bg-background/95 backdrop-blur-sm shadow-lg rounded-lg px-2.5 py-1.5 border border-border/50 max-w-[160px]">
-          <p className="text-xs md:text-sm font-semibold text-foreground truncate leading-tight">
-            {business.name}
-          </p>
-          {cityText && (
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate leading-tight">
-              {cityText}
-            </p>
-          )}
-        </div>
-        {/* Small arrow pointing down to pin */}
-        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-background/95 -mt-px" />
-      </div>
-    );
+     root.render(
+       <button
+         className={
+           "flex items-center justify-center bg-background/95 backdrop-blur-sm shadow-lg rounded-full border border-border hover:bg-accent transition-colors " +
+           // Smaller than pins; slightly smaller on mobile.
+           "h-4 w-4 md:h-5 md:w-5"
+         }
+         onClick={() => {
+           window.open(getDirectionsUrl(lat, lng), "_blank");
+         }}
+         aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
+       >
+         <Navigation className="h-2.5 w-2.5 md:h-3 md:w-3 text-foreground" />
+       </button>
+     );
 
-    // Position the label above the pin
+    // Position the marker slightly down-left from the pin
     directionsMarkerRef.current = new mapboxgl.Marker({ 
       element: div,
-      anchor: 'bottom',
-      offset: [0, -35] // Position above the pin
+      anchor: 'top',
+      offset: [-14, 22]
     })
       .setLngLat([lng, lat])
       .addTo(map.current);
@@ -291,8 +290,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       .setDOMContent(popupDiv)
       .addTo(map.current);
     
-    // Show business name label above the pin
-    showBusinessLabel(business);
+    // Show directions icon below the pin
+    showDirectionsIcon(business);
   };
 
   // Update markers when businesses change or map moves

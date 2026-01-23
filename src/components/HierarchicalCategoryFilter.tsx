@@ -230,64 +230,12 @@ const HierarchicalCategoryFilter = ({
     </div>
   );
 
-  // Map mode: all 4 categories inline, no student discount, but WITH dropdown support
+  // Map mode: all 4 categories inline, no student discount
   if (mapMode || mapCompact) {
     return (
-      <>
-        <div className="flex gap-1.5 md:gap-2 lg:gap-2.5 items-center">
-          {categories.map(cat => renderBadge(cat, true))}
-        </div>
-        
-        {/* Portal Dropdown Menu for Map Mode */}
-        {openDropdown && dropdownPosition && createPortal(
-          <AnimatePresence>
-            {categories.map((category) => (
-              category.hasDropdown && openDropdown === category.id && (
-                <motion.div
-                  key={category.id}
-                  ref={dropdownRef}
-                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                  style={{
-                    position: 'fixed',
-                    top: dropdownPosition.top,
-                    left: Math.min(dropdownPosition.left, window.innerWidth - 220),
-                    zIndex: 9999,
-                  }}
-                  className="min-w-[180px] max-w-[calc(100vw-32px)] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
-                >
-                  <div className="p-2 space-y-1">
-                    {category.subOptions?.map((subOption) => (
-                      <label
-                        key={subOption.id}
-                        htmlFor={`map-${subOption.id}`}
-                        className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg cursor-pointer transition-colors ${
-                          selectedCategories.includes(subOption.id)
-                            ? "bg-ocean/10 text-ocean"
-                            : "hover:bg-muted"
-                        }`}
-                      >
-                        <Checkbox
-                          id={`map-${subOption.id}`}
-                          checked={selectedCategories.includes(subOption.id)}
-                          onCheckedChange={() => toggleSubOption(subOption.id)}
-                          className="data-[state=checked]:bg-ocean data-[state=checked]:border-ocean flex-shrink-0"
-                        />
-                        <span className="text-xs md:text-sm font-medium">
-                          {subOption.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </motion.div>
-              )
-            ))}
-          </AnimatePresence>,
-          document.body
-        )}
-      </>
+      <div className="flex gap-1.5 md:gap-2 lg:gap-2.5 items-center">
+        {categories.map(cat => renderBadge(cat, true))}
+      </div>
     );
   }
 
