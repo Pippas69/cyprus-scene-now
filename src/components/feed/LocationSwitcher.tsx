@@ -9,9 +9,10 @@ interface LocationSwitcherProps {
   selectedCity: string | null;
   onCityChange: (city: string | null) => void;
   compact?: boolean;
+  mapMode?: boolean;
 }
 
-const LocationSwitcher = ({ language, selectedCity, onCityChange, compact = false }: LocationSwitcherProps) => {
+const LocationSwitcher = ({ language, selectedCity, onCityChange, compact = false, mapMode = false }: LocationSwitcherProps) => {
   const [availableCities, setAvailableCities] = useState<string[]>([]);
 
   useEffect(() => {
@@ -44,13 +45,34 @@ const LocationSwitcher = ({ language, selectedCity, onCityChange, compact = fals
     })),
   ];
 
+  // Map mode: smaller styling for the map page (inline with categories)
+  const getSelectClassName = () => {
+    if (mapMode) {
+      return "w-auto min-w-[90px] md:min-w-[100px] lg:min-w-[120px] h-7 md:h-8 lg:h-9 text-[10px] md:text-xs lg:text-sm px-2 md:px-2.5 lg:px-3 shrink-0";
+    }
+    if (compact) {
+      return "w-auto min-w-[120px] h-8 text-xs px-2.5";
+    }
+    return "w-[180px]";
+  };
+
+  const getIconClassName = () => {
+    if (mapMode) {
+      return "mr-1 md:mr-1.5 lg:mr-2 h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4";
+    }
+    if (compact) {
+      return "mr-1.5 h-3.5 w-3.5";
+    }
+    return "mr-2 h-4 w-4";
+  };
+
   return (
     <Select 
       value={selectedCity || "all"} 
       onValueChange={(val) => onCityChange(val === "all" ? null : val)}
     >
-      <SelectTrigger className={compact ? "w-auto min-w-[120px] h-8 text-xs px-2.5" : "w-[180px]"}>
-        <MapPin className={compact ? "mr-1.5 h-3.5 w-3.5" : "mr-2 h-4 w-4"} />
+      <SelectTrigger className={getSelectClassName()}>
+        <MapPin className={getIconClassName()} />
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

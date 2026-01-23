@@ -110,24 +110,24 @@ const Xartis = () => {
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* Filters Section */}
-      <div className="bg-background border-b border-border p-3 lg:p-4">
-        <div className="space-y-2 lg:space-y-4">
-          {/* Desktop: All in one row */}
-          <div className="hidden lg:flex items-center gap-3">
+      {/* Filters Section - Single row on all devices */}
+      <div className="bg-background border-b border-border px-3 py-2 lg:px-4 lg:py-3">
+        <div className="space-y-2">
+          {/* All in one row with horizontal scroll if needed */}
+          <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3 overflow-x-auto scrollbar-hide">
             <LocationSwitcher 
               language={language} 
               selectedCity={selectedCity} 
-              onCityChange={setSelectedCity} 
+              onCityChange={setSelectedCity}
+              mapMode={true}
             />
             
-            <div className="flex-1">
-              <HierarchicalCategoryFilter
-                selectedCategories={selectedCategories}
-                onCategoryChange={setSelectedCategories}
-                language={language}
-              />
-            </div>
+            <HierarchicalCategoryFilter
+              selectedCategories={selectedCategories}
+              onCategoryChange={setSelectedCategories}
+              language={language}
+              mapMode={true}
+            />
 
             {/* Clear Filters */}
             {hasActiveFilters && (
@@ -135,48 +135,12 @@ const Xartis = () => {
                 variant="ghost"
                 size="sm"
                 onClick={clearAllFilters}
-                className="gap-2 whitespace-nowrap shrink-0"
+                className="gap-1 md:gap-1.5 lg:gap-2 whitespace-nowrap shrink-0 h-7 md:h-8 lg:h-9 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
               >
-                <X size={16} />
+                <X className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
                 {t.clearFilters}
               </Button>
             )}
-          </div>
-
-          {/* Mobile/Tablet: Location on top, categories below */}
-          <div className="flex flex-col gap-2 lg:hidden">
-            {/* Row 1: Location selector */}
-            <div className="flex items-center gap-2">
-              <LocationSwitcher 
-                language={language} 
-                selectedCity={selectedCity} 
-                onCityChange={setSelectedCity}
-                compact={true}
-              />
-              
-              {/* Clear Filters - mobile */}
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearAllFilters}
-                  className="gap-1.5 whitespace-nowrap shrink-0 h-8 px-2 text-xs"
-                >
-                  <X size={14} />
-                  {t.clearFilters}
-                </Button>
-              )}
-            </div>
-            
-            {/* Row 2: All 4 categories in one line */}
-            <div className="flex items-center">
-              <HierarchicalCategoryFilter
-                selectedCategories={selectedCategories}
-                onCategoryChange={setSelectedCategories}
-                language={language}
-                mapCompact={true}
-              />
-            </div>
           </div>
 
           {/* Filter Chips */}
