@@ -1,4 +1,4 @@
-import { Home, Calendar, MapPin, Tag, User } from "lucide-react";
+import { Home, Calendar, MapPin, Tag, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,10 +50,10 @@ const BottomNav = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Compute profile path as a separate variable to fix reactivity issues
-  const profilePath = useMemo(() => {
+  // Compute settings path based on user role
+  const settingsPath = useMemo(() => {
     if (!user) return "/login";
-    return userRole === "business" ? "/dashboard-business" : "/dashboard-user";
+    return userRole === "business" ? "/dashboard-business/settings" : "/dashboard-user?tab=settings";
   }, [user, userRole]);
 
   const navItems = useMemo(() => [
@@ -61,8 +61,8 @@ const BottomNav = () => {
     { icon: MapPin, label: "Map", path: "/xartis" },
     { icon: Calendar, label: "Events", path: "/ekdiloseis" },
     { icon: Tag, label: "Offers", path: "/offers" },
-    { icon: User, label: "Profile", path: profilePath },
-  ], [profilePath]);
+    { icon: Settings, label: "Settings", path: settingsPath },
+  ], [settingsPath]);
 
   const activeIndex = navItems.findIndex(item => location.pathname === item.path);
 

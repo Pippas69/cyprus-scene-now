@@ -72,6 +72,26 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'clubs & νυχτερινή διασκέδαση': { el: 'Clubs & Νυχτερινή Διασκέδαση', en: 'Clubs & Nightlife' },
   'εστίαση & καφέ': { el: 'Εστίαση & Καφέ', en: 'Dining & Cafe' },
   'nightlife & bars': { el: 'Νυχτερινή Διασκέδαση & Bars', en: 'Nightlife & Bars' },
+  // Additional mixed formats from database
+  'εστίαση & casual dining': { el: 'Εστίαση & Χαλαρή Εστίαση', en: 'Dining & Casual Dining' },
+  'εστίαση & casual-dining': { el: 'Εστίαση & Χαλαρή Εστίαση', en: 'Dining & Casual Dining' },
+  'dining & casual dining': { el: 'Εστίαση & Χαλαρή Εστίαση', en: 'Dining & Casual Dining' },
+  'dining & casual-dining': { el: 'Εστίαση & Χαλαρή Εστίαση', en: 'Dining & Casual Dining' },
+  // Categories stored with spaces instead of hyphens
+  'casual dining': { el: 'Χαλαρή Εστίαση', en: 'Casual Dining' },
+  'fine dining': { el: 'Επίσημη Εστίαση', en: 'Fine Dining' },
+  'live music': { el: 'Ζωντανή Μουσική', en: 'Live Music' },
+  'beach bars': { el: 'Beach Bars', en: 'Beach Bars' },
+  'wine cocktail bars': { el: 'Κρασί & Cocktail Bars', en: 'Wine & Cocktail Bars' },
+  'wine & cocktail bars': { el: 'Κρασί & Cocktail Bars', en: 'Wine & Cocktail Bars' },
+  'summer events': { el: 'Καλοκαιρινές Εκδηλώσεις', en: 'Summer Events' },
+  'seaside restaurants': { el: 'Παραθαλάσσια Εστιατόρια', en: 'Seaside Restaurants' },
+  'beach summer': { el: 'Παραλία/Καλοκαίρι', en: 'Beach/Summer' },
+  'beach / summer': { el: 'Παραλία / Καλοκαίρι', en: 'Beach / Summer' },
+  'shisha lounges': { el: 'Shisha Lounges', en: 'Shisha Lounges' },
+  'rooftop bars': { el: 'Rooftop Bars', en: 'Rooftop Bars' },
+  'fitness wellness': { el: 'Γυμναστική/Ευεξία', en: 'Fitness/Wellness' },
+  'art culture': { el: 'Τέχνη & Πολιτισμός', en: 'Art & Culture' },
 };
 
 export function getCategoryLabel(category: string | null | undefined, language: Language): string {
@@ -80,8 +100,20 @@ export function getCategoryLabel(category: string | null | undefined, language: 
   // Normalize the category key (lowercase, trim)
   const normalizedKey = category.toLowerCase().trim();
   
-  // Look up in the map
-  const mapping = categoryMap[normalizedKey];
+  // Look up in the map - try exact match first
+  let mapping = categoryMap[normalizedKey];
+  
+  // If not found, try replacing spaces with hyphens
+  if (!mapping) {
+    const hyphenatedKey = normalizedKey.replace(/\s+/g, '-');
+    mapping = categoryMap[hyphenatedKey];
+  }
+  
+  // If still not found, try replacing hyphens with spaces
+  if (!mapping) {
+    const spacedKey = normalizedKey.replace(/-/g, ' ');
+    mapping = categoryMap[spacedKey];
+  }
   
   if (mapping) {
     return mapping[language];
