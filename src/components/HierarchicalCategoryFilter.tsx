@@ -39,11 +39,24 @@ const HierarchicalCategoryFilter = ({
   mapMode = false,
 }: HierarchicalCategoryFilterProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [isDesktopLg, setIsDesktopLg] = useState(false);
   // NOTE: We store document coordinates (page), not viewport coordinates.
   // This avoids edge-cases where `position: fixed` inside portals can appear misaligned.
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const badgeRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // IMPORTANT: This component renders different layouts on desktop vs mobile.
+  // We must NOT render both layouts at once, because duplicated refs (same category ids)
+  // can point to hidden elements and cause the dropdown to open at (0,0) on desktop.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => setIsDesktopLg(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
 
   // Build categories from unified source (plural forms for users/feed)
   const categories: Category[] = unifiedCategories.map(cat => ({
@@ -298,26 +311,22 @@ const HierarchicalCategoryFilter = ({
           {categories.map((cat) => renderBadge(cat, true))}
         </div>
       ) : (
-        <>
-          {/* Desktop: 4 categories in one row, Student Discount on the next row centered */}
-          <div className="hidden lg:flex flex-col gap-2 pb-2">
-            <div className="flex gap-2">
-              {categories.map((cat) => renderBadge(cat))}
-            </div>
+        isDesktopLg ? (
+          // Desktop: 4 categories in one row, Student Discount on the next row centered
+          <div className="flex flex-col gap-2 pb-2">
+            <div className="flex gap-2">{categories.map((cat) => renderBadge(cat))}</div>
             <div className="flex justify-center">{renderStudentDiscountBadge()}</div>
           </div>
-
-          {/* Mobile/Tablet: Summer + Student Discount on the same row (as per mock) */}
-          <div className="lg:hidden space-y-1.5 pb-1.5">
-            <div className="flex gap-1.5 justify-start">
-              {firstRow.map((cat) => renderBadge(cat))}
-            </div>
+        ) : (
+          // Mobile/Tablet: Summer + Student Discount on the same row (as per mock)
+          <div className="space-y-1.5 pb-1.5">
+            <div className="flex gap-1.5 justify-start">{firstRow.map((cat) => renderBadge(cat))}</div>
             <div className="flex gap-1.5 justify-start items-center">
               {secondRow.map((cat) => renderBadge(cat))}
               {renderStudentDiscountBadge()}
             </div>
           </div>
-        </>
+        )
       )}
 
       {/* Portal Dropdown Menu (must render for BOTH feed & map) */}

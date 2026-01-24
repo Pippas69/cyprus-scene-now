@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, ChevronRight, Crown, Star, Zap, Navigation } from "lucide-react";
+import { Building2, MapPin, ChevronRight, Navigation } from "lucide-react";
 import { translateCity } from "@/lib/cityTranslations";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { getDirectionsUrl } from "@/lib/mapUtils";
@@ -117,46 +117,50 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-sm line-clamp-1">{business.name}</h4>
-                      </div>
-                      
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-                        <MapPin className="h-3 w-3" />
-                        <span className="line-clamp-1">{translateCity(business.city, language)}</span>
-                      </div>
-
-                      {/* Categories */}
-                      {business.category.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {business.category.slice(0, 2).map((cat) => (
-                            <Badge key={cat} variant="secondary" className="text-[10px] px-1.5 py-0">
-                              {getCategoryLabel(cat, language)}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex gap-2">
+                      {/* Name row + small Profile badge (right of name) */}
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <h4 className="font-semibold text-sm line-clamp-1 min-w-0 flex-1">{business.name}</h4>
                         <Button
                           size="sm"
-                          variant="outline"
-                          className="h-7 text-xs px-2"
-                          onClick={(e) => handleDirections(e, business)}
-                        >
-                          <Navigation className="h-3 w-3 mr-1" />
-                          {t.directions}
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="h-7 text-xs px-2"
+                          className="h-6 px-2 text-[10px] leading-none shrink-0"
                           onClick={(e) => handleProfile(e, business)}
                         >
                           {t.profile}
                           <ChevronRight className="h-3 w-3 ml-1" />
                         </Button>
                       </div>
+
+                      {/* Location row + small Directions badge (right of location) */}
+                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground mb-2">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span className="line-clamp-1">{translateCity(business.city, language)}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-[10px] leading-none shrink-0"
+                          onClick={(e) => handleDirections(e, business)}
+                        >
+                          <Navigation className="h-3 w-3 mr-1" />
+                          {t.directions}
+                        </Button>
+                      </div>
+
+                      {/* Categories */}
+                      {business.category.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {business.category.slice(0, 2).map((cat) => (
+                            <Badge
+                              key={cat}
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20"
+                            >
+                              {getCategoryLabel(cat, language)}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
