@@ -115,13 +115,33 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
 
                     {/* Info - tighter spacing */}
                     <div className="flex-1 min-w-0 space-y-0.5">
-                      {/* Name row */}
-                      <h4 className="font-semibold text-sm line-clamp-1">{business.name}</h4>
+                      {/* Name row with Profile badge */}
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-sm line-clamp-1">{business.name}</h4>
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0.5 h-auto cursor-pointer hover:bg-secondary/80 shrink-0"
+                          onClick={(e) => handleProfile(e, business)}
+                        >
+                          {t.profile}
+                          <ChevronRight className="h-3 w-3 ml-0.5" />
+                        </Badge>
+                      </div>
 
-                      {/* Location row */}
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        <span className="line-clamp-1">{translateCity(business.city, language)}</span>
+                      {/* Location row with Directions badge */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span className="line-clamp-1">{translateCity(business.city, language)}</span>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0.5 h-auto cursor-pointer hover:bg-muted shrink-0"
+                          onClick={(e) => handleDirections(e, business)}
+                        >
+                          {t.directions}
+                          <Navigation className="h-2.5 w-2.5 ml-0.5" />
+                        </Badge>
                       </div>
 
                       {/* Categories */}

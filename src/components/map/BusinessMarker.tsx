@@ -39,7 +39,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   // Free stays EXACTLY as-is per request
   free: {
     desktopSize: 14,
-    tabletSize: 13,
+    tabletSize: 14,    // Slightly larger on tablet (+1)
     mobileSize: 12,
     opacity: 0.7,
     shadowBlur: 2,
@@ -50,7 +50,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   basic: {
     desktopSize: 17,
-    tabletSize: 15,
+    tabletSize: 16,    // Slightly larger on tablet (+1)
     mobileSize: 13,
     opacity: 1,
     shadowBlur: 3,
@@ -61,7 +61,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   pro: {
     desktopSize: 20,
-    tabletSize: 17,
+    tabletSize: 18,    // Slightly larger on tablet (+1)
     mobileSize: 15,
     opacity: 1,
     shadowBlur: 4,
@@ -72,7 +72,7 @@ const PIN_CONFIG: Record<PlanSlug, {
   },
   elite: {
     desktopSize: 22,
-    tabletSize: 18,
+    tabletSize: 19,    // Slightly larger on tablet (+1)
     mobileSize: 17,
     opacity: 1,
     shadowBlur: 4,
