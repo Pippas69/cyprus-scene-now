@@ -1,0 +1,390 @@
+import { useState, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
+import { trackEngagement } from '@/lib/analyticsTracking';
+
+// Types
+export type ShareChannel = 
+  | 'instagram'
+  | 'messenger'
+  | 'sms'
+  | 'whatsapp'
+  | 'snapchat'
+  | 'instagram-story'
+  | 'facebook-story'
+  | 'copy'
+  | 'download-story'
+  | 'native'
+  | 'whatsapp-web'
+  | 'telegram-web';
+
+export type ShareObjectType = 'event' | 'discount' | 'business';
+
+export interface ShareEventData {
+  id: string;
+  title: string;
+  description?: string;
+  location: string;
+  startAt: string;
+  endAt?: string;
+  coverImageUrl?: string;
+  businessName?: string;
+  businessId?: string;
+}
+
+export interface ShareBusinessData {
+  id: string;
+  name: string;
+  city?: string;
+  address?: string;
+  logoUrl?: string;
+  coverUrl?: string;
+}
+
+export interface ShareOfferData {
+  id: string;
+  title: string;
+  validUntil?: string;
+  businessId: string;
+  businessName?: string;
+}
+
+// Device detection utilities
+export const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+export const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
+export const isAndroid = () => /Android/i.test(navigator.userAgent);
+export const hasNativeShare = () => typeof navigator !== 'undefined' && 'share' in navigator;
+
+// Canonical URL generators (using fomo.cy domain for future-proofing)
+const CANONICAL_DOMAIN = 'https://fomo.cy';
+
+export const getEventUrl = (eventId: string) => `${CANONICAL_DOMAIN}/e/${eventId}`;
+export const getOfferUrl = (offerId: string) => `${CANONICAL_DOMAIN}/o/${offerId}`;
+export const getVenueUrl = (venueId: string) => `${CANONICAL_DOMAIN}/v/${venueId}`;
+export const getBusinessUrl = (businessId: string) => `${CANONICAL_DOMAIN}/v/${businessId}`;
+
+// Fallback URLs using current origin (for now, until canonical domain is set up)
+export const getEventUrlFallback = (eventId: string) => `${window.location.origin}/event/${eventId}`;
+export const getBusinessUrlFallback = (businessId: string) => `${window.location.origin}/business/${businessId}`;
+
+// Share text formatters
+export const formatEventShareText = (event: ShareEventData, language: 'el' | 'en' = 'el'): string => {
+  const date = new Date(event.startAt);
+  const dateStr = date.toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+  const timeStr = date.toLocaleTimeString(language === 'el' ? 'el-GR' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  
+  const venueInfo = event.businessName ? `@ ${event.businessName}` : `@ ${event.location}`;
+  const url = getEventUrlFallback(event.id);
+  
+  if (language === 'el') {
+    return `${event.title} — ${dateStr}, ${timeStr} ${venueInfo}\nΔες λεπτομέρειες/εισιτήρια στο ΦΟΜΟ: ${url}`;
+  }
+  return `${event.title} — ${dateStr}, ${timeStr} ${venueInfo}\nSee details/tickets on ΦΟΜΟ: ${url}`;
+};
+
+export const formatBusinessShareText = (business: ShareBusinessData, language: 'el' | 'en' = 'el'): string => {
+  const url = getBusinessUrlFallback(business.id);
+  
+  if (language === 'el') {
+    return `Αυτό παίζει τώρα στο ΦΟΜΟ 👀\n${business.name}\n${url}`;
+  }
+  return `Check this out on ΦΟΜΟ 👀\n${business.name}\n${url}`;
+};
+
+export const formatOfferShareText = (offer: ShareOfferData, language: 'el' | 'en' = 'el'): string => {
+  const url = getEventUrlFallback(offer.id); // Using event URL pattern for now
+  const validUntil = offer.validUntil 
+    ? new Date(offer.validUntil).toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US')
+    : null;
+  
+  if (language === 'el') {
+    return `Προσφορά στο ${offer.businessName || 'ΦΟΜΟ'} 🔥${validUntil ? `\nΙσχύει μέχρι ${validUntil}` : ''}\n${url}`;
+  }
+  return `Deal at ${offer.businessName || 'ΦΟΜΟ'} 🔥${validUntil ? `\nValid until ${validUntil}` : ''}\n${url}`;
+};
+
+interface UseShareReturn {
+  isSharing: boolean;
+  shareToChannel: (
+    channel: ShareChannel,
+    url: string,
+    text: string,
+    options?: {
+      title?: string;
+      objectType?: ShareObjectType;
+      objectId?: string;
+      businessId?: string;
+      onImageDownload?: () => Promise<void>;
+    }
+  ) => Promise<void>;
+  generateStoryImage: (elementRef: React.RefObject<HTMLElement>) => Promise<string | null>;
+  downloadImage: (dataUrl: string, filename: string) => void;
+}
+
+// Toast messages (bilingual)
+const toasts = {
+  el: {
+    linkCopied: 'Το link αντιγράφηκε',
+    imageSaved: 'Η εικόνα αποθηκεύτηκε',
+    openingWhatsApp: 'Άνοιξε το WhatsApp…',
+    openingMessenger: 'Άνοιξε το Messenger…',
+    openingInstagram: 'Το link αντιγράφηκε — επικόλλησέ το στο Instagram DM',
+    openingSnapchat: 'Το link αντιγράφηκε — επικόλλησέ το στο Snapchat',
+    storyInstruction: 'Ανέβασε την εικόνα στο Story και πρόσθεσε το link',
+    shareFailed: 'Αποτυχία κοινοποίησης',
+    nativeShareSuccess: 'Στάλθηκε 👍',
+  },
+  en: {
+    linkCopied: 'Link copied',
+    imageSaved: 'Image saved',
+    openingWhatsApp: 'Opening WhatsApp…',
+    openingMessenger: 'Opening Messenger…',
+    openingInstagram: 'Link copied — paste it in Instagram DM',
+    openingSnapchat: 'Link copied — paste it in Snapchat',
+    storyInstruction: 'Upload the image to your Story and add the link',
+    shareFailed: 'Share failed',
+    nativeShareSuccess: 'Sent 👍',
+  },
+};
+
+export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
+  const [isSharing, setIsSharing] = useState(false);
+  const t = toasts[language];
+
+  // Generate story-ready image (1080x1920)
+  const generateStoryImage = useCallback(async (elementRef: React.RefObject<HTMLElement>): Promise<string | null> => {
+    if (!elementRef.current) return null;
+
+    try {
+      const canvas = await html2canvas(elementRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        scale: 3, // High quality for story
+        width: 360,
+        height: 640,
+      });
+      
+      // Resize to 1080x1920
+      const resizedCanvas = document.createElement('canvas');
+      resizedCanvas.width = 1080;
+      resizedCanvas.height = 1920;
+      const ctx = resizedCanvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(canvas, 0, 0, 1080, 1920);
+        return resizedCanvas.toDataURL('image/png');
+      }
+      return canvas.toDataURL('image/png');
+    } catch (error) {
+      console.error('Failed to generate story image:', error);
+      return null;
+    }
+  }, []);
+
+  // Download image utility
+  const downloadImage = useCallback((dataUrl: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(t.imageSaved);
+  }, [t]);
+
+  // Copy to clipboard utility
+  const copyToClipboard = useCallback(async (text: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      console.error('Clipboard write failed:', error);
+      return false;
+    }
+  }, []);
+
+  // Main share function
+  const shareToChannel = useCallback(async (
+    channel: ShareChannel,
+    url: string,
+    text: string,
+    options?: {
+      title?: string;
+      objectType?: ShareObjectType;
+      objectId?: string;
+      businessId?: string;
+      onImageDownload?: () => Promise<void>;
+    }
+  ) => {
+    setIsSharing(true);
+    const encodedText = encodeURIComponent(text);
+    const encodedUrl = encodeURIComponent(url);
+
+    // Track analytics
+    if (options?.businessId) {
+      trackEngagement(options.businessId, 'share', options.objectType || 'event', options.objectId || '', {
+        channel,
+        source: 'share_sheet',
+      });
+    }
+
+    try {
+      switch (channel) {
+        // === DM PLATFORMS ===
+        case 'instagram':
+          // Instagram DM from web cannot prefill - fallback to copy
+          await copyToClipboard(url);
+          toast.info(t.openingInstagram);
+          if (isMobile()) {
+            // Try to open Instagram app
+            window.open('instagram://direct-inbox', '_blank');
+          }
+          break;
+
+        case 'messenger':
+          if (isMobile()) {
+            // Mobile deep link
+            const opened = window.open(`fb-messenger://share/?link=${encodedUrl}`, '_blank');
+            if (!opened) {
+              // Fallback to copy
+              await copyToClipboard(url);
+              toast.info(t.openingMessenger);
+            } else {
+              toast.success(t.openingMessenger);
+            }
+          } else {
+            // Desktop - open Messenger web
+            window.open(
+              `https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=966242223397117&redirect_uri=${encodeURIComponent(window.location.origin)}`,
+              '_blank',
+              'width=600,height=500'
+            );
+          }
+          break;
+
+        case 'sms':
+          if (isMobile()) {
+            // SMS deep link
+            const smsBody = encodeURIComponent(`${text} ${url}`);
+            if (isIOS()) {
+              window.open(`sms:&body=${smsBody}`, '_self');
+            } else {
+              window.open(`sms:?body=${smsBody}`, '_self');
+            }
+          } else {
+            // Desktop fallback - copy link
+            await copyToClipboard(url);
+            toast.success(t.linkCopied);
+          }
+          break;
+
+        case 'whatsapp':
+          if (isMobile()) {
+            window.open(`whatsapp://send?text=${encodedText}%20${encodedUrl}`, '_blank');
+            toast.success(t.openingWhatsApp);
+          } else {
+            window.open(`https://web.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`, '_blank');
+          }
+          break;
+
+        case 'whatsapp-web':
+          window.open(`https://web.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`, '_blank');
+          break;
+
+        case 'telegram-web':
+          window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
+          break;
+
+        case 'snapchat':
+          if (isMobile()) {
+            // Try Snapchat deep link
+            const snapUrl = `https://www.snapchat.com/share?url=${encodedUrl}`;
+            window.open(snapUrl, '_blank');
+          } else {
+            // Desktop fallback
+            await copyToClipboard(url);
+            toast.info(t.openingSnapchat);
+          }
+          break;
+
+        // === STORY PLATFORMS ===
+        case 'instagram-story':
+          // Download image for story + copy link
+          if (options?.onImageDownload) {
+            await options.onImageDownload();
+          }
+          await copyToClipboard(url);
+          toast.info(t.storyInstruction, { duration: 5000 });
+          break;
+
+        case 'facebook-story':
+          // Download image for story + copy link
+          if (options?.onImageDownload) {
+            await options.onImageDownload();
+          }
+          await copyToClipboard(url);
+          toast.info(t.storyInstruction, { duration: 5000 });
+          break;
+
+        // === UTILITY ===
+        case 'copy':
+          await copyToClipboard(url);
+          toast.success(t.linkCopied);
+          break;
+
+        case 'download-story':
+          if (options?.onImageDownload) {
+            await options.onImageDownload();
+          }
+          break;
+
+        case 'native':
+          if (hasNativeShare()) {
+            try {
+              await navigator.share({
+                title: options?.title || '',
+                text: text,
+                url: url,
+              });
+              toast.success(t.nativeShareSuccess);
+            } catch (error) {
+              // User cancelled or failed - silent
+              if ((error as Error)?.name !== 'AbortError') {
+                await copyToClipboard(url);
+                toast.success(t.linkCopied);
+              }
+            }
+          } else {
+            await copyToClipboard(url);
+            toast.success(t.linkCopied);
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+      // Always fallback to copy
+      try {
+        await copyToClipboard(url);
+        toast.success(t.linkCopied);
+      } catch {
+        toast.error(t.shareFailed);
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  }, [t, copyToClipboard]);
+
+  return {
+    isSharing,
+    shareToChannel,
+    generateStoryImage,
+    downloadImage,
+  };
+};
