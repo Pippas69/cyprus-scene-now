@@ -16,14 +16,14 @@ export const PremiumBadge = ({ type, className = "" }: PremiumBadgeProps) => {
       <div 
         className={`
           inline-flex items-center justify-center 
-          w-7 h-7 rounded-full 
+          w-6 h-6 rounded-full 
           bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600
           shadow-[0_0_12px_rgba(251,191,36,0.6)]
           ring-2 ring-amber-300/50
           ${className}
         `}
       >
-        <Crown className="h-3.5 w-3.5 text-white drop-shadow-sm" />
+        <Crown className="h-3 w-3 text-white drop-shadow-sm" />
       </div>
     );
   }
@@ -33,14 +33,14 @@ export const PremiumBadge = ({ type, className = "" }: PremiumBadgeProps) => {
     <div 
       className={`
         inline-flex items-center justify-center 
-        w-7 h-7 rounded-full 
+        w-6 h-6 rounded-full 
         bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600
         shadow-[0_0_12px_rgba(52,211,153,0.6)]
         ring-2 ring-emerald-300/50
         ${className}
       `}
     >
-      <Sparkles className="h-3.5 w-3.5 text-white drop-shadow-sm" />
+      <Sparkles className="h-3 w-3 text-white drop-shadow-sm" />
     </div>
   );
 };

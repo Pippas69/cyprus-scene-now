@@ -15,7 +15,11 @@ import snapchatIcon from '@/assets/icons/snapchat.png';
 
 // Social Icons with brand colors - consistent sizing for all icons
 const ICON_SIZE = 40;
-const CONTAINER_SIZE = 'w-14 h-14';
+const IG_ICON_SIZE = 44;
+const TG_ICON_SIZE = 46;
+const SNAP_ICON_SIZE = 46;
+// Slightly smaller containers so the row fits better on mobile, while keeping icons large.
+const CONTAINER_SIZE = 'w-12 h-12';
 
 const WhatsAppIcon = () => (
   <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none">
@@ -32,7 +36,8 @@ const InstagramIcon = () => (
     src={instagramIcon}
     alt="Instagram"
     draggable={false}
-    className="select-none object-contain w-[40px] h-[40px]"
+    className="select-none object-contain"
+    style={{ width: IG_ICON_SIZE, height: IG_ICON_SIZE }}
   />
 );
 
@@ -57,7 +62,8 @@ const TelegramIcon = () => (
     src={telegramIcon}
     alt="Telegram"
     draggable={false}
-    className="select-none object-contain w-[40px] h-[40px]"
+    className="select-none object-contain"
+    style={{ width: TG_ICON_SIZE, height: TG_ICON_SIZE }}
   />
 );
 
@@ -66,12 +72,13 @@ const SnapchatIcon = () => (
     src={snapchatIcon}
     alt="Snapchat"
     draggable={false}
-    className="select-none object-contain w-[40px] h-[40px]"
+    className="select-none object-contain"
+    style={{ width: SNAP_ICON_SIZE, height: SNAP_ICON_SIZE }}
   />
 );
 
-const FacebookIcon = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+const FacebookIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="12" cy="12" r="12" fill="#1877F2" />
     <path
       d="M16.5 12.049l.41-2.67h-2.56v-1.73c0-.73.36-1.44 1.5-1.44h1.16v-2.27s-1.06-.18-2.07-.18c-2.11 0-3.49 1.28-3.49 3.6v2.03h-2.35v2.67h2.35v6.45a9.36 9.36 0 002.89 0v-6.45h2.15z"
@@ -157,7 +164,7 @@ const QuickActionButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'flex flex-col items-center gap-1.5 flex-shrink-0',
+      'flex flex-col items-center gap-1 flex-shrink-0',
       'disabled:opacity-50 disabled:cursor-not-allowed'
     )}
   >
@@ -167,7 +174,7 @@ const QuickActionButton = ({
     )}>
       <Icon />
     </div>
-    <span className="text-[10px] font-medium text-muted-foreground text-center leading-tight whitespace-nowrap">
+    <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight whitespace-nowrap">
       {label}
     </span>
   </motion.button>
@@ -355,7 +362,10 @@ export const PremiumShareSheet = ({
         <div 
           ref={quickRowRef}
           onWheel={handleQuickRowWheel}
-          className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 overscroll-x-contain"
+          className={cn(
+            'flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 pr-8 overscroll-x-contain',
+            'touch-pan-x'
+          )}
           style={{ 
             scrollbarWidth: 'thin',
             WebkitOverflowScrolling: 'touch',
@@ -409,20 +419,20 @@ export const PremiumShareSheet = ({
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="flex-1 h-11 gap-2 text-sm font-medium"
+            className="flex-1 h-10 px-3 gap-1.5 text-xs font-semibold whitespace-nowrap"
             onClick={() => handleShare('instagram-story')}
             disabled={isSharing}
           >
-            <img src={instagramIcon} alt="" className="w-5 h-5 object-contain" />
+            <img src={instagramIcon} alt="" className="w-4.5 h-4.5 object-contain" />
             {t.instagramStory}
           </Button>
           <Button
             variant="outline"
-            className="flex-1 h-11 gap-2 text-sm font-medium"
+            className="flex-1 h-10 px-3 gap-1.5 text-xs font-semibold whitespace-nowrap"
             onClick={() => handleShare('facebook-story')}
             disabled={isSharing}
           >
-            <FacebookIcon />
+            <FacebookIcon size={18} />
             {t.facebookStory}
           </Button>
         </div>
