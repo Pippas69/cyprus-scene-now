@@ -137,3 +137,30 @@ verify_jwt = false
 
 [functions.validate-offer]
 verify_jwt = true
+
+[functions.send-event-reminders]
+verify_jwt = false
+
+[functions.send-event-reminders.schedule]
+cron = "*/30 * * * *"
+
+[functions.send-reservation-reminders]
+verify_jwt = false
+
+[functions.send-reservation-reminders.schedule]
+cron = "*/30 * * * *"
+
+[functions.send-offer-expiry-reminders]
+verify_jwt = false
+
+[functions.send-offer-expiry-reminders.schedule]
+cron = "*/30 * * * *"
+
+[functions.send-personalized-notifications]
+verify_jwt = false
+
+[functions.send-personalized-notifications.schedule]
+cron = "0 */6 * * *"
+
+[functions.send-user-notification]
+verify_jwt = false
