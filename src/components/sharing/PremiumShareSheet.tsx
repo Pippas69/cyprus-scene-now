@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useShare, isMobile, hasNativeShare, formatEventShareText, formatBusinessShareText, getEventUrlFallback, getBusinessUrlFallback, ShareChannel } from '@/hooks/useShare';
 import { ShareableEventCard } from './ShareableEventCard';
 import { ShareableBusinessCard } from './ShareableBusinessCard';
+import snapchatIcon from '@/assets/icons/snapchat.png';
 
 // Exact brand icons as rounded rectangles matching the reference images
 const ICON_SIZE = 48;
@@ -61,17 +62,15 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
-// Snapchat - yellow rounded square with ghost outline
+// Snapchat - using the exact image provided
 const SnapchatIcon = () => (
-  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
-    <rect x="0" y="0" width="48" height="48" rx="12" fill="#FFFC00" />
-    <path
-      d="M24.03 10.5c2.55 0 4.65.87 6.24 2.58 1.26 1.35 1.95 3.15 2.1 5.37.03.45.03.9 0 1.35-.03.3-.06.6-.06.87.24.06.51.09.78.09.45 0 .78-.09 1.02-.18.15-.06.3-.12.48-.12.36 0 .72.27.72.69 0 .33-.18.57-.42.72-.6.39-1.38.63-2.22.81-.03.12-.06.27-.09.42-.06.33-.12.69-.12.96 0 .18.06.3.24.39.42.18.9.36 1.47.54.99.33 2.22.75 2.73 1.41.21.27.27.54.18.84-.27.63-1.26 1.05-2.94 1.26-.09.03-.15.06-.21.21-.09.27-.18.57-.3.87-.12.3-.33.45-.57.45-.06 0-.12 0-.18-.03-.36-.09-.75-.33-1.26-.54-.66-.27-1.47-.57-2.52-.57-.42 0-.84.06-1.26.18-.78.27-1.47.75-2.19 1.32-1.08.84-2.22 1.71-3.93 1.71s-2.85-.87-3.93-1.71c-.72-.57-1.41-1.05-2.19-1.32-.42-.12-.84-.18-1.26-.18-1.05 0-1.86.3-2.52.57-.51.21-.9.45-1.26.54-.06.03-.12.03-.18.03-.24 0-.45-.15-.57-.45-.12-.3-.21-.6-.3-.87-.06-.15-.12-.18-.21-.21-1.68-.21-2.67-.63-2.94-1.26-.09-.3-.03-.57.18-.84.51-.66 1.74-1.08 2.73-1.41.57-.18 1.05-.36 1.47-.54.18-.09.24-.21.24-.39 0-.27-.06-.63-.12-.96-.03-.15-.06-.3-.09-.42-.84-.18-1.62-.42-2.22-.81-.24-.15-.42-.39-.42-.72 0-.42.36-.69.72-.69.18 0 .33.06.48.12.24.09.57.18 1.02.18.27 0 .54-.03.78-.09 0-.27-.03-.57-.06-.87-.03-.45-.03-.9 0-1.35.15-2.22.84-4.02 2.1-5.37 1.59-1.71 3.69-2.58 6.24-2.58z"
-      fill="none"
-      stroke="white"
-      strokeWidth="1.8"
-    />
-  </svg>
+  <img
+    src={snapchatIcon}
+    alt="Snapchat"
+    draggable={false}
+    className="select-none"
+    style={{ width: ICON_SIZE, height: ICON_SIZE, borderRadius: 12 }}
+  />
 );
 
 // Telegram - light blue rounded square with paper plane
