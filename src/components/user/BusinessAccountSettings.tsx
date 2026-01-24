@@ -596,7 +596,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               <Input 
                 id="business-address" 
                 {...businessProfileForm.register("address")} 
-                placeholder={businessT.addressPlaceholder} 
+                placeholder={businessT.addressPlaceholder}
+                className="text-xs md:text-sm"
               />
               {geocoding && (
                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
