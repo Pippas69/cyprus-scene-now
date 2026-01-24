@@ -13,9 +13,12 @@ import instagramIcon from '@/assets/icons/instagram.png';
 import telegramIcon from '@/assets/icons/telegram.png';
 import snapchatIcon from '@/assets/icons/snapchat.png';
 
-// Social Icons with brand colors
-const WhatsAppIcon = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+// Social Icons with brand colors - consistent sizing for all icons
+const ICON_SIZE = 32;
+const CONTAINER_SIZE = 'w-14 h-14';
+
+const WhatsAppIcon = () => (
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="12" fill="#25D366" />
     <path
       d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"
@@ -24,23 +27,19 @@ const WhatsAppIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
-const PngIcon = ({ src, size = 24, alt }: { src: string; size?: number; alt: string }) => (
+const InstagramIcon = () => (
   <img
-    src={src}
-    alt={alt}
-    width={size}
-    height={size}
+    src={instagramIcon}
+    alt="Instagram"
+    width={ICON_SIZE}
+    height={ICON_SIZE}
     draggable={false}
-    className="select-none"
+    className="select-none object-contain"
   />
 );
 
-const InstagramIcon = ({ size = 24 }: { size?: number }) => (
-  <PngIcon src={instagramIcon} size={size} alt="Instagram" />
-);
-
-const MessengerIcon = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+const MessengerIcon = () => (
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none">
     <defs>
       <linearGradient id="messenger-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
         <stop offset="0%" stopColor="#0099FF" />
@@ -55,12 +54,40 @@ const MessengerIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
-const TelegramIcon = ({ size = 24 }: { size?: number }) => (
-  <PngIcon src={telegramIcon} size={size} alt="Telegram" />
+const TelegramIcon = () => (
+  <img
+    src={telegramIcon}
+    alt="Telegram"
+    width={ICON_SIZE}
+    height={ICON_SIZE}
+    draggable={false}
+    className="select-none object-contain"
+  />
 );
 
-const SnapchatIcon = ({ size = 24 }: { size?: number }) => (
-  <PngIcon src={snapchatIcon} size={size} alt="Snapchat" />
+const SnapchatIcon = () => (
+  <img
+    src={snapchatIcon}
+    alt="Snapchat"
+    width={ICON_SIZE}
+    height={ICON_SIZE}
+    draggable={false}
+    className="select-none object-contain"
+  />
+);
+
+const FacebookIcon = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="12" fill="#1877F2" />
+    <path
+      d="M16.5 12.049l.41-2.67h-2.56v-1.73c0-.73.36-1.44 1.5-1.44h1.16v-2.27s-1.06-.18-2.07-.18c-2.11 0-3.49 1.28-3.49 3.6v2.03h-2.35v2.67h2.35v6.45a9.36 9.36 0 002.89 0v-6.45h2.15z"
+      fill="white"
+    />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <Download className="text-primary" size={ICON_SIZE - 4} />
 );
 
 // Types
@@ -101,7 +128,7 @@ const translations = {
     share: 'Κοινοποίηση',
     sendToFriend: 'Στείλε σε φίλο',
     forStory: 'Για Story',
-    downloadImage: 'Λήψη εικόνας',
+    downloadImage: 'Λήψη',
     instagramStory: 'Instagram Story',
     facebookStory: 'Facebook Story',
     moreOptions: 'Περισσότερες επιλογές',
@@ -111,7 +138,7 @@ const translations = {
     share: 'Share',
     sendToFriend: 'Send to a friend',
     forStory: 'For Story',
-    downloadImage: 'Download image',
+    downloadImage: 'Download',
     instagramStory: 'Instagram Story',
     facebookStory: 'Facebook Story',
     moreOptions: 'More options',
@@ -119,14 +146,14 @@ const translations = {
   },
 };
 
-// Quick action button component (circular icons)
+// Quick action button component (circular icons with horizontal scroll support)
 const QuickActionButton = ({
   icon: Icon,
   label,
   onClick,
   disabled,
 }: {
-  icon: React.FC<{ size?: number }>;
+  icon: React.FC;
   label: string;
   onClick: () => void;
   disabled?: boolean;
@@ -136,21 +163,20 @@ const QuickActionButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'flex flex-col items-center gap-1.5 min-w-[60px]',
+      'flex flex-col items-center gap-1.5 flex-shrink-0',
       'disabled:opacity-50 disabled:cursor-not-allowed'
     )}
   >
-    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-background shadow-sm border border-border/50 hover:border-border transition-colors">
-      <Icon size={28} />
+    <div className={cn(
+      CONTAINER_SIZE,
+      'flex items-center justify-center rounded-full bg-background shadow-sm border border-border/50 hover:border-border transition-colors'
+    )}>
+      <Icon />
     </div>
     <span className="text-[10px] font-medium text-muted-foreground text-center leading-tight whitespace-nowrap">
       {label}
     </span>
   </motion.button>
-);
-
-const DownloadStoryIcon = ({ size = 24 }: { size?: number }) => (
-  <Download className="text-primary" size={size} />
 );
 
 export const PremiumShareSheet = ({
@@ -315,13 +341,19 @@ export const PremiumShareSheet = ({
       {/* Preview */}
       <PreviewCard />
 
-      {/* Send to friend section */}
+      {/* Send to friend section - with horizontal scroll */}
       <div>
         <div className="flex items-center gap-2 mb-3">
           <span className="text-muted-foreground">💬</span>
           <h4 className="text-sm font-medium text-foreground">{t.sendToFriend}</h4>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+        <div 
+          className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4"
+          style={{ 
+            scrollbarWidth: 'thin',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
           <QuickActionButton
             icon={InstagramIcon}
             label="Instagram"
@@ -349,11 +381,11 @@ export const PremiumShareSheet = ({
           <QuickActionButton
             icon={TelegramIcon}
             label="Telegram"
-            onClick={() => handleShare('telegram-web')}
+            onClick={() => handleShare('telegram')}
             disabled={isSharing}
           />
           <QuickActionButton
-            icon={DownloadStoryIcon}
+            icon={DownloadIcon}
             label={t.downloadImage}
             onClick={handleDownloadStoryImage}
             disabled={isSharing}
@@ -374,7 +406,7 @@ export const PremiumShareSheet = ({
             onClick={() => handleShare('instagram-story')}
             disabled={isSharing}
           >
-            <InstagramIcon size={18} />
+            <img src={instagramIcon} alt="" className="w-5 h-5 object-contain" />
             {t.instagramStory}
           </Button>
           <Button
@@ -383,16 +415,18 @@ export const PremiumShareSheet = ({
             onClick={() => handleShare('facebook-story')}
             disabled={isSharing}
           >
+            <FacebookIcon />
             {t.facebookStory}
           </Button>
         </div>
       </div>
 
-      {/* Primary CTA: System share sheet (or safe fallback) */}
+      {/* Primary CTA: System share sheet - smaller button */}
       {hasNativeShare() ? (
         <Button
-          variant="default"
-          className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90"
+          variant="secondary"
+          size="sm"
+          className="w-full h-10 text-sm font-medium"
           onClick={() => handleShare('native')}
           disabled={isSharing}
         >
@@ -400,8 +434,9 @@ export const PremiumShareSheet = ({
         </Button>
       ) : (
         <Button
-          variant="default"
-          className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90"
+          variant="secondary"
+          size="sm"
+          className="w-full h-10 text-sm font-medium"
           onClick={() => handleShare('copy')}
           disabled={isSharing}
         >

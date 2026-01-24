@@ -10,6 +10,7 @@ export type ShareChannel =
   | 'sms'
   | 'whatsapp'
   | 'snapchat'
+  | 'telegram'
   | 'instagram-story'
   | 'facebook-story'
   | 'copy'
@@ -135,8 +136,9 @@ const toasts = {
     imageSaved: 'Η εικόνα αποθηκεύτηκε',
     openingWhatsApp: 'Άνοιξε το WhatsApp…',
     openingMessenger: 'Άνοιξε το Messenger…',
+    openingTelegram: 'Άνοιξε το Telegram…',
     openingInstagram: 'Το link αντιγράφηκε — επικόλλησέ το στο Instagram DM',
-    openingSnapchat: 'Το link αντιγράφηκε — επικόλλησέ το στο Snapchat',
+    openingSnapchat: 'Το link αντιγράφηκε — άνοιξε το Snapchat',
     storyInstruction: 'Ανέβασε την εικόνα στο Story και πρόσθεσε το link',
     shareFailed: 'Αποτυχία κοινοποίησης',
     nativeShareSuccess: 'Στάλθηκε 👍',
@@ -146,8 +148,9 @@ const toasts = {
     imageSaved: 'Image saved',
     openingWhatsApp: 'Opening WhatsApp…',
     openingMessenger: 'Opening Messenger…',
+    openingTelegram: 'Opening Telegram…',
     openingInstagram: 'Link copied — paste it in Instagram DM',
-    openingSnapchat: 'Link copied — paste it in Snapchat',
+    openingSnapchat: 'Link copied — open Snapchat',
     storyInstruction: 'Upload the image to your Story and add the link',
     shareFailed: 'Share failed',
     nativeShareSuccess: 'Sent 👍',
@@ -239,28 +242,27 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
       switch (channel) {
         // === DM PLATFORMS ===
         case 'instagram':
-          // Instagram DM from web cannot prefill - fallback to copy
+          // Instagram DM from web: copy link and try to open the app
           await copyToClipboard(url);
           toast.info(t.openingInstagram);
           if (isMobile()) {
-            // Try to open Instagram app
-            window.open('instagram://direct-inbox', '_blank');
+            // Try to open Instagram app to DM
+            setTimeout(() => {
+              window.location.href = 'instagram://direct-inbox';
+            }, 100);
           }
           break;
 
         case 'messenger':
           if (isMobile()) {
-            // Mobile deep link
-            const opened = window.open(`fb-messenger://share/?link=${encodedUrl}`, '_blank');
-            if (!opened) {
-              // Fallback to copy
-              await copyToClipboard(url);
-              toast.info(t.openingMessenger);
-            } else {
-              toast.success(t.openingMessenger);
-            }
+            // Mobile: use fb-messenger:// deep link
+            await copyToClipboard(url);
+            toast.success(t.openingMessenger);
+            setTimeout(() => {
+              window.location.href = `fb-messenger://share/?link=${encodedUrl}`;
+            }, 100);
           } else {
-            // Desktop - open Messenger web
+            // Desktop: open Messenger web share dialog
             window.open(
               `https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=966242223397117&redirect_uri=${encodeURIComponent(window.location.origin)}`,
               '_blank',
@@ -272,11 +274,11 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
         case 'sms':
           if (isMobile()) {
             // SMS deep link
-            const smsBody = encodeURIComponent(`${text} ${url}`);
+            const smsBody = encodeURIComponent(`${text}`);
             if (isIOS()) {
-              window.open(`sms:&body=${smsBody}`, '_self');
+              window.location.href = `sms:&body=${smsBody}`;
             } else {
-              window.open(`sms:?body=${smsBody}`, '_self');
+              window.location.href = `sms:?body=${smsBody}`;
             }
           } else {
             // Desktop fallback - copy link
@@ -286,51 +288,75 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
           break;
 
         case 'whatsapp':
+          toast.success(t.openingWhatsApp);
           if (isMobile()) {
-            window.open(`whatsapp://send?text=${encodedText}%20${encodedUrl}`, '_blank');
-            toast.success(t.openingWhatsApp);
+            // Mobile: use whatsapp:// deep link
+            setTimeout(() => {
+              window.location.href = `whatsapp://send?text=${encodedText}`;
+            }, 100);
           } else {
-            window.open(`https://web.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`, '_blank');
+            // Desktop: open WhatsApp Web
+            window.open(`https://web.whatsapp.com/send?text=${encodedText}`, '_blank');
           }
           break;
 
         case 'whatsapp-web':
-          window.open(`https://web.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`, '_blank');
+          window.open(`https://web.whatsapp.com/send?text=${encodedText}`, '_blank');
           break;
 
+        case 'telegram':
         case 'telegram-web':
-          window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
+          toast.success(t.openingTelegram);
+          if (isMobile()) {
+            // Mobile: use tg:// deep link
+            setTimeout(() => {
+              window.location.href = `tg://msg_url?url=${encodedUrl}&text=${encodedText}`;
+            }, 100);
+          } else {
+            // Desktop: open Telegram Web share
+            window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
+          }
           break;
 
         case 'snapchat':
+          // Snapchat: copy link and try to open app
+          await copyToClipboard(url);
+          toast.info(t.openingSnapchat);
           if (isMobile()) {
-            // Try Snapchat deep link
-            const snapUrl = `https://www.snapchat.com/share?url=${encodedUrl}`;
-            window.open(snapUrl, '_blank');
-          } else {
-            // Desktop fallback
-            await copyToClipboard(url);
-            toast.info(t.openingSnapchat);
+            setTimeout(() => {
+              // Try Snapchat Creative Kit deep link
+              window.location.href = `snapchat://`;
+            }, 100);
           }
           break;
 
         // === STORY PLATFORMS ===
         case 'instagram-story':
-          // Download image for story + copy link
+          // Download story image and copy link, then try to open Instagram
           if (options?.onImageDownload) {
             await options.onImageDownload();
           }
           await copyToClipboard(url);
           toast.info(t.storyInstruction, { duration: 5000 });
+          if (isMobile()) {
+            setTimeout(() => {
+              window.location.href = 'instagram://story-camera';
+            }, 500);
+          }
           break;
 
         case 'facebook-story':
-          // Download image for story + copy link
+          // Download story image and copy link, then try to open Facebook
           if (options?.onImageDownload) {
             await options.onImageDownload();
           }
           await copyToClipboard(url);
           toast.info(t.storyInstruction, { duration: 5000 });
+          if (isMobile()) {
+            setTimeout(() => {
+              window.location.href = 'fb://story';
+            }, 500);
+          }
           break;
 
         // === UTILITY ===
