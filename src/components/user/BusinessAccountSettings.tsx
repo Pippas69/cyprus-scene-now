@@ -590,6 +590,22 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               </div>
             </div>
 
+            {/* Address */}
+            <div>
+              <Label htmlFor="business-address">{businessT.address}</Label>
+              <Input 
+                id="business-address" 
+                {...businessProfileForm.register("address")} 
+                placeholder={businessT.addressPlaceholder} 
+              />
+              {geocoding && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {language === 'el' ? 'Ενημέρωση συντεταγμένων...' : 'Updating coordinates...'}
+                </p>
+              )}
+            </div>
+
             {/* Description */}
             <div>
               <Label htmlFor="business-description">{businessT.description}</Label>
