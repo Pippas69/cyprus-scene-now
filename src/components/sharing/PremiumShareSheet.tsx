@@ -8,22 +8,28 @@ import { useShare, isMobile, hasNativeShare, formatEventShareText, formatBusines
 import { ShareableEventCard } from './ShareableEventCard';
 import { ShareableBusinessCard } from './ShareableBusinessCard';
 
-import instagramIcon from '@/assets/icons/instagram.png';
-import telegramIcon from '@/assets/icons/telegram.png';
-import snapchatIcon from '@/assets/icons/snapchat.png';
-
 // Exact brand icons as rounded rectangles matching the reference images
 const ICON_SIZE = 48;
 
-// Instagram - gradient pink/purple/orange rounded square
+// Instagram - gradient pink/purple/orange rounded square with camera icon
 const InstagramIcon = () => (
-  <img
-    src={instagramIcon}
-    alt="Instagram"
-    draggable={false}
-    className="select-none rounded-xl"
-    style={{ width: ICON_SIZE, height: ICON_SIZE }}
-  />
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
+    <defs>
+      <linearGradient id="instagram-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#FFDC80" />
+        <stop offset="15%" stopColor="#FCAF45" />
+        <stop offset="35%" stopColor="#F77737" />
+        <stop offset="55%" stopColor="#F56040" />
+        <stop offset="70%" stopColor="#FD1D1D" />
+        <stop offset="85%" stopColor="#E1306C" />
+        <stop offset="100%" stopColor="#C13584" />
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="48" height="48" rx="12" fill="url(#instagram-grad)" />
+    <rect x="12" y="12" width="24" height="24" rx="6" stroke="white" strokeWidth="2.5" fill="none" />
+    <circle cx="24" cy="24" r="5.5" stroke="white" strokeWidth="2.5" fill="none" />
+    <circle cx="31" cy="17" r="2" fill="white" />
+  </svg>
 );
 
 // Messenger - gradient purple/blue rounded square  
@@ -55,26 +61,26 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
-// Snapchat - yellow rounded square with ghost
+// Snapchat - yellow rounded square with ghost icon
 const SnapchatIcon = () => (
-  <img
-    src={snapchatIcon}
-    alt="Snapchat"
-    draggable={false}
-    className="select-none rounded-xl"
-    style={{ width: ICON_SIZE, height: ICON_SIZE }}
-  />
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
+    <rect x="0" y="0" width="48" height="48" rx="12" fill="#FFFC00" />
+    <path
+      d="M24 11c-3.1 0-5.6 1.1-7.2 3.3-1.3 1.7-1.5 3.6-1.5 5.3 0 .5 0 1 .1 1.5 0 .3.1.6.1.9-.3.1-.7.2-1 .2-.7 0-1.1-.2-1.4-.3-.2-.1-.4-.2-.6-.2-.4 0-.8.3-.8.8 0 .4.2.7.5.9.8.5 1.8.8 2.8 1 0 .1.1.3.1.4.1.4.2.9.2 1.2 0 .2-.1.3-.3.4-.5.2-1.1.4-1.8.6-1.2.4-2.6.9-3.2 1.7-.3.4-.3.8-.2 1.1.3.8 1.5 1.3 3.5 1.5.2 0 .3.1.4.1.1.3.2.7.4 1 .1.3.3.5.6.5h.1c.4 0 .9-.2 1.5-.4.8-.3 1.8-.6 3-.6.5 0 1 .1 1.5.2.9.3 1.7.9 2.6 1.6 1.3.9 2.7 2 4.7 2s3.4-1 4.7-2c.9-.6 1.7-1.3 2.6-1.6.5-.2 1-.2 1.5-.2 1.2 0 2.2.3 3 .6.6.2 1.1.4 1.5.4h.1c.3 0 .5-.2.6-.5.2-.3.3-.7.4-1 .1-.1.2-.1.4-.1 2-.2 3.2-.7 3.5-1.5.1-.3.1-.7-.2-1.1-.6-.8-2-1.3-3.2-1.7-.7-.2-1.3-.4-1.8-.6-.2-.1-.3-.2-.3-.4 0-.3.1-.8.2-1.2 0-.1.1-.3.1-.4 1-.2 2-.5 2.8-1 .3-.2.5-.5.5-.9 0-.5-.4-.8-.8-.8-.2 0-.4.1-.6.2-.3.1-.7.3-1.4.3-.3 0-.7-.1-1-.2 0-.3.1-.6.1-.9.1-.5.1-1 .1-1.5 0-1.7-.2-3.6-1.5-5.3C29.6 12.1 27.1 11 24 11z"
+      fill="white"
+    />
+  </svg>
 );
 
 // Telegram - light blue rounded square with paper plane
 const TelegramIcon = () => (
-  <img
-    src={telegramIcon}
-    alt="Telegram"
-    draggable={false}
-    className="select-none rounded-xl"
-    style={{ width: ICON_SIZE, height: ICON_SIZE }}
-  />
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
+    <rect x="0" y="0" width="48" height="48" rx="12" fill="#29B6F6" />
+    <path
+      d="M35.3 13.2L10.9 22.8c-1.7.7-1.6 1.6-.3 2l6.3 2 2.4 7.3c.3.8.5.9 1.1.9.5 0 .7-.2 1-.5l2.9-2.8 6.1 4.5c1.1.6 1.9.3 2.2-.9l4-18.9c.4-1.7-.6-2.4-1.8-1.9zM19.7 26.8l-.5 5.3-.1.1-1.4-4.5 12.5-7.9-10.5 7z"
+      fill="white"
+    />
+  </svg>
 );
 
 // Facebook - blue rounded square with F
@@ -400,7 +406,23 @@ export const PremiumShareSheet = ({
               )}
             >
               <div className="flex items-center gap-3">
-                <img src={instagramIcon} alt="" className="w-7 h-7 object-contain rounded-lg" />
+                <svg width={28} height={28} viewBox="0 0 48 48" fill="none">
+                  <defs>
+                    <linearGradient id="ig-story-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#FFDC80" />
+                      <stop offset="15%" stopColor="#FCAF45" />
+                      <stop offset="35%" stopColor="#F77737" />
+                      <stop offset="55%" stopColor="#F56040" />
+                      <stop offset="70%" stopColor="#FD1D1D" />
+                      <stop offset="85%" stopColor="#E1306C" />
+                      <stop offset="100%" stopColor="#C13584" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="0" y="0" width="48" height="48" rx="12" fill="url(#ig-story-grad)" />
+                  <rect x="12" y="12" width="24" height="24" rx="6" stroke="white" strokeWidth="2.5" fill="none" />
+                  <circle cx="24" cy="24" r="5.5" stroke="white" strokeWidth="2.5" fill="none" />
+                  <circle cx="31" cy="17" r="2" fill="white" />
+                </svg>
                 <span className="text-sm font-medium text-foreground">{t.instagramStory}</span>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
