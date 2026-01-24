@@ -147,17 +147,16 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                         </Badge>
                       </div>
 
-                      {/* Categories */}
+                      {/* Categories - stacked vertically, same font as location */}
                       {business.category.length > 0 && (
-                        <div className="flex flex-nowrap items-center gap-1 overflow-hidden -mt-0.5">
+                        <div className="flex flex-col">
                           {business.category.slice(0, 2).map((cat) => (
-                            <Badge
+                            <span
                               key={cat}
-                              variant="outline"
-                              className="text-[9px] md:text-[10px] px-1.5 py-0 leading-none bg-primary/10 text-primary border-primary/20 truncate max-w-[48%]"
+                              className="text-xs text-muted-foreground leading-tight"
                             >
                               {getCategoryLabel(cat, language)}
-                            </Badge>
+                            </span>
                           ))}
                         </div>
                       )}
