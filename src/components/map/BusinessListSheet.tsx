@@ -23,6 +23,9 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
   const [showAll, setShowAll] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  const actionBadgeClass =
+    "text-[10px] px-1.5 py-0.5 h-auto leading-none cursor-pointer hover:bg-muted shrink-0";
+
   const text = {
     el: {
       businesses: "επιχειρήσεις",
@@ -114,13 +117,13 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                     </div>
 
                     {/* Info - tighter spacing */}
-                    <div className="flex-1 min-w-0 space-y-0.5">
+                    <div className="flex-1 min-w-0 space-y-0">
                       {/* Name row with Profile badge on far right */}
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm line-clamp-1">{business.name}</h4>
                         <Badge
                           variant="outline"
-                          className="text-[10px] px-1.5 py-0.5 h-auto cursor-pointer hover:bg-muted shrink-0 ml-2"
+                          className={cn(actionBadgeClass, "ml-2")}
                           onClick={(e) => handleProfile(e, business)}
                         >
                           {t.profile}
@@ -129,14 +132,14 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                       </div>
 
                       {/* Location row with Directions badge on far right */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between -mt-0.5">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <MapPin className="h-3 w-3 shrink-0" />
                           <span className="line-clamp-1">{translateCity(business.city, language)}</span>
                         </div>
                         <Badge
                           variant="outline"
-                          className="text-[10px] px-1.5 py-0.5 h-auto cursor-pointer hover:bg-muted shrink-0 ml-2"
+                          className={cn(actionBadgeClass, "ml-2")}
                           onClick={(e) => handleDirections(e, business)}
                         >
                           {t.directions}
@@ -146,12 +149,12 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
 
                       {/* Categories */}
                       {business.category.length > 0 && (
-                        <div className="flex flex-wrap gap-1 pt-0.5">
+                        <div className="flex flex-nowrap items-center gap-1 overflow-hidden -mt-0.5">
                           {business.category.slice(0, 2).map((cat) => (
                             <Badge
                               key={cat}
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20"
+                              className="text-[9px] md:text-[10px] px-1.5 py-0 leading-none bg-primary/10 text-primary border-primary/20 truncate max-w-[48%]"
                             >
                               {getCategoryLabel(cat, language)}
                             </Badge>
