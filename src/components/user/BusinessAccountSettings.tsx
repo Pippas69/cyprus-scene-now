@@ -562,7 +562,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             {/* Name and City Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="business-name">{businessT.businessName} *</Label>
+                <Label htmlFor="business-name" className="text-sm md:text-base">{businessT.businessName} *</Label>
                 <Input 
                   id="business-name" 
                   {...businessProfileForm.register("name")} 
@@ -573,7 +573,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 )}
               </div>
               <div>
-                <Label htmlFor="business-city">{businessT.city}</Label>
+                <Label htmlFor="business-city" className="text-sm md:text-base">{businessT.city}</Label>
                 <select
                   id="business-city"
                   {...businessProfileForm.register("city")}
@@ -592,7 +592,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
             {/* Address */}
             <div>
-              <Label htmlFor="business-address">{businessT.address}</Label>
+              <Label htmlFor="business-address" className="text-sm md:text-base">{businessT.address}</Label>
               <Input 
                 id="business-address" 
                 {...businessProfileForm.register("address")} 
@@ -608,7 +608,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
             {/* Description */}
             <div>
-              <Label htmlFor="business-description">{businessT.description}</Label>
+              <Label htmlFor="business-description" className="text-sm md:text-base">{businessT.description}</Label>
               <Textarea 
                 id="business-description" 
                 {...businessProfileForm.register("description")} 
