@@ -85,16 +85,22 @@ export const ShareableEventCard = forwardRef<HTMLDivElement, ShareableEventCardP
               </h2>
 
               <div className="space-y-2">
+                {/* Date */}
                 <div className="flex items-center justify-center gap-2 text-white/90">
-                  <Calendar className="h-5 w-5" />
-                  <span className="font-medium">{dateStr}</span>
-                  <Clock className="h-5 w-5 ml-2" />
-                  <span className="font-medium">{timeStr}</span>
+                  <Calendar className="h-5 w-5 shrink-0" />
+                  <span className="font-medium leading-none">{dateStr}</span>
                 </div>
 
+                {/* Time */}
                 <div className="flex items-center justify-center gap-2 text-white/90">
-                  <MapPin className="h-5 w-5" />
-                  <span className="font-medium">{event.location}</span>
+                  <Clock className="h-5 w-5 shrink-0" />
+                  <span className="font-medium leading-none">{timeStr}</span>
+                </div>
+
+                {/* Location */}
+                <div className="flex items-center justify-center gap-2 text-white/90">
+                  <MapPin className="h-5 w-5 shrink-0" />
+                  <span className="font-medium leading-none text-center">{event.location}</span>
                 </div>
 
                 {event.businessName && (
@@ -107,10 +113,12 @@ export const ShareableEventCard = forwardRef<HTMLDivElement, ShareableEventCardP
 
             {/* QR Code Placeholder - Call to Action */}
             <div className="mt-6 text-center">
-              <div className="inline-block px-6 py-3 bg-white/20 backdrop-blur-sm rounded-full">
-                <span className="text-white font-medium">
+              <div className="flex justify-center">
+                <div className="inline-flex items-center justify-center max-w-full px-5 py-2.5 bg-white/20 backdrop-blur-sm rounded-full">
+                  <span className="text-white font-semibold text-base text-center leading-none whitespace-nowrap">
                   {language === 'el' ? 'Δες περισσότερα στο ΦΟΜΟ' : 'See more on ΦΟΜΟ'}
-                </span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
