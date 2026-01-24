@@ -1,37 +1,77 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, MapPin, Download, Check } from 'lucide-react';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from '@/components/ui/drawer';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { X, Calendar, MapPin, Download, Check, Share2, Link2, MoreHorizontal } from 'lucide-react';
+import { Drawer, DrawerContent, DrawerClose } from '@/components/ui/drawer';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useShare, isMobile, hasNativeShare, formatEventShareText, formatBusinessShareText, getEventUrlFallback, getBusinessUrlFallback, ShareChannel } from '@/hooks/useShare';
 import { ShareableEventCard } from './ShareableEventCard';
 import { ShareableBusinessCard } from './ShareableBusinessCard';
-import {
-  InstagramIcon,
-  MessengerIcon,
-  WhatsAppIcon,
-  SnapchatIcon,
-  FacebookIcon,
-  LinkIcon,
-  TelegramIcon,
-} from './SocialPlatformIcons';
 
-// SMS Icon component
-const SMSIcon = ({ size = 24 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    className="text-[#34C759]"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+// Social Icons with brand colors
+const WhatsAppIcon = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="12" fill="#25D366" />
+    <path
+      d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"
+      fill="white"
+    />
+  </svg>
+);
+
+const InstagramIcon = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="ig-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#FFDC80" />
+        <stop offset="25%" stopColor="#F77737" />
+        <stop offset="50%" stopColor="#E1306C" />
+        <stop offset="75%" stopColor="#C13584" />
+        <stop offset="100%" stopColor="#833AB4" />
+      </linearGradient>
+    </defs>
+    <rect width="24" height="24" rx="6" fill="url(#ig-gradient)" />
+    <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="1.5" fill="none" />
+    <circle cx="17" cy="7" r="1" fill="white" />
+  </svg>
+);
+
+const MessengerIcon = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="messenger-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#0099FF" />
+        <stop offset="100%" stopColor="#A033FF" />
+      </linearGradient>
+    </defs>
+    <circle cx="12" cy="12" r="12" fill="url(#messenger-gradient)" />
+    <path
+      d="M12 5C7.75 5 4.5 7.94 4.5 11.5c0 2.03 1.01 3.84 2.59 5.03v2.47l2.38-1.31c.64.18 1.31.28 2.03.28 4.25 0 7.5-2.94 7.5-6.47S16.25 5 12 5zm.75 8.72l-1.91-2.04-3.72 2.04 4.09-4.34 1.96 2.04 3.67-2.04-4.09 4.34z"
+      fill="white"
+    />
+  </svg>
+);
+
+const TelegramIcon = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="12" fill="#0088CC" />
+    <path
+      d="M9.417 15.181l-.397 3.298s-.164.774.676 0c.84-.775 1.644-1.487 1.644-1.487l3.421 2.523s.591.366.795-.202l1.437-9.028s.367-1.418-.818-.897l-11.56 4.464s-.882.325-.815.97c.066.646.788.939.788.939l2.979 1.003 6.893-4.558s.398-.243.381 0c0 0 .072.044-.142.266-.215.221-5.449 4.859-5.449 4.859"
+      fill="white"
+    />
+  </svg>
+);
+
+const SnapchatIcon = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <rect width="24" height="24" rx="6" fill="#FFFC00" />
+    <path
+      d="M12 4.5c-2.4 0-3.9 1.7-4.1 4.1 0 .4-.1.8-.1 1.1-.2 0-.5-.1-.7-.1-.4 0-.7.2-.7.5s.2.5.5.6c.2.1.4.1.7.2-.1.3-.3.6-.5.9-.4.5-.9 1-1.5 1.4-.2.1-.3.3-.2.5.1.3.4.4.7.4.4 0 .9-.1 1.3-.3.1 0 .2-.1.3-.1.1 0 .2.1.2.2.1.5.3 1 .7 1.4.8.8 2.1 1.2 3.4 1.2s2.6-.4 3.4-1.2c.4-.4.6-.9.7-1.4 0-.1.1-.2.2-.2.1 0 .2.1.3.1.4.2.9.3 1.3.3.3 0 .6-.1.7-.4.1-.2 0-.4-.2-.5-.6-.4-1.1-.9-1.5-1.4-.2-.3-.4-.6-.5-.9.3-.1.5-.1.7-.2.3-.1.5-.3.5-.6s-.3-.5-.7-.5c-.2 0-.5.1-.7.1 0-.3-.1-.7-.1-1.1-.2-2.4-1.7-4.1-4.1-4.1z"
+      fill="white"
+      stroke="black"
+      strokeWidth="0.5"
+    />
   </svg>
 );
 
@@ -70,59 +110,65 @@ interface PremiumShareSheetProps {
 // Translations
 const translations = {
   el: {
-    share: 'Κοινοποίηση',
+    share: 'Κοινοποίησε',
+    shareButton: 'Κοινοποίησε',
     sendToFriend: 'Στείλε σε φίλο',
     forStory: 'Για Story',
-    moreOptions: 'Περισσότερες επιλογές',
+    moreOptions: 'Περισσότερα...',
     copyLink: 'Αντιγραφή link',
-    downloadStory: 'Λήψη εικόνας (Story)',
+    downloadImage: 'Λήψη εικόνας',
     copied: 'Αντιγράφηκε!',
-    messages: 'Μηνύματα',
   },
   en: {
     share: 'Share',
+    shareButton: 'Share',
     sendToFriend: 'Send to a friend',
     forStory: 'For Story',
-    moreOptions: 'More options',
+    moreOptions: 'More...',
     copyLink: 'Copy link',
-    downloadStory: 'Download image (Story)',
+    downloadImage: 'Download image',
     copied: 'Copied!',
-    messages: 'Messages',
   },
 };
 
-// Platform button component
-const PlatformButton = ({
+// Quick action button component (circular icons)
+const QuickActionButton = ({
   icon: Icon,
   label,
   onClick,
   disabled,
-  isLoading,
 }: {
   icon: React.FC<{ size?: number }>;
   label: string;
   onClick: () => void;
   disabled?: boolean;
-  isLoading?: boolean;
 }) => (
   <motion.button
     whileTap={{ scale: 0.92 }}
     onClick={onClick}
-    disabled={disabled || isLoading}
+    disabled={disabled}
     className={cn(
-      'flex flex-col items-center gap-2 p-3 rounded-2xl min-w-[72px]',
-      'bg-muted/50 hover:bg-muted/80 transition-all duration-200',
-      'disabled:opacity-50 disabled:cursor-not-allowed',
-      'active:bg-muted'
+      'flex flex-col items-center gap-1.5 min-w-[60px]',
+      'disabled:opacity-50 disabled:cursor-not-allowed'
     )}
   >
-    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-background shadow-sm">
+    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-background shadow-sm border border-border/50 hover:border-border transition-colors">
       <Icon size={28} />
     </div>
-    <span className="text-[11px] font-medium text-foreground/80 text-center leading-tight">
+    <span className="text-[10px] font-medium text-muted-foreground text-center leading-tight whitespace-nowrap">
       {label}
     </span>
   </motion.button>
+);
+
+// Download icon for image download
+const DownloadIcon = ({ size = 24 }: { size?: number }) => (
+  <div 
+    className="flex items-center justify-center"
+    style={{ width: size, height: size }}
+  >
+    <Link2 className="text-aegean" size={size * 0.8} />
+  </div>
 );
 
 export const PremiumShareSheet = ({
@@ -222,8 +268,6 @@ export const PremiumShareSheet = ({
       weekday: 'short',
       day: 'numeric',
       month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
@@ -231,27 +275,27 @@ export const PremiumShareSheet = ({
   const PreviewCard = () => {
     if (type === 'event' && event) {
       return (
-        <div className="flex items-center gap-4 p-4 rounded-2xl bg-muted/30 border border-border/50">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40">
           {event.cover_image_url ? (
             <img
               src={event.cover_image_url}
               alt={event.title}
-              className="w-16 h-16 rounded-xl object-cover"
+              className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
             />
           ) : (
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center">
-              <span className="text-2xl">🌊</span>
+            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center flex-shrink-0">
+              <span className="text-xl">🌊</span>
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate">{event.title}</h3>
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-              <Calendar className="h-3.5 w-3.5" />
+            <h3 className="font-semibold text-foreground truncate text-sm">{event.title}</h3>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+              <Calendar className="h-3 w-3" />
               <span>{formatDate(event.start_at)}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5" />
-              <span className="truncate">{event.location}</span>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              <span className="truncate">{event.businesses?.name || event.location}</span>
             </div>
           </div>
         </div>
@@ -261,23 +305,23 @@ export const PremiumShareSheet = ({
     if (type === 'business' && business) {
       const locationLabel = [business.city, business.address].filter(Boolean).join(' • ');
       return (
-        <div className="flex items-center gap-4 p-4 rounded-2xl bg-muted/30 border border-border/50">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40">
           {business.logo_url ? (
             <img
               src={business.logo_url}
               alt={business.name}
-              className="w-16 h-16 rounded-xl object-cover"
+              className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
             />
           ) : (
-            <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center">
-              <span className="text-2xl">🏷️</span>
+            <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+              <span className="text-xl">🏷️</span>
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate">{business.name}</h3>
+            <h3 className="font-semibold text-foreground truncate text-sm">{business.name}</h3>
             {locationLabel && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                <MapPin className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                <MapPin className="h-3 w-3" />
                 <span className="truncate">{locationLabel}</span>
               </div>
             )}
@@ -289,44 +333,58 @@ export const PremiumShareSheet = ({
     return null;
   };
 
-  // Mobile content (curated)
-  const MobileContent = () => (
-    <div className="space-y-6 pb-8">
+  // Share content component
+  const ShareContent = () => (
+    <div className="px-4 pb-6 pt-2 space-y-5">
       {/* Preview */}
       <PreviewCard />
 
+      {/* Main Share Button - Primary CTA */}
+      <Button
+        variant="default"
+        className="w-full h-12 text-base font-medium gap-2 bg-primary hover:bg-primary/90"
+        onClick={() => handleShare('native')}
+        disabled={isSharing}
+      >
+        <Share2 className="h-4 w-4" />
+        {t.shareButton}
+      </Button>
+
       {/* Send to friend section */}
       <div>
-        <h4 className="text-sm font-semibold text-foreground mb-3">{t.sendToFriend}</h4>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          <PlatformButton
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-muted-foreground">💬</span>
+          <h4 className="text-sm font-medium text-foreground">{t.sendToFriend}</h4>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+          <QuickActionButton
             icon={InstagramIcon}
             label="Instagram"
             onClick={() => handleShare('instagram')}
             disabled={isSharing}
           />
-          <PlatformButton
+          <QuickActionButton
             icon={MessengerIcon}
             label="Messenger"
             onClick={() => handleShare('messenger')}
             disabled={isSharing}
           />
-          <PlatformButton
-            icon={SMSIcon}
-            label={t.messages}
-            onClick={() => handleShare('sms')}
-            disabled={isSharing}
-          />
-          <PlatformButton
+          <QuickActionButton
             icon={WhatsAppIcon}
             label="WhatsApp"
             onClick={() => handleShare('whatsapp')}
             disabled={isSharing}
           />
-          <PlatformButton
-            icon={SnapchatIcon}
-            label="Snapchat"
-            onClick={() => handleShare('snapchat')}
+          <QuickActionButton
+            icon={TelegramIcon}
+            label="Telegram"
+            onClick={() => handleShare('telegram-web')}
+            disabled={isSharing}
+          />
+          <QuickActionButton
+            icon={DownloadIcon}
+            label={t.downloadImage}
+            onClick={handleDownloadStoryImage}
             disabled={isSharing}
           />
         </div>
@@ -334,122 +392,66 @@ export const PremiumShareSheet = ({
 
       {/* For Story section */}
       <div>
-        <h4 className="text-sm font-semibold text-foreground mb-3">{t.forStory}</h4>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-muted-foreground">✨</span>
+          <h4 className="text-sm font-medium text-foreground">{t.forStory}</h4>
+        </div>
         <div className="flex gap-2">
-          <PlatformButton
-            icon={InstagramIcon}
-            label="Instagram Story"
-            onClick={() => handleShare('instagram-story')}
-            disabled={isSharing}
-          />
-          <PlatformButton
-            icon={FacebookIcon}
-            label="Facebook Story"
-            onClick={() => handleShare('facebook-story')}
-            disabled={isSharing}
-          />
-        </div>
-      </div>
-
-      {/* More options button */}
-      <Button
-        variant="outline"
-        className="w-full h-12 text-base font-medium"
-        onClick={() => handleShare('native')}
-        disabled={isSharing}
-      >
-        {t.moreOptions}
-      </Button>
-    </div>
-  );
-
-  // Desktop content (simplified)
-  const DesktopContent = () => (
-    <div className="space-y-6">
-      {/* Preview */}
-      <PreviewCard />
-
-      {/* Primary actions */}
-      <div className="space-y-3">
-        {/* Copy link - Primary */}
-        <Button
-          variant="default"
-          className="w-full h-12 text-base font-medium gap-2"
-          onClick={() => handleShare('copy')}
-          disabled={isSharing}
-        >
-          <AnimatePresence mode="wait">
-            {copied ? (
-              <motion.span
-                key="check"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                className="flex items-center gap-2"
-              >
-                <Check className="h-5 w-5" />
-                {t.copied}
-              </motion.span>
-            ) : (
-              <motion.span
-                key="copy"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                className="flex items-center gap-2"
-              >
-                <LinkIcon size={20} />
-                {t.copyLink}
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </Button>
-
-        {/* Secondary actions */}
-        <div className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"
-            className="h-11 gap-2"
-            onClick={() => handleShare('whatsapp-web')}
+            className="flex-1 h-11 gap-2 text-sm font-medium"
+            onClick={handleDownloadStoryImage}
             disabled={isSharing}
           >
-            <WhatsAppIcon size={20} />
-            <span>WhatsApp</span>
+            <Download className="h-4 w-4" />
+            {t.downloadImage}
           </Button>
           <Button
             variant="outline"
-            className="h-11 gap-2"
-            onClick={() => handleShare('telegram-web')}
+            className="flex-1 h-11 gap-2 text-sm font-medium"
+            onClick={() => handleShare('copy')}
             disabled={isSharing}
           >
-            <TelegramIcon size={20} />
-            <span>Telegram</span>
+            <AnimatePresence mode="wait">
+              {copied ? (
+                <motion.span
+                  key="check"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="flex items-center gap-2"
+                >
+                  <Check className="h-4 w-4 text-green-500" />
+                  {t.copied}
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="copy"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="flex items-center gap-2"
+                >
+                  <Link2 className="h-4 w-4" />
+                  {t.copyLink}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Button>
         </div>
-
-        {/* Download story image */}
-        <Button
-          variant="outline"
-          className="w-full h-11 gap-2"
-          onClick={handleDownloadStoryImage}
-          disabled={isSharing}
-        >
-          <Download className="h-5 w-5" />
-          {t.downloadStory}
-        </Button>
-
-        {/* More options - only if native share is available */}
-        {hasNativeShare() && (
-          <Button
-            variant="ghost"
-            className="w-full h-10 text-sm text-muted-foreground"
-            onClick={() => handleShare('native')}
-            disabled={isSharing}
-          >
-            {t.moreOptions}
-          </Button>
-        )}
       </div>
+
+      {/* More options */}
+      {hasNativeShare() && (
+        <button
+          onClick={() => handleShare('native')}
+          disabled={isSharing}
+          className="w-full flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+          {t.moreOptions}
+        </button>
+      )}
     </div>
   );
 
@@ -490,44 +492,48 @@ export const PremiumShareSheet = ({
     </div>
   );
 
-  // Render based on device
+  // Desktop uses Dialog
   if (isDesktop) {
     return (
       <>
         <HiddenStoryCard />
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="sm:max-w-[420px]">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-semibold">{t.share}</DialogTitle>
-            </DialogHeader>
-            <DesktopContent />
+          <DialogContent className="sm:max-w-[400px] p-0 gap-0 rounded-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-border/50">
+              <h2 className="text-lg font-semibold text-foreground">{t.share}</h2>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="p-1.5 rounded-full hover:bg-muted transition-colors"
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+            <ShareContent />
           </DialogContent>
         </Dialog>
       </>
     );
   }
 
-  // Mobile: Bottom sheet / Drawer
+  // Mobile/Tablet uses Drawer (bottom sheet)
   return (
     <>
       <HiddenStoryCard />
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[85vh]">
-          <DrawerHeader className="flex items-center justify-between border-b border-border/50 pb-3">
-            <DrawerTitle className="text-lg font-semibold">{t.share}</DrawerTitle>
+        <DrawerContent className="max-h-[85vh] rounded-t-3xl">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border/30">
+            <h2 className="text-lg font-semibold text-foreground">{t.share}</h2>
             <DrawerClose asChild>
-              <button className="p-2 -mr-2 rounded-full hover:bg-muted transition-colors">
+              <button className="p-1.5 rounded-full hover:bg-muted transition-colors">
                 <X className="h-5 w-5 text-muted-foreground" />
               </button>
             </DrawerClose>
-          </DrawerHeader>
-          <div className="px-4 pt-4 overflow-y-auto">
-            <MobileContent />
           </div>
+          <ShareContent />
         </DrawerContent>
       </Drawer>
     </>
   );
 };
-
-export default PremiumShareSheet;
