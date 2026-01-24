@@ -1,6 +1,5 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +47,7 @@ const wrapEmailContent = (content: string) => `
 
 interface OfferClaimEmailRequest {
   purchaseId: string;
+  userId: string;
   userEmail: string;
   userName: string;
   offerTitle: string;
@@ -105,6 +105,19 @@ Deno.serve(async (req) => {
 
   try {
     logStep("Function started");
+
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+
+    const resend = new Resend(resendApiKey);
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
 
     const data: OfferClaimEmailRequest = await req.json();
     logStep("Request data", { purchaseId: data.purchaseId, userEmail: data.userEmail });
@@ -256,14 +269,35 @@ Deno.serve(async (req) => {
 
     logStep("Email sent successfully", emailResponse);
 
+    // Create in-app notification for the user
+    if (data.userId) {
+      try {
+        await supabaseClient.from('notifications').insert({
+          user_id: data.userId,
+          title: '🎁 Προσφορά διεκδικήθηκε!',
+          message: `"${data.offerTitle}" από ${data.businessName} - έτοιμη για εξαργύρωση`,
+          type: 'offer',
+          event_type: 'offer_claimed',
+          entity_type: 'offer',
+          entity_id: data.purchaseId,
+          deep_link: `/dashboard-user/offers`,
+          delivered_at: new Date().toISOString(),
+        });
+        logStep("In-app notification created for user", { userId: data.userId });
+      } catch (notifError) {
+        logStep("Failed to create in-app notification", notifError);
+      }
+    }
+
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
-    logStep("ERROR", { message: error.message });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
