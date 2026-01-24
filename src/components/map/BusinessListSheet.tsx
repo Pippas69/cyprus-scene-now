@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, MapPin, ChevronRight, Navigation } from "lucide-react";
 import { translateCity } from "@/lib/cityTranslations";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { getCategoryIcon } from "@/lib/unifiedCategories";
 import { getDirectionsUrl } from "@/lib/mapUtils";
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
 import { cn } from "@/lib/utils";
@@ -18,11 +19,38 @@ interface BusinessListSheetProps {
 
 const PLAN_TIER_ORDER = ['elite', 'pro', 'basic', 'free'] as const;
 
+// Map sub-categories to their parent category for icon lookup
+const getParentCategoryIcon = (categoryId: string): string => {
+  // Nightlife sub-options
+  if (['bars', 'cocktail-bars', 'wine-bars', 'pubs'].includes(categoryId)) {
+    return '🍸'; // Nightlife icon
+  }
+  // Clubs - has its own icon
+  if (categoryId === 'clubs') {
+    return '🎉'; // Clubs icon
+  }
+  // Dining sub-options
+  if (['fine-dining', 'casual-dining', 'dining'].includes(categoryId)) {
+    return '🍴'; // Dining icon
+  }
+  // Summer sub-options
+  if (['beach-bars', 'summer-events', 'seaside-restaurants', 'summer'].includes(categoryId)) {
+    return '☀️'; // Summer icon
+  }
+  // Nightlife main category
+  if (categoryId === 'nightlife') {
+    return '🍸';
+  }
+  // Fallback to getCategoryIcon
+  return getCategoryIcon(categoryId);
+};
+
 export const BusinessListSheet = ({ businesses, language, onBusinessClick }: BusinessListSheetProps) => {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Unified badge class for both Profile and Directions - exactly the same
   const actionBadgeClass =
     "text-[10px] px-1.5 py-0.5 h-auto leading-none cursor-pointer hover:bg-muted shrink-0";
 
@@ -67,6 +95,15 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
     e.stopPropagation();
     setIsOpen(false);
     navigate(`/business/${business.id}`);
+  };
+
+  // Format location as "Address, City"
+  const formatLocation = (business: BusinessLocation): string => {
+    const city = translateCity(business.city, language);
+    if (business.address && business.address.trim()) {
+      return `${business.address}, ${city}`;
+    }
+    return city;
   };
 
   return (
@@ -135,7 +172,7 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                       <div className="flex items-center justify-between -mt-0.5">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <MapPin className="h-3 w-3 shrink-0" />
-                          <span className="line-clamp-1">{translateCity(business.city, language)}</span>
+                          <span className="line-clamp-1">{formatLocation(business)}</span>
                         </div>
                         <Badge
                           variant="outline"
@@ -147,16 +184,16 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                         </Badge>
                       </div>
 
-                      {/* Categories - stacked vertically, same font as location */}
+                      {/* Categories - stacked vertically with icons */}
                       {business.category.length > 0 && (
-                        <div className="flex flex-col">
+                        <div className="flex flex-col -mt-0.5">
                           {business.category.slice(0, 2).map((cat) => (
-                            <span
-                              key={cat}
-                              className="text-xs text-muted-foreground leading-tight"
-                            >
-                              {getCategoryLabel(cat, language)}
-                            </span>
+                            <div key={cat} className="flex items-center gap-1 text-xs text-muted-foreground leading-tight">
+                              <span className="h-3 w-3 shrink-0 flex items-center justify-center text-[10px] grayscale opacity-70">
+                                {getParentCategoryIcon(cat)}
+                              </span>
+                              <span>{getCategoryLabel(cat, language)}</span>
+                            </div>
                           ))}
                         </div>
                       )}
