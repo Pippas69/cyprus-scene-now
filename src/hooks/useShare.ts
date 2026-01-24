@@ -275,28 +275,12 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
       switch (channel) {
         // === DM PLATFORMS ===
         case 'instagram':
-          // On mobile, the closest match to the native “send to friend” UX is the system share sheet
-          // (shows iOS/Android-specific options like the user's screenshot).
-          if (isMobile() && hasNativeShare()) {
-            try {
-              await navigator.share({
-                title: options?.title || '',
-                text,
-                url,
-              });
-            } catch (error) {
-              // User cancelled
-              if ((error as Error)?.name === 'AbortError') break;
-              throw error;
-            }
-            break;
-          }
-
           toast.info(t.openingInstagram);
           if (isMobile()) {
             await tryOpenApp(
               'instagram://direct-inbox',
               async () => {
+                // Fallback: open web instagram home (best-effort) without auto-copy
                 window.open('https://www.instagram.com/', '_blank');
                 toast.error(t.appOpenFailed);
               }
@@ -307,21 +291,6 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
           break;
 
         case 'messenger':
-          // On mobile, prefer system share sheet for a reliable, OS-native “send to” picker.
-          if (isMobile() && hasNativeShare()) {
-            try {
-              await navigator.share({
-                title: options?.title || '',
-                text,
-                url,
-              });
-            } catch (error) {
-              if ((error as Error)?.name === 'AbortError') break;
-              throw error;
-            }
-            break;
-          }
-
           if (isMobile()) {
             toast.success(t.openingMessenger);
             await tryOpenApp(
@@ -336,6 +305,7 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
               }
             );
           } else {
+            // Desktop: open Messenger web share dialog
             window.open(
               `https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=966242223397117&redirect_uri=${encodeURIComponent(window.location.origin)}`,
               '_blank',
