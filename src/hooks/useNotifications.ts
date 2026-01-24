@@ -10,6 +10,9 @@ interface Notification {
   read: boolean;
   entity_type: string | null;
   entity_id: string | null;
+  event_type: string | null;
+  deep_link: string | null;
+  delivered_at: string | null;
   created_at: string;
 }
 
