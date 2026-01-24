@@ -1,9 +1,8 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Calendar, MapPin, Download, MoreHorizontal } from 'lucide-react';
-import { Drawer, DrawerContent, DrawerClose } from '@/components/ui/drawer';
+import { X, ChevronRight } from 'lucide-react';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useShare, isMobile, hasNativeShare, formatEventShareText, formatBusinessShareText, getEventUrlFallback, getBusinessUrlFallback, ShareChannel } from '@/hooks/useShare';
 import { ShareableEventCard } from './ShareableEventCard';
@@ -13,19 +12,14 @@ import instagramIcon from '@/assets/icons/instagram.png';
 import telegramIcon from '@/assets/icons/telegram.png';
 import snapchatIcon from '@/assets/icons/snapchat.png';
 
-// Social Icons with brand colors - consistent sizing for all icons
-const ICON_SIZE = 40;
-const IG_ICON_SIZE = 44;
-const TG_ICON_SIZE = 46;
-const SNAP_ICON_SIZE = 46;
-// Slightly smaller containers so the row fits better on mobile, while keeping icons large.
-const CONTAINER_SIZE = 'w-12 h-12';
+// Brand icons with exact sizing matching the reference
+const ICON_SIZE = 44;
 
 const WhatsAppIcon = () => (
-  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="12" fill="#25D366" />
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
+    <circle cx="24" cy="24" r="24" fill="#25D366" />
     <path
-      d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"
+      d="M34.944 28.764c-.594-.298-3.516-1.734-4.06-1.934-.546-.198-.942-.296-1.34.3-.394.594-1.534 1.932-1.88 2.328-.346.398-.694.446-1.288.15-.594-.3-2.51-.926-4.78-2.95-1.766-1.576-2.96-3.522-3.306-4.118-.346-.594-.036-.916.26-1.212.268-.266.596-.694.892-1.04.298-.348.396-.596.596-.994.198-.396.1-.742-.05-1.04-.15-.298-1.338-3.224-1.832-4.414-.484-1.158-.974-1-.1338-1.02-.346-.016-.742-.02-1.14-.02-.396 0-1.04.148-1.584.744-.544.594-2.08 2.032-2.08 4.958 0 2.924 2.13 5.75 2.426 6.148.298.396 4.192 6.4 10.154 8.974 1.418.612 2.524.978 3.388 1.25 1.424.452 2.72.388 3.742.236 1.142-.17 3.516-1.438 4.012-2.826.496-1.388.496-2.578.346-2.826-.148-.248-.546-.396-1.14-.694z"
       fill="white"
     />
   </svg>
@@ -37,21 +31,21 @@ const InstagramIcon = () => (
     alt="Instagram"
     draggable={false}
     className="select-none object-contain"
-    style={{ width: IG_ICON_SIZE, height: IG_ICON_SIZE }}
+    style={{ width: ICON_SIZE, height: ICON_SIZE }}
   />
 );
 
 const MessengerIcon = () => (
-  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none">
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
     <defs>
-      <linearGradient id="messenger-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <linearGradient id="messenger-gradient-sheet" x1="0%" y1="100%" x2="100%" y2="0%">
         <stop offset="0%" stopColor="#0099FF" />
         <stop offset="100%" stopColor="#A033FF" />
       </linearGradient>
     </defs>
-    <circle cx="12" cy="12" r="12" fill="url(#messenger-gradient)" />
+    <circle cx="24" cy="24" r="24" fill="url(#messenger-gradient-sheet)" />
     <path
-      d="M12 5C7.75 5 4.5 7.94 4.5 11.5c0 2.03 1.01 3.84 2.59 5.03v2.47l2.38-1.31c.64.18 1.31.28 2.03.28 4.25 0 7.5-2.94 7.5-6.47S16.25 5 12 5zm.75 8.72l-1.91-2.04-3.72 2.04 4.09-4.34 1.96 2.04 3.67-2.04-4.09 4.34z"
+      d="M24 10C16 10 9 16.28 9 24c0 4.06 2.02 7.68 5.18 10.06V39l4.76-2.62c1.28.36 2.62.56 4.06.56 8 0 15-6.28 15-14S32 10 24 10zm1.5 18.88l-3.82-4.08-7.44 4.08 8.18-8.68 3.92 4.08 7.34-4.08-8.18 8.68z"
       fill="white"
     />
   </svg>
@@ -63,7 +57,7 @@ const TelegramIcon = () => (
     alt="Telegram"
     draggable={false}
     className="select-none object-contain"
-    style={{ width: TG_ICON_SIZE, height: TG_ICON_SIZE }}
+    style={{ width: ICON_SIZE + 4, height: ICON_SIZE + 4 }}
   />
 );
 
@@ -73,11 +67,11 @@ const SnapchatIcon = () => (
     alt="Snapchat"
     draggable={false}
     className="select-none object-contain"
-    style={{ width: SNAP_ICON_SIZE, height: SNAP_ICON_SIZE }}
+    style={{ width: ICON_SIZE + 4, height: ICON_SIZE + 4 }}
   />
 );
 
-const FacebookIcon = ({ size = 18 }: { size?: number }) => (
+const FacebookIcon = ({ size = 24 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="12" cy="12" r="12" fill="#1877F2" />
     <path
@@ -85,10 +79,6 @@ const FacebookIcon = ({ size = 18 }: { size?: number }) => (
       fill="white"
     />
   </svg>
-);
-
-const DownloadIcon = () => (
-  <Download className="text-primary" size={ICON_SIZE - 6} />
 );
 
 // Types
@@ -129,26 +119,22 @@ const translations = {
     share: 'Κοινοποίηση',
     sendToFriend: 'Στείλε σε φίλο',
     forStory: 'Για Story',
-    downloadImage: 'Λήψη',
     instagramStory: 'Instagram Story',
     facebookStory: 'Facebook Story',
-    moreOptions: 'Περισσότερες επιλογές',
-    copyLink: 'Αντιγραφή link',
+    moreOptions: 'Περισσότερες επιλογές...',
   },
   en: {
     share: 'Share',
     sendToFriend: 'Send to a friend',
     forStory: 'For Story',
-    downloadImage: 'Download',
     instagramStory: 'Instagram Story',
     facebookStory: 'Facebook Story',
-    moreOptions: 'More options',
-    copyLink: 'Copy link',
+    moreOptions: 'More options...',
   },
 };
 
-// Quick action button component (circular icons with horizontal scroll support)
-const QuickActionButton = ({
+// Circular icon button for send to friend section
+const SocialIconButton = ({
   icon: Icon,
   label,
   onClick,
@@ -164,17 +150,14 @@ const QuickActionButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'flex flex-col items-center gap-1 flex-shrink-0',
+      'flex flex-col items-center gap-1.5 flex-shrink-0',
       'disabled:opacity-50 disabled:cursor-not-allowed'
     )}
   >
-    <div className={cn(
-      CONTAINER_SIZE,
-      'flex items-center justify-center rounded-full bg-background shadow-sm border border-border/50 hover:border-border transition-colors'
-    )}>
+    <div className="w-14 h-14 flex items-center justify-center">
       <Icon />
     </div>
-    <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight whitespace-nowrap">
+    <span className="text-[11px] font-medium text-foreground text-center leading-tight">
       {label}
     </span>
   </motion.button>
@@ -191,10 +174,8 @@ export const PremiumShareSheet = ({
   const t = translations[language];
   const { shareToChannel, generateStoryImage, downloadImage, isSharing } = useShare(language);
   const storyCardRef = useRef<HTMLDivElement>(null);
-  const quickRowRef = useRef<HTMLDivElement>(null);
   const [isDesktop, setIsDesktop] = useState(false);
 
-  // Check if desktop on mount
   useEffect(() => {
     setIsDesktop(!isMobile());
   }, []);
@@ -237,13 +218,12 @@ export const PremiumShareSheet = ({
   }, [type, event, business, language]);
 
   const getShareOptions = useCallback(() => {
-    const baseOptions = {
+    return {
       title: type === 'event' ? event?.title : business?.name,
       objectType: type as 'event' | 'business',
       objectId: type === 'event' ? event?.id : business?.id,
       businessId: type === 'event' ? event?.businesses?.id : business?.id,
     };
-    return baseOptions;
   }, [type, event, business]);
 
   // Handle story image download
@@ -265,79 +245,73 @@ export const PremiumShareSheet = ({
     });
   }, [shareToChannel, getShareUrl, getShareText, getShareOptions, handleDownloadStoryImage]);
 
-  // Mouse wheel should also scroll the horizontal quick-actions row (desktop mouse support)
-  const handleQuickRowWheel = useCallback((e: React.WheelEvent) => {
-    const el = quickRowRef.current;
-    if (!el) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      el.scrollLeft += e.deltaY;
-      e.preventDefault();
-    }
-  }, []);
-
   // Format date for preview
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US', {
-      weekday: 'short',
+      weekday: 'long',
       day: 'numeric',
       month: 'short',
     });
   };
 
-  // Preview component
-  const PreviewCard = () => {
+  // Image Preview Card - exactly like the reference image
+  const ImagePreviewCard = () => {
     if (type === 'event' && event) {
       return (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40">
+        <div className="relative w-full h-40 rounded-2xl overflow-hidden">
           {event.cover_image_url ? (
             <img
               src={event.cover_image_url}
               alt={event.title}
-              className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+              className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center flex-shrink-0">
-              <span className="text-xl">🌊</span>
+            <div className="w-full h-full bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center">
+              <span className="text-4xl">🌊</span>
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate text-sm">{event.title}</h3>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(event.start_at)}</span>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              <span className="truncate">{event.businesses?.name || event.location}</span>
-            </div>
+          {/* Gradient overlay at bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          {/* Text overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <p className="text-white/90 text-sm font-medium">
+              {formatDate(event.start_at)}
+            </p>
+            <h3 className="text-white font-bold text-lg leading-tight">
+              {event.businesses?.name || event.location}
+            </h3>
           </div>
         </div>
       );
     }
 
     if (type === 'business' && business) {
-      const locationLabel = [business.city, business.address].filter(Boolean).join(' • ');
+      const coverImage = business.cover_url || business.logo_url;
       return (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40">
-          {business.logo_url ? (
+        <div className="relative w-full h-40 rounded-2xl overflow-hidden">
+          {coverImage ? (
             <img
-              src={business.logo_url}
+              src={coverImage}
               alt={business.name}
-              className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+              className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-              <span className="text-xl">🏷️</span>
+            <div className="w-full h-full bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center">
+              <span className="text-4xl">🏷️</span>
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate text-sm">{business.name}</h3>
-            {locationLabel && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                <MapPin className="h-3 w-3" />
-                <span className="truncate">{locationLabel}</span>
-              </div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          {/* Text overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h3 className="text-white font-bold text-lg leading-tight">
+              {business.name}
+            </h3>
+            {business.city && (
+              <p className="text-white/90 text-sm font-medium">
+                {business.city}
+              </p>
             )}
           </div>
         </div>
@@ -347,112 +321,121 @@ export const PremiumShareSheet = ({
     return null;
   };
 
-  // Share content component
+  // Main share content matching the reference design exactly
   const ShareContent = () => (
-    <div className="px-4 pb-6 pt-2 space-y-5">
-      {/* Preview */}
-      <PreviewCard />
-
-      {/* Send to friend section - with horizontal scroll */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-muted-foreground">💬</span>
-          <h4 className="text-sm font-medium text-foreground">{t.sendToFriend}</h4>
-        </div>
-        <div 
-          ref={quickRowRef}
-          onWheel={handleQuickRowWheel}
-          className={cn(
-            'flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 pr-8 overscroll-x-contain',
-            'touch-pan-x'
-          )}
-          style={{ 
-            scrollbarWidth: 'thin',
-            WebkitOverflowScrolling: 'touch',
-          }}
+    <div className="flex flex-col">
+      {/* Header with title and close button */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+        <div className="w-8" /> {/* Spacer for centering */}
+        <h2 className="text-base font-semibold text-foreground">{t.share}</h2>
+        <button
+          onClick={() => onOpenChange(false)}
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
         >
-          <QuickActionButton
-            icon={InstagramIcon}
-            label="Instagram"
-            onClick={() => handleShare('instagram')}
-            disabled={isSharing}
-          />
-          <QuickActionButton
-            icon={MessengerIcon}
-            label="Messenger"
-            onClick={() => handleShare('messenger')}
-            disabled={isSharing}
-          />
-          <QuickActionButton
-            icon={WhatsAppIcon}
-            label="WhatsApp"
-            onClick={() => handleShare('whatsapp')}
-            disabled={isSharing}
-          />
-          <QuickActionButton
-            icon={SnapchatIcon}
-            label="Snapchat"
-            onClick={() => handleShare('snapchat')}
-            disabled={isSharing}
-          />
-          <QuickActionButton
-            icon={TelegramIcon}
-            label="Telegram"
-            onClick={() => handleShare('telegram')}
-            disabled={isSharing}
-          />
-          <QuickActionButton
-            icon={DownloadIcon}
-            label={t.downloadImage}
-            onClick={handleDownloadStoryImage}
-            disabled={isSharing}
-          />
-        </div>
+          <X className="h-5 w-5 text-muted-foreground" />
+        </button>
       </div>
 
-      {/* For Story section */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-muted-foreground">✨</span>
-          <h4 className="text-sm font-medium text-foreground">{t.forStory}</h4>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="flex-1 h-10 px-3 gap-1.5 text-xs font-semibold whitespace-nowrap"
-            onClick={() => handleShare('instagram-story')}
-            disabled={isSharing}
-          >
-            <img src={instagramIcon} alt="" className="w-4.5 h-4.5 object-contain" />
-            {t.instagramStory}
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 h-10 px-3 gap-1.5 text-xs font-semibold whitespace-nowrap"
-            onClick={() => handleShare('facebook-story')}
-            disabled={isSharing}
-          >
-            <FacebookIcon size={18} />
-            {t.facebookStory}
-          </Button>
-        </div>
-      </div>
+      <div className="px-4 py-4 space-y-6">
+        {/* Image Preview Card */}
+        <ImagePreviewCard />
 
-      {/* Primary CTA: System share sheet - smaller button */}
-      <button
-        type="button"
-        onClick={() => handleShare('native')}
-        disabled={isSharing}
-        className={cn(
-          'w-fit inline-flex items-center gap-1.5',
-          'text-xs font-medium text-muted-foreground hover:text-foreground',
-          'disabled:opacity-50 disabled:cursor-not-allowed'
-        )}
-        aria-label={t.moreOptions}
-      >
-        <MoreHorizontal className="h-4 w-4" />
-        <span>{t.moreOptions}</span>
-      </button>
+        {/* Send to friend section */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-4">{t.sendToFriend}</h4>
+          <div className="flex items-start justify-between gap-2">
+            <SocialIconButton
+              icon={InstagramIcon}
+              label="Instagram"
+              onClick={() => handleShare('instagram')}
+              disabled={isSharing}
+            />
+            <SocialIconButton
+              icon={MessengerIcon}
+              label="Messenger"
+              onClick={() => handleShare('messenger')}
+              disabled={isSharing}
+            />
+            <SocialIconButton
+              icon={WhatsAppIcon}
+              label="WhatsApp"
+              onClick={() => handleShare('whatsapp')}
+              disabled={isSharing}
+            />
+            <SocialIconButton
+              icon={SnapchatIcon}
+              label="Snapchat"
+              onClick={() => handleShare('snapchat')}
+              disabled={isSharing}
+            />
+            <SocialIconButton
+              icon={TelegramIcon}
+              label="Telegram"
+              onClick={() => handleShare('telegram')}
+              disabled={isSharing}
+            />
+          </div>
+        </div>
+
+        {/* For Story section - full width buttons with chevrons */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-3">{t.forStory}</h4>
+          <div className="space-y-2">
+            {/* Instagram Story button */}
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleShare('instagram-story')}
+              disabled={isSharing}
+              className={cn(
+                'w-full flex items-center justify-between px-4 py-3.5 rounded-xl',
+                'bg-muted/50 hover:bg-muted transition-colors',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <img src={instagramIcon} alt="" className="w-7 h-7 object-contain" />
+                </div>
+                <span className="text-sm font-medium text-foreground">{t.instagramStory}</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </motion.button>
+
+            {/* Facebook Story button */}
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleShare('facebook-story')}
+              disabled={isSharing}
+              className={cn(
+                'w-full flex items-center justify-between px-4 py-3.5 rounded-xl',
+                'bg-muted/50 hover:bg-muted transition-colors',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <FacebookIcon size={28} />
+                </div>
+                <span className="text-sm font-medium text-foreground">{t.facebookStory}</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </motion.button>
+          </div>
+        </div>
+
+        {/* More options link at the bottom */}
+        <button
+          type="button"
+          onClick={() => handleShare('native')}
+          disabled={isSharing || !hasNativeShare()}
+          className={cn(
+            'text-sm text-muted-foreground hover:text-foreground transition-colors',
+            'disabled:opacity-40 disabled:cursor-not-allowed'
+          )}
+        >
+          {t.moreOptions}
+        </button>
+      </div>
     </div>
   );
 
@@ -499,17 +482,7 @@ export const PremiumShareSheet = ({
       <>
         <HiddenStoryCard />
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="sm:max-w-[400px] p-0 gap-0 rounded-2xl overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-border/50">
-              <h2 className="text-lg font-semibold text-foreground">{t.share}</h2>
-              <button
-                onClick={() => onOpenChange(false)}
-                className="p-1.5 rounded-full hover:bg-muted transition-colors"
-              >
-                <X className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </div>
+          <DialogContent className="max-w-sm p-0 gap-0 rounded-2xl overflow-hidden">
             <ShareContent />
           </DialogContent>
         </Dialog>
@@ -517,22 +490,15 @@ export const PremiumShareSheet = ({
     );
   }
 
-  // Mobile/Tablet uses Drawer (bottom sheet)
+  // Mobile uses Drawer (bottom sheet)
   return (
     <>
       <HiddenStoryCard />
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[85vh] rounded-t-3xl">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-border/30">
-            <h2 className="text-lg font-semibold text-foreground">{t.share}</h2>
-            <DrawerClose asChild>
-              <button className="p-1.5 rounded-full hover:bg-muted transition-colors">
-                <X className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </DrawerClose>
-          </div>
+        <DrawerContent className="max-h-[90vh] rounded-t-2xl">
           <ShareContent />
+          {/* Safe area bottom padding */}
+          <div className="h-6" />
         </DrawerContent>
       </Drawer>
     </>
