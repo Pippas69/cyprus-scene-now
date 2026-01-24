@@ -280,15 +280,29 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         language={language}
       />
     );
+    // Pin label must sit clearly ABOVE the pin and stay on top of other UI.
     popupRef.current = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
       maxWidth: 'none',
-      offset: 25,
+      anchor: 'bottom',
+      // Negative Y lifts the label above the pin.
+      offset: [0, -36],
+      className: 'fomo-pin-label',
     })
       .setLngLat([lng, lat])
       .setDOMContent(popupDiv)
       .addTo(map.current);
+
+    // Ensure it never renders behind map controls/overlays.
+    try {
+      const el = popupRef.current.getElement();
+      el.style.zIndex = '60';
+      // Remove default tip spacing that can cause awkward gaps.
+      el.style.pointerEvents = 'auto';
+    } catch {
+      // ignore
+    }
     
     // Show directions icon below the pin
     showDirectionsIcon(business);
