@@ -1,5 +1,5 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { orderId, userEmail, eventTitle, tickets, eventDate, eventLocation, businessName, customerName, eventCoverImage } = await req.json();
+    const { orderId, userEmail, eventTitle, tickets, eventDate, eventLocation, businessName, customerName, eventCoverImage, userId, eventId } = await req.json();
     logStep("Request data", { orderId, userEmail, eventTitle, ticketCount: tickets?.length, businessName, hasEventCover: !!eventCoverImage });
 
     if (!orderId || !userEmail || !tickets || tickets.length === 0) {
@@ -160,6 +160,26 @@ Deno.serve(async (req) => {
     });
 
     logStep("Email sent successfully", emailResponse);
+
+    // Create in-app notification for the user
+    if (userId) {
+      try {
+        await supabaseClient.from('notifications').insert({
+          user_id: userId,
+          title: '🎟️ Τα εισιτήριά σου είναι έτοιμα!',
+          message: `${tickets.length} εισιτήρι${tickets.length > 1 ? 'α' : 'ο'} για "${eventTitle}"`,
+          type: 'ticket',
+          event_type: 'ticket_purchased',
+          entity_type: 'ticket',
+          entity_id: orderId,
+          deep_link: `/dashboard-user/tickets`,
+          delivered_at: new Date().toISOString(),
+        });
+        logStep("In-app notification created for user", { userId });
+      } catch (notifError) {
+        logStep("Failed to create in-app notification", notifError);
+      }
+    }
 
     return new Response(JSON.stringify({ success: true, emailId: emailResponse.data?.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

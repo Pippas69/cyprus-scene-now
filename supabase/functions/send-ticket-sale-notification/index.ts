@@ -1,7 +1,4 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,6 +63,13 @@ Deno.serve(async (req) => {
 
   try {
     logStep("Function started");
+
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+    
+    const resend = new Resend(resendApiKey);
 
     const {
       orderId,
@@ -151,10 +155,11 @@ Deno.serve(async (req) => {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
-    logStep("ERROR", { message: error.message });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

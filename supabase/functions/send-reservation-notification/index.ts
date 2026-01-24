@@ -1,7 +1,6 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -58,6 +57,13 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+    
+    const resend = new Resend(resendApiKey);
+    
     const { reservationId, type }: NotificationRequest = await req.json();
     console.log(`Processing ${type} notification for reservation ${reservationId}`);
 
@@ -169,6 +175,7 @@ const handler = async (req: Request): Promise<Response> => {
     let userHtml = '';
     let businessSubject = '';
     let businessHtml = '';
+    let inAppNotification: { title: string; message: string; event_type: string; deep_link: string } | null = null;
 
     const reservationTypeLabel = isDirectReservation ? 'Κράτηση Τραπεζιού' : 'Κράτηση Εκδήλωσης';
     const reservationTypeEmoji = isDirectReservation ? '🪑' : '🎉';
@@ -180,6 +187,12 @@ const handler = async (req: Request): Promise<Response> => {
       if (isAutoAccepted && qrCodeUrl) {
         // Auto-accepted reservation - send confirmation with QR code
         userSubject = `Η Κράτησή σου Επιβεβαιώθηκε - ${reservationContext}`;
+        inAppNotification = {
+          title: '✅ Κράτηση επιβεβαιώθηκε!',
+          message: `${reservationContext} στις ${formattedDateTime}`,
+          event_type: 'reservation_confirmed',
+          deep_link: `/dashboard-user/reservations`
+        };
         userHtml = wrapEmailContent(`
           <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Η Κράτησή σου Επιβεβαιώθηκε! ✅</h2>
           <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
@@ -219,6 +232,12 @@ const handler = async (req: Request): Promise<Response> => {
       } else {
         // Pending reservation - needs approval
         userSubject = `Επιβεβαίωση Κράτησης - ${reservationContext}`;
+        inAppNotification = {
+          title: '📋 Κράτηση καταχωρήθηκε',
+          message: `${reservationContext} - αναμονή έγκρισης`,
+          event_type: 'reservation_pending',
+          deep_link: `/dashboard-user/reservations`
+        };
         userHtml = wrapEmailContent(`
           <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Επιβεβαίωση Κράτησης ${reservationTypeEmoji}</h2>
           <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
@@ -286,6 +305,22 @@ const handler = async (req: Request): Promise<Response> => {
       const statusEmoji = isAccepted ? '✅' : '❌';
       
       userSubject = `Ενημέρωση Κράτησης - ${statusText}`;
+      
+      if (isAccepted) {
+        inAppNotification = {
+          title: '✅ Κράτηση εγκρίθηκε!',
+          message: `${reservationContext} στις ${formattedDateTime}`,
+          event_type: 'reservation_confirmed',
+          deep_link: `/dashboard-user/reservations`
+        };
+      } else {
+        inAppNotification = {
+          title: '❌ Κράτηση απορρίφθηκε',
+          message: `${reservationContext} - ${businessName}`,
+          event_type: 'reservation_declined',
+          deep_link: `/dashboard-user/reservations`
+        };
+      }
       
       if (isAccepted && qrCodeUrl) {
         // Accepted reservation with QR code
@@ -377,6 +412,12 @@ const handler = async (req: Request): Promise<Response> => {
       }
     } else if (type === 'cancellation') {
       userSubject = `Ακύρωση Κράτησης - ${reservationContext}`;
+      inAppNotification = {
+        title: '🚫 Κράτηση ακυρώθηκε',
+        message: `${reservationContext} - ${businessName}`,
+        event_type: 'reservation_cancelled',
+        deep_link: `/dashboard-user/reservations`
+      };
       userHtml = wrapEmailContent(`
         <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Κράτηση Ακυρώθηκε</h2>
         <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
@@ -445,6 +486,26 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Email API responses:', JSON.stringify(results, null, 2));
     console.log('Emails sent successfully to:', userProfile.email, businessEmail || 'no business email');
 
+    // Create in-app notification
+    if (inAppNotification) {
+      try {
+        await supabase.from('notifications').insert({
+          user_id: reservation.user_id,
+          title: inAppNotification.title,
+          message: inAppNotification.message,
+          type: 'reservation',
+          event_type: inAppNotification.event_type,
+          entity_type: 'reservation',
+          entity_id: reservationId,
+          deep_link: inAppNotification.deep_link,
+          delivered_at: new Date().toISOString(),
+        });
+        console.log('In-app notification created for user', reservation.user_id);
+      } catch (notifError) {
+        console.log('Failed to create in-app notification', notifError);
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true }),
       {
@@ -452,10 +513,11 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
-  } catch (error: any) {
-    console.error("Error in send-reservation-notification:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error in send-reservation-notification:", errorMessage);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
