@@ -12,70 +12,77 @@ import instagramIcon from '@/assets/icons/instagram.png';
 import telegramIcon from '@/assets/icons/telegram.png';
 import snapchatIcon from '@/assets/icons/snapchat.png';
 
-// Brand icons with exact sizing matching the reference
-const ICON_SIZE = 44;
+// Exact brand icons as rounded rectangles matching the reference images
+const ICON_SIZE = 48;
 
-const WhatsAppIcon = () => (
-  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
-    <circle cx="24" cy="24" r="24" fill="#25D366" />
-    <path
-      d="M34.944 28.764c-.594-.298-3.516-1.734-4.06-1.934-.546-.198-.942-.296-1.34.3-.394.594-1.534 1.932-1.88 2.328-.346.398-.694.446-1.288.15-.594-.3-2.51-.926-4.78-2.95-1.766-1.576-2.96-3.522-3.306-4.118-.346-.594-.036-.916.26-1.212.268-.266.596-.694.892-1.04.298-.348.396-.596.596-.994.198-.396.1-.742-.05-1.04-.15-.298-1.338-3.224-1.832-4.414-.484-1.158-.974-1-.1338-1.02-.346-.016-.742-.02-1.14-.02-.396 0-1.04.148-1.584.744-.544.594-2.08 2.032-2.08 4.958 0 2.924 2.13 5.75 2.426 6.148.298.396 4.192 6.4 10.154 8.974 1.418.612 2.524.978 3.388 1.25 1.424.452 2.72.388 3.742.236 1.142-.17 3.516-1.438 4.012-2.826.496-1.388.496-2.578.346-2.826-.148-.248-.546-.396-1.14-.694z"
-      fill="white"
-    />
-  </svg>
-);
-
+// Instagram - gradient pink/purple/orange rounded square
 const InstagramIcon = () => (
   <img
     src={instagramIcon}
     alt="Instagram"
     draggable={false}
-    className="select-none object-contain"
+    className="select-none rounded-xl"
     style={{ width: ICON_SIZE, height: ICON_SIZE }}
   />
 );
 
+// Messenger - gradient purple/blue rounded square  
 const MessengerIcon = () => (
   <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
     <defs>
-      <linearGradient id="messenger-gradient-sheet" x1="0%" y1="100%" x2="100%" y2="0%">
+      <linearGradient id="messenger-grad" x1="0%" y1="100%" x2="100%" y2="0%">
         <stop offset="0%" stopColor="#0099FF" />
-        <stop offset="100%" stopColor="#A033FF" />
+        <stop offset="50%" stopColor="#A033FF" />
+        <stop offset="100%" stopColor="#FF5C87" />
       </linearGradient>
     </defs>
-    <circle cx="24" cy="24" r="24" fill="url(#messenger-gradient-sheet)" />
+    <rect x="0" y="0" width="48" height="48" rx="12" fill="url(#messenger-grad)" />
     <path
-      d="M24 10C16 10 9 16.28 9 24c0 4.06 2.02 7.68 5.18 10.06V39l4.76-2.62c1.28.36 2.62.56 4.06.56 8 0 15-6.28 15-14S32 10 24 10zm1.5 18.88l-3.82-4.08-7.44 4.08 8.18-8.68 3.92 4.08 7.34-4.08-8.18 8.68z"
+      d="M24 10C16.268 10 10 15.73 10 22.92c0 3.906 1.916 7.394 4.916 9.72V38l5.09-2.792c1.362.376 2.806.58 4.294.58 7.732 0 14-5.73 14-12.868C38.3 15.73 31.732 10 24 10zm1.434 17.356l-3.572-3.812-6.974 3.812 7.67-8.14 3.66 3.812 6.886-3.812-7.67 8.14z"
       fill="white"
     />
   </svg>
 );
 
-const TelegramIcon = () => (
-  <img
-    src={telegramIcon}
-    alt="Telegram"
-    draggable={false}
-    className="select-none object-contain"
-    style={{ width: ICON_SIZE + 4, height: ICON_SIZE + 4 }}
-  />
+// WhatsApp - green rounded square with phone icon
+const WhatsAppIcon = () => (
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
+    <rect x="0" y="0" width="48" height="48" rx="12" fill="#25D366" />
+    <path
+      d="M34.6 13.3C31.7 10.4 27.9 8.8 24 8.8c-8.1 0-14.7 6.6-14.7 14.7 0 2.6.7 5.1 1.9 7.3L9.3 39l8.4-2.2c2.1 1.2 4.5 1.8 6.9 1.8h0c8.1 0 14.7-6.6 14.7-14.7.1-3.9-1.5-7.6-4.4-10.5l-.3-.1zm-10.6 22.6c-2.2 0-4.3-.6-6.2-1.7l-.4-.3-4.5 1.2 1.2-4.4-.3-.5c-1.2-1.9-1.8-4.1-1.8-6.4 0-6.6 5.4-12 12-12 3.2 0 6.2 1.3 8.5 3.5 2.3 2.3 3.5 5.3 3.5 8.5 0 6.6-5.4 12-12 12zm6.6-9c-.4-.2-2.1-1.1-2.5-1.2-.4-.1-.6-.2-.9.2-.2.4-1 1.2-1.2 1.4-.2.2-.5.3-.9.1-.4-.2-1.6-.6-3.1-1.9-1.1-1-1.9-2.3-2.1-2.7-.2-.4 0-.6.2-.8.2-.2.4-.5.6-.7.2-.2.2-.4.4-.6.1-.2.1-.5 0-.7-.1-.2-1-2.3-1.3-3.2-.3-.8-.7-.7-.9-.7h-.8c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.3 3.4 1.4 3.6c.1.2 2.5 3.8 6 5.3.8.4 1.5.6 2 .8.8.2 1.6.2 2.2.1.7-.1 2.1-.9 2.4-1.7.3-.8.3-1.5.2-1.7-.1-.2-.3-.3-.7-.5z"
+      fill="white"
+    />
+  </svg>
 );
 
+// Snapchat - yellow rounded square with ghost
 const SnapchatIcon = () => (
   <img
     src={snapchatIcon}
     alt="Snapchat"
     draggable={false}
-    className="select-none object-contain"
-    style={{ width: ICON_SIZE + 4, height: ICON_SIZE + 4 }}
+    className="select-none rounded-xl"
+    style={{ width: ICON_SIZE, height: ICON_SIZE }}
   />
 );
 
-const FacebookIcon = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <circle cx="12" cy="12" r="12" fill="#1877F2" />
+// Telegram - light blue rounded square with paper plane
+const TelegramIcon = () => (
+  <img
+    src={telegramIcon}
+    alt="Telegram"
+    draggable={false}
+    className="select-none rounded-xl"
+    style={{ width: ICON_SIZE, height: ICON_SIZE }}
+  />
+);
+
+// Facebook - blue rounded square with F
+const FacebookIcon = ({ size = 28 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    <rect x="0" y="0" width="48" height="48" rx="10" fill="#1877F2" />
     <path
-      d="M16.5 12.049l.41-2.67h-2.56v-1.73c0-.73.36-1.44 1.5-1.44h1.16v-2.27s-1.06-.18-2.07-.18c-2.11 0-3.49 1.28-3.49 3.6v2.03h-2.35v2.67h2.35v6.45a9.36 9.36 0 002.89 0v-6.45h2.15z"
+      d="M32.5 24.06l.68-4.45h-4.27v-2.89c0-1.22.6-2.4 2.5-2.4h1.94V10.4s-1.76-.3-3.45-.3c-3.52 0-5.82 2.13-5.82 6v3.38h-3.91v4.45h3.91V38.4a15.56 15.56 0 004.82 0V24.06h3.6z"
       fill="white"
     />
   </svg>
@@ -154,7 +161,7 @@ const SocialIconButton = ({
       'disabled:opacity-50 disabled:cursor-not-allowed'
     )}
   >
-    <div className="w-14 h-14 flex items-center justify-center">
+    <div className="flex items-center justify-center">
       <Icon />
     </div>
     <span className="text-[11px] font-medium text-foreground text-center leading-tight">
@@ -340,10 +347,10 @@ export const PremiumShareSheet = ({
         {/* Image Preview Card */}
         <ImagePreviewCard />
 
-        {/* Send to friend section */}
+        {/* Send to friend section - 5 icons in a row with equal spacing */}
         <div>
           <h4 className="text-sm font-semibold text-foreground mb-4">{t.sendToFriend}</h4>
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start justify-between px-1">
             <SocialIconButton
               icon={InstagramIcon}
               label="Instagram"
@@ -393,9 +400,7 @@ export const PremiumShareSheet = ({
               )}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 flex items-center justify-center">
-                  <img src={instagramIcon} alt="" className="w-7 h-7 object-contain" />
-                </div>
+                <img src={instagramIcon} alt="" className="w-7 h-7 object-contain rounded-lg" />
                 <span className="text-sm font-medium text-foreground">{t.instagramStory}</span>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -413,9 +418,7 @@ export const PremiumShareSheet = ({
               )}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 flex items-center justify-center">
-                  <FacebookIcon size={28} />
-                </div>
+                <FacebookIcon size={28} />
                 <span className="text-sm font-medium text-foreground">{t.facebookStory}</span>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
