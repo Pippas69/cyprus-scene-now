@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, MapPin, Download, Check, Share2, Link2, MoreHorizontal } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { X, Calendar, MapPin, Download } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerClose } from '@/components/ui/drawer';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,10 @@ import { cn } from '@/lib/utils';
 import { useShare, isMobile, hasNativeShare, formatEventShareText, formatBusinessShareText, getEventUrlFallback, getBusinessUrlFallback, ShareChannel } from '@/hooks/useShare';
 import { ShareableEventCard } from './ShareableEventCard';
 import { ShareableBusinessCard } from './ShareableBusinessCard';
+
+import instagramIcon from '@/assets/icons/instagram.png';
+import telegramIcon from '@/assets/icons/telegram.png';
+import snapchatIcon from '@/assets/icons/snapchat.png';
 
 // Social Icons with brand colors
 const WhatsAppIcon = ({ size = 24 }: { size?: number }) => (
@@ -20,21 +24,19 @@ const WhatsAppIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
+const PngIcon = ({ src, size = 24, alt }: { src: string; size?: number; alt: string }) => (
+  <img
+    src={src}
+    alt={alt}
+    width={size}
+    height={size}
+    draggable={false}
+    className="select-none"
+  />
+);
+
 const InstagramIcon = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <defs>
-      <linearGradient id="ig-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#FFDC80" />
-        <stop offset="25%" stopColor="#F77737" />
-        <stop offset="50%" stopColor="#E1306C" />
-        <stop offset="75%" stopColor="#C13584" />
-        <stop offset="100%" stopColor="#833AB4" />
-      </linearGradient>
-    </defs>
-    <rect width="24" height="24" rx="6" fill="url(#ig-gradient)" />
-    <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="1.5" fill="none" />
-    <circle cx="17" cy="7" r="1" fill="white" />
-  </svg>
+  <PngIcon src={instagramIcon} size={size} alt="Instagram" />
 );
 
 const MessengerIcon = ({ size = 24 }: { size?: number }) => (
@@ -54,25 +56,11 @@ const MessengerIcon = ({ size = 24 }: { size?: number }) => (
 );
 
 const TelegramIcon = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="12" fill="#0088CC" />
-    <path
-      d="M9.417 15.181l-.397 3.298s-.164.774.676 0c.84-.775 1.644-1.487 1.644-1.487l3.421 2.523s.591.366.795-.202l1.437-9.028s.367-1.418-.818-.897l-11.56 4.464s-.882.325-.815.97c.066.646.788.939.788.939l2.979 1.003 6.893-4.558s.398-.243.381 0c0 0 .072.044-.142.266-.215.221-5.449 4.859-5.449 4.859"
-      fill="white"
-    />
-  </svg>
+  <PngIcon src={telegramIcon} size={size} alt="Telegram" />
 );
 
 const SnapchatIcon = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <rect width="24" height="24" rx="6" fill="#FFFC00" />
-    <path
-      d="M12 4.5c-2.4 0-3.9 1.7-4.1 4.1 0 .4-.1.8-.1 1.1-.2 0-.5-.1-.7-.1-.4 0-.7.2-.7.5s.2.5.5.6c.2.1.4.1.7.2-.1.3-.3.6-.5.9-.4.5-.9 1-1.5 1.4-.2.1-.3.3-.2.5.1.3.4.4.7.4.4 0 .9-.1 1.3-.3.1 0 .2-.1.3-.1.1 0 .2.1.2.2.1.5.3 1 .7 1.4.8.8 2.1 1.2 3.4 1.2s2.6-.4 3.4-1.2c.4-.4.6-.9.7-1.4 0-.1.1-.2.2-.2.1 0 .2.1.3.1.4.2.9.3 1.3.3.3 0 .6-.1.7-.4.1-.2 0-.4-.2-.5-.6-.4-1.1-.9-1.5-1.4-.2-.3-.4-.6-.5-.9.3-.1.5-.1.7-.2.3-.1.5-.3.5-.6s-.3-.5-.7-.5c-.2 0-.5.1-.7.1 0-.3-.1-.7-.1-1.1-.2-2.4-1.7-4.1-4.1-4.1z"
-      fill="white"
-      stroke="black"
-      strokeWidth="0.5"
-    />
-  </svg>
+  <PngIcon src={snapchatIcon} size={size} alt="Snapchat" />
 );
 
 // Types
@@ -110,24 +98,24 @@ interface PremiumShareSheetProps {
 // Translations
 const translations = {
   el: {
-    share: 'Κοινοποίησε',
-    shareButton: 'Κοινοποίησε',
+    share: 'Κοινοποίηση',
     sendToFriend: 'Στείλε σε φίλο',
     forStory: 'Για Story',
-    moreOptions: 'Περισσότερα...',
-    copyLink: 'Αντιγραφή link',
     downloadImage: 'Λήψη εικόνας',
-    copied: 'Αντιγράφηκε!',
+    instagramStory: 'Instagram Story',
+    facebookStory: 'Facebook Story',
+    moreOptions: 'Περισσότερες επιλογές',
+    copyLink: 'Αντιγραφή link',
   },
   en: {
     share: 'Share',
-    shareButton: 'Share',
     sendToFriend: 'Send to a friend',
     forStory: 'For Story',
-    moreOptions: 'More...',
-    copyLink: 'Copy link',
     downloadImage: 'Download image',
-    copied: 'Copied!',
+    instagramStory: 'Instagram Story',
+    facebookStory: 'Facebook Story',
+    moreOptions: 'More options',
+    copyLink: 'Copy link',
   },
 };
 
@@ -161,14 +149,8 @@ const QuickActionButton = ({
   </motion.button>
 );
 
-// Download icon for image download
-const DownloadIcon = ({ size = 24 }: { size?: number }) => (
-  <div 
-    className="flex items-center justify-center"
-    style={{ width: size, height: size }}
-  >
-    <Link2 className="text-aegean" size={size * 0.8} />
-  </div>
+const DownloadStoryIcon = ({ size = 24 }: { size?: number }) => (
+  <Download className="text-primary" size={size} />
 );
 
 export const PremiumShareSheet = ({
@@ -182,7 +164,6 @@ export const PremiumShareSheet = ({
   const t = translations[language];
   const { shareToChannel, generateStoryImage, downloadImage, isSharing } = useShare(language);
   const storyCardRef = useRef<HTMLDivElement>(null);
-  const [copied, setCopied] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
   // Check if desktop on mount
@@ -254,11 +235,6 @@ export const PremiumShareSheet = ({
       ...getShareOptions(),
       onImageDownload: handleDownloadStoryImage,
     });
-    
-    if (channel === 'copy') {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
   }, [shareToChannel, getShareUrl, getShareText, getShareOptions, handleDownloadStoryImage]);
 
   // Format date for preview
@@ -339,17 +315,6 @@ export const PremiumShareSheet = ({
       {/* Preview */}
       <PreviewCard />
 
-      {/* Main Share Button - Primary CTA */}
-      <Button
-        variant="default"
-        className="w-full h-12 text-base font-medium gap-2 bg-primary hover:bg-primary/90"
-        onClick={() => handleShare('native')}
-        disabled={isSharing}
-      >
-        <Share2 className="h-4 w-4" />
-        {t.shareButton}
-      </Button>
-
       {/* Send to friend section */}
       <div>
         <div className="flex items-center gap-2 mb-3">
@@ -376,13 +341,19 @@ export const PremiumShareSheet = ({
             disabled={isSharing}
           />
           <QuickActionButton
+            icon={SnapchatIcon}
+            label="Snapchat"
+            onClick={() => handleShare('snapchat')}
+            disabled={isSharing}
+          />
+          <QuickActionButton
             icon={TelegramIcon}
             label="Telegram"
             onClick={() => handleShare('telegram-web')}
             disabled={isSharing}
           />
           <QuickActionButton
-            icon={DownloadIcon}
+            icon={DownloadStoryIcon}
             label={t.downloadImage}
             onClick={handleDownloadStoryImage}
             disabled={isSharing}
@@ -400,57 +371,42 @@ export const PremiumShareSheet = ({
           <Button
             variant="outline"
             className="flex-1 h-11 gap-2 text-sm font-medium"
-            onClick={handleDownloadStoryImage}
+            onClick={() => handleShare('instagram-story')}
             disabled={isSharing}
           >
-            <Download className="h-4 w-4" />
-            {t.downloadImage}
+            <InstagramIcon size={18} />
+            {t.instagramStory}
           </Button>
           <Button
             variant="outline"
             className="flex-1 h-11 gap-2 text-sm font-medium"
-            onClick={() => handleShare('copy')}
+            onClick={() => handleShare('facebook-story')}
             disabled={isSharing}
           >
-            <AnimatePresence mode="wait">
-              {copied ? (
-                <motion.span
-                  key="check"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <Check className="h-4 w-4 text-green-500" />
-                  {t.copied}
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="copy"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <Link2 className="h-4 w-4" />
-                  {t.copyLink}
-                </motion.span>
-              )}
-            </AnimatePresence>
+            {t.facebookStory}
           </Button>
         </div>
       </div>
 
-      {/* More options */}
-      {hasNativeShare() && (
-        <button
+      {/* Primary CTA: System share sheet (or safe fallback) */}
+      {hasNativeShare() ? (
+        <Button
+          variant="default"
+          className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90"
           onClick={() => handleShare('native')}
           disabled={isSharing}
-          className="w-full flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <MoreHorizontal className="h-4 w-4" />
           {t.moreOptions}
-        </button>
+        </Button>
+      ) : (
+        <Button
+          variant="default"
+          className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90"
+          onClick={() => handleShare('copy')}
+          disabled={isSharing}
+        >
+          {t.copyLink}
+        </Button>
       )}
     </div>
   );
