@@ -15,7 +15,7 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 
 // Create in-app notification for business owner
 async function createInAppNotification(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   userId: string,
   businessId: string,
   totalReservations: number,
@@ -318,6 +318,17 @@ Deno.serve(async (req) => {
         } else {
           emailsSent++;
           logStep("Email sent successfully", { businessId: business.id, email: profile.email });
+          
+          // Also create in-app notification
+          await createInAppNotification(
+            supabase,
+            business.user_id,
+            business.id,
+            totalReservations,
+            totalTickets,
+            totalOfferRedemptions,
+            totalRevenue
+          );
         }
       } catch (bizError: any) {
         logStep("Error processing business", { businessId: business.id, error: bizError.message });

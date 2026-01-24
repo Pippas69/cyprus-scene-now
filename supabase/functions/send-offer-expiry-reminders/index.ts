@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
     const { data: prefs } = await supabase
       .from('user_preferences')
-      .select('user_id, email_notifications_enabled')
+      .select('user_id, email_notifications_enabled, notification_expiring_offers')
       .in('user_id', userIds);
 
     const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
@@ -129,6 +129,8 @@ Deno.serve(async (req) => {
 
     expiringPurchases.forEach((p: any) => {
       const pref = prefMap.get(p.user_id);
+      // Check if user has disabled offer expiry reminders
+      if (pref?.notification_expiring_offers === false) return;
       if (pref?.email_notifications_enabled === false) return;
 
       const profile = profileMap.get(p.user_id);

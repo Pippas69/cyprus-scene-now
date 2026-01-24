@@ -164,3 +164,21 @@ cron = "0 */6 * * *"
 
 [functions.send-user-notification]
 verify_jwt = false
+
+[functions.send-business-reservation-notification]
+verify_jwt = false
+
+[functions.send-business-sale-notification]
+verify_jwt = false
+
+[functions.send-business-ops-notification]
+verify_jwt = false
+
+[functions.send-inventory-alert]
+verify_jwt = false
+
+[functions.send-weekly-sales-summary]
+verify_jwt = false
+
+[functions.send-weekly-sales-summary.schedule]
+cron = "0 9 * * 1"

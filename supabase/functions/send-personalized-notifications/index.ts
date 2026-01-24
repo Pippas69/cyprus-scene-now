@@ -158,11 +158,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     logStep(`Found ${newContent.length} content items`);
 
-    // Get users with preferences enabled
+    // Get users with preferences enabled for boosted content / suggestions
+    // The UI toggle "Προτάσεις για Εσένα" uses notification_boosted_content
     const { data: userPrefs } = await supabase
       .from('user_preferences')
       .select('user_id, notification_personalized_events, notification_personalized_offers, notification_boosted_content, notification_fomo_recommendations, email_notifications_enabled, notification_push_enabled')
-      .eq('notification_fomo_recommendations', true);
+      .eq('notification_boosted_content', true);
 
     if (!userPrefs || userPrefs.length === 0) {
       logStep("No users with enabled preferences");
