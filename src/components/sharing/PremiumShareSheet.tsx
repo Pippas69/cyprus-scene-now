@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Calendar, MapPin, Download } from 'lucide-react';
+import { X, Calendar, MapPin, Download, MoreHorizontal } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerClose } from '@/components/ui/drawer';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import telegramIcon from '@/assets/icons/telegram.png';
 import snapchatIcon from '@/assets/icons/snapchat.png';
 
 // Social Icons with brand colors - consistent sizing for all icons
-const ICON_SIZE = 32;
+const ICON_SIZE = 40;
 const CONTAINER_SIZE = 'w-14 h-14';
 
 const WhatsAppIcon = () => (
@@ -31,10 +31,8 @@ const InstagramIcon = () => (
   <img
     src={instagramIcon}
     alt="Instagram"
-    width={ICON_SIZE}
-    height={ICON_SIZE}
     draggable={false}
-    className="select-none object-contain"
+    className="select-none object-contain w-[40px] h-[40px]"
   />
 );
 
@@ -58,10 +56,8 @@ const TelegramIcon = () => (
   <img
     src={telegramIcon}
     alt="Telegram"
-    width={ICON_SIZE}
-    height={ICON_SIZE}
     draggable={false}
-    className="select-none object-contain"
+    className="select-none object-contain w-[40px] h-[40px]"
   />
 );
 
@@ -69,15 +65,13 @@ const SnapchatIcon = () => (
   <img
     src={snapchatIcon}
     alt="Snapchat"
-    width={ICON_SIZE}
-    height={ICON_SIZE}
     draggable={false}
-    className="select-none object-contain"
+    className="select-none object-contain w-[40px] h-[40px]"
   />
 );
 
 const FacebookIcon = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="12" cy="12" r="12" fill="#1877F2" />
     <path
       d="M16.5 12.049l.41-2.67h-2.56v-1.73c0-.73.36-1.44 1.5-1.44h1.16v-2.27s-1.06-.18-2.07-.18c-2.11 0-3.49 1.28-3.49 3.6v2.03h-2.35v2.67h2.35v6.45a9.36 9.36 0 002.89 0v-6.45h2.15z"
@@ -87,7 +81,7 @@ const FacebookIcon = () => (
 );
 
 const DownloadIcon = () => (
-  <Download className="text-primary" size={ICON_SIZE - 4} />
+  <Download className="text-primary" size={ICON_SIZE - 6} />
 );
 
 // Types
@@ -190,6 +184,7 @@ export const PremiumShareSheet = ({
   const t = translations[language];
   const { shareToChannel, generateStoryImage, downloadImage, isSharing } = useShare(language);
   const storyCardRef = useRef<HTMLDivElement>(null);
+  const quickRowRef = useRef<HTMLDivElement>(null);
   const [isDesktop, setIsDesktop] = useState(false);
 
   // Check if desktop on mount
@@ -262,6 +257,16 @@ export const PremiumShareSheet = ({
       onImageDownload: handleDownloadStoryImage,
     });
   }, [shareToChannel, getShareUrl, getShareText, getShareOptions, handleDownloadStoryImage]);
+
+  // Mouse wheel should also scroll the horizontal quick-actions row (desktop mouse support)
+  const handleQuickRowWheel = useCallback((e: React.WheelEvent) => {
+    const el = quickRowRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+  }, []);
 
   // Format date for preview
   const formatDate = (dateStr: string) => {
@@ -348,7 +353,9 @@ export const PremiumShareSheet = ({
           <h4 className="text-sm font-medium text-foreground">{t.sendToFriend}</h4>
         </div>
         <div 
-          className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4"
+          ref={quickRowRef}
+          onWheel={handleQuickRowWheel}
+          className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 overscroll-x-contain"
           style={{ 
             scrollbarWidth: 'thin',
             WebkitOverflowScrolling: 'touch',
@@ -422,27 +429,20 @@ export const PremiumShareSheet = ({
       </div>
 
       {/* Primary CTA: System share sheet - smaller button */}
-      {hasNativeShare() ? (
-        <Button
-          variant="secondary"
-          size="sm"
-          className="w-full h-10 text-sm font-medium"
-          onClick={() => handleShare('native')}
-          disabled={isSharing}
-        >
-          {t.moreOptions}
-        </Button>
-      ) : (
-        <Button
-          variant="secondary"
-          size="sm"
-          className="w-full h-10 text-sm font-medium"
-          onClick={() => handleShare('copy')}
-          disabled={isSharing}
-        >
-          {t.copyLink}
-        </Button>
-      )}
+      <button
+        type="button"
+        onClick={() => handleShare('native')}
+        disabled={isSharing}
+        className={cn(
+          'w-fit inline-flex items-center gap-1.5',
+          'text-xs font-medium text-muted-foreground hover:text-foreground',
+          'disabled:opacity-50 disabled:cursor-not-allowed'
+        )}
+        aria-label={t.moreOptions}
+      >
+        <MoreHorizontal className="h-4 w-4" />
+        <span>{t.moreOptions}</span>
+      </button>
     </div>
   );
 

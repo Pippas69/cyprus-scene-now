@@ -137,11 +137,13 @@ const toasts = {
     openingWhatsApp: 'Άνοιξε το WhatsApp…',
     openingMessenger: 'Άνοιξε το Messenger…',
     openingTelegram: 'Άνοιξε το Telegram…',
-    openingInstagram: 'Το link αντιγράφηκε — επικόλλησέ το στο Instagram DM',
-    openingSnapchat: 'Το link αντιγράφηκε — άνοιξε το Snapchat',
+    openingInstagram: 'Άνοιξε το Instagram…',
+    openingSnapchat: 'Άνοιξε το Snapchat…',
     storyInstruction: 'Ανέβασε την εικόνα στο Story και πρόσθεσε το link',
     shareFailed: 'Αποτυχία κοινοποίησης',
     nativeShareSuccess: 'Στάλθηκε 👍',
+    nativeShareUnavailable: 'Το share sheet δεν υποστηρίζεται εδώ',
+    appOpenFailed: 'Δεν άνοιξε η εφαρμογή — δοκίμασε ξανά',
   },
   en: {
     linkCopied: 'Link copied',
@@ -149,17 +151,48 @@ const toasts = {
     openingWhatsApp: 'Opening WhatsApp…',
     openingMessenger: 'Opening Messenger…',
     openingTelegram: 'Opening Telegram…',
-    openingInstagram: 'Link copied — paste it in Instagram DM',
-    openingSnapchat: 'Link copied — open Snapchat',
+    openingInstagram: 'Opening Instagram…',
+    openingSnapchat: 'Opening Snapchat…',
     storyInstruction: 'Upload the image to your Story and add the link',
     shareFailed: 'Share failed',
     nativeShareSuccess: 'Sent 👍',
+    nativeShareUnavailable: 'System share is not supported here',
+    appOpenFailed: 'Could not open the app — try again',
   },
 };
 
 export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
   const [isSharing, setIsSharing] = useState(false);
   const t = toasts[language];
+
+  // Try to open an app deep-link. If it doesn't switch away (blocked / not installed), run fallback.
+  const tryOpenApp = useCallback(async (
+    appUrl: string,
+    fallback: () => Promise<void>,
+    waitMs = 700
+  ) => {
+    let switchedAway = false;
+
+    const onBlur = () => {
+      switchedAway = true;
+    };
+
+    const onVis = () => {
+      if (document.hidden) switchedAway = true;
+    };
+
+    window.addEventListener('blur', onBlur, { once: true });
+    document.addEventListener('visibilitychange', onVis, { once: true });
+
+    // Must happen synchronously after user gesture in most browsers.
+    window.location.href = appUrl;
+
+    await new Promise((r) => setTimeout(r, waitMs));
+
+    if (!switchedAway) {
+      await fallback();
+    }
+  }, []);
 
   // Generate story-ready image (1080x1920)
   const generateStoryImage = useCallback(async (elementRef: React.RefObject<HTMLElement>): Promise<string | null> => {
@@ -242,25 +275,35 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
       switch (channel) {
         // === DM PLATFORMS ===
         case 'instagram':
-          // Instagram DM from web: copy link and try to open the app
-          await copyToClipboard(url);
           toast.info(t.openingInstagram);
           if (isMobile()) {
-            // Try to open Instagram app to DM
-            setTimeout(() => {
-              window.location.href = 'instagram://direct-inbox';
-            }, 100);
+            await tryOpenApp(
+              'instagram://direct-inbox',
+              async () => {
+                // Fallback: open web instagram home (best-effort) without auto-copy
+                window.open('https://www.instagram.com/', '_blank');
+                toast.error(t.appOpenFailed);
+              }
+            );
+          } else {
+            window.open('https://www.instagram.com/', '_blank');
           }
           break;
 
         case 'messenger':
           if (isMobile()) {
-            // Mobile: use fb-messenger:// deep link
-            await copyToClipboard(url);
             toast.success(t.openingMessenger);
-            setTimeout(() => {
-              window.location.href = `fb-messenger://share/?link=${encodedUrl}`;
-            }, 100);
+            await tryOpenApp(
+              `fb-messenger://share/?link=${encodedUrl}`,
+              async () => {
+                // Fallback: Facebook send dialog in browser
+                window.open(
+                  `https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=966242223397117&redirect_uri=${encodeURIComponent(window.location.origin)}`,
+                  '_blank',
+                  'width=600,height=500'
+                );
+              }
+            );
           } else {
             // Desktop: open Messenger web share dialog
             window.open(
@@ -308,10 +351,12 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
         case 'telegram-web':
           toast.success(t.openingTelegram);
           if (isMobile()) {
-            // Mobile: use tg:// deep link
-            setTimeout(() => {
-              window.location.href = `tg://msg_url?url=${encodedUrl}&text=${encodedText}`;
-            }, 100);
+            await tryOpenApp(
+              `tg://msg_url?url=${encodedUrl}&text=${encodedText}`,
+              async () => {
+                window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
+              }
+            );
           } else {
             // Desktop: open Telegram Web share
             window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
@@ -319,14 +364,17 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
           break;
 
         case 'snapchat':
-          // Snapchat: copy link and try to open app
-          await copyToClipboard(url);
           toast.info(t.openingSnapchat);
           if (isMobile()) {
-            setTimeout(() => {
-              // Try Snapchat Creative Kit deep link
-              window.location.href = `snapchat://`;
-            }, 100);
+            await tryOpenApp(
+              'snapchat://',
+              async () => {
+                // Fallback: open Snapchat web with attachment
+                window.open(`https://www.snapchat.com/scan?attachmentUrl=${encodedUrl}`, '_blank');
+              }
+            );
+          } else {
+            window.open(`https://www.snapchat.com/scan?attachmentUrl=${encodedUrl}`, '_blank');
           }
           break;
 
@@ -336,12 +384,17 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
           if (options?.onImageDownload) {
             await options.onImageDownload();
           }
-          await copyToClipboard(url);
           toast.info(t.storyInstruction, { duration: 5000 });
           if (isMobile()) {
-            setTimeout(() => {
-              window.location.href = 'instagram://story-camera';
-            }, 500);
+            await tryOpenApp(
+              'instagram://story-camera',
+              async () => {
+                window.open('https://www.instagram.com/', '_blank');
+              },
+              900
+            );
+          } else {
+            window.open('https://www.instagram.com/', '_blank');
           }
           break;
 
@@ -350,12 +403,17 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
           if (options?.onImageDownload) {
             await options.onImageDownload();
           }
-          await copyToClipboard(url);
           toast.info(t.storyInstruction, { duration: 5000 });
           if (isMobile()) {
-            setTimeout(() => {
-              window.location.href = 'fb://story';
-            }, 500);
+            await tryOpenApp(
+              'fb://story',
+              async () => {
+                window.open('https://www.facebook.com/', '_blank');
+              },
+              900
+            );
+          } else {
+            window.open('https://www.facebook.com/', '_blank');
           }
           break;
 
@@ -381,15 +439,13 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
               });
               toast.success(t.nativeShareSuccess);
             } catch (error) {
-              // User cancelled or failed - silent
+              // User cancelled or failed
               if ((error as Error)?.name !== 'AbortError') {
-                await copyToClipboard(url);
-                toast.success(t.linkCopied);
+                toast.error(t.nativeShareUnavailable);
               }
             }
           } else {
-            await copyToClipboard(url);
-            toast.success(t.linkCopied);
+            toast.error(t.nativeShareUnavailable);
           }
           break;
       }
@@ -405,7 +461,7 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
     } finally {
       setIsSharing(false);
     }
-  }, [t, copyToClipboard]);
+  }, [t, copyToClipboard, tryOpenApp]);
 
   return {
     isSharing,
