@@ -18,8 +18,6 @@ interface BusinessListSheetProps {
 
 const PLAN_TIER_ORDER = ['elite', 'pro', 'basic', 'free'] as const;
 
-// Plan UI disclosure intentionally removed (ordering still uses PLAN_TIER_ORDER).
-
 export const BusinessListSheet = ({ businesses, language, onBusinessClick }: BusinessListSheetProps) => {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
@@ -115,41 +113,20 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                       )}
                     </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      {/* Name row + small Profile badge (right of name) */}
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <h4 className="font-semibold text-sm line-clamp-1 min-w-0 flex-1">{business.name}</h4>
-                        <Button
-                          size="sm"
-                          className="h-6 px-2 text-[10px] leading-none shrink-0"
-                          onClick={(e) => handleProfile(e, business)}
-                        >
-                          {t.profile}
-                          <ChevronRight className="h-3 w-3 ml-1" />
-                        </Button>
-                      </div>
+                    {/* Info - tighter spacing */}
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      {/* Name row */}
+                      <h4 className="font-semibold text-sm line-clamp-1">{business.name}</h4>
 
-                      {/* Location row + small Directions badge (right of location) */}
-                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground mb-2">
-                        <div className="flex items-center gap-1 min-w-0">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          <span className="line-clamp-1">{translateCity(business.city, language)}</span>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 px-2 text-[10px] leading-none shrink-0"
-                          onClick={(e) => handleDirections(e, business)}
-                        >
-                          <Navigation className="h-3 w-3 mr-1" />
-                          {t.directions}
-                        </Button>
+                      {/* Location row */}
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span className="line-clamp-1">{translateCity(business.city, language)}</span>
                       </div>
 
                       {/* Categories */}
                       {business.category.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-2">
+                        <div className="flex flex-wrap gap-1 pt-0.5">
                           {business.category.slice(0, 2).map((cat) => (
                             <Badge
                               key={cat}
