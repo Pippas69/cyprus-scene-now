@@ -71,26 +71,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const now = new Date();
-    const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+    // Check every 30 minutes for boosted content - more real-time for user interests
+    const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+    // Also check up to 2 hours for newly created content to ensure nothing is missed
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
 
-    // Get new events created in the last 6 hours (more frequent for real-time feel)
+    // Get new events created in the last 2 hours
     const { data: newEvents } = await supabase
       .from('events')
       .select(`
         id, title, category, cover_image_url,
         businesses!inner(name)
       `)
-      .gte('created_at', sixHoursAgo.toISOString())
+      .gte('created_at', twoHoursAgo.toISOString())
       .gte('start_at', now.toISOString());
 
-    // Get new offers created in the last 6 hours
+    // Get new offers created in the last 2 hours
     const { data: newOffers } = await supabase
       .from('discounts')
       .select(`
         id, title, category,
         businesses!inner(name)
       `)
-      .gte('created_at', sixHoursAgo.toISOString())
+      .gte('created_at', twoHoursAgo.toISOString())
       .eq('active', true)
       .gte('end_at', now.toISOString());
 
@@ -209,13 +212,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       if (matchingContent.length === 0) continue;
 
-      // Check notification log to avoid duplicates (6-hour window)
+      // Check notification log to avoid duplicates (30-minute window for faster notifications)
       const { data: existingLogs } = await supabase
         .from('notification_log')
         .select('reference_id')
         .eq('user_id', profile.id)
         .eq('notification_type', 'personalized_suggestion')
-        .gte('sent_at', sixHoursAgo.toISOString());
+        .gte('sent_at', thirtyMinutesAgo.toISOString());
 
       const alreadySent = new Set(existingLogs?.map(l => l.reference_id) || []);
       const newMatchingContent = matchingContent.filter(c => !alreadySent.has(c.id));

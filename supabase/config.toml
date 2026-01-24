@@ -160,7 +160,7 @@ cron = "*/30 * * * *"
 verify_jwt = false
 
 [functions.send-personalized-notifications.schedule]
-cron = "0 */6 * * *"
+cron = "*/30 * * * *"
 
 [functions.send-user-notification]
 verify_jwt = false
