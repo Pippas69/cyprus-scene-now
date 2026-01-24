@@ -63,7 +63,7 @@ const WhatsAppIcon = () => (
 
 // Snapchat - crisp SVG version matching official brand
 const SnapchatIcon = () => (
-  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none" style={{ marginLeft: -5 }}>
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none" style={{ marginLeft: -38 }}>
     <rect x="0" y="0" width="48" height="48" rx="12" fill="#FFFC00" />
     <g transform="translate(8, 8) scale(0.667)">
       <path
