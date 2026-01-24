@@ -13,19 +13,43 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[WEEKLY-SALES-SUMMARY] ${step}${detailsStr}`);
 };
 
+// Create in-app notification for business owner
+async function createInAppNotification(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  businessId: string,
+  totalReservations: number,
+  totalTickets: number,
+  totalOfferRedemptions: number,
+  totalRevenue: number
+): Promise<void> {
+  const message = `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | Εξαργυρώσεις: ${totalOfferRedemptions} | Έσοδα: €${(totalRevenue / 100).toFixed(2)}`;
+  
+  await supabase.from('notifications').insert({
+    user_id: userId,
+    title: 'Εβδομαδιαία Σύνοψη 📊',
+    message,
+    type: 'business',
+    event_type: 'WEEKLY_DIGEST',
+    entity_type: 'BUSINESS',
+    entity_id: businessId,
+    deep_link: '/dashboard-business/analytics',
+    read: false,
+    delivered_at: new Date().toISOString(),
+  });
+}
+
 const emailHeader = `
-<div style="background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0;">
-  <img src="https://fomocy.lovable.app/fomo-logo-new.png" alt="FOMO" style="height: 48px; margin-bottom: 16px;" />
-  <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700;">Εβδομαδιαία Σύνοψη</h1>
-  <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Weekly Business Summary</p>
+<div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0;">
+  <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 4px; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</h1>
+  <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Εβδομαδιαία Σύνοψη Επιχείρησης</p>
 </div>
 `;
 
 const emailFooter = `
-<div style="background: #f8fafc; padding: 24px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e2e8f0;">
-  <p style="color: #64748b; font-size: 12px; margin: 0;">
-    FOMO Cyprus © ${new Date().getFullYear()} | <a href="https://fomocy.lovable.app" style="color: #0ea5e9;">fomocy.lovable.app</a>
-  </p>
+<div style="background: #102b4a; padding: 24px; text-align: center; border-radius: 0 0 12px 12px;">
+  <p style="color: #3ec3b7; font-size: 18px; font-weight: bold; letter-spacing: 2px; margin: 0 0 8px 0; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</p>
+  <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2025 ΦΟΜΟ. Empowering Cyprus businesses.</p>
 </div>
 `;
 
@@ -35,6 +59,7 @@ const wrapEmailContent = (content: string) => `
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; padding: 20px; margin: 0;">
   <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">

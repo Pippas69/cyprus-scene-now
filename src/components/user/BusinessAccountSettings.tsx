@@ -128,8 +128,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       inventoryAlertsDescription: 'Ειδοποίηση όταν απομένουν 2 θέσεις ή εξαντληθούν κρατήσεις/εισιτήρια/προσφορές',
       reservationStatus: 'Ακύρωση / No-show / Check-in',
       reservationStatusDescription: 'Ειδοποίηση όταν πελάτης ακυρώσει, δεν εμφανιστεί ή κάνει check-in',
-      userEngagement: 'Αλληλεπίδραση Χρηστών',
-      userEngagementDescription: 'Αλλαγή πλάνου, νέα μηνύματα, νέοι ακόλουθοι, RSVP',
+      userEngagement: 'Όλες οι υπόλοιπες ειδοποιήσεις',
+      userEngagementDescription: 'Δημιουργία/boost, αλλαγή πλάνου, νέοι ακόλουθοι, RSVP',
       
       // Weekly summary
       weeklySummary: 'Εβδομαδιαία Σύνοψη',
@@ -803,7 +803,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                    </Label>
                    <p className="text-xs text-muted-foreground">
                      {language === 'el'
-                       ? 'Δημιουργία/boost, αλλαγή πλάνου, νέα μηνύματα, νέοι ακόλουθοι, RSVP'
+                       ? 'Δημιουργία/boost, αλλαγή πλάνου, νέοι ακόλουθοι, RSVP'
                        : t.userEngagementDescription}
                    </p>
                 </div>
@@ -812,7 +812,6 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 id="user-engagement"
                 checked={
                   (preferences.notification_plan_change ?? true) && 
-                  (preferences.notification_new_message ?? true) && 
                    (preferences.notification_new_follower ?? true) &&
                    (preferences.notification_creation_success ?? true) &&
                    (preferences.notification_boost_success ?? true) &&
@@ -821,7 +820,6 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 onCheckedChange={(checked) =>
                   updatePreferences({ 
                     notification_plan_change: checked,
-                    notification_new_message: checked,
                      notification_new_follower: checked,
                      notification_creation_success: checked,
                      notification_boost_success: checked,
