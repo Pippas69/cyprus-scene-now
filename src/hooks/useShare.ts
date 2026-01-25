@@ -422,7 +422,7 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
         // === STORY PLATFORMS (Web Share API with files) ===
         case 'instagram-story':
         case 'facebook-story': {
-          // ALWAYS generate the image first
+          // Step 1: ALWAYS generate the image first
           let storyImageDataUrl: string | null = null;
           if (options?.onGenerateImage) {
             storyImageDataUrl = await options.onGenerateImage();
@@ -433,25 +433,30 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
             break;
           }
           
-          // Attempt 1: Web Share API with files (works on iOS Safari 15+, Chrome Android 76+)
+          // Step 2: Copy link to clipboard BEFORE attempting share
+          // This way, when user opens Instagram Stories, link is ready to paste
+          await copyToClipboard(url);
+          
+          // Step 3: Try Web Share API with files ONLY (no text/url - Instagram ignores them)
           const storyFile = dataURLtoFile(storyImageDataUrl, 'fomo-story.png');
           
           try {
-            // Build share data with the image file
+            // Share data with ONLY the file - Instagram Stories ignores text/url anyway
             const shareData: ShareData = {
               files: [storyFile],
-              title: options?.title || 'ΦΟΜΟ',
-              text: text,
-              url: url,
             };
             
-            // Validate share capability if canShare exists
-            if (navigator.canShare && !navigator.canShare(shareData)) {
-              throw new Error('Cannot share files');
-            }
-            
+            // Skip canShare check - it's unreliable on iOS Safari
+            // Just try to share and handle errors
             await navigator.share(shareData);
-            toast.success(t.storyShared);
+            
+            // Success! Show toast with paste instruction
+            toast.success(
+              language === 'el' 
+                ? 'Το link αντιγράφηκε! Επίλεξε Instagram Stories και κάνε paste το link' 
+                : 'Link copied! Select Instagram Stories and paste the link',
+              { duration: 5000 }
+            );
             break;
           } catch (e) {
             const error = e as Error;
@@ -461,26 +466,12 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
             
             console.log('Web Share API with files failed:', error.message);
             
-            // Attempt 2: Try sharing without files (just URL/text) - still opens share sheet
-            try {
-              await navigator.share({
-                title: options?.title || 'ΦΟΜΟ',
-                text: text,
-                url: url,
-              });
-              toast.success(t.nativeShareSuccess);
-              break;
-            } catch (e2) {
-              if ((e2 as Error)?.name === 'AbortError') break;
-              console.log('Web Share API without files also failed:', e2);
-            }
-            
-            // Attempt 3: Fallback - Save image and copy link (no deep links - they don't work)
+            // Fallback: Save image (link already copied above)
             downloadImage(storyImageDataUrl, 'fomo-story.png');
-            await copyToClipboard(url);
-            toast.info(language === 'el' 
-              ? 'Η εικόνα αποθηκεύτηκε και το link αντιγράφηκε! Άνοιξε το Instagram > Stories > Επίλεξε την εικόνα > Πρόσθεσε link sticker'
-              : 'Image saved and link copied! Open Instagram > Stories > Select the image > Add link sticker',
+            toast.info(
+              language === 'el' 
+                ? 'Η εικόνα αποθηκεύτηκε! Άνοιξε το Instagram > Stories > Επίλεξε την εικόνα > Πρόσθεσε link sticker (το link είναι ήδη copied)'
+                : 'Image saved! Open Instagram > Stories > Select the image > Add link sticker (link already copied)',
               { duration: 6000 }
             );
           }
