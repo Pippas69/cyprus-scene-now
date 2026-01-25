@@ -59,6 +59,20 @@ export const useBoostValueMetrics = (
       const startDate = dateRange?.from?.toISOString() || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const endDate = dateRange?.to?.toISOString() || new Date().toISOString();
 
+      // NOTE: We must avoid the 1000-row cap for analytics accuracy.
+      const fetchAll = async <T,>(
+        fetchPage: (from: number, to: number) => Promise<T[]>
+      ): Promise<T[]> => {
+        const pageSize = 1000;
+        const out: T[] = [];
+        for (let from = 0; ; from += pageSize) {
+          const page = await fetchPage(from, from + pageSize - 1);
+          out.push(...page);
+          if (page.length < pageSize) break;
+        }
+        return out;
+      };
+
       // ========================================
       // PROFILE - Featured vs Non-Featured (based on subscription)
       // ========================================
@@ -85,20 +99,20 @@ export const useBoostValueMetrics = (
       let profileWith = { views: 0, interactions: 0, visits: 0 };
 
       const countProfileViews = async (rangeStart: string, rangeEnd: string) => {
-        const { data } = await supabase
+        const { count } = await supabase
           .from("engagement_events")
-          .select("id")
+          .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .eq("event_type", "profile_view")
           .gte("created_at", rangeStart)
           .lte("created_at", rangeEnd);
-        return data?.length || 0;
+        return count || 0;
       };
 
       const countProfileInteractions = async (rangeStart: string, rangeEnd: string) => {
-        const { data: events } = await supabase
+        const { count: eventsCount } = await supabase
           .from("engagement_events")
-          .select("id")
+          .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .in("event_type", ["follow", "favorite", "share", "profile_click"])
           .gte("created_at", rangeStart)
@@ -112,7 +126,7 @@ export const useBoostValueMetrics = (
           .gte("created_at", rangeStart)
           .lte("created_at", rangeEnd);
 
-        return (events?.length || 0) + (followerCount || 0);
+        return (eventsCount || 0) + (followerCount || 0);
       };
 
       const countProfileVisits = async (rangeStart: string, rangeEnd: string) => {
@@ -156,17 +170,17 @@ export const useBoostValueMetrics = (
       } else {
         // Split range: [startDate, featuredStart) and [featuredStart, endDate]
         // Without (non-featured)
-        const withoutViews = await supabase
+        const { count: withoutViewsCount } = await supabase
           .from("engagement_events")
-          .select("id")
+          .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .eq("event_type", "profile_view")
           .gte("created_at", startDate)
           .lt("created_at", featuredStartIso);
 
-        const withoutInteractionsEvents = await supabase
+        const { count: withoutInteractionsEventsCount } = await supabase
           .from("engagement_events")
-          .select("id")
+          .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .in("event_type", ["follow", "favorite", "share", "profile_click"])
           .gte("created_at", startDate)
@@ -190,8 +204,8 @@ export const useBoostValueMetrics = (
           .lt("checked_in_at", featuredStartIso);
 
         profileWithout = {
-          views: withoutViews.data?.length || 0,
-          interactions: (withoutInteractionsEvents.data?.length || 0) + (withoutFollowerCount || 0),
+          views: withoutViewsCount || 0,
+          interactions: (withoutInteractionsEventsCount || 0) + (withoutFollowerCount || 0),
           visits: withoutResCheckins || 0,
         };
 
@@ -233,12 +247,18 @@ export const useBoostValueMetrics = (
       let nonBoostedOfferViews = 0;
 
       if (businessOfferIds.length > 0) {
-        const { data: allOfferViews } = await supabase
-          .from("discount_views")
-          .select("discount_id, viewed_at")
-          .in("discount_id", businessOfferIds)
-          .gte("viewed_at", startDate)
-          .lte("viewed_at", endDate);
+        const allOfferViews = await fetchAll<{ discount_id: string; viewed_at: string }>(
+          async (from, to) => {
+            const { data } = await supabase
+              .from("discount_views")
+              .select("discount_id, viewed_at")
+              .in("discount_id", businessOfferIds)
+              .gte("viewed_at", startDate)
+              .lte("viewed_at", endDate)
+              .range(from, to);
+            return (data || []) as any;
+          }
+        );
 
         // Split views based on whether they occurred during a boost period
         (allOfferViews || []).forEach(view => {
@@ -275,13 +295,19 @@ export const useBoostValueMetrics = (
       let nonBoostedOfferVisits = 0;
 
       if (businessOfferIds.length > 0) {
-        const { data: allOfferRedemptions } = await supabase
-          .from("offer_purchases")
-          .select("discount_id, redeemed_at")
-          .in("discount_id", businessOfferIds)
-          .not("redeemed_at", "is", null)
-          .gte("redeemed_at", startDate)
-          .lte("redeemed_at", endDate);
+        const allOfferRedemptions = await fetchAll<{ discount_id: string; redeemed_at: string | null }>(
+          async (from, to) => {
+            const { data } = await supabase
+              .from("offer_purchases")
+              .select("discount_id, redeemed_at")
+              .in("discount_id", businessOfferIds)
+              .not("redeemed_at", "is", null)
+              .gte("redeemed_at", startDate)
+              .lte("redeemed_at", endDate)
+              .range(from, to);
+            return (data || []) as any;
+          }
+        );
 
         (allOfferRedemptions || []).forEach(redemption => {
           if (redemption.redeemed_at && isWithinBoostPeriod(redemption.redeemed_at, redemption.discount_id, offerBoostPeriods)) {
@@ -321,12 +347,18 @@ export const useBoostValueMetrics = (
       let nonBoostedEventViews = 0;
 
       if (businessEventIds.length > 0) {
-        const { data: allEventViews } = await supabase
-          .from("event_views")
-          .select("event_id, viewed_at")
-          .in("event_id", businessEventIds)
-          .gte("viewed_at", startDate)
-          .lte("viewed_at", endDate);
+        const allEventViews = await fetchAll<{ event_id: string; viewed_at: string }>(
+          async (from, to) => {
+            const { data } = await supabase
+              .from("event_views")
+              .select("event_id, viewed_at")
+              .in("event_id", businessEventIds)
+              .gte("viewed_at", startDate)
+              .lte("viewed_at", endDate)
+              .range(from, to);
+            return (data || []) as any;
+          }
+        );
 
         (allEventViews || []).forEach(view => {
           if (isWithinBoostPeriod(view.viewed_at, view.event_id, eventBoostPeriods)) {
@@ -365,13 +397,19 @@ export const useBoostValueMetrics = (
 
       if (businessEventIds.length > 0) {
         // Ticket check-ins
-        const { data: ticketCheckins } = await supabase
-          .from("tickets")
-          .select("event_id, checked_in_at")
-          .in("event_id", businessEventIds)
-          .not("checked_in_at", "is", null)
-          .gte("checked_in_at", startDate)
-          .lte("checked_in_at", endDate);
+        const ticketCheckins = await fetchAll<{ event_id: string; checked_in_at: string | null }>(
+          async (from, to) => {
+            const { data } = await supabase
+              .from("tickets")
+              .select("event_id, checked_in_at")
+              .in("event_id", businessEventIds)
+              .not("checked_in_at", "is", null)
+              .gte("checked_in_at", startDate)
+              .lte("checked_in_at", endDate)
+              .range(from, to);
+            return (data || []) as any;
+          }
+        );
 
         (ticketCheckins || []).forEach(ticket => {
           if (ticket.checked_in_at && isWithinBoostPeriod(ticket.checked_in_at, ticket.event_id, eventBoostPeriods)) {
@@ -382,13 +420,19 @@ export const useBoostValueMetrics = (
         });
 
         // Event reservation check-ins
-        const { data: eventResCheckins } = await supabase
-          .from("reservations")
-          .select("event_id, checked_in_at")
-          .in("event_id", businessEventIds)
-          .not("checked_in_at", "is", null)
-          .gte("checked_in_at", startDate)
-          .lte("checked_in_at", endDate);
+        const eventResCheckins = await fetchAll<{ event_id: string | null; checked_in_at: string | null }>(
+          async (from, to) => {
+            const { data } = await supabase
+              .from("reservations")
+              .select("event_id, checked_in_at")
+              .in("event_id", businessEventIds)
+              .not("checked_in_at", "is", null)
+              .gte("checked_in_at", startDate)
+              .lte("checked_in_at", endDate)
+              .range(from, to);
+            return (data || []) as any;
+          }
+        );
 
         (eventResCheckins || []).forEach(res => {
           if (res.event_id && res.checked_in_at && isWithinBoostPeriod(res.checked_in_at, res.event_id, eventBoostPeriods)) {

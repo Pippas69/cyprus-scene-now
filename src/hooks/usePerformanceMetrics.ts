@@ -35,18 +35,18 @@ export const usePerformanceMetrics = (
       const endDate = dateRange?.to?.toISOString() || new Date().toISOString();
 
       // Profile views from engagement_events
-      const { data: profileViews } = await supabase
+      const { count: profileViewsCount } = await supabase
         .from("engagement_events")
-        .select("id")
+        .select("id", { count: "exact", head: true })
         .eq("business_id", businessId)
         .eq("event_type", "profile_view")
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
       // Profile interactions (follows, shares, profile clicks ONLY - not event clicks)
-      const { data: profileInteractions } = await supabase
+      const { count: profileInteractionsCount } = await supabase
         .from("engagement_events")
-        .select("id")
+        .select("id", { count: "exact", head: true })
         .eq("business_id", businessId)
         .in("event_type", ["follow", "favorite", "share", "profile_click"])
         .gte("created_at", startDate)
@@ -61,7 +61,7 @@ export const usePerformanceMetrics = (
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
-      const totalProfileInteractions = (profileInteractions?.length || 0) + (followerCount || 0);
+      const totalProfileInteractions = (profileInteractionsCount || 0) + (followerCount || 0);
 
       // Profile visits = verified reservation check-ins for DIRECT business reservations only (reservation.event_id IS NULL)
       const { count: profileVisitsCount } = await supabase
@@ -93,14 +93,18 @@ export const usePerformanceMetrics = (
       }
 
       // Offer interactions = clicks on "Εξαργύρωσε" (intent)
-      const { data: offerInteractions } = await supabase
-        .from("engagement_events")
-        .select("id")
-        .eq("business_id", businessId)
-        .eq("event_type", "offer_redeem_click")
-        .in("entity_id", offerIds)
-        .gte("created_at", startDate)
-        .lte("created_at", endDate);
+      let offerInteractionsCount = 0;
+      if (offerIds.length > 0) {
+        const { count } = await supabase
+          .from("engagement_events")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .eq("event_type", "offer_redeem_click")
+          .in("entity_id", offerIds)
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+        offerInteractionsCount = count || 0;
+      }
 
       // Offer visits = verified offer redemptions
       // IMPORTANT: We count offer_purchases.redeemed_at (1 row per redemption).
@@ -174,13 +178,13 @@ export const usePerformanceMetrics = (
 
       return {
         profile: {
-          views: profileViews?.length || 0,
+          views: profileViewsCount || 0,
           interactions: totalProfileInteractions,
           visits: profileVisitsCount || 0,
         },
         offers: {
           views: offerViewsCount,
-          interactions: offerInteractions?.length || 0,
+          interactions: offerInteractionsCount,
           visits: offerVisitsCount,
         },
         events: {
