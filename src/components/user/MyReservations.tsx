@@ -497,7 +497,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 onClick={() => {
                   const businessId = isDirectReservation ? reservation.business_id : reservation.events?.id ? reservation.events?.businesses?.name : null;
                   if (reservation.business_id) {
-                    navigate(`/xartis?business=${reservation.business_id}`);
+                    navigate(`/xartis?business=${reservation.business_id}&src=dashboard_user`);
                   }
                 }}
                 className="flex items-center gap-2 hover:text-primary transition-colors text-left"

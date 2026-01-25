@@ -251,7 +251,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                     <button
                       onClick={() => {
                         if (ticket.events?.business_id) {
-                          navigate(`/xartis?business=${ticket.events.business_id}`);
+                          navigate(`/xartis?business=${ticket.events.business_id}&src=dashboard_user`);
                         }
                       }}
                       className="flex items-center gap-1 hover:text-primary transition-colors"

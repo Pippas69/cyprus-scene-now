@@ -3,6 +3,26 @@ import { useEffect } from 'react';
 
 let sessionId: string | null = null;
 
+/**
+ * Views must NEVER be counted when the user is browsing from their own dashboard sections
+ * (My Events / My Reservations / My Offers / Settings).
+ *
+ * We enforce this centrally to avoid missing any edge-case component.
+ */
+const isDashboardUserContext = (): boolean => {
+  try {
+    const path = window.location?.pathname || "";
+    if (path.startsWith('/dashboard-user')) return true;
+
+    const src = new URLSearchParams(window.location?.search || "").get('src');
+    if (src === 'dashboard_user') return true;
+
+    return false;
+  } catch {
+    return false;
+  }
+};
+
 // Generate or retrieve session ID
 const getSessionId = (): string => {
   if (!sessionId) {
@@ -25,6 +45,8 @@ export const trackEventView = async (
   source: 'feed' | 'map' | 'search' | 'profile' | 'direct'
 ) => {
   try {
+    if (isDashboardUserContext()) return;
+
     const { data: { user } } = await supabase.auth.getUser();
     
     const { error } = await supabase.from('event_views').insert({
@@ -49,6 +71,8 @@ export const trackDiscountView = async (
   source: 'feed' | 'event' | 'profile' | 'direct'
 ) => {
   try {
+    if (isDashboardUserContext()) return;
+
     const { data: { user } } = await supabase.auth.getUser();
     
     const { error } = await supabase.from('discount_views').insert({
@@ -76,6 +100,9 @@ export const trackEngagement = async (
   metadata?: Record<string, any>
 ) => {
   try {
+    // Profile views are a *view metric*. Never count them from user dashboard context.
+    if (eventType === 'profile_view' && isDashboardUserContext()) return;
+
     const { data: { user } } = await supabase.auth.getUser();
 
     const { error } = await supabase.from('engagement_events').insert({

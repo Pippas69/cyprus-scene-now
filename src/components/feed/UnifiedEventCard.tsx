@@ -135,7 +135,19 @@ export const UnifiedEventCard = ({
   const handleMapClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/xartis?business=${event.business_id}`);
+
+    // If this card is rendered in user-dashboard context, we pass src so map pin clicks won't count as views.
+    const src = (() => {
+      if (!linkSearch) return null;
+      try {
+        const raw = linkSearch.startsWith('?') ? linkSearch.slice(1) : linkSearch;
+        return new URLSearchParams(raw).get('src');
+      } catch {
+        return null;
+      }
+    })();
+
+    navigate(`/xartis?business=${event.business_id}${src ? `&src=${encodeURIComponent(src)}` : ''}`);
   };
 
   // For Feed cards (compact, default, boosted) - keep horizontal scroller style

@@ -375,7 +375,11 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
             name={business.name}
             onClick={() => {
               // Click on pin = profile VIEW (not just seeing it)
-              trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map' });
+              // BUT: never count views when navigation originated from user dashboard sections.
+              const src = new URLSearchParams(window.location.search).get('src');
+              if (src !== 'dashboard_user') {
+                trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map' });
+              }
 
               map.current?.flyTo({
                 center: [lng, lat],
