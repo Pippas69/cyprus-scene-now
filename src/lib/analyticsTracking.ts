@@ -29,8 +29,9 @@ const isDashboardUserContext = (): boolean => {
     if (isUserDashboardNoViewsEnabled()) return true;
 
     const path = window.location?.pathname || "";
-    // Any internal dashboard browsing (user/business/admin) must never count as views.
-    if (path.startsWith('/dashboard-')) return true;
+    // ONLY the *user* dashboard sections must never count as views.
+    // Business dashboard analytics must keep working normally.
+    if (path.startsWith('/dashboard-user')) return true;
 
     const src = new URLSearchParams(window.location?.search || "").get('src');
     if (src === 'dashboard_user') return true;
