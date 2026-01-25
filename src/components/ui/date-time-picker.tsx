@@ -185,18 +185,25 @@ export function DateTimePicker({
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-start text-left font-normal truncate",
+            "w-full justify-start text-left font-normal",
             !displayValue && "text-muted-foreground"
           )}
           disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
           {displayValue ? (
-            <span className="truncate">
-              {format(displayValue, dateOnlyDisplay ? "PPP" : "PPP, HH:mm", { locale })}
-            </span>
+            <>
+              {/* Mobile: Short date format */}
+              <span className="truncate sm:hidden text-xs">
+                {format(displayValue, dateOnlyDisplay ? "dd/MM/yy" : "dd/MM/yy HH:mm", { locale })}
+              </span>
+              {/* Desktop: Full date format */}
+              <span className="truncate hidden sm:inline">
+                {format(displayValue, dateOnlyDisplay ? "PPP" : "PPP, HH:mm", { locale })}
+              </span>
+            </>
           ) : (
-            <span className="truncate">{placeholder || (language === 'el' ? 'Επιλέξτε ημερομηνία' : 'Select date')}</span>
+            <span className="truncate text-xs sm:text-sm">{placeholder || (language === 'el' ? 'Επιλέξτε ημερομηνία' : 'Select date')}</span>
           )}
         </Button>
       </PopoverTrigger>
