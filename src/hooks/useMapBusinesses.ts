@@ -136,9 +136,11 @@ export const useMapBusinesses = (
           if (selectedCategories.length > 0) {
             const categoryMap: Record<string, string[]> = {
               'nightlife': ['Nightlife', 'nightlife', 'Νυχτερινή Ζωή'],
+              'clubs': ['Clubs', 'clubs', 'Κλαμπ'], // Now a nightlife sub-option
               'bars': ['Bars', 'bars', 'Μπαρ'],
-              'clubs': ['Clubs', 'clubs', 'Κλαμπ'],
-              'live-music': ['Live Music', 'live-music', 'Ζωντανή Μουσική'],
+              'wine-bars': ['Wine Bars', 'wine-bars'],
+              'pubs': ['Pubs', 'pubs'],
+              'events': ['Events', 'events'], // New top-level category
               'dining': ['Dining', 'dining', 'Εστίαση', 'Restaurants', 'restaurants'],
               'restaurants': ['Restaurants', 'restaurants', 'Εστιατόρια'],
               'cafes': ['Cafes', 'cafes', 'Καφέ'],

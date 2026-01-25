@@ -3,12 +3,12 @@ export const eventCategories = {
   el: {
     // Main categories
     nightlife: "Νυχτερινή Ζωή",
-    clubs: "Clubs",
+    events: "Events",
     dining: "Εστίαση",
     "beach-summer": "Παραλία/Καλοκαίρι",
-    // Nightlife sub-options
+    // Nightlife sub-options (Clubs is now here)
+    clubs: "Clubs",
     bars: "Bars",
-    "wine-cocktail-bars": "Κρασί & Cocktail Bars",
     "live-music": "Ζωντανή Μουσική",
     // Dining sub-options
     "fine-dining": "Επίσημη Εστίαση",
@@ -33,13 +33,12 @@ export const eventCategories = {
   en: {
     // Main categories
     nightlife: "Nightlife",
-    clubs: "Clubs",
+    events: "Events",
     dining: "Dining",
     "beach-summer": "Beach/Summer",
-    // Nightlife sub-options
+    // Nightlife sub-options (Clubs is now here)
+    clubs: "Clubs",
     bars: "Bars",
-    "wine-cocktail-bars": "Wine & Cocktail Bars",
-    "live-music": "Live Music",
     // Dining sub-options
     "fine-dining": "Fine Dining",
     "casual-dining": "Casual Dining",

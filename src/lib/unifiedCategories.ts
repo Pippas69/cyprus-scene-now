@@ -31,14 +31,14 @@ export const unifiedCategories: UnifiedCategory[] = [
     hasDropdown: true,
     subOptions: [
       { 
+        id: "clubs", 
+        label: { el: "Clubs", en: "Clubs" },
+        singularLabel: { el: "Club", en: "Club" }
+      },
+      { 
         id: "bars", 
         label: { el: "Bars", en: "Bars" },
         singularLabel: { el: "Bar", en: "Bar" }
-      },
-      { 
-        id: "cocktail-bars", 
-        label: { el: "Cocktail Bars", en: "Cocktail Bars" },
-        singularLabel: { el: "Cocktail Bar", en: "Cocktail Bar" }
       },
       { 
         id: "wine-bars", 
@@ -53,9 +53,9 @@ export const unifiedCategories: UnifiedCategory[] = [
     ],
   },
   { 
-    id: "clubs", 
-    label: { el: "Clubs", en: "Clubs" },
-    singularLabel: { el: "Club", en: "Club" },
+    id: "events", 
+    label: { el: "Events", en: "Events" },
+    singularLabel: { el: "Event", en: "Event" },
     icon: "🎉",
     hasDropdown: false 
   },

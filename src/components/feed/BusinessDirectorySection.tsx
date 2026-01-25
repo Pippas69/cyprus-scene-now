@@ -41,13 +41,14 @@ interface BusinessDirectorySectionProps {
 const CATEGORY_ID_TO_DB_VALUES: Record<string, string[]> = {
   // Main categories
   "nightlife": ["Nightlife"],
-  "clubs": ["Clubs"],
+  "events": ["Events"],
   "dining": ["Dining"],
   "beach-summer": ["Beach & Summer"],
-  // Nightlife sub-options
+  // Nightlife sub-options (Clubs is now here)
+  "clubs": ["Nightlife", "Clubs"],
   "bars": ["Nightlife", "Bars"],
-  "wine-cocktail-bars": ["Nightlife", "Wine & Cocktail Bars"],
-  "live-music": ["Nightlife", "Live Music"],
+  "wine-bars": ["Nightlife", "Wine Bars"],
+  "pubs": ["Nightlife", "Pubs"],
   // Dining sub-options
   "fine-dining": ["Dining", "Fine Dining"],
   "casual-dining": ["Dining", "Casual Dining"],

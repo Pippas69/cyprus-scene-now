@@ -17,14 +17,15 @@ interface FilterChipsProps {
 const categoryLabels: Record<string, { el: string; en: string }> = {
   // Main categories
   nightlife: { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
-  clubs: { el: 'Clubs', en: 'Clubs' },
+  events: { el: 'Events', en: 'Events' },
   dining: { el: 'Εστίαση', en: 'Dining' },
   'beach-summer': { el: 'Παραλία/Καλοκαίρι', en: 'Beach/Summer' },
   
-  // Nightlife sub-options
+  // Nightlife sub-options (Clubs is now here)
+  clubs: { el: 'Clubs', en: 'Clubs' },
   bars: { el: 'Bars', en: 'Bars' },
-  'wine-cocktail-bars': { el: 'Κρασί & Cocktail Bars', en: 'Wine & Cocktail Bars' },
-  'live-music': { el: 'Ζωντανή Μουσική', en: 'Live Music' },
+  'wine-bars': { el: 'Wine Bars', en: 'Wine Bars' },
+  pubs: { el: 'Pubs', en: 'Pubs' },
   
   // Dining sub-options
   'fine-dining': { el: 'Επίσημη Εστίαση', en: 'Fine Dining' },

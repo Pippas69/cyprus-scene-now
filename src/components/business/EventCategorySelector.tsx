@@ -17,7 +17,7 @@ interface Category {
   subOptions?: SubOption[];
 }
 
-// Order: Nightlife → Clubs → Dining → Beach & Summer (4 core categories)
+// Order: Nightlife → Events → Dining → Beach & Summer (4 core categories)
 const eventCategoryHierarchy: Category[] = [
   {
     id: "nightlife",
@@ -25,12 +25,13 @@ const eventCategoryHierarchy: Category[] = [
     icon: "🍸",
     hasDropdown: true,
     subOptions: [
+      { id: "clubs", label: { el: "Clubs", en: "Clubs" } },
       { id: "bars", label: { el: "Bars", en: "Bars" } },
-      { id: "wine-cocktail-bars", label: { el: "Κρασί & Cocktail Bars", en: "Wine & Cocktail Bars" } },
-      { id: "live-music", label: { el: "Ζωντανή Μουσική", en: "Live Music" } },
+      { id: "wine-bars", label: { el: "Wine Bars", en: "Wine Bars" } },
+      { id: "pubs", label: { el: "Pubs", en: "Pubs" } },
     ],
   },
-  { id: "clubs", label: { el: "Clubs", en: "Clubs" }, icon: "🎉", hasDropdown: false },
+  { id: "events", label: { el: "Events", en: "Events" }, icon: "🎉", hasDropdown: false },
   {
     id: "dining",
     label: { el: "Εστίαση", en: "Dining" },
@@ -48,7 +49,7 @@ const eventCategoryHierarchy: Category[] = [
     hasDropdown: true,
     subOptions: [
       { id: "beach-bars", label: { el: "Beach Bars", en: "Beach Bars" } },
-      { id: "summer-events", label: { el: "Καλοκαιρινές Εκδηλώσεις", en: "Summer Events" } },
+      { id: "summer-events", label: { el: "Summer Events", en: "Summer Events" } },
       { id: "seaside-restaurants", label: { el: "Παραθαλάσσια Εστιατόρια", en: "Seaside Restaurants" } },
     ],
   },
