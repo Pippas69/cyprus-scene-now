@@ -365,17 +365,6 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       visibleBusinesses.forEach((business) => {
         const [lng, lat] = business.coordinates;
 
-        try {
-          const bounds = map.current?.getBounds();
-          const isInViewport = bounds ? bounds.contains([lng, lat]) : false;
-          if (isInViewport && !viewedPinsRef.current.has(business.id)) {
-            viewedPinsRef.current.add(business.id);
-            trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map' });
-          }
-        } catch {
-          // ignore
-        }
-
         const div = document.createElement('div');
         const root = ReactDOM.createRoot(div);
 
@@ -385,7 +374,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
             markerId={business.id}
             name={business.name}
             onClick={() => {
-              trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map' });
+              // Click on pin = profile VIEW (not just seeing it)
+              trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map' });
 
               map.current?.flyTo({
                 center: [lng, lat],
@@ -441,7 +431,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   const handleBusinessListClick = (business: any) => {
     if (!map.current) return;
     const [lng, lat] = business.coordinates;
-    trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'map_list' });
+    // Click from business list = profile INTERACTION (not view)
+    trackEngagement(business.id, 'profile_interaction', 'business', business.id, { source: 'map_list' });
     map.current.flyTo({ center: [lng, lat], zoom: 15, duration: 800, essential: true });
     setTimeout(() => openBusinessPopup(business), 500);
   };
