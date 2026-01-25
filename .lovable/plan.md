@@ -1,115 +1,167 @@
 
-# Διόρθωση Web Share API για Published/PWA
+# Διόρθωση Συστήματος Analytics - Συνέπεια Προβολών
 
-## Το πρόβλημα
+## Τι συμβαίνει τώρα (ΛΑΘΟΣ)
 
-Το Web Share API δεν δουλεύει **καθόλου** στο Lovable editor preview γιατί το iOS μπλοκάρει τα `navigator.share()` calls μέσα από third-party iframes. Αυτό **δεν είναι bug** - είναι iOS security restriction.
+Αυτή τη στιγμή υπάρχουν **ασυνέπειες** μεταξύ των sections λόγω διαφορετικής μέτρησης:
 
-Στο published URL (fomocy.lovable.app) ή στο PWA, το Web Share API θα δουλέψει κανονικά.
-
----
-
-## Αλλαγές που θα κάνω
-
-### 1. Βελτίωση ροής για iOS (useShare.ts)
-
-Θα κάνω τις εξής αλλαγές στο `instagram-story` και `facebook-story` case:
-
-```text
-ΤΩΡΑ:
-1. Generate image
-2. Try navigator.share({ files }) ❌ fails
-3. Try navigator.share({ text, url }) ❌ fails (iframe block)
-4. Fallback: download image + copy link + toast
-
-ΜΕΤΑ:
-1. Generate image
-2. Copy link to clipboard FIRST
-3. Try navigator.share({ files }) 
-   - iOS Safari/PWA → Native share sheet opens with image
-   - User selects Instagram Stories
-   - Instagram Story editor opens with image attached
-   - User pastes link from clipboard (already copied!)
-4. If fails → download image + toast with instructions
-```
-
-### 2. Αλλαγή clipboard timing
-
-```typescript
-// Copy link BEFORE attempting share
-await copyToClipboard(url);
-
-const shareData = {
-  files: [storyFile],
-  title: options?.title || 'ΦΟΜΟ',
-};
-
-// Try sharing with files only (no text/url - causes issues)
-await navigator.share(shareData);
-toast.success('Η εικόνα κοινοποιήθηκε! Το link έχει αντιγραφεί - κάνε paste στο Story');
-```
-
-### 3. Αφαίρεση URL/text από share data
-
-Το Instagram Stories **αγνοεί** το URL/text που περνάει το Web Share API. Θα το αφαιρέσω για να αποφύγω conflicts:
-
-```typescript
-const shareData: ShareData = {
-  files: [storyFile],  // Μόνο το file
-  // χωρίς title, text, url
-};
-```
-
-### 4. Βελτιωμένο toast message
-
-```typescript
-toast.success(
-  language === 'el' 
-    ? 'Το link αντιγράφηκε! Επίλεξε Instagram Stories και κάνε paste το link' 
-    : 'Link copied! Select Instagram Stories and paste the link',
-  { duration: 5000 }
-);
-```
+| Section | Τι μετράει τώρα | Πρόβλημα |
+|---------|-----------------|----------|
+| Overview - Συνολικές Προβολές | Profile + Offers + Events views | Οι αριθμοί δεν ταιριάζουν με Performance |
+| Performance - Profile Views | `engagement_events.profile_view` | Σωστό |
+| Performance - Offer Views | `discount_views` | Σωστό |
+| Performance - Event Views | `event_views` | Σωστό |
+| Boost Value - Profile | Split με βάση subscription period | Άθροισμα δεν ισούται με Performance |
+| Boost Value - Offers | Split με βάση boost periods | Άθροισμα δεν ισούται με Performance |
+| Boost Value - Events | Split με βάση boost periods | Άθροισμα δεν ισούται με Performance |
+| Guidance - Profile | Δεν δείχνει αριθμό προβολών | Λείπει ο αριθμός |
+| Guidance - Offers | Δεν δείχνει αριθμό προβολών | Λείπει ο αριθμός |
+| Guidance - Events | Δεν δείχνει αριθμό προβολών | Λείπει ο αριθμός |
 
 ---
 
-## Αρχεία που θα τροποποιηθούν
+## Τι πρέπει να συμβαίνει (ΣΩΣΤΟ)
+
+### Κανόνες Συνέπειας
+
+1. **Overview Total Views** = Performance Profile Views + Performance Offer Views + Performance Event Views
+
+2. **Boost Value Profile** (Non-Featured + Featured) = Performance Profile Views
+
+3. **Boost Value Offers** (Non-Boosted + Boosted) = Performance Offer Views
+
+4. **Boost Value Events** (Non-Boosted + Boosted) = Performance Event Views
+
+5. **Guidance Profile Views** = Performance Profile Views (ακριβώς ο ίδιος αριθμός)
+
+6. **Guidance Offer Views** = Performance Offer Views (ακριβώς ο ίδιος αριθμός)
+
+7. **Guidance Event Views** = Performance Event Views (ακριβώς ο ίδιος αριθμός)
+
+### Πώς μετράμε Προβολές (Views)
+
+| Τύπος | Πηγή Δεδομένων | Τι σημαίνει |
+|-------|----------------|-------------|
+| Profile Views | `engagement_events` where `event_type='profile_view'` | Χρήστες που ΕΙΔΑΝ τη σελίδα προφίλ (από feed, χάρτη, αναζήτηση, κοινοποίηση) |
+| Offer Views | `discount_views` table | Χρήστες που ΕΙΔΑΝ σελίδα προσφοράς |
+| Event Views | `event_views` table | Χρήστες που ΕΙΔΑΝ σελίδα εκδήλωσης |
+
+Οι προβολές είναι **impressions** (οπτική επαφή), ΟΧΙ clicks.
+
+---
+
+## Αλλαγές που θα γίνουν
+
+### 1. `useOverviewMetrics.ts` - Χρήση Performance data
+
+Το `totalViews` θα υπολογίζεται ακριβώς όπως στο Performance:
+- Profile: count από `engagement_events.profile_view`
+- Offers: count από `discount_views`
+- Events: count από `event_views`
+
+Αυτό ήδη λειτουργεί σωστά - θα επιβεβαιώσω ότι τα queries είναι ίδια.
+
+### 2. `useBoostValueMetrics.ts` - Εξασφάλιση αθροίσματος
+
+**Πρόβλημα**: Οι queries για Profile, Offers, Events ΔΕΝ χρησιμοποιούν τα ίδια date filters όπως το Performance tab.
+
+**Λύση**:
+- Profile: Οι προβολές θα χωρίζονται σε non-featured/featured με βάση το `current_period_start` του subscription
+- Offers: Οι προβολές θα χωρίζονται σε non-boosted/boosted με βάση τα `offer_boosts` periods
+- Events: Οι προβολές θα χωρίζονται σε non-boosted/boosted με βάση τα `event_boosts` periods
+
+**Κρίσιμο**: Το άθροισμα (without + with) ΠΡΕΠΕΙ να ισούται με το Performance total.
+
+### 3. `useGuidanceData.ts` - Προσθήκη αριθμών προβολών
+
+**Πρόβλημα**: Το hook επιστρέφει μόνο `TimeWindow[]` (μέρες/ώρες), αλλά ΔΕΝ επιστρέφει τον **συνολικό αριθμό** προβολών.
+
+**Λύση**: Θα προσθέσω νέα πεδία στο return object:
+```typescript
+profileTotals: {
+  views: number;
+  interactions: number;
+  visits: number;
+}
+offerTotals: {
+  views: number;
+  interactions: number;
+  visits: number;
+}
+eventTotals: {
+  views: number;
+  interactions: number;
+  visits: number;
+}
+```
+
+Αυτοί οι αριθμοί θα υπολογίζονται ακριβώς όπως στο Performance.
+
+### 4. `GuidanceTab.tsx` - Εμφάνιση αριθμών
+
+**Πρόβλημα**: Δεν εμφανίζει τον αριθμό προβολών δίπλα στη μετρική.
+
+**Λύση**: Θα προσθέσω τον αριθμό δίπλα από κάθε μετρική:
+```
+Προβολές: 150    Καλύτερες Μέρες & Ώρες: Παρασκευή 18:00-20:00
+Αλληλεπιδράσεις: 45    Καλύτερες Μέρες & Ώρες: Σάββατο 20:00-22:00
+Επισκέψεις: 20    Καλύτερες Μέρες & Ώρες: Παρασκευή 21:00-23:00
+```
+
+---
+
+## Τεχνικές Λεπτομέρειες
+
+### Αρχεία που θα τροποποιηθούν
 
 | Αρχείο | Αλλαγή |
 |--------|--------|
-| `src/hooks/useShare.ts` | Βελτιωμένη ροή story sharing με clipboard first |
+| `src/hooks/useGuidanceData.ts` | Προσθήκη `profileTotals`, `offerTotals`, `eventTotals` |
+| `src/components/business/analytics/GuidanceTab.tsx` | Εμφάνιση αριθμών προβολών/αλληλεπιδράσεων/επισκέψεων |
+| `src/hooks/useBoostValueMetrics.ts` | Διόρθωση queries για να ταιριάζει με Performance |
+| `src/hooks/useOverviewMetrics.ts` | Επιβεβαίωση ότι τα queries είναι ίδια με Performance |
 
----
+### Λογική υπολογισμού για Boost Value
 
-## Τεχνικό context
+```typescript
+// Profile - Split by subscription period
+const totalProfileViews = /* same as Performance */;
+if (!featuredStart || featuredStart > endDate) {
+  profileWithout.views = totalProfileViews;
+  profileWith.views = 0;
+} else if (featuredStart <= startDate) {
+  profileWithout.views = 0;
+  profileWith.views = totalProfileViews;
+} else {
+  // Split proportionally based on date
+  profileWithout.views = /* views before featuredStart */;
+  profileWith.views = /* views after featuredStart */;
+}
+// Άθροισμα πάντα = totalProfileViews
+```
 
-Το Instagram (και Facebook) Stories δεν υποστηρίζουν URL/link embedding μέσω Web Share API. Ο μόνος τρόπος να προσθέσεις link σε Story είναι:
-1. Να χρησιμοποιήσεις το Link Sticker μέσα στο Instagram Story editor
-2. Να κάνεις paste το link (που θα έχουμε ήδη copied στο clipboard)
+### Λογική υπολογισμού για Guidance
 
-Αυτό **δεν είναι τεχνικός περιορισμός του κώδικα** - είναι πώς λειτουργεί το Instagram.
-
----
-
-## Τι θα βλέπει ο χρήστης (Published/PWA)
-
-```text
-1. Πατάει "Instagram Story"
-2. Toast: "Το link αντιγράφηκε!"
-3. Ανοίγει το iOS share sheet με την εικόνα
-4. Επιλέγει "Instagram Stories"  
-5. Instagram ανοίγει με την εικόνα στον Story editor
-6. Προσθέτει Link Sticker → paste (το link είναι ήδη στο clipboard)
-7. Post Story!
+```typescript
+// Guidance totals - SAME queries as Performance
+const profileTotals = {
+  views: /* count from engagement_events where event_type='profile_view' */,
+  interactions: /* count from engagement_events + business_followers */,
+  visits: /* count from reservations with checked_in_at */,
+};
 ```
 
 ---
 
-## ΣΗΜΑΝΤΙΚΟ: Testing
+## Τελικό αποτέλεσμα
 
-Για να τεστάρεις σωστά, πρέπει να:
-1. **Publish** την εφαρμογή (πατώντας "Publish" στο Lovable)
-2. Ανοίξεις το **fomocy.lovable.app** σε Safari ή στο PWA
-3. Τότε το Web Share API θα δουλέψει
+Μετά τις αλλαγές:
 
-Στο editor preview (lovable.dev) δεν θα δουλέψει ποτέ λόγω iOS iframe restrictions.
+| Metric | Overview | Performance | Boost Value (sum) | Guidance |
+|--------|----------|-------------|-------------------|----------|
+| Profile Views | ✓ (included) | 150 | 50 + 100 = 150 | 150 |
+| Offer Views | ✓ (included) | 80 | 30 + 50 = 80 | 80 |
+| Event Views | ✓ (included) | 120 | 40 + 80 = 120 | 120 |
+| **Total Views** | 350 | 350 | — | — |
+
+Όλοι οι αριθμοί θα είναι **συνεπείς** σε όλα τα sections.
