@@ -4,11 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
+import { X, Loader2 } from "lucide-react";
 
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
-import { Loader2 } from "lucide-react";
+import LocationSwitcher from "@/components/feed/LocationSwitcher";
+import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
+import { FilterChips } from "@/components/feed/FilterChips";
+import { Button } from "@/components/ui/button";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 
 const Ekdiloseis = () => {
@@ -16,6 +19,8 @@ const Ekdiloseis = () => {
   const { language } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -38,15 +43,32 @@ const Ekdiloseis = () => {
       loginRequired: "Συνδεθείτε ή εγγραφείτε για να δείτε όλες τις εκδηλώσεις!",
       loginSubtitle: "Γίνετε μέλος της κοινότητας ΦΟΜΟ και μην χάσετε τίποτα στην Κύπρο.",
       joinButton: "Εγγραφή στο ΦΟΜΟ",
+      clearFilters: "Καθαρισμός",
     },
     en: {
       loginRequired: "Log in or sign up to see all events!",
       loginSubtitle: "Join the ΦΟΜΟ community and don't miss anything in Cyprus.",
       joinButton: "Join ΦΟΜΟ",
+      clearFilters: "Clear",
     },
   };
 
   const t = text[language];
+
+  const clearAllFilters = () => {
+    setSelectedCategories([]);
+    setSelectedCity(null);
+  };
+
+  const hasActiveFilters = selectedCategories.length > 0 || selectedCity;
+
+  const handleRemoveCategory = (category: string) => {
+    setSelectedCategories(prev => prev.filter(c => c !== category));
+  };
+
+  const handleRemoveCity = () => {
+    setSelectedCity(null);
+  };
 
   if (loading) {
     return (
@@ -58,7 +80,54 @@ const Ekdiloseis = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Main Content - No hero banner */}
+      {/* Premium Filter Bar - Same as Map - Always visible */}
+      <div className="bg-background border-b border-border px-3 py-2 lg:px-4 lg:py-3">
+        <div className="space-y-2">
+          {/* All in one row with horizontal scroll if needed */}
+          <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3 overflow-x-auto scrollbar-hide">
+            <LocationSwitcher 
+              language={language} 
+              selectedCity={selectedCity} 
+              onCityChange={setSelectedCity}
+              mapMode={true}
+            />
+            
+            <HierarchicalCategoryFilter
+              selectedCategories={selectedCategories}
+              onCategoryChange={setSelectedCategories}
+              language={language}
+              mapMode={true}
+            />
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="gap-1 md:gap-1.5 lg:gap-2 whitespace-nowrap shrink-0 h-7 md:h-8 lg:h-9 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
+              >
+                <X className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+                {t.clearFilters}
+              </Button>
+            )}
+          </div>
+
+          {/* Filter Chips */}
+          <FilterChips
+            categories={selectedCategories}
+            quickFilters={[]}
+            selectedCity={selectedCity}
+            onRemoveCategory={handleRemoveCategory}
+            onRemoveQuickFilter={() => {}}
+            onRemoveCity={handleRemoveCity}
+            onClearAll={clearAllFilters}
+            language={language}
+          />
+        </div>
+      </div>
+
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         {!user ? (
           <LimitedExploreView 
@@ -66,6 +135,8 @@ const Ekdiloseis = () => {
             navigate={navigate} 
             t={t}
             onSignupClick={() => navigate("/signup?redirect=/ekdiloseis")}
+            selectedCity={selectedCity}
+            selectedCategories={selectedCategories}
           />
         ) : (
           <motion.div
@@ -73,7 +144,12 @@ const Ekdiloseis = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            <FullExploreView language={language} user={user} />
+            <FullExploreView 
+              language={language} 
+              user={user}
+              selectedCity={selectedCity}
+              selectedCategories={selectedCategories}
+            />
           </motion.div>
         )}
       </div>
@@ -82,7 +158,7 @@ const Ekdiloseis = () => {
 };
 
 // Limited View for Visitors
-const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
+const LimitedExploreView = ({ language, navigate, t, onSignupClick, selectedCity, selectedCategories }: any) => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -205,9 +281,13 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick }: any) => {
 };
 
 // Full View for Logged-in Users - FOMO Style
-const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any }) => {
+const FullExploreView = ({ language, user, selectedCity, selectedCategories }: { 
+  language: "el" | "en"; 
+  user: any;
+  selectedCity: string | null;
+  selectedCategories: string[];
+}) => {
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | null>(null);
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   const text = {
     el: {
@@ -275,7 +355,7 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
 
   // Fetch BOOSTED events (shown at top, but STILL filtered by selected time window)
   const { data: boostedEvents, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-events-ekdiloseis", timeFilter, selectedCity, Array.from(boostedEventIds)],
+    queryKey: ["boosted-events-ekdiloseis", timeFilter, selectedCity, selectedCategories, Array.from(boostedEventIds)],
     queryFn: async () => {
       if (boostedEventIds.size === 0) return [];
 
@@ -293,6 +373,11 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
       // Filter by city if selected
       if (selectedCity) {
         query = query.eq('businesses.city', selectedCity);
+      }
+
+      // Filter by categories if selected
+      if (selectedCategories.length > 0) {
+        query = query.overlaps('category', selectedCategories);
       }
 
       // Apply time filter if selected (Boosted must respect the same time window)
@@ -329,7 +414,7 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
 
   // Fetch NON-BOOSTED events (filtered by time and city)
   const { data: regularEvents, isLoading: loadingRegular } = useQuery({
-    queryKey: ["regular-events", timeFilter, selectedCity, Array.from(boostedEventIds)],
+    queryKey: ["regular-events", timeFilter, selectedCity, selectedCategories, Array.from(boostedEventIds)],
     queryFn: async () => {
       let query = supabase
         .from('events')
@@ -344,6 +429,11 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
       // Filter by city if selected
       if (selectedCity) {
         query = query.eq('businesses.city', selectedCity);
+      }
+
+      // Filter by categories if selected
+      if (selectedCategories.length > 0) {
+        query = query.overlaps('category', selectedCategories);
       }
 
       // Apply time filter only if selected
@@ -392,17 +482,8 @@ const FullExploreView = ({ language, user }: { language: "el" | "en"; user: any 
   };
 
   return (
-    <div className="space-y-6">
-      {/* Location Dropdown at top */}
-      <div className="flex items-center">
-        <CompactLocationDropdown
-          language={language}
-          selectedCity={selectedCity}
-          onCityChange={setSelectedCity}
-        />
-      </div>
-
-      {/* Time Filter Chips - At top */}
+    <div className="space-y-4">
+      {/* Time Filter Chips */}
       <div className="flex gap-1.5 sm:gap-2">
         {(['today', 'week', 'month'] as const).map((filter) => (
           <button

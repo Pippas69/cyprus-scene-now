@@ -4,17 +4,22 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
-import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
+import LocationSwitcher from "@/components/feed/LocationSwitcher";
+import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
+import { FilterChips } from "@/components/feed/FilterChips";
+import { Button } from "@/components/ui/button";
 
 const Offers = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -37,15 +42,32 @@ const Offers = () => {
       loginRequired: "Συνδεθείτε για να δείτε όλες τις προσφορές!",
       loginSubtitle: "Γίνετε μέλος της κοινότητας ΦΟΜΟ και εξοικονομήστε χρήματα.",
       joinButton: "Εγγραφή στο ΦΟΜΟ",
+      clearFilters: "Καθαρισμός",
     },
     en: {
       loginRequired: "Log in to see all offers!",
       loginSubtitle: "Join the ΦΟΜΟ community and save money.",
       joinButton: "Join ΦΟΜΟ",
+      clearFilters: "Clear",
     },
   };
 
   const t = text[language];
+
+  const clearAllFilters = () => {
+    setSelectedCategories([]);
+    setSelectedCity(null);
+  };
+
+  const hasActiveFilters = selectedCategories.length > 0 || selectedCity;
+
+  const handleRemoveCategory = (category: string) => {
+    setSelectedCategories(prev => prev.filter(c => c !== category));
+  };
+
+  const handleRemoveCity = () => {
+    setSelectedCity(null);
+  };
 
   if (loading) {
     return (
@@ -57,7 +79,51 @@ const Offers = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Main Content - No hero banner */}
+      {/* Premium Filter Bar - Same as Map - Always visible */}
+      <div className="bg-background border-b border-border px-3 py-2 lg:px-4 lg:py-3">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3 overflow-x-auto scrollbar-hide">
+            <LocationSwitcher 
+              language={language} 
+              selectedCity={selectedCity} 
+              onCityChange={setSelectedCity}
+              mapMode={true}
+            />
+            
+            <HierarchicalCategoryFilter
+              selectedCategories={selectedCategories}
+              onCategoryChange={setSelectedCategories}
+              language={language}
+              mapMode={true}
+            />
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="gap-1 md:gap-1.5 lg:gap-2 whitespace-nowrap shrink-0 h-7 md:h-8 lg:h-9 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
+              >
+                <X className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+                {t.clearFilters}
+              </Button>
+            )}
+          </div>
+
+          <FilterChips
+            categories={selectedCategories}
+            quickFilters={[]}
+            selectedCity={selectedCity}
+            onRemoveCategory={handleRemoveCategory}
+            onRemoveQuickFilter={() => {}}
+            onRemoveCity={handleRemoveCity}
+            onClearAll={clearAllFilters}
+            language={language}
+          />
+        </div>
+      </div>
+
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         {!user ? (
           <LimitedOffersView 
@@ -71,7 +137,12 @@ const Offers = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            <FullOffersView language={language} user={user} />
+            <FullOffersView 
+              language={language} 
+              user={user}
+              selectedCity={selectedCity}
+              selectedCategories={selectedCategories}
+            />
           </motion.div>
         )}
       </div>
@@ -171,9 +242,13 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
 };
 
 // Full View for Logged-in Users - FOMO Style
-const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }) => {
+const FullOffersView = ({ language, user, selectedCity, selectedCategories }: { 
+  language: "el" | "en"; 
+  user: any;
+  selectedCity: string | null;
+  selectedCategories: string[];
+}) => {
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | null>(null);
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   const text = {
     el: {
@@ -238,7 +313,7 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
 
   // Fetch BOOSTED offers (shown at top, but STILL filtered by selected time window)
   const { data: boostedOffers, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-offers-page", timeFilter, selectedCity, Array.from(boostedOfferIds)],
+    queryKey: ["boosted-offers-page", timeFilter, selectedCity, selectedCategories, Array.from(boostedOfferIds)],
     queryFn: async () => {
       if (boostedOfferIds.size === 0) return [];
 
@@ -261,6 +336,11 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
         query = query.eq('businesses.city', selectedCity);
       }
 
+      // Filter by categories if selected (filter by business category)
+      if (selectedCategories.length > 0) {
+        query = query.overlaps('businesses.category', selectedCategories);
+      }
+
       // Apply time filter if selected (Boosted must respect the same time window)
       if (timeBoundaries) {
         query = query.lte('end_at', timeBoundaries.end);
@@ -275,7 +355,7 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
 
   // Fetch NON-BOOSTED offers (filtered by time and city)
   const { data: regularOffers, isLoading: loadingRegular } = useQuery({
-    queryKey: ["regular-offers", timeFilter, selectedCity, Array.from(boostedOfferIds)],
+    queryKey: ["regular-offers", timeFilter, selectedCity, selectedCategories, Array.from(boostedOfferIds)],
     queryFn: async () => {
       const now = new Date().toISOString();
       
@@ -294,6 +374,11 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
       // Filter by city if selected
       if (selectedCity) {
         query = query.eq('businesses.city', selectedCity);
+      }
+
+      // Filter by categories if selected (filter by business category)
+      if (selectedCategories.length > 0) {
+        query = query.overlaps('businesses.category', selectedCategories);
       }
 
       // Apply time filter: show offers that END within the selected time window
@@ -321,18 +406,80 @@ const FullOffersView = ({ language, user }: { language: "el" | "en"; user: any }
     setTimeFilter(prev => prev === filter ? null : filter);
   };
 
+  const clearAllFilters = () => {
+    setSelectedCategories([]);
+    setSelectedCity(null);
+    setTimeFilter(null);
+  };
+
+  const hasActiveFilters = selectedCategories.length > 0 || selectedCity || timeFilter;
+
+  const handleRemoveCategory = (category: string) => {
+    setSelectedCategories(prev => prev.filter(c => c !== category));
+  };
+
+  const handleRemoveCity = () => {
+    setSelectedCity(null);
+  };
+
+  const textFilters = {
+    el: { clearFilters: "Καθαρισμός" },
+    en: { clearFilters: "Clear" },
+  };
+  const tf = textFilters[language];
+
   return (
-    <div className="space-y-6">
-      {/* Location Dropdown at top */}
-      <div className="flex items-center">
-        <CompactLocationDropdown
-          language={language}
-          selectedCity={selectedCity}
-          onCityChange={setSelectedCity}
-        />
+    <div className="space-y-4">
+      {/* Premium Filter Bar - Same as Map */}
+      <div className="bg-background border-b border-border px-1 py-2 lg:px-2 lg:py-3 -mx-4 md:-mx-0">
+        <div className="space-y-2">
+          {/* All in one row with horizontal scroll if needed */}
+          <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3 overflow-x-auto scrollbar-hide px-3 md:px-0">
+            <LocationSwitcher 
+              language={language} 
+              selectedCity={selectedCity} 
+              onCityChange={setSelectedCity}
+              mapMode={true}
+            />
+            
+            <HierarchicalCategoryFilter
+              selectedCategories={selectedCategories}
+              onCategoryChange={setSelectedCategories}
+              language={language}
+              mapMode={true}
+            />
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="gap-1 md:gap-1.5 lg:gap-2 whitespace-nowrap shrink-0 h-7 md:h-8 lg:h-9 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
+              >
+                <X className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+                {tf.clearFilters}
+              </Button>
+            )}
+          </div>
+
+          {/* Filter Chips */}
+          <div className="px-3 md:px-0">
+            <FilterChips
+              categories={selectedCategories}
+              quickFilters={[]}
+              selectedCity={selectedCity}
+              onRemoveCategory={handleRemoveCategory}
+              onRemoveQuickFilter={() => {}}
+              onRemoveCity={handleRemoveCity}
+              onClearAll={clearAllFilters}
+              language={language}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Time Filter Chips - At top */}
+      {/* Time Filter Chips */}
       <div className="flex gap-1.5 sm:gap-2">
         {(['today', 'week', 'month'] as const).map((filter) => (
           <button
