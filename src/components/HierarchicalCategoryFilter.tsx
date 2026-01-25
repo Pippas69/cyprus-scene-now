@@ -187,6 +187,7 @@ const HierarchicalCategoryFilter = ({
   };
 
   // Badge rendering with mapMode support
+  // Slightly larger text on mobile/tablet for Ekdiloseis/Offers pages
   const renderBadge = (category: Category, isMapStyle: boolean = false) => (
     <div
       key={category.id}
@@ -205,7 +206,7 @@ const HierarchicalCategoryFilter = ({
         }
         className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
           isMapStyle 
-            ? "px-2 md:px-2.5 lg:px-3 py-1 md:py-1.5 lg:py-2 text-[10px] md:text-xs lg:text-sm min-h-[28px] md:min-h-[32px] lg:min-h-[36px] gap-1 md:gap-1.5 lg:gap-2" 
+            ? "px-2.5 md:px-3 lg:px-3 py-1.5 md:py-1.5 lg:py-2 text-[11px] md:text-[13px] lg:text-sm min-h-[30px] md:min-h-[34px] lg:min-h-[36px] gap-1 md:gap-1.5 lg:gap-2" 
             : "px-2.5 md:px-3 lg:px-4 py-1.5 md:py-2 lg:py-2.5 text-xs md:text-xs lg:text-sm min-h-[32px] md:min-h-[40px] lg:min-h-[44px] gap-1.5 md:gap-1.5 lg:gap-2"
         } font-medium flex items-center justify-center rounded-full select-none whitespace-nowrap ${
           category.hasDropdown
@@ -224,7 +225,7 @@ const HierarchicalCategoryFilter = ({
           }
         }}
       >
-        <span className={isMapStyle ? "text-[10px] md:text-xs lg:text-sm" : "text-xs md:text-sm lg:text-base"}>{category.icon}</span>
+        <span className={isMapStyle ? "text-[11px] md:text-[13px] lg:text-sm" : "text-xs md:text-sm lg:text-base"}>{category.icon}</span>
         <span>{category.label}</span>
         {category.hasDropdown && (
           <>

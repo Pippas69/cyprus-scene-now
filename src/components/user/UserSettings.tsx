@@ -14,11 +14,12 @@ import { usePasswordChange } from '@/hooks/usePasswordChange';
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from '@/hooks/use-toast';
 import { toastTranslations } from '@/translations/toastTranslations';
-import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon } from 'lucide-react';
+import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon, GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getCategoriesForUser } from '@/lib/unifiedCategories';
 import { getCityOptions, translateCity } from '@/lib/cityTranslations';
 import { InterestSelectorList } from '@/components/categories/InterestSelectorList';
+import { StudentVerificationSection } from '@/components/user/StudentVerificationSection';
 
 interface UserSettingsProps {
   userId: string;
@@ -422,6 +423,14 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 categories={categories}
                 selectedIds={profile.preferences || []}
                 onToggle={togglePreference}
+              />
+            </div>
+
+            {/* Student Verification Section */}
+            <div className="pt-4 border-t">
+              <StudentVerificationSection 
+                userId={userId} 
+                userName={profile.first_name || profile.name || ''}
               />
             </div>
 

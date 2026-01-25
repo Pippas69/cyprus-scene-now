@@ -48,7 +48,7 @@ const LocationSwitcher = ({ language, selectedCity, onCityChange, compact = fals
   // Map mode: smaller styling for the map page (inline with categories)
   const getSelectClassName = () => {
     if (mapMode) {
-      return "w-auto min-w-[90px] md:min-w-[100px] lg:min-w-[120px] h-7 md:h-8 lg:h-9 text-[10px] md:text-xs lg:text-sm px-2 md:px-2.5 lg:px-3 shrink-0";
+      return "w-auto min-w-[100px] md:min-w-[110px] lg:min-w-[120px] h-[30px] md:h-[34px] lg:h-9 text-[11px] md:text-[13px] lg:text-sm px-2.5 md:px-3 lg:px-3 shrink-0";
     }
     if (compact) {
       return "w-auto min-w-[120px] h-8 text-xs px-2.5";

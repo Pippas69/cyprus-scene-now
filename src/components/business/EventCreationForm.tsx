@@ -132,6 +132,8 @@ interface FormData {
     noMinSpend: boolean;
     noReservation: boolean;
   };
+  // Terms & Conditions (optional)
+  termsAndConditions: string;
 }
 
 // ============================================
@@ -219,6 +221,8 @@ const translations = {
     acceptAllDeclarations: "Πρέπει να αποδεχτείτε όλες τις δηλώσεις",
     addAtLeastOneSeating: "Προσθέστε τουλάχιστον έναν τύπο θέσης",
     addAtLeastOneRange: "Κάθε τύπος θέσης χρειάζεται τουλάχιστον ένα εύρος ατόμων",
+    termsConditions: "Όροι & Προϋποθέσεις (προαιρετικό)",
+    termsPlaceholder: "π.χ. Δεν επιτρέπεται η είσοδος σε ανηλίκους...",
   },
   en: {
     createEvent: "Create Event",
@@ -300,6 +304,8 @@ const translations = {
     acceptAllDeclarations: "You must accept all declarations",
     addAtLeastOneSeating: "Add at least one seating type",
     addAtLeastOneRange: "Each seating type needs at least one person range",
+    termsConditions: "Terms & Conditions (optional)",
+    termsPlaceholder: "e.g. No entry for minors...",
   },
 };
 
@@ -363,6 +369,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       noMinSpend: false,
       noReservation: false,
     },
+    termsAndConditions: '',
   });
   
   // Ticket tier validation errors
