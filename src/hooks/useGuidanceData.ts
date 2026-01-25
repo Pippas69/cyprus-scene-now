@@ -7,6 +7,13 @@ interface TimeWindow {
   count: number;
 }
 
+// Totals to match Performance tab exactly
+interface SectionTotals {
+  views: number;
+  interactions: number;
+  visits: number;
+}
+
 interface GuidanceSection {
   views: TimeWindow[];
   interactions: TimeWindow[];
@@ -17,6 +24,10 @@ interface GuidanceData {
   profile: GuidanceSection;
   offers: GuidanceSection;
   events: GuidanceSection;
+  // NEW: Total counts matching Performance tab
+  profileTotals: SectionTotals;
+  offerTotals: SectionTotals;
+  eventTotals: SectionTotals;
   recommendedPlan: {
     publish: { dayIndex: number; hours: string };
     interactions: { dayIndex: number; hours: string };
@@ -124,15 +135,20 @@ export const useGuidanceData = (businessId: string) => {
       ];
       const profileInteractions = analyzeTimestamps(allProfileInteractionTimestamps);
 
-      // Profile visits = reservation scans (QR check-ins) for direct business reservations
-      const { data: profileVisitScans } = await (supabase
-        .from('reservation_scans') as any)
-        .select('scanned_at')
+      // Profile visits = verified reservation check-ins for DIRECT business reservations (same as Performance)
+      const { data: profileVisitCheckins } = await supabase
+        .from('reservations')
+        .select('checked_in_at')
         .eq('business_id', businessId)
-        .gte('scanned_at', thirtyDaysAgo)
-        .lte('scanned_at', now);
+        .is('event_id', null)
+        .not('checked_in_at', 'is', null)
+        .gte('checked_in_at', thirtyDaysAgo)
+        .lte('checked_in_at', now);
 
-      const profileVisits = analyzeTimestamps((profileVisitScans || []).map((s: any) => s.scanned_at));
+      const profileVisitTimestamps = (profileVisitCheckins || [])
+        .filter((r) => r.checked_in_at)
+        .map((r) => r.checked_in_at as string);
+      const profileVisits = analyzeTimestamps(profileVisitTimestamps);
 
       // ========================================
       // OFFERS - Same algorithm as Performance
@@ -163,15 +179,17 @@ export const useGuidanceData = (businessId: string) => {
           .lte('created_at', now);
         offerInteractionTimestamps = (offerInteractionsRes || []).map((v) => v.created_at);
 
-        // Offer visits (redemptions/scans) - same as Performance
-        const { data: offerScansRes } = await supabase
-          .from('discount_scans')
-          .select('scanned_at')
+        // Offer visits = verified offer redemptions (same as Performance - uses offer_purchases.redeemed_at)
+        const { data: offerRedemptionsRes } = await supabase
+          .from('offer_purchases')
+          .select('redeemed_at')
           .in('discount_id', offerIds)
-          .eq('success', true)
-          .gte('scanned_at', thirtyDaysAgo)
-          .lte('scanned_at', now);
-        offerVisitTimestamps = (offerScansRes || []).map((v) => v.scanned_at);
+          .not('redeemed_at', 'is', null)
+          .gte('redeemed_at', thirtyDaysAgo)
+          .lte('redeemed_at', now);
+        offerVisitTimestamps = (offerRedemptionsRes || [])
+          .filter((v) => v.redeemed_at)
+          .map((v) => v.redeemed_at as string);
       }
 
       const offerViews = analyzeTimestamps(offerViewTimestamps);
@@ -268,7 +286,7 @@ export const useGuidanceData = (businessId: string) => {
       
       // Combine all visit timestamps for best visit time
       const allVisitTimestamps = [
-        ...((profileVisitScans || []).map((s: any) => s.scanned_at)),
+        ...profileVisitTimestamps,
         ...offerVisitTimestamps,
         ...eventVisitTimestamps,
       ];
@@ -279,6 +297,7 @@ export const useGuidanceData = (businessId: string) => {
       const bestVisits = bestVisitWindows[0] || { dayIndex: 5, hours: '20:00–23:00' };
 
       // Return data with defaults for empty sections
+      // Include totals that EXACTLY match Performance tab counts
       return {
         profile: {
           views: profileViews.length > 0 && profileViews[0].count > 0 ? profileViews : [
@@ -321,6 +340,22 @@ export const useGuidanceData = (businessId: string) => {
             { dayIndex: 5, hours: '23:00–03:00', count: 0 },
             { dayIndex: 6, hours: '23:00–03:00', count: 0 },
           ],
+        },
+        // TOTALS - Same counts as Performance tab
+        profileTotals: {
+          views: profileViewEvents?.length || 0,
+          interactions: allProfileInteractionTimestamps.length,
+          visits: profileVisitTimestamps.length,
+        },
+        offerTotals: {
+          views: offerViewTimestamps.length,
+          interactions: offerInteractionTimestamps.length,
+          visits: offerVisitTimestamps.length,
+        },
+        eventTotals: {
+          views: eventViewTimestamps.length,
+          interactions: eventInteractionTimestamps.length,
+          visits: eventVisitTimestamps.length,
         },
         recommendedPlan: {
           publish: { dayIndex: bestPublish.dayIndex, hours: bestPublish.hours },

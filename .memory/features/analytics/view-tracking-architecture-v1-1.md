@@ -55,9 +55,10 @@ All tabs MUST use the same underlying data sources and produce consistent totals
 
 ### Guidance Tab (useGuidanceData)
 - Uses ALL views (no splitting) to analyze best times/days
-- Profile views from engagement_events
-- Offer views from discount_views
-- Event views from event_views
+- **profileTotals.views** = Same as Performance Profile Views
+- **offerTotals.views** = Same as Performance Offer Views
+- **eventTotals.views** = Same as Performance Event Views
+- Displays total count next to each metric name (e.g., "150 Προβολές")
 
 ## Boost Period Detection
 
@@ -73,5 +74,14 @@ This checks ALL boost statuses (active, completed, canceled, etc.) to properly c
 
 1. **Totals MUST match**: Overview.totalViews = Performance.profile + Performance.offers + Performance.events
 2. **Boost Value splits MUST sum**: BoostValue.without + BoostValue.with = Performance.total (for each category)
-3. **No double counting**: Each view is counted exactly once
-4. **Historical accuracy**: Boost status is checked at the time of the view, not current status
+3. **Guidance totals MUST match Performance**: Guidance.profileTotals.views = Performance.profile.views (and same for offers/events)
+4. **No double counting**: Each view is counted exactly once
+5. **Historical accuracy**: Boost status is checked at the time of the view, not current status
+
+## Visit Tracking (CRITICAL)
+
+Visits are tracked consistently across tabs using these sources:
+
+- **Profile Visits**: `reservations.checked_in_at` where `event_id IS NULL`
+- **Offer Visits**: `offer_purchases.redeemed_at` (NOT discount_scans)
+- **Event Visits**: `tickets.checked_in_at` + `reservations.checked_in_at` where event_id matches
