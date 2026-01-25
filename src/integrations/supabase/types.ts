@@ -1758,6 +1758,7 @@ export type Database = {
           seating_options: string[] | null
           start_at: string
           tags: string[] | null
+          terms_and_conditions: string | null
           title: string
           updated_at: string
           venue_name: string | null
@@ -1797,6 +1798,7 @@ export type Database = {
           seating_options?: string[] | null
           start_at: string
           tags?: string[] | null
+          terms_and_conditions?: string | null
           title: string
           updated_at?: string
           venue_name?: string | null
@@ -1836,6 +1838,7 @@ export type Database = {
           seating_options?: string[] | null
           start_at?: string
           tags?: string[] | null
+          terms_and_conditions?: string | null
           title?: string
           updated_at?: string
           venue_name?: string | null
@@ -2732,6 +2735,8 @@ export type Database = {
           last_name: string | null
           name: string | null
           preferences: string[] | null
+          reservation_cancellation_count: number | null
+          reservation_restricted_until: string | null
           role: Database["public"]["Enums"]["app_role"]
           student_qr_token: string | null
           suspended: boolean | null
@@ -2760,6 +2765,8 @@ export type Database = {
           last_name?: string | null
           name?: string | null
           preferences?: string[] | null
+          reservation_cancellation_count?: number | null
+          reservation_restricted_until?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           student_qr_token?: string | null
           suspended?: boolean | null
@@ -2788,6 +2795,8 @@ export type Database = {
           last_name?: string | null
           name?: string | null
           preferences?: string[] | null
+          reservation_cancellation_count?: number | null
+          reservation_restricted_until?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           student_qr_token?: string | null
           suspended?: boolean | null
