@@ -57,15 +57,27 @@ export const isAndroid = () => /Android/i.test(navigator.userAgent);
 export const hasNativeShare = () => typeof navigator !== 'undefined' && 'share' in navigator;
 
 // Check if Web Share API supports file sharing (for native story sharing)
+// More permissive check for iOS Safari 15+ and PWA where canShare may not exist
 export const canShareFiles = (): boolean => {
-  if (typeof navigator === 'undefined' || !('share' in navigator)) return false;
-  if (typeof navigator.canShare !== 'function') return false;
-  // Test with dummy file
+  // Check basic requirements
+  if (typeof navigator === 'undefined') return false;
+  if (!('share' in navigator)) return false;
+  
+  // On iOS Safari 15+, canShare may not exist but share with files works
+  // On Android Chrome 76+, both work
+  // Skip the test if canShare doesn't exist - just try sharing
+  if (typeof navigator.canShare !== 'function') {
+    // iOS Safari may not have canShare but still supports file sharing
+    // Return true and let the actual share call handle errors
+    return 'share' in navigator && isMobile();
+  }
+  
   try {
     const testFile = new File(['test'], 'test.png', { type: 'image/png' });
     return navigator.canShare({ files: [testFile] });
   } catch {
-    return false;
+    // Some browsers throw on canShare - still try sharing on mobile
+    return isMobile();
   }
 };
 
@@ -409,50 +421,71 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
 
         // === STORY PLATFORMS (Web Share API with files) ===
         case 'instagram-story':
-        case 'facebook-story':
-          // Try Web Share API with image file first (native sharing)
-          if (options?.onGenerateImage && canShareFiles()) {
-            try {
-              const imageDataUrl = await options.onGenerateImage();
-              if (imageDataUrl) {
-                const file = dataURLtoFile(imageDataUrl, 'fomo-story.png');
-                await navigator.share({
-                  files: [file],
-                  title: options?.title || 'ΦΟΜΟ',
-                  text: text,
-                  url: url,
-                });
-                toast.success(t.nativeShareSuccess);
-                break;
-              }
-            } catch (e) {
-              // User cancelled - don't fallback
-              if ((e as Error)?.name === 'AbortError') break;
-              // Other error - fall through to fallback
-              console.log('Web Share API failed, falling back to download:', e);
-            }
+        case 'facebook-story': {
+          // ALWAYS generate the image first
+          let storyImageDataUrl: string | null = null;
+          if (options?.onGenerateImage) {
+            storyImageDataUrl = await options.onGenerateImage();
           }
           
-          // Fallback: Download image + instructions + try to open app
-          if (options?.onImageDownload) {
-            await options.onImageDownload();
+          if (!storyImageDataUrl) {
+            toast.error(t.shareFailed);
+            break;
           }
-          toast.info(t.storyInstruction, { duration: 5000 });
-          if (isMobile()) {
-            const appUrl = channel === 'instagram-story' ? 'instagram://story-camera' : 'fb://story';
-            const webUrl = channel === 'instagram-story' ? 'https://www.instagram.com/' : 'https://www.facebook.com/';
-            await tryOpenApp(
-              appUrl,
-              async () => {
-                window.open(webUrl, '_blank');
-              },
-              900
+          
+          // Attempt 1: Web Share API with files (works on iOS Safari 15+, Chrome Android 76+)
+          const storyFile = dataURLtoFile(storyImageDataUrl, 'fomo-story.png');
+          
+          try {
+            // Build share data with the image file
+            const shareData: ShareData = {
+              files: [storyFile],
+              title: options?.title || 'ΦΟΜΟ',
+              text: text,
+              url: url,
+            };
+            
+            // Validate share capability if canShare exists
+            if (navigator.canShare && !navigator.canShare(shareData)) {
+              throw new Error('Cannot share files');
+            }
+            
+            await navigator.share(shareData);
+            toast.success(t.storyShared);
+            break;
+          } catch (e) {
+            const error = e as Error;
+            
+            // User cancelled - stop here
+            if (error?.name === 'AbortError') break;
+            
+            console.log('Web Share API with files failed:', error.message);
+            
+            // Attempt 2: Try sharing without files (just URL/text) - still opens share sheet
+            try {
+              await navigator.share({
+                title: options?.title || 'ΦΟΜΟ',
+                text: text,
+                url: url,
+              });
+              toast.success(t.nativeShareSuccess);
+              break;
+            } catch (e2) {
+              if ((e2 as Error)?.name === 'AbortError') break;
+              console.log('Web Share API without files also failed:', e2);
+            }
+            
+            // Attempt 3: Fallback - Save image and copy link (no deep links - they don't work)
+            downloadImage(storyImageDataUrl, 'fomo-story.png');
+            await copyToClipboard(url);
+            toast.info(language === 'el' 
+              ? 'Η εικόνα αποθηκεύτηκε και το link αντιγράφηκε! Άνοιξε το Instagram > Stories > Επίλεξε την εικόνα > Πρόσθεσε link sticker'
+              : 'Image saved and link copied! Open Instagram > Stories > Select the image > Add link sticker',
+              { duration: 6000 }
             );
-          } else {
-            const webUrl = channel === 'instagram-story' ? 'https://www.instagram.com/' : 'https://www.facebook.com/';
-            window.open(webUrl, '_blank');
           }
           break;
+        }
 
         // === UTILITY ===
         case 'copy':
