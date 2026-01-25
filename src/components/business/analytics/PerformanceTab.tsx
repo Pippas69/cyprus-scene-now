@@ -43,10 +43,10 @@ const translations = {
     eventsViewsSource: 'Όλες οι σελίδες εκδηλώσεων',
     // Interactions - ενδιαφέρον χρηστών
     interactionsExplanation: 'Ενδιαφέρον χρηστών',
-    profileInteractionsDetails: 'Χρήστες που ακολούθησαν, μοιράστηκαν ή έκαναν κλικ στο προφίλ σου.',
+    profileInteractionsDetails: 'Χρήστες που ακολούθησαν ή έκαναν κλικ στο προφίλ σου.',
     offersInteractionsDetails: 'Κλικ στο κουμπί "Εξαργύρωσε" – δείχνει πρόθεση χρήσης της προσφοράς.',
     eventsInteractionsDetails: 'RSVPs χρηστών: "Ενδιαφέρομαι" ή "Θα πάω".',
-    profileInteractionsSource: 'Ακολουθήσεις, κοινοποιήσεις, κλικ',
+    profileInteractionsSource: 'Ακολουθήσεις, κλικ',
     offersInteractionsSource: 'Κλικ στο "Εξαργύρωσε"',
     eventsInteractionsSource: 'RSVPs (Ενδιαφέρομαι/Θα πάω)',
     // Visits - πραγματικές επισκέψεις με QR
@@ -93,10 +93,10 @@ const translations = {
     eventsViewsSource: 'All event pages',
     // Interactions
     interactionsExplanation: 'User interest',
-    profileInteractionsDetails: 'Users who followed, shared, or clicked on your profile.',
+    profileInteractionsDetails: 'Users who followed or clicked on your profile.',
     offersInteractionsDetails: 'Clicks on "Redeem" button – shows intent to use the offer.',
     eventsInteractionsDetails: 'User RSVPs: "Interested" or "Going".',
-    profileInteractionsSource: 'Follows, shares, clicks',
+    profileInteractionsSource: 'Follows, clicks',
     offersInteractionsSource: 'Clicks on "Redeem"',
     eventsInteractionsSource: 'RSVPs (Interested/Going)',
     // Visits - verified with QR

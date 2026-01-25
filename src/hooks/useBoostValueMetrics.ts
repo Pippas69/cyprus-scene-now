@@ -114,7 +114,7 @@ export const useBoostValueMetrics = (
           .from("engagement_events")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
-          .in("event_type", ["follow", "favorite", "share", "profile_click"])
+          .in("event_type", ["follow", "favorite", "profile_click", "profile_interaction"])
           .gte("created_at", rangeStart)
           .lte("created_at", rangeEnd);
 
