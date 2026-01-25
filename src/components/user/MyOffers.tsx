@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { CreditTransactionHistory } from "./CreditTransactionHistory";
 import { OfferQRCard } from "./OfferQRCard";
+import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 
 interface MyOffersProps {
   userId: string;
@@ -35,18 +36,20 @@ interface OfferPurchase {
     offer_type: string | null;
     bonus_percent: number | null;
     credit_amount_cents: number | null;
+    category: string | null;
     businesses: {
       name: string;
       logo_url: string | null;
       city: string;
+      category: string[];
     };
   };
 }
 
 export function MyOffers({ userId, language }: MyOffersProps) {
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
-
   const [showHistory, setShowHistory] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const text = {
     title: { el: "Οι Αγορές Μου", en: "My Purchases" },
@@ -195,10 +198,12 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             offer_type,
             bonus_percent,
             credit_amount_cents,
+            category,
             businesses (
               name,
               logo_url,
-              city
+              city,
+              category
             )
           )
         `)
@@ -241,6 +246,26 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     const isExpired = new Date(p.expires_at) <= new Date();
     return p.status === 'expired' || (p.status === 'paid' && isExpired);
   }) || [];
+
+  // Filter purchases by selected categories
+  const filterByCategory = (purchasesList: OfferPurchase[]) => {
+    if (selectedCategories.length === 0) return purchasesList;
+    return purchasesList.filter(p => {
+      // Check discount category
+      const discountCat = p.discounts?.category;
+      // Check business categories
+      const businessCats = p.discounts?.businesses?.category || [];
+      // Match if either discount category or any business category matches
+      return selectedCategories.some(cat => 
+        discountCat === cat || businessCats.includes(cat)
+      );
+    });
+  };
+
+  // Filtered lists
+  const filteredActive = filterByCategory(activePurchases);
+  const filteredRedeemed = filterByCategory(redeemedPurchases);
+  const filteredExpired = filterByCategory(expiredPurchases);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), language === "el" ? "dd/MM/yyyy" : "MM/dd/yyyy");
@@ -398,31 +423,41 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto overflow-hidden">
+    <div className="w-full max-w-6xl mx-auto overflow-hidden space-y-4">
+      {/* Category Filter Bar - Premium Map Style */}
+      <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
+        <HierarchicalCategoryFilter
+          selectedCategories={selectedCategories}
+          onCategoryChange={setSelectedCategories}
+          language={language}
+          mapMode={true}
+        />
+      </div>
+
       <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full grid-cols-3 text-[11px] sm:text-sm bg-muted/50 p-1 gap-0.5">
           <TabsTrigger value="active" className="px-1.5 sm:px-3 py-2 gap-0.5">
             <span className="truncate">{t.active}</span>
-            {activePurchases.length > 0 && (
-              <span className="text-muted-foreground shrink-0">({activePurchases.length})</span>
+            {filteredActive.length > 0 && (
+              <span className="text-muted-foreground shrink-0">({filteredActive.length})</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="redeemed" className="px-1.5 sm:px-3 py-2 gap-0.5">
             <span className="truncate">{t.redeemed}</span>
-            {redeemedPurchases.length > 0 && (
-              <span className="text-muted-foreground shrink-0">({redeemedPurchases.length})</span>
+            {filteredRedeemed.length > 0 && (
+              <span className="text-muted-foreground shrink-0">({filteredRedeemed.length})</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="expired" className="px-1.5 sm:px-3 py-2 gap-0.5">
             <span className="truncate">{t.expired}</span>
-            {expiredPurchases.length > 0 && (
-              <span className="text-muted-foreground shrink-0">({expiredPurchases.length})</span>
+            {filteredExpired.length > 0 && (
+              <span className="text-muted-foreground shrink-0">({filteredExpired.length})</span>
             )}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="mt-4">
-          {activePurchases.length === 0 ? (
+          {filteredActive.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <ShoppingBag className="h-10 w-10 text-muted-foreground mb-3" />
@@ -434,7 +469,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </Card>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {activePurchases.map((purchase) => (
+              {filteredActive.map((purchase) => (
                 <PurchaseCard key={purchase.id} purchase={purchase} />
               ))}
             </div>
@@ -442,7 +477,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         </TabsContent>
 
         <TabsContent value="redeemed" className="mt-4">
-          {redeemedPurchases.length === 0 ? (
+          {filteredRedeemed.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <CheckCircle className="h-10 w-10 text-muted-foreground mb-3" />
@@ -451,7 +486,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </Card>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {redeemedPurchases.map((purchase) => (
+              {filteredRedeemed.map((purchase) => (
                 <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />
               ))}
             </div>
@@ -459,7 +494,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         </TabsContent>
 
         <TabsContent value="expired" className="mt-4">
-          {expiredPurchases.length === 0 ? (
+          {filteredExpired.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <Clock className="h-10 w-10 text-muted-foreground mb-3" />
@@ -468,7 +503,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </Card>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {expiredPurchases.map((purchase) => (
+              {filteredExpired.map((purchase) => (
                 <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />
               ))}
             </div>
