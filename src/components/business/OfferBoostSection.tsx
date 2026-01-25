@@ -235,9 +235,10 @@ const OfferBoostSection = ({
                 <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(startDate, "PPP")}
+                    <Button variant="outline" className="w-full justify-start text-left text-xs sm:text-sm">
+                      <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate sm:hidden">{format(startDate, "dd/MM/yy")}</span>
+                      <span className="truncate hidden sm:inline">{format(startDate, "PPP")}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -277,9 +278,10 @@ const OfferBoostSection = ({
                 <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(startDate, "PPP")}
+                    <Button variant="outline" className="w-full justify-start text-left text-xs sm:text-sm">
+                      <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate sm:hidden">{format(startDate, "dd/MM/yy")}</span>
+                      <span className="truncate hidden sm:inline">{format(startDate, "PPP")}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -297,9 +299,10 @@ const OfferBoostSection = ({
                 <Label>{language === "el" ? "Ημερομηνία Λήξης" : "End Date"}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(endDate, "PPP")}
+                    <Button variant="outline" className="w-full justify-start text-left text-xs sm:text-sm">
+                      <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate sm:hidden">{format(endDate, "dd/MM/yy")}</span>
+                      <span className="truncate hidden sm:inline">{format(endDate, "PPP")}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
