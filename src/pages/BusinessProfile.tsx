@@ -193,10 +193,13 @@ const BusinessProfile = () => {
   useEffect(() => {
     if (businessId) {
       fetchBusinessData();
-      // Track profile view
-      trackEngagement(businessId, 'profile_view', 'business', businessId);
+      // Do NOT count views when navigation originated from the user's dashboard sections.
+      const src = new URLSearchParams(location.search).get('src');
+      if (src !== 'dashboard_user') {
+        trackEngagement(businessId, 'profile_view', 'business', businessId);
+      }
     }
-  }, [businessId]);
+  }, [businessId, location.search]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
