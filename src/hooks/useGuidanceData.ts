@@ -49,6 +49,20 @@ export const useGuidanceData = (businessId: string) => {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const now = new Date().toISOString();
 
+      // Avoid the 1000-row cap when we need full-fidelity totals.
+      const fetchAll = async <T,>(
+        fetchPage: (from: number, to: number) => Promise<T[]>
+      ): Promise<T[]> => {
+        const pageSize = 1000;
+        const out: T[] = [];
+        for (let from = 0; ; from += pageSize) {
+          const page = await fetchPage(from, from + pageSize - 1);
+          out.push(...page);
+          if (page.length < pageSize) break;
+        }
+        return out;
+      };
+
       const analyzeTimestamps = (timestamps: string[] | null | undefined) => {
         const hourCounts: Record<number, Record<number, number>> = {};
 
@@ -101,33 +115,45 @@ export const useGuidanceData = (businessId: string) => {
       // ========================================
       
       // Profile views from engagement_events (same as Performance)
-      const { data: profileViewEvents } = await supabase
-        .from('engagement_events')
-        .select('created_at')
-        .eq('business_id', businessId)
-        .eq('event_type', 'profile_view')
-        .gte('created_at', thirtyDaysAgo)
-        .lte('created_at', now);
+      const profileViewEvents = await fetchAll<{ created_at: string }>(async (from, to) => {
+        const { data } = await supabase
+          .from('engagement_events')
+          .select('created_at')
+          .eq('business_id', businessId)
+          .eq('event_type', 'profile_view')
+          .gte('created_at', thirtyDaysAgo)
+          .lte('created_at', now)
+          .range(from, to);
+        return (data || []) as any;
+      });
 
       const profileViews = analyzeTimestamps(profileViewEvents?.map((e) => e.created_at));
 
       // Profile interactions (follows, shares, profile clicks ONLY) - same as Performance
-      const { data: profileInteractionEvents } = await supabase
-        .from('engagement_events')
-        .select('created_at')
-        .eq('business_id', businessId)
-        .in('event_type', ['follow', 'favorite', 'share', 'profile_click'])
-        .gte('created_at', thirtyDaysAgo)
-        .lte('created_at', now);
+      const profileInteractionEvents = await fetchAll<{ created_at: string }>(async (from, to) => {
+        const { data } = await supabase
+          .from('engagement_events')
+          .select('created_at')
+          .eq('business_id', businessId)
+          .in('event_type', ['follow', 'favorite', 'share', 'profile_click'])
+          .gte('created_at', thirtyDaysAgo)
+          .lte('created_at', now)
+          .range(from, to);
+        return (data || []) as any;
+      });
 
       // Also count business followers for interactions - same as Performance
-      const { data: followerData } = await supabase
-        .from('business_followers')
-        .select('created_at')
-        .eq('business_id', businessId)
-        .is('unfollowed_at', null)
-        .gte('created_at', thirtyDaysAgo)
-        .lte('created_at', now);
+      const followerData = await fetchAll<{ created_at: string }>(async (from, to) => {
+        const { data } = await supabase
+          .from('business_followers')
+          .select('created_at')
+          .eq('business_id', businessId)
+          .is('unfollowed_at', null)
+          .gte('created_at', thirtyDaysAgo)
+          .lte('created_at', now)
+          .range(from, to);
+        return (data || []) as any;
+      });
 
       const allProfileInteractionTimestamps = [
         ...(profileInteractionEvents?.map((e) => e.created_at) || []),
@@ -136,14 +162,18 @@ export const useGuidanceData = (businessId: string) => {
       const profileInteractions = analyzeTimestamps(allProfileInteractionTimestamps);
 
       // Profile visits = verified reservation check-ins for DIRECT business reservations (same as Performance)
-      const { data: profileVisitCheckins } = await supabase
-        .from('reservations')
-        .select('checked_in_at')
-        .eq('business_id', businessId)
-        .is('event_id', null)
-        .not('checked_in_at', 'is', null)
-        .gte('checked_in_at', thirtyDaysAgo)
-        .lte('checked_in_at', now);
+      const profileVisitCheckins = await fetchAll<{ checked_in_at: string | null }>(async (from, to) => {
+        const { data } = await supabase
+          .from('reservations')
+          .select('checked_in_at')
+          .eq('business_id', businessId)
+          .is('event_id', null)
+          .not('checked_in_at', 'is', null)
+          .gte('checked_in_at', thirtyDaysAgo)
+          .lte('checked_in_at', now)
+          .range(from, to);
+        return (data || []) as any;
+      });
 
       const profileVisitTimestamps = (profileVisitCheckins || [])
         .filter((r) => r.checked_in_at)
@@ -160,33 +190,45 @@ export const useGuidanceData = (businessId: string) => {
 
       if (offerIds.length > 0) {
         // Offer views from discount_views
-        const { data: offerViewsRes } = await supabase
-          .from('discount_views')
-          .select('viewed_at')
-          .in('discount_id', offerIds)
-          .gte('viewed_at', thirtyDaysAgo)
-          .lte('viewed_at', now);
+        const offerViewsRes = await fetchAll<{ viewed_at: string }>(async (from, to) => {
+          const { data } = await supabase
+            .from('discount_views')
+            .select('viewed_at')
+            .in('discount_id', offerIds)
+            .gte('viewed_at', thirtyDaysAgo)
+            .lte('viewed_at', now)
+            .range(from, to);
+          return (data || []) as any;
+        });
         offerViewTimestamps = (offerViewsRes || []).map((v) => v.viewed_at);
 
         // Offer interactions = clicks on "Εξαργύρωσε" (same as Performance)
-        const { data: offerInteractionsRes } = await supabase
-          .from('engagement_events')
-          .select('created_at')
-          .eq('business_id', businessId)
-          .eq('event_type', 'offer_redeem_click')
-          .in('entity_id', offerIds)
-          .gte('created_at', thirtyDaysAgo)
-          .lte('created_at', now);
+        const offerInteractionsRes = await fetchAll<{ created_at: string }>(async (from, to) => {
+          const { data } = await supabase
+            .from('engagement_events')
+            .select('created_at')
+            .eq('business_id', businessId)
+            .eq('event_type', 'offer_redeem_click')
+            .in('entity_id', offerIds)
+            .gte('created_at', thirtyDaysAgo)
+            .lte('created_at', now)
+            .range(from, to);
+          return (data || []) as any;
+        });
         offerInteractionTimestamps = (offerInteractionsRes || []).map((v) => v.created_at);
 
         // Offer visits = verified offer redemptions (same as Performance - uses offer_purchases.redeemed_at)
-        const { data: offerRedemptionsRes } = await supabase
-          .from('offer_purchases')
-          .select('redeemed_at')
-          .in('discount_id', offerIds)
-          .not('redeemed_at', 'is', null)
-          .gte('redeemed_at', thirtyDaysAgo)
-          .lte('redeemed_at', now);
+        const offerRedemptionsRes = await fetchAll<{ redeemed_at: string | null }>(async (from, to) => {
+          const { data } = await supabase
+            .from('offer_purchases')
+            .select('redeemed_at')
+            .in('discount_id', offerIds)
+            .not('redeemed_at', 'is', null)
+            .gte('redeemed_at', thirtyDaysAgo)
+            .lte('redeemed_at', now)
+            .range(from, to);
+          return (data || []) as any;
+        });
         offerVisitTimestamps = (offerRedemptionsRes || [])
           .filter((v) => v.redeemed_at)
           .map((v) => v.redeemed_at as string);
@@ -206,57 +248,67 @@ export const useGuidanceData = (businessId: string) => {
 
       if (eventIds.length > 0) {
         // Event views from event_views
-        const { data: eventViewsRes } = await supabase
-          .from('event_views')
-          .select('viewed_at')
-          .in('event_id', eventIds)
-          .gte('viewed_at', thirtyDaysAgo)
-          .lte('viewed_at', now);
+        const eventViewsRes = await fetchAll<{ viewed_at: string }>(async (from, to) => {
+          const { data } = await supabase
+            .from('event_views')
+            .select('viewed_at')
+            .in('event_id', eventIds)
+            .gte('viewed_at', thirtyDaysAgo)
+            .lte('viewed_at', now)
+            .range(from, to);
+          return (data || []) as any;
+        });
         eventViewTimestamps = (eventViewsRes || []).map((v) => v.viewed_at);
 
         // Event interactions (RSVPs) - same as Performance
-        const { data: rsvpsRes } = await supabase
-          .from('rsvps')
-          .select('created_at')
-          .in('event_id', eventIds)
-          .in('status', ['interested', 'going'])
-          .gte('created_at', thirtyDaysAgo)
-          .lte('created_at', now);
+        const rsvpsRes = await fetchAll<{ created_at: string }>(async (from, to) => {
+          const { data } = await supabase
+            .from('rsvps')
+            .select('created_at')
+            .in('event_id', eventIds)
+            .in('status', ['interested', 'going'])
+            .gte('created_at', thirtyDaysAgo)
+            .lte('created_at', now)
+            .range(from, to);
+          return (data || []) as any;
+        });
         eventInteractionTimestamps = (rsvpsRes || []).map((v) => v.created_at);
 
-        // Event visits = ticket check-ins + event reservation scans - same as Performance
-        const { data: ticketCheckInsRes } = await supabase
-          .from('tickets')
-          .select('checked_in_at')
-          .in('event_id', eventIds)
-          .not('checked_in_at', 'is', null)
-          .gte('created_at', thirtyDaysAgo)
-          .lte('created_at', now);
+        // Event visits = ticket check-ins + event reservation check-ins (same as Performance)
+        const ticketCheckInsRes = await fetchAll<{ checked_in_at: string | null }>(async (from, to) => {
+          const { data } = await supabase
+            .from('tickets')
+            .select('checked_in_at')
+            .in('event_id', eventIds)
+            .not('checked_in_at', 'is', null)
+            .gte('checked_in_at', thirtyDaysAgo)
+            .lte('checked_in_at', now)
+            .range(from, to);
+          return (data || []) as any;
+        });
         
         const ticketCheckIns = (ticketCheckInsRes || [])
           .filter((t) => t.checked_in_at)
           .map((t) => t.checked_in_at as string);
 
-        // Add event-linked reservation scans
-        const { data: eventReservations } = await supabase
-          .from('reservations')
-          .select('id')
-          .in('event_id', eventIds)
-          .gte('created_at', thirtyDaysAgo)
-          .lte('created_at', now);
+        // Add event-linked reservation check-ins
+        const eventReservationCheckinsRes = await fetchAll<{ checked_in_at: string | null }>(async (from, to) => {
+          const { data } = await supabase
+            .from('reservations')
+            .select('checked_in_at')
+            .in('event_id', eventIds)
+            .not('checked_in_at', 'is', null)
+            .gte('checked_in_at', thirtyDaysAgo)
+            .lte('checked_in_at', now)
+            .range(from, to);
+          return (data || []) as any;
+        });
 
-        const eventResIds = eventReservations?.map((r) => r.id) || [];
-        let eventResScanTimestamps: string[] = [];
-        
-        if (eventResIds.length > 0) {
-          const { data: eventResScansRes } = await (supabase
-            .from('reservation_scans') as any)
-            .select('scanned_at')
-            .in('reservation_id', eventResIds);
-          eventResScanTimestamps = (eventResScansRes || []).map((s: any) => s.scanned_at);
-        }
+        const eventReservationCheckins = (eventReservationCheckinsRes || [])
+          .filter((r) => r.checked_in_at)
+          .map((r) => r.checked_in_at as string);
 
-        eventVisitTimestamps = [...ticketCheckIns, ...eventResScanTimestamps];
+        eventVisitTimestamps = [...ticketCheckIns, ...eventReservationCheckins];
       }
 
       const eventViews = analyzeTimestamps(eventViewTimestamps);
