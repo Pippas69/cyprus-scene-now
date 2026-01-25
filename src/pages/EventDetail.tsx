@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -67,6 +67,7 @@ const itemVariants = {
 export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguage();
   const [event, setEvent] = useState<any>(null);
   const [similarEvents, setSimilarEvents] = useState<any[]>([]);
@@ -90,9 +91,13 @@ export default function EventDetail() {
     checkUser();
     if (eventId) {
       fetchEventDetails();
-      trackEventView(eventId, 'direct');
+      // Do NOT count views when navigation originated from the user's dashboard sections.
+      const src = new URLSearchParams(location.search).get('src');
+      if (src !== 'dashboard_user') {
+        trackEventView(eventId, 'direct');
+      }
     }
-  }, [eventId]);
+  }, [eventId, location.search]);
 
   useEffect(() => {
     if (event && user) {

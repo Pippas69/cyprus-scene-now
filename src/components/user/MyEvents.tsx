@@ -129,10 +129,22 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
             <div key={key} className="relative">
               {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
               <div className="md:hidden">
-                <UnifiedEventCard event={event} language={language} size="mobileFixed" />
+                <UnifiedEventCard
+                  event={event}
+                  language={language}
+                  size="mobileFixed"
+                  disableViewTracking
+                  linkSearch="?src=dashboard_user"
+                />
               </div>
               <div className="hidden md:block">
-                <UnifiedEventCard event={event} language={language} size="full" />
+                <UnifiedEventCard
+                  event={event}
+                  language={language}
+                  size="full"
+                  disableViewTracking
+                  linkSearch="?src=dashboard_user"
+                />
               </div>
             </div>
           );
@@ -154,10 +166,22 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
             <div key={key} className="relative opacity-60">
               {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
               <div className="md:hidden">
-                <UnifiedEventCard event={event} language={language} size="mobileFixed" />
+                <UnifiedEventCard
+                  event={event}
+                  language={language}
+                  size="mobileFixed"
+                  disableViewTracking
+                  linkSearch="?src=dashboard_user"
+                />
               </div>
               <div className="hidden md:block">
-                <UnifiedEventCard event={event} language={language} size="full" />
+                <UnifiedEventCard
+                  event={event}
+                  language={language}
+                  size="full"
+                  disableViewTracking
+                  linkSearch="?src=dashboard_user"
+                />
               </div>
               <Badge variant="secondary" className="absolute top-2 right-2 bg-background/90 backdrop-blur text-xs z-20">
                 <Clock className="h-3 w-3 mr-1" />

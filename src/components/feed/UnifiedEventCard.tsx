@@ -36,6 +36,13 @@ interface UnifiedEventCardProps {
   isFree?: boolean;
   size?: "compact" | "default" | "boosted" | "full" | "mobileFixed";
   className?: string;
+  /**
+   * When true, this card will NOT record a view impression.
+   * Useful for user-dashboard sections (My Events/My Reservations/etc.) that must never count as views.
+   */
+  disableViewTracking?: boolean;
+  /** Optional query string appended to navigation links (e.g. "?src=dashboard_user"). */
+  linkSearch?: string;
 }
 
 const translations = {
@@ -72,7 +79,9 @@ export const UnifiedEventCard = ({
   isBoosted = false,
   isFree = false,
   size = "default",
-  className
+  className,
+  disableViewTracking = false,
+  linkSearch
 }: UnifiedEventCardProps) => {
   const navigate = useNavigate();
   const t = translations[language];
@@ -82,8 +91,9 @@ export const UnifiedEventCard = ({
   // View tracking
   const cardRef = useRef<HTMLDivElement | null>(null);
   const handleView = useCallback(() => {
+    if (disableViewTracking) return;
     trackEventView(event.id, 'feed');
-  }, [event.id]);
+  }, [disableViewTracking, event.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
 
   // Interaction = click to open event
@@ -140,7 +150,7 @@ export const UnifiedEventCard = ({
     return (
       <Link
         ref={cardRef as any}
-        to={`/event/${event.id}`}
+        to={`/event/${event.id}${linkSearch || ""}`}
         onClick={handleCardClick}
         className={cn(
           "flex flex-col rounded-xl bg-card border border-border",
@@ -233,7 +243,7 @@ export const UnifiedEventCard = ({
       <CardContent className="p-0 h-full flex flex-col">
         {/* Image section - increased height for mobile (h-48 instead of h-40) */}
         <Link
-          to={`/event/${event.id}`}
+          to={`/event/${event.id}${linkSearch || ""}`}
           onClick={handleCardClick}
           className="block relative h-48 sm:h-40 overflow-visible rounded-t-xl flex-shrink-0"
         >
@@ -271,7 +281,7 @@ export const UnifiedEventCard = ({
         {/* Content section - matching reference image layout */}
         <div className="p-2.5 sm:p-3 flex-1 flex flex-col gap-0.5">
           {/* Title */}
-          <Link to={`/event/${event.id}`} onClick={handleCardClick}>
+          <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
             <h3 className="font-semibold text-sm leading-tight line-clamp-1 hover:text-primary transition-colors">
               {event.title}
             </h3>
