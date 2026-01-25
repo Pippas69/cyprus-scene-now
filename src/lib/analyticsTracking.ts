@@ -4,6 +4,19 @@ import { useEffect } from 'react';
 let sessionId: string | null = null;
 
 /**
+ * Hard kill-switch for view tracking while the user is browsing their own dashboard-user sections.
+ * This is intentionally NOT based only on URL, because some mobile/webview cases can report
+ * unexpected path/query values during SPA transitions.
+ */
+const isUserDashboardNoViewsEnabled = (): boolean => {
+  try {
+    return (window as any)?.__NO_VIEWS_CONTEXT === 'dashboard_user_sections';
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Views must NEVER be counted when the user is browsing from their own dashboard sections
  * (My Events / My Reservations / My Offers / Settings).
  *
@@ -11,6 +24,10 @@ let sessionId: string | null = null;
  */
 const isDashboardUserContext = (): boolean => {
   try {
+    // Strongest rule: if the UI explicitly marked this session as “user dashboard sections”,
+    // do not count ANY views.
+    if (isUserDashboardNoViewsEnabled()) return true;
+
     const path = window.location?.pathname || "";
     // Any internal dashboard browsing (user/business/admin) must never count as views.
     if (path.startsWith('/dashboard-')) return true;
