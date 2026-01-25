@@ -326,10 +326,11 @@ const MetricRow: React.FC<{
   label: string;
   icon: React.ElementType;
   windows: TimeWindow[];
+  totalCount: number;
   tooltipTitle: string;
   tooltipText: string;
   language: 'el' | 'en';
-}> = ({ label, icon: Icon, windows, tooltipTitle, tooltipText, language }) => {
+}> = ({ label, icon: Icon, windows, totalCount, tooltipTitle, tooltipText, language }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -338,7 +339,8 @@ const MetricRow: React.FC<{
             <span className="flex items-center gap-2">
               <Icon className="h-4 w-4 text-muted-foreground" />
               <span className="flex items-center gap-1">
-                {label}
+                <span className="font-medium text-primary">{totalCount}</span>
+                <span>{label}</span>
                 <Info className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
               </span>
             </span>
@@ -394,16 +396,24 @@ const TipsSection: React.FC<{ tip1: string; tip2: string }> = ({ tip1, tip2 }) =
   );
 };
 
+// Totals interface
+interface SectionTotals {
+  views: number;
+  interactions: number;
+  visits: number;
+}
+
 // Guidance table for each section
 const GuidanceTable: React.FC<{
   title: string;
   icon: React.ElementType;
   iconColor: string;
   data: GuidanceSection;
+  totals: SectionTotals;
   sectionType: 'profile' | 'offers' | 'events';
   language: 'el' | 'en';
   metricsContent?: React.ReactNode;
-}> = ({ title, icon: Icon, iconColor, data, sectionType, language, metricsContent }) => {
+}> = ({ title, icon: Icon, iconColor, data, totals, sectionType, language, metricsContent }) => {
   const t = translations[language];
   const tips = generateTips(data, sectionType, language);
 
@@ -429,6 +439,7 @@ const GuidanceTable: React.FC<{
                 label={t.views}
                 icon={Eye}
                 windows={data.views}
+                totalCount={totals.views}
                 tooltipTitle={t.viewsTooltipTitle}
                 tooltipText={
                   sectionType === 'profile'
@@ -443,6 +454,7 @@ const GuidanceTable: React.FC<{
                 label={t.interactions}
                 icon={MousePointer}
                 windows={data.interactions}
+                totalCount={totals.interactions}
                 tooltipTitle={t.interactionsTooltipTitle}
                 tooltipText={
                   sectionType === 'profile'
@@ -457,6 +469,7 @@ const GuidanceTable: React.FC<{
                 label={t.visits}
                 icon={MapPin}
                 windows={data.visits}
+                totalCount={totals.visits}
                 tooltipTitle={t.visitsTooltipTitle}
                 tooltipText={
                   sectionType === 'profile'
@@ -912,6 +925,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         icon={Crown}
         iconColor="text-yellow-500"
         data={data.profile}
+        totals={data.profileTotals}
         sectionType="profile"
         language={language}
         metricsContent={
@@ -931,17 +945,18 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         icon={Gift}
         iconColor="text-orange-500"
         data={data.offers}
+        totals={data.offerTotals}
         sectionType="offers"
         language={language}
-          metricsContent={
-            metrics && (
-              <OfferBoostMetricsSection
-                boostSpentCents={metrics.offers.boostSpentCents}
-                totalVisits={metrics.offers.totalVisits}
-                language={language}
-              />
-            )
-          }
+        metricsContent={
+          metrics && (
+            <OfferBoostMetricsSection
+              boostSpentCents={metrics.offers.boostSpentCents}
+              totalVisits={metrics.offers.totalVisits}
+              language={language}
+            />
+          )
+        }
       />
 
       {/* 3. Boosted Events */}
@@ -950,6 +965,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         icon={Ticket}
         iconColor="text-purple-500"
         data={data.events}
+        totals={data.eventTotals}
         sectionType="events"
         language={language}
         metricsContent={
