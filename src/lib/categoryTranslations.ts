@@ -5,16 +5,16 @@ type Language = 'el' | 'en';
 const categoryMap: Record<string, { el: string; en: string }> = {
   // Main categories (4 core categories)
   'nightlife': { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
-  'clubs': { el: 'Clubs', en: 'Clubs' },
-  'club': { el: 'Club', en: 'Club' },
+  'events': { el: 'Events', en: 'Events' },
+  'event': { el: 'Event', en: 'Event' },
   'dining': { el: 'Εστίαση', en: 'Dining' },
   'summer': { el: 'Καλοκαίρι', en: 'Summer' },
   
-  // Nightlife sub-options (plural for users)
+  // Nightlife sub-options (plural for users) - Clubs is now a sub-option
+  'clubs': { el: 'Clubs', en: 'Clubs' },
+  'club': { el: 'Club', en: 'Club' },
   'bars': { el: 'Bars', en: 'Bars' },
   'bar': { el: 'Bar', en: 'Bar' },
-  'cocktail-bars': { el: 'Cocktail Bars', en: 'Cocktail Bars' },
-  'cocktail-bar': { el: 'Cocktail Bar', en: 'Cocktail Bar' },
   'wine-bars': { el: 'Wine Bars', en: 'Wine Bars' },
   'wine-bar': { el: 'Wine Bar', en: 'Wine Bar' },
   'pubs': { el: 'Pubs', en: 'Pubs' },

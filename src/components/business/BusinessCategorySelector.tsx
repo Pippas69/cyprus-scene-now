@@ -100,7 +100,7 @@ export const BusinessCategorySelector = ({
                 )}
               >
                 <div className="flex items-center gap-3 flex-1">
-                  {/* For categories without dropdowns (like Clubs), show checkbox */}
+                  {/* For categories without dropdowns (like Events), show checkbox */}
                   {!hasSubOptions && (
                     <Checkbox
                       id={category.id}

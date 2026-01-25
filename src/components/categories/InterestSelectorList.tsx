@@ -22,7 +22,7 @@ interface InterestSelectorListProps {
 /**
  * Mobile-first “list rows” selector (as per provided mock):
  * - Categories with sub-options are expandable (no checkbox on main row)
- * - Categories without sub-options (e.g. Clubs) are directly selectable
+ * - Categories without sub-options (e.g. Events) are directly selectable
  */
 export function InterestSelectorList({
   categories,
