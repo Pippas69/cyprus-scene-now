@@ -4,9 +4,10 @@ import { X, ChevronRight } from 'lucide-react';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { useShare, isMobile, hasNativeShare, formatEventShareText, formatBusinessShareText, getEventUrlFallback, getBusinessUrlFallback, ShareChannel } from '@/hooks/useShare';
+import { useShare, isMobile, hasNativeShare, formatEventShareText, formatBusinessShareText, formatOfferShareText, getEventUrlFallback, getBusinessUrlFallback, getOfferUrlFallback, ShareChannel } from '@/hooks/useShare';
 import { ShareableEventCard } from './ShareableEventCard';
 import { ShareableBusinessCard } from './ShareableBusinessCard';
+import { ShareableOfferCard } from './ShareableOfferCard';
 
 // Exact brand icons as rounded rectangles matching the reference images
 const ICON_SIZE = 48;
@@ -119,12 +120,28 @@ interface ShareSheetBusiness {
   cover_url?: string | null;
 }
 
+interface ShareSheetOffer {
+  id: string;
+  title: string;
+  description?: string;
+  percent_off?: number | null;
+  special_deal_text?: string | null;
+  end_at: string;
+  businesses: {
+    id: string;
+    name: string;
+    cover_url?: string | null;
+    logo_url?: string | null;
+  };
+}
+
 interface PremiumShareSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  type: 'event' | 'business';
+  type: 'event' | 'business' | 'offer';
   event?: ShareSheetEvent;
   business?: ShareSheetBusiness;
+  offer?: ShareSheetOffer;
   language: 'el' | 'en';
 }
 
@@ -184,6 +201,7 @@ export const PremiumShareSheet = ({
   type,
   event,
   business,
+  offer,
   language,
 }: PremiumShareSheetProps) => {
   const t = translations[language];
@@ -203,8 +221,11 @@ export const PremiumShareSheet = ({
     if (type === 'business' && business) {
       return getBusinessUrlFallback(business.id);
     }
+    if (type === 'offer' && offer) {
+      return getOfferUrlFallback(offer.id);
+    }
     return window.location.href;
-  }, [type, event, business]);
+  }, [type, event, business, offer]);
 
   const getShareText = useCallback(() => {
     if (type === 'event' && event) {
@@ -229,17 +250,26 @@ export const PremiumShareSheet = ({
         coverUrl: business.cover_url ?? undefined,
       }, language);
     }
+    if (type === 'offer' && offer) {
+      return formatOfferShareText({
+        id: offer.id,
+        title: offer.title,
+        validUntil: offer.end_at,
+        businessId: offer.businesses.id,
+        businessName: offer.businesses.name,
+      }, language);
+    }
     return '';
-  }, [type, event, business, language]);
+  }, [type, event, business, offer, language]);
 
   const getShareOptions = useCallback(() => {
     return {
-      title: type === 'event' ? event?.title : business?.name,
-      objectType: type as 'event' | 'business',
-      objectId: type === 'event' ? event?.id : business?.id,
-      businessId: type === 'event' ? event?.businesses?.id : business?.id,
+      title: type === 'event' ? event?.title : type === 'offer' ? offer?.title : business?.name,
+      objectType: type === 'offer' ? 'discount' as const : type as 'event' | 'business',
+      objectId: type === 'event' ? event?.id : type === 'offer' ? offer?.id : business?.id,
+      businessId: type === 'event' ? event?.businesses?.id : type === 'offer' ? offer?.businesses?.id : business?.id,
     };
-  }, [type, event, business]);
+  }, [type, event, business, offer]);
 
   // Handle story image download
   const handleDownloadStoryImage = useCallback(async () => {
@@ -247,18 +277,26 @@ export const PremiumShareSheet = ({
     if (imageUrl) {
       const filename = type === 'event'
         ? `${event?.title?.replace(/\s+/g, '-').toLowerCase() || 'event'}-story.png`
+        : type === 'offer'
+        ? `${offer?.title?.replace(/\s+/g, '-').toLowerCase() || 'offer'}-story.png`
         : `${business?.name?.replace(/\s+/g, '-').toLowerCase() || 'business'}-story.png`;
       downloadImage(imageUrl, filename);
     }
-  }, [type, event, business, generateStoryImage, downloadImage]);
+  }, [type, event, business, offer, generateStoryImage, downloadImage]);
+
+  // Generate story image and return data URL (for Web Share API)
+  const handleGenerateStoryImage = useCallback(async (): Promise<string | null> => {
+    return await generateStoryImage(storyCardRef);
+  }, [generateStoryImage]);
 
   // Share handlers
   const handleShare = useCallback(async (channel: ShareChannel) => {
     await shareToChannel(channel, getShareUrl(), getShareText(), {
       ...getShareOptions(),
       onImageDownload: handleDownloadStoryImage,
+      onGenerateImage: handleGenerateStoryImage,
     });
-  }, [shareToChannel, getShareUrl, getShareText, getShareOptions, handleDownloadStoryImage]);
+  }, [shareToChannel, getShareUrl, getShareText, getShareOptions, handleDownloadStoryImage, handleGenerateStoryImage]);
 
   // Format date for preview
   const formatDate = (dateStr: string) => {
@@ -328,6 +366,38 @@ export const PremiumShareSheet = ({
                 {business.city}
               </p>
             )}
+          </div>
+        </div>
+      );
+    }
+
+    if (type === 'offer' && offer) {
+      const coverImage = offer.businesses.cover_url || offer.businesses.logo_url;
+      return (
+        <div className="relative w-full h-40 rounded-2xl overflow-hidden">
+          {coverImage ? (
+            <img
+              src={coverImage}
+              alt={offer.businesses.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center">
+              <span className="text-4xl">🔥</span>
+            </div>
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          {/* Text overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            {offer.percent_off && offer.percent_off > 0 && (
+              <p className="text-white/90 text-sm font-medium">
+                -{offer.percent_off}%
+              </p>
+            )}
+            <h3 className="text-white font-bold text-lg leading-tight">
+              {offer.title}
+            </h3>
           </div>
         </div>
       );
@@ -495,6 +565,24 @@ export const PremiumShareSheet = ({
             address: business.address ?? undefined,
             logoUrl: business.logo_url ?? undefined,
             coverUrl: business.cover_url ?? undefined,
+          }}
+          variant="story"
+          language={language}
+        />
+      )}
+      {type === 'offer' && offer && (
+        <ShareableOfferCard
+          ref={storyCardRef}
+          offer={{
+            id: offer.id,
+            title: offer.title,
+            description: offer.description,
+            percent_off: offer.percent_off,
+            special_deal_text: offer.special_deal_text,
+            end_at: offer.end_at,
+            businessName: offer.businesses.name,
+            businessCoverUrl: offer.businesses.cover_url ?? undefined,
+            businessLogoUrl: offer.businesses.logo_url ?? undefined,
           }}
           variant="story"
           language={language}

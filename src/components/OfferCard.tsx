@@ -1,4 +1,4 @@
-import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck, Sparkles } from "lucide-react";
+import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck, Sparkles, Share2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { PremiumBadge } from "@/components/ui/premium-badge";
 
 import { cn } from "@/lib/utils";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
+import { ShareOfferDialog } from "@/components/sharing/ShareOfferDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { OfferItemsDisplay } from "@/components/business/offers/OfferItemsDisplay";
@@ -73,6 +74,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   // Removed scroll reveal for stable layout
   const offerData = offer || discount;
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   // Fetch items for bundle offers
   const { data: discountItems } = useQuery({
@@ -243,7 +245,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </span>
           </button>
 
-          {/* Bottom row: Discount badge + Redeem button */}
+          {/* Bottom row: Discount badge + Share + Redeem button */}
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-1">
               {offerData.percent_off && offerData.percent_off > 0 && (
@@ -258,19 +260,34 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 </Badge>
               )}
             </div>
-            <Button 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
-                setIsPurchaseOpen(true);
-              }} 
-              size="sm" 
-              variant="default"
-              className="text-xs h-7 px-3"
-            >
-              {language === "el" ? "Εξαργύρωσε" : "Redeem"}
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsShareOpen(true);
+                }}
+                title={language === "el" ? "Κοινοποίηση" : "Share"}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
+                  setIsPurchaseOpen(true);
+                }} 
+                size="sm" 
+                variant="default"
+                className="text-xs h-7 px-3"
+              >
+                {language === "el" ? "Εξαργύρωσε" : "Redeem"}
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -306,6 +323,29 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               cover_url: offerData.businesses.cover_url,
               city: offerData.businesses.city,
               accepts_direct_reservations: offerData.businesses.accepts_direct_reservations,
+            },
+          }}
+          language={language}
+        />
+      )}
+
+      {/* Share Dialog */}
+      {offerData && (
+        <ShareOfferDialog
+          open={isShareOpen}
+          onOpenChange={setIsShareOpen}
+          offer={{
+            id: offerData.id,
+            title: offerData.title,
+            description: offerData.description,
+            percent_off: offerData.percent_off,
+            special_deal_text: offerData.special_deal_text,
+            end_at: offerData.end_at,
+            businesses: {
+              id: offerData.business_id,
+              name: offerData.businesses.name,
+              cover_url: offerData.businesses.cover_url,
+              logo_url: offerData.businesses.logo_url,
             },
           }}
           language={language}

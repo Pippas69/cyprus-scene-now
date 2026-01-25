@@ -56,6 +56,30 @@ export const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
 export const isAndroid = () => /Android/i.test(navigator.userAgent);
 export const hasNativeShare = () => typeof navigator !== 'undefined' && 'share' in navigator;
 
+// Check if Web Share API supports file sharing (for native story sharing)
+export const canShareFiles = (): boolean => {
+  if (typeof navigator === 'undefined' || !('share' in navigator)) return false;
+  if (typeof navigator.canShare !== 'function') return false;
+  // Test with dummy file
+  try {
+    const testFile = new File(['test'], 'test.png', { type: 'image/png' });
+    return navigator.canShare({ files: [testFile] });
+  } catch {
+    return false;
+  }
+};
+
+// Convert DataURL to File object for Web Share API
+export const dataURLtoFile = (dataUrl: string, filename: string): File => {
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
+  return new File([u8arr], filename, { type: mime });
+};
+
 // Canonical URL generators (using fomo.cy domain for future-proofing)
 const CANONICAL_DOMAIN = 'https://fomo.cy';
 
@@ -66,6 +90,7 @@ export const getBusinessUrl = (businessId: string) => `${CANONICAL_DOMAIN}/v/${b
 
 // Fallback URLs using current origin (for now, until canonical domain is set up)
 export const getEventUrlFallback = (eventId: string) => `${window.location.origin}/event/${eventId}`;
+export const getOfferUrlFallback = (offerId: string) => `${window.location.origin}/offer/${offerId}`;
 export const getBusinessUrlFallback = (businessId: string) => `${window.location.origin}/business/${businessId}`;
 
 // Share text formatters
@@ -100,7 +125,7 @@ export const formatBusinessShareText = (business: ShareBusinessData, language: '
 };
 
 export const formatOfferShareText = (offer: ShareOfferData, language: 'el' | 'en' = 'el'): string => {
-  const url = getEventUrlFallback(offer.id); // Using event URL pattern for now
+  const url = getOfferUrlFallback(offer.id);
   const validUntil = offer.validUntil 
     ? new Date(offer.validUntil).toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US')
     : null;
@@ -123,6 +148,7 @@ interface UseShareReturn {
       objectId?: string;
       businessId?: string;
       onImageDownload?: () => Promise<void>;
+      onGenerateImage?: () => Promise<string | null>;
     }
   ) => Promise<void>;
   generateStoryImage: (elementRef: React.RefObject<HTMLElement>) => Promise<string | null>;
@@ -141,9 +167,10 @@ const toasts = {
     openingSnapchat: 'Άνοιξε το Snapchat…',
     storyInstruction: 'Ανέβασε την εικόνα στο Story και πρόσθεσε το link',
     shareFailed: 'Αποτυχία κοινοποίησης',
-    nativeShareSuccess: 'Στάλθηκε 👍',
+    nativeShareSuccess: 'Κοινοποιήθηκε! 🎉',
     nativeShareUnavailable: 'Το share sheet δεν υποστηρίζεται εδώ',
     appOpenFailed: 'Δεν άνοιξε η εφαρμογή — δοκίμασε ξανά',
+    storyShared: 'Επέλεξε την εφαρμογή για Story',
   },
   en: {
     linkCopied: 'Link copied',
@@ -155,9 +182,10 @@ const toasts = {
     openingSnapchat: 'Opening Snapchat…',
     storyInstruction: 'Upload the image to your Story and add the link',
     shareFailed: 'Share failed',
-    nativeShareSuccess: 'Sent 👍',
+    nativeShareSuccess: 'Shared! 🎉',
     nativeShareUnavailable: 'System share is not supported here',
     appOpenFailed: 'Could not open the app — try again',
+    storyShared: 'Choose the app for your Story',
   },
 };
 
@@ -257,6 +285,7 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
       objectId?: string;
       businessId?: string;
       onImageDownload?: () => Promise<void>;
+      onGenerateImage?: () => Promise<string | null>;
     }
   ) => {
     setIsSharing(true);
@@ -378,42 +407,50 @@ export const useShare = (language: 'el' | 'en' = 'el'): UseShareReturn => {
           }
           break;
 
-        // === STORY PLATFORMS ===
+        // === STORY PLATFORMS (Web Share API with files) ===
         case 'instagram-story':
-          // Download story image and copy link, then try to open Instagram
-          if (options?.onImageDownload) {
-            await options.onImageDownload();
-          }
-          toast.info(t.storyInstruction, { duration: 5000 });
-          if (isMobile()) {
-            await tryOpenApp(
-              'instagram://story-camera',
-              async () => {
-                window.open('https://www.instagram.com/', '_blank');
-              },
-              900
-            );
-          } else {
-            window.open('https://www.instagram.com/', '_blank');
-          }
-          break;
-
         case 'facebook-story':
-          // Download story image and copy link, then try to open Facebook
+          // Try Web Share API with image file first (native sharing)
+          if (options?.onGenerateImage && canShareFiles()) {
+            try {
+              const imageDataUrl = await options.onGenerateImage();
+              if (imageDataUrl) {
+                const file = dataURLtoFile(imageDataUrl, 'fomo-story.png');
+                await navigator.share({
+                  files: [file],
+                  title: options?.title || 'ΦΟΜΟ',
+                  text: text,
+                  url: url,
+                });
+                toast.success(t.nativeShareSuccess);
+                break;
+              }
+            } catch (e) {
+              // User cancelled - don't fallback
+              if ((e as Error)?.name === 'AbortError') break;
+              // Other error - fall through to fallback
+              console.log('Web Share API failed, falling back to download:', e);
+            }
+          }
+          
+          // Fallback: Download image + instructions + try to open app
           if (options?.onImageDownload) {
             await options.onImageDownload();
           }
           toast.info(t.storyInstruction, { duration: 5000 });
           if (isMobile()) {
+            const appUrl = channel === 'instagram-story' ? 'instagram://story-camera' : 'fb://story';
+            const webUrl = channel === 'instagram-story' ? 'https://www.instagram.com/' : 'https://www.facebook.com/';
             await tryOpenApp(
-              'fb://story',
+              appUrl,
               async () => {
-                window.open('https://www.facebook.com/', '_blank');
+                window.open(webUrl, '_blank');
               },
               900
             );
           } else {
-            window.open('https://www.facebook.com/', '_blank');
+            const webUrl = channel === 'instagram-story' ? 'https://www.instagram.com/' : 'https://www.facebook.com/';
+            window.open(webUrl, '_blank');
           }
           break;
 
