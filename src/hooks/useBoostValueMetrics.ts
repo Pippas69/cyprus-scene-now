@@ -23,9 +23,30 @@ interface DateRange {
   to: Date;
 }
 
+interface BoostPeriod {
+  entityId: string;
+  startDate: string;
+  endDate: string;
+}
+
 const calculateChange = (without: number, withBoost: number): number => {
   if (without === 0) return withBoost > 0 ? 100 : 0;
   return Math.round(((withBoost - without) / without) * 100);
+};
+
+// Helper to check if a timestamp falls within any boost period for an entity
+const isWithinBoostPeriod = (
+  timestamp: string,
+  entityId: string,
+  boostPeriods: BoostPeriod[]
+): boolean => {
+  const date = new Date(timestamp);
+  return boostPeriods.some(
+    (period) =>
+      period.entityId === entityId &&
+      date >= new Date(period.startDate) &&
+      date <= new Date(period.endDate + "T23:59:59.999Z")
+  );
 };
 
 export const useBoostValueMetrics = (
@@ -38,6 +59,10 @@ export const useBoostValueMetrics = (
       const startDate = dateRange?.from?.toISOString() || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const endDate = dateRange?.to?.toISOString() || new Date().toISOString();
 
+      // ========================================
+      // PROFILE - Featured vs Non-Featured (based on subscription)
+      // ========================================
+      
       // Check if business has/had active subscription (featured profile)
       const { data: subscription } = await supabase
         .from("business_subscriptions")
@@ -56,12 +81,8 @@ export const useBoostValueMetrics = (
       const allEventIds = businessEventsForVisits?.map(e => e.id) || [];
 
       // Profile metrics - split into two periods so that (without + with) always equals Performance totals
-      // - Without = non-featured period
-      // - With = featured period
       let profileWithout = { views: 0, interactions: 0, visits: 0 };
       let profileWith = { views: 0, interactions: 0, visits: 0 };
-
-      const clampIsoEndExclusive = (iso: string) => iso; // kept for readability
 
       const countProfileViews = async (rangeStart: string, rangeEnd: string) => {
         const { data } = await supabase
@@ -75,7 +96,6 @@ export const useBoostValueMetrics = (
       };
 
       const countProfileInteractions = async (rangeStart: string, rangeEnd: string) => {
-        // Must match Performance: follows + shares + profile clicks ONLY (not event clicks)
         const { data: events } = await supabase
           .from("engagement_events")
           .select("id")
@@ -96,7 +116,6 @@ export const useBoostValueMetrics = (
       };
 
       const countProfileVisits = async (rangeStart: string, rangeEnd: string) => {
-        // Profile visits = only DIRECT reservation check-ins (reservation.event_id IS NULL)
         const { count } = await supabase
           .from("reservations")
           .select("id", { count: "exact", head: true })
@@ -136,9 +155,6 @@ export const useBoostValueMetrics = (
         };
       } else {
         // Split range: [startDate, featuredStart) and [featuredStart, endDate]
-        // NOTE: For consistency with the rest of the analytics, we use < featuredStart for "without" and >= featuredStart for "with".
-        const withoutEnd = clampIsoEndExclusive(featuredStartIso);
-
         // Without (non-featured)
         const withoutViews = await supabase
           .from("engagement_events")
@@ -146,15 +162,15 @@ export const useBoostValueMetrics = (
           .eq("business_id", businessId)
           .eq("event_type", "profile_view")
           .gte("created_at", startDate)
-          .lt("created_at", withoutEnd);
+          .lt("created_at", featuredStartIso);
 
         const withoutInteractionsEvents = await supabase
           .from("engagement_events")
           .select("id")
           .eq("business_id", businessId)
-          .in("event_type", ["follow", "favorite", "share", "click", "profile_click"])
+          .in("event_type", ["follow", "favorite", "share", "profile_click"])
           .gte("created_at", startDate)
-          .lt("created_at", withoutEnd);
+          .lt("created_at", featuredStartIso);
 
         const { count: withoutFollowerCount } = await supabase
           .from("business_followers")
@@ -162,7 +178,7 @@ export const useBoostValueMetrics = (
           .eq("business_id", businessId)
           .is("unfollowed_at", null)
           .gte("created_at", startDate)
-          .lt("created_at", withoutEnd);
+          .lt("created_at", featuredStartIso);
 
         const { count: withoutResCheckins } = await supabase
           .from("reservations")
@@ -171,7 +187,7 @@ export const useBoostValueMetrics = (
           .is("event_id", null)
           .not("checked_in_at", "is", null)
           .gte("checked_in_at", startDate)
-          .lt("checked_in_at", withoutEnd);
+          .lt("checked_in_at", featuredStartIso);
 
         profileWithout = {
           views: withoutViews.data?.length || 0,
@@ -187,7 +203,11 @@ export const useBoostValueMetrics = (
         };
       }
 
-      // Get business offers
+      // ========================================
+      // OFFERS - Get ALL boost periods (not just active ones)
+      // Split based on whether the view happened during a boost period
+      // ========================================
+      
       const { data: businessOffers } = await supabase
         .from("discounts")
         .select("id")
@@ -195,92 +215,87 @@ export const useBoostValueMetrics = (
 
       const businessOfferIds = businessOffers?.map(o => o.id) || [];
 
-      // Get boosted offers from event_boosts (offer_boosts might not exist)
-      const { data: offerBoosts } = await supabase
+      // Get ALL offer boosts (any status) with their date ranges
+      const { data: allOfferBoosts } = await supabase
         .from("offer_boosts")
-        .select("discount_id")
+        .select("discount_id, start_date, end_date")
         .eq("business_id", businessId)
-        .eq("status", "active");
+        .in("status", ["active", "completed", "paused"]);
 
-      const boostedOfferIds = offerBoosts?.map(b => b.discount_id) || [];
+      const offerBoostPeriods: BoostPeriod[] = (allOfferBoosts || []).map(b => ({
+        entityId: b.discount_id,
+        startDate: b.start_date,
+        endDate: b.end_date,
+      }));
 
-      // Offer views by boost status
+      // Get ALL offer views with timestamps
       let boostedOfferViews = 0;
       let nonBoostedOfferViews = 0;
 
       if (businessOfferIds.length > 0) {
-        if (boostedOfferIds.length > 0) {
-          const { count: boostedCount } = await supabase
-            .from("discount_views")
-            .select("id", { count: 'exact', head: true })
-            .in("discount_id", boostedOfferIds)
-            .gte("viewed_at", startDate)
-            .lte("viewed_at", endDate);
-          boostedOfferViews = boostedCount || 0;
-        }
+        const { data: allOfferViews } = await supabase
+          .from("discount_views")
+          .select("discount_id, viewed_at")
+          .in("discount_id", businessOfferIds)
+          .gte("viewed_at", startDate)
+          .lte("viewed_at", endDate);
 
-        const nonBoostedIds = businessOfferIds.filter(id => !boostedOfferIds.includes(id));
-        if (nonBoostedIds.length > 0) {
-          const { count: nonBoostedCount } = await supabase
-            .from("discount_views")
-            .select("id", { count: 'exact', head: true })
-            .in("discount_id", nonBoostedIds)
-            .gte("viewed_at", startDate)
-            .lte("viewed_at", endDate);
-          nonBoostedOfferViews = nonBoostedCount || 0;
-        }
+        // Split views based on whether they occurred during a boost period
+        (allOfferViews || []).forEach(view => {
+          if (isWithinBoostPeriod(view.viewed_at, view.discount_id, offerBoostPeriods)) {
+            boostedOfferViews++;
+          } else {
+            nonBoostedOfferViews++;
+          }
+        });
       }
 
       // Offer interactions = clicks on "Εξαργύρωσε" (intent)
       const { data: offerInteractions } = await supabase
         .from("engagement_events")
-        .select("id, entity_id")
+        .select("id, entity_id, created_at")
         .eq("business_id", businessId)
         .eq("event_type", "offer_redeem_click")
-        .in("entity_id", businessOfferIds)
+        .in("entity_id", businessOfferIds.length > 0 ? businessOfferIds : ['00000000-0000-0000-0000-000000000000'])
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
-      const boostedOfferInteractions =
-        offerInteractions?.filter((i) => i.entity_id && boostedOfferIds.includes(i.entity_id)).length || 0;
-      const nonBoostedOfferInteractions = (offerInteractions?.length || 0) - boostedOfferInteractions;
+      let boostedOfferInteractions = 0;
+      let nonBoostedOfferInteractions = 0;
+      (offerInteractions || []).forEach(interaction => {
+        if (interaction.entity_id && isWithinBoostPeriod(interaction.created_at, interaction.entity_id, offerBoostPeriods)) {
+          boostedOfferInteractions++;
+        } else {
+          nonBoostedOfferInteractions++;
+        }
+      });
 
-      // Offer visits (scans)
+      // Offer visits (redemptions)
       let boostedOfferVisits = 0;
       let nonBoostedOfferVisits = 0;
 
-      if (boostedOfferIds.length > 0) {
-        const { count } = await supabase
+      if (businessOfferIds.length > 0) {
+        const { data: allOfferRedemptions } = await supabase
           .from("offer_purchases")
-          .select("id", { count: "exact", head: true })
-          .in("discount_id", boostedOfferIds)
+          .select("discount_id, redeemed_at")
+          .in("discount_id", businessOfferIds)
           .not("redeemed_at", "is", null)
           .gte("redeemed_at", startDate)
           .lte("redeemed_at", endDate);
-        boostedOfferVisits = count || 0;
+
+        (allOfferRedemptions || []).forEach(redemption => {
+          if (redemption.redeemed_at && isWithinBoostPeriod(redemption.redeemed_at, redemption.discount_id, offerBoostPeriods)) {
+            boostedOfferVisits++;
+          } else {
+            nonBoostedOfferVisits++;
+          }
+        });
       }
 
-      const nonBoostedIds = businessOfferIds.filter(id => !boostedOfferIds.includes(id));
-      if (nonBoostedIds.length > 0) {
-        const { count } = await supabase
-          .from("offer_purchases")
-          .select("id", { count: "exact", head: true })
-          .in("discount_id", nonBoostedIds)
-          .not("redeemed_at", "is", null)
-          .gte("redeemed_at", startDate)
-          .lte("redeemed_at", endDate);
-        nonBoostedOfferVisits = count || 0;
-      }
-
-      // Events - boosted vs non-boosted
-      const { data: boostedEvents } = await supabase
-        .from("event_boosts")
-        .select("event_id")
-        .eq("business_id", businessId)
-        .eq("status", "active");
-
-      const boostedEventIds = boostedEvents?.map(b => b.event_id) || [];
-
+      // ========================================
+      // EVENTS - Same logic: split by boost period timing
+      // ========================================
+      
       const { data: businessEvents } = await supabase
         .from("events")
         .select("id")
@@ -288,96 +303,107 @@ export const useBoostValueMetrics = (
 
       const businessEventIds = businessEvents?.map(e => e.id) || [];
 
+      // Get ALL event boosts (any status) with their date ranges
+      const { data: allEventBoosts } = await supabase
+        .from("event_boosts")
+        .select("event_id, start_date, end_date")
+        .eq("business_id", businessId)
+        .in("status", ["active", "completed", "canceled", "pending", "scheduled"]);
+
+      const eventBoostPeriods: BoostPeriod[] = (allEventBoosts || []).map(b => ({
+        entityId: b.event_id,
+        startDate: b.start_date,
+        endDate: b.end_date,
+      }));
+
       // Event views
       let boostedEventViews = 0;
       let nonBoostedEventViews = 0;
 
-      if (boostedEventIds.length > 0) {
-        const { count } = await supabase
+      if (businessEventIds.length > 0) {
+        const { data: allEventViews } = await supabase
           .from("event_views")
-          .select("id", { count: 'exact', head: true })
-          .in("event_id", boostedEventIds)
+          .select("event_id, viewed_at")
+          .in("event_id", businessEventIds)
           .gte("viewed_at", startDate)
           .lte("viewed_at", endDate);
-        boostedEventViews = count || 0;
+
+        (allEventViews || []).forEach(view => {
+          if (isWithinBoostPeriod(view.viewed_at, view.event_id, eventBoostPeriods)) {
+            boostedEventViews++;
+          } else {
+            nonBoostedEventViews++;
+          }
+        });
       }
 
-      const nonBoostedEventIds = businessEventIds.filter(id => !boostedEventIds.includes(id));
-      if (nonBoostedEventIds.length > 0) {
-        const { count } = await supabase
-          .from("event_views")
-          .select("id", { count: 'exact', head: true })
-          .in("event_id", nonBoostedEventIds)
-          .gte("viewed_at", startDate)
-          .lte("viewed_at", endDate);
-        nonBoostedEventViews = count || 0;
-      }
-
-      // Event interactions (RSVPs) - directly from rsvps table for accuracy
+      // Event interactions (RSVPs)
       let boostedEventInteractions = 0;
       let nonBoostedEventInteractions = 0;
+
+      if (businessEventIds.length > 0) {
+        const { data: allRsvps } = await supabase
+          .from("rsvps")
+          .select("event_id, created_at")
+          .in("event_id", businessEventIds)
+          .in("status", ["interested", "going"])
+          .gte("created_at", startDate)
+          .lte("created_at", endDate);
+
+        (allRsvps || []).forEach(rsvp => {
+          if (isWithinBoostPeriod(rsvp.created_at, rsvp.event_id, eventBoostPeriods)) {
+            boostedEventInteractions++;
+          } else {
+            nonBoostedEventInteractions++;
+          }
+        });
+      }
+
+      // Event visits = ticket check-ins + event reservation check-ins
       let boostedEventVisits = 0;
       let nonBoostedEventVisits = 0;
 
-      const countEventVisits = async (eventIds: string[]): Promise<number> => {
-        if (eventIds.length === 0) return 0;
-
-        // 1) Ticket check-ins (by checked_in_at)
-        const { count: ticketCheckins } = await supabase
+      if (businessEventIds.length > 0) {
+        // Ticket check-ins
+        const { data: ticketCheckins } = await supabase
           .from("tickets")
-          .select("id", { count: "exact", head: true })
-          .in("event_id", eventIds)
+          .select("event_id, checked_in_at")
+          .in("event_id", businessEventIds)
           .not("checked_in_at", "is", null)
           .gte("checked_in_at", startDate)
           .lte("checked_in_at", endDate);
 
-        let visits = ticketCheckins || 0;
+        (ticketCheckins || []).forEach(ticket => {
+          if (ticket.checked_in_at && isWithinBoostPeriod(ticket.checked_in_at, ticket.event_id, eventBoostPeriods)) {
+            boostedEventVisits++;
+          } else {
+            nonBoostedEventVisits++;
+          }
+        });
 
-        // 2) Verified reservation check-ins for event-linked reservations
-        const { count: eventReservationCheckins } = await supabase
+        // Event reservation check-ins
+        const { data: eventResCheckins } = await supabase
           .from("reservations")
-          .select("id", { count: "exact", head: true })
-          .in("event_id", eventIds)
+          .select("event_id, checked_in_at")
+          .in("event_id", businessEventIds)
           .not("checked_in_at", "is", null)
           .gte("checked_in_at", startDate)
           .lte("checked_in_at", endDate);
 
-        visits += eventReservationCheckins || 0;
-
-        return visits;
-      };
-
-      if (boostedEventIds.length > 0) {
-        const { count: boostedRsvps } = await supabase
-          .from("rsvps")
-          .select("id", { count: "exact", head: true })
-          .in("event_id", boostedEventIds)
-          .in("status", ["interested", "going"])
-          .gte("created_at", startDate)
-          .lte("created_at", endDate);
-        boostedEventInteractions = boostedRsvps || 0;
-
-        boostedEventVisits = await countEventVisits(boostedEventIds);
-      }
-
-      if (nonBoostedEventIds.length > 0) {
-        const { count: nonBoostedRsvps } = await supabase
-          .from("rsvps")
-          .select("id", { count: "exact", head: true })
-          .in("event_id", nonBoostedEventIds)
-          .in("status", ["interested", "going"])
-          .gte("created_at", startDate)
-          .lte("created_at", endDate);
-        nonBoostedEventInteractions = nonBoostedRsvps || 0;
-
-        nonBoostedEventVisits = await countEventVisits(nonBoostedEventIds);
+        (eventResCheckins || []).forEach(res => {
+          if (res.event_id && res.checked_in_at && isWithinBoostPeriod(res.checked_in_at, res.event_id, eventBoostPeriods)) {
+            boostedEventVisits++;
+          } else {
+            nonBoostedEventVisits++;
+          }
+        });
       }
 
       // Get best performing day from RSVPs
       const { data: rsvpDays } = await supabase
         .from("rsvps")
         .select("created_at")
-        .in("event_id", businessEventIds)
+        .in("event_id", businessEventIds.length > 0 ? businessEventIds : ['00000000-0000-0000-0000-000000000000'])
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
