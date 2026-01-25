@@ -406,78 +406,8 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
     setTimeFilter(prev => prev === filter ? null : filter);
   };
 
-  const clearAllFilters = () => {
-    setSelectedCategories([]);
-    setSelectedCity(null);
-    setTimeFilter(null);
-  };
-
-  const hasActiveFilters = selectedCategories.length > 0 || selectedCity || timeFilter;
-
-  const handleRemoveCategory = (category: string) => {
-    setSelectedCategories(prev => prev.filter(c => c !== category));
-  };
-
-  const handleRemoveCity = () => {
-    setSelectedCity(null);
-  };
-
-  const textFilters = {
-    el: { clearFilters: "Καθαρισμός" },
-    en: { clearFilters: "Clear" },
-  };
-  const tf = textFilters[language];
-
   return (
     <div className="space-y-4">
-      {/* Premium Filter Bar - Same as Map */}
-      <div className="bg-background border-b border-border px-1 py-2 lg:px-2 lg:py-3 -mx-4 md:-mx-0">
-        <div className="space-y-2">
-          {/* All in one row with horizontal scroll if needed */}
-          <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3 overflow-x-auto scrollbar-hide px-3 md:px-0">
-            <LocationSwitcher 
-              language={language} 
-              selectedCity={selectedCity} 
-              onCityChange={setSelectedCity}
-              mapMode={true}
-            />
-            
-            <HierarchicalCategoryFilter
-              selectedCategories={selectedCategories}
-              onCategoryChange={setSelectedCategories}
-              language={language}
-              mapMode={true}
-            />
-
-            {/* Clear Filters */}
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFilters}
-                className="gap-1 md:gap-1.5 lg:gap-2 whitespace-nowrap shrink-0 h-7 md:h-8 lg:h-9 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
-              >
-                <X className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
-                {tf.clearFilters}
-              </Button>
-            )}
-          </div>
-
-          {/* Filter Chips */}
-          <div className="px-3 md:px-0">
-            <FilterChips
-              categories={selectedCategories}
-              quickFilters={[]}
-              selectedCity={selectedCity}
-              onRemoveCategory={handleRemoveCategory}
-              onRemoveQuickFilter={() => {}}
-              onRemoveCity={handleRemoveCity}
-              onClearAll={clearAllFilters}
-              language={language}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Time Filter Chips */}
       <div className="flex gap-1.5 sm:gap-2">
