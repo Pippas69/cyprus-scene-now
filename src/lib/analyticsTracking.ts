@@ -42,6 +42,14 @@ const isDashboardUserContext = (): boolean => {
   }
 };
 
+const debugLog = (...args: any[]) => {
+  // Keep noise out of production builds
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.debug(...args);
+  }
+};
+
 // Generate or retrieve session ID
 const getSessionId = (): string => {
   if (!sessionId) {
@@ -64,7 +72,12 @@ export const trackEventView = async (
   source: 'feed' | 'map' | 'search' | 'profile' | 'direct'
 ) => {
   try {
-    if (isDashboardUserContext()) return;
+    if (isDashboardUserContext()) {
+      debugLog('[trackEventView] skipped', { eventId, source, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+      return;
+    }
+
+    debugLog('[trackEventView] sending', { eventId, source, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
 
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -90,7 +103,12 @@ export const trackDiscountView = async (
   source: 'feed' | 'event' | 'profile' | 'direct'
 ) => {
   try {
-    if (isDashboardUserContext()) return;
+    if (isDashboardUserContext()) {
+      debugLog('[trackDiscountView] skipped', { discountId, source, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+      return;
+    }
+
+    debugLog('[trackDiscountView] sending', { discountId, source, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
 
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -120,7 +138,14 @@ export const trackEngagement = async (
 ) => {
   try {
     // Profile views are a *view metric*. Never count them from user dashboard context.
-    if (eventType === 'profile_view' && isDashboardUserContext()) return;
+    if (eventType === 'profile_view' && isDashboardUserContext()) {
+      debugLog('[trackEngagement] profile_view skipped', { businessId, entityType, entityId, metadata, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+      return;
+    }
+
+    if (eventType === 'profile_view') {
+      debugLog('[trackEngagement] profile_view sending', { businessId, entityType, entityId, metadata, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
 
