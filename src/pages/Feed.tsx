@@ -34,11 +34,9 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
 interface FeedProps {
   showNavbar?: boolean;
-  /** When true, disables all *view* tracking that is triggered by card visibility. */
-  disableViewTracking?: boolean;
 }
 
-const Feed = ({ showNavbar = true, disableViewTracking = false }: FeedProps = {}) => {
+const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   // NOTE: We intentionally removed the big “Discover ΦΟΜΟ” / “Όλη η Κύπρος” header per your requested hierarchy.
   // Order on Feed:
   // 1) Paid (boosted) events & offers (top of page)
@@ -316,7 +314,6 @@ const Feed = ({ showNavbar = true, disableViewTracking = false }: FeedProps = {}
             offers={boostedOffers || []} 
             language={language}
             userCity={selectedCity || personalizedData?.profile?.city}
-            disableViewTracking={disableViewTracking}
           />
         </div>
 
@@ -432,7 +429,6 @@ const Feed = ({ showNavbar = true, disableViewTracking = false }: FeedProps = {}
                 selectedCity={selectedCity} 
                 selectedCategories={selectedCategories}
                 showStudentDiscountBadges={false}
-                  disableViewTracking={disableViewTracking}
               />
             )}
 

@@ -74,8 +74,6 @@ interface BoostedContentSectionProps {
   offers: BoostedOffer[];
   language: "el" | "en";
   userCity?: string | null;
-  /** When true, disables all *view* tracking (impressions) triggered by visibility observers. */
-  disableViewTracking?: boolean;
 }
 
 const translations = {
@@ -106,7 +104,6 @@ export const BoostedContentSection = ({
   offers, 
   language,
   userCity,
-  disableViewTracking = false,
 }: BoostedContentSectionProps) => {
   const t = translations[language];
 
@@ -158,14 +155,12 @@ export const BoostedContentSection = ({
                   language={language}
                   isBoosted={true}
                   size="boosted"
-                  disableViewTracking={disableViewTracking}
                 />
               ) : (
                 <OfferCard 
                   offer={item.data} 
                   t={t} 
                   language={language}
-                  disableViewTracking={disableViewTracking}
                 />
               )}
             </motion.div>
@@ -181,20 +176,18 @@ interface OfferCardProps {
   offer: BoostedOffer;
   t: typeof translations.el;
   language: "el" | "en";
-  disableViewTracking?: boolean;
 }
 
-const OfferCard = ({ offer, t, language, disableViewTracking = false }: OfferCardProps) => {
+const OfferCard = ({ offer, t, language }: OfferCardProps) => {
   const navigate = useNavigate();
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
 
   // View = card became visible to the user (NOT a click)
   const cardRef = useRef<HTMLDivElement | null>(null);
   const handleView = useCallback(() => {
-    if (disableViewTracking) return;
     if (!offer?.id) return;
     trackDiscountView(offer.id, 'feed');
-  }, [disableViewTracking, offer?.id]);
+  }, [offer?.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
   
   const endDate = new Date(offer.end_at);

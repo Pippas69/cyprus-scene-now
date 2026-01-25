@@ -307,7 +307,7 @@ const DashboardBusiness = () => {
             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [-webkit-overflow-scrolling:touch] px-0 sm:px-2"
           >
             <Routes>
-              <Route index element={<Feed showNavbar={false} disableViewTracking />} />
+              <Route index element={<Feed showNavbar={false} />} />
               <Route path="map" element={<Xartis />} />
               <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
               {/* Posts feature hidden but kept in code
