@@ -16,6 +16,17 @@ const DashboardUser = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'events');
 
+  // NEVER count views while the user browses their own dashboard sections.
+  // This is a hard kill-switch to avoid any mobile/webview edge-cases.
+  useEffect(() => {
+    (window as any).__NO_VIEWS_CONTEXT = 'dashboard_user_sections';
+    return () => {
+      if ((window as any).__NO_VIEWS_CONTEXT === 'dashboard_user_sections') {
+        delete (window as any).__NO_VIEWS_CONTEXT;
+      }
+    };
+  }, []);
+
   useEffect(() => {
     checkUser();
   }, []);
