@@ -34,6 +34,8 @@ interface BusinessDirectorySectionProps {
   selectedCategories?: string[];
   userCity?: string | null;
   showStudentDiscountBadges?: boolean;
+  /** When true, disables *view* tracking for business cards (impressions). */
+  disableViewTracking?: boolean;
 }
 
 // Map filter IDs to database category values
@@ -88,6 +90,7 @@ export const BusinessDirectorySection = ({
   selectedCategories = [],
   userCity = null,
   showStudentDiscountBadges = false,
+  disableViewTracking = false,
 }: BusinessDirectorySectionProps) => {
   const t = translations[language];
 
@@ -229,6 +232,7 @@ export const BusinessDirectorySection = ({
             index={index}
             language={language}
             showStudentDiscountBadges={showStudentDiscountBadges}
+            disableViewTracking={disableViewTracking}
           />
         ))}
       </motion.div>
@@ -243,16 +247,19 @@ const BusinessCard = ({
   index, 
   language,
   showStudentDiscountBadges,
+  disableViewTracking,
 }: { 
   business: Business; 
   index: number;
   language: "el" | "en";
   showStudentDiscountBadges: boolean;
+  disableViewTracking: boolean;
 }) => {
   const cardRef = useRef<HTMLAnchorElement | null>(null);
   const handleView = useCallback(() => {
+    if (disableViewTracking) return;
     trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'feed' });
-  }, [business.id]);
+  }, [disableViewTracking, business.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
 
   return (
