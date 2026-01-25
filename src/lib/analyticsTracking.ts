@@ -12,7 +12,8 @@ let sessionId: string | null = null;
 const isDashboardUserContext = (): boolean => {
   try {
     const path = window.location?.pathname || "";
-    if (path.startsWith('/dashboard-user')) return true;
+    // Any internal dashboard browsing (user/business/admin) must never count as views.
+    if (path.startsWith('/dashboard-')) return true;
 
     const src = new URLSearchParams(window.location?.search || "").get('src');
     if (src === 'dashboard_user') return true;
