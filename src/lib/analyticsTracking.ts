@@ -24,20 +24,6 @@ const isDashboardUserContext = (): boolean => {
   }
 };
 
-const debugTracking = (msg: string, data?: Record<string, any>) => {
-  // Keep logs minimal and searchable.
-  try {
-    // eslint-disable-next-line no-console
-    console.debug(`[tracking] ${msg}`, {
-      path: window.location?.pathname,
-      search: window.location?.search,
-      ...(data || {}),
-    });
-  } catch {
-    // ignore
-  }
-};
-
 // Generate or retrieve session ID
 const getSessionId = (): string => {
   if (!sessionId) {
@@ -60,11 +46,7 @@ export const trackEventView = async (
   source: 'feed' | 'map' | 'search' | 'profile' | 'direct'
 ) => {
   try {
-    if (isDashboardUserContext()) {
-      debugTracking('blocked event_view (dashboard context)', { eventId, source });
-      return;
-    }
-    debugTracking('allow event_view', { eventId, source });
+    if (isDashboardUserContext()) return;
 
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -90,11 +72,7 @@ export const trackDiscountView = async (
   source: 'feed' | 'event' | 'profile' | 'direct'
 ) => {
   try {
-    if (isDashboardUserContext()) {
-      debugTracking('blocked discount_view (dashboard context)', { discountId, source });
-      return;
-    }
-    debugTracking('allow discount_view', { discountId, source });
+    if (isDashboardUserContext()) return;
 
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -124,10 +102,7 @@ export const trackEngagement = async (
 ) => {
   try {
     // Profile views are a *view metric*. Never count them from user dashboard context.
-    if (eventType === 'profile_view' && isDashboardUserContext()) {
-      debugTracking('blocked engagement profile_view (dashboard context)', { businessId, entityType, entityId, metadata });
-      return;
-    }
+    if (eventType === 'profile_view' && isDashboardUserContext()) return;
 
     const { data: { user } } = await supabase.auth.getUser();
 
