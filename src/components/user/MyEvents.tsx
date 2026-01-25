@@ -14,7 +14,6 @@ import { ChevronDown, Clock, CalendarCheck, Star, Ticket, QrCode, MapPin, Calend
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { TicketQRDialog } from '@/components/tickets/TicketQRDialog';
-import HierarchicalCategoryFilter from '@/components/HierarchicalCategoryFilter';
 
 interface MyEventsProps {
   userId: string;
@@ -26,7 +25,6 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
   const { interested, going, pastInterested, pastGoing, loading: rsvpLoading } = useUserRSVPs(userId);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const dateLocale = language === 'el' ? el : enUS;
 
   // Fetch user's tickets
@@ -299,34 +297,8 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
 
   const hasPastEvents = pastInterested.length > 0 || pastGoing.length > 0 || pastTickets.length > 0;
 
-  // Filter events by selected categories
-  const filterByCategory = (eventsList: any[], isRsvp: boolean = false) => {
-    if (selectedCategories.length === 0) return eventsList;
-    return eventsList.filter(item => {
-      const event = isRsvp ? item.event : item;
-      const eventCategories = event.category || [];
-      return selectedCategories.some(cat => eventCategories.includes(cat));
-    });
-  };
-
-  // Filtered lists
-  const filteredGoing = filterByCategory(going, true);
-  const filteredInterested = filterByCategory(interested, true);
-  const filteredPastGoing = filterByCategory(pastGoing, true);
-  const filteredPastInterested = filterByCategory(pastInterested, true);
-
   return (
     <div className="space-y-4">
-      {/* Category Filter Bar - Premium Map Style */}
-      <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
-        <HierarchicalCategoryFilter
-          selectedCategories={selectedCategories}
-          onCategoryChange={setSelectedCategories}
-          language={language}
-          mapMode={true}
-        />
-      </div>
-
       <Tabs defaultValue="going" className="w-full">
         <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
           <TabsTrigger 
@@ -362,10 +334,10 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
         </TabsList>
 
         <TabsContent value="going" className="mt-4">
-          {renderEvents(filteredGoing, t.noGoing, true)}
+          {renderEvents(going, t.noGoing, true)}
         </TabsContent>
         <TabsContent value="interested" className="mt-4">
-          {renderEvents(filteredInterested, t.noInterested, true)}
+          {renderEvents(interested, t.noInterested, true)}
         </TabsContent>
         <TabsContent value="tickets" className="mt-4">
           {renderTickets(upcomingTickets, t.noTickets, false)}
@@ -379,7 +351,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">
-                  {t.history} ({filteredPastGoing.length + filteredPastInterested.length + pastTickets.length})
+                  {t.history} ({pastGoing.length + pastInterested.length + pastTickets.length})
                 </span>
               </div>
               <ChevronDown 
@@ -391,10 +363,10 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
             <Tabs defaultValue="past-going" className="w-full">
               <TabsList className="w-full h-auto gap-1 bg-muted/30 p-1 rounded-lg">
                 <TabsTrigger value="past-going" className="flex-1 text-xs px-2 py-1.5">
-                  {t.going} ({filteredPastGoing.length})
+                  {t.going} ({pastGoing.length})
                 </TabsTrigger>
                 <TabsTrigger value="past-interested" className="flex-1 text-xs px-2 py-1.5">
-                  {t.interested} ({filteredPastInterested.length})
+                  {t.interested} ({pastInterested.length})
                 </TabsTrigger>
                 <TabsTrigger value="past-tickets" className="flex-1 text-xs px-2 py-1.5">
                   {t.tickets} ({pastTickets.length})
@@ -402,10 +374,10 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
               </TabsList>
 
               <TabsContent value="past-going" className="mt-4">
-                {renderPastEvents(filteredPastGoing, true)}
+                {renderPastEvents(pastGoing, true)}
               </TabsContent>
               <TabsContent value="past-interested" className="mt-4">
-                {renderPastEvents(filteredPastInterested, true)}
+                {renderPastEvents(pastInterested, true)}
               </TabsContent>
               <TabsContent value="past-tickets" className="mt-4">
                 {renderTickets(pastTickets, t.noHistory, true)}
