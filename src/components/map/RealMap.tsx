@@ -161,11 +161,23 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: MAPBOX_CONFIG.mapStyle,
-      center: MAPBOX_CONFIG.defaultCenter,
-      zoom: 8,
+      // Center adjusted to show ALL of Cyprus (center of island)
+      center: [33.4, 35.1] as [number, number],
+      // Zoom level to show entire island from Paphos to Karpasia
+      zoom: 7,
       pitch: 0,
       maxBounds: MAPBOX_CONFIG.maxBounds,
       minZoom: MAPBOX_CONFIG.minZoom,
+    });
+    
+    // On load, fit bounds to show ALL of Cyprus (from Paphos to Karpasia tip)
+    map.current.on('load', () => {
+      // Cyprus bounds: SW [32.2, 34.55] to NE [34.6, 35.7]
+      // This ensures the entire island is visible on any screen size
+      map.current?.fitBounds(
+        [[32.2, 34.55], [34.6, 35.7]],
+        { padding: { top: 20, bottom: 20, left: 10, right: 10 }, duration: 0 }
+      );
     });
     
     map.current.on('style.load', () => {
@@ -318,6 +330,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     const doInitialCamera = () => {
       if (!map.current) return;
 
+      // If focusing on a specific business (from URL param), zoom to it
       if (focusBusinessId) {
         const target = businesses.find((b) => b.id === focusBusinessId);
         if (target && lastFocusedRef.current !== focusBusinessId) {
@@ -331,19 +344,14 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         }
       }
 
-      try {
-        const lngs = businesses.map((b) => b.coordinates[0]);
-        const lats = businesses.map((b) => b.coordinates[1]);
-        const sw: [number, number] = [Math.min(...lngs), Math.min(...lats)];
-        const ne: [number, number] = [Math.max(...lngs), Math.max(...lats)];
-        map.current.fitBounds([sw, ne], {
-          padding: 80,
-          duration: 0,
-          maxZoom: 11,
-        });
-      } catch {
-        // ignore
-      }
+      // DEFAULT: Always show ALL of Cyprus (don't auto-zoom to businesses)
+      // This ensures users see the entire island on first load
+      // They can zoom in manually if they want
+      // Cyprus bounds: SW [32.2, 34.55] to NE [34.6, 35.7]
+      map.current.fitBounds(
+        [[32.2, 34.55], [34.6, 35.7]],
+        { padding: { top: 20, bottom: 20, left: 10, right: 10 }, duration: 0 }
+      );
     };
 
     doInitialCamera();
@@ -461,7 +469,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
   return (
     <div className={`relative w-full rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20 transition-all duration-300 ${
-      isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-[50vh] md:h-[60vh] lg:h-[70vh]'
+      isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-full min-h-[50vh]'
     }`}>
       {/* Search bar - top left corner, compact */}
       <div className="absolute top-2 left-2 z-10">
