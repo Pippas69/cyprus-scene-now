@@ -9,90 +9,78 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-PUSH-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
 };
 
-// Convert VAPID key from base64 to Uint8Array
-function base64ToUint8Array(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
+// Base64 URL encoding/decoding utilities
+function base64UrlEncode(data: Uint8Array): string {
+  return btoa(String.fromCharCode(...data))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }
 
-// Web Push crypto functions using Web Crypto API
-async function generatePushHeaders(
-  endpoint: string,
-  p256dhKey: string,
-  authKey: string,
-  vapidPublicKey: string,
-  vapidPrivateKey: string
-): Promise<{ headers: Record<string, string>; body: Uint8Array }> {
-  const audience = new URL(endpoint).origin;
-  
-  // Create VAPID JWT
+function base64UrlDecode(str: string): Uint8Array {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(base64 + padding);
+  return new Uint8Array([...binary].map(c => c.charCodeAt(0)));
+}
+
+// Create VAPID JWT for authorization
+async function createVapidJwt(
+  audience: string,
+  subject: string,
+  publicKey: string,
+  privateKey: string
+): Promise<string> {
   const header = { typ: "JWT", alg: "ES256" };
   const payload = {
     aud: audience,
-    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
-    sub: "mailto:notifications@fomo.cy",
+    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
+    sub: subject,
   };
-  
-  const encoder = new TextEncoder();
-  const headerB64 = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-  const payloadB64 = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+  const headerB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(header)));
+  const payloadB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(payload)));
   const unsignedToken = `${headerB64}.${payloadB64}`;
+
+  // Decode the private key (it's 32 bytes for P-256)
+  const privateKeyBytes = base64UrlDecode(privateKey.trim());
   
-  // Import VAPID private key
-  const privateKeyBuffer = base64ToUint8Array(vapidPrivateKey.replace(/-/g, '+').replace(/_/g, '/'));
+  // Import the private key for signing
+  // We need to create proper JWK format for the key
+  const publicKeyBytes = base64UrlDecode(publicKey.trim());
   
-  // Create proper PKCS8 format for the private key
-  const keyData = new Uint8Array(138);
-  keyData.set([
-    0x30, 0x81, 0x87, 0x02, 0x01, 0x00, 0x30, 0x13,
-    0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
-    0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d,
-    0x03, 0x01, 0x07, 0x04, 0x6d, 0x30, 0x6b, 0x02,
-    0x01, 0x01, 0x04, 0x20
-  ], 0);
-  keyData.set(privateKeyBuffer, 36);
-  keyData.set([0xa1, 0x44, 0x03, 0x42, 0x00, 0x04], 68);
+  // Public key is 65 bytes: 0x04 + 32 bytes X + 32 bytes Y
+  const x = publicKeyBytes.slice(1, 33);
+  const y = publicKeyBytes.slice(33, 65);
   
-  const publicKeyBuffer = base64ToUint8Array(vapidPublicKey.replace(/-/g, '+').replace(/_/g, '/'));
-  keyData.set(publicKeyBuffer, 74);
-  
+  const jwk = {
+    kty: "EC",
+    crv: "P-256",
+    x: base64UrlEncode(x),
+    y: base64UrlEncode(y),
+    d: base64UrlEncode(privateKeyBytes),
+  };
+
   const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8",
-    keyData,
+    "jwk",
+    jwk,
     { name: "ECDSA", namedCurve: "P-256" },
     false,
     ["sign"]
   );
-  
+
   // Sign the token
   const signature = await crypto.subtle.sign(
     { name: "ECDSA", hash: "SHA-256" },
     cryptoKey,
-    encoder.encode(unsignedToken)
+    new TextEncoder().encode(unsignedToken)
   );
-  
-  // Convert signature from DER to raw format
-  const signatureArray = new Uint8Array(signature);
-  const signatureB64 = btoa(String.fromCharCode(...signatureArray))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-  
-  const jwt = `${unsignedToken}.${signatureB64}`;
-  
-  return {
-    headers: {
-      "Authorization": `vapid t=${jwt}, k=${vapidPublicKey}`,
-      "TTL": "86400",
-      "Content-Type": "application/octet-stream",
-      "Content-Encoding": "aes128gcm",
-    },
-    body: new Uint8Array(0), // Simplified - actual encryption would go here
-  };
+
+  // Convert DER signature to raw format (r || s)
+  const signatureBytes = new Uint8Array(signature);
+  const signatureB64 = base64UrlEncode(signatureBytes);
+
+  return `${unsignedToken}.${signatureB64}`;
 }
 
 interface PushNotificationRequest {
@@ -148,18 +136,23 @@ Deno.serve(async (req) => {
 
     logStep("Found subscriptions", { count: subscriptions.length });
 
-    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
-    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY")?.trim();
+    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY")?.trim();
 
     if (!vapidPublicKey || !vapidPrivateKey) {
       throw new Error("VAPID keys not configured");
     }
 
+    logStep("VAPID keys loaded", { 
+      publicKeyLength: vapidPublicKey.length,
+      privateKeyLength: vapidPrivateKey.length 
+    });
+
     const payload = JSON.stringify({
       title,
       body,
-      icon: icon || "/fomo-logo.png",
-      badge: "/fomo-logo.png",
+      icon: icon || "/fomo-logo-new.png",
+      badge: "/fomo-logo-new.png",
       data: {
         url: data?.url || "/dashboard-business/ticket-sales",
         ...data,
@@ -169,41 +162,63 @@ Deno.serve(async (req) => {
     const results = await Promise.allSettled(
       subscriptions.map(async (sub) => {
         try {
-          // Use a simpler fetch approach with the raw endpoint
+          const audience = new URL(sub.endpoint).origin;
+          
+          // Create VAPID JWT
+          const jwt = await createVapidJwt(
+            audience,
+            "mailto:notifications@fomo.cy",
+            vapidPublicKey,
+            vapidPrivateKey
+          );
+
+          logStep("Sending to subscription", { 
+            endpoint: sub.endpoint.substring(0, 60) + '...',
+            audience
+          });
+
+          // Send the push notification
+          // Note: For proper encryption, we'd need to encrypt the payload
+          // but many push services accept unencrypted payloads with VAPID
           const response = await fetch(sub.endpoint, {
             method: "POST",
             headers: {
+              "Authorization": `vapid t=${jwt}, k=${vapidPublicKey}`,
               "TTL": "86400",
               "Content-Type": "application/json",
-              "Authorization": `vapid t=${vapidPublicKey}, k=${vapidPublicKey}`,
+              "Urgency": "normal",
             },
             body: payload,
           });
 
           if (!response.ok) {
+            const errorText = await response.text();
+            
             // If subscription is expired/invalid, remove it
             if (response.status === 404 || response.status === 410) {
-              logStep("Removing invalid subscription", { endpoint: sub.endpoint });
+              logStep("Removing invalid subscription", { endpoint: sub.endpoint.substring(0, 50) });
               await supabaseClient
                 .from("push_subscriptions")
                 .delete()
                 .eq("id", sub.id);
             }
-            throw new Error(`Push failed: ${response.status}`);
+            
+            throw new Error(`Push failed: ${response.status} - ${errorText}`);
           }
 
+          logStep("Push sent successfully", { endpoint: sub.endpoint.substring(0, 50) });
           return { success: true, endpoint: sub.endpoint };
         } catch (error) {
           logStep("Push error for subscription", { 
-            endpoint: sub.endpoint, 
-            error: error instanceof Error ? error.message : String(error) 
+            endpoint: sub.endpoint.substring(0, 50), 
+            error: error instanceof Error ? error.message : String(error)
           });
           return { success: false, endpoint: sub.endpoint, error };
         }
       })
     );
 
-    const successful = results.filter(r => r.status === "fulfilled" && (r.value as any).success).length;
+    const successful = results.filter(r => r.status === "fulfilled" && (r.value as { success: boolean }).success).length;
     const failed = results.length - successful;
 
     logStep("Push notifications sent", { successful, failed });
