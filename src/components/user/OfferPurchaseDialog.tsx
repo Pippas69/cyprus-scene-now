@@ -568,7 +568,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                   </div>
                 ) : (
                   <Select value={reservationTime} onValueChange={setReservationTime}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
                       <SelectValue placeholder={t("selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
