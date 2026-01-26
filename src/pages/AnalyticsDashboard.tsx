@@ -100,9 +100,9 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       {badge && BadgeIcon && (
         <span className="absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none z-10">
           <span
-            className={`inline-flex items-center gap-0.5 sm:gap-1 rounded-full border px-1.5 sm:px-2 py-0.5 text-[7px] sm:text-[9px] font-semibold shadow-sm ${badge.className}`}
+            className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 sm:px-2 py-px text-[6px] sm:text-[8px] font-semibold shadow-sm ${badge.className}`}
           >
-            <BadgeIcon className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+            <BadgeIcon className="h-1.5 w-1.5 sm:h-2 sm:w-2" />
             {badge.label}
           </span>
         </span>
