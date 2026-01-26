@@ -150,20 +150,20 @@ const OfferBoostSection = ({
   };
 
   return (
-    <div className="space-y-4 p-4 border-2 border-dashed rounded-lg">
-      <div className="flex items-center justify-between">
-        <div>
-          <Label className="text-base font-semibold flex items-center gap-2">
-            <Rocket className="h-4 w-4 text-primary" />
+    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border-2 border-dashed rounded-lg">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <Label className="text-xs sm:text-base font-semibold flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+            <Rocket className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
             {language === "el" ? "Προώθηση Προσφοράς" : "Boost Offer Visibility"}
           </Label>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[10px] sm:text-sm text-muted-foreground">
             {language === "el"
               ? "Αυξήστε την εμβέλεια με αλγοριθμική στόχευση"
               : "Increase reach with algorithmic targeting"}
           </p>
         </div>
-        <Switch checked={boostEnabled} onCheckedChange={handleBoostToggle} />
+        <Switch checked={boostEnabled} onCheckedChange={handleBoostToggle} className="shrink-0" />
       </div>
 
       {boostEnabled && (
