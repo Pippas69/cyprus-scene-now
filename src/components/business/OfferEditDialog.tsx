@@ -54,6 +54,7 @@ interface FormData {
   maxPeoplePerRedemption: number;
   onePerUser: boolean;
   showReservationCta: boolean;
+  termsAndConditions: string;
 }
 
 interface OfferEditDialogProps {
@@ -131,6 +132,8 @@ const translations = {
     loading: "Φόρτωση...",
     offerImage: "Εικόνα Προσφοράς",
     currentImage: "Τρέχουσα εικόνα",
+    termsConditions: "Όροι & Προϋποθέσεις (προαιρετικό)",
+    termsPlaceholder: "π.χ. Ισχύει μόνο για νέους πελάτες...",
   },
   en: {
     editOffer: "Edit Offer",
@@ -189,6 +192,8 @@ const translations = {
     loading: "Loading...",
     offerImage: "Offer Image",
     currentImage: "Current image",
+    termsConditions: "Terms & Conditions (optional)",
+    termsPlaceholder: "e.g. Valid for new customers only...",
   },
 };
 
@@ -226,6 +231,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
     maxPeoplePerRedemption: 4,
     onePerUser: false,
     showReservationCta: false,
+    termsAndConditions: '',
   });
 
   // Load existing offer data
@@ -280,6 +286,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
         maxPeoplePerRedemption: offer.max_people_per_redemption || 4,
         onePerUser: offer.one_per_user || false,
         showReservationCta: offer.show_reservation_cta || false,
+        termsAndConditions: offer.terms || '',
       });
     } finally {
       setIsLoading(false);
@@ -692,6 +699,18 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
                   onCheckedChange={(checked) => updateField('showReservationCta', checked)}
                 />
               </div>
+            </div>
+
+            {/* Terms & Conditions (Optional) */}
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">{t.termsConditions}</Label>
+              <Textarea
+                value={formData.termsAndConditions}
+                onChange={(e) => updateField('termsAndConditions', e.target.value)}
+                placeholder={t.termsPlaceholder}
+                className="min-h-[60px] text-xs sm:text-sm resize-none"
+                rows={2}
+              />
             </div>
 
             {/* Actions */}

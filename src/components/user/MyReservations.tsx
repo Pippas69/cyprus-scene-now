@@ -263,6 +263,24 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
       if (error) throw error;
 
+      // Increment cancellation count and apply 2-week restriction if 3+ strikes
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('reservation_cancellation_count')
+        .eq('id', userId)
+        .single();
+
+      const newCount = (profile?.reservation_cancellation_count || 0) + 1;
+      const updateData: any = { reservation_cancellation_count: newCount };
+      
+      if (newCount >= 3) {
+        const restrictedUntil = new Date();
+        restrictedUntil.setDate(restrictedUntil.getDate() + 14); // 2-week restriction
+        updateData.reservation_restricted_until = restrictedUntil.toISOString();
+      }
+
+      await supabase.from('profiles').update(updateData).eq('id', userId);
+
       // Send cancellation notification
       try {
         await supabase.functions.invoke('send-reservation-notification', {
@@ -589,10 +607,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {reservation.status === 'pending' && !isPast && (
+          {(reservation.status === 'pending' || reservation.status === 'accepted') && !isPast && (
             <Button
               variant="outline"
-              className="w-full h-9 text-sm"
+              className="w-full h-9 text-sm text-destructive border-destructive/30 hover:bg-destructive/10"
               onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
             >
               <X className="h-3.5 w-3.5 mr-2" />
