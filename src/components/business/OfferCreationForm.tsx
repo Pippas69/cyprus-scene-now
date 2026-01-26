@@ -292,7 +292,7 @@ const SectionCard = ({
   children: React.ReactNode;
 }) => (
   <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-    <CardHeader className="pb-0.5 sm:pb-1 md:pb-1 p-3 sm:p-4 md:p-6">
+    <CardHeader className="pb-1 p-3 sm:p-4 md:p-6 sm:pb-0 md:pb-0">
       <CardTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2 whitespace-nowrap">
         {title}
         {required && (
@@ -302,7 +302,7 @@ const SectionCard = ({
         )}
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-2 sm:space-y-2 md:space-y-2 p-3 sm:p-4 md:p-6 pt-0">
+    <CardContent className="space-y-2 p-3 sm:p-4 md:p-6 pt-1 sm:pt-1 md:pt-1">
       {children}
     </CardContent>
   </Card>
