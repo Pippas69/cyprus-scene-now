@@ -229,8 +229,8 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
                 </CardContent>
               </Card>
             </DialogTrigger>
-            <DialogContent className="max-w-[280px] sm:max-w-md p-3 sm:p-6">
-              <DialogHeader className="pb-2 sm:pb-4">
+            <DialogContent className="max-w-[280px] sm:max-w-md p-3 sm:p-6 pr-10 sm:pr-6">
+              <DialogHeader className="pb-2 sm:pb-4 pr-2 sm:pr-0">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
                     <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />

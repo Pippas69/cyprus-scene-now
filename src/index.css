@@ -180,11 +180,12 @@ All colors MUST be HSL.
 
   /* Mapbox popup styling */
   .mapboxgl-popup-content {
-    background-color: hsl(var(--background));
-    border: 1px solid hsl(var(--border));
-    border-radius: 12px;
-    padding: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Make the outer Mapbox container invisible so only our custom bubble (BusinessPopup) is visible */
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
   }
 
   .mapboxgl-popup-close-button {
@@ -210,7 +211,7 @@ All colors MUST be HSL.
   }
 
   .mapboxgl-popup-tip {
-    border-top-color: hsl(var(--background));
+    border-top-color: transparent;
   }
 
   h1, h2, h3, h4, h5, h6 {
