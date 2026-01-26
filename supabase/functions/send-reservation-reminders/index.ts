@@ -1,6 +1,7 @@
 // Edge function to send reservation reminders 2 hours before reservation time
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { sendEncryptedPush } from "../_shared/web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -305,36 +306,14 @@ Deno.serve(async (req) => {
           read: false,
         });
 
-        // Send push notification
-        const { data: subs } = await supabase
-          .from('push_subscriptions')
-          .select('*')
-          .eq('user_id', reminder.userId);
-
-        if (subs && subs.length > 0) {
-          const vapidKey = Deno.env.get("VAPID_PUBLIC_KEY");
-          const payload = JSON.stringify({
-            title: '⏰ Υπενθύμιση Κράτησης',
-            body: `Η κράτησή σου στο ${reminder.businessName} είναι σε 2 ώρες!`,
-            icon: '/fomo-logo-new.png',
-            badge: '/fomo-logo-new.png',
-            data: { url: '/dashboard-user/reservations' },
-          });
-
-          for (const sub of subs) {
-            try {
-              await fetch(sub.endpoint, {
-                method: 'POST',
-                headers: {
-                  'TTL': '86400',
-                  'Content-Type': 'application/json',
-                  'Authorization': `vapid t=${vapidKey}, k=${vapidKey}`,
-                },
-                body: payload,
-              });
-            } catch {}
-          }
-        }
+        // Send push notification (using encrypted push for iOS/Safari)
+        const pushResult = await sendEncryptedPush(reminder.userId, {
+          title: '⏰ Υπενθύμιση Κράτησης',
+          body: `Η κράτησή σου στο ${reminder.businessName} είναι σε 2 ώρες!`,
+          tag: `reservation-reminder-${reminder.reservationId}`,
+          data: { url: '/dashboard-user/reservations' },
+        }, supabase);
+        logStep('Push notification sent', { reservationId: reminder.reservationId, ...pushResult });
 
         // Log to prevent duplicates
         await supabase.from('notification_log').insert({

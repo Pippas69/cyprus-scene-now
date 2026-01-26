@@ -2,6 +2,7 @@
 // For: reservations, tickets, RSVPs (going + interested)
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { sendEncryptedPush } from "../_shared/web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -358,36 +359,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
           read: false,
         });
 
-        // Send push notification if enabled
+        // Send push notification if enabled (using encrypted push for iOS/Safari)
         if (pushEnabled) {
-          const { data: subs } = await supabase
-            .from('push_subscriptions')
-            .select('*')
-            .eq('user_id', notification.user_id);
-
-          if (subs && subs.length > 0) {
-            const payload = JSON.stringify({
-              title: notification.reminder_type === '1_day' ? '📅 Υπενθύμιση Εκδήλωσης' : '⏰ Η εκδήλωση ξεκινάει σύντομα!',
-              body: `${notification.event_title} - ${timeText}!`,
-              icon: '/fomo-logo-new.png',
-              badge: '/fomo-logo-new.png',
-              tag: `event-reminder-${notification.event_id}`,
-              data: { url: `/event/${notification.event_id}` },
-            });
-
-            for (const sub of subs) {
-              try {
-                await fetch(sub.endpoint, {
-                  method: 'POST',
-                  headers: {
-                    'TTL': '86400',
-                    'Content-Type': 'application/json',
-                  },
-                  body: payload,
-                });
-              } catch {}
-            }
-          }
+          const pushResult = await sendEncryptedPush(notification.user_id, {
+            title: notification.reminder_type === '1_day' ? '📅 Υπενθύμιση Εκδήλωσης' : '⏰ Η εκδήλωση ξεκινάει σύντομα!',
+            body: `${notification.event_title} - ${timeText}!`,
+            tag: `event-reminder-${notification.event_id}`,
+            data: { url: `/event/${notification.event_id}` },
+          }, supabase);
+          logStep('Push notification sent', { eventId: notification.event_id, ...pushResult });
         }
 
         // Log the notification

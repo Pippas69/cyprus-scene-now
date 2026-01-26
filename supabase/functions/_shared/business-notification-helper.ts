@@ -3,6 +3,7 @@
 
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { sendEncryptedPush, PushPayload } from "./web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -209,28 +210,13 @@ async function createInAppNotification(
   return true;
 }
 
-// Send push notification to business owner
+// Send push notification to business owner using encrypted Web Push (iOS/Safari compatible)
 async function sendPushNotification(
   supabase: SupabaseClient,
   data: BusinessNotificationData
 ): Promise<{ sent: number; failed: number }> {
-  const { data: subscriptions, error } = await supabase
-    .from('push_subscriptions')
-    .select('*')
-    .eq('user_id', data.businessUserId);
-
-  if (error || !subscriptions || subscriptions.length === 0) {
-    logStep('No push subscriptions found for business owner', { userId: data.businessUserId });
-    return { sent: 0, failed: 0 };
-  }
-
-  const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
-  if (!vapidPublicKey) {
-    logStep('VAPID key not configured');
-    return { sent: 0, failed: subscriptions.length };
-  }
-
-  const payload = JSON.stringify({
+  // Build push payload
+  const payload: PushPayload = {
     title: data.title,
     body: data.message,
     icon: "/fomo-logo-new.png",
@@ -243,38 +229,10 @@ async function sendPushNotification(
       objectType: data.objectType,
       objectId: data.objectId,
     },
-  });
+  };
 
-  let sent = 0;
-  let failed = 0;
-
-  for (const sub of subscriptions) {
-    try {
-      const response = await fetch(sub.endpoint, {
-        method: "POST",
-        headers: {
-          "TTL": "86400",
-          "Content-Type": "application/json",
-          "Authorization": `vapid t=${vapidPublicKey}, k=${vapidPublicKey}`,
-        },
-        body: payload,
-      });
-
-      if (!response.ok) {
-        if (response.status === 404 || response.status === 410) {
-          await supabase.from('push_subscriptions').delete().eq('id', sub.id);
-        }
-        failed++;
-      } else {
-        sent++;
-      }
-    } catch (err) {
-      logStep('Push error', { endpoint: sub.endpoint, error: String(err) });
-      failed++;
-    }
-  }
-
-  return { sent, failed };
+  // Use encrypted push (iOS/Safari compatible)
+  return sendEncryptedPush(data.businessUserId, payload, supabase);
 }
 
 // Send email to business owner
@@ -339,8 +297,8 @@ export async function sendBusinessNotification(
       logStep('In-app notification created', { success: result.inApp });
     }
 
-    // 2. Send push notification
-    if (!data.skipPush) {
+    // 2. Send push notification if enabled
+    if (!data.skipPush && prefs?.notification_push_enabled !== false) {
       result.push = await sendPushNotification(supabase, data);
       logStep('Push notifications sent', result.push);
     }

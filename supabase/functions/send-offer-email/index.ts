@@ -1,4 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +13,7 @@ const logStep = (step: string, details?: unknown) => {
 
 interface OfferEmailRequest {
   purchaseId: string;
+  userId?: string;
   userEmail: string;
   userName?: string;
   offerTitle: string;
@@ -38,9 +41,16 @@ Deno.serve(async (req) => {
     }
 
     const resend = new Resend(resendApiKey);
+    
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
 
     const {
       purchaseId,
+      userId,
       userEmail,
       userName,
       offerTitle,
@@ -189,6 +199,22 @@ Deno.serve(async (req) => {
     });
 
     logStep("Email sent successfully", emailResponse);
+
+    // Send push notification if userId provided
+    if (userId) {
+      const pushResult = await sendPushIfEnabled(userId, {
+        title: '🎁 Η προσφορά σου είναι έτοιμη!',
+        body: `${offerTitle} από ${businessName}`,
+        tag: `offer-${purchaseId}`,
+        data: {
+          url: `/dashboard-user/offers`,
+          type: 'offer_purchased',
+          entityType: 'offer',
+          entityId: purchaseId,
+        },
+      }, supabaseClient);
+      logStep("Push notification sent", pushResult);
+    }
 
     return new Response(JSON.stringify({ success: true, emailId: emailResponse.data?.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

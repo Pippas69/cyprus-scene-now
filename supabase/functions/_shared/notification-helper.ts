@@ -1,6 +1,7 @@
 // Shared notification helper for sending email + push + in-app notifications together
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { sendEncryptedPush, isUserPushEnabled, PushPayload } from "./web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -84,71 +85,35 @@ async function createInAppNotification(
   return true;
 }
 
-// Send push notification
+// Send push notification using encrypted Web Push (iOS/Safari compatible)
 async function sendPushNotification(
   supabase: SupabaseClient,
   data: NotificationData
 ): Promise<{ sent: number; failed: number }> {
-  const { data: subscriptions, error } = await supabase
-    .from('push_subscriptions')
-    .select('*')
-    .eq('user_id', data.userId);
-
-  if (error || !subscriptions || subscriptions.length === 0) {
-    logStep('No push subscriptions found for user', { userId: data.userId });
+  // Check if user has push enabled
+  const enabled = await isUserPushEnabled(data.userId, supabase);
+  if (!enabled) {
+    logStep('Push disabled for user', { userId: data.userId });
     return { sent: 0, failed: 0 };
   }
 
-  const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
-  if (!vapidPublicKey) {
-    logStep('VAPID key not configured');
-    return { sent: 0, failed: subscriptions.length };
-  }
-
-  const payload = JSON.stringify({
+  // Build push payload
+  const payload: PushPayload = {
     title: data.title,
     body: data.message,
     icon: "/fomo-logo-new.png",
     badge: "/fomo-logo-new.png",
+    tag: `${data.eventType}-${data.entityId || Date.now()}`,
     data: {
       url: data.deepLink || "/",
       type: data.eventType,
       entityType: data.entityType,
       entityId: data.entityId,
     },
-  });
+  };
 
-  let sent = 0;
-  let failed = 0;
-
-  for (const sub of subscriptions) {
-    try {
-      const response = await fetch(sub.endpoint, {
-        method: "POST",
-        headers: {
-          "TTL": "86400",
-          "Content-Type": "application/json",
-          "Authorization": `vapid t=${vapidPublicKey}, k=${vapidPublicKey}`,
-        },
-        body: payload,
-      });
-
-      if (!response.ok) {
-        if (response.status === 404 || response.status === 410) {
-          // Invalid subscription, remove it
-          await supabase.from('push_subscriptions').delete().eq('id', sub.id);
-        }
-        failed++;
-      } else {
-        sent++;
-      }
-    } catch (err) {
-      logStep('Push error', { endpoint: sub.endpoint, error: String(err) });
-      failed++;
-    }
-  }
-
-  return { sent, failed };
+  // Use encrypted push (iOS/Safari compatible)
+  return sendEncryptedPush(data.userId, payload, supabase);
 }
 
 // Send email notification

@@ -2,6 +2,7 @@
 // Used by other functions and frontend to trigger notifications
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -83,56 +84,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2. Send push notification if enabled
+    // 2. Send push notification if enabled (using encrypted Web Push for iOS/Safari)
     if (!data.skipPush && prefs?.notification_push_enabled !== false) {
-      const { data: subscriptions } = await supabase
-        .from('push_subscriptions')
-        .select('*')
-        .eq('user_id', data.userId);
+      const payload: PushPayload = {
+        title: data.title,
+        body: data.message,
+        icon: '/fomo-logo-new.png',
+        badge: '/fomo-logo-new.png',
+        tag: `${data.eventType}-${data.entityId || Date.now()}`,
+        data: {
+          url: data.deepLink || '/',
+          type: data.eventType,
+          entityType: data.entityType,
+          entityId: data.entityId,
+        },
+      };
 
-      if (subscriptions && subscriptions.length > 0) {
-        const vapidKey = Deno.env.get("VAPID_PUBLIC_KEY");
-        
-        if (vapidKey) {
-          const payload = JSON.stringify({
-            title: data.title,
-            body: data.message,
-            icon: '/fomo-logo-new.png',
-            badge: '/fomo-logo-new.png',
-            data: {
-              url: data.deepLink || '/',
-              type: data.eventType,
-              entityType: data.entityType,
-              entityId: data.entityId,
-            },
-          });
-
-          for (const sub of subscriptions) {
-            try {
-              const response = await fetch(sub.endpoint, {
-                method: 'POST',
-                headers: {
-                  'TTL': '86400',
-                  'Content-Type': 'application/json',
-                  'Authorization': `vapid t=${vapidKey}, k=${vapidKey}`,
-                },
-                body: payload,
-              });
-
-              if (!response.ok) {
-                if (response.status === 404 || response.status === 410) {
-                  await supabase.from('push_subscriptions').delete().eq('id', sub.id);
-                }
-                results.push.failed++;
-              } else {
-                results.push.sent++;
-              }
-            } catch {
-              results.push.failed++;
-            }
-          }
-        }
-      }
+      results.push = await sendEncryptedPush(data.userId, payload, supabase);
+      logStep('Push notifications sent', results.push);
     }
 
     // 3. Send email if provided and enabled
@@ -163,9 +132,10 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error: any) {
-    logStep('ERROR', error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep('ERROR', errorMessage);
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
