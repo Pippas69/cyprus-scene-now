@@ -150,24 +150,26 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
   if (verification?.status === 'approved') {
     return (
       <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-              <CheckCircle2 className="h-5 w-5" />
-              {t.verified}
-            </CardTitle>
-            <Badge variant="outline" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700">
-              <GraduationCap className="h-3 w-3 mr-1" />
-              {verification.university_name}
+        <CardHeader className="p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+              <span className="text-xs sm:text-sm font-semibold text-green-700 dark:text-green-400 whitespace-nowrap">
+                {t.verified}
+              </span>
+            </div>
+            <Badge variant="outline" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700 text-[10px] sm:text-xs px-1.5 py-0.5 whitespace-nowrap shrink-0">
+              <GraduationCap className="h-2.5 w-2.5 mr-0.5 shrink-0" />
+              <span className="truncate max-w-[120px] sm:max-w-none">{verification.university_name}</span>
             </Badge>
           </div>
-          <CardDescription className="text-green-600 dark:text-green-500">
+          <CardDescription className="text-green-600 dark:text-green-500 text-[10px] sm:text-xs mt-1">
             {t.verifiedDesc}
           </CardDescription>
         </CardHeader>
         {verification.expires_at && (
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
+          <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               {t.expiresAt}: {new Date(verification.expires_at).toLocaleDateString(language === 'el' ? 'el-GR' : 'en-GB')}
             </p>
           </CardContent>
@@ -180,34 +182,37 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
   if (verification?.status === 'pending') {
     return (
       <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-            <Clock className="h-5 w-5" />
-            {t.pending}
-          </CardTitle>
-          <CardDescription className="text-amber-600 dark:text-amber-500">
+        <CardHeader className="p-3 sm:p-4">
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs sm:text-sm font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
+              {t.pending}
+            </span>
+          </div>
+          <CardDescription className="text-amber-600 dark:text-amber-500 text-[10px] sm:text-xs mt-1">
             {t.pendingDesc}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            <Mail className="inline h-4 w-4 mr-1" />
-            {verification.university_email}
+        <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4 space-y-3">
+          <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+            <Mail className="h-3 w-3 shrink-0" />
+            <span className="truncate">{verification.university_email}</span>
           </p>
           <Button
             variant="outline"
             onClick={handleResend}
             disabled={submitting}
-            className="gap-2"
+            size="sm"
+            className="gap-1.5 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3 whitespace-nowrap"
           >
             {submitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3 w-3 animate-spin" />
                 {t.submitting}
               </>
             ) : (
               <>
-                <Send className="h-4 w-4" />
+                <Send className="h-3 w-3" />
                 {t.resend}
               </>
             )}
@@ -220,15 +225,15 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
   // Rejected or no verification - show form
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <GraduationCap className="h-5 w-5 text-primary" />
-          {t.title}
-        </CardTitle>
-        <CardDescription>
+      <CardHeader className="p-3 sm:p-4">
+        <div className="flex items-center gap-1.5">
+          <GraduationCap className="h-4 w-4 shrink-0 text-primary" />
+          <span className="text-xs sm:text-sm font-semibold">{t.title}</span>
+        </div>
+        <CardDescription className="text-[10px] sm:text-xs mt-1">
           {verification?.status === 'rejected' ? (
             <span className="flex items-center gap-1 text-red-500">
-              <XCircle className="h-4 w-4" />
+              <XCircle className="h-3 w-3 shrink-0" />
               {t.rejected}: {verification.rejection_reason || ''}
             </span>
           ) : (
@@ -236,16 +241,16 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
           )}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>{t.university}</Label>
+      <CardContent className="space-y-3 pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
+        <div className="space-y-1.5">
+          <Label className="text-[10px] sm:text-xs">{t.university}</Label>
           <Select value={selectedUniversity} onValueChange={setSelectedUniversity}>
-            <SelectTrigger>
+            <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
               <SelectValue placeholder={t.selectUniversity} />
             </SelectTrigger>
             <SelectContent>
               {CYPRUS_UNIVERSITIES.map(uni => (
-                <SelectItem key={uni.domain} value={uni.domain}>
+                <SelectItem key={uni.domain} value={uni.domain} className="text-xs sm:text-sm">
                   {language === 'el' ? uni.nameEl : uni.name}
                 </SelectItem>
               ))}
@@ -253,29 +258,31 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label>{t.email}</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[10px] sm:text-xs">{t.email}</Label>
           <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t.emailPlaceholder}
+            className="h-8 sm:h-9 text-xs sm:text-sm"
           />
         </div>
 
         <Button
           onClick={handleSubmit}
           disabled={!email || submitting}
-          className="w-full gap-2"
+          size="sm"
+          className="w-full gap-1.5 text-xs sm:text-sm h-8 sm:h-9"
         >
           {submitting ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
               {t.submitting}
             </>
           ) : (
             <>
-              <Send className="h-4 w-4" />
+              <Send className="h-3 w-3" />
               {t.submit}
             </>
           )}
