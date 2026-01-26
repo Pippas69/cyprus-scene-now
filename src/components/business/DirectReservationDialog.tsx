@@ -437,7 +437,7 @@ export const DirectReservationDialog = ({
             </Label>
             <Popover open={showCalendar} onOpenChange={setShowCalendar}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left text-xs sm:text-sm h-9 sm:h-10">
+                <Button variant="outline" className="w-full justify-start text-left text-xs sm:text-sm font-normal h-9 sm:h-10">
                   <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   {format(formData.preferred_date, 'PPP')}
                 </Button>
@@ -473,7 +473,7 @@ export const DirectReservationDialog = ({
                 value={formData.preferred_time}
                 onValueChange={(value) => setFormData({ ...formData, preferred_time: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="text-xs sm:text-sm font-normal h-9 sm:h-10">
                   <SelectValue placeholder={t.selectTime} />
                 </SelectTrigger>
                 <SelectContent>
@@ -515,7 +515,7 @@ export const DirectReservationDialog = ({
                 value={formData.seating_preference}
                 onValueChange={(value) => setFormData({ ...formData, seating_preference: value })}
               >
-                <SelectTrigger id="seating_preference">
+                <SelectTrigger id="seating_preference" className="text-xs sm:text-sm font-normal h-9 sm:h-10">
                   <SelectValue placeholder={t.noPreference} />
                 </SelectTrigger>
                 <SelectContent>

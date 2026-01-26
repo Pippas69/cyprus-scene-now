@@ -359,8 +359,8 @@ const MetricRow: React.FC<{
         </tr>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-[280px] sm:max-w-md p-3 sm:p-6 pr-10 sm:pr-6">
+        <DialogHeader className="pr-2 sm:pr-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
               <Icon className="h-5 w-5 text-primary" />

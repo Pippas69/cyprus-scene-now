@@ -62,19 +62,58 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   const hasBoostValueAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('boostValue'));
   const hasGuidanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('guidance'));
 
+  const badgeByTab: Record<
+    string,
+    { label: string; Icon: React.ElementType; className: string } | undefined
+  > = {
+    performance: {
+      label: t.basicPlan,
+      Icon: Zap,
+      className:
+        "border-blue-400/40 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400",
+    },
+    boostValue: {
+      label: t.proPlan,
+      Icon: Star,
+      className:
+        "border-primary/40 bg-gradient-to-r from-primary/10 to-sunset-coral/10 text-primary",
+    },
+    guidance: {
+      label: t.elitePlan,
+      Icon: Crown,
+      className:
+        "border-purple-400/40 bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-600 dark:text-purple-400",
+    },
+  };
+
   // Render tab trigger with lock icon if not accessible
-  const renderTabTrigger = (value: string, label: string, hasAccess: boolean) => (
+  const renderTabTrigger = (value: string, label: string, hasAccess: boolean) => {
+    const badge = badgeByTab[value];
+    const BadgeIcon = badge?.Icon;
+
+    return (
     <TabsTrigger 
       value={value} 
       className={`relative ${!hasAccess ? 'text-muted-foreground/60' : ''}`}
       disabled={!hasAccess}
     >
+      {badge && BadgeIcon && (
+        <span className="absolute -top-2 left-1/2 -translate-x-1/2 pointer-events-none">
+          <span
+            className={`inline-flex items-center gap-0.5 sm:gap-1 rounded-full border px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-medium bg-background shadow-sm ${badge.className}`}
+          >
+            <BadgeIcon className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+            {badge.label}
+          </span>
+        </span>
+      )}
       {!hasAccess && (
         <Lock className="w-3 h-3 mr-1.5 opacity-60" />
       )}
       {label}
     </TabsTrigger>
-  );
+    );
+  };
 
   return (
     <div className="px-3 sm:px-4 lg:container lg:mx-auto py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
@@ -85,43 +124,14 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-        {/* Plan Badges Row - visible on all devices */}
-        <div className="relative">
-          <div className="grid absolute -top-3 left-0 right-0 z-10 w-full grid-cols-4 gap-1 text-center pointer-events-none">
-            {/* Overview - no badge */}
-            <div />
-            {/* Performance = Basic */}
-            <div className="flex justify-center">
-              <span className="inline-flex items-center gap-0.5 sm:gap-1 rounded-full border border-blue-400/40 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-background shadow-sm">
-                <Zap className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-                {t.basicPlan}
-              </span>
-            </div>
-            {/* Boost Value = Pro */}
-            <div className="flex justify-center">
-              <span className="inline-flex items-center gap-0.5 sm:gap-1 rounded-full border border-primary/40 bg-gradient-to-r from-primary/10 to-sunset-coral/10 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-medium text-primary bg-background shadow-sm">
-                <Star className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-                {t.proPlan}
-              </span>
-            </div>
-            {/* Guidance = Elite */}
-            <div className="flex justify-center">
-              <span className="inline-flex items-center gap-0.5 sm:gap-1 rounded-full border border-purple-400/40 bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-background shadow-sm">
-                <Crown className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-                {t.elitePlan}
-              </span>
-            </div>
-          </div>
-
-          {/* Tabs - scrollable on mobile */}
-          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible">
-            <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-4 pt-3 min-w-max sm:min-w-0 gap-1 sm:gap-0">
-              {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
-              {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
-              {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
-              {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess)}
-            </TabsList>
-          </div>
+        {/* Tabs - scrollable on mobile */}
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible">
+          <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-4 pt-5 min-w-max sm:min-w-0 gap-1 sm:gap-0">
+            {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
+            {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
+            {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
+            {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess)}
+          </TabsList>
         </div>
 
         <TabsContent value="overview">
