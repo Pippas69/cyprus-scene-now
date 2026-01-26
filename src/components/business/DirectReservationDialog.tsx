@@ -101,8 +101,8 @@ export const DirectReservationDialog = ({
       selectTime: 'Επιλέξτε ώρα',
       noSlotsForDay: 'Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα',
       policyTitle: 'Πολιτική Κρατήσεων',
-      noShowPolicy: '15 λεπτά περιθώριο - αυτόματη ακύρωση αν δεν γίνει check-in',
-      cancellationPolicy: 'Μέχρι 3 ακυρώσεις επιτρέπονται. Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων',
+      noShowPolicy: 'Περιθώριο 15 λεπτά. (Ακύρωση αν δεν γίνει check in)',
+      cancellationPolicy: 'Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων.',
       instantConfirmation: 'Άμεση επιβεβαίωση κράτησης',
     },
     en: {
@@ -131,8 +131,8 @@ export const DirectReservationDialog = ({
       selectTime: 'Select time',
       noSlotsForDay: 'No available slots for this day',
       policyTitle: 'Reservation Policy',
-      noShowPolicy: '15 min grace period - auto-cancelled if no check-in',
-      cancellationPolicy: 'Up to 3 cancellations allowed. After 3 cancellations, 2-week restriction',
+      noShowPolicy: '15 min grace. (Cancel if no check-in)',
+      cancellationPolicy: 'After 3 cancellations, 2-week restriction.',
       instantConfirmation: 'Instant reservation confirmation',
     },
   };
@@ -355,19 +355,19 @@ export const DirectReservationDialog = ({
         <>
           {/* Policy Info */}
           <div className="bg-muted/50 border rounded-lg p-3 space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">{t.policyTitle}</p>
-            <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                <span>{t.instantConfirmation}</span>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">{t.policyTitle}</p>
+            <div className="flex flex-col gap-1 text-[10px] sm:text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                <span className="whitespace-nowrap">{t.instantConfirmation}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                <span>{t.noShowPolicy}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                <span className="whitespace-nowrap">{t.noShowPolicy}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                <span>{t.cancellationPolicy}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                <span className="whitespace-nowrap">{t.cancellationPolicy}</span>
               </div>
             </div>
           </div>
@@ -395,9 +395,9 @@ export const DirectReservationDialog = ({
           )}
 
           {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="reservation_name" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
+          <div className="space-y-1.5">
+            <Label htmlFor="reservation_name" className="flex items-center gap-2 text-xs sm:text-sm">
+              <User className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.reservationName}
             </Label>
             <Input
@@ -406,13 +406,14 @@ export const DirectReservationDialog = ({
               onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
               placeholder={t.namePlaceholder}
               required
+              className="text-xs sm:text-sm h-9 sm:h-10"
             />
           </div>
 
           {/* Party Size */}
-          <div className="space-y-2">
-            <Label htmlFor="party_size" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
+          <div className="space-y-1.5">
+            <Label htmlFor="party_size" className="flex items-center gap-2 text-xs sm:text-sm">
+              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.partySize}
             </Label>
             <Input
@@ -424,19 +425,20 @@ export const DirectReservationDialog = ({
               onChange={(e) => setFormData({ ...formData, party_size: parseInt(e.target.value) || 1 })}
               required
               disabled={availableCapacity === 0}
+              className="text-xs sm:text-sm h-9 sm:h-10"
             />
           </div>
 
           {/* Date */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4" />
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-2 text-xs sm:text-sm">
+              <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.preferredDate}
             </Label>
             <Popover open={showCalendar} onOpenChange={setShowCalendar}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                <Button variant="outline" className="w-full justify-start text-left text-xs sm:text-sm h-9 sm:h-10">
+                  <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   {format(formData.preferred_date, 'PPP')}
                 </Button>
               </PopoverTrigger>
@@ -457,13 +459,13 @@ export const DirectReservationDialog = ({
           </div>
 
           {/* Time */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-2 text-xs sm:text-sm">
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.preferredTime}
             </Label>
             {timeSlots.length === 0 ? (
-              <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground text-center">
+              <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                 {t.noSlotsForDay}
               </div>
             ) : (
@@ -486,9 +488,9 @@ export const DirectReservationDialog = ({
           </div>
 
           {/* Phone */}
-          <div className="space-y-2">
-            <Label htmlFor="phone_number" className="flex items-center gap-2">
-              <Phone className="w-4 h-4" />
+          <div className="space-y-1.5">
+            <Label htmlFor="phone_number" className="flex items-center gap-2 text-xs sm:text-sm">
+              <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.phoneNumber}
             </Label>
             <Input
@@ -498,14 +500,15 @@ export const DirectReservationDialog = ({
               onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
               placeholder={t.phonePlaceholder}
               required
+              className="text-xs sm:text-sm h-9 sm:h-10"
             />
           </div>
 
           {/* Seating Preference (Optional) */}
           {settings?.reservation_seating_options && settings.reservation_seating_options.length > 0 && (
-            <div className="space-y-2">
-              <Label htmlFor="seating_preference" className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
+            <div className="space-y-1.5">
+              <Label htmlFor="seating_preference" className="flex items-center gap-2 text-xs sm:text-sm">
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                 {t.seatingPreference}
               </Label>
               <Select
