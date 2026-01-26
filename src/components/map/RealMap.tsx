@@ -327,9 +327,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     } catch {
       // ignore
     }
-    
-    // Show directions icon below the pin
-    showDirectionsIcon(business);
+    // Directions icon is now integrated directly into the popup
   };
 
   // Update markers when businesses change or map moves
