@@ -743,7 +743,15 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => cancelDialog.reservationId && handleCancelReservation(cancelDialog.reservationId)}
+              onClick={async (e) => {
+                // Ensure the action always triggers the cancellation mutation
+                // (prevents any default button behavior from short-circuiting the async handler)
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!cancelDialog.reservationId) return;
+                await handleCancelReservation(cancelDialog.reservationId);
+              }}
             >
               {t.confirm}
             </AlertDialogAction>
