@@ -206,7 +206,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
               <span className="hidden lg:inline ml-1.5">{t.refresh}</span>
             </Button>
             
-            <CardTitle className="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-base whitespace-nowrap pr-10 sm:pr-20">
+            <CardTitle className="flex items-center gap-1 sm:gap-2 text-xs sm:text-base whitespace-nowrap pr-10 sm:pr-20">
               <Clock className="h-3.5 w-3.5 sm:h-5 sm:w-5 flex-shrink-0" />
               <span>{t.slotStatus}</span>
               {isToday && (
@@ -215,7 +215,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription className="text-[9px] sm:text-xs whitespace-nowrap mt-0.5 sm:mt-1">{t.description}</CardDescription>
+            <CardDescription className="text-[10px] sm:text-xs whitespace-nowrap mt-0.5 sm:mt-1">{t.description}</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

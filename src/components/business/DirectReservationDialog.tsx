@@ -532,14 +532,15 @@ export const DirectReservationDialog = ({
           )}
 
           {/* Special Requests (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="special_requests">{t.specialRequests}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="special_requests" className="text-xs sm:text-sm">{t.specialRequests}</Label>
             <Textarea
               id="special_requests"
               value={formData.special_requests}
               onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
               placeholder={t.requestsPlaceholder}
               rows={3}
+              className="text-xs sm:text-sm"
             />
           </div>
 

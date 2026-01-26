@@ -229,8 +229,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     withReservation: { el: "Με κράτηση", en: "With reservation" },
     noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" },
     policyTitle: { el: "Πολιτική Κρατήσεων", en: "Reservation Policy" },
-    noShowPolicy: { el: "15 λεπτά περιθώριο - αυτόματη ακύρωση αν δεν γίνει check-in", en: "15 min grace period - auto-cancelled if no check-in" },
-    cancellationPolicy: { el: "Μέχρι 3 ακυρώσεις επιτρέπονται. Μετά από 3, περιορισμός 2 εβδομάδων", en: "Up to 3 cancellations allowed. After 3, 2-week restriction" },
+    noShowPolicy: { el: "Περιθώριο 15 λεπτά. (Ακύρωση αν δεν γίνει check in)", en: "15 min grace. (Cancel if no check-in)" },
+    cancellationPolicy: { el: "Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων.", en: "After 3 cancellations, 2-week restriction." },
     instantConfirmation: { el: "Άμεση επιβεβαίωση κράτησης", en: "Instant reservation confirmation" },
   };
 
@@ -480,11 +480,11 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       availableCapacity !== null && availableCapacity >= partySize && !capacityError;
 
     return (
-      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-primary font-medium">
-            <CalendarCheck className="h-5 w-5" />
-            <span>{t("wantReservation")}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-primary font-medium">
+            <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs sm:text-sm">{t("wantReservation")}</span>
           </div>
           <Checkbox
             id="want-reservation"
@@ -501,43 +501,42 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
           />
         </div>
         
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
           {language === "el"
-            ? `Κάντε κράτηση για τις ώρες που ισχύει η έκπτωση (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.`
-            : `Make a reservation for the discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
+            ? `Κάντε κράτηση για τις ώρες της έκπτωσης (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.`
+            : `Book for discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
         </p>
-
         {wantsReservation && (
-          <div className="space-y-3 pt-2">
+          <div className="space-y-2 sm:space-y-3 pt-2">
             {/* Policy Info */}
-            <div className="bg-background/80 border rounded-lg p-2.5 space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">{t("policyTitle")}</p>
-              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                  <span>{t("instantConfirmation")}</span>
+            <div className="bg-background/80 border rounded-lg p-2 sm:p-2.5 space-y-1">
+              <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">{t("policyTitle")}</p>
+              <div className="flex flex-col gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                  <span className="whitespace-nowrap">{t("instantConfirmation")}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  <span>{t("noShowPolicy")}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  <span className="whitespace-nowrap">{t("noShowPolicy")}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                  <span>{t("cancellationPolicy")}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                  <span className="whitespace-nowrap">{t("cancellationPolicy")}</span>
                 </div>
               </div>
             </div>
 
             {/* Date Picker */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
+                <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 {t("selectDate")}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarDays className="mr-2 h-4 w-4" />
+                  <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm h-9 sm:h-10">
+                    <CalendarDays className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {reservationDate 
                       ? format(reservationDate, "PPP", { locale: language === "el" ? el : enUS })
                       : t("selectDate")
@@ -563,13 +562,13 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
             {/* Time Selector */}
             {reservationDate && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
+                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t("selectTime")}
                 </Label>
                 {timeSlots.length === 0 ? (
-                  <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground text-center">
+                  <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                     {t("noSlotsForDay")}
                   </div>
                 ) : (
