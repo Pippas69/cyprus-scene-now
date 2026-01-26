@@ -304,14 +304,14 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         language={language}
       />
     );
-    // Pin label must sit clearly ABOVE the pin and stay on top of other UI.
+    // Pin label must sit just above the pin - very close spacing
     popupRef.current = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
       maxWidth: 'none',
       anchor: 'bottom',
-      // Negative Y lifts the label above the pin.
-      offset: [0, -36],
+      // Minimal offset for tight spacing between popup and pin
+      offset: [0, -8],
       className: 'fomo-pin-label',
     })
       .setLngLat([lng, lat])

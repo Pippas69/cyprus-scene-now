@@ -1,4 +1,4 @@
-import { MapPin, Navigation } from "lucide-react";
+import { Navigation } from "lucide-react";
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
 import { getDirectionsUrl } from "@/lib/mapUtils";
 
@@ -8,7 +8,7 @@ interface BusinessPopupProps {
   language: "el" | "en";
 }
 
-// Premium popup styling per plan tier
+// Premium popup styling per plan tier - border only, white interior
 const POPUP_STYLES: Record<string, {
   container: string;
   name: string;
@@ -17,35 +17,35 @@ const POPUP_STYLES: Record<string, {
   navIcon: string;
 }> = {
   elite: {
-    // Premium golden background with darker gold border
-    container: "bg-gradient-to-br from-[hsl(45,95%,65%)] to-[hsl(45,95%,55%)] border-2 border-[hsl(45,90%,40%)] shadow-[0_4px_16px_rgba(234,179,8,0.4)]",
-    name: "text-[hsl(35,80%,15%)]",
-    address: "text-[hsl(35,60%,25%)]",
-    navButton: "bg-[hsl(45,90%,40%)] hover:bg-[hsl(45,90%,35%)] shadow-sm",
+    // Golden border, white interior
+    container: "bg-white border-2 border-[hsl(45,80%,50%)] rounded-full shadow-sm",
+    name: "text-[hsl(35,30%,25%)]",
+    address: "text-[hsl(35,20%,40%)]",
+    navButton: "bg-[hsl(45,70%,55%)] hover:bg-[hsl(45,75%,50%)]",
     navIcon: "text-white",
   },
   pro: {
-    // Light background with coral/orange border
-    container: "bg-background/95 border-2 border-[hsl(var(--plan-pro))] shadow-[0_4px_16px_rgba(249,115,22,0.25)]",
+    // Coral border, white interior
+    container: "bg-white border-2 border-[hsl(var(--plan-pro))] rounded-full shadow-sm",
     name: "text-foreground",
     address: "text-muted-foreground",
-    navButton: "bg-[hsl(var(--plan-pro))] hover:bg-[hsl(12,90%,50%)] shadow-sm",
+    navButton: "bg-[hsl(var(--plan-pro))] hover:bg-[hsl(12,90%,50%)]",
     navIcon: "text-white",
   },
   basic: {
-    // Light background with cyan border
-    container: "bg-background/95 border-2 border-[hsl(var(--plan-basic))] shadow-[0_4px_16px_rgba(6,182,212,0.25)]",
+    // Cyan border, white interior
+    container: "bg-white border-2 border-[hsl(var(--plan-basic))] rounded-full shadow-sm",
     name: "text-foreground",
     address: "text-muted-foreground",
-    navButton: "bg-[hsl(var(--plan-basic))] hover:bg-[hsl(200,90%,40%)] shadow-sm",
+    navButton: "bg-[hsl(var(--plan-basic))] hover:bg-[hsl(200,90%,40%)]",
     navIcon: "text-white",
   },
   free: {
-    // Light background with ocean blue border
-    container: "bg-background/95 border-2 border-[hsl(var(--ocean))] shadow-[0_4px_16px_rgba(61,107,153,0.2)]",
+    // Ocean blue border (matching pin color), white interior
+    container: "bg-white border-2 border-[hsl(207,43%,42%)] rounded-full shadow-sm",
     name: "text-foreground",
     address: "text-muted-foreground",
-    navButton: "bg-[hsl(var(--ocean))] hover:bg-[hsl(207,72%,28%)] shadow-sm",
+    navButton: "bg-[hsl(207,43%,42%)] hover:bg-[hsl(207,43%,35%)]",
     navIcon: "text-white",
   },
 };
@@ -62,39 +62,38 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
   return (
     <div 
       className={`
-        relative backdrop-blur-sm rounded-xl 
-        px-3 py-2 md:px-4 md:py-2.5 
-        min-w-[140px] max-w-[220px]
+        relative inline-flex items-center gap-1.5
+        px-2.5 py-1 pr-7
         ${styles.container}
       `}
     >
-      {/* Navigation/Directions button - top right corner */}
+      {/* Content: Name & Address */}
+      <div className="flex flex-col items-start min-w-0">
+        <h3 className={`font-medium text-[11px] leading-tight whitespace-nowrap ${styles.name}`}>
+          {business.name}
+        </h3>
+        {business.address && (
+          <div className={`flex items-center gap-0.5 text-[9px] leading-tight ${styles.address}`}>
+            <span className="opacity-70">⊙</span>
+            <span className="whitespace-nowrap">{business.address}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Navigation/Directions button - small, right edge */}
       <button
         onClick={handleDirectionsClick}
         className={`
-          absolute -top-2 -right-2 
-          w-7 h-7 md:w-8 md:h-8 
+          absolute -right-1 top-1/2 -translate-y-1/2
+          w-5 h-5 
           rounded-full flex items-center justify-center
           transition-all duration-200 hover:scale-110
           ${styles.navButton}
         `}
         title={language === "el" ? "Οδηγίες" : "Directions"}
       >
-        <Navigation className={`h-3.5 w-3.5 md:h-4 md:w-4 ${styles.navIcon}`} />
+        <Navigation className={`h-2.5 w-2.5 ${styles.navIcon}`} />
       </button>
-
-      {/* Business Name - centered */}
-      <h3 className={`font-semibold text-xs md:text-sm leading-tight text-center pr-4 ${styles.name}`}>
-        {business.name}
-      </h3>
-      
-      {/* Address with location icon */}
-      {business.address && (
-        <div className={`flex items-center justify-center gap-1 text-[10px] md:text-xs mt-1 ${styles.address}`}>
-          <MapPin className="h-3 w-3 shrink-0" />
-          <span className="truncate">{business.address}</span>
-        </div>
-      )}
     </div>
   );
 };
