@@ -135,7 +135,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     );
     setOfferLinkedReservationIds(offerReservationIds);
 
-    // 1. Event-based reservations (upcoming)
+    // 1. Event-based reservations (upcoming) - exclude cancelled
     const { data: upcomingEventRes } = await supabase
       .from('reservations')
       .select(`
@@ -152,6 +152,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       `)
       .eq('user_id', userId)
       .not('event_id', 'is', null)
+      .neq('status', 'cancelled')
       .gte('events.end_at', now);
 
     // 2. Event-based reservations (past)
@@ -173,7 +174,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       .not('event_id', 'is', null)
       .lt('events.end_at', now);
 
-    // 3. Direct business reservations (upcoming)
+    // 3. Direct business reservations (upcoming) - exclude cancelled
     const { data: upcomingDirectRes } = await supabase
       .from('reservations')
       .select(`
@@ -183,6 +184,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       .eq('user_id', userId)
       .is('event_id', null)
       .not('business_id', 'is', null)
+      .neq('status', 'cancelled')
       .gte('preferred_time', now);
 
     // 4. Direct business reservations (past)
