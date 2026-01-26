@@ -94,23 +94,25 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     return (
     <TabsTrigger 
       value={value} 
-      className={`relative ${!hasAccess ? 'text-muted-foreground/60' : ''}`}
+      className={`relative pt-1 ${!hasAccess ? 'text-muted-foreground/60' : ''}`}
       disabled={!hasAccess}
     >
       {badge && BadgeIcon && (
-        <span className="absolute -top-2 left-1/2 -translate-x-1/2 pointer-events-none">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-10">
           <span
-            className={`inline-flex items-center gap-0.5 sm:gap-1 rounded-full border px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-medium bg-background shadow-sm ${badge.className}`}
+            className={`inline-flex items-center gap-0.5 sm:gap-1 rounded-full border px-1.5 sm:px-2 py-0.5 text-[7px] sm:text-[9px] font-semibold shadow-sm ${badge.className}`}
           >
             <BadgeIcon className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
             {badge.label}
           </span>
         </span>
       )}
-      {!hasAccess && (
-        <Lock className="w-3 h-3 mr-1.5 opacity-60" />
-      )}
-      {label}
+      <span className="flex items-center gap-1">
+        {!hasAccess && (
+          <Lock className="w-3 h-3 opacity-60" />
+        )}
+        {label}
+      </span>
     </TabsTrigger>
     );
   };
@@ -125,8 +127,8 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
       <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
         {/* Tabs - scrollable on mobile */}
-        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible">
-          <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-4 pt-5 min-w-max sm:min-w-0 gap-1 sm:gap-0">
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible pt-2">
+          <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-4 min-w-max sm:min-w-0 gap-1 sm:gap-0 overflow-visible">
             {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
             {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
             {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
