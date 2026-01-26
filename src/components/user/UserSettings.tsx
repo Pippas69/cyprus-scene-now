@@ -12,9 +12,10 @@ import { Separator } from '@/components/ui/separator';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { usePasswordChange } from '@/hooks/usePasswordChange';
 import { useLanguage } from '@/hooks/useLanguage';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from '@/hooks/use-toast';
 import { toastTranslations } from '@/translations/toastTranslations';
-import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon, GraduationCap } from 'lucide-react';
+import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon, GraduationCap, Smartphone, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getCategoriesForUser } from '@/lib/unifiedCategories';
 import { getCityOptions, translateCity } from '@/lib/cityTranslations';
@@ -31,6 +32,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   const { setLanguage } = useLanguage();
   const { preferences, isLoading: prefsLoading, updatePreferences, isUpdating } = useUserPreferences(userId);
   const { changePassword, isChanging } = usePasswordChange();
+  const { isSupported: pushSupported, isSubscribed: pushSubscribed, isLoading: pushLoading, permissionState, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushNotifications(userId);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   
   // Profile state
   const [profile, setProfile] = useState<any>(null);
@@ -100,6 +103,11 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       reservationRemindersDesc: '2 ώρες πριν την ώρα της κράτησής σου',
       expiringOffers: 'Υπενθυμίσεις Προσφορών',
       expiringOffersDesc: '2 ώρες πριν λήξουν οι προσφορές που εξαργύρωσες',
+      pushNotifications: 'Push Ειδοποιήσεις',
+      pushNotificationsDesc: 'Λάβετε άμεσες ειδοποιήσεις στη συσκευή σας',
+      pushDenied: 'Οι ειδοποιήσεις είναι απενεργοποιημένες στον browser',
+      testPush: 'Δοκιμή',
+      sendingTest: 'Αποστολή...',
       privacy: 'Απόρρητο & Δεδομένα',
       profileVisibility: 'Ορατότητα Προφίλ',
       public: 'Δημόσιο',
@@ -157,6 +165,11 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       reservationRemindersDesc: '2 hours before your reservation time',
       expiringOffers: 'Offer Reminders',
       expiringOffersDesc: '2 hours before your redeemed offers expire',
+      pushNotifications: 'Push Notifications',
+      pushNotificationsDesc: 'Receive instant notifications on your device',
+      pushDenied: 'Notifications are disabled in browser settings',
+      testPush: 'Test',
+      sendingTest: 'Sending...',
       privacy: 'Privacy & Data',
       profileVisibility: 'Profile Visibility',
       public: 'Public',
@@ -484,6 +497,58 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               className="data-[state=checked]:bg-primary cursor-default"
             />
           </div>
+
+          {/* Push Notifications */}
+          {pushSupported && (
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5 flex-1">
+                <Label className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" />
+                  {t.pushNotifications}
+                </Label>
+                <p className="text-xs text-muted-foreground">{t.pushNotificationsDesc}</p>
+                {permissionState === 'denied' && (
+                  <p className="text-xs text-destructive">{t.pushDenied}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {pushSubscribed && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      setIsSendingTest(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('test-push-notification');
+                        if (error) throw error;
+                        toast({
+                          title: language === 'el' ? 'Ειδοποίηση εστάλη!' : 'Notification sent!',
+                          description: language === 'el' ? 'Ελέγξτε τη συσκευή σας' : 'Check your device',
+                        });
+                      } catch (err) {
+                        toast({
+                          title: language === 'el' ? 'Αποτυχία' : 'Failed',
+                          description: err instanceof Error ? err.message : 'Unknown error',
+                          variant: 'destructive',
+                        });
+                      } finally {
+                        setIsSendingTest(false);
+                      }
+                    }}
+                    disabled={isSendingTest}
+                  >
+                    <Send className="h-3 w-3 mr-1" />
+                    {isSendingTest ? t.sendingTest : t.testPush}
+                  </Button>
+                )}
+                <Switch
+                  checked={pushSubscribed}
+                  disabled={pushLoading || permissionState === 'denied'}
+                  onCheckedChange={(checked) => checked ? subscribePush() : unsubscribePush()}
+                />
+              </div>
+            </div>
+          )}
 
           <Separator />
 
