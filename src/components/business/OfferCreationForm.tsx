@@ -661,7 +661,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           onChange={(e) => updateField('title', e.target.value)}
           placeholder={t.titlePlaceholder}
           maxLength={100}
-          className="text-base"
+          className="text-xs sm:text-base"
         />
       </SectionCard>
 
@@ -689,42 +689,40 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           </div>
 
           {/* Image Source - Integrated into Description section */}
-          <div className="pt-4 border-t border-border/50 space-y-4">
-            <Label className="text-sm font-semibold">{t.offerImage}</Label>
+          <div className="pt-3 sm:pt-4 border-t border-border/50 space-y-3 sm:space-y-4">
+            <Label className="text-xs sm:text-sm font-semibold">{t.offerImage}</Label>
             
             {/* Image Source Toggle */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => updateField('imageSource', 'profile')}
                 className={cn(
-                  "p-3 sm:p-4 rounded-xl border-2 transition-all text-left",
+                  "p-2.5 sm:p-4 rounded-xl border-2 transition-all text-left",
                   formData.imageSource === 'profile'
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-primary/50"
                 )}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <ImageIcon className="w-4 h-4 text-primary" />
-                  <span className="font-medium text-xs sm:text-sm">{t.useProfileImage}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                  <span className="font-medium text-[10px] sm:text-sm whitespace-nowrap">{t.useProfileImage}</span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.profileImageDesc}</p>
               </button>
               <button
                 type="button"
                 onClick={() => updateField('imageSource', 'custom')}
                 className={cn(
-                  "p-3 sm:p-4 rounded-xl border-2 transition-all text-left",
+                  "p-2.5 sm:p-4 rounded-xl border-2 transition-all text-left",
                   formData.imageSource === 'custom'
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-primary/50"
                 )}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Upload className="w-4 h-4 text-primary" />
-                  <span className="font-medium text-xs sm:text-sm">{t.useCustomImage}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                  <span className="font-medium text-[10px] sm:text-sm whitespace-nowrap">{t.useCustomImage}</span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.customImageDesc}</p>
               </button>
             </div>
 
@@ -833,7 +831,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           {/* Discount Value Input */}
           {formData.discountType === 'percentage' ? (
             <div className="space-y-2">
-              <Label>{t.percentOffLabel}</Label>
+              <Label className="text-xs sm:text-sm">{t.percentOffLabel}</Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -841,19 +839,20 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   onChange={(e) => updateField('percentOff', Math.max(1, Math.min(99, parseInt(e.target.value) || 0)))}
                   min={1}
                   max={99}
-                  className="w-24"
+                  className="w-20 sm:w-24 text-sm sm:text-base"
                 />
-                <span className="text-2xl font-bold text-primary">%</span>
-                <span className="text-muted-foreground ml-2">off</span>
+                <span className="text-lg sm:text-2xl font-bold text-primary">%</span>
+                <span className="text-xs sm:text-sm text-muted-foreground ml-1 sm:ml-2">off</span>
               </div>
             </div>
           ) : (
             <div className="space-y-2">
-              <Label>{t.specialDealLabel}</Label>
+              <Label className="text-xs sm:text-sm">{t.specialDealLabel}</Label>
               <Input
                 value={formData.specialDealText}
                 onChange={(e) => updateField('specialDealText', e.target.value)}
                 placeholder={t.specialDealPlaceholder}
+                className="text-xs sm:text-base"
               />
             </div>
           )}
@@ -862,13 +861,13 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       {/* Section 5: When Discount Applies */}
       <SectionCard title={t.step5} required>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Valid Days */}
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center justify-between">
-              <Label>{t.validDaysLabel}</Label>
+              <Label className="text-xs sm:text-sm">{t.validDaysLabel}</Label>
               <div className="flex items-center gap-2">
-                <Label htmlFor="all-days" className="text-sm text-muted-foreground">{t.allDays}</Label>
+                <Label htmlFor="all-days" className="text-[10px] sm:text-sm text-muted-foreground">{t.allDays}</Label>
                 <Switch
                   id="all-days"
                   checked={formData.allDays}
@@ -877,7 +876,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               </div>
             </div>
             
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {DAYS_OF_WEEK.map((day) => (
                 <button
                   key={day}
@@ -885,7 +884,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   onClick={() => toggleDay(day)}
                   disabled={formData.allDays}
                   className={cn(
-                    "py-2 px-3 rounded-lg text-sm font-medium transition-all",
+                    "py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-[10px] sm:text-sm font-medium transition-all",
                     formData.validDays.includes(day)
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/80",
@@ -899,11 +898,11 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           </div>
 
           {/* Valid Hours */}
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center justify-between">
-              <Label>{t.validHoursLabel}</Label>
+              <Label className="text-xs sm:text-sm">{t.validHoursLabel}</Label>
               <div className="flex items-center gap-2">
-                <Label htmlFor="all-day" className="text-sm text-muted-foreground">{t.allDay}</Label>
+                <Label htmlFor="all-day" className="text-[10px] sm:text-sm text-muted-foreground">{t.allDay}</Label>
                 <Switch
                   id="all-day"
                   checked={formData.allDay}
@@ -913,24 +912,24 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
             </div>
             
             {!formData.allDay && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground mb-1">{t.fromTime}</Label>
+                  <Label className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t.fromTime}</Label>
                   <Input
                     type="time"
                     value={formData.validStartTime}
                     onChange={(e) => updateField('validStartTime', e.target.value)}
-                    className="w-full"
+                    className="w-full text-xs sm:text-sm"
                   />
                 </div>
-                <span className="text-muted-foreground mt-5">→</span>
+                <span className="text-muted-foreground mt-4 sm:mt-5">→</span>
                 <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground mb-1">{t.toTime}</Label>
+                  <Label className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t.toTime}</Label>
                   <Input
                     type="time"
                     value={formData.validEndTime}
                     onChange={(e) => updateField('validEndTime', e.target.value)}
-                    className="w-full"
+                    className="w-full text-xs sm:text-sm"
                   />
                 </div>
               </div>
@@ -941,48 +940,48 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       {/* Section 6: Appearance Duration */}
       <SectionCard title={t.step6} required>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Mode Toggle */}
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
             <button
               type="button"
               onClick={() => updateField('appearanceMode', 'hours')}
               className={cn(
-                "p-2.5 sm:p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-1.5 sm:gap-2",
+                "p-2 sm:p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-1 sm:gap-2",
                 formData.appearanceMode === 'hours'
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
               )}
             >
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{t.byHours}</span>
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="font-medium text-[10px] sm:text-sm whitespace-nowrap">{t.byHours}</span>
             </button>
             <button
               type="button"
               onClick={() => updateField('appearanceMode', 'days')}
               className={cn(
-                "p-2.5 sm:p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-1.5 sm:gap-2",
+                "p-2 sm:p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-1 sm:gap-2",
                 formData.appearanceMode === 'days'
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
               )}
             >
-              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{t.byDays}</span>
+              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="font-medium text-[10px] sm:text-sm whitespace-nowrap">{t.byDays}</span>
             </button>
           </div>
 
           {/* Hours Mode */}
           {formData.appearanceMode === 'hours' && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex flex-wrap gap-1 sm:gap-2">
                 {HOUR_PRESETS.map((hours) => (
                   <button
                     key={hours}
                     type="button"
                     onClick={() => updateField('appearanceHours', hours)}
                     className={cn(
-                      "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium transition-all text-xs sm:text-sm",
+                      "px-2 sm:px-4 py-1 sm:py-2 rounded-full font-medium transition-all text-[10px] sm:text-sm",
                       formData.appearanceHours === hours
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -995,7 +994,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   type="button"
                   onClick={() => updateField('appearanceHours', -1)}
                   className={cn(
-                    "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium transition-all text-xs sm:text-sm whitespace-nowrap",
+                    "px-2 sm:px-4 py-1 sm:py-2 rounded-full font-medium transition-all text-[10px] sm:text-sm whitespace-nowrap",
                     formData.appearanceHours === -1
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -1013,9 +1012,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                     onChange={(e) => updateField('appearanceCustomHours', Math.max(1, parseInt(e.target.value) || 1))}
                     min={1}
                     max={168}
-                    className="w-24"
+                    className="w-20 sm:w-24 text-xs sm:text-base"
                   />
-                  <span className="text-muted-foreground">{t.hours}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{t.hours}</span>
                 </div>
               )}
             </div>
@@ -1047,43 +1046,43 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       {/* Section 7: Availability (People-Based) */}
       <SectionCard title={t.step7} required>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Total People */}
-          <div className="space-y-2">
+          <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" />
-              <Label>{t.totalPeople}</Label>
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+              <Label className="text-xs sm:text-sm">{t.totalPeople}</Label>
             </div>
             <Input
               type="number"
               value={formData.totalPeople}
               onChange={(e) => updateField('totalPeople', Math.max(1, parseInt(e.target.value) || 1))}
               min={1}
-              className="w-32"
+              className="w-28 sm:w-32 text-xs sm:text-base"
             />
-            <p className="text-xs text-muted-foreground">{t.totalPeopleDesc}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">{t.totalPeopleDesc}</p>
           </div>
 
           {/* Max Per Redemption */}
-          <div className="space-y-2">
-            <Label>{t.maxPerRedemption}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="text-xs sm:text-sm">{t.maxPerRedemption}</Label>
             <Input
               type="number"
               value={formData.maxPeoplePerRedemption}
               onChange={(e) => updateField('maxPeoplePerRedemption', Math.max(1, parseInt(e.target.value) || 1))}
               min={1}
               max={formData.totalPeople}
-              className="w-32"
+              className="w-28 sm:w-32 text-xs sm:text-base"
             />
-            <p className="text-xs text-muted-foreground">{t.maxPerRedemptionDesc}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">{t.maxPerRedemptionDesc}</p>
           </div>
 
           {/* One Per User */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+          <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-muted/50">
             <div className="flex items-center gap-2">
-              <Label htmlFor="one-per-user" className="cursor-pointer">{t.onePerUser}</Label>
+              <Label htmlFor="one-per-user" className="cursor-pointer text-xs sm:text-sm">{t.onePerUser}</Label>
               <span title={t.onePerUserTooltip} className="cursor-help">
-                <Info className="h-4 w-4 text-muted-foreground" />
+                <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
               </span>
             </div>
             <Switch
@@ -1131,11 +1130,11 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       {/* Section 9: Optional Booking CTA */}
       <SectionCard title={t.step9}>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-2">
-              <CalendarCheck className="w-4 h-4 text-primary" />
-              <Label htmlFor="show-cta" className="cursor-pointer">{t.reservationCtaLabel}</Label>
+        <div className="space-y-2 sm:space-y-3">
+          <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <CalendarCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+              <Label htmlFor="show-cta" className="cursor-pointer text-[10px] sm:text-sm whitespace-nowrap">{t.reservationCtaLabel}</Label>
             </div>
             <Switch
               id="show-cta"
@@ -1143,7 +1142,6 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               onCheckedChange={(checked) => updateField('showReservationCta', checked)}
             />
           </div>
-          <p className="text-xs text-muted-foreground">{t.reservationCtaDesc}</p>
         </div>
       </SectionCard>
 

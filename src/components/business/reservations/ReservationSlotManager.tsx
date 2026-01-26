@@ -105,11 +105,11 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       noSlotsWarning: 'Προσθέστε τουλάχιστον ένα χρονικό slot για να δέχεστε κρατήσεις',
       noDaysWarning: 'Επιλέξτε ημέρες για αυτό το slot',
       instantConfirmation: 'Άμεση Επιβεβαίωση',
-      instantConfirmationDescription: 'Οι κρατήσεις επιβεβαιώνονται αυτόματα αν υπάρχει διαθεσιμότητα',
+      instantConfirmationDescription: 'Αυτόματη επιβεβαίωση αν υπάρχει διαθεσιμότητα',
       noShowPolicy: 'Πολιτική No-Show',
-      noShowPolicyDescription: '15 λεπτά περιθώριο - αυτόματη ακύρωση αν δεν γίνει check-in',
+      noShowPolicyDescription: 'Περιθώριο 15 λεπτά - ακύρωση αν δεν γίνει check-in',
       cancellationPolicy: 'Πολιτική Ακύρωσης',
-      cancellationPolicyDescription: 'Μέχρι 3 ακυρώσεις επιτρέπονται. Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων',
+      cancellationPolicyDescription: 'Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων',
       allDays: 'Όλες τις μέρες',
       selectedDays: 'Επιλεγμένες μέρες',
       timeWindow: 'Χρονικό Παράθυρο',
@@ -405,10 +405,9 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
               <Label htmlFor="enable-reservations" className="text-[11px] sm:text-sm lg:text-base font-semibold whitespace-nowrap">
                 {t.enableReservations}
               </Label>
-              <p className="text-[9px] sm:text-xs lg:text-sm text-muted-foreground lg:whitespace-nowrap">
-                {t.enableDescription} <span className="lg:inline hidden">{t.enableDescriptionSub}</span>
+              <p className="text-[10px] sm:text-xs lg:text-sm text-muted-foreground whitespace-nowrap">
+                {t.enableDescription} {t.enableDescriptionSub}
               </p>
-              <p className="text-[9px] sm:text-xs text-muted-foreground lg:hidden">{t.enableDescriptionSub}</p>
             </div>
             <Switch
               id="enable-reservations"
@@ -448,42 +447,42 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
           {/* Policy Info Cards - compact on mobile/tablet */}
           <div className="grid grid-cols-1 gap-2 sm:gap-3">
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
-              <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400" />
+              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                    <Clock className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-green-600 dark:text-green-400" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-medium text-[11px] sm:text-sm text-green-800 dark:text-green-200">{t.instantConfirmation}</h4>
-                    <p className="text-[9px] sm:text-xs text-green-700 dark:text-green-300">{t.instantConfirmationDescription}</p>
+                    <h4 className="font-medium text-[10px] sm:text-xs text-green-800 dark:text-green-200 whitespace-nowrap">{t.instantConfirmation}</h4>
+                    <p className="text-[9px] sm:text-[11px] text-green-700 dark:text-green-300 whitespace-nowrap">{t.instantConfirmationDescription}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30">
-              <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600 dark:text-orange-400" />
+              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-medium text-[11px] sm:text-sm text-orange-800 dark:text-orange-200">{t.noShowPolicy}</h4>
-                    <p className="text-[9px] sm:text-xs text-orange-700 dark:text-orange-300">{t.noShowPolicyDescription}</p>
+                    <h4 className="font-medium text-[10px] sm:text-xs text-orange-800 dark:text-orange-200 whitespace-nowrap">{t.noShowPolicy}</h4>
+                    <p className="text-[9px] sm:text-[11px] text-orange-700 dark:text-orange-300 whitespace-nowrap">{t.noShowPolicyDescription}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
-              <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400" />
+              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-medium text-[11px] sm:text-sm text-blue-800 dark:text-blue-200">{t.cancellationPolicy}</h4>
-                    <p className="text-[9px] sm:text-xs text-blue-700 dark:text-blue-300">{t.cancellationPolicyDescription}</p>
+                    <h4 className="font-medium text-[10px] sm:text-xs text-blue-800 dark:text-blue-200 whitespace-nowrap">{t.cancellationPolicy}</h4>
+                    <p className="text-[9px] sm:text-[11px] text-blue-700 dark:text-blue-300 whitespace-nowrap">{t.cancellationPolicyDescription}</p>
                   </div>
                 </div>
               </CardContent>
