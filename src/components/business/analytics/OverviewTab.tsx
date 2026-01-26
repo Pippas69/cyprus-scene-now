@@ -229,25 +229,25 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
                 </CardContent>
               </Card>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Icon className="h-5 w-5 text-primary" />
+            <DialogContent className="max-w-[280px] sm:max-w-md p-3 sm:p-6">
+              <DialogHeader className="pb-2 sm:pb-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </div>
                   <div>
-                    <DialogTitle>{label}</DialogTitle>
-                    <DialogDescription>{explanation}</DialogDescription>
+                    <DialogTitle className="text-sm sm:text-lg">{label}</DialogTitle>
+                    <DialogDescription className="text-[10px] sm:text-sm">{explanation}</DialogDescription>
                   </div>
                 </div>
               </DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-3xl font-bold text-foreground">{value.toLocaleString()}</p>
+              <div className="space-y-2 sm:space-y-4 pt-1 sm:pt-2">
+                <div className="p-2 sm:p-4 bg-muted/50 rounded-lg">
+                  <p className="text-xl sm:text-3xl font-bold text-foreground">{value.toLocaleString()}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{details}</p>
-                <div className="pt-2 border-t border-border">
-                  <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">{details}</p>
+                <div className="pt-1.5 sm:pt-2 border-t border-border">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     <span className="font-medium">{t.dataSource}:</span> {source}
                   </p>
                 </div>

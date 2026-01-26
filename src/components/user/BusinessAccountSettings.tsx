@@ -560,24 +560,25 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             </div>
 
             {/* Name and City Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="business-name" className="text-sm md:text-base">{businessT.businessName} *</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="business-name" className="text-xs sm:text-sm">{businessT.businessName} *</Label>
                 <Input 
                   id="business-name" 
                   {...businessProfileForm.register("name")} 
-                  placeholder={businessT.businessNamePlaceholder} 
+                  placeholder={businessT.businessNamePlaceholder}
+                  className="text-xs sm:text-sm h-9 sm:h-10"
                 />
                 {businessProfileForm.formState.errors.name && (
-                  <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.name.message}</p>
+                  <p className="text-[10px] sm:text-sm text-destructive mt-1">{businessProfileForm.formState.errors.name.message}</p>
                 )}
               </div>
-              <div>
-                <Label htmlFor="business-city" className="text-sm md:text-base">{businessT.city}</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="business-city" className="text-xs sm:text-sm">{businessT.city}</Label>
                 <select
                   id="business-city"
                   {...businessProfileForm.register("city")}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm"
                 >
                   <option value="">{businessT.selectCity}</option>
                   {cities[language].map((cityOption) => (
@@ -585,22 +586,22 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                   ))}
                 </select>
                 {businessProfileForm.formState.errors.city && (
-                  <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.city.message}</p>
+                  <p className="text-[10px] sm:text-sm text-destructive mt-1">{businessProfileForm.formState.errors.city.message}</p>
                 )}
               </div>
             </div>
 
             {/* Address */}
-            <div>
-              <Label htmlFor="business-address" className="text-sm md:text-base">{businessT.address}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="business-address" className="text-xs sm:text-sm">{businessT.address}</Label>
               <Input 
                 id="business-address" 
                 {...businessProfileForm.register("address")} 
                 placeholder={businessT.addressPlaceholder}
-                className="text-xs md:text-sm"
+                className="text-xs sm:text-sm h-9 sm:h-10"
               />
               {geocoding && (
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 flex items-center gap-1">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   {language === 'el' ? 'Ενημέρωση συντεταγμένων...' : 'Updating coordinates...'}
                 </p>
@@ -608,16 +609,17 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             </div>
 
             {/* Description */}
-            <div>
-              <Label htmlFor="business-description" className="text-sm md:text-base">{businessT.description}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="business-description" className="text-xs sm:text-sm">{businessT.description}</Label>
               <Textarea 
                 id="business-description" 
                 {...businessProfileForm.register("description")} 
                 placeholder={businessT.businessDescPlaceholder}
                 rows={3}
+                className="text-xs sm:text-sm"
               />
               {businessProfileForm.formState.errors.description && (
-                <p className="text-sm text-destructive mt-1">{businessProfileForm.formState.errors.description.message}</p>
+                <p className="text-[10px] sm:text-sm text-destructive mt-1">{businessProfileForm.formState.errors.description.message}</p>
               )}
             </div>
 
@@ -838,43 +840,47 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
       {/* Password Management */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+            <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
             {t.passwordManagement}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current-password">{t.currentPassword}</Label>
+        <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="current-password" className="text-xs sm:text-sm">{t.currentPassword}</Label>
             <Input
               id="current-password"
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
+              className="text-xs sm:text-sm h-9 sm:h-10"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="new-password">{t.newPassword}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="new-password" className="text-xs sm:text-sm">{t.newPassword}</Label>
             <Input
               id="new-password"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              className="text-xs sm:text-sm h-9 sm:h-10"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">{t.confirmPassword}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="confirm-password" className="text-xs sm:text-sm">{t.confirmPassword}</Label>
             <Input
               id="confirm-password"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              className="text-xs sm:text-sm h-9 sm:h-10"
             />
           </div>
           <Button 
             onClick={handlePasswordChange}
             disabled={isChanging || !currentPassword || !newPassword || !confirmPassword}
+            className="text-xs sm:text-sm h-9 sm:h-10"
           >
             {t.changePassword}
           </Button>
