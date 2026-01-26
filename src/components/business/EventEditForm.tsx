@@ -1170,7 +1170,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 sm:gap-3 pt-4">
+          <div className="flex gap-2 sm:gap-3 pt-6 pb-2">
             <Button
               type="button"
               variant="outline"

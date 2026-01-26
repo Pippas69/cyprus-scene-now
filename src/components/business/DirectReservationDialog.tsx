@@ -102,7 +102,7 @@ export const DirectReservationDialog = ({
       noSlotsForDay: 'Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα',
       policyTitle: 'Πολιτική Κρατήσεων',
       noShowPolicy: '15 λεπτά περιθώριο - αυτόματη ακύρωση αν δεν γίνει check-in',
-      cancellationPolicy: 'Δωρεάν ακύρωση μέχρι 1 ώρα πριν την κράτηση',
+      cancellationPolicy: 'Μέχρι 3 ακυρώσεις επιτρέπονται. Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων',
       instantConfirmation: 'Άμεση επιβεβαίωση κράτησης',
     },
     en: {
@@ -132,7 +132,7 @@ export const DirectReservationDialog = ({
       noSlotsForDay: 'No available slots for this day',
       policyTitle: 'Reservation Policy',
       noShowPolicy: '15 min grace period - auto-cancelled if no check-in',
-      cancellationPolicy: 'Free cancellation up to 1 hour before',
+      cancellationPolicy: 'Up to 3 cancellations allowed. After 3 cancellations, 2-week restriction',
       instantConfirmation: 'Instant reservation confirmation',
     },
   };

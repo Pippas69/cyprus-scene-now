@@ -125,7 +125,6 @@ interface FormData {
   reservationToTime: string;
   selectedSeatingTypes: SeatingType[];
   seatingConfigs: Record<SeatingType, SeatingConfig>;
-  cancellationHours: number;
   // Free Entry fields
   freeEntryAccepted: {
     noTicket: boolean;
@@ -212,6 +211,8 @@ const translations = {
     noMinSpend: "Δεν υπάρχει υποχρεωτικό minimum spend",
     noReservationRequired: "Δεν απαιτείται κράτηση για είσοδο",
     freeEntryWarning: "Τα Free Entry events εμφανίζονται μόνο όταν γίνει boost. Υπάρχει σύστημα strike αν αποδειχθεί ότι ζητήθηκε πληρωμή στην είσοδο.",
+    termsConditions: "Όροι & Προϋποθέσεις (προαιρετικό)",
+    termsPlaceholder: "π.χ. Δεν επιτρέπεται η είσοδος σε ανηλίκους...",
     boostEvent: "Boost αυτή την εκδήλωση",
     publishEvent: "Δημοσίευση Εκδήλωσης",
     publishing: "Δημοσίευση...",
@@ -221,8 +222,6 @@ const translations = {
     acceptAllDeclarations: "Πρέπει να αποδεχτείτε όλες τις δηλώσεις",
     addAtLeastOneSeating: "Προσθέστε τουλάχιστον έναν τύπο θέσης",
     addAtLeastOneRange: "Κάθε τύπος θέσης χρειάζεται τουλάχιστον ένα εύρος ατόμων",
-    termsConditions: "Όροι & Προϋποθέσεις (προαιρετικό)",
-    termsPlaceholder: "π.χ. Δεν επιτρέπεται η είσοδος σε ανηλίκους...",
   },
   en: {
     createEvent: "Create Event",
@@ -295,6 +294,8 @@ const translations = {
     noMinSpend: "No mandatory minimum spend",
     noReservationRequired: "No reservation required for entry",
     freeEntryWarning: "Free Entry events only appear when boosted. A strike system applies if users report payment was required at the door.",
+      termsConditions: "Terms & Conditions (optional)",
+      termsPlaceholder: "e.g. No entry for minors...",
     boostEvent: "Boost this event",
     publishEvent: "Publish Event",
     publishing: "Publishing...",
@@ -304,8 +305,6 @@ const translations = {
     acceptAllDeclarations: "You must accept all declarations",
     addAtLeastOneSeating: "Add at least one seating type",
     addAtLeastOneRange: "Each seating type needs at least one person range",
-    termsConditions: "Terms & Conditions (optional)",
-    termsPlaceholder: "e.g. No entry for minors...",
   },
 };
 
@@ -363,7 +362,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
       vip: getDefaultSeatingConfig('vip'),
       sofa: getDefaultSeatingConfig('sofa'),
     },
-    cancellationHours: 12,
     freeEntryAccepted: {
       noTicket: false,
       noMinSpend: false,
@@ -631,7 +629,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
               available_slots: config.availableSlots,
               slots_booked: 0,
               dress_code: null,
-              cancellation_policy: formData.cancellationHours > 0 ? `${formData.cancellationHours}h cancellation` : null,
+              cancellation_policy: '3_strikes',
               no_show_policy: 'non_refundable',
             })
             .select()
@@ -1065,29 +1063,6 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 );
               })}
 
-              {/* Cancellation Policy */}
-              <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
-                <Label className="text-xs sm:text-sm">{t.cancellationPolicy}</Label>
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                  <span className="text-[10px] sm:text-sm text-muted-foreground">{t.freeCancellationUpTo}</span>
-                  <Select
-                    value={String(formData.cancellationHours)}
-                    onValueChange={(v) => updateField('cancellationHours', parseInt(v))}
-                  >
-                    <SelectTrigger className="w-16 sm:w-24 h-7 sm:h-10 text-xs sm:text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="6">6</SelectItem>
-                      <SelectItem value="12">12</SelectItem>
-                      <SelectItem value="24">24</SelectItem>
-                      <SelectItem value="48">48</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-[10px] sm:text-sm text-muted-foreground">{t.hoursBeforeEvent}</span>
-                </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.cancellationNote}</p>
-              </div>
             </div>
           )}
 
@@ -1137,6 +1112,21 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             </div>
           )}
         </SectionCard>
+
+        {/* Terms & Conditions (Optional) */}
+        <div className="space-y-2">
+          <Label className="text-xs sm:text-sm">{t.termsConditions}</Label>
+          <Textarea
+            value={formData.termsAndConditions}
+            onChange={(e) => updateField('termsAndConditions', e.target.value)}
+            placeholder={t.termsPlaceholder}
+            className="min-h-[80px] text-xs sm:text-sm resize-none"
+            maxLength={500}
+          />
+          <p className="text-[9px] sm:text-xs text-muted-foreground">
+            {500 - formData.termsAndConditions.length} {language === 'el' ? 'χαρακτήρες απομένουν' : 'characters remaining'}
+          </p>
+        </div>
 
         {/* Submit Button */}
         <Button
