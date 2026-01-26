@@ -411,7 +411,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
             </div>
             <Switch
               id="enable-reservations"
-              className="flex-shrink-0 scale-90 sm:scale-100"
+              className="flex-shrink-0 scale-75 md:scale-90 lg:scale-100"
               checked={settings.accepts_direct_reservations}
               onCheckedChange={async (checked) => {
                 setSettings((prev) => ({ ...prev, accepts_direct_reservations: checked }));
