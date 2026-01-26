@@ -930,11 +930,15 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                   <Ticket className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.ticketConfig}
                 </h4>
+                
+                <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} />
+                
                 <TicketTierEditor
                   tiers={formData.ticketTiers}
                   onTiersChange={(tiers) => updateField('ticketTiers', tiers)}
                   commissionPercent={commissionPercent}
                   validationErrors={ticketValidationErrors}
+                  autoEnabled={true}
                 />
               </div>
             )}

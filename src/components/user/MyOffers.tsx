@@ -428,7 +428,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 <ShoppingBag className="h-10 w-10 text-muted-foreground mb-3" />
                 <p className="text-muted-foreground text-sm mb-3">{t.noPurchases}</p>
                 <Button asChild variant="outline" size="sm">
-                  <a href="/feed">{t.browseOffers}</a>
+                  <a href="/offers">{t.browseOffers}</a>
                 </Button>
               </CardContent>
             </Card>
