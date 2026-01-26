@@ -22,8 +22,14 @@ interface PushSubscriptionState {
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
+  // Clean the key: remove whitespace, quotes, and normalize
+  const cleanedKey = base64String
+    .trim()
+    .replace(/^["']|["']$/g, '') // Remove wrapping quotes
+    .replace(/\s/g, '');          // Remove any whitespace
+  
+  const padding = '='.repeat((4 - (cleanedKey.length % 4)) % 4);
+  const base64 = (cleanedKey + padding)
     .replace(/-/g, '+')
     .replace(/_/g, '/');
   
@@ -193,8 +199,17 @@ export function usePushNotifications(userId: string | null) {
           throw new Error('VAPID key not configured');
         }
         console.log('[Push] VAPID key received');
+        console.log('[Push] VAPID key length:', vapidKey.length);
+        console.log('[Push] VAPID key starts with:', vapidKey.substring(0, 10) + '...');
         
-        const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+        let applicationServerKey: Uint8Array;
+        try {
+          applicationServerKey = urlBase64ToUint8Array(vapidKey);
+        } catch (decodeError) {
+          console.error('[Push] Failed to decode VAPID key:', decodeError);
+          console.error('[Push] Key value (first 20 chars):', vapidKey.substring(0, 20));
+          throw new Error('Invalid VAPID key format. Please check the server configuration.');
+        }
         
         console.log('[Push] Creating push subscription...');
         subscription = await registration.pushManager.subscribe({
