@@ -360,17 +360,23 @@ const MetricRow: React.FC<{
       </DialogTrigger>
 
       <DialogContent className="max-w-[280px] sm:max-w-md p-3 sm:p-6 pr-10 sm:pr-6">
-        <DialogHeader className="pr-2 sm:pr-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Icon className="h-5 w-5 text-primary" />
+        <DialogHeader className="pb-2 sm:pb-4 pr-2 sm:pr-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
+              <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <DialogTitle>{tooltipTitle}</DialogTitle>
-              <DialogDescription className="whitespace-pre-line">{tooltipText}</DialogDescription>
+              <DialogTitle className="text-sm sm:text-lg">{tooltipTitle}</DialogTitle>
+              <DialogDescription className="text-[10px] sm:text-sm">{label}</DialogDescription>
             </div>
           </div>
         </DialogHeader>
+        <div className="space-y-2 sm:space-y-4 pt-1 sm:pt-2">
+          <div className="p-2 sm:p-4 bg-muted/50 rounded-lg">
+            <p className="text-xl sm:text-3xl font-bold text-primary">{totalCount.toLocaleString()}</p>
+          </div>
+          <p className="text-[10px] sm:text-sm text-muted-foreground whitespace-pre-line">{tooltipText}</p>
+        </div>
       </DialogContent>
     </Dialog>
   );
