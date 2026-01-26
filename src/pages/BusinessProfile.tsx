@@ -396,18 +396,24 @@ const BusinessProfile = () => {
         <DialogPortal>
           <DialogOverlay />
           <DialogPrimitive.Content
+            aria-describedby={undefined}
             className={cn(
               "fixed left-1/2 z-50 w-full border-0 bg-transparent p-0 shadow-none outline-none",
               // Cover should appear higher (not centered)
               imageViewerAlt.includes("logo")
                 ? "top-1/2 -translate-x-1/2 -translate-y-1/2"
-                : "top-[6vh] sm:top-[7vh] md:top-[8vh] -translate-x-1/2 translate-y-0",
+                : "top-[12vh] sm:top-[7vh] md:top-[8vh] -translate-x-1/2 translate-y-0",
               // Size rules
               imageViewerAlt.includes("logo")
                 ? "max-w-[220px] sm:max-w-[300px] md:max-w-[340px] overflow-visible"
                 : "max-w-[85vw] sm:max-w-lg md:max-w-xl overflow-hidden",
             )}
           >
+            {/* A11y: keep title for screen readers (but visually hidden) */}
+            <DialogPrimitive.Title className="sr-only">
+              {language === "el" ? "Προβολή εικόνας" : "Image preview"}
+            </DialogPrimitive.Title>
+
             <div
               className={cn(
                 "relative",
@@ -418,12 +424,20 @@ const BusinessProfile = () => {
                 (imageViewerAlt.includes("logo") ? (
                   // Circular logo preview - Instagram style magnification (no clipping)
                   <div className="relative">
-                    <img
-                      src={imageViewerSrc}
-                      alt={imageViewerAlt}
-                      className="w-[180px] h-[180px] sm:w-[240px] sm:h-[240px] md:w-[280px] md:h-[280px] rounded-full object-cover ring-4 ring-background shadow-2xl"
-                      loading="eager"
-                    />
+                    {/*
+                      Two-layer circle to guarantee PERFECT circular mask (no odd corners)
+                      and keep ring/shadow outside without being clipped.
+                    */}
+                    <div className="inline-flex rounded-full ring-4 ring-background shadow-2xl">
+                      <div className="rounded-full overflow-hidden">
+                        <img
+                          src={imageViewerSrc}
+                          alt={imageViewerAlt}
+                          className="block w-[180px] h-[180px] sm:w-[240px] sm:h-[240px] md:w-[280px] md:h-[280px] object-cover"
+                          loading="eager"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   // Cover image preview - size is good, just show it higher
