@@ -98,7 +98,7 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       disabled={!hasAccess}
     >
       {badge && BadgeIcon && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-10">
+        <span className="absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none z-10">
           <span
             className={`inline-flex items-center gap-0.5 sm:gap-1 rounded-full border px-1.5 sm:px-2 py-0.5 text-[7px] sm:text-[9px] font-semibold shadow-sm ${badge.className}`}
           >
