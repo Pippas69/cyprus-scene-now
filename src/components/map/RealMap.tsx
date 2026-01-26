@@ -156,13 +156,13 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   const isTokenMissing = !MAPBOX_TOKEN || MAPBOX_TOKEN.includes('your-mapbox-token');
 
   const getCyprusFitPadding = () => {
-    // On smaller screens we need MORE padding to keep the full island visible (premium, no accidental crop).
+    // On mobile/tablet we want a MORE zoomed-out first impression so the whole island is always visible.
     const w = typeof window !== 'undefined' ? window.innerWidth : 1024;
     if (w < 768) {
-      return { top: 56, bottom: 56, left: 44, right: 44 };
+      return { top: 18, bottom: 18, left: 18, right: 18 };
     }
     if (w < 1024) {
-      return { top: 44, bottom: 44, left: 36, right: 36 };
+      return { top: 18, bottom: 18, left: 18, right: 18 };
     }
     return { top: 20, bottom: 20, left: 10, right: 10 };
   };
@@ -182,13 +182,12 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       minZoom: MAPBOX_CONFIG.minZoom,
     });
     
-    // On load, fit bounds to show ALL of Cyprus (from Paphos to Karpasia tip)
+    // On load, fit bounds to show ALL of Cyprus with comfortable sea margins
     map.current.on('load', () => {
       map.current?.resize();
-      // Cyprus bounds: SW [32.2, 34.55] to NE [34.6, 35.7]
-      // This ensures the entire island is visible on any screen size
+      // Use configured max bounds (slightly larger than the island) so mobile/tablet always sees the whole island.
       map.current?.fitBounds(
-        [[32.2, 34.55], [34.6, 35.7]],
+        MAPBOX_CONFIG.maxBounds,
         { padding: getCyprusFitPadding(), duration: 0 }
       );
     });
@@ -358,11 +357,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       }
 
       // DEFAULT: Always show ALL of Cyprus (don't auto-zoom to businesses)
-      // This ensures users see the entire island on first load
-      // They can zoom in manually if they want
-      // Cyprus bounds: SW [32.2, 34.55] to NE [34.6, 35.7]
+      // Users choose when to zoom.
       map.current.fitBounds(
-        [[32.2, 34.55], [34.6, 35.7]],
+        MAPBOX_CONFIG.maxBounds,
         { padding: getCyprusFitPadding(), duration: 0 }
       );
     };

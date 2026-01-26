@@ -751,11 +751,11 @@ export const PremiumShareSheet = ({
         <DrawerContent
           className={cn(
             // Smaller + more premium on mobile
-            "left-1/2 right-auto w-[92vw] max-w-[420px] -translate-x-1/2",
-            "max-h-[58vh] rounded-t-3xl overflow-hidden",
+            "left-1/2 right-auto w-[86vw] max-w-[360px] -translate-x-1/2",
+            "max-h-[52vh] rounded-t-3xl overflow-hidden",
           )}
         >
-          <div className="overflow-y-auto max-h-[calc(58vh-env(safe-area-inset-bottom))] pb-safe">
+          <div className="overflow-y-auto max-h-[calc(52vh-env(safe-area-inset-bottom))] pb-safe">
             <ShareContentMobile />
             {/* Safe area bottom padding */}
             <div className="h-4 pb-safe" />
