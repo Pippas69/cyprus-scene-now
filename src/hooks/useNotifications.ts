@@ -109,6 +109,12 @@ export const useNotifications = (userId: string | undefined) => {
   const markAllAsRead = async () => {
     if (!userId) return;
 
+    // Optimistic UI update: remove the badge immediately, then sync to backend.
+    const prevNotifications = notifications;
+    const prevUnread = unreadCount;
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadCount(0);
+
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
@@ -117,11 +123,11 @@ export const useNotifications = (userId: string | undefined) => {
 
     if (error) {
       console.error('Error marking all notifications as read:', error);
+      // Rollback if backend update fails
+      setNotifications(prevNotifications);
+      setUnreadCount(prevUnread);
       return;
     }
-
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    setUnreadCount(0);
   };
 
   return {

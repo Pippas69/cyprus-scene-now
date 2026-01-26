@@ -152,6 +152,43 @@ export const DirectReservationDialog = ({
 
   const t = text[language];
 
+  const getSlotMaxPartySizeForTime = (timeHHmm: string): number => {
+    const fallback = 50;
+    const slots = settings?.reservation_time_slots;
+    if (!slots?.length) return fallback;
+
+    const selectedDayName = format(formData.preferred_date, 'EEEE').toLowerCase();
+    const [h, m] = timeHHmm.split(':').map((x) => parseInt(x, 10));
+    if (Number.isNaN(h) || Number.isNaN(m)) return fallback;
+    const tMin = h * 60 + m;
+
+    const toMin = (hhmm: string) => {
+      const [hh, mm] = hhmm.split(':').map((x) => parseInt(x, 10));
+      if (Number.isNaN(hh) || Number.isNaN(mm)) return NaN;
+      return hh * 60 + mm;
+    };
+
+    const match = slots.find((s) => {
+      if (!s.days?.includes(selectedDayName)) return false;
+      const from = toMin(s.timeFrom || s.time || '00:00');
+      const to = toMin(s.timeTo || '00:00');
+      if (Number.isNaN(from) || Number.isNaN(to)) return false;
+
+      // Overnight window (e.g. 22:00 -> 02:00)
+      if (to <= from) {
+        const tAdj = tMin < from ? tMin + 1440 : tMin;
+        const toAdj = to + 1440;
+        return tAdj >= from && tAdj < toAdj;
+      }
+
+      return tMin >= from && tMin < to;
+    });
+
+    return Math.max(1, match?.maxPartySize ?? fallback);
+  };
+
+  const slotMaxPartySize = getSlotMaxPartySizeForTime(formData.preferred_time);
+
   useEffect(() => {
     if (open && businessId) {
       fetchSettings();
@@ -193,6 +230,7 @@ export const DirectReservationDialog = ({
           timeFrom: slot.timeFrom || slot.time || '12:00',
           timeTo: slot.timeTo || '14:00',
           capacity: slot.capacity || 10,
+          maxPartySize: slot.maxPartySize ?? 50,
           days: slot.days || [],
           time: slot.time,
         }));
@@ -466,13 +504,25 @@ export const DirectReservationDialog = ({
               id="party_size"
               type="number"
               min="1"
-              max="50"
+              max={slotMaxPartySize}
               value={formData.party_size}
-              onChange={(e) => setFormData({ ...formData, party_size: parseInt(e.target.value) || 1 })}
+              onChange={(e) => {
+                const raw = parseInt(e.target.value, 10);
+                const next = Number.isFinite(raw) ? raw : 1;
+                setFormData({
+                  ...formData,
+                  party_size: Math.min(Math.max(1, next), slotMaxPartySize),
+                });
+              }}
               required
               disabled={availableCapacity === 0}
               className="text-xs sm:text-sm h-9 sm:h-10"
             />
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
+              {language === 'el'
+                ? `Μέγιστο ${slotMaxPartySize} άτομα ανά κράτηση για αυτό το slot.`
+                : `Max ${slotMaxPartySize} people per reservation for this slot.`}
+            </p>
           </div>
 
           {/* Date */}
