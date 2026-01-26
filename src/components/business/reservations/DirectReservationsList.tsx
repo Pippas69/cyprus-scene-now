@@ -43,7 +43,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [todayCapacity, setTodayCapacity] = useState<number>(0);
 
   const text = {
     el: {
@@ -136,40 +135,20 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   const fetchReservations = async () => {
     setLoading(true);
     try {
-      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      // Fetch direct reservations (event_id is null)
+      const { data, error } = await supabase
+        .from('reservations')
+        .select(`
+          id, business_id, user_id, reservation_name, party_size, status,
+          created_at, phone_number, preferred_time, seating_preference, special_requests,
+          business_notes, confirmation_code, qr_code_token, checked_in_at,
+          profiles(name, email)
+        `)
+        .eq('business_id', businessId)
+        .is('event_id', null)
+        .order('preferred_time', { ascending: true });
 
-      // Fetch direct reservations + today's slot capacity in parallel
-      const [reservationsResult, slotsResult] = await Promise.all([
-        supabase
-          .from('reservations')
-          .select(`
-            id, business_id, user_id, reservation_name, party_size, status,
-            created_at, phone_number, preferred_time, seating_preference, special_requests,
-            business_notes, confirmation_code, qr_code_token, checked_in_at,
-            profiles(name, email)
-          `)
-          .eq('business_id', businessId)
-          .is('event_id', null)
-          .order('preferred_time', { ascending: true }),
-        supabase.rpc('get_slots_availability', {
-          p_business_id: businessId,
-          p_date: todayStr,
-        }),
-      ]);
-
-      const { data, error } = reservationsResult;
       if (error) throw error;
-
-      // Sum today's capacity across all active slots
-      if (!slotsResult.error && Array.isArray(slotsResult.data)) {
-        const capacitySum = (slotsResult.data as Array<{ capacity: number }>).reduce(
-          (acc, s) => acc + (Number(s.capacity) || 0),
-          0
-        );
-        setTodayCapacity(capacitySum);
-      } else {
-        setTodayCapacity(0);
-      }
 
       // Check which reservations are linked to offers
       const reservationIds = data?.map(r => r.id) || [];
@@ -215,16 +194,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
     return format(new Date(iso), 'yyyy-MM-dd') === todayStr;
   };
 
-  // Active reservations count excludes cancellations
-  const isActiveReservation = (r: DirectReservation) => r.status === 'pending' || r.status === 'accepted';
-
   const stats = {
-    // "Σύνολο" = today's slot capacity (returns to original when cancellations happen)
-    total: todayCapacity,
-    // "Σήμερα" = only active reservations scheduled for today (cancelled should not count)
-    today: reservations.filter(r => isActiveReservation(r) && isSameDay(r.preferred_time)).length,
-    // "Check-ins" = check-ins that happened today (independent of cancellations)
-    checkedIn: reservations.filter(r => isSameDay(r.checked_in_at)).length,
+    // "Σύνολο" = όλες οι κρατήσεις που εμφανίζονται στη λίστα (ανεξαρτήτως κατάστασης)
+    total: reservations.length,
+    // "Σήμερα" = κρατήσεις που δημιουργήθηκαν σήμερα και ΔΕΝ είναι ακυρωμένες
+    today: reservations.filter(r => isSameDay(r.created_at) && r.status !== 'cancelled').length,
+    // "Check-ins" = όλα τα check-ins από όλες τις κρατήσεις (όχι μόνο σήμερα)
+    checkedIn: reservations.filter(r => Boolean(r.checked_in_at)).length,
   };
 
   const getStatusBadge = (reservation: DirectReservation) => {
