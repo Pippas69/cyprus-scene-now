@@ -1,69 +1,84 @@
 
-# Plan: Fix VAPID Key Decoding Error
 
-## Problem
-The error "The string contains invalid characters" occurs when enabling push notifications because the VAPID public key fails to decode properly in the `urlBase64ToUint8Array` function.
+# Plan: Fix Push Notifications for iOS Safari/PWA
 
-## Root Cause
-The `window.atob()` function at line 30 of `usePushNotifications.ts` throws this error when the base64 string contains invalid characters. This usually means the `VAPID_PUBLIC_KEY` secret has formatting issues (extra whitespace, quotes, or line breaks).
+## Problem Identified
+The Edge Function is failing with **"Failed to decode base64"** when processing VAPID keys, and more critically, **Apple's push service requires encrypted payloads** using the Web Push encryption standard.
+
+## Root Causes
+
+1. **VAPID Key Decoding**: The Edge Function's `base64UrlDecode` doesn't clean the keys (trim, remove quotes) like the client-side fix
+2. **Missing Encryption**: iOS/Apple Push requires proper Web Push encryption using:
+   - The subscription's `p256dh_key` (ECDH public key)
+   - The subscription's `auth_key` (shared authentication secret)
+   - ECDH key exchange + HKDF + AES-GCM encryption
 
 ## Solution
 
-### 1. Add Robust Key Cleaning
-Update `usePushNotifications.ts` to clean the VAPID key before decoding:
+### Option A: Use web-push Library (Recommended)
+Use a proper Web Push library that handles all the encryption complexity:
+
+**File**: `supabase/functions/send-push-notification/index.ts`
 
 ```typescript
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  // Clean the key: remove whitespace, quotes, and normalize
-  const cleanedKey = base64String
-    .trim()
-    .replace(/^["']|["']$/g, '') // Remove wrapping quotes
-    .replace(/\s/g, '');          // Remove any whitespace
-  
-  const padding = '='.repeat((4 - (cleanedKey.length % 4)) % 4);
-  const base64 = (cleanedKey + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  
-  const rawData = window.atob(base64);
-  // ... rest of function
-}
+import webpush from "npm:web-push@3.6.7";
+
+// Configure VAPID
+webpush.setVapidDetails(
+  'mailto:notifications@fomo.cy',
+  Deno.env.get("VAPID_PUBLIC_KEY")!,
+  Deno.env.get("VAPID_PRIVATE_KEY")!
+);
+
+// For each subscription, send with proper encryption
+await webpush.sendNotification(
+  {
+    endpoint: sub.endpoint,
+    keys: {
+      p256dh: sub.p256dh_key,
+      auth: sub.auth_key,
+    }
+  },
+  JSON.stringify(payload)
+);
 ```
 
-### 2. Add Better Error Logging
-Log the key format for debugging without exposing the full key:
+### Option B: Manual Encryption (Complex)
+Implement Web Push encryption manually using:
+- ECDH for key agreement
+- HKDF for key derivation  
+- AES-128-GCM for payload encryption
+- Add Content-Encoding: aes128gcm header
 
-```typescript
-console.log('[Push] VAPID key length:', vapidKey?.length);
-console.log('[Push] VAPID key starts with:', vapidKey?.substring(0, 10) + '...');
-```
+This is ~200 lines of complex crypto code and error-prone.
 
-### 3. Add Try-Catch Around Decoding
-Wrap the decode in try-catch with a helpful error message:
+## Recommended Approach: Option A
 
-```typescript
-try {
-  const applicationServerKey = urlBase64ToUint8Array(vapidKey);
-} catch (decodeError) {
-  console.error('[Push] Failed to decode VAPID key:', decodeError);
-  throw new Error('Invalid VAPID key format. Please check the server configuration.');
-}
-```
+Rewrite the Edge Function to use the `web-push` npm package which handles:
+- VAPID JWT signing
+- Payload encryption (ECDH + AES-GCM)
+- Proper headers (Content-Encoding, Crypto-Key, etc.)
+- All push service compatibility (Apple, Google, Mozilla)
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/hooks/usePushNotifications.ts` | Add key cleaning, better error handling, and logging |
+| `supabase/functions/send-push-notification/index.ts` | Replace manual implementation with web-push library |
 
-## Alternative Fix (If Code Fix Doesn't Work)
-If the code fix doesn't resolve the issue, the VAPID_PUBLIC_KEY secret may need to be re-entered. Valid VAPID public keys:
-- Are ~87 characters long
-- Use URL-safe base64 (`-` and `_` instead of `+` and `/`)
-- Have no whitespace or quotes
+## Technical Details
 
-## Testing
-1. Deploy the fix
-2. Go to Settings → Notifications on your PWA
-3. Enable Push Notifications toggle
-4. Should successfully subscribe without the "invalid characters" error
+The web-push library will:
+1. Generate ephemeral ECDH key pair
+2. Derive shared secret with subscription's p256dh key
+3. Use HKDF to derive encryption key and nonce
+4. Encrypt payload with AES-128-GCM
+5. Add required headers (Content-Encoding: aes128gcm, etc.)
+6. Sign request with VAPID JWT
+
+## After Fix
+1. Redeploy Edge Function
+2. Go to Settings on your PWA
+3. Click Test button
+4. You should receive the push notification on your iOS device
+
