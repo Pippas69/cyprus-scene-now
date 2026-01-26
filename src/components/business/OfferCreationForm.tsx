@@ -67,6 +67,8 @@ interface FormData {
   onePerUser: boolean;
   // Section 9: Optional Booking CTA
   showReservationCta: boolean;
+  // Terms & Conditions (optional)
+  termsAndConditions: string;
 }
 
 // ============================================
@@ -155,6 +157,8 @@ const translations = {
     offerCreateFailed: "Αποτυχία δημιουργίας προσφοράς",
     selectAtLeastOneDay: "Επιλέξτε τουλάχιστον μία ημέρα",
     verificationWarning: "Η επιχείρησή σας πρέπει να επαληθευτεί πριν δημοσιεύσετε προσφορές",
+    termsConditions: "Όροι & Προϋποθέσεις (προαιρετικό)",
+    termsPlaceholder: "π.χ. Ισχύει μόνο για νέους πελάτες, Δεν συνδυάζεται με άλλες προσφορές...",
   },
   en: {
     createOffer: "Create Offer",
@@ -237,6 +241,8 @@ const translations = {
     offerCreateFailed: "Failed to create offer",
     selectAtLeastOneDay: "Select at least one day",
     verificationWarning: "Your business must be verified before publishing offers",
+    termsConditions: "Terms & Conditions (optional)",
+    termsPlaceholder: "e.g. Valid for new customers only, Cannot be combined with other offers...",
   },
 };
 
@@ -395,6 +401,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     maxPeoplePerRedemption: 5,
     onePerUser: true,
     showReservationCta: false,
+    termsAndConditions: '',
   });
   
   const [customImagePreview, setCustomImagePreview] = useState<string | null>(null);
@@ -1141,6 +1148,18 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           <p className="text-xs text-muted-foreground">{t.reservationCtaDesc}</p>
         </div>
       </SectionCard>
+
+      {/* Terms & Conditions (Optional) */}
+      <div className="space-y-2">
+        <Label className="text-xs sm:text-sm font-medium">{t.termsConditions}</Label>
+        <Textarea
+          value={formData.termsAndConditions}
+          onChange={(e) => updateField('termsAndConditions', e.target.value)}
+          placeholder={t.termsPlaceholder}
+          className="min-h-[60px] text-xs sm:text-sm resize-none"
+          rows={2}
+        />
+      </div>
 
       {/* Section 10: Boost (Optional) */}
       <OfferBoostSection

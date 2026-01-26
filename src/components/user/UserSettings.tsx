@@ -633,14 +633,6 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           </div>
           <Separator />
           <div className="space-y-2">
-            <Label>{t.downloadData}</Label>
-            <Button onClick={handleDownloadData} variant="outline" className="w-full">
-              <Download className="h-4 w-4 mr-2" />
-              {t.downloadMyData}
-            </Button>
-          </div>
-          <Separator />
-          <div className="space-y-2">
             <Label className="text-destructive">{t.deleteAccount}</Label>
             <p className="text-sm text-muted-foreground">{t.deleteWarning}</p>
             <AlertDialog>

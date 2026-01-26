@@ -151,29 +151,50 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
     return (
       <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
         <CardHeader className="p-3 sm:p-4">
-          <div className="flex items-center justify-between gap-2">
+          {/* Desktop/Tablet layout - badge next to status */}
+          <div className="hidden sm:flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
-              <span className="text-xs sm:text-sm font-semibold text-green-700 dark:text-green-400 whitespace-nowrap">
+              <span className="text-xs font-semibold text-green-700 dark:text-green-400 whitespace-nowrap">
                 {t.verified}
               </span>
             </div>
-            <Badge variant="outline" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700 text-[10px] sm:text-xs px-1.5 py-0.5 whitespace-nowrap shrink-0">
+            <Badge variant="outline" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700 text-[10px] px-1.5 py-0.5 whitespace-nowrap shrink-0">
               <GraduationCap className="h-2.5 w-2.5 mr-0.5 shrink-0" />
-              <span className="truncate max-w-[120px] sm:max-w-none">{verification.university_name}</span>
+              <span className="truncate max-w-[150px]">{verification.university_name}</span>
             </Badge>
+          </div>
+          {/* Mobile layout - badge below */}
+          <div className="flex sm:hidden items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+            <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 whitespace-nowrap">
+              {t.verified}
+            </span>
           </div>
           <CardDescription className="text-green-600 dark:text-green-500 text-[10px] sm:text-xs mt-1">
             {t.verifiedDesc}
           </CardDescription>
         </CardHeader>
-        {verification.expires_at && (
-          <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
-            <p className="text-[10px] sm:text-xs text-muted-foreground">
+        <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
+          {/* Mobile: Show university badge next to expiry date */}
+          <div className="flex sm:hidden items-center justify-between gap-2">
+            {verification.expires_at && (
+              <p className="text-[10px] text-muted-foreground">
+                {t.expiresAt}: {new Date(verification.expires_at).toLocaleDateString(language === 'el' ? 'el-GR' : 'en-GB')}
+              </p>
+            )}
+            <Badge variant="outline" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700 text-[8px] px-1 py-0.5 whitespace-nowrap shrink-0">
+              <GraduationCap className="h-2 w-2 mr-0.5 shrink-0" />
+              <span className="truncate max-w-[90px]">{verification.university_name}</span>
+            </Badge>
+          </div>
+          {/* Desktop: Just expiry date */}
+          {verification.expires_at && (
+            <p className="hidden sm:block text-[10px] sm:text-xs text-muted-foreground">
               {t.expiresAt}: {new Date(verification.expires_at).toLocaleDateString(language === 'el' ? 'el-GR' : 'en-GB')}
             </p>
-          </CardContent>
-        )}
+          )}
+        </CardContent>
       </Card>
     );
   }
