@@ -129,6 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
       reservationContext = 'Κράτηση Τραπεζιού';
       reservationDateTime = reservation.preferred_time || reservation.reservation_date;
       locationInfo = businessData?.address || null;
+      console.log('Direct reservation - preferred_time:', reservation.preferred_time);
     } else {
       // Event-based reservation
       const event = reservation.events;
@@ -139,7 +140,10 @@ const handler = async (req: Request): Promise<Response> => {
       reservationContext = event.title;
       reservationDateTime = event.start_at;
       locationInfo = event.location;
+      console.log('Event reservation - start_at:', event.start_at);
     }
+    
+    console.log('Final reservationDateTime:', reservationDateTime);
 
     if (!businessData) {
       throw new Error('Business data not found');
@@ -155,15 +159,18 @@ const handler = async (req: Request): Promise<Response> => {
     const businessEmail = businessProfile?.email;
     const businessName = businessData.name;
 
-    // Format the date/time for display
-    const formattedDateTime = reservationDateTime ? new Date(reservationDateTime).toLocaleDateString('el-GR', {
+    // Format the date/time for display - use Europe/Athens timezone
+    const formattedDateTime = reservationDateTime ? new Date(reservationDateTime).toLocaleString('el-GR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Europe/Athens'
     }) : 'Δεν καθορίστηκε';
+    
+    console.log('Formatted DateTime (Europe/Athens):', formattedDateTime);
 
     // Generate QR code URL using the qr_code_token
     const qrCodeToken = reservation.qr_code_token || reservation.confirmation_code;
@@ -486,7 +493,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Email API responses:', JSON.stringify(results, null, 2));
     console.log('Emails sent successfully to:', userProfile.email, businessEmail || 'no business email');
 
-    // Create in-app notification
+    // Create in-app notification and send push notification
     if (inAppNotification) {
       try {
         await supabase.from('notifications').insert({
@@ -501,6 +508,35 @@ const handler = async (req: Request): Promise<Response> => {
           delivered_at: new Date().toISOString(),
         });
         console.log('In-app notification created for user', reservation.user_id);
+        
+        // Send push notification
+        try {
+          const pushResponse = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              userId: reservation.user_id,
+              title: inAppNotification.title,
+              body: inAppNotification.message,
+              data: {
+                url: inAppNotification.deep_link,
+                type: inAppNotification.event_type,
+              },
+            }),
+          });
+          
+          if (pushResponse.ok) {
+            const pushResult = await pushResponse.json();
+            console.log('Push notification sent:', pushResult);
+          } else {
+            console.log('Push notification failed:', await pushResponse.text());
+          }
+        } catch (pushError) {
+          console.log('Error sending push notification:', pushError);
+        }
       } catch (notifError) {
         console.log('Failed to create in-app notification', notifError);
       }
