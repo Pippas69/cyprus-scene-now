@@ -1,5 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -284,6 +285,20 @@ Deno.serve(async (req) => {
           delivered_at: new Date().toISOString(),
         });
         logStep("In-app notification created for user", { userId: data.userId });
+
+        // Send push notification
+        const pushResult = await sendPushIfEnabled(data.userId, {
+          title: '🎁 Προσφορά διεκδικήθηκε!',
+          body: `"${data.offerTitle}" από ${data.businessName}`,
+          tag: `offer-claim-${data.purchaseId}`,
+          data: {
+            url: `/dashboard-user/offers`,
+            type: 'offer_claimed',
+            entityType: 'offer',
+            entityId: data.purchaseId,
+          },
+        }, supabaseClient);
+        logStep("Push notification sent", pushResult);
       } catch (notifError) {
         logStep("Failed to create in-app notification", notifError);
       }
