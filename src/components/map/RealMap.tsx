@@ -155,6 +155,15 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   const MAPBOX_TOKEN = MAPBOX_CONFIG.publicToken;
   const isTokenMissing = !MAPBOX_TOKEN || MAPBOX_TOKEN.includes('your-mapbox-token');
 
+  const getViewportMinZoom = () => {
+    // On narrow portrait screens, Mapbox may need a slightly lower zoom than desktop
+    // to fit the full Cyprus bounds. If minZoom is too high, fitBounds gets clamped
+    // and the island looks “cropped/too zoomed in”.
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    if (w < 1024) return 6; // mobile + tablet
+    return MAPBOX_CONFIG.minZoom;
+  };
+
   const getCyprusFitPadding = () => {
     // On mobile/tablet we want a MORE zoomed-out first impression so the whole island is always visible.
     const w = typeof window !== 'undefined' ? window.innerWidth : 1024;
@@ -165,6 +174,15 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       return { top: 18, bottom: 18, left: 18, right: 18 };
     }
     return { top: 20, bottom: 20, left: 10, right: 10 };
+  };
+
+  const fitCyprus = (opts?: { forceDuration?: number }) => {
+    if (!map.current) return;
+    map.current.resize();
+    map.current.fitBounds(MAPBOX_CONFIG.maxBounds, {
+      padding: getCyprusFitPadding(),
+      duration: opts?.forceDuration ?? 0,
+    });
   };
 
   useEffect(() => {
@@ -179,17 +197,17 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       zoom: 7,
       pitch: 0,
       maxBounds: MAPBOX_CONFIG.maxBounds,
-      minZoom: MAPBOX_CONFIG.minZoom,
+      minZoom: getViewportMinZoom(),
     });
     
     // On load, fit bounds to show ALL of Cyprus with comfortable sea margins
     map.current.on('load', () => {
-      map.current?.resize();
-      // Use configured max bounds (slightly larger than the island) so mobile/tablet always sees the whole island.
-      map.current?.fitBounds(
-        MAPBOX_CONFIG.maxBounds,
-        { padding: getCyprusFitPadding(), duration: 0 }
-      );
+      // Mobile layouts often settle after the map load event (safe-area, toolbars, fonts).
+      // Re-fit a few times to guarantee the initial view shows the entire island.
+      fitCyprus();
+      requestAnimationFrame(() => fitCyprus());
+      setTimeout(() => fitCyprus(), 200);
+      setTimeout(() => fitCyprus(), 800);
     });
     
     map.current.on('style.load', () => {
@@ -235,9 +253,19 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     // Apply on load and resize
     setTimeout(applyZoomControlStyles, 100);
     window.addEventListener('resize', applyZoomControlStyles);
+
+    const handleViewportResize = () => {
+      // Keep minZoom responsive + re-fit Cyprus when the viewport changes (rotation, address bar collapse)
+      if (!map.current) return;
+      map.current.setMinZoom(getViewportMinZoom());
+      fitCyprus();
+      applyZoomControlStyles();
+    };
+    window.addEventListener('resize', handleViewportResize);
     
     return () => { 
       window.removeEventListener('resize', applyZoomControlStyles);
+      window.removeEventListener('resize', handleViewportResize);
       map.current?.remove(); 
     };
   }, [MAPBOX_TOKEN]);
@@ -358,10 +386,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
       // DEFAULT: Always show ALL of Cyprus (don't auto-zoom to businesses)
       // Users choose when to zoom.
-      map.current.fitBounds(
-        MAPBOX_CONFIG.maxBounds,
-        { padding: getCyprusFitPadding(), duration: 0 }
-      );
+      fitCyprus();
     };
 
     doInitialCamera();
