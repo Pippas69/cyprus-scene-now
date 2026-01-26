@@ -536,6 +536,143 @@ export const PremiumShareSheet = ({
     </div>
   );
 
+  // Compact mobile share content - smaller and more premium
+  const ShareContentMobile = () => (
+    <div className="flex flex-col">
+      {/* Header with title and close button - compact */}
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/30">
+        <div className="w-7" />
+        <h2 className="text-sm font-semibold text-foreground">{t.share}</h2>
+        <button
+          onClick={() => onOpenChange(false)}
+          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+        >
+          <X className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      <div className="px-3 py-3 space-y-4">
+        {/* Compact Image Preview Card */}
+        <div className="relative w-full h-28 rounded-xl overflow-hidden">
+          {type === 'event' && event && (
+            event.cover_image_url ? (
+              <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center">
+                <span className="text-3xl">🌊</span>
+              </div>
+            )
+          )}
+          {type === 'business' && business && (
+            (business.cover_url || business.logo_url) ? (
+              <img src={business.cover_url || business.logo_url || ''} alt={business.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center">
+                <span className="text-3xl">🏷️</span>
+              </div>
+            )
+          )}
+          {type === 'offer' && offer && (
+            (offer.businesses.cover_url || offer.businesses.logo_url) ? (
+              <img src={offer.businesses.cover_url || offer.businesses.logo_url || ''} alt={offer.businesses.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-aegean to-seafoam flex items-center justify-center">
+                <span className="text-3xl">🔥</span>
+              </div>
+            )
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-2.5">
+            <h3 className="text-white font-bold text-sm leading-tight truncate">
+              {type === 'event' ? event?.businesses?.name || event?.location : type === 'offer' ? offer?.title : business?.name}
+            </h3>
+          </div>
+        </div>
+
+        {/* Send to friend - compact icons */}
+        <div>
+          <h4 className="text-xs font-semibold text-foreground mb-2.5">{t.sendToFriend}</h4>
+          <div className="flex items-start justify-between px-0.5">
+            {[
+              { icon: InstagramIcon, label: 'Instagram', channel: 'instagram' as ShareChannel },
+              { icon: MessengerIcon, label: 'Messenger', channel: 'messenger' as ShareChannel },
+              { icon: WhatsAppIcon, label: 'WhatsApp', channel: 'whatsapp' as ShareChannel },
+              { icon: SnapchatIcon, label: 'Snapchat', channel: 'snapchat' as ShareChannel },
+              { icon: TelegramIcon, label: 'Telegram', channel: 'telegram' as ShareChannel },
+            ].map(({ icon: Icon, label, channel }) => (
+              <motion.button
+                key={channel}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => handleShare(channel)}
+                disabled={isSharing}
+                className="flex flex-col items-center gap-1 disabled:opacity-50"
+              >
+                <div className="w-10 h-10 flex items-center justify-center scale-[0.83]">
+                  <Icon />
+                </div>
+                <span className="text-[9px] font-medium text-foreground">{label}</span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* For Story - compact buttons */}
+        <div>
+          <h4 className="text-xs font-semibold text-foreground mb-2">{t.forStory}</h4>
+          <div className="space-y-1.5">
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleShare('instagram-story')}
+              disabled={isSharing}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              <div className="flex items-center gap-2.5">
+                <svg width={22} height={22} viewBox="0 0 48 48" fill="none">
+                  <defs>
+                    <linearGradient id="ig-story-grad-m" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#FFDC80" />
+                      <stop offset="35%" stopColor="#F77737" />
+                      <stop offset="70%" stopColor="#FD1D1D" />
+                      <stop offset="100%" stopColor="#C13584" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="0" y="0" width="48" height="48" rx="12" fill="url(#ig-story-grad-m)" />
+                  <rect x="12" y="12" width="24" height="24" rx="6" stroke="white" strokeWidth="2.5" fill="none" />
+                  <circle cx="24" cy="24" r="5.5" stroke="white" strokeWidth="2.5" fill="none" />
+                </svg>
+                <span className="text-xs font-medium text-foreground">{t.instagramStory}</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </motion.button>
+
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleShare('facebook-story')}
+              disabled={isSharing}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              <div className="flex items-center gap-2.5">
+                <FacebookIcon size={22} />
+                <span className="text-xs font-medium text-foreground">{t.facebookStory}</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </motion.button>
+          </div>
+        </div>
+
+        {/* More options - compact */}
+        <button
+          type="button"
+          onClick={() => handleShare('native')}
+          disabled={isSharing || !hasNativeShare()}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+        >
+          {t.moreOptions}
+        </button>
+      </div>
+    </div>
+  );
+
   // Hidden story card for image generation
   const HiddenStoryCard = () => (
     <div className="fixed -left-[9999px] top-0 pointer-events-none">
@@ -605,16 +742,16 @@ export const PremiumShareSheet = ({
     );
   }
 
-  // Mobile uses Drawer (bottom sheet)
+  // Mobile uses Drawer (bottom sheet) - compact premium design
   return (
     <>
       <HiddenStoryCard />
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[85vh] rounded-t-2xl overflow-hidden">
-          <div className="overflow-y-auto max-h-[calc(85vh-env(safe-area-inset-bottom))] pb-safe">
-            <ShareContent />
+        <DrawerContent className="max-h-[70vh] rounded-t-3xl overflow-hidden">
+          <div className="overflow-y-auto max-h-[calc(70vh-env(safe-area-inset-bottom))] pb-safe">
+            <ShareContentMobile />
             {/* Safe area bottom padding */}
-            <div className="h-8 pb-safe" />
+            <div className="h-4 pb-safe" />
           </div>
         </DrawerContent>
       </Drawer>

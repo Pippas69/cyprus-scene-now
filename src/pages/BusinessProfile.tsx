@@ -10,6 +10,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { RippleButton } from "@/components/ui/ripple-button";
 import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap, Share2 } from "lucide-react";
@@ -388,17 +389,41 @@ const BusinessProfile = () => {
         </div>
       </div>
 
-      {/* Image Viewer */}
+      {/* Image Viewer - Premium Instagram-style */}
       <Dialog open={imageViewerOpen} onOpenChange={setImageViewerOpen}>
-        <DialogContent className="max-w-[96vw] sm:max-w-4xl p-0 overflow-hidden">
-          <div className="bg-background">
+        <DialogContent 
+          className={cn(
+            "p-0 overflow-hidden border-0 bg-transparent shadow-none",
+            // If viewing logo (circular avatar), use circular preview
+            imageViewerAlt.includes('logo') 
+              ? "max-w-[200px] sm:max-w-[280px] md:max-w-[320px]" 
+              : "max-w-[85vw] sm:max-w-lg md:max-w-xl"
+          )}
+        >
+          <div className={cn(
+            "relative",
+            imageViewerAlt.includes('logo') && "flex items-center justify-center"
+          )}>
             {imageViewerSrc && (
-              <img
-                src={imageViewerSrc}
-                alt={imageViewerAlt}
-                className="w-full h-auto max-h-[85vh] object-contain"
-                loading="eager"
-              />
+              imageViewerAlt.includes('logo') ? (
+                // Circular logo preview - Instagram style magnification
+                <div className="relative">
+                  <img
+                    src={imageViewerSrc}
+                    alt={imageViewerAlt}
+                    className="w-[180px] h-[180px] sm:w-[240px] sm:h-[240px] md:w-[280px] md:h-[280px] rounded-full object-cover ring-4 ring-background shadow-2xl"
+                    loading="eager"
+                  />
+                </div>
+              ) : (
+                // Cover image preview - smaller and more premium
+                <img
+                  src={imageViewerSrc}
+                  alt={imageViewerAlt}
+                  className="w-full h-auto max-h-[50vh] sm:max-h-[55vh] md:max-h-[60vh] object-contain rounded-xl"
+                  loading="eager"
+                />
+              )
             )}
           </div>
         </DialogContent>
