@@ -36,6 +36,7 @@ interface TimeSlot {
   timeFrom: string;
   timeTo: string;
   capacity: number;
+  maxPartySize: number;
   days: string[];
 }
 
@@ -75,6 +76,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       slotFrom: 'Από',
       slotTo: 'Έως',
       slotCapacity: 'Χωρητικότητα',
+      slotMaxPartySize: 'Max άτομα/κράτηση',
       slotDays: 'Ημέρες',
       addSlot: 'Προσθήκη Slot',
       removeSlot: 'Διαγραφή Slot',
@@ -129,6 +131,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       slotFrom: 'From',
       slotTo: 'To',
       slotCapacity: 'Capacity',
+      slotMaxPartySize: 'Max people/reservation',
       slotDays: 'Days',
       addSlot: 'Add Slot',
       removeSlot: 'Delete Slot',
@@ -226,6 +229,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                 timeFrom: slot.timeFrom,
                 timeTo: slot.timeTo,
                 capacity: slot.capacity || 10,
+                maxPartySize: slot.maxPartySize || 50,
                 days: slot.days || DAYS,
               };
             } else if (slot.time) {
@@ -237,6 +241,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                 timeFrom: slot.time,
                 timeTo: `${toHour.toString().padStart(2, '0')}:00`,
                 capacity: slot.capacity || 10,
+                maxPartySize: 50,
                 days: DAYS, // Default to all days for migrated slots
               };
             }
@@ -310,6 +315,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       timeFrom: '18:00', 
       timeTo: '20:00', 
       capacity: 10,
+      maxPartySize: 50,
       days: [...DAYS] // Default to all days
     };
     setSettings((prev) => ({
@@ -527,8 +533,12 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                               <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 mt-0.5 sm:mt-1">
                                 <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
                                   <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                                  {slot.capacity} {language === 'el' ? 'άτομα' : 'people'}
+                            {t.slotCapacity}: {slot.capacity}
                                 </Badge>
+                          <Badge variant="outline" className="text-[10px] sm:text-xs w-fit">
+                            <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                            {t.slotMaxPartySize}: {slot.maxPartySize}
+                          </Badge>
                                 <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
                                   {getDaysLabel(slot.days)}
                                 </span>
@@ -590,6 +600,25 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                             <Users className="h-4 w-4 text-muted-foreground" />
                             <span className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap">
                               {language === 'el' ? 'μέγιστες κρατήσεις' : 'max reservations'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Max party size per reservation */}
+                        <div>
+                          <Label className="text-[10px] sm:text-sm font-medium">{t.slotMaxPartySize}</Label>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Input
+                              type="number"
+                              min="1"
+                              max="50"
+                              value={slot.maxPartySize}
+                              onChange={(e) => updateTimeSlot(slot.id, 'maxPartySize', parseInt(e.target.value) || 1)}
+                              className="max-w-[120px] h-8 sm:h-10 text-[11px] sm:text-sm"
+                            />
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap">
+                              {language === 'el' ? 'άτομα ανά κράτηση' : 'people per reservation'}
                             </span>
                           </div>
                         </div>

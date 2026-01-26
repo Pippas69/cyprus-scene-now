@@ -32,6 +32,7 @@ interface TimeSlot {
   timeFrom: string;
   timeTo: string;
   capacity: number;
+  maxPartySize?: number;
   days: string[];
   // Legacy support
   time?: string;
@@ -295,30 +296,51 @@ export const DirectReservationDialog = ({
 
     setLoading(true);
     try {
-      const status = settings?.reservation_requires_approval ? 'pending' : 'accepted';
-
-      const { data: reservation, error } = await supabase
-        .from('reservations')
-        .insert({
-          business_id: businessId,
-          user_id: userId,
-          reservation_name: formData.reservation_name,
-          party_size: formData.party_size,
-          seating_preference: formData.seating_preference && formData.seating_preference !== 'none' ? formData.seating_preference : null,
-          preferred_time: preferredDateTime.toISOString(),
-          phone_number: formData.phone_number,
-          special_requests: formData.special_requests || null,
-          status,
-        })
-        .select()
-        .single();
+      // Always use atomic booking so capacity is reduced for the correct slot window
+      // and maxPartySize is enforced.
+      const { data: booking, error } = await supabase.rpc('book_slot_atomically', {
+        p_business_id: businessId,
+        p_user_id: userId,
+        p_date: format(formData.preferred_date, 'yyyy-MM-dd'),
+        p_slot_time: formData.preferred_time,
+        p_party_size: formData.party_size,
+        p_reservation_name: formData.reservation_name,
+        p_phone_number: formData.phone_number,
+        p_seating_preference:
+          formData.seating_preference && formData.seating_preference !== 'none' ? formData.seating_preference : null,
+        p_special_requests: formData.special_requests || null,
+        p_is_offer_based: false,
+      });
 
       if (error) throw error;
+
+      const result = booking as
+        | {
+            success: boolean;
+            error?: string;
+            message?: string;
+            reservation_id?: string;
+            confirmation_code?: string;
+            qr_token?: string;
+            preferred_time?: string;
+            max_party_size?: number;
+          }
+        | null;
+
+      if (!result?.success) {
+        const msg =
+          result?.error === 'PARTY_TOO_LARGE'
+            ? language === 'el'
+              ? `Μέγιστο ${result?.max_party_size ?? ''} άτομα για αυτό το slot.`
+              : `Max ${result?.max_party_size ?? ''} people for this slot.`
+            : result?.message || toastTranslations[language].error;
+        throw new Error(msg);
+      }
 
       // Send notification
       try {
         await supabase.functions.invoke('send-reservation-notification', {
-          body: { reservationId: reservation.id, type: 'new' },
+          body: { reservationId: result.reservation_id, type: 'new' },
         });
       } catch (emailError) {
         console.error('Email error:', emailError);
@@ -327,22 +349,18 @@ export const DirectReservationDialog = ({
       // Close the form dialog
       onOpenChange(false);
       
-      // Show success dialog with QR code for accepted reservations
-      if (status === 'accepted') {
-        setSuccessDialog({
-          open: true,
-          reservation: {
-            confirmation_code: reservation.confirmation_code || '',
-            qr_code_token: reservation.qr_code_token || '',
-            reservation_name: formData.reservation_name,
-            party_size: formData.party_size,
-            preferred_time: preferredDateTime.toISOString(),
-            business_name: businessName,
-          },
-        });
-      } else {
-        toast.success(t.reservationPending);
-      }
+      // Always accepted in atomic booking flow
+      setSuccessDialog({
+        open: true,
+        reservation: {
+          confirmation_code: result.confirmation_code || '',
+          qr_code_token: result.qr_token || '',
+          reservation_name: formData.reservation_name,
+          party_size: formData.party_size,
+          preferred_time: result.preferred_time || preferredDateTime.toISOString(),
+          business_name: businessName,
+        },
+      });
       
       onSuccess();
 
