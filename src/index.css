@@ -179,13 +179,27 @@ All colors MUST be HSL.
   }
 
   /* Mapbox popup styling */
+  .mapboxgl-popup {
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
   .mapboxgl-popup-content {
     /* Make the outer Mapbox container invisible so only our custom bubble (BusinessPopup) is visible */
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    padding: 0;
-    box-shadow: none;
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  /* Ensure no extra white wrapper from inner content */
+  .mapboxgl-popup-content > * {
+    margin: 0 !important;
   }
 
   .mapboxgl-popup-close-button {
