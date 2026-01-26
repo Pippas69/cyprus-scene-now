@@ -98,11 +98,11 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
       disabled={!hasAccess}
     >
       {badge && BadgeIcon && (
-        <span className="absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none z-10">
+        <span className="absolute -top-7 left-1/2 -translate-x-1/2 pointer-events-none z-10">
           <span
-            className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 sm:px-2 py-px text-[6px] sm:text-[8px] font-semibold shadow-sm ${badge.className}`}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 sm:px-2.5 py-0.5 text-[8px] sm:text-[10px] font-bold tracking-wide shadow-md ${badge.className}`}
           >
-            <BadgeIcon className="h-1.5 w-1.5 sm:h-2 sm:w-2" />
+            <BadgeIcon className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
             {badge.label}
           </span>
         </span>
@@ -127,8 +127,8 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
       <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
         {/* Tabs - scrollable on mobile */}
-        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible pt-2">
-          <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-4 min-w-max sm:min-w-0 gap-1 sm:gap-0 overflow-visible">
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible pt-4 sm:pt-3">
+          <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-4 min-w-max sm:min-w-0 gap-1 sm:gap-0 overflow-visible mt-4">
             {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
             {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
             {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
