@@ -1,44 +1,69 @@
 
-# Plan: Add Push Notification Toggle & Test Button
+# Plan: Fix VAPID Key Decoding Error
 
-## Overview
-Add a Push Notifications toggle in User Settings so you can enable notifications on your device, plus a "Send Test" button to verify they work.
+## Problem
+The error "The string contains invalid characters" occurs when enabling push notifications because the VAPID public key fails to decode properly in the `urlBase64ToUint8Array` function.
 
-## Changes
+## Root Cause
+The `window.atob()` function at line 30 of `usePushNotifications.ts` throws this error when the base64 string contains invalid characters. This usually means the `VAPID_PUBLIC_KEY` secret has formatting issues (extra whitespace, quotes, or line breaks).
 
-### 1. Update UserSettings.tsx
-**Location**: Notifications card (after the mandatory section, before "Suggestions for You")
+## Solution
 
-**Add**:
-- Import `usePushNotifications` hook and `Smartphone` icon
-- Push Notifications toggle with:
-  - Label: "Push Notifications" / "Push Ειδοποιήσεις"
-  - Description: "Receive instant notifications on your device"
-  - Toggle using `subscribe()` / `unsubscribe()` from the hook
-- "Test" button (visible when enabled) that calls the test edge function
-- Permission state indicator (if denied, show helper text)
+### 1. Add Robust Key Cleaning
+Update `usePushNotifications.ts` to clean the VAPID key before decoding:
 
-### 2. Create Test Edge Function
-**File**: `supabase/functions/test-push-notification/index.ts`
+```typescript
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  // Clean the key: remove whitespace, quotes, and normalize
+  const cleanedKey = base64String
+    .trim()
+    .replace(/^["']|["']$/g, '') // Remove wrapping quotes
+    .replace(/\s/g, '');          // Remove any whitespace
+  
+  const padding = '='.repeat((4 - (cleanedKey.length % 4)) % 4);
+  const base64 = (cleanedKey + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  
+  const rawData = window.atob(base64);
+  // ... rest of function
+}
+```
 
-Simple authenticated function that:
-1. Validates user JWT
-2. Calls existing `send-push-notification` function with test payload:
-   - Title: "🔔 Test Notification"
-   - Body: "Push notifications are working! / Οι push ειδοποιήσεις λειτουργούν!"
+### 2. Add Better Error Logging
+Log the key format for debugging without exposing the full key:
 
-### 3. Update config.toml
-Add the new function with `verify_jwt = false` (validate in code)
+```typescript
+console.log('[Push] VAPID key length:', vapidKey?.length);
+console.log('[Push] VAPID key starts with:', vapidKey?.substring(0, 10) + '...');
+```
 
-## Testing Flow
-1. Go to Settings → Notifications
-2. Enable "Push Notifications" toggle → browser asks for permission → Allow
-3. Click "Test" button
-4. ✅ You should receive a push notification on your device
+### 3. Add Try-Catch Around Decoding
+Wrap the decode in try-catch with a helpful error message:
 
-## Files to Modify/Create
-| File | Action |
+```typescript
+try {
+  const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+} catch (decodeError) {
+  console.error('[Push] Failed to decode VAPID key:', decodeError);
+  throw new Error('Invalid VAPID key format. Please check the server configuration.');
+}
+```
+
+## Files to Modify
+
+| File | Change |
 |------|--------|
-| `src/components/user/UserSettings.tsx` | Add push toggle + test button |
-| `supabase/functions/test-push-notification/index.ts` | Create |
-| `supabase/config.toml` | Add function config |
+| `src/hooks/usePushNotifications.ts` | Add key cleaning, better error handling, and logging |
+
+## Alternative Fix (If Code Fix Doesn't Work)
+If the code fix doesn't resolve the issue, the VAPID_PUBLIC_KEY secret may need to be re-entered. Valid VAPID public keys:
+- Are ~87 characters long
+- Use URL-safe base64 (`-` and `_` instead of `+` and `/`)
+- Have no whitespace or quotes
+
+## Testing
+1. Deploy the fix
+2. Go to Settings → Notifications on your PWA
+3. Enable Push Notifications toggle
+4. Should successfully subscribe without the "invalid characters" error
