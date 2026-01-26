@@ -230,7 +230,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" },
     policyTitle: { el: "Πολιτική Κρατήσεων", en: "Reservation Policy" },
     noShowPolicy: { el: "15 λεπτά περιθώριο - αυτόματη ακύρωση αν δεν γίνει check-in", en: "15 min grace period - auto-cancelled if no check-in" },
-    cancellationPolicy: { el: "Δωρεάν ακύρωση μέχρι 1 ώρα πριν", en: "Free cancellation up to 1 hour before" },
+    cancellationPolicy: { el: "Μέχρι 3 ακυρώσεις επιτρέπονται. Μετά από 3, περιορισμός 2 εβδομάδων", en: "Up to 3 cancellations allowed. After 3, 2-week restriction" },
     instantConfirmation: { el: "Άμεση επιβεβαίωση κράτησης", en: "Instant reservation confirmation" },
   };
 

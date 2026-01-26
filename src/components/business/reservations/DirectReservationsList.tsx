@@ -72,7 +72,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       outdoor: 'Εξωτερικά',
       stats: 'Στατιστικά',
       total: 'Σύνολο',
-      upcoming: 'Επερχόμενες',
       today: 'Σήμερα',
       checkedInCount: 'Check-ins',
     },
@@ -103,7 +102,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       outdoor: 'Outdoor',
       stats: 'Statistics',
       total: 'Total',
-      upcoming: 'Upcoming',
       today: 'Today',
       checkedInCount: 'Check-ins',
     },
@@ -193,7 +191,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   const todayStr = format(now, 'yyyy-MM-dd');
   const stats = {
     total: reservations.length,
-    upcoming: reservations.filter(r => r.preferred_time && isAfter(new Date(r.preferred_time), now) && r.status === 'accepted').length,
     today: reservations.filter(r => r.preferred_time && format(new Date(r.preferred_time), 'yyyy-MM-dd') === todayStr).length,
     checkedIn: reservations.filter(r => r.checked_in_at).length,
   };
@@ -268,14 +265,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
             <div className="flex flex-col items-center justify-center text-center">
               <div className="text-2xl font-bold text-blue-600">{stats.today}</div>
               <div className="text-[11px] md:text-xs text-muted-foreground whitespace-nowrap">{t.today}</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="min-w-0">
-          <CardContent className="py-3">
-            <div className="flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-bold text-orange-600">{stats.upcoming}</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">{t.upcoming}</div>
             </div>
           </CardContent>
         </Card>
