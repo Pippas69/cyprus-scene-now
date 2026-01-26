@@ -6,9 +6,9 @@ export const MAPBOX_CONFIG = {
   // Replace this with your actual Mapbox public token
   publicToken: "pk.eyJ1IjoicGlwcGFzNjkiLCJhIjoiY21oeHRoYjV6MDBmeTJtczRuNm03dWRnNyJ9.ws_aDgURsUhQ2LcoQ3EEjw",
 
-  // Default map settings for Cyprus
-  defaultCenter: [33.4299, 35.1264] as [number, number],
-  defaultZoom: 9,
+  // Default map settings for Cyprus - showing ENTIRE island (Paphos to Karpasia)
+  defaultCenter: [33.4, 35.1] as [number, number],
+  defaultZoom: 7,
   defaultPitch: 45,
   mapStyle: "mapbox://styles/mapbox/light-v11",
   
