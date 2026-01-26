@@ -696,6 +696,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             onChange={(e) => updateField('title', e.target.value)}
             placeholder={t.titlePlaceholder}
             maxLength={100}
+            className="text-xs sm:text-sm h-9 sm:h-10"
           />
         </SectionCard>
 
@@ -706,9 +707,10 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
             onChange={(e) => updateField('description', e.target.value)}
             placeholder={t.descriptionPlaceholder}
             rows={4}
+            className="text-xs sm:text-sm"
           />
           <p className={cn(
-            "text-sm",
+            "text-xs sm:text-sm",
             wordsRemaining >= 0 ? "text-muted-foreground" : "text-destructive font-medium"
           )}>
             {wordsRemaining >= 0 
@@ -752,7 +754,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
           </RadioGroup>
 
           {formData.appearanceMode === 'hours' && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {[1, 2, 3, 6, 12, 24].map((h) => (
                 <Button
                   key={h}
@@ -760,8 +762,9 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                   variant={formData.appearanceHours === h ? "default" : "outline"}
                   size="sm"
                   onClick={() => updateField('appearanceHours', h)}
+                  className="text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-9"
                 >
-                  {h} {t.hours}
+                  {h}h
                 </Button>
               ))}
               <Button
@@ -769,6 +772,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 variant={formData.appearanceHours === -1 ? "default" : "outline"}
                 size="sm"
                 onClick={() => updateField('appearanceHours', -1)}
+                className="text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-9 whitespace-nowrap"
               >
                 {t.custom}
               </Button>
@@ -813,24 +817,26 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
 
         {/* Step 5: Venue */}
         <SectionCard title={t.step5} required requiredLabel={t.required}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t.venueName}</Label>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">{t.venueName}</Label>
               <Input
                 value={formData.venueName}
                 onChange={(e) => updateField('venueName', e.target.value)}
                 placeholder={t.venueNamePlaceholder}
+                className="text-xs sm:text-sm h-9 sm:h-10"
               />
             </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="flex items-center gap-2 text-xs sm:text-sm">
+                <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
                 {t.location}
               </Label>
               <Input
                 value={formData.address}
                 onChange={(e) => updateField('address', e.target.value)}
                 placeholder={t.locationPlaceholder}
+                className="text-xs sm:text-sm h-9 sm:h-10"
               />
             </div>
           </div>

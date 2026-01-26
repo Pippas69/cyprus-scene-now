@@ -37,7 +37,7 @@ const t = {
     descriptionPlaceholder: "Προαιρετική περιγραφή...",
     price: "Τιμή (€)",
     quantity: "Διαθέσιμα",
-    maxPerOrder: "Max ανά παραγ.",
+    maxPerOrder: "Μέγιστο ανά παραγγελία",
     maxPerOrderFull: "Μέγιστο ανά παραγγελία",
     freeTickets: "Δωρεάν Εισιτήρια",
     commission: "Προμήθεια πλατφόρμας",
@@ -233,21 +233,6 @@ export const TicketTierEditor = ({
 
       {(ticketsEnabled || autoEnabled) && (
         <>
-          {/* Commission info */}
-          {commissionPercent > 0 && (
-            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-xs sm:text-sm">
-                <span className="font-medium">{text.commission}:</span>{" "}
-                {commissionPercent}%
-                <span className="text-muted-foreground ml-2">
-                  {language === 'el' 
-                    ? "(Αναβαθμίστε το πλάνο σας για μικρότερη προμήθεια)"
-                    : "(Upgrade your plan for lower commission)"
-                  }
-                </span>
-              </p>
-            </div>
-          )}
 
           {/* Ticket tiers */}
           <div className="space-y-3">
@@ -300,7 +285,8 @@ export const TicketTierEditor = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  {/* Price & Quantity row, max per order on own row for tablet */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div className="space-y-2">
                       <Label className="flex items-center gap-1 text-xs sm:text-sm">
                         <Euro className="h-3 w-3" />
@@ -339,22 +325,23 @@ export const TicketTierEditor = ({
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm whitespace-nowrap">
-                        <span className="hidden md:inline">{text.maxPerOrderFull}</span>
-                        <span className="md:hidden">{text.maxPerOrder}</span>
-                      </Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max={tier.quantity_total}
-                        value={tier.max_per_order}
-                        onChange={(e) => updateTier(index, { 
-                          max_per_order: parseInt(e.target.value || "1") 
-                        })}
-                        className="h-8 sm:h-10 text-xs sm:text-sm"
-                      />
-                    </div>
+                  </div>
+                  
+                  {/* Max per order - on its own row on tablet for better fit */}
+                  <div className="space-y-2 sm:col-span-1 md:max-w-[200px]">
+                    <Label className="text-xs sm:text-sm whitespace-nowrap">
+                      {text.maxPerOrderFull}
+                    </Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={tier.quantity_total}
+                      value={tier.max_per_order}
+                      onChange={(e) => updateTier(index, { 
+                        max_per_order: parseInt(e.target.value || "1") 
+                      })}
+                      className="h-8 sm:h-10 text-xs sm:text-sm"
+                    />
                   </div>
 
                   {/* Dress Code Selector */}

@@ -292,7 +292,7 @@ const SectionCard = ({
   children: React.ReactNode;
 }) => (
   <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-    <CardHeader className="pb-3 sm:pb-4 p-3 sm:p-6">
+    <CardHeader className="pb-2 sm:pb-4 p-3 sm:p-6">
       <CardTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2 whitespace-nowrap">
         {title}
         {required && (
@@ -302,7 +302,7 @@ const SectionCard = ({
         )}
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6 pt-0">
+    <CardContent className="space-y-2 sm:space-y-4 p-3 sm:p-6 pt-0">
       {children}
     </CardContent>
   </Card>
@@ -942,49 +942,47 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       {/* Section 6: Appearance Duration */}
       <SectionCard title={t.step6} required>
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">{t.appearanceDesc}</p>
-          
           {/* Mode Toggle */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => updateField('appearanceMode', 'hours')}
               className={cn(
-                "p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2",
+                "p-2.5 sm:p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-1.5 sm:gap-2",
                 formData.appearanceMode === 'hours'
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
               )}
             >
-              <Clock className="w-4 h-4" />
-              <span className="font-medium">{t.byHours}</span>
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{t.byHours}</span>
             </button>
             <button
               type="button"
               onClick={() => updateField('appearanceMode', 'days')}
               className={cn(
-                "p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2",
+                "p-2.5 sm:p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-1.5 sm:gap-2",
                 formData.appearanceMode === 'days'
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
               )}
             >
-              <Calendar className="w-4 h-4" />
-              <span className="font-medium">{t.byDays}</span>
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{t.byDays}</span>
             </button>
           </div>
 
           {/* Hours Mode */}
           {formData.appearanceMode === 'hours' && (
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {HOUR_PRESETS.map((hours) => (
                   <button
                     key={hours}
                     type="button"
                     onClick={() => updateField('appearanceHours', hours)}
                     className={cn(
-                      "px-4 py-2 rounded-full font-medium transition-all",
+                      "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium transition-all text-xs sm:text-sm",
                       formData.appearanceHours === hours
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -997,7 +995,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   type="button"
                   onClick={() => updateField('appearanceHours', -1)}
                   className={cn(
-                    "px-4 py-2 rounded-full font-medium transition-all",
+                    "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium transition-all text-xs sm:text-sm whitespace-nowrap",
                     formData.appearanceHours === -1
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
