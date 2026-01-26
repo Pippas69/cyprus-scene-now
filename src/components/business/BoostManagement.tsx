@@ -403,12 +403,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   }) => (
     <Dialog>
       <DialogTrigger asChild>
-        <div className="p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-          <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
-            <Icon className="h-4 w-4" />
-            <span className="text-xs font-medium">{label}</span>
+        <div className="p-2 sm:p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors">
+          <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-muted-foreground mb-0.5 sm:mb-1">
+            <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap">{label}</span>
           </div>
-          <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+          <p className="text-lg sm:text-2xl font-bold">{value.toLocaleString()}</p>
         </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -433,20 +433,20 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t.title}</h1>
-        <p className="text-muted-foreground">{t.subtitle}</p>
+        <h1 className="text-xl sm:text-3xl font-bold">{t.title}</h1>
+        <p className="text-xs sm:text-base text-muted-foreground">{t.subtitle}</p>
       </div>
 
       <Tabs defaultValue="events">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="events">
-            <Zap className="h-4 w-4 mr-2" />
+          <TabsTrigger value="events" className="text-xs sm:text-sm">
+            <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             {t.events} ({eventBoosts.length})
           </TabsTrigger>
-          <TabsTrigger value="offers">
-            <Ticket className="h-4 w-4 mr-2" />
+          <TabsTrigger value="offers" className="text-xs sm:text-sm">
+            <Ticket className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             {t.offers} ({offerBoosts.length})
           </TabsTrigger>
         </TabsList>
@@ -467,15 +467,15 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                 <Card key={boost.id} className="overflow-hidden">
                   <CardContent className="p-0">
                     {/* Header with title and status badge */}
-                    <div className="p-4 pb-3 border-b bg-muted/30 flex items-center justify-between">
-                      <h3 className="font-semibold text-lg">{boost.event_title}</h3>
+                    <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.event_title}</h3>
                       {isActive ? (
-                        <Badge variant="default">{t.active}</Badge>
+                        <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap shrink-0">{t.active}</Badge>
                       ) : (
                         <Dialog>
                           <DialogTrigger asChild>
-                            <button type="button" className="inline-flex">
-                              <Badge variant="destructive" className="cursor-pointer">
+                            <button type="button" className="inline-flex shrink-0">
+                              <Badge variant="destructive" className="cursor-pointer text-[9px] sm:text-xs whitespace-nowrap">
                                 {t.paused}
                               </Badge>
                             </button>
@@ -598,15 +598,15 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
               <Card key={boost.id} className="overflow-hidden">
                 <CardContent className="p-0">
                   {/* Header with title and status badge */}
-                  <div className="p-4 pb-3 border-b bg-muted/30 flex items-center justify-between">
-                    <h3 className="font-semibold text-lg">{boost.offer_title}</h3>
+                  <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.offer_title}</h3>
                     {boost.active ? (
-                      <Badge variant="default">{t.active}</Badge>
+                      <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap shrink-0">{t.active}</Badge>
                     ) : (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <button type="button" className="inline-flex">
-                            <Badge variant="destructive" className="cursor-pointer">
+                          <button type="button" className="inline-flex shrink-0">
+                            <Badge variant="destructive" className="cursor-pointer text-[9px] sm:text-xs whitespace-nowrap">
                               {t.paused}
                             </Badge>
                           </button>

@@ -883,28 +883,28 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
       {/* Privacy & Data */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+            <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
             {t.privacy}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t.downloadData}</Label>
-            <Button onClick={handleDownloadData} variant="outline" className="w-full">
-              <Download className="h-4 w-4 mr-2" />
+        <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="text-xs sm:text-sm">{t.downloadData}</Label>
+            <Button onClick={handleDownloadData} variant="outline" className="w-full text-xs sm:text-sm h-9 sm:h-10">
+              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
               {t.downloadBusinessData}
             </Button>
           </div>
           <Separator />
-          <div className="space-y-2">
-            <Label className="text-destructive">{t.deleteAccount}</Label>
-            <p className="text-sm text-muted-foreground">{t.deleteWarning}</p>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="text-destructive text-xs sm:text-sm">{t.deleteAccount}</Label>
+            <p className="text-[10px] sm:text-sm text-muted-foreground">{t.deleteWarning}</p>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full">
-                  <Trash2 className="h-4 w-4 mr-2" />
+                <Button variant="destructive" className="w-full text-xs sm:text-sm h-9 sm:h-10">
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                   {t.deleteAccount}
                 </Button>
               </AlertDialogTrigger>
@@ -927,13 +927,13 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
       {/* App Preferences */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t.appPreferences}</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-sm sm:text-lg">{t.appPreferences}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t.restartTour}</Label>
-            <p className="text-sm text-muted-foreground">{t.restartTourDescription}</p>
+        <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="text-xs sm:text-sm">{t.restartTour}</Label>
+            <p className="text-[10px] sm:text-sm text-muted-foreground">{t.restartTourDescription}</p>
             <Button 
               variant="outline" 
               onClick={async () => {
@@ -941,20 +941,20 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 navigate('/dashboard-business');
                 window.location.reload();
               }}
-              className="w-full"
+              className="w-full text-xs sm:text-sm h-9 sm:h-10"
             >
-              <RotateCcw className="h-4 w-4 mr-2" />
+              <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
               {t.restartTour}
             </Button>
           </div>
           <Separator />
-          <div className="space-y-2">
-            <Label htmlFor="language">{t.languagePreference}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="language" className="text-xs sm:text-sm">{t.languagePreference}</Label>
             <Select
               value={language}
               onValueChange={(value: 'el' | 'en') => setLanguage(value)}
             >
-              <SelectTrigger id="language">
+              <SelectTrigger id="language" className="text-xs sm:text-sm h-9 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -963,13 +963,13 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="theme">{t.theme}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="theme" className="text-xs sm:text-sm">{t.theme}</Label>
             <Select
               value={preferences.theme_preference || 'system'}
               onValueChange={(value) => updatePreferences({ theme_preference: value })}
             >
-              <SelectTrigger id="theme">
+              <SelectTrigger id="theme" className="text-xs sm:text-sm h-9 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

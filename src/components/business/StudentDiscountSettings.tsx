@@ -123,21 +123,21 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <GraduationCap className="h-5 w-5 text-primary" />
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+          <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           {t.title}
         </CardTitle>
-        <CardDescription>{t.description}</CardDescription>
+        <CardDescription className="text-xs sm:text-sm">{t.description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0 sm:pt-0">
         {/* Enable Toggle */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="student-discount-toggle" className="text-base">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-0.5 min-w-0">
+            <Label htmlFor="student-discount-toggle" className="text-xs sm:text-base">
               {t.enable}
             </Label>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[10px] sm:text-sm text-muted-foreground">
               {t.enableDesc}
             </p>
           </div>
@@ -145,6 +145,7 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
             id="student-discount-toggle"
             checked={enabled}
             onCheckedChange={setEnabled}
+            className="shrink-0"
           />
         </div>
 
@@ -152,8 +153,8 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
           <>
             {/* Discount Percent */}
             <div className="space-y-2">
-              <Label htmlFor="discount-percent" className="flex items-center gap-2">
-                <Percent className="h-4 w-4" />
+              <Label htmlFor="discount-percent" className="flex items-center gap-2 text-xs sm:text-sm">
+                <Percent className="h-3 w-3 sm:h-4 sm:w-4" />
                 {t.percent}
               </Label>
               <div className="relative">
@@ -165,35 +166,35 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
                   value={percent}
                   onChange={(e) => setPercent(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
                   placeholder={t.percentPlaceholder}
-                  className="pr-8"
+                  className="pr-8 text-xs sm:text-sm"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs sm:text-sm">%</span>
               </div>
             </div>
 
             {/* Redemption Mode */}
-            <div className="space-y-3">
-              <Label>{t.mode}</Label>
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="text-xs sm:text-sm">{t.mode}</Label>
               <RadioGroup
                 value={mode}
                 onValueChange={(value) => setMode(value as 'once' | 'unlimited')}
-                className="grid grid-cols-1 gap-3"
+                className="grid grid-cols-1 gap-2 sm:gap-3"
               >
                 <label
                   htmlFor="mode-once"
-                  className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                  className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg border-2 cursor-pointer transition-colors ${
                     mode === 'once' 
                       ? 'border-primary bg-primary/5' 
                       : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <RadioGroupItem value="once" id="mode-once" className="mt-1" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 font-medium">
-                      <RotateCcw className="h-4 w-4 text-amber-500" />
-                      {t.modeOnce}
+                  <RadioGroupItem value="once" id="mode-once" className="mt-0.5 sm:mt-1" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm">
+                      <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 shrink-0" />
+                      <span className="whitespace-nowrap">{t.modeOnce}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
                       {t.modeOnceDesc}
                     </p>
                   </div>
@@ -201,19 +202,19 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
 
                 <label
                   htmlFor="mode-unlimited"
-                  className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                  className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg border-2 cursor-pointer transition-colors ${
                     mode === 'unlimited' 
                       ? 'border-primary bg-primary/5' 
                       : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <RadioGroupItem value="unlimited" id="mode-unlimited" className="mt-1" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 font-medium">
-                      <Infinity className="h-4 w-4 text-green-500" />
-                      {t.modeUnlimited}
+                  <RadioGroupItem value="unlimited" id="mode-unlimited" className="mt-0.5 sm:mt-1" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm">
+                      <Infinity className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 shrink-0" />
+                      <span className="whitespace-nowrap">{t.modeUnlimited}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
                       {t.modeUnlimitedDesc}
                     </p>
                   </div>
@@ -227,16 +228,16 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="w-full gap-2"
+          className="w-full gap-2 text-xs sm:text-sm h-9 sm:h-10"
         >
           {saving ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
               {t.saving}
             </>
           ) : (
             <>
-              <Save className="h-4 w-4" />
+              <Save className="h-3 w-3 sm:h-4 sm:w-4" />
               {t.save}
             </>
           )}

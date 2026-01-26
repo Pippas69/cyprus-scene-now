@@ -1096,33 +1096,33 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       {/* Section 8: Redemption Method (Informational) */}
       <SectionCard title={t.step8}>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <QrCode className="w-5 h-5 text-primary" />
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+              <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <span className="font-semibold text-lg">{t.redemptionTitle}</span>
+            <span className="font-semibold text-sm sm:text-lg">{t.redemptionTitle}</span>
           </div>
           
-          <p className="text-sm text-muted-foreground">{t.redemptionDesc}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{t.redemptionDesc}</p>
           
-          <div className="grid grid-cols-3 gap-2">
-            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-              <Check className="w-4 h-4" />
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm text-green-600 dark:text-green-400">
+              <Check className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
               <span>{t.noPayment}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-              <Check className="w-4 h-4" />
+            <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm text-green-600 dark:text-green-400">
+              <Check className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
               <span>{t.noHold}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-              <Check className="w-4 h-4" />
+            <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm text-green-600 dark:text-green-400">
+              <Check className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
               <span>{t.noCommission}</span>
             </div>
           </div>
           
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 text-sm">
-            <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 text-[10px] sm:text-sm">
+            <Info className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
             <span>{t.walkInNote}</span>
           </div>
         </div>
