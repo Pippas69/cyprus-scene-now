@@ -25,6 +25,7 @@ interface TimeSlot {
   timeFrom: string;
   timeTo: string;
   capacity: number;
+  maxPartySize?: number;
   days: string[];
 }
 
@@ -165,22 +166,16 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       const { data, error } = await supabase.rpc('get_slot_available_capacity', {
         p_business_id: offer.business_id,
         p_date: format(reservationDate, 'yyyy-MM-dd'),
-        p_time_from: reservationTime,
+        p_slot_time: reservationTime,
       });
 
       if (error) throw error;
 
-      const capacityData = data as { available?: boolean; remaining_capacity?: number; reason?: string } | null;
-      
-      if (!capacityData?.available) {
-        setCapacityError(capacityData?.reason || (language === "el" ? "Δεν υπάρχει διαθεσιμότητα" : "No availability"));
-        setAvailableCapacity(0);
-      } else {
-        const remaining = capacityData.remaining_capacity ?? 0;
-        setAvailableCapacity(remaining);
-        if (remaining === 0) {
-          setCapacityError(language === "el" ? "Δεν υπάρχουν διαθέσιμες θέσεις" : "No available seats");
-        }
+      // RPC now returns an integer remaining capacity
+      const remaining = typeof data === 'number' ? data : Number(data ?? 0);
+      setAvailableCapacity(remaining);
+      if (remaining <= 0) {
+        setCapacityError(language === "el" ? "Δεν υπάρχουν διαθέσιμες θέσεις" : "No available seats");
       }
     } catch (error) {
       console.error("Capacity check error:", error);
