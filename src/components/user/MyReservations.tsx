@@ -541,9 +541,18 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </Button>
           )}
 
-          {/* Confirmation Code & QR Code - only for non-offer reservations */}
+          {/* Confirmation Code & QR Code - only for non-offer reservations - FULLY CLICKABLE */}
           {reservation.confirmation_code && !isPast && !isOfferBased && (
-            <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
+            <button
+              type="button"
+              onClick={() => qrCodes[reservation.id] && setQrDialog({
+                open: true,
+                qrCode: qrCodes[reservation.id],
+                confirmationCode: reservation.confirmation_code || '',
+                businessName: businessInfo?.name || ''
+              })}
+              className="w-full bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 hover:bg-primary/10 transition-colors cursor-pointer text-left"
+            >
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-muted-foreground">{t.confirmationCode}</p>
@@ -551,23 +560,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                     {reservation.confirmation_code}
                   </p>
                 </div>
-                {qrCodes[reservation.id] && (
-                  <button
-                    type="button"
-                    onClick={() => setQrDialog({
-                      open: true,
-                      qrCode: qrCodes[reservation.id],
-                      confirmationCode: reservation.confirmation_code || '',
-                      businessName: businessInfo?.name || ''
-                    })}
-                    className="flex items-center gap-1 text-xs text-primary hover:underline shrink-0"
-                  >
-                    <QrCode className="h-4 w-4" />
-                    {language === 'el' ? 'QR' : 'QR'}
-                  </button>
-                )}
+                <div className="flex items-center gap-1 text-xs text-primary shrink-0">
+                  <QrCode className="h-5 w-5" />
+                  <span>{language === 'el' ? 'QR' : 'QR'}</span>
+                </div>
               </div>
-            </div>
+            </button>
           )}
 
           {/* Prepaid reservation info - for event reservations - compact */}

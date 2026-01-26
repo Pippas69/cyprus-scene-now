@@ -15,6 +15,7 @@ import { format, isBefore, startOfDay, parse } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { expandSlotsForDay, normalizeTime } from '@/lib/timeSlots';
+import { ReservationSuccessDialog } from '@/components/user/ReservationSuccessDialog';
 
 interface DirectReservationDialogProps {
   open: boolean;
@@ -71,6 +72,17 @@ export const DirectReservationDialog = ({
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [showCalendar, setShowCalendar] = useState(false);
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
+  const [successDialog, setSuccessDialog] = useState<{
+    open: boolean;
+    reservation: {
+      confirmation_code: string;
+      qr_code_token: string;
+      reservation_name: string;
+      party_size: number;
+      preferred_time: string;
+      business_name: string;
+    } | null;
+  }>({ open: false, reservation: null });
 
   const isMobile = useIsMobile();
 
@@ -312,11 +324,27 @@ export const DirectReservationDialog = ({
         console.error('Email error:', emailError);
       }
 
-      toast.success(
-        status === 'pending' ? t.reservationPending : t.reservationCreated
-      );
-      onSuccess();
+      // Close the form dialog
       onOpenChange(false);
+      
+      // Show success dialog with QR code for accepted reservations
+      if (status === 'accepted') {
+        setSuccessDialog({
+          open: true,
+          reservation: {
+            confirmation_code: reservation.confirmation_code || '',
+            qr_code_token: reservation.qr_code_token || '',
+            reservation_name: formData.reservation_name,
+            party_size: formData.party_size,
+            preferred_time: preferredDateTime.toISOString(),
+            business_name: businessName,
+          },
+        });
+      } else {
+        toast.success(t.reservationPending);
+      }
+      
+      onSuccess();
 
       // Reset form
       setFormData({
@@ -554,27 +582,43 @@ export const DirectReservationDialog = ({
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>{t.title}</DrawerTitle>
-            <DrawerDescription>{t.description}</DrawerDescription>
-          </DrawerHeader>
-          <div className="px-4 pb-4 max-h-[70vh] overflow-y-auto">{formContent}</div>
-        </DrawerContent>
-      </Drawer>
+      <>
+        <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>{t.title}</DrawerTitle>
+              <DrawerDescription>{t.description}</DrawerDescription>
+            </DrawerHeader>
+            <div className="px-4 pb-4 max-h-[70vh] overflow-y-auto">{formContent}</div>
+          </DrawerContent>
+        </Drawer>
+        <ReservationSuccessDialog
+          open={successDialog.open}
+          onOpenChange={(open) => setSuccessDialog({ ...successDialog, open })}
+          reservation={successDialog.reservation}
+          language={language}
+        />
+      </>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t.title}</DialogTitle>
-          <DialogDescription>{t.description}</DialogDescription>
-        </DialogHeader>
-        {formContent}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t.title}</DialogTitle>
+            <DialogDescription>{t.description}</DialogDescription>
+          </DialogHeader>
+          {formContent}
+        </DialogContent>
+      </Dialog>
+      <ReservationSuccessDialog
+        open={successDialog.open}
+        onOpenChange={(open) => setSuccessDialog({ ...successDialog, open })}
+        reservation={successDialog.reservation}
+        language={language}
+      />
+    </>
   );
 };
