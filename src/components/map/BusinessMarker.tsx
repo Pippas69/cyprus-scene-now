@@ -109,10 +109,10 @@ const PIN_COLORS: Record<PlanSlug, {
     glow: 'transparent',
   },
   pro: {
-    // Matches subscription Pro gradient: from-primary to-sunset-coral
-    primary: 'hsl(var(--sunset-coral))',
-    secondary: 'hsl(var(--primary))',
-    accent: 'hsl(var(--primary))',
+    // Purple/violet color matching Elite subscription badge style
+    primary: 'hsl(var(--plan-pro))',
+    secondary: 'hsl(var(--plan-pro) / 0.9)',
+    accent: 'hsl(var(--plan-pro) / 0.75)',
     glow: 'transparent',
   },
   elite: {
