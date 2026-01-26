@@ -18,39 +18,39 @@ const POPUP_STYLES: Record<string, {
 }> = {
   elite: {
     container:
-      "bg-white border-2 border-[hsl(var(--plan-elite))] rounded-[10px] shadow-[0_3px_10px_hsl(var(--plan-elite)/0.18)]",
+      "bg-white border-2 border-[hsl(var(--plan-elite))] rounded-[10px]",
     name: "text-foreground",
     address: "text-muted-foreground",
     // Small badge like the reference: white fill + colored border, icon in tier color
     navButton:
-      "bg-white border border-[hsl(var(--plan-elite))] shadow-[0_2px_6px_hsl(var(--plan-elite)/0.18)]",
+      "bg-white border border-[hsl(var(--plan-elite))]",
     navIcon: "text-[hsl(var(--plan-elite))]",
   },
   pro: {
     container:
-      "bg-white border-2 border-[hsl(var(--plan-pro))] rounded-[10px] shadow-[0_3px_10px_hsl(var(--plan-pro)/0.18)]",
+      "bg-white border-2 border-[hsl(var(--plan-pro))] rounded-[10px]",
     name: "text-foreground",
     address: "text-muted-foreground",
     navButton:
-      "bg-white border border-[hsl(var(--plan-pro))] shadow-[0_2px_6px_hsl(var(--plan-pro)/0.18)]",
+      "bg-white border border-[hsl(var(--plan-pro))]",
     navIcon: "text-[hsl(var(--plan-pro))]",
   },
   basic: {
     container:
-      "bg-white border-2 border-[hsl(var(--plan-basic))] rounded-[10px] shadow-[0_3px_10px_hsl(var(--plan-basic)/0.18)]",
+      "bg-white border-2 border-[hsl(var(--plan-basic))] rounded-[10px]",
     name: "text-foreground",
     address: "text-muted-foreground",
     navButton:
-      "bg-white border border-[hsl(var(--plan-basic))] shadow-[0_2px_6px_hsl(var(--plan-basic)/0.18)]",
+      "bg-white border border-[hsl(var(--plan-basic))]",
     navIcon: "text-[hsl(var(--plan-basic))]",
   },
   free: {
     container:
-      "bg-white border-2 border-[hsl(var(--ocean))] rounded-[10px] shadow-[0_3px_10px_hsl(var(--ocean)/0.16)]",
+      "bg-white border-2 border-[hsl(var(--ocean))] rounded-[10px]",
     name: "text-foreground",
     address: "text-muted-foreground",
     navButton:
-      "bg-white border border-[hsl(var(--ocean))] shadow-[0_2px_6px_hsl(var(--ocean)/0.16)]",
+      "bg-white border border-[hsl(var(--ocean))]",
     navIcon: "text-[hsl(var(--ocean))]",
   },
 };
@@ -68,7 +68,7 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
     <div 
       className={`
         relative inline-flex items-start gap-2
-        px-3 py-1.5 pr-8
+        px-3 py-1.5 pr-9
         ${styles.container}
       `}
     >
@@ -85,11 +85,11 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
         )}
       </div>
 
-      {/* Navigation/Directions button - top-right like reference */}
+      {/* Navigation/Directions button - INSIDE the border (no outside white) */}
       <button
         onClick={handleDirectionsClick}
         className={`
-          absolute -top-2 -right-2
+          absolute top-1 right-1
           w-6 h-6
           rounded-md flex items-center justify-center
           transition-all duration-200 hover:scale-105
