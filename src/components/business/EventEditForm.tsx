@@ -122,6 +122,7 @@ interface FormData {
     noMinSpend: boolean;
     noReservation: boolean;
   };
+  termsAndConditions: string;
 }
 
 // ============================================
@@ -197,6 +198,8 @@ const translations = {
     cancel: "Ακύρωση",
     eventTypeReadonly: "Ο τύπος εκδήλωσης δεν μπορεί να αλλάξει",
     loading: "Φόρτωση...",
+    termsConditions: "Όροι & Προϋποθέσεις (προαιρετικό)",
+    termsPlaceholder: "π.χ. Δεν επιτρέπεται η είσοδος σε ανηλίκους...",
   },
   en: {
     editEvent: "Edit Event",
@@ -266,6 +269,8 @@ const translations = {
     cancel: "Cancel",
     eventTypeReadonly: "Event type cannot be changed",
     loading: "Loading...",
+    termsConditions: "Terms & Conditions (optional)",
+    termsPlaceholder: "e.g. No minors allowed...",
   },
 };
 
@@ -331,6 +336,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       noMinSpend: false,
       noReservation: false,
     },
+    termsAndConditions: '',
   });
   
   const [ticketValidationErrors, setTicketValidationErrors] = useState<string[]>([]);
@@ -450,6 +456,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           noMinSpend: event.free_entry_declaration || false,
           noReservation: event.free_entry_declaration || false,
         },
+        termsAndConditions: event.terms_and_conditions || '',
       });
 
       setExistingCoverUrl(event.cover_image_url || null);
@@ -1149,6 +1156,18 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
               </div>
             )}
           </SectionCard>
+
+          {/* Terms & Conditions (Optional) */}
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">{t.termsConditions}</Label>
+            <Textarea
+              value={formData.termsAndConditions}
+              onChange={(e) => updateField('termsAndConditions', e.target.value)}
+              placeholder={t.termsPlaceholder}
+              className="min-h-[60px] text-xs sm:text-sm resize-none"
+              rows={2}
+            />
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 sm:gap-3 pt-4">
