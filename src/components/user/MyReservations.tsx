@@ -257,13 +257,21 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const handleCancelReservation = async (reservationId: string) => {
     try {
-      const { error } = await supabase
+      // Optimistically remove from UI immediately
+      setUpcomingReservations((prev) => prev.filter((r) => r.id !== reservationId));
+
+      // IMPORTANT: Force returning rows so we can detect "0 rows updated" (which otherwise looks like success)
+      const { data: updatedRows, error } = await supabase
         .from('reservations')
         .update({ status: 'cancelled', updated_at: new Date().toISOString() })
         .eq('id', reservationId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id, status');
 
       if (error) throw error;
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error('No reservation row updated (possible RLS or wrong reservationId)');
+      }
 
       // Increment cancellation count and apply 2-week restriction if 3+ strikes
       const { data: profile } = await supabase
@@ -300,6 +308,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     } catch (error) {
       console.error('Error cancelling reservation:', error);
       toast.error(tt.failed);
+      // Rollback by refetching (ensures UI matches server state)
+      fetchReservations();
     } finally {
       setCancelDialog({ open: false, reservationId: null });
     }
