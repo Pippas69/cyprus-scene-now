@@ -68,7 +68,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         className="absolute bottom-[40%] right-[5%] w-5 h-5 rounded-full bg-seafoam/60"
       />
 
-      <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20">
+      <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 -mt-24 sm:mt-0">
         <div className="flex flex-col items-center text-center space-y-5 sm:space-y-6 md:space-y-8">
           {/* Tagline badge */}
           <motion.div

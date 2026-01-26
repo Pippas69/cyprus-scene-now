@@ -251,28 +251,29 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   return (
     <div className="space-y-4 w-full max-w-full">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-full">
+      {/* Stats Cards - always 3 in a row */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-full">
         <Card className="min-w-0">
-          <CardContent className="py-3">
+          <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
             <div className="flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <div className="text-[11px] md:text-xs text-muted-foreground whitespace-nowrap">{t.total}</div>
+              <div className="text-lg sm:text-2xl font-bold">{stats.total}</div>
+              <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.total}</div>
             </div>
           </CardContent>
         </Card>
         <Card className="min-w-0">
-          <CardContent className="py-3">
+          <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
             <div className="flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.today}</div>
-              <div className="text-[11px] md:text-xs text-muted-foreground whitespace-nowrap">{t.today}</div>
+              <div className="text-lg sm:text-2xl font-bold text-blue-600">{stats.today}</div>
+              <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.today}</div>
             </div>
           </CardContent>
         </Card>
         <Card className="min-w-0">
-          <CardContent className="py-3">
+          <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
             <div className="flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.checkedIn}</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">{t.checkedInCount}</div>
+              <div className="text-lg sm:text-2xl font-bold text-green-600">{stats.checkedIn}</div>
+              <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.checkedInCount}</div>
             </div>
           </CardContent>
         </Card>

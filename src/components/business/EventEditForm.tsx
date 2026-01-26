@@ -774,19 +774,19 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             <RadioGroup
               value={formData.appearanceMode}
               onValueChange={(v) => updateField('appearanceMode', v as AppearanceMode)}
-              className="flex gap-4"
+              className="flex gap-3 sm:gap-4"
             >
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
                 <RadioGroupItem value="hours" id="edit-hours" />
-                <Label htmlFor="edit-hours" className="flex items-center gap-2 cursor-pointer">
-                  <Clock className="h-4 w-4" />
+                <Label htmlFor="edit-hours" className="flex items-center gap-1 sm:gap-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap">
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.byHours}
                 </Label>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
                 <RadioGroupItem value="days" id="edit-days" />
-                <Label htmlFor="edit-days" className="flex items-center gap-2 cursor-pointer">
-                  <Calendar className="h-4 w-4" />
+                <Label htmlFor="edit-days" className="flex items-center gap-1 sm:gap-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap">
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.byDays}
                 </Label>
               </div>
