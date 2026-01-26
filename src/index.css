@@ -211,6 +211,8 @@ All colors MUST be HSL.
   }
 
   .mapboxgl-popup-tip {
+    /* Hide the default popup tip completely (prevents extra spacing/visual artifacts) */
+    display: none;
     border-top-color: transparent;
   }
 

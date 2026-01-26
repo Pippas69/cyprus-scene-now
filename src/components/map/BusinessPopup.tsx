@@ -8,7 +8,7 @@ interface BusinessPopupProps {
   language: "el" | "en";
 }
 
-// Premium popup styling per plan tier - border only, white interior
+// Premium popup styling per plan tier - white interior, colored border (no outer background)
 const POPUP_STYLES: Record<string, {
   container: string;
   name: string;
@@ -17,36 +17,41 @@ const POPUP_STYLES: Record<string, {
   navIcon: string;
 }> = {
   elite: {
-    // Golden border, white interior
-    container: "bg-white border-2 border-[hsl(45,80%,50%)] rounded-full shadow-sm",
-    name: "text-[hsl(35,30%,25%)]",
-    address: "text-[hsl(35,20%,40%)]",
-    navButton: "bg-[hsl(45,70%,55%)] hover:bg-[hsl(45,75%,50%)]",
-    navIcon: "text-white",
+    container:
+      "bg-white border-2 border-[hsl(var(--plan-elite))] rounded-[10px] shadow-[0_3px_10px_hsl(var(--plan-elite)/0.18)]",
+    name: "text-foreground",
+    address: "text-muted-foreground",
+    // Small badge like the reference: white fill + colored border, icon in tier color
+    navButton:
+      "bg-white border border-[hsl(var(--plan-elite))] shadow-[0_2px_6px_hsl(var(--plan-elite)/0.18)]",
+    navIcon: "text-[hsl(var(--plan-elite))]",
   },
   pro: {
-    // Coral border, white interior
-    container: "bg-white border-2 border-[hsl(var(--plan-pro))] rounded-full shadow-sm",
+    container:
+      "bg-white border-2 border-[hsl(var(--plan-pro))] rounded-[10px] shadow-[0_3px_10px_hsl(var(--plan-pro)/0.18)]",
     name: "text-foreground",
     address: "text-muted-foreground",
-    navButton: "bg-[hsl(var(--plan-pro))] hover:bg-[hsl(12,90%,50%)]",
-    navIcon: "text-white",
+    navButton:
+      "bg-white border border-[hsl(var(--plan-pro))] shadow-[0_2px_6px_hsl(var(--plan-pro)/0.18)]",
+    navIcon: "text-[hsl(var(--plan-pro))]",
   },
   basic: {
-    // Cyan border, white interior
-    container: "bg-white border-2 border-[hsl(var(--plan-basic))] rounded-full shadow-sm",
+    container:
+      "bg-white border-2 border-[hsl(var(--plan-basic))] rounded-[10px] shadow-[0_3px_10px_hsl(var(--plan-basic)/0.18)]",
     name: "text-foreground",
     address: "text-muted-foreground",
-    navButton: "bg-[hsl(var(--plan-basic))] hover:bg-[hsl(200,90%,40%)]",
-    navIcon: "text-white",
+    navButton:
+      "bg-white border border-[hsl(var(--plan-basic))] shadow-[0_2px_6px_hsl(var(--plan-basic)/0.18)]",
+    navIcon: "text-[hsl(var(--plan-basic))]",
   },
   free: {
-    // Ocean blue border (matching pin color), white interior
-    container: "bg-white border-2 border-[hsl(207,43%,42%)] rounded-full shadow-sm",
+    container:
+      "bg-white border-2 border-[hsl(var(--ocean))] rounded-[10px] shadow-[0_3px_10px_hsl(var(--ocean)/0.16)]",
     name: "text-foreground",
     address: "text-muted-foreground",
-    navButton: "bg-[hsl(207,43%,42%)] hover:bg-[hsl(207,43%,35%)]",
-    navIcon: "text-white",
+    navButton:
+      "bg-white border border-[hsl(var(--ocean))] shadow-[0_2px_6px_hsl(var(--ocean)/0.16)]",
+    navIcon: "text-[hsl(var(--ocean))]",
   },
 };
 
@@ -62,37 +67,37 @@ export const BusinessPopup = ({ business, onClose, language }: BusinessPopupProp
   return (
     <div 
       className={`
-        relative inline-flex items-center gap-1.5
-        px-2.5 py-1 pr-7
+        relative inline-flex items-start gap-2
+        px-3 py-1.5 pr-8
         ${styles.container}
       `}
     >
       {/* Content: Name & Address */}
       <div className="flex flex-col items-start min-w-0">
-        <h3 className={`font-medium text-[11px] leading-tight whitespace-nowrap ${styles.name}`}>
+        <h3 className={`font-semibold text-[12px] leading-tight whitespace-nowrap ${styles.name}`}>
           {business.name}
         </h3>
         {business.address && (
-          <div className={`flex items-center gap-0.5 text-[9px] leading-tight ${styles.address}`}>
+          <div className={`flex items-center gap-1 text-[10px] leading-tight ${styles.address}`}>
             <span className="opacity-70">⊙</span>
             <span className="whitespace-nowrap">{business.address}</span>
           </div>
         )}
       </div>
 
-      {/* Navigation/Directions button - small, right edge */}
+      {/* Navigation/Directions button - top-right like reference */}
       <button
         onClick={handleDirectionsClick}
         className={`
-          absolute -right-1 top-1/2 -translate-y-1/2
-          w-5 h-5 
-          rounded-full flex items-center justify-center
-          transition-all duration-200 hover:scale-110
+          absolute -top-2 -right-2
+          w-6 h-6
+          rounded-md flex items-center justify-center
+          transition-all duration-200 hover:scale-105
           ${styles.navButton}
         `}
         title={language === "el" ? "Οδηγίες" : "Directions"}
       >
-        <Navigation className={`h-2.5 w-2.5 ${styles.navIcon}`} />
+        <Navigation className={`h-3 w-3 ${styles.navIcon}`} />
       </button>
     </div>
   );
