@@ -904,11 +904,14 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                 {t.ticketConfig}
               </h4>
               
+              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} />
+              
               <TicketTierEditor
                 tiers={formData.ticketTiers}
                 onTiersChange={(tiers) => updateField('ticketTiers', tiers)}
                 commissionPercent={commissionPercent}
                 validationErrors={ticketValidationErrors}
+                autoEnabled={true}
               />
             </div>
           )}

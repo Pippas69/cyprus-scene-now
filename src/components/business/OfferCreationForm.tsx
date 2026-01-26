@@ -797,35 +797,35 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       <SectionCard title={t.step4} required>
         <div className="space-y-4">
           {/* Discount Type Selection */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => updateField('discountType', 'percentage')}
               className={cn(
-                "p-4 rounded-xl border-2 transition-all text-left",
+                "p-3 sm:p-4 rounded-xl border-2 transition-all text-left",
                 formData.discountType === 'percentage'
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
               )}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Percent className="w-5 h-5 text-primary" />
-                <span className="font-medium">{t.percentageDiscount}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{t.percentageDiscount}</span>
               </div>
             </button>
             <button
               type="button"
               onClick={() => updateField('discountType', 'special_deal')}
               className={cn(
-                "p-4 rounded-xl border-2 transition-all text-left",
+                "p-3 sm:p-4 rounded-xl border-2 transition-all text-left",
                 formData.discountType === 'special_deal'
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
               )}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Tag className="w-5 h-5 text-primary" />
-                <span className="font-medium">{t.specialDeal}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{t.specialDeal}</span>
               </div>
             </button>
           </div>

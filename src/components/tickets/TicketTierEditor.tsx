@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ interface TicketTierEditorProps {
   onTiersChange: (tiers: TicketTier[]) => void;
   commissionPercent: number;
   validationErrors?: string[];
+  autoEnabled?: boolean; // When true, skip toggle and auto-add tier if empty
 }
 
 const t = {
@@ -36,7 +37,8 @@ const t = {
     descriptionPlaceholder: "Προαιρετική περιγραφή...",
     price: "Τιμή (€)",
     quantity: "Διαθέσιμα",
-    maxPerOrder: "Μέγ. ανά παραγγελία",
+    maxPerOrder: "Max ανά παραγ.",
+    maxPerOrderFull: "Μέγιστο ανά παραγγελία",
     freeTickets: "Δωρεάν Εισιτήρια",
     commission: "Προμήθεια πλατφόρμας",
     youReceive: "Θα λάβετε",
@@ -61,7 +63,8 @@ const t = {
     descriptionPlaceholder: "Optional description...",
     price: "Price (€)",
     quantity: "Quantity",
-    maxPerOrder: "Max per Order",
+    maxPerOrder: "Max/Order",
+    maxPerOrderFull: "Max per Order",
     freeTickets: "Free Tickets",
     commission: "Platform commission",
     youReceive: "You receive",
@@ -100,11 +103,30 @@ export const TicketTierEditor = ({
   onTiersChange,
   commissionPercent,
   validationErrors = [],
+  autoEnabled = false,
 }: TicketTierEditorProps) => {
   const { language } = useLanguage();
   const text = t[language];
-  const [ticketsEnabled, setTicketsEnabled] = useState(tiers.length > 0);
+  // When autoEnabled, tickets are always enabled; otherwise use tiers.length
+  const [ticketsEnabled, setTicketsEnabled] = useState(autoEnabled || tiers.length > 0);
   const [touchedTiers, setTouchedTiers] = useState<Set<number>>(new Set());
+
+  // Auto-add a tier if autoEnabled and no tiers exist
+  useEffect(() => {
+    if (autoEnabled && tiers.length === 0) {
+      const defaultName = language === 'el' ? 'Γενική Είσοδος' : 'General Admission';
+      const newTier: TicketTier = {
+        name: defaultName,
+        description: "",
+        price_cents: 0,
+        currency: "eur",
+        quantity_total: 100,
+        max_per_order: 10,
+        sort_order: 0,
+      };
+      queueMicrotask(() => onTiersChange([newTier]));
+    }
+  }, [autoEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addTier = useCallback(() => {
     const defaultName = language === 'el' ? 'Γενική Είσοδος' : 'General Admission';
@@ -187,27 +209,29 @@ export const TicketTierEditor = ({
         </div>
       )}
 
-      {/* Toggle for enabling tickets */}
-      <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg border bg-muted/30">
-        <div className="flex items-center gap-3">
-          <Ticket className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          <div>
-            <p className="font-medium text-sm sm:text-base">{text.enableTickets}</p>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {ticketsEnabled 
-                ? (language === 'el' ? "Οι χρήστες θα μπορούν να αγοράσουν εισιτήρια" : "Users will be able to purchase tickets")
-                : text.noTickets
-              }
-            </p>
+      {/* Toggle for enabling tickets - only show if NOT autoEnabled */}
+      {!autoEnabled && (
+        <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg border bg-muted/30">
+          <div className="flex items-center gap-3">
+            <Ticket className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <div>
+              <p className="font-medium text-sm sm:text-base">{text.enableTickets}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {ticketsEnabled 
+                  ? (language === 'el' ? "Οι χρήστες θα μπορούν να αγοράσουν εισιτήρια" : "Users will be able to purchase tickets")
+                  : text.noTickets
+                }
+              </p>
+            </div>
           </div>
+          <Switch
+            checked={ticketsEnabled}
+            onCheckedChange={handleToggleTickets}
+          />
         </div>
-        <Switch
-          checked={ticketsEnabled}
-          onCheckedChange={handleToggleTickets}
-        />
-      </div>
+      )}
 
-      {ticketsEnabled && (
+      {(ticketsEnabled || autoEnabled) && (
         <>
           {/* Commission info */}
           {commissionPercent > 0 && (
@@ -316,7 +340,10 @@ export const TicketTierEditor = ({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm whitespace-nowrap">{text.maxPerOrder}</Label>
+                      <Label className="text-xs sm:text-sm whitespace-nowrap">
+                        <span className="hidden md:inline">{text.maxPerOrderFull}</span>
+                        <span className="md:hidden">{text.maxPerOrder}</span>
+                      </Label>
                       <Input
                         type="number"
                         min="1"
