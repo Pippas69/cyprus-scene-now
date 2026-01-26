@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { trackEngagement } from "@/lib/analyticsTracking";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -391,42 +392,51 @@ const BusinessProfile = () => {
 
       {/* Image Viewer - Premium Instagram-style */}
       <Dialog open={imageViewerOpen} onOpenChange={setImageViewerOpen}>
-        <DialogContent 
-          className={cn(
-            "p-0 overflow-hidden border-0 bg-transparent shadow-none",
-            // If viewing logo (circular avatar), use circular preview
-            imageViewerAlt.includes('logo') 
-              ? "max-w-[200px] sm:max-w-[280px] md:max-w-[320px]" 
-              : "max-w-[85vw] sm:max-w-lg md:max-w-xl"
-          )}
-        >
-          <div className={cn(
-            "relative",
-            imageViewerAlt.includes('logo') && "flex items-center justify-center"
-          )}>
-            {imageViewerSrc && (
-              imageViewerAlt.includes('logo') ? (
-                // Circular logo preview - Instagram style magnification
-                <div className="relative">
+        {/* Custom content to REMOVE the default X close button for premium look */}
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogPrimitive.Content
+            className={cn(
+              "fixed left-1/2 z-50 w-full border-0 bg-transparent p-0 shadow-none outline-none",
+              // Cover should appear higher (not centered)
+              imageViewerAlt.includes("logo")
+                ? "top-1/2 -translate-x-1/2 -translate-y-1/2"
+                : "top-[6vh] sm:top-[7vh] md:top-[8vh] -translate-x-1/2 translate-y-0",
+              // Size rules
+              imageViewerAlt.includes("logo")
+                ? "max-w-[220px] sm:max-w-[300px] md:max-w-[340px] overflow-visible"
+                : "max-w-[85vw] sm:max-w-lg md:max-w-xl overflow-hidden",
+            )}
+          >
+            <div
+              className={cn(
+                "relative",
+                imageViewerAlt.includes("logo") && "flex items-center justify-center p-2",
+              )}
+            >
+              {imageViewerSrc &&
+                (imageViewerAlt.includes("logo") ? (
+                  // Circular logo preview - Instagram style magnification (no clipping)
+                  <div className="relative">
+                    <img
+                      src={imageViewerSrc}
+                      alt={imageViewerAlt}
+                      className="w-[180px] h-[180px] sm:w-[240px] sm:h-[240px] md:w-[280px] md:h-[280px] rounded-full object-cover ring-4 ring-background shadow-2xl"
+                      loading="eager"
+                    />
+                  </div>
+                ) : (
+                  // Cover image preview - size is good, just show it higher
                   <img
                     src={imageViewerSrc}
                     alt={imageViewerAlt}
-                    className="w-[180px] h-[180px] sm:w-[240px] sm:h-[240px] md:w-[280px] md:h-[280px] rounded-full object-cover ring-4 ring-background shadow-2xl"
+                    className="w-full h-auto max-h-[50vh] sm:max-h-[55vh] md:max-h-[60vh] object-contain rounded-xl"
                     loading="eager"
                   />
-                </div>
-              ) : (
-                // Cover image preview - smaller and more premium
-                <img
-                  src={imageViewerSrc}
-                  alt={imageViewerAlt}
-                  className="w-full h-auto max-h-[50vh] sm:max-h-[55vh] md:max-h-[60vh] object-contain rounded-xl"
-                  loading="eager"
-                />
-              )
-            )}
-          </div>
-        </DialogContent>
+                ))}
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
       </Dialog>
 
       {/* Business Info - centered below avatar */}

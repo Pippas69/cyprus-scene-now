@@ -64,9 +64,10 @@ const WhatsAppIcon = () => (
 
 // Snapchat - crisp SVG version matching official brand
 const SnapchatIcon = () => (
-  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none" style={{ marginLeft: -5 }}>
+  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 48 48" fill="none">
     <rect x="0" y="0" width="48" height="48" rx="12" fill="#FFFC00" />
-    <g transform="translate(8, 8) scale(0.667)">
+    {/* Centered ghost (no offset) */}
+    <g transform="translate(24 24) scale(0.72) translate(-24 -24)">
       <path
         d="M24 4.5c-5.1 0-9.2 1.8-11.8 5.4-2.1 2.9-2.4 6-2.4 8.7 0 .8 0 1.7.1 2.4 0 .5.1 1 .1 1.5-.5.1-1.1.3-1.7.3-1.1 0-1.8-.3-2.3-.5-.3-.2-.6-.3-.9-.3-.7 0-1.3.5-1.3 1.3 0 .7.3 1.1.8 1.5 1.3.8 2.9 1.3 4.6 1.6 0 .2.1.4.1.7.1.6.2 1.4.3 2 0 .3-.1.5-.4.6-.7.3-1.5.6-2.5 1-1.6.6-3.5 1.3-4.3 2.4-.4.5-.5 1-.3 1.5.4 1.1 2 1.8 4.7 2 .1.1.2.2.3.5.1.4.3 1 .5 1.5.2.5.5.8 1 .8.1 0 .2 0 .3-.1.6-.2 1.2-.5 2.1-.9 1.1-.4 2.5-.9 4.2-.9.7 0 1.4.1 2.1.3 1.3.4 2.4 1.3 3.6 2.2 1.8 1.4 3.7 2.9 6.4 2.9s4.6-1.5 6.4-2.9c1.2-.9 2.3-1.8 3.6-2.2.7-.2 1.4-.3 2.1-.3 1.7 0 3.1.5 4.2.9.9.4 1.5.7 2.1.9.1 0 .2.1.3.1.5 0 .8-.3 1-.8.2-.5.4-1.1.5-1.5.1-.3.2-.4.3-.5 2.7-.2 4.3-.9 4.7-2 .2-.5.1-1-.3-1.5-.8-1.1-2.7-1.8-4.3-2.4-1-.4-1.8-.7-2.5-1-.3-.1-.4-.3-.4-.6.1-.6.2-1.4.3-2 0-.2.1-.5.1-.7 1.7-.3 3.3-.8 4.6-1.6.5-.4.8-.8.8-1.5 0-.8-.6-1.3-1.3-1.3-.3 0-.6.1-.9.3-.5.2-1.2.5-2.3.5-.6 0-1.2-.2-1.7-.3 0-.5.1-1 .1-1.5.1-.7.1-1.6.1-2.4 0-2.7-.3-5.8-2.4-8.7C33.2 6.3 29.1 4.5 24 4.5z"
         fill="white"
@@ -747,8 +748,14 @@ export const PremiumShareSheet = ({
     <>
       <HiddenStoryCard />
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[70vh] rounded-t-3xl overflow-hidden">
-          <div className="overflow-y-auto max-h-[calc(70vh-env(safe-area-inset-bottom))] pb-safe">
+        <DrawerContent
+          className={cn(
+            // Smaller + more premium on mobile
+            "left-1/2 right-auto w-[92vw] max-w-[420px] -translate-x-1/2",
+            "max-h-[58vh] rounded-t-3xl overflow-hidden",
+          )}
+        >
+          <div className="overflow-y-auto max-h-[calc(58vh-env(safe-area-inset-bottom))] pb-safe">
             <ShareContentMobile />
             {/* Safe area bottom padding */}
             <div className="h-4 pb-safe" />

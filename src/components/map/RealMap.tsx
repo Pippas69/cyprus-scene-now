@@ -155,6 +155,18 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   const MAPBOX_TOKEN = MAPBOX_CONFIG.publicToken;
   const isTokenMissing = !MAPBOX_TOKEN || MAPBOX_TOKEN.includes('your-mapbox-token');
 
+  const getCyprusFitPadding = () => {
+    // On smaller screens we need MORE padding to keep the full island visible (premium, no accidental crop).
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    if (w < 768) {
+      return { top: 56, bottom: 56, left: 44, right: 44 };
+    }
+    if (w < 1024) {
+      return { top: 44, bottom: 44, left: 36, right: 36 };
+    }
+    return { top: 20, bottom: 20, left: 10, right: 10 };
+  };
+
   useEffect(() => {
     if (!mapContainer.current || map.current || isTokenMissing) return;
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -172,11 +184,12 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     
     // On load, fit bounds to show ALL of Cyprus (from Paphos to Karpasia tip)
     map.current.on('load', () => {
+      map.current?.resize();
       // Cyprus bounds: SW [32.2, 34.55] to NE [34.6, 35.7]
       // This ensures the entire island is visible on any screen size
       map.current?.fitBounds(
         [[32.2, 34.55], [34.6, 35.7]],
-        { padding: { top: 20, bottom: 20, left: 10, right: 10 }, duration: 0 }
+        { padding: getCyprusFitPadding(), duration: 0 }
       );
     });
     
@@ -350,7 +363,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       // Cyprus bounds: SW [32.2, 34.55] to NE [34.6, 35.7]
       map.current.fitBounds(
         [[32.2, 34.55], [34.6, 35.7]],
-        { padding: { top: 20, bottom: 20, left: 10, right: 10 }, duration: 0 }
+        { padding: getCyprusFitPadding(), duration: 0 }
       );
     };
 
