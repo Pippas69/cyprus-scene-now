@@ -162,6 +162,8 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             orderId,
+            userId: order.user_id,
+            eventId: order.event_id,
             userEmail: orderDetails.customer_email,
             eventTitle,
             eventDate,
@@ -244,41 +246,13 @@ Deno.serve(async (req) => {
                 tierName: tierData?.name || "General",
                 businessEmail: profile.email,
                 businessName,
+                businessUserId,
               }),
             });
             logStep("Ticket sale notification sent to business owner");
           }
         } else {
           logStep("Ticket sale notifications disabled for business owner");
-        }
-
-        // Send push notification if enabled
-        const shouldSendPush = prefs?.notification_push_enabled === true;
-        if (shouldSendPush) {
-          try {
-            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push-notification`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-              },
-              body: JSON.stringify({
-                userId: businessUserId,
-                title: "New Ticket Sale! 🎟️",
-                body: `${orderDetails?.customer_name || "Someone"} purchased ${ticketsToCreate.length} ticket${ticketsToCreate.length > 1 ? 's' : ''} for ${eventData.title}`,
-                data: {
-                  url: "/dashboard-business/ticket-sales",
-                  orderId,
-                  eventId: order.event_id,
-                },
-              }),
-            });
-            logStep("Push notification sent to business owner");
-          } catch (pushError) {
-            logStep("Error sending push notification", { 
-              error: pushError instanceof Error ? pushError.message : String(pushError) 
-            });
-          }
         }
       }
     } catch (notifError) {
