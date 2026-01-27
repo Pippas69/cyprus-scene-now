@@ -267,6 +267,11 @@ const BusinessCard = ({
       <Link
         ref={cardRef}
         to={`/business/${business.id}`}
+        state={{
+          analyticsTracked: true,
+          analyticsSource: 'feed',
+          from: `${window.location.pathname}${window.location.search}`,
+        }}
         onClick={() => {
           // PROFILE INTERACTION = user clicks on the business card to open the profile
           // This is separate from VIEW (seeing the card) - it's an active engagement
