@@ -313,6 +313,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             businessEmail: businessOwner.email,
             businessName: discount.businesses.name,
+            businessUserId: discount.businesses.user_id,
             offerTitle: discount.title,
             customerName: userName,
             partySize,
