@@ -438,6 +438,7 @@ export async function sendEncryptedPush(
 }
 
 // Helper: Check if user has push enabled in preferences
+// ROBUST: If user has active subscriptions but pref is false, treat as enabled (and self-heal)
 export async function isUserPushEnabled(
   userId: string,
   supabase?: SupabaseClient
@@ -448,14 +449,46 @@ export async function isUserPushEnabled(
     { auth: { persistSession: false } }
   );
 
-  const { data } = await client
+  // Check preferences
+  const { data: prefs } = await client
     .from("user_preferences")
     .select("notification_push_enabled")
     .eq("user_id", userId)
     .single();
 
-  // Default to enabled if no preference set
-  return data?.notification_push_enabled !== false;
+  const prefEnabled = prefs?.notification_push_enabled;
+
+  // If explicitly enabled, great
+  if (prefEnabled === true) {
+    return true;
+  }
+
+  // If explicitly disabled (false), respect that
+  if (prefEnabled === false) {
+    // But check if they have active subscriptions - if so, there's a mismatch
+    const { data: subs } = await client
+      .from("push_subscriptions")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1);
+
+    if (subs && subs.length > 0) {
+      // Self-heal: they have subscriptions but pref is false - fix it
+      logStep("Self-healing: user has subscriptions but pref was false, enabling", { userId });
+      await client
+        .from("user_preferences")
+        .upsert({
+          user_id: userId,
+          notification_push_enabled: true,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+      return true;
+    }
+    return false;
+  }
+
+  // If no preference set (null/undefined), default to enabled
+  return true;
 }
 
 // Convenience function: Send push if user has it enabled
