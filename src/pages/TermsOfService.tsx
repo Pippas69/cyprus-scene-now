@@ -245,7 +245,7 @@ const TermsOfService = () => {
             "Any service fees are clearly stated before completion",
             "Refund policy depends on each business/event",
             "In case of event cancellation, refund is made by the business",
-            "Cancellation policy: Up to 3 cancellations allowed. After 3 cancellations, 2-week restriction",
+            "Cancellation policy: After 3 cancellations, two weeks restriction",
             "ΦΟΜΟ is not liable for delays in refunds",
           ],
         },
