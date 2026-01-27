@@ -390,7 +390,9 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
   const getDaysLabel = (days: string[]) => {
     if (days.length === 7) return t.allDays;
     if (days.length === 0) return t.noDaysWarning;
-    return days.map(d => dayShortTranslations[d]).join(', ');
+    // Sort days in correct order (Monday to Sunday)
+    const sortedDays = [...days].sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b));
+    return sortedDays.map(d => dayShortTranslations[d]).join(', ');
   };
 
   if (loading) {
@@ -548,21 +550,38 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                               </span>
                             </div>
                             
-                            {/* Badges row - Tablet/Mobile: badges on one line, days below */}
-                            <div className="lg:hidden">
+                            {/* Badges row - Tablet: badges on one line, days below */}
+                            <div className="hidden sm:block lg:hidden">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <Badge className="bg-destructive/15 text-destructive hover:bg-destructive/20 border-0 text-[10px] sm:text-xs px-2 py-0.5">
-                                  <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                                <Badge className="bg-destructive/15 text-destructive hover:bg-destructive/20 border-0 text-xs px-2 py-0.5">
+                                  <Users className="h-3 w-3 mr-1" />
                                   {t.slotCapacity}: {slot.capacity}
                                 </Badge>
-                                <Badge variant="outline" className="text-[10px] sm:text-xs px-2 py-0.5 border-border">
-                                  <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                                <Badge variant="outline" className="text-xs px-2 py-0.5 border-border">
+                                  <Users className="h-3 w-3 mr-1" />
                                   {t.slotMaxPartySize}: {slot.maxPartySize}
                                 </Badge>
                               </div>
-                              <span className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 block">
+                              <span className="text-xs text-muted-foreground mt-1.5 block">
                                 {getDaysLabel(slot.days)}
                               </span>
+                            </div>
+                            
+                            {/* Badges row - Mobile: all on same line */}
+                            <div className="sm:hidden">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge className="bg-destructive/15 text-destructive hover:bg-destructive/20 border-0 text-[10px] px-2 py-0.5">
+                                  <Users className="h-2.5 w-2.5 mr-0.5" />
+                                  {t.slotCapacity}: {slot.capacity}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-border">
+                                  <Users className="h-2.5 w-2.5 mr-0.5" />
+                                  {t.slotMaxPartySize}: {slot.maxPartySize}
+                                </Badge>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {getDaysLabel(slot.days)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                           
