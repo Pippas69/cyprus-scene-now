@@ -1365,6 +1365,7 @@ export type Database = {
           max_people_per_redemption: number | null
           max_per_user: number | null
           max_purchases: number | null
+          offer_image_url: string | null
           offer_type: string | null
           one_per_user: boolean | null
           original_price_cents: number | null
@@ -1400,6 +1401,7 @@ export type Database = {
           max_people_per_redemption?: number | null
           max_per_user?: number | null
           max_purchases?: number | null
+          offer_image_url?: string | null
           offer_type?: string | null
           one_per_user?: boolean | null
           original_price_cents?: number | null
@@ -1435,6 +1437,7 @@ export type Database = {
           max_people_per_redemption?: number | null
           max_per_user?: number | null
           max_purchases?: number | null
+          offer_image_url?: string | null
           offer_type?: string | null
           one_per_user?: boolean | null
           original_price_cents?: number | null

@@ -197,9 +197,20 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
       } else {
         setActionLoading(false);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error creating connect account:', err);
-      toast.error(language === 'el' ? 'Σφάλμα κατά τη ρύθμιση' : 'Error during setup');
+      
+      // Check for specific error messages from edge function
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      
+      // Check if it's the platform activation error
+      if (errorMessage.includes('activated') || errorMessage.includes('onboarding')) {
+        toast.error(language === 'el' 
+          ? 'Η πλατφόρμα Stripe δεν έχει ενεργοποιηθεί ακόμα. Παρακαλώ επικοινωνήστε με την υποστήριξη.' 
+          : 'Stripe platform not yet activated. Please contact support.');
+      } else {
+        toast.error(language === 'el' ? 'Σφάλμα κατά τη ρύθμιση' : 'Error during setup');
+      }
       setActionLoading(false);
     }
   };

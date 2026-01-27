@@ -13,6 +13,7 @@ import { ImageCropDialog } from "./ImageCropDialog";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
+import { compressImage } from "@/lib/imageCompression";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import OfferBoostDialog from "./OfferBoostDialog";
@@ -561,6 +562,28 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
     try {
       const appearance = getAppearanceDates();
 
+      // Handle image upload
+      let offerImageUrl: string | null = null;
+      
+      if (formData.imageSource === 'custom' && formData.customImageBlob) {
+        // Upload custom image
+        const file = new File([formData.customImageBlob], `offer-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const compressedFile = await compressImage(file, 1920, 1080, 0.85);
+        const fileName = `${businessId}-${Date.now()}.jpg`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('offer-images')
+          .upload(fileName, compressedFile, { contentType: 'image/jpeg' });
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage.from('offer-images').getPublicUrl(fileName);
+        offerImageUrl = publicUrl;
+      } else if (formData.imageSource === 'profile') {
+        // Use business profile image
+        offerImageUrl = (businessData?.cover_url || businessData?.logo_url) as string | null;
+      }
+
       const { data: offerData, error: insertError } = await supabase.from('discounts').insert({
         business_id: businessId,
         title: formData.title,
@@ -582,6 +605,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         pricing_type: 'single',
         qr_code_token: generateQRToken(businessId),
         active: true,
+        offer_image_url: offerImageUrl,
       }).select().single();
 
       if (insertError) throw insertError;
