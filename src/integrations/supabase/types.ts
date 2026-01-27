@@ -4112,6 +4112,8 @@ export type Database = {
           notification_daily_sales_summary: boolean | null
           notification_event_reminders: boolean | null
           notification_expiring_offers: boolean | null
+          notification_followed_business_events: boolean | null
+          notification_followed_business_offers: boolean | null
           notification_fomo_recommendations: boolean | null
           notification_new_events: boolean | null
           notification_new_follower: boolean | null
@@ -4128,6 +4130,7 @@ export type Database = {
           notification_sold_out: boolean | null
           notification_ticket_confirmations: boolean | null
           notification_ticket_sales: boolean | null
+          notification_tickets_selling_out: boolean | null
           notification_weekly_summary: boolean | null
           profile_visibility: string | null
           theme_preference: string | null
@@ -4148,6 +4151,8 @@ export type Database = {
           notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_expiring_offers?: boolean | null
+          notification_followed_business_events?: boolean | null
+          notification_followed_business_offers?: boolean | null
           notification_fomo_recommendations?: boolean | null
           notification_new_events?: boolean | null
           notification_new_follower?: boolean | null
@@ -4164,6 +4169,7 @@ export type Database = {
           notification_sold_out?: boolean | null
           notification_ticket_confirmations?: boolean | null
           notification_ticket_sales?: boolean | null
+          notification_tickets_selling_out?: boolean | null
           notification_weekly_summary?: boolean | null
           profile_visibility?: string | null
           theme_preference?: string | null
@@ -4184,6 +4190,8 @@ export type Database = {
           notification_daily_sales_summary?: boolean | null
           notification_event_reminders?: boolean | null
           notification_expiring_offers?: boolean | null
+          notification_followed_business_events?: boolean | null
+          notification_followed_business_offers?: boolean | null
           notification_fomo_recommendations?: boolean | null
           notification_new_events?: boolean | null
           notification_new_follower?: boolean | null
@@ -4200,6 +4208,7 @@ export type Database = {
           notification_sold_out?: boolean | null
           notification_ticket_confirmations?: boolean | null
           notification_ticket_sales?: boolean | null
+          notification_tickets_selling_out?: boolean | null
           notification_weekly_summary?: boolean | null
           profile_visibility?: string | null
           theme_preference?: string | null

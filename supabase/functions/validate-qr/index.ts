@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -183,7 +184,7 @@ Deno.serve(async (req) => {
     // 1. Try ticket
     const { data: ticket } = await supabaseAdmin
       .from("tickets")
-      .select(`*, ticket_tiers(name, price_cents), ticket_orders(customer_name, customer_email), events(id, title, start_at, business_id)`)
+      .select(`*, ticket_tiers(name, price_cents), ticket_orders(customer_name, customer_email, user_id), events(id, title, start_at, business_id)`)
       .eq("qr_code_token", token)
       .single();
 
@@ -298,6 +299,29 @@ async function handleTicketQR(
   }
 
   logStep("Ticket checked in", { ticketId: ticket.id });
+
+  // Send push notification to user when their ticket is checked in
+  const ticketUserId = ticket.ticket_orders?.user_id;
+  if (ticketUserId) {
+    try {
+      await sendPushIfEnabled(ticketUserId, {
+        title: '✅ Check-in επιτυχές!',
+        body: language === "el" 
+          ? `Καλωσήρθατε στο "${ticket.events?.title}"` 
+          : `Welcome to "${ticket.events?.title}"`,
+        tag: `ticket-checkin-${ticket.id}`,
+        data: {
+          url: `/event/${ticket.events?.id}`,
+          type: 'ticket_checked_in',
+          entityType: 'ticket',
+          entityId: ticket.id,
+        },
+      }, supabaseAdmin);
+      logStep("Ticket check-in push sent", { userId: ticketUserId });
+    } catch (pushError) {
+      logStep("Ticket check-in push failed (non-fatal)", { error: pushError instanceof Error ? pushError.message : String(pushError) });
+    }
+  }
 
   return new Response(JSON.stringify({
     success: true,
@@ -437,6 +461,28 @@ async function handleOfferQR(
 
   logStep("Offer redeemed", { purchaseId: purchase.id });
 
+  // Send push notification to user when their offer is redeemed
+  if (purchase.user_id) {
+    try {
+      await sendPushIfEnabled(purchase.user_id, {
+        title: '✅ Προσφορά εξαργυρώθηκε!',
+        body: language === "el" 
+          ? `"${discount.title}" εξαργυρώθηκε επιτυχώς` 
+          : `"${discount.title}" redeemed successfully`,
+        tag: `offer-redeemed-${purchase.id}`,
+        data: {
+          url: '/dashboard-user/offers',
+          type: 'offer_redeemed',
+          entityType: 'offer',
+          entityId: purchase.id,
+        },
+      }, supabaseAdmin);
+      logStep("Offer redemption push sent", { userId: purchase.user_id });
+    } catch (pushError) {
+      logStep("Offer redemption push failed (non-fatal)", { error: pushError instanceof Error ? pushError.message : String(pushError) });
+    }
+  }
+
   return new Response(JSON.stringify({
     success: true,
     message: m.success,
@@ -549,6 +595,32 @@ async function handleReservationQR(
   }
 
   logStep("Reservation checked in", { reservationId: reservation.id });
+
+  // Send push notification to user when their reservation is checked in
+  if (reservation.user_id) {
+    try {
+      const locationName = isDirectReservation 
+        ? reservation.businesses?.name 
+        : reservation.events?.title;
+      
+      await sendPushIfEnabled(reservation.user_id, {
+        title: '✅ Check-in επιτυχές!',
+        body: language === "el" 
+          ? `Κράτηση για ${reservation.reservation_name} - Καλωσήρθατε!` 
+          : `Reservation for ${reservation.reservation_name} - Welcome!`,
+        tag: `reservation-checkin-${reservation.id}`,
+        data: {
+          url: '/dashboard-user/reservations',
+          type: 'reservation_checked_in',
+          entityType: 'reservation',
+          entityId: reservation.id,
+        },
+      }, supabaseAdmin);
+      logStep("Reservation check-in push sent", { userId: reservation.user_id });
+    } catch (pushError) {
+      logStep("Reservation check-in push failed (non-fatal)", { error: pushError instanceof Error ? pushError.message : String(pushError) });
+    }
+  }
 
   return new Response(JSON.stringify({
     success: true,

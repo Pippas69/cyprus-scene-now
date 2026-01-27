@@ -185,3 +185,12 @@ cron = "0 9 * * 1"
 
 [functions.test-push-notification]
 verify_jwt = false
+
+[functions.send-follower-notifications]
+verify_jwt = false
+
+[functions.send-follower-notifications.schedule]
+cron = "*/30 * * * *"
+
+[functions.send-event-update-notification]
+verify_jwt = true

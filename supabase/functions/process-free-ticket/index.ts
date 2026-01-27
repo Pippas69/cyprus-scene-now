@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
       const emailResponse = await supabase.functions.invoke("send-ticket-email", {
         body: {
           orderId: order.id,
+          userId: order.user_id,
           userEmail: order.customer_email,
           customerName: order.customer_name,
           eventTitle: event?.title || "Event",

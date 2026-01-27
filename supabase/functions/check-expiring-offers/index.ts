@@ -1,8 +1,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const logStep = (step: string, details?: unknown) => {
+  console.log(`[CHECK-EXPIRING-OFFERS] ${step}`, details ? JSON.stringify(details) : '');
 };
 
 Deno.serve(async (req) => {
@@ -16,7 +21,7 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Checking for expiring offers...');
+    logStep('Checking for expiring offers...');
 
     // Calculate the time 24 hours from now
     const twentyFourHoursFromNow = new Date();
@@ -37,11 +42,11 @@ Deno.serve(async (req) => {
       .gte('end_at', new Date().toISOString());
 
     if (offersError) {
-      console.error('Error fetching expiring offers:', offersError);
+      logStep('Error fetching expiring offers', { error: offersError });
       throw offersError;
     }
 
-    console.log(`Found ${expiringOffers?.length || 0} expiring offers`);
+    logStep(`Found ${expiringOffers?.length || 0} expiring offers`);
 
     if (!expiringOffers || expiringOffers.length === 0) {
       return new Response(
@@ -51,6 +56,7 @@ Deno.serve(async (req) => {
     }
 
     let notificationCount = 0;
+    let pushCount = 0;
 
     // For each expiring offer, find users who have favorited it
     for (const offer of expiringOffers) {
@@ -60,7 +66,7 @@ Deno.serve(async (req) => {
         .eq('discount_id', offer.id);
 
       if (favError) {
-        console.error(`Error fetching favorites for offer ${offer.id}:`, favError);
+        logStep(`Error fetching favorites for offer ${offer.id}`, { error: favError });
         continue;
       }
 
@@ -74,10 +80,12 @@ Deno.serve(async (req) => {
       );
 
       const businessName = (offer.businesses as any)?.name || 'A business';
+      const notifTitle = '⏰ Η προσφορά λήγει σύντομα!';
+      const notifMessage = `"${offer.title}" από ${businessName} λήγει σε ${hoursUntilExpiry} ώρες. Μην τη χάσεις!`;
 
       // Create notifications for each user
       for (const favorite of favoriteUsers) {
-        // Check if notification already exists for this user and offer
+        // Check if notification already exists for this user and offer (idempotency)
         const { data: existingNotification } = await supabase
           .from('notifications')
           .select('id')
@@ -88,26 +96,49 @@ Deno.serve(async (req) => {
           .single();
 
         if (existingNotification) {
-          console.log(`Notification already exists for user ${favorite.user_id} and offer ${offer.id}`);
+          logStep(`Notification already exists for user ${favorite.user_id} and offer ${offer.id}`);
           continue;
         }
 
+        // Create in-app notification
         const { error: notifError } = await supabase
           .from('notifications')
           .insert({
             user_id: favorite.user_id,
-            title: 'Offer Expiring Soon!',
-            message: `"${offer.title}" from ${businessName} expires in ${hoursUntilExpiry} hours. Don't miss out!`,
+            title: notifTitle,
+            message: notifMessage,
             type: 'expiring_offer',
             entity_type: 'discount',
             entity_id: offer.id,
           });
 
         if (notifError) {
-          console.error(`Error creating notification for user ${favorite.user_id}:`, notifError);
+          logStep(`Error creating notification for user ${favorite.user_id}`, { error: notifError });
         } else {
           notificationCount++;
-          console.log(`Created notification for user ${favorite.user_id} about offer "${offer.title}"`);
+          logStep(`Created notification for user ${favorite.user_id} about offer "${offer.title}"`);
+        }
+
+        // Send push notification
+        try {
+          const pushResult = await sendPushIfEnabled(favorite.user_id, {
+            title: notifTitle,
+            body: notifMessage,
+            tag: `expiring-offer-${offer.id}`,
+            data: {
+              url: `/offer/${offer.id}`,
+              type: 'expiring_offer',
+              entityType: 'discount',
+              entityId: offer.id,
+            },
+          }, supabase);
+
+          if (pushResult.sent > 0) {
+            pushCount++;
+            logStep(`Push sent for user ${favorite.user_id}`, { sent: pushResult.sent });
+          }
+        } catch (pushError) {
+          logStep(`Push error for user ${favorite.user_id} (non-fatal)`, { error: pushError instanceof Error ? pushError.message : String(pushError) });
         }
       }
     }
@@ -116,13 +147,14 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         message: 'Successfully checked expiring offers',
         offersChecked: expiringOffers.length,
-        notificationsCreated: notificationCount
+        notificationsCreated: notificationCount,
+        pushNotificationsSent: pushCount,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in check-expiring-offers function:', error);
+    logStep('Error in check-expiring-offers function', { error: error instanceof Error ? error.message : 'Unknown error' });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
