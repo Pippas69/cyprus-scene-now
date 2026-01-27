@@ -255,8 +255,8 @@ export const ProfileBoostDialog = ({
                   <Label>{t.startDate}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                      <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm lg:text-base">
+                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                         {format(startDate, "PP")}
                       </Button>
                     </PopoverTrigger>
@@ -274,8 +274,8 @@ export const ProfileBoostDialog = ({
                   <Label>{t.endDate}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                      <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm lg:text-base">
+                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                         {format(endDate, "PP")}
                       </Button>
                     </PopoverTrigger>

@@ -301,8 +301,8 @@ const EventBoostDialog = ({
                     <Label>{language === "el" ? "Ημερομηνία Έναρξης" : "Start Date"}</Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
+                      <Button variant="outline" className="w-full justify-start text-left text-xs sm:text-sm lg:text-base">
+                          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                           {format(startDate, "PPP")}
                         </Button>
                       </PopoverTrigger>
