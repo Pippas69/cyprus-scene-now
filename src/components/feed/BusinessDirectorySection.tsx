@@ -237,7 +237,8 @@ export const BusinessDirectorySection = ({
 };
 
 // Separate component for business card
-// View = card became visible to the user (NOT a click)
+// View = card became visible to the user in feed (NOT a click)
+// This is the PRIMARY source of profile_view tracking
 const BusinessCard = ({ 
   business, 
   index, 
@@ -250,6 +251,8 @@ const BusinessCard = ({
   showStudentDiscountBadges: boolean;
 }) => {
   const cardRef = useRef<HTMLAnchorElement | null>(null);
+  
+  // PROFILE VIEW = user sees the business card in the feed (visibility tracking)
   const handleView = useCallback(() => {
     trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'feed' });
   }, [business.id]);
@@ -265,7 +268,8 @@ const BusinessCard = ({
         ref={cardRef}
         to={`/business/${business.id}`}
         onClick={() => {
-          // Interaction = click to open profile (NOT a view)
+          // PROFILE INTERACTION = user clicks on the business card to open the profile
+          // This is separate from VIEW (seeing the card) - it's an active engagement
           trackEngagement(business.id, 'profile_click', 'business', business.id, { source: 'feed' });
         }}
         className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"

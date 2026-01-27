@@ -195,10 +195,14 @@ const BusinessProfile = () => {
   useEffect(() => {
     if (businessId) {
       fetchBusinessData();
-      // Do NOT count views when navigation originated from the user's dashboard sections.
+      // IMPORTANT: profile_view is tracked at the SOURCE (feed card visibility, map pin click, search result)
+      // Opening the profile page itself is an INTERACTION (profile_click), not a view.
+      // Views = seeing the profile card in feed/map/search
+      // Interactions = clicking to open the profile page
       const src = new URLSearchParams(location.search).get('src');
       if (src !== 'dashboard_user') {
-        trackEngagement(businessId, 'profile_view', 'business', businessId);
+        // Track as interaction (user clicked to open profile), NOT as view
+        trackEngagement(businessId, 'profile_click', 'business', businessId, { source: 'direct_navigation' });
       }
     }
   }, [businessId, location.search]);
