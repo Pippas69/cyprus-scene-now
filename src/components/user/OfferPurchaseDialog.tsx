@@ -101,21 +101,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const [checkingCapacity, setCheckingCapacity] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
 
-  // Track when offer dialog is opened (this is when a "view" occurs)
-  const hasTrackedView = useRef(false);
-  
-  // Track offer view when dialog opens
-  useEffect(() => {
-    if (isOpen && offer?.id && !hasTrackedView.current) {
-      hasTrackedView.current = true;
-      // Track the offer view - this is when the user actually sees the offer details
-      trackDiscountView(offer.id, 'direct');
-    }
-    
-    if (!isOpen) {
-      hasTrackedView.current = false;
-    }
-  }, [isOpen, offer?.id]);
+  // NOTE: View tracking is handled by OfferCard when the card becomes visible
+  // DO NOT track views here - "Εξαργύρωσε" click is ONLY an interaction, not a view
 
   // Reset state when dialog opens/closes
   useEffect(() => {
