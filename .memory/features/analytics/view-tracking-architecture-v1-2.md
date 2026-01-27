@@ -17,11 +17,13 @@ Updated: 2026-01-27
 **Tracked Sources**:
 1. **Feed visibility** - Card becomes visible in feed (`source: 'feed'`)
 2. **Map pin click** - User clicks on business pin on map (`source: 'map_pin_click'`)
-3. **Search results** - Business appears in search results (visibility)
+3. **Map list visibility** - Business appears in the business list sheet on map (`source: 'map_list_visibility'`)
+4. **Search results** - Business appears in search results (visibility)
 
 **Tracking Location**: 
 - `src/components/feed/BusinessDirectorySection.tsx` - via `useViewTracking` on card visibility
 - `src/components/map/RealMap.tsx` - on pin click (onClick handler)
+- `src/components/map/BusinessListSheet.tsx` - when sheet opens and businesses become visible
 
 **Database**: `engagement_events` where `event_type = 'profile_view'`
 
