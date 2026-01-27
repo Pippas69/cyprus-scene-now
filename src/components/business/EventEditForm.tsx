@@ -1059,7 +1059,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                                 value={tier.maxPeople}
                                 onChange={(e) => updateTier(type, index, { maxPeople: parseInt(e.target.value) || 1 })}
                                 min={tier.minPeople}
-                                className="w-12 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm"
+                                className="w-14 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm px-1.5 sm:px-3"
                               />
                               <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">
                                 {language === 'el' ? 'άτ.' : 'ppl'}
