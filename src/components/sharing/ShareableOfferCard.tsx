@@ -11,6 +11,7 @@ interface ShareableOfferCardProps {
     percent_off?: number | null;
     special_deal_text?: string | null;
     end_at: string;
+    offer_image_url?: string | null;
     businessName?: string;
     businessCoverUrl?: string;
     businessLogoUrl?: string;
@@ -34,7 +35,7 @@ export const ShareableOfferCard = forwardRef<HTMLDivElement, ShareableOfferCardP
     };
 
     const offerText = getOfferText();
-    const coverImage = offer.businessCoverUrl || offer.businessLogoUrl;
+    const coverImage = offer.offer_image_url || offer.businessCoverUrl || offer.businessLogoUrl;
 
     if (variant === 'story') {
       // Story format: 1080x1920 (9:16 aspect ratio)

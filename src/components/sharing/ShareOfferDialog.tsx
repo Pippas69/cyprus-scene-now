@@ -10,6 +10,7 @@ interface ShareOfferDialogProps {
     percent_off?: number | null;
     special_deal_text?: string | null;
     end_at: string;
+    offer_image_url?: string | null;
     businesses: {
       id: string;
       name: string;
@@ -38,6 +39,7 @@ export const ShareOfferDialog = ({
         percent_off: offer.percent_off,
         special_deal_text: offer.special_deal_text,
         end_at: offer.end_at,
+        offer_image_url: offer.offer_image_url ?? null,
         businesses: {
           id: offer.businesses.id,
           name: offer.businesses.name,
