@@ -183,6 +183,24 @@ Deno.serve(async (req) => {
       
       reservationId = reservation.id;
       logStep("Reservation created", { reservationId });
+
+      // Trigger reservation notifications (user + business)
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-reservation-notification`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            reservationId,
+            type: "new",
+          }),
+        });
+        logStep("Reservation notification sent");
+      } catch (notifError) {
+        logStep("Reservation notification error", notifError);
+      }
     }
 
     // Generate unique QR token
@@ -273,6 +291,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           purchaseId: purchase.id,
+          userId: user.id,
           userEmail: user.email,
           userName,
           offerTitle: discount.title,
