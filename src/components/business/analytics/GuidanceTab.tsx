@@ -189,7 +189,7 @@ const translations = {
     pdfConclusionPending: 'Awaiting application choice from the business owner.',
     // Metrics sections
     newCustomersFromProfile: 'New Customers from Featured Profile',
-    newCustomersDescription: 'These customers came because your profile appears featured on FOMO.',
+    newCustomersDescription: 'These customers came because your profile appears featured on ΦΟΜΟ.',
     newCustomersTooltip: 'Users who visited since your profile went on a paid plan. Counts only verified physical visits: QR check-ins from reservations made directly through your profile.',
     boostSpent: 'Boost Money',
     boostSpentTooltip: 'How much money was spent on boost.',
@@ -199,9 +199,9 @@ const translations = {
     newCustomer: 'new customer was acquired',
     newCustomers: 'new customers were acquired',
     revenueFromBoost: 'Revenue from Boost',
-    revenueFromBoostTooltip: 'Revenue from tickets and reservations with minimum charge. Amount includes FOMO commission.',
+    revenueFromBoostTooltip: 'Revenue from tickets and reservations with minimum charge. Amount includes ΦΟΜΟ commission.',
     netRevenue: 'Net Revenue',
-    netRevenueTooltip: 'Revenue after deducting FOMO commission.',
+    netRevenueTooltip: 'Revenue after deducting ΦΟΜΟ commission.',
     onlyPaidEvents: 'Includes only paid tickets and reservations with payment (minimum charge).',
     noNewCustomersYet: 'No new customers yet.',
     noBoostData: 'No boost data available.',
@@ -532,13 +532,24 @@ const ProfileMetricsSection: React.FC<{
                   <Info className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               </DialogTrigger>
-              <DialogContent className="max-w-sm">
-                <DialogHeader>
-                  <DialogTitle>{(t as any).newCustomersFromProfile}</DialogTitle>
-                  <DialogDescription className="pt-2">
-                    {(t as any).newCustomersTooltip}
-                  </DialogDescription>
+              <DialogContent className="max-w-[280px] sm:max-w-md p-3 sm:p-6 pr-10 sm:pr-6">
+                <DialogHeader className="pb-2 sm:pb-4 pr-2 sm:pr-0">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    </div>
+                    <div>
+                      <DialogTitle className="text-sm sm:text-lg">{(t as any).visitsTooltipTitle}</DialogTitle>
+                      <DialogDescription className="text-[10px] sm:text-sm">{(t as any).newCustomersFromProfile}</DialogDescription>
+                    </div>
+                  </div>
                 </DialogHeader>
+                <div className="space-y-2 sm:space-y-4 pt-1 sm:pt-2">
+                  <div className="p-2 sm:p-4 bg-muted/50 rounded-lg">
+                    <p className="text-xl sm:text-3xl font-bold text-primary">{newCustomers > 0 ? newCustomers.toLocaleString() : '—'}</p>
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground whitespace-pre-line">{(t as any).profileVisitsTooltipText}</p>
+                </div>
               </DialogContent>
             </Dialog>
           </div>
