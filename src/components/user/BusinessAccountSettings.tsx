@@ -765,7 +765,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
              {/* Weekly Summary (THIRD) */}
              <div className="flex items-center justify-between py-3 border-b border-border">
                <div className="flex items-center gap-2">
-                 <BarChart3 className="h-4 w-4 text-primary" />
+                 <BarChart3 className="h-5 w-5 text-primary" />
                  <div>
                    <Label htmlFor="weekly-summary" className="font-medium">{t.weeklySummary}</Label>
                    <p className="text-xs text-muted-foreground">
