@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 // Force cache refresh - v1
 const corsHeaders = {
@@ -159,6 +160,19 @@ Deno.serve(async (req) => {
                 html: emailHtml,
               });
               logStep("Business notification sent", { businessEmail: businessOwner.email });
+
+              // Send push notification to business owner
+              const pushResult = await sendPushIfEnabled(purchase.discounts.businesses.user_id, {
+                title: '⏰ Πληρωμή έληξε',
+                body: `Κράτηση ακυρώθηκε - ${customer?.name || 'Πελάτης'}`,
+                tag: `expired-reservation-${purchase.id}`,
+                data: {
+                  url: '/dashboard-business/reservations',
+                  type: 'payment_expired',
+                  entityType: 'reservation',
+                },
+              }, supabaseAdmin);
+              logStep("Push notification sent to business", pushResult);
             } catch (emailError) {
               console.error("Error sending business notification:", emailError);
             }

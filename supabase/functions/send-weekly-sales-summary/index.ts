@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -329,6 +330,20 @@ Deno.serve(async (req) => {
             totalOfferRedemptions,
             totalRevenue
           );
+          
+          // Send push notification to business owner
+          const pushResult = await sendPushIfEnabled(business.user_id, {
+            title: '📊 Εβδομαδιαία Σύνοψη',
+            body: `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | €${(totalRevenue / 100).toFixed(2)}`,
+            tag: `weekly-summary-${business.id}`,
+            data: {
+              url: '/dashboard-business/analytics',
+              type: 'weekly_sales_summary',
+              entityType: 'business',
+              entityId: business.id,
+            },
+          }, supabase);
+          logStep("Push notification sent", pushResult);
         }
       } catch (bizError: any) {
         logStep("Error processing business", { businessId: business.id, error: bizError.message });

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 // Force cache refresh - v1
 const corsHeaders = {
@@ -182,6 +183,20 @@ serve(async (req) => {
           `,
         });
         console.log("Refund notification email sent to:", userProfile.email);
+
+        // Send push notification
+        const pushResult = await sendPushIfEnabled(purchase.user_id, {
+          title: '❌ Κράτηση απορρίφθηκε',
+          body: `Επιστροφή €${refundAmount} επεξεργάστηκε`,
+          tag: `refund-${purchase.id}`,
+          data: {
+            url: '/dashboard-user/offers',
+            type: 'reservation_declined_refund',
+            entityType: 'purchase',
+            entityId: purchase.id,
+          },
+        }, supabase);
+        console.log("Push notification sent:", pushResult);
       } catch (emailError) {
         console.error("Error sending refund email:", emailError);
         // Don't fail the whole operation if email fails

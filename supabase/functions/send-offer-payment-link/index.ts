@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 // Force cache refresh - v1
 const corsHeaders = {
@@ -219,6 +220,20 @@ Deno.serve(async (req) => {
           html: emailHtml,
         });
         logStep("Payment link email sent");
+
+        // Send push notification
+        const pushResult = await sendPushIfEnabled(purchase.user_id, {
+          title: '✅ Κράτηση εγκρίθηκε!',
+          body: `Ολοκλήρωσε την πληρωμή για ${purchase.discounts.businesses.name}`,
+          tag: `payment-link-${purchase.id}`,
+          data: {
+            url: session.url,
+            type: 'offer_payment_link',
+            entityType: 'purchase',
+            entityId: purchase.id,
+          },
+        }, supabaseAdmin);
+        logStep("Push notification sent", pushResult);
       } catch (emailError) {
         console.error("Error sending email:", emailError);
       }

@@ -2,6 +2,7 @@
 // matching user interests
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -245,36 +246,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
             read: false,
           });
 
-          // Send push notification if enabled
+          // Send push notification if enabled using shared encrypted module
           if (pref.notification_push_enabled !== false) {
-            const { data: subs } = await supabase
-              .from('push_subscriptions')
-              .select('*')
-              .eq('user_id', profile.id);
-
-            if (subs && subs.length > 0) {
-              const payload = JSON.stringify({
-                title: item.is_boosted ? '⭐ Προτεινόμενο για Εσένα' : '🎯 Νέο περιεχόμενο για εσένα!',
-                body: `${item.title} από ${item.business_name}`,
-                icon: '/fomo-logo-new.png',
-                badge: '/fomo-logo-new.png',
-                tag: `suggestion-${item.id}`,
-                data: { url: item.type === 'event' ? `/event/${item.id}` : `/discount/${item.id}` },
-              });
-
-              for (const sub of subs) {
-                try {
-                  await fetch(sub.endpoint, {
-                    method: 'POST',
-                    headers: {
-                      'TTL': '86400',
-                      'Content-Type': 'application/json',
-                    },
-                    body: payload,
-                  });
-                } catch {}
-              }
-            }
+            const pushResult = await sendPushIfEnabled(profile.id, {
+              title: item.is_boosted ? '⭐ Προτεινόμενο για Εσένα' : '🎯 Νέο περιεχόμενο για εσένα!',
+              body: `${item.title} από ${item.business_name}`,
+              tag: `suggestion-${item.id}`,
+              data: {
+                url: item.type === 'event' ? `/event/${item.id}` : `/discount/${item.id}`,
+                type: 'personalized_suggestion',
+                entityType: item.type,
+                entityId: item.id,
+              },
+            }, supabase);
+            logStep('Push notification sent', { userId: profile.id, result: pushResult });
           }
 
           // Log the notification

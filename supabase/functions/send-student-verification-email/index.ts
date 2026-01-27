@@ -1,5 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -143,6 +144,28 @@ Deno.serve(async (req) => {
     });
 
     logStep("Email sent successfully", emailResponse);
+
+    // Get user_id from verification record to send push
+    const { data: verification } = await supabaseClient
+      .from('student_verifications')
+      .select('user_id')
+      .eq('id', verificationId)
+      .single();
+
+    if (verification?.user_id) {
+      const pushResult = await sendPushIfEnabled(verification.user_id, {
+        title: '🎓 Επαλήθευση Email',
+        body: `Έλεγξε το ${universityEmail} για τον σύνδεσμο επαλήθευσης`,
+        tag: `student-verification-${verificationId}`,
+        data: {
+          url: '/dashboard-user?tab=settings',
+          type: 'student_verification',
+          entityType: 'verification',
+          entityId: verificationId,
+        },
+      }, supabaseClient);
+      logStep("Push notification sent", pushResult);
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
