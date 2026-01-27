@@ -1,62 +1,127 @@
 
-# Fix: Missing `businessUserId` in Offer Claim Notification
+# Fix: Missing userId/businessUserId in Multiple Edge Functions
 
-## Problem Identified
-When an offer is claimed, the `claim-offer` function calls `send-offer-claim-business-notification` but **does not include the `businessUserId`** in the request payload. The notification function only sends a push notification if `businessUserId` is provided (line 178 check).
+## Problem Summary
 
-## Root Cause
-In `claim-offer/index.ts` lines 312-325, the payload is missing the `businessUserId` field even though the business user ID is available from the query as `discount.businesses.user_id`.
+After auditing all edge functions that trigger notifications, I found **3 functions** with missing user IDs that prevent push notifications from being sent:
+
+| Function | Issue | Impact |
+|----------|-------|--------|
+| `process-ticket-payment/index.ts` | Missing `userId` when calling `send-ticket-email` | User doesn't receive push for ticket purchase |
+| `process-ticket-payment/index.ts` | Missing `businessUserId` when calling `send-ticket-sale-notification` | Business owner doesn't receive push for ticket sale |
+| `process-ticket-payment/index.ts` | Uses legacy manual push call instead of shared helper | Redundant code, potential encryption issues |
+| `send-ticket-sale-notification/index.ts` | No push notification support at all | Business never gets push for ticket sales |
+| `process-offer-payment/index.ts` | Missing `userId` when calling `send-offer-email` | User doesn't receive push for offer purchase |
 
 ## Solution
-Add `businessUserId: discount.businesses.user_id` to the payload when calling the business notification function.
 
-## File to Modify
+### File 1: `supabase/functions/process-ticket-payment/index.ts`
 
-| File | Change |
-|------|--------|
-| `supabase/functions/claim-offer/index.ts` | Add `businessUserId` to the notification payload |
+**Changes:**
+1. Add `userId: order.user_id` to the payload when calling `send-ticket-email` (line 163-174)
+2. Add `eventId: order.event_id` to the payload for deep linking
+3. Add `businessUserId` to the payload when calling `send-ticket-sale-notification` (line 237-248)
+4. Remove the legacy manual push notification call (lines 256-282) since `send-ticket-sale-notification` will handle it
 
-## Code Change (lines 312-325)
+### File 2: `supabase/functions/send-ticket-sale-notification/index.ts`
 
-**Before:**
-```javascript
+**Changes:**
+1. Add `businessUserId?: string` to the `TicketSaleNotificationRequest` interface
+2. Import `sendPushIfEnabled` from the shared crypto module
+3. Add Supabase client initialization
+4. Add push notification call after sending the email
+
+### File 3: `supabase/functions/process-offer-payment/index.ts`
+
+**Changes:**
+1. Add `userId: user.id` to the payload when calling `send-offer-email` (line 194-218)
+
+## Code Changes
+
+### process-ticket-payment/index.ts
+
+**Add userId and eventId to send-ticket-email call (around line 163):**
+```typescript
 body: JSON.stringify({
-  businessEmail: businessOwner.email,
-  businessName: discount.businesses.name,
-  offerTitle: discount.title,
-  customerName: userName,
-  partySize,
-  claimedAt: new Date().toISOString(),
-  remainingPeople: newPeopleRemaining,
-  totalPeople: discount.total_people,
-  hasReservation: !!reservationId,
-  reservationDate: reservationData?.preferred_date,
-  reservationTime: reservationData?.preferred_time,
+  orderId,
+  userId: order.user_id,  // ADD THIS
+  eventId: order.event_id,  // ADD THIS
+  userEmail: orderDetails.customer_email,
+  eventTitle,
+  // ... rest of payload
 }),
 ```
 
-**After:**
-```javascript
+**Add businessUserId to send-ticket-sale-notification call (around line 237):**
+```typescript
 body: JSON.stringify({
-  businessEmail: businessOwner.email,
-  businessName: discount.businesses.name,
-  businessUserId: discount.businesses.user_id,  // <-- ADD THIS
-  offerTitle: discount.title,
-  customerName: userName,
-  partySize,
-  claimedAt: new Date().toISOString(),
-  remainingPeople: newPeopleRemaining,
-  totalPeople: discount.total_people,
-  hasReservation: !!reservationId,
-  reservationDate: reservationData?.preferred_date,
-  reservationTime: reservationData?.preferred_time,
+  orderId,
+  eventId: order.event_id,
+  eventTitle: eventData.title,
+  customerName: orderDetails?.customer_name || "",
+  ticketCount: ticketsToCreate.length,
+  totalAmount: order.total_cents || 0,
+  tierName: tierData?.name || "General",
+  businessEmail: profile.email,
+  businessName,
+  businessUserId,  // ADD THIS
 }),
 ```
 
-## Why This Was Missed
-The interface in `send-offer-claim-business-notification` marks `businessUserId` as optional (`businessUserId?: string`), which meant no error was thrown when it was missing. The function gracefully skipped the push notification because the check `if (data.businessUserId)` failed silently.
+**Remove legacy push call (lines 255-282):**
+Remove the entire block starting with `// Send push notification if enabled` since the notification function will handle this.
 
-## Expected Result
-After this fix, when a user redeems an offer:
-1. Business owner receives an email (already working)
-2. Business owner receives a push notification on their device (will now work)
+### send-ticket-sale-notification/index.ts
+
+**Add push notification support:**
+```typescript
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+
+interface TicketSaleNotificationRequest {
+  // ... existing fields
+  businessUserId?: string;  // ADD THIS
+}
+
+// Inside Deno.serve, after email send:
+if (businessUserId) {
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+  
+  const pushResult = await sendPushIfEnabled(businessUserId, {
+    title: '🎟️ Νέα Πώληση Εισιτηρίων!',
+    body: `${customerName || 'Κάποιος'} αγόρασε ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} για ${eventTitle}`,
+    tag: `ticket-sale-${orderId}`,
+    data: {
+      url: '/dashboard-business/ticket-sales',
+      type: 'ticket_sale',
+      orderId,
+      eventId,
+    },
+  }, supabaseClient);
+  logStep("Push notification sent", pushResult);
+}
+```
+
+### process-offer-payment/index.ts
+
+**Add userId to send-offer-email call (around line 194):**
+```typescript
+const emailPayload = {
+  purchaseId: purchase.id,
+  userId: user.id,  // ADD THIS
+  userEmail: user.email,
+  // ... rest of payload
+};
+```
+
+## Expected Results
+
+After these fixes:
+- Users will receive push notifications when they purchase tickets
+- Business owners will receive push notifications when tickets are sold
+- Users will receive push notifications when they purchase offers
+- Redundant legacy push code is removed for cleaner maintenance
