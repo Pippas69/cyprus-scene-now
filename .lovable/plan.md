@@ -1,90 +1,139 @@
 
-Goal: Business (and user) push notifications reliably arrive whenever a device is subscribed, by fixing a logic mismatch where the database “push enabled” flag stays `false` even after a successful subscription.
+# Comprehensive Push Notification Audit & Fixes
 
-What I found (root cause)
-- Your backend logs show:
-  - `[WEB-PUSH-CRYPTO] Push disabled for user {"userId":"8170..."}`
-  - and the notification function reports `{"sent":0,"failed":0,"skipped":true}`
-- The database confirms for your business user:
-  - `user_preferences.notification_push_enabled = false`
-  - but there IS an active `push_subscriptions` row for that same user.
-- In the frontend subscription hook (`src/hooks/usePushNotifications.ts`):
-  - `unsubscribe()` explicitly sets `notification_push_enabled` to `false`
-  - but `subscribe()` never sets it back to `true`
-- In the backend helper (`supabase/functions/_shared/web-push-crypto.ts`):
-  - `sendPushIfEnabled()` blocks all sends when `notification_push_enabled === false`, even if a subscription exists.
+## Summary
 
-So you were subscribed at the device level, but the preference flag remained false, causing the backend to skip sending.
+After auditing all 50+ edge functions, I found that the push notification infrastructure is **mostly well-implemented**. The key issue you experienced was the `notification_push_enabled` flag mismatch, which we already fixed. However, I identified **3 additional gaps** that need to be addressed for complete coverage.
 
-Fix strategy
-A) Make “Subscribe” explicitly enable pushes in preferences
-1) Update `src/hooks/usePushNotifications.ts`:
-   - After successfully saving/upserting into `push_subscriptions`, also upsert/update `user_preferences.notification_push_enabled = true`.
-   - Use an upsert so it works whether a preferences row exists or not.
-   - Keep `unsubscribe()` as-is (it already sets to false).
+---
 
-B) Repair existing users who are currently subscribed but flagged disabled
-2) Run a one-time database migration (safe + idempotent) to set:
-   - `notification_push_enabled = true` for any `user_id` that has at least one row in `push_subscriptions`.
-   This immediately fixes users like your Velora business account without needing manual toggles.
+## Functions Already Working (No Changes Needed)
 
-C) Make backend behavior more robust against future mismatches (optional but recommended)
-3) Update `supabase/functions/_shared/web-push-crypto.ts`:
-   - Adjust the “enabled” logic to avoid false negatives:
-     - Option 1 (recommended): Treat users as enabled if they have at least one active subscription, unless they explicitly disabled.
-     - Option 2 (minimal): Keep current preference gate, but add a “self-heal” check: if pref is false but subscriptions exist, log a warning and proceed (or flip the pref).
-   This is defensive programming to prevent a single missed preference update from killing push delivery again.
+These functions are properly integrated with push notifications:
 
-Implementation details (files to change)
-1) Frontend
-- File: `src/hooks/usePushNotifications.ts`
-- Change in `subscribe()`:
-  - After saving subscription to `push_subscriptions`, do:
-    - `upsert({ user_id: userId, notification_push_enabled: true })` into `user_preferences` (or `update` + fallback insert).
-  - Ensure errors are handled (if this update fails, we should treat subscription as incomplete and show a clear toast).
+| Function | User Push | Business Push | Status |
+|----------|-----------|---------------|--------|
+| `send-ticket-email` | ✅ Uses `sendPushIfEnabled` | N/A | Working |
+| `send-offer-email` | ✅ Uses `sendPushIfEnabled` | N/A | Working |
+| `send-offer-claim-email` | ✅ Uses `sendPushIfEnabled` | N/A | Working |
+| `send-offer-claim-business-notification` | N/A | ✅ Uses `sendPushIfEnabled` | Fixed earlier |
+| `send-ticket-sale-notification` | N/A | ✅ Uses `sendPushIfEnabled` | Fixed earlier |
+| `send-reservation-notification` | ✅ Uses `sendPushIfEnabled` | N/A | Working |
+| `send-event-reminders` | ✅ Uses `sendEncryptedPush` | N/A | Working |
+| `send-offer-expiry-reminders` | ✅ Uses `sendEncryptedPush` | N/A | Working |
+| `send-reservation-reminders` | ✅ Uses `sendEncryptedPush` | N/A | Working |
+| `send-daily-sales-summary` | N/A | ✅ Uses `sendPushIfEnabled` | Working |
+| `send-weekly-sales-summary` | N/A | ✅ Uses `sendPushIfEnabled` | Working |
+| `send-personalized-notifications` | ✅ Uses `sendPushIfEnabled` | N/A | Working |
+| `send-inventory-alert` | N/A | ✅ Uses `sendBusinessNotification` helper | Working |
+| `send-business-reservation-notification` | N/A | ✅ Uses `sendBusinessNotification` helper | Working |
 
-2) Database migration (one-time repair)
-- Migration SQL concept:
-  - Update user_preferences for all users who have push_subscriptions.
-  - Also insert missing user_preferences rows (if your schema allows) so users without a row still get enabled.
-- This avoids telling you “just toggle it off/on”.
+---
 
-3) Backend shared helper (optional but recommended)
-- File: `supabase/functions/_shared/web-push-crypto.ts`
-- Change:
-  - Strengthen `isUserPushEnabled()` / `sendPushIfEnabled()` decision so “subscription exists” isn’t ignored.
+## Gaps Identified (Need Fixes)
 
-How we’ll verify (step-by-step)
-1) Re-test with an explicit push test
-- In User Settings, press “Test Push”.
-- Expected backend log: it should no longer say “Push disabled for user”.
-- Expected response: `sent >= 1` (or `failed` with a real endpoint error if something else is wrong).
+### Gap 1: `send-reservation-notification` - Missing Business Push
 
-2) Re-test with a real business event
-- Claim/redeem another offer.
-- Check logs for `send-offer-claim-business-notification`:
-  - Expect `skipped:false` and `sent:1` (or `failed:1` with detailed reason if delivery fails).
+**Problem**: When a user makes a new reservation, the business owner receives an **email** but **no push notification**.
 
-3) If delivery still fails after these fixes
-- Next layer checks (we’ll do only if needed):
-  - Confirm browser permission state is `granted`
-  - Confirm service worker registration scope is correct (`/sw.js`)
-  - Confirm the endpoint type (Apple) is receiving encrypted payload correctly (we already see the Apple endpoint in your DB)
+**Location**: `supabase/functions/send-reservation-notification/index.ts`
 
-Expected outcome after these changes
-- Yes, you will get business notifications for offer claims (and ticket sales, etc.) as long as:
-  - the device is subscribed and permissions are granted, and
-  - the user hasn’t disabled push intentionally.
-- Your current issue specifically (Velora business account) will be fixed immediately by the repair migration + the subscribe() preference update, so it won’t regress.
+**Current behavior**: The function sends emails to business owners for new reservations, but doesn't call `sendPushIfEnabled` for the business owner.
 
-Notes / edge cases covered
-- Users who explicitly disable push remain disabled (unsubscribe sets the flag false).
-- Users who subscribe on multiple devices remain enabled (flag true, multiple subscription rows).
-- If a subscription exists but the pref is false due to a bug or old state, the migration and/or backend hardening resolves it.
+**Fix**: After sending the business email (around line 490), add a push notification call for the business owner using `businessData.user_id`.
 
-After you approve this plan, I will:
-- Implement the frontend hook fix,
-- Add the backend hardening (recommended),
-- Apply the one-time database repair migration,
-- Then guide you through a quick “Test Push” verification.
+---
 
+### Gap 2: `process-ticket-payment` - Need to confirm `userId` is passed to `send-ticket-email`
+
+**Problem**: We need to verify that the `userId` field we added earlier is actually being passed correctly.
+
+**Status**: Already fixed in earlier session - just need to verify it's deployed.
+
+---
+
+### Gap 3: `process-offer-payment` - Need to confirm `userId` is passed to `send-offer-email`
+
+**Problem**: We need to verify that the `userId` field we added earlier is actually being passed correctly.
+
+**Status**: Already fixed in earlier session - just need to verify it's deployed.
+
+---
+
+## Technical Implementation
+
+### Fix for Gap 1: `send-reservation-notification/index.ts`
+
+Add push notification for business owner after sending business email (around line 495):
+
+```typescript
+// After business email is sent, send push notification to business owner
+if (businessData?.user_id) {
+  try {
+    const pushResult = await sendPushIfEnabled(businessData.user_id, {
+      title: type === 'new' ? '📋 Νέα Κράτηση!' : 
+             type === 'cancellation' ? '🚫 Ακύρωση Κράτησης' : '📋 Ενημέρωση Κράτησης',
+      body: `${reservation.reservation_name} • ${formattedDateTime} • ${reservation.party_size} άτομα`,
+      tag: `reservation-business-${reservationId}`,
+      data: {
+        url: '/dashboard-business/reservations',
+        type: type === 'new' ? 'new_reservation' : 
+              type === 'cancellation' ? 'reservation_cancelled' : 'reservation_update',
+        entityType: 'reservation',
+        entityId: reservationId,
+      },
+    }, supabase);
+    console.log('Business push notification result:', pushResult);
+  } catch (pushError) {
+    console.log('Failed to send business push notification', pushError);
+  }
+}
+```
+
+---
+
+## Complete Notification Flow After Fixes
+
+### User Actions → User Notifications
+
+| Action | Email | In-App | Push |
+|--------|-------|--------|------|
+| User buys ticket | ✅ | ✅ | ✅ |
+| User buys offer | ✅ | ✅ | ✅ |
+| User claims free offer | ✅ | ✅ | ✅ |
+| User reservation confirmed | ✅ | ✅ | ✅ |
+| User reservation declined | ✅ | ✅ | ✅ |
+| Offer expiring (2h) | ✅ | ✅ | ✅ |
+| Event reminder (1d/2h) | ✅ | ✅ | ✅ |
+| Reservation reminder (2h) | ✅ | ✅ | ✅ |
+| Personalized suggestions | ✅ | ✅ | ✅ |
+
+### User Actions → Business Notifications
+
+| Action | Email | In-App | Push |
+|--------|-------|--------|------|
+| Ticket sold | ✅ | ✅ | ✅ |
+| Offer claimed | ✅ | ✅ | ✅ (Fixed earlier) |
+| Offer redeemed | ✅ | ✅ | ✅ |
+| New reservation | ✅ | ✅ | ⚠️ **Needs fix** |
+| Reservation cancelled | ✅ | ✅ | ⚠️ **Needs fix** |
+| Low inventory alert | ✅ | ✅ | ✅ |
+| Daily sales summary | ✅ | ✅ | ✅ |
+| Weekly sales summary | ✅ | ✅ | ✅ |
+
+---
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `supabase/functions/send-reservation-notification/index.ts` | Add business owner push notification after sending business email |
+
+---
+
+## Expected Outcome
+
+After this fix:
+- Business owners will receive push notifications for **all** new reservations (event-based and direct)
+- Business owners will receive push notifications when reservations are cancelled
+- Complete bidirectional push notification coverage for both users and businesses
