@@ -253,6 +253,24 @@ export function usePushNotifications(userId: string | null) {
       }
 
       console.log('[Push] Subscription saved successfully');
+
+      // CRITICAL: Also enable push in user_preferences so backend doesn't skip sending
+      const { error: prefError } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: userId,
+          notification_push_enabled: true,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id',
+        });
+
+      if (prefError) {
+        console.warn('[Push] Failed to update preferences, but subscription saved:', prefError);
+      } else {
+        console.log('[Push] Push enabled in user_preferences');
+      }
+
       setState(prev => ({ ...prev, isSubscribed: true, isLoading: false }));
       
       toast({
