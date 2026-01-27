@@ -88,11 +88,15 @@ export const UnifiedEventCard = ({
   const eventDate = new Date(event.start_at);
   const now = new Date();
 
-  // View tracking
+  // View tracking - trackEventView now handles source validation internally
   const cardRef = useRef<HTMLDivElement | null>(null);
   const handleView = useCallback(() => {
     if (disableViewTracking) return;
-    trackEventView(event.id, 'feed');
+    // Source detection - the actual filtering is done inside trackEventView
+    const path = window.location.pathname;
+    const source = path.includes('/ekdiloseis') ? 'direct' :
+                   path.includes('/feed') || path === '/' ? 'feed' : 'direct';
+    trackEventView(event.id, source as 'feed' | 'map' | 'search' | 'profile' | 'direct');
   }, [disableViewTracking, event.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
 

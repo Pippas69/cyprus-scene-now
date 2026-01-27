@@ -24,7 +24,7 @@ const isUserDashboardNoViewsEnabled = (): boolean => {
  */
 const isDashboardUserContext = (): boolean => {
   try {
-    // Strongest rule: if the UI explicitly marked this session as “user dashboard sections”,
+    // Strongest rule: if the UI explicitly marked this session as "user dashboard sections",
     // do not count ANY views.
     if (isUserDashboardNoViewsEnabled()) return true;
 
@@ -36,6 +36,65 @@ const isDashboardUserContext = (): boolean => {
     const src = new URLSearchParams(window.location?.search || "").get('src');
     if (src === 'dashboard_user') return true;
 
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * ALLOWED SOURCES for view tracking:
+ * 
+ * EVENT VIEWS:
+ * - /ekdiloseis page (public events discovery)
+ * - Feed (boosted events only - tracked via BoostedContentSection)
+ * - /event/:id page (direct event detail view)
+ * 
+ * OFFER VIEWS:
+ * - /offers page (public offers discovery)
+ * - Feed (boosted offers only - tracked via BoostedContentSection)
+ * - Offer detail dialog when opened
+ * 
+ * NOT ALLOWED (must never count as views):
+ * - /dashboard-user/* (My Events, My Reservations, My Offers)
+ * - /xartis (Map - views are NOT tracked here)
+ * - Business profiles (views are NOT tracked here)
+ */
+const isAllowedEventViewSource = (): boolean => {
+  try {
+    if (isDashboardUserContext()) return false;
+    
+    const path = window.location?.pathname || "";
+    
+    // Allowed: /ekdiloseis page
+    if (path === '/ekdiloseis' || path.startsWith('/ekdiloseis')) return true;
+    
+    // Allowed: /event/:id detail page
+    if (path.startsWith('/event/')) return true;
+    
+    // Allowed: Feed page (root / or /feed)
+    if (path === '/' || path === '/feed') return true;
+    
+    // NOT allowed: Map, business profiles, dashboard sections
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+const isAllowedOfferViewSource = (): boolean => {
+  try {
+    if (isDashboardUserContext()) return false;
+    
+    const path = window.location?.pathname || "";
+    
+    // Allowed: /offers page
+    if (path === '/offers' || path.startsWith('/offers')) return true;
+    
+    // Allowed: Feed page (root / or /feed) for boosted offers
+    if (path === '/' || path === '/feed') return true;
+    
+    // NOT allowed: Map, business profiles, dashboard sections
     return false;
   } catch {
     return false;
@@ -66,18 +125,24 @@ const getDeviceType = (): 'mobile' | 'tablet' | 'desktop' => {
   return 'desktop';
 };
 
-// Track event view
+// Track event view - ONLY from allowed sources
 export const trackEventView = async (
   eventId: string,
   source: 'feed' | 'map' | 'search' | 'profile' | 'direct'
 ) => {
   try {
-    if (isDashboardUserContext()) {
-      debugLog('[trackEventView] skipped', { eventId, source, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+    // Check if this is an allowed source for event views
+    if (!isAllowedEventViewSource()) {
+      debugLog('[trackEventView] skipped - not allowed source', { 
+        eventId, 
+        source, 
+        path: window.location?.pathname, 
+        search: window.location?.search 
+      });
       return;
     }
 
-    debugLog('[trackEventView] sending', { eventId, source, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+    debugLog('[trackEventView] sending', { eventId, source, path: window.location?.pathname, search: window.location?.search });
 
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -97,18 +162,24 @@ export const trackEventView = async (
   }
 };
 
-// Track discount view
+// Track discount view - ONLY from allowed sources
 export const trackDiscountView = async (
   discountId: string,
   source: 'feed' | 'event' | 'profile' | 'direct'
 ) => {
   try {
-    if (isDashboardUserContext()) {
-      debugLog('[trackDiscountView] skipped', { discountId, source, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+    // Check if this is an allowed source for offer views
+    if (!isAllowedOfferViewSource()) {
+      debugLog('[trackDiscountView] skipped - not allowed source', { 
+        discountId, 
+        source, 
+        path: window.location?.pathname, 
+        search: window.location?.search 
+      });
       return;
     }
 
-    debugLog('[trackDiscountView] sending', { discountId, source, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+    debugLog('[trackDiscountView] sending', { discountId, source, path: window.location?.pathname, search: window.location?.search });
 
     const { data: { user } } = await supabase.auth.getUser();
     
