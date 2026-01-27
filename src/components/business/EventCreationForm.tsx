@@ -1026,7 +1026,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                               value={tier.minPeople}
                               onChange={(e) => updateTier(type, index, { minPeople: parseInt(e.target.value) || 1 })}
                               min={1}
-                              className="w-12 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm"
+                              className="w-14 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm"
                               placeholder={t.fromPersons}
                             />
                             <span className="text-muted-foreground text-xs">-</span>
@@ -1035,7 +1035,7 @@ const EventCreationForm = ({ businessId }: EventCreationFormProps) => {
                               value={tier.maxPeople}
                               onChange={(e) => updateTier(type, index, { maxPeople: parseInt(e.target.value) || 1 })}
                               min={tier.minPeople}
-                              className="w-12 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm"
+                              className="w-14 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm"
                               placeholder={t.toPersons}
                             />
                             <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">
