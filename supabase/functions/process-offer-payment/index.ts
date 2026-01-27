@@ -193,6 +193,7 @@ Deno.serve(async (req) => {
       try {
         const emailPayload = {
           purchaseId: purchase.id,
+          userId: user.id,
           userEmail: user.email,
           userName: profile?.first_name || profile?.name || undefined,
           offerTitle: discount.title,

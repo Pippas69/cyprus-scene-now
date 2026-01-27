@@ -1,4 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +56,7 @@ interface TicketSaleNotificationRequest {
   tierName: string;
   businessEmail: string;
   businessName: string;
+  businessUserId?: string;
 }
 
 Deno.serve(async (req) => {
@@ -81,6 +84,7 @@ Deno.serve(async (req) => {
       tierName,
       businessEmail,
       businessName,
+      businessUserId,
     }: TicketSaleNotificationRequest = await req.json();
 
     logStep("Request data", { orderId, eventTitle, ticketCount, businessEmail });
@@ -150,6 +154,28 @@ Deno.serve(async (req) => {
     });
 
     logStep("Email sent successfully", emailResponse);
+
+    // Send push notification if businessUserId is provided
+    if (businessUserId) {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+
+      const pushResult = await sendPushIfEnabled(businessUserId, {
+        title: '🎟️ Νέα Πώληση Εισιτηρίων!',
+        body: `${customerName || 'Κάποιος'} αγόρασε ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} για ${eventTitle}`,
+        tag: `ticket-sale-${orderId}`,
+        data: {
+          url: '/dashboard-business/ticket-sales',
+          type: 'ticket_sale',
+          orderId,
+          eventId,
+        },
+      }, supabaseClient);
+      logStep("Push notification result", pushResult);
+    }
 
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
