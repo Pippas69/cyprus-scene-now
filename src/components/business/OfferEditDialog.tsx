@@ -265,7 +265,8 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
         .eq('id', offer.business_id)
         .single();
       
-      setExistingImageUrl(business?.cover_url || null);
+      // Use offer's own image if it has one, otherwise use business cover
+      setExistingImageUrl(offer.offer_image_url || business?.cover_url || null);
       
       setFormData({
         title: offer.title || '',
@@ -350,25 +351,50 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
     setIsSubmitting(true);
 
     try {
+      // Handle image upload if a new custom image was selected
+      let offerImageUrl: string | null | undefined = undefined; // undefined means don't update
+      
+      if (customImage) {
+        // Upload new custom image
+        const compressedFile = await compressImage(customImage, 1920, 1080, 0.85);
+        const fileName = `${offer.business_id}-${Date.now()}.jpg`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('offer-images')
+          .upload(fileName, compressedFile, { contentType: 'image/jpeg' });
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage.from('offer-images').getPublicUrl(fileName);
+        offerImageUrl = publicUrl;
+      }
+
+      const updateData: Record<string, unknown> = {
+        title: formData.title,
+        description: formData.description || null,
+        category: formData.category,
+        discount_type: formData.discountType,
+        percent_off: formData.discountType === 'percentage' ? formData.percentOff : null,
+        special_deal_text: formData.discountType === 'special_deal' ? formData.specialDealText : null,
+        valid_days: formData.allDays ? DAYS_OF_WEEK : formData.validDays,
+        valid_start_time: formData.allDay ? '00:00' : formData.validStartTime,
+        valid_end_time: formData.allDay ? '23:59' : formData.validEndTime,
+        start_at: formData.appearanceStartDate!.toISOString(),
+        end_at: formData.appearanceEndDate!.toISOString(),
+        total_people: formData.totalPeople,
+        max_people_per_redemption: formData.maxPeoplePerRedemption,
+        one_per_user: formData.onePerUser,
+        show_reservation_cta: formData.showReservationCta,
+      };
+
+      // Only update image URL if a new image was uploaded
+      if (offerImageUrl !== undefined) {
+        updateData.offer_image_url = offerImageUrl;
+      }
+
       const { error: updateError } = await supabase
         .from('discounts')
-        .update({
-          title: formData.title,
-          description: formData.description || null,
-          category: formData.category,
-          discount_type: formData.discountType,
-          percent_off: formData.discountType === 'percentage' ? formData.percentOff : null,
-          special_deal_text: formData.discountType === 'special_deal' ? formData.specialDealText : null,
-          valid_days: formData.allDays ? DAYS_OF_WEEK : formData.validDays,
-          valid_start_time: formData.allDay ? '00:00' : formData.validStartTime,
-          valid_end_time: formData.allDay ? '23:59' : formData.validEndTime,
-          start_at: formData.appearanceStartDate!.toISOString(),
-          end_at: formData.appearanceEndDate!.toISOString(),
-          total_people: formData.totalPeople,
-          max_people_per_redemption: formData.maxPeoplePerRedemption,
-          one_per_user: formData.onePerUser,
-          show_reservation_cta: formData.showReservationCta,
-        })
+        .update(updateData)
         .eq('id', offer.id);
 
       if (updateError) throw updateError;

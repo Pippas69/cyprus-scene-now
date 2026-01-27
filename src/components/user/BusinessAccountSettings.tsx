@@ -15,7 +15,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { toast } from '@/hooks/use-toast';
-import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, RotateCcw, BellRing, Mail, CalendarCheck, Ticket, Gift, BarChart3, Users, Sparkles } from 'lucide-react';
+import { Lock, Bell, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, BellRing, Mail, CalendarCheck, Ticket, Gift, BarChart3, Users, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -135,21 +135,16 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       weeklySummary: 'Εβδομαδιαία Σύνοψη',
       weeklySummaryDescription: 'Λάβετε email με σύνοψη της εβδομάδας: κρατήσεις, εισιτήρια, προσφορές, QR check-ins και καλύτερη μέρα',
       
-      privacy: 'Απόρρητο & Δεδομένα',
-      downloadData: 'Λήψη Δεδομένων Επιχείρησης',
-      downloadBusinessData: 'Λήψη Δεδομένων',
+      preferencesAndData: 'Προτιμήσεις & Δεδομένα',
       deleteAccount: 'Διαγραφή Λογαριασμού',
       deleteWarning: 'ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Αυτό θα διαγράψει τον λογαριασμό σας και όλα τα δεδομένα της επιχείρησης. Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.',
       deleteConfirm: 'Διαγραφή Λογαριασμού',
-      appPreferences: 'Προτιμήσεις Εφαρμογής',
       languagePreference: 'Γλώσσα',
       theme: 'Θέμα',
       light: 'Φωτεινό',
       dark: 'Σκοτεινό',
       system: 'Σύστημα',
       cancel: 'Ακύρωση',
-      restartTour: 'Επανεκκίνηση Περιήγησης',
-      restartTourDescription: 'Δείτε ξανά τον οδηγό εισαγωγής',
     },
     en: {
       accountSettings: 'Account Settings',
@@ -195,21 +190,16 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       weeklySummary: 'Weekly Summary',
       weeklySummaryDescription: 'Receive weekly email with summary: reservations, tickets, offers, QR check-ins and best day',
       
-      privacy: 'Privacy & Data',
-      downloadData: 'Download Business Data',
-      downloadBusinessData: 'Download Data',
+      preferencesAndData: 'Preferences & Data',
       deleteAccount: 'Delete Account',
       deleteWarning: 'WARNING: This will delete your account and all business data. This action cannot be undone.',
       deleteConfirm: 'Delete Account',
-      appPreferences: 'App Preferences',
       languagePreference: 'Language',
       theme: 'Theme',
       light: 'Light',
       dark: 'Dark',
       system: 'System',
       cancel: 'Cancel',
-      restartTour: 'Restart Onboarding Tour',
-      restartTourDescription: 'View the introduction guide again',
     },
   };
 
@@ -887,25 +877,51 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
         </CardContent>
       </Card>
 
-      {/* Privacy & Data */}
+      {/* Preferences & Data - Combined Section */}
       <Card>
         <CardHeader className="p-4 sm:p-6">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
-            <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
-            {t.privacy}
+            <SettingsIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            {t.preferencesAndData}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
+        <CardContent className="space-y-4 sm:space-y-5 p-4 sm:p-6 pt-0 sm:pt-0">
+          {/* Language */}
           <div className="space-y-1.5 sm:space-y-2">
-            <Label className="text-xs sm:text-sm">{t.downloadData}</Label>
-            <Button onClick={handleDownloadData} variant="outline" className="w-full text-xs sm:text-sm h-9 sm:h-10">
-              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-              {t.downloadBusinessData}
-            </Button>
+            <Label htmlFor="language" className="text-xs sm:text-sm">{t.languagePreference}</Label>
+            <Select
+              value={language}
+              onValueChange={(value: 'el' | 'en') => setLanguage(value)}
+            >
+              <SelectTrigger id="language" className="text-xs sm:text-sm h-9 sm:h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="el">Ελληνικά</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Separator />
+
+          {/* Theme */}
           <div className="space-y-1.5 sm:space-y-2">
-            <Label className="text-destructive text-xs sm:text-sm">{t.deleteAccount}</Label>
+            <Label htmlFor="theme" className="text-xs sm:text-sm">{t.theme}</Label>
+            <Select
+              value={preferences.theme_preference || 'system'}
+              onValueChange={(value) => updatePreferences({ theme_preference: value })}
+            >
+              <SelectTrigger id="theme" className="text-xs sm:text-sm h-9 sm:h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">{t.light}</SelectItem>
+                <SelectItem value="dark">{t.dark}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Delete Account */}
+          <div className="pt-3 sm:pt-4 border-t border-border/50 space-y-2 sm:space-y-3">
             <p className="text-[10px] sm:text-sm text-muted-foreground">{t.deleteWarning}</p>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -927,63 +943,6 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* App Preferences */}
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-sm sm:text-lg">{t.appPreferences}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label className="text-xs sm:text-sm">{t.restartTour}</Label>
-            <p className="text-[10px] sm:text-sm text-muted-foreground">{t.restartTourDescription}</p>
-            <Button 
-              variant="outline" 
-              onClick={async () => {
-                await resetOnboarding();
-                navigate('/dashboard-business');
-                window.location.reload();
-              }}
-              className="w-full text-xs sm:text-sm h-9 sm:h-10"
-            >
-              <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-              {t.restartTour}
-            </Button>
-          </div>
-          <Separator />
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="language" className="text-xs sm:text-sm">{t.languagePreference}</Label>
-            <Select
-              value={language}
-              onValueChange={(value: 'el' | 'en') => setLanguage(value)}
-            >
-              <SelectTrigger id="language" className="text-xs sm:text-sm h-9 sm:h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="el">Ελληνικά</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="theme" className="text-xs sm:text-sm">{t.theme}</Label>
-            <Select
-              value={preferences.theme_preference || 'system'}
-              onValueChange={(value) => updatePreferences({ theme_preference: value })}
-            >
-              <SelectTrigger id="theme" className="text-xs sm:text-sm h-9 sm:h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">{t.light}</SelectItem>
-                <SelectItem value="dark">{t.dark}</SelectItem>
-                <SelectItem value="system">{t.system}</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
