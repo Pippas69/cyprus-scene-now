@@ -195,17 +195,27 @@ const BusinessProfile = () => {
   useEffect(() => {
     if (businessId) {
       fetchBusinessData();
-      // IMPORTANT: profile_view is tracked at the SOURCE (feed card visibility, map pin click, search result)
-      // Opening the profile page itself is an INTERACTION (profile_click), not a view.
-      // Views = seeing the profile card in feed/map/search
-      // Interactions = clicking to open the profile page
+      // IMPORTANT: profile_click is tracked at the SOURCE (feed card click, map badge click, etc.)
+      // We only track here for DIRECT URL navigation (user typed URL or shared link)
+      // Do NOT track if user came from feed, map, or other internal navigation
+      // because those sources already track the interaction
       const src = new URLSearchParams(location.search).get('src');
-      if (src !== 'dashboard_user') {
-        // Track as interaction (user clicked to open profile), NOT as view
-        trackEngagement(businessId, 'profile_click', 'business', businessId, { source: 'direct_navigation' });
+      const from = (location.state as any)?.from as string | undefined;
+      
+      // Only track for truly direct navigation (no referrer state and not from dashboard)
+      if (src !== 'dashboard_user' && !from) {
+        // Check if this is a direct URL access (no internal navigation)
+        // We use a simple heuristic: if there's no from state, it's likely direct
+        const isDirectNavigation = !document.referrer || 
+          !document.referrer.includes(window.location.origin) ||
+          document.referrer.includes('/business/'); // Coming from another business profile
+        
+        if (isDirectNavigation) {
+          trackEngagement(businessId, 'profile_click', 'business', businessId, { source: 'direct_navigation' });
+        }
       }
     }
-  }, [businessId, location.search]);
+  }, [businessId, location.search, location.state]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
