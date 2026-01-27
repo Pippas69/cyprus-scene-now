@@ -653,14 +653,8 @@ const EventCreationForm = ({
       toast.success(t.eventCreated);
       setCreatedEventId(createdEvent.id);
 
-      // Open boost dialog if free entry and wants boost, or for other types
-      if (formData.eventType === 'free_entry' && wantsBoost) {
-        setBoostDialogOpen(true);
-      } else if (formData.eventType !== 'free_entry') {
-        setBoostDialogOpen(true);
-      } else {
-        navigate('/dashboard');
-      }
+      // Always show the optional boost prompt after publishing (same behavior as offer creation)
+      setBoostDialogOpen(true);
     } catch (err) {
       console.error('Error creating event:', err);
       toast.error(t.eventCreateFailed);
@@ -955,7 +949,7 @@ const EventCreationForm = ({
       {createdEventId && <EventBoostDialog eventId={createdEventId} eventTitle={formData.title} hasActiveSubscription={false} remainingBudgetCents={0} open={boostDialogOpen} onOpenChange={open => {
       setBoostDialogOpen(open);
       if (!open) {
-        navigate('/dashboard');
+        navigate('/dashboard-business/events');
       }
     }} />}
     </Card>;
