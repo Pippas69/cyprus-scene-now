@@ -166,7 +166,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       noShowPolicy: 'No-Show Policy',
       noShowPolicyDescription: '15 minute grace period - auto-cancelled if no check-in',
       cancellationPolicy: 'Cancellation Policy',
-      cancellationPolicyDescription: 'Up to 3 cancellations allowed. After 3 cancellations, 2-week restriction',
+      cancellationPolicyDescription: 'After 3 cancellations, two weeks restriction',
       allDays: 'All days',
       selectedDays: 'Selected days',
       timeWindow: 'Time Window',
@@ -521,33 +521,55 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                   <Card className="border-2">
                     <CollapsibleTrigger asChild>
                       <div className="p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="font-semibold text-sm sm:text-base whitespace-nowrap">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            {/* Time row with icon */}
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="h-6 w-6 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
+                                <Clock className="h-3 w-3 text-muted-foreground" />
+                              </div>
+                              <span className="font-medium text-sm sm:text-base">
                                 {formatTimeRange(slot.timeFrom, slot.timeTo)}
-                              </div>
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 mt-0.5 sm:mt-1">
-                                <Badge variant="secondary" className="text-[10px] sm:text-xs w-fit">
+                              </span>
+                            </div>
+                            
+                            {/* Badges row - Desktop: badges + days on same line */}
+                            <div className="hidden lg:flex items-center gap-2">
+                              <Badge className="bg-destructive/15 text-destructive hover:bg-destructive/20 border-0 text-xs px-2.5 py-0.5">
+                                <Users className="h-3 w-3 mr-1" />
+                                {t.slotCapacity}: {slot.capacity}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs px-2.5 py-0.5 border-border">
+                                <Users className="h-3 w-3 mr-1" />
+                                {t.slotMaxPartySize}: {slot.maxPartySize}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground ml-1">
+                                {getDaysLabel(slot.days)}
+                              </span>
+                            </div>
+                            
+                            {/* Badges row - Tablet/Mobile: badges on one line, days below */}
+                            <div className="lg:hidden">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge className="bg-destructive/15 text-destructive hover:bg-destructive/20 border-0 text-[10px] sm:text-xs px-2 py-0.5">
                                   <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                            {t.slotCapacity}: {slot.capacity}
+                                  {t.slotCapacity}: {slot.capacity}
                                 </Badge>
-                          <Badge variant="outline" className="text-[10px] sm:text-xs w-fit">
-                            <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                            {t.slotMaxPartySize}: {slot.maxPartySize}
-                          </Badge>
-                                <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
-                                  {getDaysLabel(slot.days)}
-                                </span>
+                                <Badge variant="outline" className="text-[10px] sm:text-xs px-2 py-0.5 border-border">
+                                  <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                                  {t.slotMaxPartySize}: {slot.maxPartySize}
+                                </Badge>
                               </div>
+                              <span className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 block">
+                                {getDaysLabel(slot.days)}
+                              </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                          
+                          {/* Chevron on right */}
+                          <div className="flex items-center flex-shrink-0 mt-1">
                             {slot.days.length === 0 && (
-                              <Badge variant="destructive" className="text-[9px] sm:text-xs hidden sm:flex">
+                              <Badge variant="destructive" className="text-[9px] sm:text-xs hidden sm:flex mr-2">
                                 <AlertTriangle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                                 {t.noDaysWarning}
                               </Badge>
