@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
     </div>
     <div style="background: #f8f9fa; padding: 20px; text-align: center;">
       <p style="margin: 0; font-size: 12px; color: #999;">
-        FOMO Cyprus - Business Dashboard
+        ΦΟΜΟ Cyprus - Business Dashboard
       </p>
     </div>
   </div>
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
 
             try {
               await resend.emails.send({
-                from: "FOMO <noreply@fomo.cy>",
+                from: "ΦΟΜΟ <noreply@fomo.cy>",
                 to: [businessOwner.email],
                 subject: `⏰ Payment Expired - Reservation Cancelled`,
                 html: emailHtml,

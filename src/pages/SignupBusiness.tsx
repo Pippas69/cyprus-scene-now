@@ -419,7 +419,7 @@ const SignupBusiness = () => {
                     id="inviteCode" 
                     {...register("inviteCode")} 
                     className="mt-1 uppercase font-mono tracking-wider pr-10" 
-                    placeholder="FOMO-XXXX-XXXX"
+                    placeholder="ΦΟΜΟ-XXXX-XXXX"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     {inviteCodeStatus === 'checking' && (

@@ -104,7 +104,7 @@ const AdminBetaManagement = () => {
 
   const generateCode = (): string => {
     const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-    let code = 'FOMO-';
+    let code = 'ΦΟΜΟ-';
     for (let i = 0; i < 4; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }

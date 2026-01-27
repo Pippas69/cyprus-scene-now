@@ -383,7 +383,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     recreateOfferBoost: language === "el" 
       ? "Για να ενεργοποιήσετε ξανά, δημιουργήστε νέα προώθηση από τις Προσφορές" 
       : "To reactivate, create a new boost from Offers",
-    revenue: language === "el" ? "Έσοδα μέσω FOMO" : "Revenue via FOMO",
+    revenue: language === "el" ? "Έσοδα μέσω ΦΟΜΟ" : "Revenue via ΦΟΜΟ",
     ticketsSold: language === "el" ? "Εισιτήρια" : "Tickets",
     reservations: language === "el" ? "Κρατήσεις" : "Reservations",
     guests: language === "el" ? "άτομα" : "guests",
