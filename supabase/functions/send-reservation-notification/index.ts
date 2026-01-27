@@ -494,6 +494,29 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Email API responses:', JSON.stringify(results, null, 2));
     console.log('Emails sent successfully to:', userProfile.email, businessEmail || 'no business email');
 
+    // Send push notification to business owner for new reservations and cancellations
+    if (businessData?.user_id && (type === 'new' || type === 'cancellation')) {
+      try {
+        const businessPushTitle = type === 'new' ? '📋 Νέα Κράτηση!' : '🚫 Ακύρωση Κράτησης';
+        const businessPushBody = `${reservation.reservation_name} • ${formattedDateTime} • ${reservation.party_size} άτομα`;
+        
+        const businessPushResult = await sendPushIfEnabled(businessData.user_id, {
+          title: businessPushTitle,
+          body: businessPushBody,
+          tag: `reservation-business-${reservationId}`,
+          data: {
+            url: '/dashboard-business/reservations',
+            type: type === 'new' ? 'new_reservation' : 'reservation_cancelled',
+            entityType: 'reservation',
+            entityId: reservationId,
+          },
+        }, supabase);
+        console.log('Business push notification result:', businessPushResult);
+      } catch (pushError) {
+        console.log('Failed to send business push notification', pushError);
+      }
+    }
+
     // Create in-app notification and send push notification
     if (inAppNotification) {
       try {
