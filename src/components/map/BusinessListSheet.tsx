@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { translateCity } from "@/lib/cityTranslations";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { getCategoryIcon } from "@/lib/unifiedCategories";
 import { getDirectionsUrl } from "@/lib/mapUtils";
+import { trackEngagement } from "@/lib/analyticsTracking";
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,36 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const viewedInSessionRef = useRef<Set<string>>(new Set());
+
+  // Track profile views when the sheet opens and businesses become visible
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    // Check if we're in dashboard user context - don't track views there
+    const src = new URLSearchParams(window.location.search).get('src');
+    if (src === 'dashboard_user' || window.location.pathname.startsWith('/dashboard-user')) {
+      return;
+    }
+
+    // Get the businesses that are currently displayed
+    const groupedBusinesses = PLAN_TIER_ORDER.reduce((acc, plan) => {
+      acc[plan] = businesses.filter(b => b.planSlug === plan);
+      return acc;
+    }, {} as Record<string, BusinessLocation[]>);
+
+    const premiumBusinesses = [...groupedBusinesses.elite, ...groupedBusinesses.pro];
+    const otherBusinesses = [...groupedBusinesses.basic, ...groupedBusinesses.free];
+    const displayedBusinesses = showAll ? [...premiumBusinesses, ...otherBusinesses] : premiumBusinesses;
+
+    // Track view for each business that becomes visible (only once per session)
+    displayedBusinesses.forEach((business) => {
+      if (!viewedInSessionRef.current.has(business.id)) {
+        viewedInSessionRef.current.add(business.id);
+        trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map_list_visibility' });
+      }
+    });
+  }, [isOpen, showAll, businesses]);
 
   // Unified badge class for both Profile and Directions - exactly the same
   const actionBadgeClass =
