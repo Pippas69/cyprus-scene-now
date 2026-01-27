@@ -58,7 +58,7 @@ export const BusinessBoostBadges = ({
           className={`absolute -top-1 -right-1 rounded-full p-0.5 ring-2 ring-background shadow-sm z-10 ${
             isElite
               ? "bg-gradient-to-br from-amber-400 to-yellow-600"
-              : "bg-gradient-to-br from-primary to-sunset-coral"
+              : "bg-[hsl(280,70%,58%)]"
           }`}
           aria-hidden
         >
