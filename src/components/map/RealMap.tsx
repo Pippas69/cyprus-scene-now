@@ -346,8 +346,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         if (target && lastFocusedRef.current !== focusBusinessId) {
           lastFocusedRef.current = focusBusinessId;
           const [lng, lat] = target.coordinates;
-
-          trackEngagement(target.id, 'profile_click', 'business', target.id, { source: 'map_link' });
+          // URL navigation to specific business = profile INTERACTION (user clicked a link)
+          trackEngagement(target.id, 'profile_click', 'business', target.id, { source: 'url_navigation' });
           map.current.flyTo({ center: [lng, lat], zoom: 15, duration: 800, essential: true });
           setTimeout(() => openBusinessPopup(target), 500);
           return;
@@ -390,11 +390,11 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
             markerId={business.id}
             name={business.name}
             onClick={() => {
-              // Click on pin = profile VIEW (not just seeing it)
-              // BUT: never count views when navigation originated from user dashboard sections.
+              // PROFILE VIEW = user clicks on pin to see business info
+              // This counts as a VIEW because user is actively seeking to see the profile
               const src = new URLSearchParams(window.location.search).get('src');
               if (src !== 'dashboard_user') {
-                trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map' });
+                trackEngagement(business.id, 'profile_view', 'business', business.id, { source: 'map_pin_click' });
               }
 
               map.current?.flyTo({
@@ -451,8 +451,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   const handleBusinessListClick = (business: any) => {
     if (!map.current) return;
     const [lng, lat] = business.coordinates;
-    // Click from business list = profile INTERACTION (not view)
-    trackEngagement(business.id, 'profile_interaction', 'business', business.id, { source: 'map_list' });
+    // PROFILE INTERACTION = user clicks on "Profile" badge in business list
+    // This is an INTERACTION because user is actively engaging (clicking) to navigate
+    trackEngagement(business.id, 'profile_interaction', 'business', business.id, { source: 'map_list_badge' });
     map.current.flyTo({ center: [lng, lat], zoom: 15, duration: 800, essential: true });
     setTimeout(() => openBusinessPopup(business), 500);
   };
