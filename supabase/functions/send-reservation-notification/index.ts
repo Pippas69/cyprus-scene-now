@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -505,38 +506,23 @@ const handler = async (req: Request): Promise<Response> => {
           entity_type: 'reservation',
           entity_id: reservationId,
           deep_link: inAppNotification.deep_link,
-          delivered_at: new Date().toISOString(),
+        delivered_at: new Date().toISOString(),
         });
         console.log('In-app notification created for user', reservation.user_id);
         
-        // Send push notification
-        try {
-          const pushResponse = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseServiceKey}`,
-            },
-            body: JSON.stringify({
-              userId: reservation.user_id,
-              title: inAppNotification.title,
-              body: inAppNotification.message,
-              data: {
-                url: inAppNotification.deep_link,
-                type: inAppNotification.event_type,
-              },
-            }),
-          });
-          
-          if (pushResponse.ok) {
-            const pushResult = await pushResponse.json();
-            console.log('Push notification sent:', pushResult);
-          } else {
-            console.log('Push notification failed:', await pushResponse.text());
-          }
-        } catch (pushError) {
-          console.log('Error sending push notification:', pushError);
-        }
+        // Send push notification using shared encrypted module
+        const pushResult = await sendPushIfEnabled(reservation.user_id, {
+          title: inAppNotification.title,
+          body: inAppNotification.message,
+          tag: `reservation-${reservationId}`,
+          data: {
+            url: inAppNotification.deep_link,
+            type: inAppNotification.event_type,
+            entityType: 'reservation',
+            entityId: reservationId,
+          },
+        }, supabase);
+        console.log('Push notification result:', pushResult);
       } catch (notifError) {
         console.log('Failed to create in-app notification', notifError);
       }

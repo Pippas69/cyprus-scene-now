@@ -1,4 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -49,6 +51,7 @@ const wrapEmailContent = (content: string) => `
 interface OfferClaimBusinessNotificationRequest {
   businessEmail: string;
   businessName: string;
+  businessUserId?: string; // Added for push notifications
   offerTitle: string;
   customerName: string;
   partySize: number;
@@ -170,6 +173,27 @@ Deno.serve(async (req) => {
     });
 
     logStep("Email sent successfully", emailResponse);
+
+    // Send push notification to business owner if userId provided
+    if (data.businessUserId) {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+      
+      const pushResult = await sendPushIfEnabled(data.businessUserId, {
+        title: '🎁 Νέα διεκδίκηση προσφοράς!',
+        body: `${data.partySize} ${data.partySize === 1 ? 'άτομο' : 'άτομα'} για "${data.offerTitle}"`,
+        tag: `offer-claim-${Date.now()}`,
+        data: {
+          url: '/dashboard-business/offers',
+          type: 'offer_claim',
+          entityType: 'offer',
+        },
+      }, supabaseClient);
+      logStep("Push notification sent", pushResult);
+    }
 
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
