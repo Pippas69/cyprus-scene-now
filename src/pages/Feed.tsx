@@ -147,14 +147,17 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000,
   });
 
-  // Boosted offers (paid priority)
+  // Boosted offers (paid priority) - check status AND date range like events
   const { data: offerBoosts } = useQuery({
     queryKey: ["active-offer-boosts"],
     queryFn: async () => {
+      const now = new Date().toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("offer_boosts")
         .select("discount_id, targeting_quality, commission_percent, business_id")
-        .eq("active", true);
+        .eq("status", "active")
+        .lte("start_date", now)
+        .gte("end_date", now);
 
       if (error) {
         console.error("Error fetching offer boosts:", error);
