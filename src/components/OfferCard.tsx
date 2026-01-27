@@ -113,10 +113,15 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   const itemCount = discountItems?.length || 0;
   
   // View = card became visible to the user (NOT a click)
+  // Note: trackDiscountView now handles source validation internally
   const cardRef = useRef<HTMLDivElement | null>(null);
   const handleView = useCallback(() => {
     if (!offerData?.id) return;
-    trackDiscountView(offerData.id, 'feed');
+    // Source detection - the actual filtering is done inside trackDiscountView
+    const path = window.location.pathname;
+    const source = path.includes('/offers') ? 'direct' :
+                   path.includes('/feed') || path === '/' ? 'feed' : 'direct';
+    trackDiscountView(offerData.id, source as 'feed' | 'event' | 'profile' | 'direct');
   }, [offerData?.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
 

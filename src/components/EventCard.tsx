@@ -73,12 +73,13 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
   const [showShareDialog, setShowShareDialog] = useState(false);
 
   // Track event view when card is 50% visible
+  // Note: trackEventView now handles source validation internally
   useViewTracking(cardRef, () => {
     if (event.id) {
-      const source = window.location.pathname.includes('/profile') ? 'profile' :
-                     window.location.pathname.includes('/xartis') ? 'map' :
-                     window.location.pathname.includes('/search') ? 'search' :
-                     window.location.pathname.includes('/feed') ? 'feed' : 'direct';
+      // Source detection - the actual filtering is done inside trackEventView
+      const path = window.location.pathname;
+      const source = path.includes('/ekdiloseis') ? 'direct' :
+                     path.includes('/feed') || path === '/' ? 'feed' : 'direct';
       trackEventView(event.id, source as 'feed' | 'map' | 'search' | 'profile' | 'direct');
     }
   }, { threshold: 0.5 });
