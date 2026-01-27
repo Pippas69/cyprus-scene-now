@@ -148,7 +148,7 @@ serve(async (req) => {
         const feeRetained = (feeRetainedCents / 100).toFixed(2);
 
         await resend.emails.send({
-          from: "FOMO <noreply@fomo.cy>",
+          from: "ΦΟΜΟ <noreply@fomo.cy>",
           to: [userProfile.email],
           subject: "Your reservation was declined - Partial refund processed",
           html: `
@@ -177,8 +177,8 @@ serve(async (req) => {
               </div>
               
               <p style="color: #666;">The refund will appear on your payment method within 5-10 business days, depending on your bank.</p>
-              <p>We apologize for any inconvenience. Please feel free to browse other offers on FOMO!</p>
-              <p style="margin-top: 30px;">Best regards,<br>The FOMO Team</p>
+              <p>We apologize for any inconvenience. Please feel free to browse other offers on ΦΟΜΟ!</p>
+              <p style="margin-top: 30px;">Best regards,<br>The ΦΟΜΟ Team</p>
             </div>
           `,
         });

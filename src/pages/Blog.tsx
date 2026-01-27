@@ -136,7 +136,7 @@ const Blog = () => {
             transition={{ delay: 0.1 }}
             className="font-cinzel text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-6 leading-tight tracking-tight"
           >
-            {language === "el" ? "ΦΟΜΟ Blog" : "FOMO Blog"}
+            ΦΟΜΟ Blog
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}

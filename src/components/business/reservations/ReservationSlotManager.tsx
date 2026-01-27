@@ -122,7 +122,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       title: 'Availability Settings',
       description: 'Set up your time slots and capacity for reservations',
       enableReservations: 'Accept Reservations',
-      enableDescription: 'Allow reservations via FOMO',
+      enableDescription: 'Allow reservations via ΦΟΜΟ',
       enableDescriptionSub: '(Profile & Offers)',
       paused: 'Temporarily Paused',
       pausedDescription: 'Reservations are temporarily closed',

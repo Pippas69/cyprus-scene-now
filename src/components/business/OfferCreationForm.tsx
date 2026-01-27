@@ -122,7 +122,7 @@ const translations = {
     // Appearance
     byHours: "Με Ώρες",
     byDays: "Με Ημερομηνίες",
-    appearanceDesc: "Πόσο καιρό θα εμφανίζεται η προσφορά στο FOMO",
+    appearanceDesc: "Πόσο καιρό θα εμφανίζεται η προσφορά στο ΦΟΜΟ",
     customHours: "Προσαρμοσμένες ώρες",
     startDate: "Ημερομηνία Έναρξης",
     endDate: "Ημερομηνία Λήξης",
@@ -206,7 +206,7 @@ const translations = {
     // Appearance
     byHours: "By Hours",
     byDays: "By Days",
-    appearanceDesc: "How long the offer will appear in FOMO",
+    appearanceDesc: "How long the offer will appear in ΦΟΜΟ",
     customHours: "Custom hours",
     startDate: "Start Date",
     endDate: "End Date",

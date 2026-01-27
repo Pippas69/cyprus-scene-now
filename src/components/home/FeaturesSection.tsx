@@ -29,7 +29,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
       ],
     },
     en: {
-      title: "Why FOMO?",
+      title: "Why ΦΟΜΟ?",
       subtitle: "One platform, endless possibilities",
       features: [
         {
