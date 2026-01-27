@@ -1,7 +1,10 @@
 // Shared Web Push encryption module for iOS/Safari PWA compatibility
 // Implements ECDH + HKDF + AES-128-GCM + VAPID JWT (ES256)
 
-import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+// deno-lint-ignore no-explicit-any
+type SupabaseClient = any;
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[WEB-PUSH-CRYPTO] ${step}`, details ? JSON.stringify(details) : '');
