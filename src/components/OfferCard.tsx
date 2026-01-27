@@ -26,6 +26,7 @@ interface Offer {
   title: string;
   description: string | null;
   percent_off: number | null;
+  offer_image_url?: string | null;
   original_price_cents?: number | null;
   pricing_type?: 'single' | 'bundle';
   bundle_price_cents?: number | null;
@@ -75,6 +76,12 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
   const offerData = offer || discount;
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+
+  const imageUrl =
+    (offerData?.offer_image_url as string | null | undefined) ||
+    (offerData?.businesses?.cover_url as string | null | undefined) ||
+    (offerData?.businesses?.logo_url as string | null | undefined) ||
+    null;
 
   // Fetch items for bundle offers
   const { data: discountItems } = useQuery({
@@ -186,9 +193,9 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           className="block relative h-48 sm:h-40 overflow-hidden rounded-t-xl"
           aria-label={offerData.businesses.name}
         >
-          {offerData.businesses.cover_url || offerData.businesses.logo_url ? (
+          {imageUrl ? (
             <img
-              src={(offerData.businesses.cover_url || offerData.businesses.logo_url) as string}
+              src={imageUrl}
               alt={offerData.businesses.name}
               className="absolute inset-0 h-full w-full object-cover"
               loading="lazy"
@@ -341,6 +348,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             percent_off: offerData.percent_off,
             special_deal_text: offerData.special_deal_text,
             end_at: offerData.end_at,
+            offer_image_url: offerData.offer_image_url ?? null,
             businesses: {
               id: offerData.business_id,
               name: offerData.businesses.name,

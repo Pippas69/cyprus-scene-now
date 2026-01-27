@@ -180,7 +180,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         .from("discounts")
         .select(
           `
-          id, title, description, percent_off, original_price_cents,
+          id, title, description, percent_off, original_price_cents, offer_image_url,
           start_at, end_at, business_id, terms, max_per_user,
           valid_days, valid_start_time, valid_end_time,
           businesses!inner (id, name, logo_url, cover_url, city, verified, accepts_direct_reservations, reservation_time_slots, reservation_days)

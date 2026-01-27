@@ -128,6 +128,7 @@ interface ShareSheetOffer {
   percent_off?: number | null;
   special_deal_text?: string | null;
   end_at: string;
+  offer_image_url?: string | null;
   businesses: {
     id: string;
     name: string;
@@ -373,7 +374,7 @@ export const PremiumShareSheet = ({
     }
 
     if (type === 'offer' && offer) {
-      const coverImage = offer.businesses.cover_url || offer.businesses.logo_url;
+      const coverImage = offer.offer_image_url || offer.businesses.cover_url || offer.businesses.logo_url;
       return (
         <div className="relative w-full h-40 rounded-2xl overflow-hidden">
           {coverImage ? (
@@ -718,6 +719,7 @@ export const PremiumShareSheet = ({
             percent_off: offer.percent_off,
             special_deal_text: offer.special_deal_text,
             end_at: offer.end_at,
+            offer_image_url: offer.offer_image_url ?? null,
             businessName: offer.businesses.name,
             businessCoverUrl: offer.businesses.cover_url ?? undefined,
             businessLogoUrl: offer.businesses.logo_url ?? undefined,
