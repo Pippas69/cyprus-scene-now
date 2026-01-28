@@ -250,6 +250,7 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
+              className="h-9 sm:h-10"
             />
           </div>
           <div className="space-y-2">
@@ -259,6 +260,7 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              className="h-9 sm:h-10"
             />
           </div>
           <div className="space-y-2">
@@ -268,6 +270,7 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              className="h-9 sm:h-10"
             />
           </div>
           <Button 
@@ -357,7 +360,7 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
               value={preferences.profile_visibility || 'public'}
               onValueChange={(value) => updatePreferences({ profile_visibility: value })}
             >
-              <SelectTrigger id="profile-visibility">
+              <SelectTrigger id="profile-visibility" className="h-9 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -414,7 +417,7 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
               value={language}
               onValueChange={(value: 'el' | 'en') => setLanguage(value)}
             >
-              <SelectTrigger id="language">
+              <SelectTrigger id="language" className="h-9 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -429,7 +432,7 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
               value={preferences.theme_preference || 'system'}
               onValueChange={(value) => updatePreferences({ theme_preference: value })}
             >
-              <SelectTrigger id="theme">
+              <SelectTrigger id="theme" className="h-9 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
