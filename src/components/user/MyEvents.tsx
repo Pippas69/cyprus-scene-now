@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useUserRSVPs } from '@/hooks/useUserRSVPs';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -49,6 +49,24 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       if (error) throw error;
       return data || [];
     },
+  });
+
+  // Fetch active boosts for all events to determine boosted status
+  const { data: activeBoosts } = useQuery({
+    queryKey: ["active-event-boosts"],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("event_boosts")
+        .select("event_id")
+        .eq("status", "active")
+        .lte("start_date", now)
+        .gte("end_date", now);
+
+      if (error) throw error;
+      return new Set((data || []).map(b => b.event_id));
+    },
+    staleTime: 60000, // Cache for 1 minute
   });
 
   // Categorize tickets
@@ -125,6 +143,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
         {eventsList.map(item => {
           const event = isRsvp ? item.event : item;
           const key = isRsvp ? item.id : event.id;
+          const isBoosted = activeBoosts?.has(event.id) || false;
           return (
             <div key={key} className="relative">
               {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
@@ -133,6 +152,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   event={event}
                   language={language}
                   size="mobileFixed"
+                  isBoosted={isBoosted}
                   disableViewTracking
                   linkSearch="?src=dashboard_user"
                 />
@@ -142,6 +162,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   event={event}
                   language={language}
                   size="full"
+                  isBoosted={isBoosted}
                   disableViewTracking
                   linkSearch="?src=dashboard_user"
                 />
@@ -162,6 +183,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
         {eventsList.map(item => {
           const event = isRsvp ? item.event : item;
           const key = isRsvp ? item.id : event.id;
+          const isBoosted = activeBoosts?.has(event.id) || false;
           return (
             <div key={key} className="relative opacity-60">
               {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
@@ -170,6 +192,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   event={event}
                   language={language}
                   size="mobileFixed"
+                  isBoosted={isBoosted}
                   disableViewTracking
                   linkSearch="?src=dashboard_user"
                 />
@@ -179,6 +202,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   event={event}
                   language={language}
                   size="full"
+                  isBoosted={isBoosted}
                   disableViewTracking
                   linkSearch="?src=dashboard_user"
                 />
