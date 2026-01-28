@@ -95,7 +95,9 @@ export const UnifiedEventCard = ({
     // Source detection - the actual filtering is done inside trackEventView
     const path = window.location.pathname;
     const source = path.includes('/ekdiloseis') ? 'direct' :
-                   path.includes('/feed') || path === '/' ? 'feed' : 'direct';
+                   path.includes('/feed') || path === '/' || path === '/dashboard-business' || path === '/dashboard-business/'
+                     ? 'feed'
+                     : 'direct';
     trackEventView(event.id, source as 'feed' | 'map' | 'search' | 'profile' | 'direct');
   }, [disableViewTracking, event.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
