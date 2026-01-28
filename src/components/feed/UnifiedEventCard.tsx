@@ -24,6 +24,10 @@ interface UnifiedEventCardProps {
     interested_count?: number;
     going_count?: number;
     business_id?: string;
+    // Event type fields for badge logic
+    event_type?: string | null;
+    accepts_reservations?: boolean;
+    external_ticket_url?: string | null;
     businesses?: {
       id?: string;
       name: string;
@@ -50,6 +54,8 @@ const translations = {
     today: "Σήμερα",
     tomorrow: "Αύριο",
     free: "Δωρεάν",
+    reservation: "Κράτηση",
+    ticket: "Εισιτήριο",
     startsIn: "ξεκινά σε περίπου",
     minutes: "λεπτά"
   },
@@ -57,6 +63,8 @@ const translations = {
     today: "Today",
     tomorrow: "Tomorrow",
     free: "Free",
+    reservation: "Reservation",
+    ticket: "Ticket",
     startsIn: "starts in about",
     minutes: "minutes"
   }
@@ -134,8 +142,31 @@ export const UnifiedEventCard = ({
   const interestedCount = event.interested_count || 0;
   const goingCount = event.going_count || 0;
 
-  // Free badge check
-  const showFreeBadge = isFree || event.price_tier === "free";
+  // Determine entry type badge: Free (Δωρεάν), Reservation (Κράτηση), or Ticket (Εισιτήριο)
+  const getEntryType = (): 'free' | 'reservation' | 'ticket' | null => {
+    // If event_type is explicitly set, use it
+    if (event.event_type === 'ticket') return 'ticket';
+    if (event.event_type === 'reservation') return 'reservation';
+    if (event.event_type === 'free_entry') return 'free';
+    
+    // Fallback logic based on fields
+    if (event.external_ticket_url) return 'ticket';
+    if (event.accepts_reservations) return 'reservation';
+    if (isFree || event.price_tier === 'free') return 'free';
+    
+    return null;
+  };
+  
+  const entryType = getEntryType();
+  
+  const getEntryBadgeLabel = () => {
+    if (entryType === 'free') return t.free;
+    if (entryType === 'reservation') return t.reservation;
+    if (entryType === 'ticket') return t.ticket;
+    return null;
+  };
+  
+  const entryBadgeLabel = getEntryBadgeLabel();
 
   // Handle map click
   const handleMapClick = (e: React.MouseEvent) => {
@@ -201,9 +232,14 @@ export const UnifiedEventCard = ({
             </div>
           )}
 
-          {showFreeBadge && (
-            <Badge className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 border-0 z-10">
-              {t.free}
+          {entryBadgeLabel && (
+            <Badge className={cn(
+              "absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 border-0 z-10",
+              isBoosted 
+                ? "bg-gradient-to-r from-amber-500 to-orange-500" 
+                : "bg-gradient-to-r from-accent to-seafoam"
+            )}>
+              {entryBadgeLabel}
             </Badge>
           )}
         </div>
@@ -213,7 +249,7 @@ export const UnifiedEventCard = ({
           <h4 className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
             {event.title}
           </h4>
-          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground min-w-0">
             <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
             <span className="text-[10px] sm:text-xs truncate">{dateLabel}</span>
           </div>
@@ -288,10 +324,15 @@ export const UnifiedEventCard = ({
             </div>
           )}
 
-          {/* Free badge */}
-          {showFreeBadge && (
-            <Badge className="absolute bottom-2 right-2 bg-gradient-to-r from-accent to-seafoam text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10">
-              {t.free}
+          {/* Entry type badge */}
+          {entryBadgeLabel && (
+            <Badge className={cn(
+              "absolute bottom-2 right-2 text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10",
+              isBoosted 
+                ? "bg-gradient-to-r from-amber-500 to-orange-500" 
+                : "bg-gradient-to-r from-accent to-seafoam"
+            )}>
+              {entryBadgeLabel}
             </Badge>
           )}
         </Link>
@@ -300,15 +341,15 @@ export const UnifiedEventCard = ({
         <div className="p-2.5 sm:p-3 flex-1 flex flex-col gap-0.5">
           {/* Title */}
           <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
-            <h3 className="font-semibold text-sm leading-tight line-clamp-1 hover:text-primary transition-colors">
+            <h3 className="font-semibold text-sm leading-tight truncate hover:text-primary transition-colors">
               {event.title}
             </h3>
           </Link>
 
           {/* Date/Time with clock icon */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
             <Clock className="h-3 w-3 shrink-0 text-primary" />
-            <span className="text-xs">{dateLabel}</span>
+            <span className="text-xs truncate">{dateLabel}</span>
           </div>
 
           {/* Location with pin icon - fully clickable */}

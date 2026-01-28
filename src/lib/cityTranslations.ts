@@ -42,11 +42,31 @@ export const getCityDbValue = (city: string): string => {
 };
 
 /**
- * List of cities for dropdowns
+ * List of cities for dropdowns - STANDARD ORDER: Λεμεσός, Λευκωσία, Λάρνακα, Πάφος, Παραλίμνι, Αγία Νάπα
  */
 export const cyprusCities = {
-  el: ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"],
-  en: ["Nicosia", "Limassol", "Larnaca", "Paphos", "Paralimni", "Ayia Napa"],
+  el: ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"],
+  en: ["Limassol", "Nicosia", "Larnaca", "Paphos", "Paralimni", "Ayia Napa"],
+};
+
+/**
+ * Standard city order for sorting - used to sort dynamic city lists
+ */
+export const CITY_ORDER = ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
+
+/**
+ * Sort cities according to the standard order
+ */
+export const sortCitiesByStandardOrder = (cities: string[]): string[] => {
+  return [...cities].sort((a, b) => {
+    const indexA = CITY_ORDER.indexOf(a);
+    const indexB = CITY_ORDER.indexOf(b);
+    // If not in standard list, put at end
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
 };
 
 /**

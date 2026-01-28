@@ -237,14 +237,14 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
         {/* Content section - compact spacing */}
         <div className="p-3 space-y-1">
           {/* Title */}
-          <h3 className="font-bold text-sm leading-tight line-clamp-1">
+          <h3 className="font-bold text-sm leading-tight truncate">
             {offerData.title}
           </h3>
 
           {/* Expiry date */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
             <Calendar className="h-3.5 w-3.5 shrink-0" />
-            <span className="text-xs">{formatExpiryChip(offerData.end_at)}</span>
+            <span className="text-xs truncate">{formatExpiryChip(offerData.end_at)}</span>
           </div>
 
           {/* Location - fully clickable */}
