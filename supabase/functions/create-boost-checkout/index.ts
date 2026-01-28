@@ -63,8 +63,8 @@ Deno.serve(async (req) => {
 
     // 2-tier boost system with hourly and daily rates (in cents)
     const boostTiers = {
-      standard: { dailyRateCents: 3000, hourlyRateCents: 500, quality: 3.5 },  // €30/day, €5/hour
-      premium: { dailyRateCents: 8000, hourlyRateCents: 1200, quality: 5 },     // €80/day, €12/hour
+      standard: { dailyRateCents: 4000, hourlyRateCents: 550, quality: 3.5 },  // €40/day, €5.50/hour
+      premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 5 },     // €60/day, €8.50/hour
     };
 
     const tierData = boostTiers[tier as keyof typeof boostTiers];

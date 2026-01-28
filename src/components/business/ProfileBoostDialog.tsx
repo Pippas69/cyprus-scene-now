@@ -73,14 +73,14 @@ const translations = {
 
 const tiers = {
   standard: {
-    dailyRateCents: 3000,
-    hourlyRateCents: 500,
+    dailyRateCents: 4000,
+    hourlyRateCents: 550,
     icon: Zap,
     quality: 3.5,
   },
   premium: {
-    dailyRateCents: 8000,
-    hourlyRateCents: 1200,
+    dailyRateCents: 6000,
+    hourlyRateCents: 850,
     icon: Crown,
     quality: 5,
   },
