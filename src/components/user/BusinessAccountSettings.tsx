@@ -126,9 +126,9 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       creationAndBoostDescription: 'Ειδοποίηση όταν δημιουργείται επιτυχώς εκδήλωση, προσφορά ή boost',
       inventoryAlerts: 'Σχεδόν Εξαντλήθηκε & Εξαντλήθηκε',
       inventoryAlertsDescription: 'Ειδοποίηση όταν απομένουν 2 θέσεις ή εξαντληθούν κρατήσεις/εισιτήρια/προσφορές',
-      reservationStatus: 'Ακύρωση / No-show / Check-in',
+      reservationStatus: 'Ακύρωση/No-show/Check-in',
       reservationStatusDescription: 'Ειδοποίηση όταν πελάτης ακυρώσει, δεν εμφανιστεί ή κάνει check-in',
-      userEngagement: 'Όλες οι υπόλοιπες ειδοποιήσεις',
+      userEngagement: 'Υπόλοιπες ειδοποιήσεις',
       userEngagementDescription: 'Δημιουργία/boost, αλλαγή πλάνου, νέοι ακόλουθοι, RSVP',
       
       // Weekly summary
@@ -521,7 +521,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       <form onSubmit={businessProfileForm.handleSubmit(onBusinessProfileSubmit)}>
         <Card>
           <CardHeader>
-            <CardTitle>{businessT.basicInfo}</CardTitle>
+            <CardTitle className="text-base sm:text-lg">{businessT.basicInfo}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Images - Always side-by-side on ALL devices */}
@@ -615,39 +615,40 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
             {/* Categories - Hierarchical Selector */}
             <div>
-              <Label>Κατηγορίες (επιλέξτε μέχρι 2)</Label>
+              <Label className="text-xs sm:text-sm">{language === 'el' ? 'Κατηγορίες (επιλέξτε μέχρι 2)' : 'Categories (select up to 2)'}</Label>
               <div className="mt-2">
                 <BusinessCategorySelector
                   selectedCategories={selectedCategories}
                   onCategoryChange={handleCategoryChange}
                   language={language}
+                  compact
                 />
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <Label>{t.email}</Label>
-              <Input disabled value={userProfile?.email || ''} className="bg-muted/50" />
+              <Label className="text-xs sm:text-sm">{t.email}</Label>
+              <Input disabled value={userProfile?.email || ''} className="bg-muted/50 text-xs sm:text-sm h-8 sm:h-10" />
             </div>
 
             {/* User ID & Business ID Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-muted-foreground">{t.userId}</Label>
-                <p className="text-sm font-mono text-muted-foreground mt-1">{userId}</p>
+                <Label className="text-xs sm:text-sm text-muted-foreground">{t.userId}</Label>
+                <p className="text-[10px] sm:text-sm font-mono text-muted-foreground mt-1 break-all">{userId}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground">{t.businessId}</Label>
-                <p className="text-sm font-mono text-muted-foreground mt-1">{businessId}</p>
+                <Label className="text-xs sm:text-sm text-muted-foreground">{t.businessId}</Label>
+                <p className="text-[10px] sm:text-sm font-mono text-muted-foreground mt-1 break-all">{businessId}</p>
               </div>
             </div>
 
             {/* Save Button */}
-            <Button type="submit" className="w-full" disabled={profileLoading}>
+            <Button type="submit" className="w-full h-9 sm:h-10 text-xs sm:text-sm" disabled={profileLoading}>
               {profileLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                   {businessT.loading}
                 </>
               ) : (
@@ -664,11 +665,11 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       {/* Business Notifications - Grouped Toggles */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" />
+          <CardTitle className="text-base sm:text-lg font-semibold flex items-center gap-2">
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             {t.businessNotifications}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {t.businessNotificationsDescription}
           </p>
         </CardHeader>
@@ -726,8 +727,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                <div className="flex items-start gap-2 flex-1 min-w-0">
                  <CalendarCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                  <div className="min-w-0">
-                   <Label htmlFor="reservation-status" className="font-medium text-sm">{t.reservationStatus}</Label>
-                   <p className="text-xs text-muted-foreground">{t.reservationStatusDescription}</p>
+                   <Label htmlFor="reservation-status" className="font-medium text-[11px] sm:text-sm whitespace-nowrap">{t.reservationStatus}</Label>
+                   <p className="text-[10px] sm:text-xs text-muted-foreground">{t.reservationStatusDescription}</p>
                  </div>
                </div>
                <Switch
@@ -745,8 +746,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               <div className="flex items-start gap-2 flex-1 min-w-0">
                 <Ticket className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <div className="min-w-0">
-                  <Label htmlFor="inventory-alerts" className="font-medium text-sm whitespace-nowrap">{t.inventoryAlerts}</Label>
-                  <p className="text-xs text-muted-foreground">{t.inventoryAlertsDescription}</p>
+                  <Label htmlFor="inventory-alerts" className="font-medium text-[11px] sm:text-sm whitespace-nowrap">{t.inventoryAlerts}</Label>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">{t.inventoryAlertsDescription}</p>
                 </div>
               </div>
               <Switch
@@ -790,13 +791,11 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               <div className="flex items-start gap-2 flex-1 min-w-0">
                 <Users className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <div className="min-w-0">
-                   <Label htmlFor="user-engagement" className="font-medium text-sm">
-                     {language === 'el' ? 'Όλες οι υπόλοιπες ειδοποιήσεις' : t.userEngagement}
+                   <Label htmlFor="user-engagement" className="font-medium text-[11px] sm:text-sm whitespace-nowrap">
+                     {t.userEngagement}
                    </Label>
-                   <p className="text-xs text-muted-foreground">
-                     {language === 'el'
-                       ? 'Δημιουργία/boost, αλλαγή πλάνου, νέοι ακόλουθοι, RSVP'
-                       : t.userEngagementDescription}
+                   <p className="text-[10px] sm:text-xs text-muted-foreground">
+                     {t.userEngagementDescription}
                    </p>
                 </div>
               </div>

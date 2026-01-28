@@ -13,6 +13,8 @@ interface BusinessCategorySelectorProps {
   onCategoryChange: (categoryId: string, checked: boolean) => void;
   language: 'el' | 'en';
   maxSelections?: number;
+  /** Compact mode for mobile - smaller text */
+  compact?: boolean;
 }
 
 export const BusinessCategorySelector = ({
@@ -20,6 +22,7 @@ export const BusinessCategorySelector = ({
   onCategoryChange,
   language,
   maxSelections = 2,
+  compact = false,
 }: BusinessCategorySelectorProps) => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
@@ -73,7 +76,10 @@ export const BusinessCategorySelector = ({
           {selectedLabels.map((x) => (
             <span
               key={x.id}
-              className="inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
+              className={cn(
+                "inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-foreground",
+                compact ? "text-[10px] sm:text-xs" : "text-xs"
+              )}
             >
               {x.label}
             </span>
@@ -116,10 +122,13 @@ export const BusinessCategorySelector = ({
                     )}
                     onClick={hasSubOptions ? () => toggleExpand(category.id) : undefined}
                   >
-                    <span className="text-lg">{category.icon}</span>
-                    <span className="text-sm font-medium">{category.label}</span>
+                    <span className={cn("text-lg", compact && "text-base sm:text-lg")}>{category.icon}</span>
+                    <span className={cn("font-medium", compact ? "text-xs sm:text-sm" : "text-sm")}>{category.label}</span>
                     {subCount > 0 && (
-                      <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                      <span className={cn(
+                        "bg-primary/20 text-primary px-2 py-0.5 rounded-full",
+                        compact ? "text-[10px] sm:text-xs" : "text-xs"
+                      )}>
                         +{subCount}
                       </span>
                     )}
@@ -157,7 +166,8 @@ export const BusinessCategorySelector = ({
                         <label
                           htmlFor={subOption.id}
                           className={cn(
-                            "text-sm cursor-pointer transition-colors",
+                            "cursor-pointer transition-colors",
+                            compact ? "text-xs sm:text-sm" : "text-sm",
                             subIsSelected ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                           )}
                         >
