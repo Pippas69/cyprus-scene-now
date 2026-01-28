@@ -146,7 +146,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         `)
         .eq('business_id', businessId)
         .is('event_id', null)
-        .order('preferred_time', { ascending: true });
+        .order('preferred_time', { ascending: false }); // Most recent first
 
       if (error) throw error;
 
@@ -173,7 +173,33 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
 
-      setReservations(enrichedData);
+      // Sort: pending/confirmed first (by most recent), then completed/cancelled/no-show at the bottom
+      const isCompleted = (r: DirectReservation) => {
+        if (r.checked_in_at) return true; // Checked in
+        if (r.status === 'cancelled') return true; // Cancelled
+        // No-show check
+        if (r.status === 'accepted' && r.preferred_time) {
+          const slotTime = new Date(r.preferred_time);
+          const graceEnd = addMinutes(slotTime, 15);
+          if (isAfter(new Date(), graceEnd)) return true;
+        }
+        return false;
+      };
+
+      const pendingReservations = enrichedData.filter(r => !isCompleted(r));
+      const completedReservations = enrichedData.filter(r => isCompleted(r));
+      
+      // Sort each group by preferred_time descending (most recent first)
+      const sortByTime = (a: DirectReservation, b: DirectReservation) => {
+        const timeA = a.preferred_time ? new Date(a.preferred_time).getTime() : 0;
+        const timeB = b.preferred_time ? new Date(b.preferred_time).getTime() : 0;
+        return timeB - timeA; // Descending
+      };
+
+      pendingReservations.sort(sortByTime);
+      completedReservations.sort(sortByTime);
+
+      setReservations([...pendingReservations, ...completedReservations]);
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {

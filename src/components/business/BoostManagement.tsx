@@ -62,6 +62,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const [eventBoosts, setEventBoosts] = useState<EventBoostWithMetrics[]>([]);
   const [offerBoosts, setOfferBoosts] = useState<OfferBoostWithMetrics[]>([]);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [showExpiredEvents, setShowExpiredEvents] = useState(false);
+  const [showExpiredOffers, setShowExpiredOffers] = useState(false);
 
   useEffect(() => {
     fetchBoosts();
@@ -387,7 +389,16 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     ticketsSold: language === "el" ? "Εισιτήρια" : "Tickets",
     reservations: language === "el" ? "Κρατήσεις" : "Reservations",
     guests: language === "el" ? "άτομα" : "guests",
+    expired: language === "el" ? "Ληγμένες" : "Expired",
+    expiredSection: language === "el" ? "Ληγμένες Προωθήσεις" : "Expired Boosts",
   };
+
+  // Separate active and expired boosts
+  const now = new Date().toISOString().split('T')[0];
+  const activeEventBoosts = eventBoosts.filter(b => b.end_date >= now && b.status === 'active');
+  const expiredEventBoosts = eventBoosts.filter(b => b.end_date < now || b.status !== 'active');
+  const activeOfferBoosts = offerBoosts.filter(b => b.end_date >= now && b.active);
+  const expiredOfferBoosts = offerBoosts.filter(b => b.end_date < now || !b.active);
 
   // Click-to-open metric dialog (same interaction style as Analytics)
   const MetricWithDialog = ({
@@ -443,24 +454,32 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="events" className="text-xs sm:text-sm">
             <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            {t.events} ({eventBoosts.length})
+            {t.events} ({activeEventBoosts.length})
           </TabsTrigger>
           <TabsTrigger value="offers" className="text-xs sm:text-sm">
             <Ticket className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            {t.offers} ({offerBoosts.length})
+            {t.offers} ({activeOfferBoosts.length})
           </TabsTrigger>
         </TabsList>
 
         {/* EVENT BOOSTS TAB */}
         <TabsContent value="events" className="space-y-4 mt-4">
-          {eventBoosts.length === 0 ? (
+          {activeEventBoosts.length === 0 && expiredEventBoosts.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                {t.noEventBoosts}
+              </CardContent>
+            </Card>
+          ) : activeEventBoosts.length === 0 && !showExpiredEvents ? (
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 {t.noEventBoosts}
               </CardContent>
             </Card>
           ) : (
-            eventBoosts.map((boost) => {
+            <>
+            {/* Active boosts */}
+            {activeEventBoosts.map((boost) => {
               const isActive = boost.status === "active";
               
               return (
@@ -581,20 +600,94 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                   </CardContent>
                 </Card>
               );
-            })
+            })}
+
+            {/* Expired toggle */}
+            {expiredEventBoosts.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowExpiredEvents(!showExpiredEvents)}
+                className="w-full text-muted-foreground hover:text-foreground"
+              >
+                {showExpiredEvents ? "▲" : "▼"} {t.expired} ({expiredEventBoosts.length})
+              </Button>
+            )}
+
+            {/* Expired boosts */}
+            {showExpiredEvents && expiredEventBoosts.map((boost) => {
+              const isActive = boost.status === "active";
+              
+              return (
+                <Card key={boost.id} className="overflow-hidden opacity-60">
+                  <CardContent className="p-0">
+                    {/* Header with title and status badge */}
+                    <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.event_title}</h3>
+                      <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap shrink-0">
+                        {t.expired}
+                      </Badge>
+                    </div>
+
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-3 divide-x border-b">
+                      <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsEventTooltip} />
+                      <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsEventTooltip} />
+                      <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsEventTooltip} />
+                    </div>
+
+                    {/* Boost Info */}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">{t.tier}</span>
+                            <Badge variant={boost.boost_tier === "premium" ? "default" : "secondary"} className="ml-1">
+                              {getTierLabel(boost.boost_tier)}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">{t.period}</span>
+                            <span className="font-medium flex items-center gap-1 ml-1">
+                              <Calendar className="h-3 w-3" />
+                              {format(new Date(boost.start_date), "dd/MM")} - {format(new Date(boost.end_date), "dd/MM")}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-sm text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-muted-foreground">{t.totalCost}</span>
+                            <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            </>
           )}
         </TabsContent>
 
         {/* OFFER BOOSTS TAB */}
         <TabsContent value="offers" className="space-y-4 mt-4">
-          {offerBoosts.length === 0 ? (
+          {activeOfferBoosts.length === 0 && expiredOfferBoosts.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                {t.noOfferBoosts}
+              </CardContent>
+            </Card>
+          ) : activeOfferBoosts.length === 0 && !showExpiredOffers ? (
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 {t.noOfferBoosts}
               </CardContent>
             </Card>
           ) : (
-            offerBoosts.map((boost) => (
+            <>
+            {/* Active boosts */}
+            {activeOfferBoosts.map((boost) => (
               <Card key={boost.id} className="overflow-hidden">
                 <CardContent className="p-0">
                   {/* Header with title and status badge */}
@@ -675,7 +768,69 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                   </div>
                 </CardContent>
               </Card>
-            ))
+            ))}
+
+            {/* Expired toggle */}
+            {expiredOfferBoosts.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowExpiredOffers(!showExpiredOffers)}
+                className="w-full text-muted-foreground hover:text-foreground"
+              >
+                {showExpiredOffers ? "▲" : "▼"} {t.expired} ({expiredOfferBoosts.length})
+              </Button>
+            )}
+
+            {/* Expired boosts */}
+            {showExpiredOffers && expiredOfferBoosts.map((boost) => (
+              <Card key={boost.id} className="overflow-hidden opacity-60">
+                <CardContent className="p-0">
+                  {/* Header with title and status badge */}
+                  <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.offer_title}</h3>
+                    <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap shrink-0">
+                      {t.expired}
+                    </Badge>
+                  </div>
+
+                  {/* Metrics Grid */}
+                  <div className="grid grid-cols-3 divide-x border-b">
+                    <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsOfferTooltip} />
+                    <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsOfferTooltip} />
+                    <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsOfferTooltip} />
+                  </div>
+
+                  {/* Boost Info */}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{t.tier}</span>
+                          <Badge variant={boost.boost_tier === "premium" ? "default" : "secondary"} className="ml-1">
+                            {getTierLabel(boost.boost_tier)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{t.period}</span>
+                          <span className="font-medium flex items-center gap-1 ml-1">
+                            <Calendar className="h-3 w-3" />
+                            {format(new Date(boost.start_date), "dd/MM")} - {format(new Date(boost.end_date), "dd/MM")}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-sm text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-muted-foreground">{t.totalCost}</span>
+                          <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            </>
           )}
         </TabsContent>
       </Tabs>

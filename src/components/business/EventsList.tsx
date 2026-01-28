@@ -64,6 +64,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [ticketSalesEvent, setTicketSalesEvent] = useState<{ id: string; title: string } | null>(null);
   const [reservationEvent, setReservationEvent] = useState<{ id: string; title: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
+  const [showExpired, setShowExpired] = useState(false);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -106,6 +107,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       badgeTicket: "Με Εισιτήριο",
       badgeReservation: "Κράτηση Τραπεζιού",
       badgeFreeEntry: "Δωρεάν Είσοδος",
+      expired: "Ληγμένες",
     },
     en: {
       title: "Events",
@@ -137,6 +139,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       badgeTicket: "With Ticket",
       badgeReservation: "Table Reservation",
       badgeFreeEntry: "Free Entry",
+      expired: "Expired",
     },
   };
 
@@ -305,10 +308,22 @@ const EventsList = ({ businessId }: EventsListProps) => {
     return 'free_entry';
   };
 
-  const filteredEvents = events?.filter(event => {
+  // Check if event is expired (end_at has passed)
+  const isEventExpired = (event: any) => {
+    return new Date(event.end_at) < new Date();
+  };
+
+  // Filter and separate active vs expired events
+  const typeFilteredEvents = events?.filter(event => {
     if (activeFilter === 'all') return true;
     return getEventType(event) === activeFilter;
   }) || [];
+
+  const activeEvents = typeFilteredEvents.filter(event => !isEventExpired(event));
+  const expiredEvents = typeFilteredEvents.filter(event => isEventExpired(event));
+
+  // For display: active events first, then expired if showExpired is true
+  const filteredEvents = showExpired ? [...activeEvents, ...expiredEvents] : activeEvents;
 
   if (isLoading) {
     return <div className="text-center py-8">{t.loading}</div>;
@@ -358,9 +373,30 @@ const EventsList = ({ businessId }: EventsListProps) => {
           <Gift className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 mr-0.5 md:mr-1 flex-shrink-0" />
           {t.filterFreeEntry}
         </Button>
+        
+        {/* Expired toggle */}
+        {expiredEvents.length > 0 && (
+          <Button
+            variant={showExpired ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={() => setShowExpired(!showExpired)}
+            className="text-[9px] md:text-xs lg:text-sm h-7 md:h-8 px-1.5 md:px-3 whitespace-nowrap flex-shrink-0"
+          >
+            {t.expired} ({expiredEvents.length})
+          </Button>
+        )}
       </div>
 
       {(!events || events.length === 0) ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              {t.noEvents}
+            </p>
+          </CardContent>
+        </Card>
+      ) : filteredEvents.length === 0 && !showExpired && expiredEvents.length > 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -382,9 +418,10 @@ const EventsList = ({ businessId }: EventsListProps) => {
         <div className="space-y-3">
           {filteredEvents.map((event) => {
             const eventType = getEventType(event);
+            const expired = isEventExpired(event);
             
             return (
-              <Card key={event.id} className="hover:shadow-md transition-shadow">
+              <Card key={event.id} className={`hover:shadow-md transition-shadow ${expired ? 'opacity-60' : ''}`}>
                 <CardContent className="p-4">
                   {/* 2-row grid so delete icon aligns with RSVP counts line (tablet+mobile) */}
                   <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2">
