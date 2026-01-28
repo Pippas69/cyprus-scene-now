@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAudienceMetrics } from "@/hooks/useAudienceMetrics";
 import { Users, Calendar, MapPin, Info } from "lucide-react";
+import { translateCity } from "@/lib/cityTranslations";
 import {
   Dialog,
   DialogContent,
@@ -217,7 +218,12 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
           details={t.explanations.regionDetails}
         >
           {regionEntries.slice(0, 5).map(([city, count]) => (
-            <MetricItem key={city} label={city} value={count} total={regionTotal} />
+            <MetricItem 
+              key={city} 
+              label={translateCity(city, language)} 
+              value={count} 
+              total={regionTotal} 
+            />
           ))}
           {regionEntries.length === 0 && (
             <p className="text-sm text-muted-foreground py-2">{t.noData}</p>
