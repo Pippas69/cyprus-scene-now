@@ -341,7 +341,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
             variant={showExpired ? 'secondary' : 'outline'}
             size="sm"
             onClick={() => setShowExpired(!showExpired)}
-            className="text-[9px] md:text-xs h-7 md:h-8 px-1.5 md:px-3 whitespace-nowrap flex-shrink-0 lg:text-xl lg:h-10 lg:px-4"
+            className="text-[10px] md:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 lg:text-base lg:h-9 lg:px-4"
           >
             {t.expired} ({expiredEvents.length})
           </Button>
