@@ -16,7 +16,9 @@ interface Notification {
   created_at: string;
 }
 
-export const useNotifications = (userId: string | undefined) => {
+type NotificationContext = 'user' | 'business';
+
+export const useNotifications = (userId: string | undefined, context?: NotificationContext) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -32,20 +34,31 @@ export const useNotifications = (userId: string | undefined) => {
     subscribeToNotifications();
 
     return () => {
-      supabase.channel('notifications').unsubscribe();
+      supabase.channel(`notifications-${context || 'all'}`).unsubscribe();
     };
-  }, [userId]);
+  }, [userId, context]);
 
   const fetchNotifications = async () => {
     if (!userId) return;
 
     setLoading(true);
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50);
+
+    // Filter by context
+    if (context === 'business') {
+      query = query.eq('type', 'business');
+    } else if (context === 'user') {
+      query = query.neq('type', 'business');
+    }
+    // If no context provided, return all (backward compatible)
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching notifications:', error);
@@ -65,7 +78,7 @@ export const useNotifications = (userId: string | undefined) => {
     if (!userId) return;
 
     const channel = supabase
-      .channel('notifications')
+      .channel(`notifications-${context || 'all'}`)
       .on(
         'postgres_changes',
         {
@@ -76,6 +89,11 @@ export const useNotifications = (userId: string | undefined) => {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
+          
+          // Filter by context if specified
+          if (context === 'business' && newNotification.type !== 'business') return;
+          if (context === 'user' && newNotification.type === 'business') return;
+          
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
           

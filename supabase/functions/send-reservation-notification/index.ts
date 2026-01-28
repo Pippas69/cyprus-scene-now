@@ -494,11 +494,25 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Email API responses:', JSON.stringify(results, null, 2));
     console.log('Emails sent successfully to:', userProfile.email, businessEmail || 'no business email');
 
-    // Send push notification to business owner for new reservations and cancellations
+    // Send push notification AND create in-app notification for business owner for new reservations and cancellations
     if (businessData?.user_id && (type === 'new' || type === 'cancellation')) {
       try {
         const businessPushTitle = type === 'new' ? '📋 Νέα Κράτηση!' : '🚫 Ακύρωση Κράτησης';
         const businessPushBody = `${reservation.reservation_name} • ${formattedDateTime} • ${reservation.party_size} άτομα`;
+        
+        // Create in-app notification for business owner
+        await supabase.from('notifications').insert({
+          user_id: businessData.user_id,
+          title: businessPushTitle,
+          message: businessPushBody,
+          type: 'business',
+          event_type: type === 'new' ? 'new_reservation' : 'reservation_cancelled',
+          entity_type: 'reservation',
+          entity_id: reservationId,
+          deep_link: '/dashboard-business/reservations',
+          delivered_at: new Date().toISOString(),
+        });
+        console.log('Business in-app notification created', { userId: businessData.user_id });
         
         const businessPushResult = await sendPushIfEnabled(businessData.user_id, {
           title: businessPushTitle,
