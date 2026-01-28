@@ -1,117 +1,122 @@
 
-# Fix Business In-App Notifications System
+# Rebuild Share System: Native-Only Approach
 
-## Problem Summary
+## Πρόβλημα
 
-Οι επιχειρηματίες δεν βλέπουν τις ειδοποιήσεις της επιχείρησής τους στο Business Dashboard. Αυτό συμβαίνει γιατί:
+Το τρέχον share system έχει πολλά προβλήματα:
+- 8 αρχεία, ~1500+ γραμμές κώδικα
+- Πολύπλοκη λογική deep-links που αποτυγχάνει
+- html2canvas για δημιουργία εικόνων story που δεν δουλεύει αξιόπιστα
+- Confusing UI με πολλές επιλογές (Instagram DM, Messenger, WhatsApp, Snapchat, Telegram, Instagram Story, Facebook Story)
 
-1. Οι transactional functions (reservations, ticket sales, offer claims) στέλνουν **push notifications** στους επιχειρηματίες, αλλά **ΔΕΝ δημιουργούν in-app notifications** για αυτούς
-2. Το σύστημα δημιουργεί in-app notifications μόνο για τους χρήστες (πελάτες)
-3. Η dedicated `sendBusinessNotification` helper υπάρχει αλλά δεν χρησιμοποιείται από τις κύριες functions
+## Λύση
 
-## Solution
+**Αντικατάσταση με Native Share Sheet μόνο** - Χρήση του Web Share API που δουλεύει αξιόπιστα σε iOS και Android.
 
-### Phase 1: Backend - Add Business In-App Notifications
-
-Θα ενημερώσουμε τις edge functions να δημιουργούν in-app notifications για τους επιχειρηματίες:
-
-**Functions to update:**
-- `send-reservation-notification` - Προσθήκη in-app notification για business owner (new reservations, cancellations)
-- `process-ticket-payment` - Προσθήκη in-app notification για business owner (ticket sales)
-- `send-offer-claim-email` - Προσθήκη in-app notification για business owner (offer claims)
-- `validate-qr` - Προσθήκη in-app notification για business owner (QR redemptions/check-ins)
-
-**Παράδειγμα αλλαγής (send-reservation-notification):**
-```typescript
-// After sending push notification to business owner, also create in-app notification
-if (businessData?.user_id && (type === 'new' || type === 'cancellation')) {
-  // Existing push notification code...
-  
-  // NEW: Create in-app notification for business owner
-  await supabase.from('notifications').insert({
-    user_id: businessData.user_id,
-    title: type === 'new' ? '📋 Νέα Κράτηση!' : '🚫 Ακύρωση Κράτησης',
-    message: `${reservation.reservation_name} • ${formattedDateTime} • ${reservation.party_size} άτομα`,
-    type: 'business',  // <-- IMPORTANT: Mark as business notification
-    event_type: type === 'new' ? 'new_reservation' : 'reservation_cancelled',
-    entity_type: 'reservation',
-    entity_id: reservationId,
-    deep_link: '/dashboard-business/reservations',
-    delivered_at: new Date().toISOString(),
-  });
-}
+```text
+┌─────────────────────────────────────────┐
+│                                         │
+│  ┌──────────────────────────────────┐   │
+│  │                                  │   │
+│  │        [Cover Image]            │   │
+│  │                                  │   │
+│  └──────────────────────────────────┘   │
+│                                         │
+│  Event Title / Business Name / Offer    │
+│  Subtitle (date, location, etc.)        │
+│                                         │
+│  ┌────────────────┐ ┌────────────────┐  │
+│  │   Copy Link    │ │     Share      │  │
+│  │      📋        │ │       ↗        │  │
+│  └────────────────┘ └────────────────┘  │
+│                                         │
+└─────────────────────────────────────────┘
 ```
 
-### Phase 2: Frontend - Filter Notifications by Context
+## Αλλαγές
 
-**Create new hook: `useBusinessNotifications`**
-```typescript
-// src/hooks/useBusinessNotifications.ts
-export const useBusinessNotifications = (userId: string | undefined) => {
-  // Same as useNotifications but filters: WHERE type = 'business'
-  // Also subscribes to realtime for type = 'business' only
-};
-```
+### Αφαίρεση (7 αρχεία):
+- `src/components/sharing/PremiumShareSheet.tsx` (769 γραμμές)
+- `src/components/sharing/ShareableEventCard.tsx`
+- `src/components/sharing/ShareableBusinessCard.tsx`
+- `src/components/sharing/ShareableOfferCard.tsx`
+- `src/components/sharing/SocialPlatformIcons.tsx`
+- Μέρος του `src/hooks/useShare.ts` (html2canvas, deep links)
 
-**Update `useNotifications` hook:**
-```typescript
-// Add optional parameter to filter by type
-export const useNotifications = (userId: string | undefined, type?: 'user' | 'business') => {
-  // If type = 'user': filter WHERE type != 'business'
-  // If type = 'business': filter WHERE type = 'business'
-  // If no type: return all (backward compatible)
-};
-```
+### Διατήρηση/Ανανέωση:
+- `src/components/sharing/ShareDialog.tsx` - Απλοποίηση
+- `src/components/sharing/ShareProfileDialog.tsx` - Απλοποίηση
+- `src/components/sharing/ShareOfferDialog.tsx` - Απλοποίηση
 
-**Update `UserAccountDropdown`:**
-- When on `/dashboard-business/*` routes, pass `type: 'business'` to show only business notifications
-- When on user routes, pass `type: 'user'` to show only personal notifications
+### Δημιουργία:
+- `src/components/sharing/SimpleShareSheet.tsx` - Νέο minimalist component
 
-### Phase 3: Notification Types to Create
+## Νέα Λειτουργία
 
-| Action | User Gets | Business Gets |
-|--------|-----------|---------------|
-| New Reservation | ✅ Κράτηση επιβεβαιώθηκε | ✅ Νέα Κράτηση! |
-| Reservation Cancelled | ✅ Κράτηση ακυρώθηκε | ✅ Ακύρωση Κράτησης |
-| Ticket Purchase | ✅ Τα εισιτήριά σου είναι έτοιμα! | ✅ Νέα Πώληση Εισιτηρίων! |
-| Offer Claimed | ✅ Προσφορά διεκδικήθηκε | ✅ Νέα διεκδίκηση προσφοράς |
-| QR Check-in | - | ✅ Check-in επιτυχές |
-| QR Redemption | - | ✅ Εξαργύρωση προσφοράς |
+### Mobile (iOS/Android):
+1. Πατάς **Share** → Ανοίγει το **native share sheet** του κινητού
+2. Επιλέγεις WhatsApp, iMessage, Instagram DM, οτιδήποτε
+3. Το λειτουργικό κάνει τα υπόλοιπα
+
+### Desktop:
+1. Πατάς **Copy Link** → Αντιγράφεται το URL
+2. Πατάς **Share** → Αν υποστηρίζεται, ανοίγει share options
+
+### Τι περιλαμβάνει το share:
+- **URL**: `https://fomo.cy/event/[id]` ή `/business/[id]` ή `/offer/[id]`
+- **Title**: Όνομα event/business/offer
+- **Text**: Σύντομο μήνυμα με λεπτομέρειες
 
 ## Technical Details
 
-### Files to Modify:
-
-**Backend (Edge Functions):**
-1. `supabase/functions/send-reservation-notification/index.ts`
-2. `supabase/functions/process-ticket-payment/index.ts`
-3. `supabase/functions/send-offer-claim-email/index.ts` (or the claim-offer function)
-4. `supabase/functions/validate-qr/index.ts`
-
-**Frontend:**
-1. `src/hooks/useNotifications.ts` - Add type filter parameter
-2. `src/components/UserAccountDropdown.tsx` - Detect route and pass correct type
-3. `src/components/notifications/InAppNotificationsSheet.tsx` - Pass type from parent
-
-### Notification Schema (Existing - No DB Changes Needed):
-```sql
-notifications:
-  - user_id: uuid (business owner's user_id)
-  - type: 'business' (to differentiate from user notifications)
-  - event_type: 'new_reservation' | 'ticket_sale' | 'offer_claimed' | etc.
-  - entity_type: 'reservation' | 'ticket' | 'offer'
-  - deep_link: '/dashboard-business/...'
+### SimpleShareSheet Component:
+```typescript
+// Minimal, focused, reliable
+interface SimpleShareSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  text: string;
+  url: string;
+  imageUrl?: string;
+  language: 'el' | 'en';
+}
 ```
 
-## Implementation Order
+### Νέο useSimpleShare hook:
+```typescript
+const useSimpleShare = () => {
+  const share = async (data: { title: string; text: string; url: string }) => {
+    if (navigator.share) {
+      await navigator.share(data);
+    } else {
+      await navigator.clipboard.writeText(data.url);
+    }
+  };
+  
+  const copyLink = async (url: string) => {
+    await navigator.clipboard.writeText(url);
+  };
+  
+  return { share, copyLink, hasNativeShare: 'share' in navigator };
+};
+```
 
-1. Update `useNotifications` hook with optional type filter
-2. Update `UserAccountDropdown` to detect business route and pass filter
-3. Update each edge function to create business in-app notifications
-4. Test end-to-end with a reservation/ticket sale
+## Αποτέλεσμα
 
-## Expected Result
+| Πριν | Μετά |
+|------|------|
+| 8 αρχεία, 1500+ γραμμές | 4 αρχεία, ~200 γραμμές |
+| 7 social platform buttons | 2 buttons (Copy + Share) |
+| Deep links που αποτυγχάνουν | Native API που δουλεύει πάντα |
+| html2canvas για stories | Καμία εξάρτηση εικόνων |
+| Confusing UX | Απλό, ξεκάθαρο |
 
-- **Business Dashboard**: Bell icon shows only business notifications (sales, reservations, claims)
-- **My Account / User pages**: Bell icon shows only personal notifications (purchases, confirmations)
-- Unread counts are separate for each context
+## Ροή Υλοποίησης
+
+1. Δημιουργία `SimpleShareSheet` component
+2. Δημιουργία `useSimpleShare` hook
+3. Ενημέρωση `ShareDialog`, `ShareProfileDialog`, `ShareOfferDialog` να χρησιμοποιούν το νέο component
+4. Αφαίρεση παλιών αρχείων
+5. Καθαρισμός αχρησιμοποίητου κώδικα από `useShare.ts`
+6. Testing σε iOS και Android
