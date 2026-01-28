@@ -211,6 +211,7 @@ const translations = {
 
 interface GuidanceTabProps {
   businessId: string;
+  dateRange?: { from: Date; to: Date };
   language: 'el' | 'en';
 }
 
@@ -748,10 +749,11 @@ const EventBoostMetricsSection: React.FC<{
 
 export const GuidanceTab: React.FC<GuidanceTabProps> = ({
   businessId,
+  dateRange,
   language,
 }) => {
   const t = translations[language];
-  const { data, isLoading } = useGuidanceData(businessId);
+  const { data, isLoading } = useGuidanceData(businessId, dateRange);
   const { data: metrics, isLoading: metricsLoading } = useGuidanceMetrics(businessId);
   const { toast } = useToast();
   const [feedbackGiven, setFeedbackGiven] = useState<boolean | null>(null);

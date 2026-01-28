@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface DateRange {
+  from: Date;
+  to: Date;
+}
+
 interface TimeWindow {
   dayIndex: number;
   hours: string;
@@ -41,13 +46,16 @@ const formatHourRange = (hour: number): string => {
   return `${start}:00–${end}:00`;
 };
 
-export const useGuidanceData = (businessId: string) => {
+export const useGuidanceData = (businessId: string, dateRange?: DateRange) => {
+  return useGuidanceDataWithRange(businessId, dateRange);
+};
+
+export function useGuidanceDataWithRange(businessId: string, dateRange?: DateRange) {
   return useQuery<GuidanceData>({
-    queryKey: ["guidance-data", businessId],
+    queryKey: ["guidance-data", businessId, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
     queryFn: async () => {
-      // Last 30 days
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const now = new Date().toISOString();
+      const startDate = dateRange?.from?.toISOString() || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const endDate = dateRange?.to?.toISOString() || new Date().toISOString();
 
       // Avoid the 1000-row cap when we need full-fidelity totals.
       const fetchAll = async <T,>(
@@ -113,44 +121,41 @@ export const useGuidanceData = (businessId: string) => {
       // ========================================
       // PROFILE - Same algorithm as Performance
       // ========================================
-      
-      // Profile views from engagement_events (same as Performance)
+
       const profileViewEvents = await fetchAll<{ created_at: string }>(async (from, to) => {
         const { data } = await supabase
           .from('engagement_events')
           .select('created_at')
           .eq('business_id', businessId)
           .eq('event_type', 'profile_view')
-          .gte('created_at', thirtyDaysAgo)
-          .lte('created_at', now)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate)
           .range(from, to);
         return (data || []) as any;
       });
 
       const profileViews = analyzeTimestamps(profileViewEvents?.map((e) => e.created_at));
 
-      // Profile interactions (follows, profile clicks ONLY - NO shares) - same as Performance
       const profileInteractionEvents = await fetchAll<{ created_at: string }>(async (from, to) => {
         const { data } = await supabase
           .from('engagement_events')
           .select('created_at')
           .eq('business_id', businessId)
           .in('event_type', ['follow', 'favorite', 'profile_click', 'profile_interaction'])
-          .gte('created_at', thirtyDaysAgo)
-          .lte('created_at', now)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate)
           .range(from, to);
         return (data || []) as any;
       });
 
-      // Also count business followers for interactions - same as Performance
       const followerData = await fetchAll<{ created_at: string }>(async (from, to) => {
         const { data } = await supabase
           .from('business_followers')
           .select('created_at')
           .eq('business_id', businessId)
           .is('unfollowed_at', null)
-          .gte('created_at', thirtyDaysAgo)
-          .lte('created_at', now)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate)
           .range(from, to);
         return (data || []) as any;
       });
@@ -161,7 +166,6 @@ export const useGuidanceData = (businessId: string) => {
       ];
       const profileInteractions = analyzeTimestamps(allProfileInteractionTimestamps);
 
-      // Profile visits = verified reservation check-ins for DIRECT business reservations (same as Performance)
       const profileVisitCheckins = await fetchAll<{ checked_in_at: string | null }>(async (from, to) => {
         const { data } = await supabase
           .from('reservations')
@@ -169,8 +173,8 @@ export const useGuidanceData = (businessId: string) => {
           .eq('business_id', businessId)
           .is('event_id', null)
           .not('checked_in_at', 'is', null)
-          .gte('checked_in_at', thirtyDaysAgo)
-          .lte('checked_in_at', now)
+          .gte('checked_in_at', startDate)
+          .lte('checked_in_at', endDate)
           .range(from, to);
         return (data || []) as any;
       });
@@ -183,26 +187,24 @@ export const useGuidanceData = (businessId: string) => {
       // ========================================
       // OFFERS - Same algorithm as Performance
       // ========================================
-      
+
       let offerViewTimestamps: string[] = [];
       let offerInteractionTimestamps: string[] = [];
       let offerVisitTimestamps: string[] = [];
 
       if (offerIds.length > 0) {
-        // Offer views from discount_views
         const offerViewsRes = await fetchAll<{ viewed_at: string }>(async (from, to) => {
           const { data } = await supabase
             .from('discount_views')
             .select('viewed_at')
             .in('discount_id', offerIds)
-            .gte('viewed_at', thirtyDaysAgo)
-            .lte('viewed_at', now)
+            .gte('viewed_at', startDate)
+            .lte('viewed_at', endDate)
             .range(from, to);
           return (data || []) as any;
         });
         offerViewTimestamps = (offerViewsRes || []).map((v) => v.viewed_at);
 
-        // Offer interactions = clicks on "Εξαργύρωσε" (same as Performance)
         const offerInteractionsRes = await fetchAll<{ created_at: string }>(async (from, to) => {
           const { data } = await supabase
             .from('engagement_events')
@@ -210,22 +212,21 @@ export const useGuidanceData = (businessId: string) => {
             .eq('business_id', businessId)
             .eq('event_type', 'offer_redeem_click')
             .in('entity_id', offerIds)
-            .gte('created_at', thirtyDaysAgo)
-            .lte('created_at', now)
+            .gte('created_at', startDate)
+            .lte('created_at', endDate)
             .range(from, to);
           return (data || []) as any;
         });
         offerInteractionTimestamps = (offerInteractionsRes || []).map((v) => v.created_at);
 
-        // Offer visits = verified offer redemptions (same as Performance - uses offer_purchases.redeemed_at)
         const offerRedemptionsRes = await fetchAll<{ redeemed_at: string | null }>(async (from, to) => {
           const { data } = await supabase
             .from('offer_purchases')
             .select('redeemed_at')
             .in('discount_id', offerIds)
             .not('redeemed_at', 'is', null)
-            .gte('redeemed_at', thirtyDaysAgo)
-            .lte('redeemed_at', now)
+            .gte('redeemed_at', startDate)
+            .lte('redeemed_at', endDate)
             .range(from, to);
           return (data || []) as any;
         });
@@ -241,65 +242,61 @@ export const useGuidanceData = (businessId: string) => {
       // ========================================
       // EVENTS - Same algorithm as Performance
       // ========================================
-      
+
       let eventViewTimestamps: string[] = [];
       let eventInteractionTimestamps: string[] = [];
       let eventVisitTimestamps: string[] = [];
 
       if (eventIds.length > 0) {
-        // Event views from event_views
         const eventViewsRes = await fetchAll<{ viewed_at: string }>(async (from, to) => {
           const { data } = await supabase
             .from('event_views')
             .select('viewed_at')
             .in('event_id', eventIds)
-            .gte('viewed_at', thirtyDaysAgo)
-            .lte('viewed_at', now)
+            .gte('viewed_at', startDate)
+            .lte('viewed_at', endDate)
             .range(from, to);
           return (data || []) as any;
         });
         eventViewTimestamps = (eventViewsRes || []).map((v) => v.viewed_at);
 
-        // Event interactions (RSVPs) - same as Performance
         const rsvpsRes = await fetchAll<{ created_at: string }>(async (from, to) => {
           const { data } = await supabase
             .from('rsvps')
             .select('created_at')
             .in('event_id', eventIds)
             .in('status', ['interested', 'going'])
-            .gte('created_at', thirtyDaysAgo)
-            .lte('created_at', now)
+            .gte('created_at', startDate)
+            .lte('created_at', endDate)
             .range(from, to);
           return (data || []) as any;
         });
         eventInteractionTimestamps = (rsvpsRes || []).map((v) => v.created_at);
 
-        // Event visits = ticket check-ins + event reservation check-ins (same as Performance)
         const ticketCheckInsRes = await fetchAll<{ checked_in_at: string | null }>(async (from, to) => {
           const { data } = await supabase
             .from('tickets')
             .select('checked_in_at')
             .in('event_id', eventIds)
             .not('checked_in_at', 'is', null)
-            .gte('checked_in_at', thirtyDaysAgo)
-            .lte('checked_in_at', now)
+            .gte('checked_in_at', startDate)
+            .lte('checked_in_at', endDate)
             .range(from, to);
           return (data || []) as any;
         });
-        
+
         const ticketCheckIns = (ticketCheckInsRes || [])
           .filter((t) => t.checked_in_at)
           .map((t) => t.checked_in_at as string);
 
-        // Add event-linked reservation check-ins
         const eventReservationCheckinsRes = await fetchAll<{ checked_in_at: string | null }>(async (from, to) => {
           const { data } = await supabase
             .from('reservations')
             .select('checked_in_at')
             .in('event_id', eventIds)
             .not('checked_in_at', 'is', null)
-            .gte('checked_in_at', thirtyDaysAgo)
-            .lte('checked_in_at', now)
+            .gte('checked_in_at', startDate)
+            .lte('checked_in_at', endDate)
             .range(from, to);
           return (data || []) as any;
         });
@@ -315,28 +312,21 @@ export const useGuidanceData = (businessId: string) => {
       const eventInteractions = analyzeTimestamps(eventInteractionTimestamps);
       const eventVisits = analyzeTimestamps(eventVisitTimestamps);
 
-      // ========================================
-      // RECOMMENDED PLAN
-      // Based on best times for interactions and visits across all content
-      // ========================================
-      
-      // Combine all timestamps for best publish time (based on profile views - when people are looking)
+      // Recommended plan windows
       const allViewTimestamps = [
         ...(profileViewEvents?.map((e) => e.created_at) || []),
         ...offerViewTimestamps,
         ...eventViewTimestamps,
       ];
       const bestPublishWindows = analyzeTimestamps(allViewTimestamps);
-      
-      // Combine all interaction timestamps for best interaction time
+
       const allInteractionTimestamps = [
         ...allProfileInteractionTimestamps,
         ...offerInteractionTimestamps,
         ...eventInteractionTimestamps,
       ];
       const bestInteractionWindows = analyzeTimestamps(allInteractionTimestamps);
-      
-      // Combine all visit timestamps for best visit time
+
       const allVisitTimestamps = [
         ...profileVisitTimestamps,
         ...offerVisitTimestamps,
@@ -348,8 +338,6 @@ export const useGuidanceData = (businessId: string) => {
       const bestInteractions = bestInteractionWindows[0] || { dayIndex: 5, hours: '18:00–21:00' };
       const bestVisits = bestVisitWindows[0] || { dayIndex: 5, hours: '20:00–23:00' };
 
-      // Return data with defaults for empty sections
-      // Include totals that EXACTLY match Performance tab counts
       return {
         profile: {
           views: profileViews.length > 0 && profileViews[0].count > 0 ? profileViews : [
@@ -393,7 +381,6 @@ export const useGuidanceData = (businessId: string) => {
             { dayIndex: 6, hours: '23:00–03:00', count: 0 },
           ],
         },
-        // TOTALS - Same counts as Performance tab
         profileTotals: {
           views: profileViewEvents?.length || 0,
           interactions: allProfileInteractionTimestamps.length,
@@ -419,4 +406,4 @@ export const useGuidanceData = (businessId: string) => {
     enabled: !!businessId,
     staleTime: 10 * 60 * 1000,
   });
-};
+}
