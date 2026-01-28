@@ -62,6 +62,10 @@ const isAllowedEventViewSource = (): boolean => {
   
   // Allowed: Feed page (root / or /feed)
   if (path === '/' || path === '/feed') return true;
+
+  // Allowed: Business dashboard feed (index route renders the Feed component)
+  // IMPORTANT: Only the feed ("home") inside business dashboard should count as views.
+  if (path === '/dashboard-business' || path === '/dashboard-business/') return true;
   
   // Allowed: /ekdiloseis page (public events discovery)
   if (path === '/ekdiloseis' || path.startsWith('/ekdiloseis')) return true;
@@ -84,6 +88,10 @@ const isAllowedOfferViewSource = (): boolean => {
   
   // Allowed: Feed page (root / or /feed)
   if (path === '/' || path === '/feed') return true;
+
+  // Allowed: Business dashboard feed (index route renders the Feed component)
+  // IMPORTANT: Only the feed ("home") inside business dashboard should count as views.
+  if (path === '/dashboard-business' || path === '/dashboard-business/') return true;
   
   // Allowed: /offers page (public offers discovery)
   if (path === '/offers' || path.startsWith('/offers')) return true;

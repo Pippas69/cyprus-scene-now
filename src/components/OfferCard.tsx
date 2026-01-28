@@ -120,7 +120,9 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
     // Source detection - the actual filtering is done inside trackDiscountView
     const path = window.location.pathname;
     const source = path.includes('/offers') ? 'direct' :
-                   path.includes('/feed') || path === '/' ? 'feed' : 'direct';
+                   path.includes('/feed') || path === '/' || path === '/dashboard-business' || path === '/dashboard-business/'
+                     ? 'feed'
+                     : 'direct';
     trackDiscountView(offerData.id, source as 'feed' | 'event' | 'profile' | 'direct');
   }, [offerData?.id]);
   useViewTracking(cardRef as any, handleView, { threshold: 0.5 });
