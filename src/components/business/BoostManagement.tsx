@@ -72,7 +72,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const fetchBoosts = async () => {
     setLoading(true);
     try {
-      // Fetch event boosts with all metrics - ONLY paid boosts (total_cost_cents > 0)
+      // Fetch event boosts with all metrics
       const { data: eventData, error: eventError } = await supabase
         .from("event_boosts")
         .select(`
@@ -90,7 +90,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           )
         `)
         .eq("business_id", businessId)
-        .gt("total_cost_cents", 0)
         .order("created_at", { ascending: false });
 
       if (eventError) throw eventError;
@@ -185,7 +184,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       setEventBoosts(eventBoostsWithMetrics);
 
-      // Fetch offer boosts with metrics - ONLY paid boosts (total_cost_cents > 0)
+      // Fetch offer boosts with metrics
       const { data: offerData, error: offerError } = await supabase
         .from("offer_boosts")
         .select(`
@@ -202,7 +201,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           )
         `)
         .eq("business_id", businessId)
-        .gt("total_cost_cents", 0)
         .order("created_at", { ascending: false });
 
       if (offerError) throw offerError;

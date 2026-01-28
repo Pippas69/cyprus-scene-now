@@ -266,7 +266,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
             variant={showExpired ? 'secondary' : 'outline'}
             size="sm"
             onClick={() => setShowExpired(!showExpired)}
-            className="text-xs h-7 px-3"
+             className="text-xs h-7 px-3 lg:text-xl lg:h-10 lg:px-4"
           >
             {t.expired} ({expiredOffers.length})
           </Button>
