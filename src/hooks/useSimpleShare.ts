@@ -164,10 +164,28 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
           }
         }
       } catch (error) {
-        // User cancelled the share - don't show error toast
         const err = error as Error;
-        if (err?.name !== 'AbortError') {
-          console.error('Share failed:', error);
+        
+        // User cancelled the share - no action needed
+        if (err?.name === 'AbortError') {
+          return;
+        }
+        
+        // NotAllowedError: iframe restrictions or permissions denied
+        // Fall back to copy link
+        if (err?.name === 'NotAllowedError') {
+          const success = await copyToClipboard(data.url);
+          if (success) {
+            toast.success(t.shareNotSupported);
+          }
+          return;
+        }
+        
+        // Other errors - log and fallback to copy
+        console.error('Share failed:', error);
+        const success = await copyToClipboard(data.url);
+        if (success) {
+          toast.success(t.shareNotSupported);
         }
       } finally {
         setIsSharing(false);
