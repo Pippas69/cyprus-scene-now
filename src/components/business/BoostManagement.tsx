@@ -125,16 +125,16 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
-          // Fetch tickets sold during boost period
-          const { data: tickets } = await supabase
+          // Fetch tickets sold during boost period (by purchase date)
+          const { data: ticketsSoldData } = await supabase
             .from("tickets")
-            .select("id, checked_in_at, created_at")
+            .select("id")
             .eq("event_id", eventId)
             .eq("status", "valid")
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
-          const ticketsSold = tickets?.length || 0;
+          const ticketsSold = ticketsSoldData?.length || 0;
 
           // Fetch ticket revenue from ticket_orders during boost period
           const { data: ticketOrders } = await supabase
@@ -147,24 +147,40 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
           const ticketRevenue = ticketOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
 
-          // Fetch ticket check-ins (visits from tickets) during boost period
-          const ticketCheckIns = tickets?.filter(t => t.checked_in_at).length || 0;
+          // CRITICAL FIX: Fetch ticket check-ins (visits) that occurred during boost period
+          // This counts check-ins by checked_in_at date, NOT by purchase date
+          const { count: ticketCheckIns } = await supabase
+            .from("tickets")
+            .select("id", { count: "exact", head: true })
+            .eq("event_id", eventId)
+            .not("checked_in_at", "is", null)
+            .gte("checked_in_at", boostStart)
+            .lte("checked_in_at", boostEnd);
 
-          // Fetch reservations during boost period
-          const { data: reservations } = await supabase
+          // Fetch reservations created during boost period (for reservation count)
+          const { data: reservationsData } = await supabase
             .from("reservations")
-            .select("party_size, prepaid_min_charge_cents, checked_in_at")
+            .select("party_size, prepaid_min_charge_cents")
             .eq("event_id", eventId)
             .eq("status", "confirmed")
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
-          const reservationsCount = reservations?.length || 0;
-          const reservationGuests = reservations?.reduce((sum, r) => sum + (r.party_size || 0), 0) || 0;
-          const reservationRevenue = reservations?.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0) || 0;
-          const reservationCheckIns = reservations?.filter(r => r.checked_in_at).length || 0;
+          const reservationsCount = reservationsData?.length || 0;
+          const reservationGuests = reservationsData?.reduce((sum, r) => sum + (r.party_size || 0), 0) || 0;
+          const reservationRevenue = reservationsData?.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0) || 0;
 
-          const totalVisits = ticketCheckIns + reservationCheckIns;
+          // CRITICAL FIX: Fetch reservation check-ins that occurred during boost period
+          // This counts check-ins by checked_in_at date, NOT by reservation creation date
+          const { count: reservationCheckIns } = await supabase
+            .from("reservations")
+            .select("id", { count: "exact", head: true })
+            .eq("event_id", eventId)
+            .not("checked_in_at", "is", null)
+            .gte("checked_in_at", boostStart)
+            .lte("checked_in_at", boostEnd);
+
+          const totalVisits = (ticketCheckIns || 0) + (reservationCheckIns || 0);
           const hasPaidContent = ticketRevenue > 0 || reservationRevenue > 0;
 
           return {
@@ -377,11 +393,11 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
       : "Clicks on \"Redeem\" button – shows intent to use the boosted offer",
     visits: language === "el" ? "Επισκέψεις" : "Visits",
     visitsEventTooltip: language === "el" 
-      ? "Check-ins εισιτηρίων και κρατήσεων εκδηλώσεων minimum charge αποκλειστικά για boosted" 
-      : "Ticket and minimum charge reservation check-ins exclusively for boosted events",
+      ? "Check-ins εισιτηρίων και κρατήσεων αποκλειστικά για Boosted εκδηλώσεις" 
+      : "Ticket and reservation check-ins exclusively for boosted events",
     visitsOfferTooltip: language === "el" 
-      ? "Σαρώσεις QR για εξαργύρωση boosted προσφοράς στον χώρο σου, είτε με κράτηση είτε χωρίς (walk-in)" 
-      : "QR scans for boosted offer redemption at your venue, with or without reservation (walk-in)",
+      ? "QR check-ins από εξαργυρώσεις boosted προσφοράς, είτε με κράτηση είτε χωρίς" 
+      : "QR check-ins from boosted offer redemptions, with or without reservation",
     tier: language === "el" ? "Tier:" : "Tier:",
     period: language === "el" ? "Περίοδος:" : "Period:",
     totalCost: language === "el" ? "Κόστος:" : "Cost:",
