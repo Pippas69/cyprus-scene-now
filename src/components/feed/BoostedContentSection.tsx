@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, Share2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import { differenceInDays } from "date-fns";
 import { useCallback, useRef, useState } from "react";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
+import { ShareOfferDialog } from "@/components/sharing/ShareOfferDialog";
 import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
 import { getCityDistance } from "@/lib/businessRanking";
 import { translateCity } from "@/lib/cityTranslations";
@@ -181,6 +182,7 @@ interface OfferCardProps {
 const OfferCard = ({ offer, t, language }: OfferCardProps) => {
   const navigate = useNavigate();
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   // View = card became visible to the user (NOT a click)
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -216,6 +218,12 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
     e.stopPropagation();
     trackOfferRedeemClick(offer.business_id, offer.id, 'boosted_section');
     setIsPurchaseOpen(true);
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsShareOpen(true);
   };
 
   const coverImage = offer.businesses?.cover_url || offer.businesses?.logo_url;
@@ -281,7 +289,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
             </span>
           </div>
 
-          {/* LINE 4: Discount badge + Redeem button */}
+          {/* LINE 4: Discount badge + Share + Redeem button */}
           <div className="flex items-center justify-between mt-0.5">
             {/* Discount badge on left */}
             {offer.percent_off && offer.percent_off > 0 && (
@@ -289,15 +297,26 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
                 -{offer.percent_off}%
               </Badge>
             )}
-            {/* Redeem button on right */}
-            <Button 
-              onClick={handleRedeemClick}
-              size="sm" 
-              variant="default"
-              className="text-[10px] sm:text-xs h-5 sm:h-6 px-2 sm:px-2.5 ml-auto"
-            >
-              {t.redeem}
-            </Button>
+            {/* Share + Redeem buttons on right */}
+            <div className="flex items-center gap-1 ml-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 sm:h-6 sm:w-6"
+                onClick={handleShareClick}
+                title={language === "el" ? "Κοινοποίηση" : "Share"}
+              >
+                <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              </Button>
+              <Button 
+                onClick={handleRedeemClick}
+                size="sm" 
+                variant="default"
+                className="text-[10px] sm:text-xs h-5 sm:h-6 px-2 sm:px-2.5"
+              >
+                {t.redeem}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -328,6 +347,28 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
             accepts_direct_reservations: offer.businesses?.accepts_direct_reservations,
             reservation_days: offer.businesses?.reservation_days || null,
             reservation_time_slots: (offer.businesses?.reservation_time_slots as any) || null,
+          },
+        }}
+        language={language}
+      />
+
+      {/* Share Dialog */}
+      <ShareOfferDialog
+        open={isShareOpen}
+        onOpenChange={setIsShareOpen}
+        offer={{
+          id: offer.id,
+          title: offer.title,
+          description: offer.description,
+          percent_off: offer.percent_off,
+          special_deal_text: null,
+          end_at: offer.end_at,
+          offer_image_url: offer.businesses?.cover_url ?? null,
+          businesses: {
+            id: offer.business_id,
+            name: offer.businesses?.name || "",
+            cover_url: offer.businesses?.cover_url,
+            logo_url: offer.businesses?.logo_url,
           },
         }}
         language={language}
