@@ -2,7 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { translateCity, allCyprusLabel, cyprusCities } from "@/lib/cityTranslations";
+import { translateCity, allCyprusLabel, cyprusCities, sortCitiesByStandardOrder } from "@/lib/cityTranslations";
 
 interface LocationSwitcherProps {
   language: "el" | "en";
@@ -29,10 +29,12 @@ const LocationSwitcher = ({ language, selectedCity, onCityChange, compact = fals
       if (error) throw error;
 
       const uniqueCities = [...new Set(data?.map((b) => b.city) || [])];
-      setAvailableCities(uniqueCities);
+      // Sort cities by standard order
+      const sortedCities = sortCitiesByStandardOrder(uniqueCities);
+      setAvailableCities(sortedCities);
     } catch (error) {
       console.error("Error fetching cities:", error);
-      // Fallback to default cities
+      // Fallback to default cities (already in standard order)
       setAvailableCities(cyprusCities.el);
     }
   };

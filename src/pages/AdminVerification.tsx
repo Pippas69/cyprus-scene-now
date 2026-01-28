@@ -15,7 +15,7 @@ import { adminTranslations } from "@/translations/adminTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { AdminOceanHeader } from "@/components/admin/AdminOceanHeader";
 
-const CITIES = ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
+const CITIES = ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 
 interface Business {
   id: string;
