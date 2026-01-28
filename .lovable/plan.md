@@ -1,122 +1,77 @@
 
-# Rebuild Share System: Native-Only Approach
+# Fix Share Fallback for Preview & Restricted Contexts
 
 ## Πρόβλημα
 
-Το τρέχον share system έχει πολλά προβλήματα:
-- 8 αρχεία, ~1500+ γραμμές κώδικα
-- Πολύπλοκη λογική deep-links που αποτυγχάνει
-- html2canvas για δημιουργία εικόνων story που δεν δουλεύει αξιόπιστα
-- Confusing UI με πολλές επιλογές (Instagram DM, Messenger, WhatsApp, Snapchat, Telegram, Instagram Story, Facebook Story)
+Το native share αποτυγχάνει στο Lovable preview iframe με:
+```
+NotAllowedError: Third-party iframes are not allowed to call share()
+```
+
+Ο τρέχων κώδικας κάνει log το error αλλά **δεν κάνει fallback** στο copy link, με αποτέλεσμα να μην γίνεται τίποτα visible για τον χρήστη.
 
 ## Λύση
 
-**Αντικατάσταση με Native Share Sheet μόνο** - Χρήση του Web Share API που δουλεύει αξιόπιστα σε iOS και Android.
+Θα ενημερώσω τη `share` function στο `useSimpleShare.ts` ώστε:
+1. Όταν αποτυγχάνει με `NotAllowedError`, να κάνει **αυτόματο fallback** στο copy link
+2. Να δείχνει toast "Το link αντιγράφηκε!" 
+3. Να διατηρεί την ίδια συμπεριφορά για `AbortError` (user cancelled - no toast)
 
-```text
-┌─────────────────────────────────────────┐
-│                                         │
-│  ┌──────────────────────────────────┐   │
-│  │                                  │   │
-│  │        [Cover Image]            │   │
-│  │                                  │   │
-│  └──────────────────────────────────┘   │
-│                                         │
-│  Event Title / Business Name / Offer    │
-│  Subtitle (date, location, etc.)        │
-│                                         │
-│  ┌────────────────┐ ┌────────────────┐  │
-│  │   Copy Link    │ │     Share      │  │
-│  │      📋        │ │       ↗        │  │
-│  └────────────────┘ └────────────────┘  │
-│                                         │
-└─────────────────────────────────────────┘
-```
+## Αλλαγή Κώδικα
 
-## Αλλαγές
+**Αρχείο:** `src/hooks/useSimpleShare.ts`
 
-### Αφαίρεση (7 αρχεία):
-- `src/components/sharing/PremiumShareSheet.tsx` (769 γραμμές)
-- `src/components/sharing/ShareableEventCard.tsx`
-- `src/components/sharing/ShareableBusinessCard.tsx`
-- `src/components/sharing/ShareableOfferCard.tsx`
-- `src/components/sharing/SocialPlatformIcons.tsx`
-- Μέρος του `src/hooks/useShare.ts` (html2canvas, deep links)
-
-### Διατήρηση/Ανανέωση:
-- `src/components/sharing/ShareDialog.tsx` - Απλοποίηση
-- `src/components/sharing/ShareProfileDialog.tsx` - Απλοποίηση
-- `src/components/sharing/ShareOfferDialog.tsx` - Απλοποίηση
-
-### Δημιουργία:
-- `src/components/sharing/SimpleShareSheet.tsx` - Νέο minimalist component
-
-## Νέα Λειτουργία
-
-### Mobile (iOS/Android):
-1. Πατάς **Share** → Ανοίγει το **native share sheet** του κινητού
-2. Επιλέγεις WhatsApp, iMessage, Instagram DM, οτιδήποτε
-3. Το λειτουργικό κάνει τα υπόλοιπα
-
-### Desktop:
-1. Πατάς **Copy Link** → Αντιγράφεται το URL
-2. Πατάς **Share** → Αν υποστηρίζεται, ανοίγει share options
-
-### Τι περιλαμβάνει το share:
-- **URL**: `https://fomo.cy/event/[id]` ή `/business/[id]` ή `/offer/[id]`
-- **Title**: Όνομα event/business/offer
-- **Text**: Σύντομο μήνυμα με λεπτομέρειες
-
-## Technical Details
-
-### SimpleShareSheet Component:
+**Πριν (γραμμές 166-171):**
 ```typescript
-// Minimal, focused, reliable
-interface SimpleShareSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  text: string;
-  url: string;
-  imageUrl?: string;
-  language: 'el' | 'en';
+} catch (error) {
+  // User cancelled the share - don't show error toast
+  const err = error as Error;
+  if (err?.name !== 'AbortError') {
+    console.error('Share failed:', error);
+  }
 }
 ```
 
-### Νέο useSimpleShare hook:
+**Μετά:**
 ```typescript
-const useSimpleShare = () => {
-  const share = async (data: { title: string; text: string; url: string }) => {
-    if (navigator.share) {
-      await navigator.share(data);
-    } else {
-      await navigator.clipboard.writeText(data.url);
+} catch (error) {
+  const err = error as Error;
+  
+  // User cancelled the share - no action needed
+  if (err?.name === 'AbortError') {
+    return;
+  }
+  
+  // NotAllowedError: iframe restrictions or permissions denied
+  // Fall back to copy link
+  if (err?.name === 'NotAllowedError') {
+    const success = await copyToClipboard(data.url);
+    if (success) {
+      toast.success(t.shareNotSupported);
     }
-  };
+    return;
+  }
   
-  const copyLink = async (url: string) => {
-    await navigator.clipboard.writeText(url);
-  };
-  
-  return { share, copyLink, hasNativeShare: 'share' in navigator };
-};
+  // Other errors - log and fallback to copy
+  console.error('Share failed:', error);
+  const success = await copyToClipboard(data.url);
+  if (success) {
+    toast.success(t.shareNotSupported);
+  }
+}
 ```
 
 ## Αποτέλεσμα
 
-| Πριν | Μετά |
-|------|------|
-| 8 αρχεία, 1500+ γραμμές | 4 αρχεία, ~200 γραμμές |
-| 7 social platform buttons | 2 buttons (Copy + Share) |
-| Deep links που αποτυγχάνουν | Native API που δουλεύει πάντα |
-| html2canvas για stories | Καμία εξάρτηση εικόνων |
-| Confusing UX | Απλό, ξεκάθαρο |
+| Περίπτωση | Πριν | Μετά |
+|-----------|------|------|
+| Preview iframe | Τίποτα | Αντιγράφει link + toast |
+| User cancels | Τίποτα ✓ | Τίποτα ✓ |
+| Production (iOS/Android) | Native share ✓ | Native share ✓ |
+| Desktop no support | Αντιγράφει ✓ | Αντιγράφει ✓ |
 
-## Ροή Υλοποίησης
+## Testing
 
-1. Δημιουργία `SimpleShareSheet` component
-2. Δημιουργία `useSimpleShare` hook
-3. Ενημέρωση `ShareDialog`, `ShareProfileDialog`, `ShareOfferDialog` να χρησιμοποιούν το νέο component
-4. Αφαίρεση παλιών αρχείων
-5. Καθαρισμός αχρησιμοποίητου κώδικα από `useShare.ts`
-6. Testing σε iOS και Android
+Μετά την αλλαγή:
+1. **Στο preview**: Πάτα Share → Toast "Το link αντιγράφηκε στο clipboard"
+2. **Στο fomocy.lovable.app**: Πάτα Share → Native share sheet ανοίγει κανονικά
