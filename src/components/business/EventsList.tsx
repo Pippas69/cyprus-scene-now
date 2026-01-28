@@ -101,8 +101,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       overview: "Επισκόπηση",
       cannotDeleteWithTickets: "Δεν μπορείτε να διαγράψετε αυτή την εκδήλωση γιατί υπάρχουν ολοκληρωμένες αγορές εισιτηρίων.",
       filterAll: "Όλα",
-      filterTicket: "Με Εισιτήριο",
-      filterReservation: "Με Κράτηση",
+      filterTicket: "Εισιτήριο",
+      filterReservation: "Κράτηση",
       filterFreeEntry: "Δωρεάν Είσοδος",
       badgeTicket: "Με Εισιτήριο",
       badgeReservation: "Κράτηση Τραπεζιού",
@@ -133,8 +133,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       overview: "Overview",
       cannotDeleteWithTickets: "Cannot delete this event because there are completed ticket purchases.",
       filterAll: "All",
-      filterTicket: "With Tickets",
-      filterReservation: "With Reservation",
+      filterTicket: "Tickets",
+      filterReservation: "Reservation",
       filterFreeEntry: "Free Entry",
       badgeTicket: "With Ticket",
       badgeReservation: "Table Reservation",
@@ -332,8 +332,20 @@ const EventsList = ({ businessId }: EventsListProps) => {
   return (
     <>
       {/* Header with title only - scanner removed, use Unified QR Scanner in dashboard header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
         <h1 className="text-2xl font-bold">{t.title}</h1>
+
+        {/* Expired toggle (same placement/behavior as Offers) */}
+        {expiredEvents.length > 0 && (
+          <Button
+            variant={showExpired ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={() => setShowExpired(!showExpired)}
+            className="text-[9px] md:text-xs h-7 md:h-8 px-1.5 md:px-3 whitespace-nowrap flex-shrink-0 lg:text-xl lg:h-10 lg:px-4"
+          >
+            {t.expired} ({expiredEvents.length})
+          </Button>
+        )}
       </div>
 
       {/* Filter tabs */}
@@ -373,18 +385,6 @@ const EventsList = ({ businessId }: EventsListProps) => {
           <Gift className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 mr-0.5 md:mr-1 flex-shrink-0" />
           {t.filterFreeEntry}
         </Button>
-        
-        {/* Expired toggle */}
-        {expiredEvents.length > 0 && (
-          <Button
-            variant={showExpired ? 'secondary' : 'outline'}
-            size="sm"
-            onClick={() => setShowExpired(!showExpired)}
-            className="text-[9px] md:text-xs lg:text-sm h-7 md:h-8 px-1.5 md:px-3 whitespace-nowrap flex-shrink-0"
-          >
-            {t.expired} ({expiredEvents.length})
-          </Button>
-        )}
       </div>
 
       {(!events || events.length === 0) ? (
