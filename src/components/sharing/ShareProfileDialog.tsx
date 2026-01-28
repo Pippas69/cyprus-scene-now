@@ -1,4 +1,5 @@
-import { PremiumShareSheet } from './PremiumShareSheet';
+import { SimpleShareSheet } from './SimpleShareSheet';
+import { formatBusinessShareText, getBusinessUrlFallback } from '@/hooks/useSimpleShare';
 
 interface ShareProfileDialogProps {
   open: boolean;
@@ -15,13 +16,23 @@ interface ShareProfileDialogProps {
 }
 
 export const ShareProfileDialog = ({ open, onOpenChange, business, language }: ShareProfileDialogProps) => {
+  const url = getBusinessUrlFallback(business.id);
+  const shareText = formatBusinessShareText({ name: business.name }, language);
+  const imageUrl = business.cover_url || business.logo_url;
+
   return (
-    <PremiumShareSheet
+    <SimpleShareSheet
       open={open}
       onOpenChange={onOpenChange}
-      type="business"
-      business={business}
+      title={business.name}
+      subtitle={business.city ?? undefined}
+      text={shareText}
+      url={url}
+      imageUrl={imageUrl}
       language={language}
+      objectType="business"
+      objectId={business.id}
+      businessId={business.id}
     />
   );
 };
