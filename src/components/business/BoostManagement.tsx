@@ -72,6 +72,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const fetchBoosts = async () => {
     setLoading(true);
     try {
+      const normalizeRange = (start: string, end: string) => {
+        const startIso = start?.length === 10 ? `${start}T00:00:00.000Z` : start;
+        const endIso = end?.length === 10 ? `${end}T23:59:59.999Z` : end;
+        return { startIso, endIso };
+      };
+
       // Fetch event boosts with all metrics
       const { data: eventData, error: eventError } = await supabase
         .from("event_boosts")
@@ -98,8 +104,10 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
       const eventBoostsWithMetrics: EventBoostWithMetrics[] = await Promise.all(
         (eventData || []).map(async (boost) => {
           const eventId = boost.event_id;
-          const boostStart = boost.start_date;
-          const boostEnd = boost.end_date;
+          const { startIso: boostStart, endIso: boostEnd } = normalizeRange(
+            boost.start_date,
+            boost.end_date
+          );
           
           // Fetch impressions (event views) during boost period
           const { count: impressions } = await supabase
@@ -209,8 +217,10 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
       const offerBoostsWithMetrics: OfferBoostWithMetrics[] = await Promise.all(
         (offerData || []).map(async (boost) => {
           const discountId = boost.discount_id;
-          const boostStart = boost.start_date;
-          const boostEnd = boost.end_date;
+          const { startIso: boostStart, endIso: boostEnd } = normalizeRange(
+            boost.start_date,
+            boost.end_date
+          );
           
           // Fetch impressions (discount views) during boost period
           const { count: impressions } = await supabase
@@ -220,11 +230,13 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .gte("viewed_at", boostStart)
             .lte("viewed_at", boostEnd);
 
-          // Fetch interactions (offer purchases = redemption clicks) during boost period
+          // Fetch interactions = clicks on "Εξαργύρωσε" during boost period
+          // Tracked as engagement_events.offer_redeem_click
           const { count: redemptionClicks } = await supabase
-            .from("offer_purchases")
-            .select("*", { count: "exact", head: true })
-            .eq("discount_id", discountId)
+            .from("engagement_events")
+            .select("id", { count: "exact", head: true })
+            .eq("event_type", "offer_redeem_click")
+            .eq("entity_id", discountId)
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
