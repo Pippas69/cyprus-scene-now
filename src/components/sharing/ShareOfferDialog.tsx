@@ -1,4 +1,5 @@
-import { PremiumShareSheet } from './PremiumShareSheet';
+import { SimpleShareSheet } from './SimpleShareSheet';
+import { formatOfferShareText, getOfferUrlFallback } from '@/hooks/useSimpleShare';
 
 interface ShareOfferDialogProps {
   open: boolean;
@@ -27,27 +28,41 @@ export const ShareOfferDialog = ({
   offer,
   language,
 }: ShareOfferDialogProps) => {
+  const url = getOfferUrlFallback(offer.id);
+  const shareText = formatOfferShareText(
+    {
+      title: offer.title,
+      validUntil: offer.end_at,
+      businessName: offer.businesses.name,
+    },
+    language
+  );
+  const imageUrl = offer.offer_image_url || offer.businesses.cover_url || offer.businesses.logo_url;
+
+  // Build subtitle
+  const getSubtitle = () => {
+    if (offer.percent_off && offer.percent_off > 0) {
+      return `-${offer.percent_off}%`;
+    }
+    if (offer.special_deal_text) {
+      return offer.special_deal_text;
+    }
+    return offer.businesses.name;
+  };
+
   return (
-    <PremiumShareSheet
+    <SimpleShareSheet
       open={open}
       onOpenChange={onOpenChange}
-      type="offer"
-      offer={{
-        id: offer.id,
-        title: offer.title,
-        description: offer.description ?? undefined,
-        percent_off: offer.percent_off,
-        special_deal_text: offer.special_deal_text,
-        end_at: offer.end_at,
-        offer_image_url: offer.offer_image_url ?? null,
-        businesses: {
-          id: offer.businesses.id,
-          name: offer.businesses.name,
-          cover_url: offer.businesses.cover_url,
-          logo_url: offer.businesses.logo_url,
-        },
-      }}
+      title={offer.title}
+      subtitle={getSubtitle()}
+      text={shareText}
+      url={url}
+      imageUrl={imageUrl}
       language={language}
+      objectType="discount"
+      objectId={offer.id}
+      businessId={offer.businesses.id}
     />
   );
 };
