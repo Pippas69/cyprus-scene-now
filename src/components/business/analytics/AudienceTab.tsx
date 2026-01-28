@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAudienceMetrics } from "@/hooks/useAudienceMetrics";
 import { Users, Calendar, MapPin, Info } from "lucide-react";
-import { translateCity } from "@/lib/cityTranslations";
+import { CITY_ORDER, normalizeCityDbValue, translateCity } from "@/lib/cityTranslations";
 import {
   Dialog,
   DialogContent,
@@ -156,7 +156,25 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
 
   const genderTotal = (data?.gender.male || 0) + (data?.gender.female || 0) + (data?.gender.other || 0);
   const ageTotal = Object.values(data?.age || {}).reduce((sum, val) => sum + val, 0);
-  const regionEntries = Object.entries(data?.region || {}).sort(([, a], [, b]) => b - a);
+  const normalizedRegionCounts = Object.entries(data?.region || {}).reduce<Record<string, number>>(
+    (acc, [rawName, count]) => {
+      const key = normalizeCityDbValue(rawName);
+      if (!key) return acc;
+      acc[key] = (acc[key] || 0) + (count as number);
+      return acc;
+    },
+    {}
+  );
+
+  const canonicalRegionEntries = CITY_ORDER
+    .filter((city) => (normalizedRegionCounts[city] || 0) > 0)
+    .map((city) => [city, normalizedRegionCounts[city]] as const);
+
+  const extraRegionEntries = Object.entries(normalizedRegionCounts)
+    .filter(([name]) => !CITY_ORDER.includes(name))
+    .sort(([, a], [, b]) => b - a);
+
+  const regionEntries = [...canonicalRegionEntries, ...extraRegionEntries];
   const regionTotal = regionEntries.reduce((sum, [, val]) => sum + val, 0);
 
   const hasData = genderTotal > 0 || ageTotal > 0 || regionTotal > 0;
@@ -217,7 +235,7 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
           explanation={t.explanations.region}
           details={t.explanations.regionDetails}
         >
-          {regionEntries.slice(0, 5).map(([city, count]) => (
+          {regionEntries.slice(0, 6).map(([city, count]) => (
             <MetricItem 
               key={city} 
               label={translateCity(city, language)} 

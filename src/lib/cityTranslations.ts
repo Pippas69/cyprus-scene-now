@@ -55,6 +55,33 @@ export const cyprusCities = {
 export const CITY_ORDER = ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
 
 /**
+ * Normalizes a raw city/town string (from DB or analytics aggregations) into the
+ * canonical database value (Greek) when it matches one of our known cities.
+ *
+ * Why: analytics sources may contain either Greek or English values, or values
+ * with extra whitespace. This ensures consistent bucketing and correct UI
+ * translation.
+ */
+export const normalizeCityDbValue = (raw: string | null | undefined): string => {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+
+  // First try direct mapping (handles both EL and EN keys)
+  const mapped = cityTranslationMap[trimmed];
+  if (mapped) return mapped.el;
+
+  // Fallback: case-insensitive match on English keys (handles e.g. "larnaca")
+  const lower = trimmed.toLowerCase();
+  for (const [key, val] of Object.entries(cityTranslationMap)) {
+    if (key.toLowerCase() === lower) return val.el;
+  }
+
+  // If it's not a known city, keep as-is (still useful for non-standard towns)
+  return trimmed;
+};
+
+/**
  * Sort cities according to the standard order
  */
 export const sortCitiesByStandardOrder = (cities: string[]): string[] => {

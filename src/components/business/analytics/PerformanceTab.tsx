@@ -6,6 +6,7 @@ import { User, Tag, Calendar, Eye, MousePointer, MapPin, Users, Info } from 'luc
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
 import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
 import { Progress } from '@/components/ui/progress';
+import { CITY_ORDER, normalizeCityDbValue, translateCity } from '@/lib/cityTranslations';
 
 const translations = {
   el: {
@@ -347,10 +348,29 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   const ageTotal = ageValues.reduce((a, b) => a + b, 0);
   
   // Convert region object to array and sort by count
-  const regionArray = Object.entries(audience?.region || {})
+  const normalizedRegionCounts = Object.entries(audience?.region || {}).reduce<Record<string, number>>(
+    (acc, [rawName, count]) => {
+      const key = normalizeCityDbValue(rawName);
+      if (!key) return acc;
+      acc[key] = (acc[key] || 0) + (count as number);
+      return acc;
+    },
+    {}
+  );
+
+  // Only show Cyprus canonical cities (standard order) if they exist in the data
+  const regionArray = CITY_ORDER
+    .filter((city) => (normalizedRegionCounts[city] || 0) > 0)
+    .map((city) => ({ name: city, count: normalizedRegionCounts[city] }));
+
+  // Keep any non-canonical regions (towns) afterwards (sorted)
+  const extraRegions = Object.entries(normalizedRegionCounts)
+    .filter(([name]) => !CITY_ORDER.includes(name))
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
-  const regionTotal = regionArray.reduce((sum, r) => sum + r.count, 0);
+
+  const fullRegionArray = [...regionArray, ...extraRegions];
+  const regionTotal = fullRegionArray.reduce((sum, r) => sum + r.count, 0);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -426,9 +446,14 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
 
           <AudienceCard icon={MapPin} title={t.region} explanation={t.regionExplanation}>
             <div className="space-y-2 sm:space-y-3">
-              {regionArray.length > 0 ? (
-                regionArray.slice(0, 6).map((r) => (
-                  <MetricBar key={r.name} label={r.name} value={r.count} total={regionTotal} />
+              {fullRegionArray.length > 0 ? (
+                fullRegionArray.slice(0, 6).map((r) => (
+                  <MetricBar
+                    key={r.name}
+                    label={translateCity(r.name, language)}
+                    value={r.count}
+                    total={regionTotal}
+                  />
                 ))
               ) : (
                 <p className="text-xs sm:text-sm text-muted-foreground italic">{t.regionNoData}</p>
