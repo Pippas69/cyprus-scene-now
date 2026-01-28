@@ -2,7 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { translateCity, allCyprusLabel, cyprusCities } from "@/lib/cityTranslations";
+import { translateCity, allCyprusLabel, cyprusCities, sortCitiesByStandardOrder } from "@/lib/cityTranslations";
 
 interface CompactLocationDropdownProps {
   language: "el" | "en";
@@ -26,17 +26,12 @@ const CompactLocationDropdown = ({ language, selectedCity, onCityChange }: Compa
 
       if (error) throw error;
 
-      // Get unique cities
+      // Get unique cities (DB values are Greek)
       const uniqueCities = [...new Set(data?.map((b) => b.city).filter(Boolean) || [])];
-      
-      // Sort cities alphabetically
-      uniqueCities.sort((a, b) => {
-        const labelA = translateCity(a, language);
-        const labelB = translateCity(b, language);
-        return labelA.localeCompare(labelB, language === "el" ? "el" : "en");
-      });
-      
-      setAvailableCities(uniqueCities);
+
+      // Always keep the platform's standard city order
+      const sortedCities = sortCitiesByStandardOrder(uniqueCities);
+      setAvailableCities(sortedCities);
     } catch (error) {
       console.error("Error fetching cities:", error);
       // Fallback to default cities
