@@ -16,21 +16,9 @@ const DashboardUser = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'events');
 
-  // IMPORTANT: enable the no-views guard *synchronously* during render.
-  // Some cards track visibility on first paint; relying only on useEffect can be too late.
-  if (typeof window !== 'undefined') {
-    (window as any).__NO_VIEWS_CONTEXT = 'dashboard_user_sections';
-  }
-
-  // NEVER count views while the user browses their own dashboard sections.
-  // This is a hard kill-switch to avoid any mobile/webview edge-cases.
-  useEffect(() => {
-    return () => {
-      if ((window as any).__NO_VIEWS_CONTEXT === 'dashboard_user_sections') {
-        delete (window as any).__NO_VIEWS_CONTEXT;
-      }
-    };
-  }, []);
+  // View tracking is now handled centrally in analyticsTracking.ts
+  // Views are ALLOWED from "offers" and "events" tabs ONLY
+  // Other tabs (reservations, settings) will NOT count views
 
   useEffect(() => {
     checkUser();
