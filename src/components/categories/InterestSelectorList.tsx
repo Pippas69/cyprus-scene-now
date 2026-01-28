@@ -49,18 +49,18 @@ export function InterestSelectorList({
           <div key={category.id} className="border border-border rounded-2xl overflow-hidden">
             <div
               className={cn(
-                "flex items-center justify-between px-4 py-3.5 sm:py-4",
+                "flex items-center justify-between px-3 sm:px-4 py-3 sm:py-3.5",
                 "bg-background",
                 isActive && "bg-muted/40"
               )}
             >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 {!hasSubOptions && (
                   <Checkbox
                     id={`interest-${category.id}`}
                     checked={selectedIds.includes(category.id)}
                     onCheckedChange={() => onToggle(category.id)}
-                    className="rounded-full"
+                    className="rounded-full h-4 w-4 sm:h-5 sm:w-5"
                   />
                 )}
 
@@ -68,12 +68,12 @@ export function InterestSelectorList({
                   type="button"
                   onClick={hasSubOptions ? () => toggleExpanded(category.id) : undefined}
                   className={cn(
-                    "flex items-center gap-3 flex-1 min-w-0 text-left",
+                    "flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-left",
                     hasSubOptions ? "cursor-pointer" : "cursor-default"
                   )}
                 >
-                  <span className="text-base leading-none">{category.icon}</span>
-                  <span className="text-sm font-medium truncate">{category.label}</span>
+                  <span className="text-sm sm:text-base leading-none">{category.icon}</span>
+                  <span className="text-xs sm:text-sm font-medium truncate">{category.label}</span>
                 </button>
               </div>
 
@@ -81,32 +81,32 @@ export function InterestSelectorList({
                 <button
                   type="button"
                   onClick={() => toggleExpanded(category.id)}
-                  className="shrink-0 p-1.5 rounded-lg hover:bg-muted transition-colors"
+                  className="shrink-0 p-1 sm:p-1.5 rounded-lg hover:bg-muted transition-colors"
                   aria-label={isExpanded ? "Collapse" : "Expand"}
                 >
                   {isExpanded ? (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                   )}
                 </button>
               )}
             </div>
 
             {hasSubOptions && isExpanded && (
-              <div className="border-t border-border bg-background px-4 py-3">
-                <div className="space-y-2">
+              <div className="border-t border-border bg-background px-3 sm:px-4 py-2.5 sm:py-3">
+                <div className="space-y-1.5 sm:space-y-2">
                   {category.subOptions!.map((sub) => (
-                    <div key={sub.id} className="flex items-center gap-3">
+                    <div key={sub.id} className="flex items-center gap-2 sm:gap-3">
                       <Checkbox
                         id={`interest-${sub.id}`}
                         checked={selectedIds.includes(sub.id)}
                         onCheckedChange={() => onToggle(sub.id)}
-                        className="rounded-full"
+                        className="rounded-full h-4 w-4 sm:h-5 sm:w-5"
                       />
                       <label
                         htmlFor={`interest-${sub.id}`}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                       >
                         {sub.label}
                       </label>
