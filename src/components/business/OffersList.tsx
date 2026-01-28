@@ -51,6 +51,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const { language } = useLanguage();
   const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
   const [editingOffer, setEditingOffer] = useState<any>(null);
+  const [showExpired, setShowExpired] = useState(false);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -80,6 +81,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       boost: "Προώθηση",
       edit: "Επεξεργασία",
       delete: "Διαγραφή",
+      expired: "Ληγμένες",
     },
     en: {
       title: "Offers",
@@ -98,6 +100,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       boost: "Boost",
       edit: "Edit",
       delete: "Delete",
+      expired: "Expired",
     },
   };
 
@@ -228,6 +231,16 @@ const OffersList = ({ businessId }: OffersListProps) => {
     return <div className="text-center py-8">{t.loading}</div>;
   }
 
+  // Check if offer is expired (end_at has passed)
+  const isOfferExpired = (offer: any) => {
+    return new Date(offer.end_at) < new Date();
+  };
+
+  // Separate active and expired offers
+  const activeOffers = (offers || []).filter(offer => !isOfferExpired(offer));
+  const expiredOffers = (offers || []).filter(offer => isOfferExpired(offer));
+  const displayedOffers = showExpired ? [...activeOffers, ...expiredOffers] : activeOffers;
+
   if (!offers || offers.length === 0) {
     return (
       <Card>
@@ -244,7 +257,21 @@ const OffersList = ({ businessId }: OffersListProps) => {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{t.title}</h1>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{t.title}</h1>
+        
+        {/* Expired toggle */}
+        {expiredOffers.length > 0 && (
+          <Button
+            variant={showExpired ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={() => setShowExpired(!showExpired)}
+            className="text-xs h-7 px-3"
+          >
+            {t.expired} ({expiredOffers.length})
+          </Button>
+        )}
+      </div>
       
       
       {/* Student Discount Stats */}
@@ -252,8 +279,10 @@ const OffersList = ({ businessId }: OffersListProps) => {
       
       {/* Offers list - redesigned cards with tighter spacing */}
       <div className="space-y-3 md:space-y-4">
-        {offers.map((offer) => (
-          <Card key={offer.id} className="bg-card/50 border-border/50">
+        {displayedOffers.map((offer) => {
+          const expired = isOfferExpired(offer);
+          return (
+          <Card key={offer.id} className={`bg-card/50 border-border/50 ${expired ? 'opacity-60' : ''}`}>
             <CardContent className="p-3 md:p-4">
               {/* 2-row grid to match mockup: (title+date) / (badges+actions) */}
               <div className="grid grid-cols-[1fr_auto] gap-x-2 md:gap-x-4 gap-y-2">
@@ -335,7 +364,8 @@ const OffersList = ({ businessId }: OffersListProps) => {
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {/* Offer Boost Dialog */}
