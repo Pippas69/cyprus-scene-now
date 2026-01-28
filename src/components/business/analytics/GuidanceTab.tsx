@@ -549,7 +549,7 @@ const ProfileMetricsSection: React.FC<{
                   <div className="p-2 sm:p-4 bg-muted/50 rounded-lg">
                     <p className="text-xl sm:text-3xl font-bold text-primary">{newCustomers > 0 ? newCustomers.toLocaleString() : '—'}</p>
                   </div>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground whitespace-pre-line">{(t as any).profileVisitsTooltipText}</p>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground whitespace-pre-line">{(t as any).newCustomersTooltip}</p>
                 </div>
               </DialogContent>
             </Dialog>

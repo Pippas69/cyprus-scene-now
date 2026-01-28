@@ -70,26 +70,17 @@ export const useGuidanceMetrics = (businessId: string) => {
       let newCustomers = 0;
 
       if (paidPlanStartDate) {
-        // Count unique visitors (QR check-ins) from direct profile reservations
-        // since the paid plan started.
-        // reservation_scans does not have business_id; join via reservations.
-        const { data: reservationScans } = await (supabase
-          .from("reservation_scans") as any)
-          .select(
-            "scanned_by, reservation:reservations!inner(event_id, business_id)"
-          )
-          .eq("reservation.business_id", businessId)
-          .is("reservation.event_id", null)
-          .eq("success", true)
-          .gte("scanned_at", paidPlanStartDate);
+        // Count QR check-ins from direct profile reservations since the paid plan started
+        // Use same logic as useBoostValueMetrics: reservations.checked_in_at
+        const { count } = await supabase
+          .from("reservations")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .is("event_id", null)
+          .not("checked_in_at", "is", null)
+          .gte("checked_in_at", paidPlanStartDate);
 
-        const uniqueUsers = new Set(
-          (reservationScans || [])
-            .filter((s: any) => s.scanned_by)
-            .map((s: any) => s.scanned_by)
-        );
-
-        newCustomers = uniqueUsers.size;
+        newCustomers = count || 0;
       }
 
 
