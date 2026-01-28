@@ -1,54 +1,48 @@
 # Memory: features/analytics/view-tracking-architecture-v1-0
-Updated: 2026-01-18
+Updated: 2026-01-28
 
-## Core Principle: Views ≠ Clicks
+## Core Principle: Views = Impressions (Card Visibility)
 
-**Views** are tracked ONLY when a user opens/navigates to the content page. Views are NOT tracked when a card is visible in a feed or list.
+**Views** are tracked when a card becomes VISIBLE to the user (IntersectionObserver impression), NOT when clicking/opening detail pages.
 
-**Interactions** (clicks, follows, shares) are tracked separately and do NOT count as views.
+## ALLOWED View Sources
 
-## View Tracking Locations
+### Event Views - Tracked From:
+1. **Feed** (/ or /feed) - boosted events become visible
+2. **/ekdiloseis** page - public events discovery
+3. **/dashboard-user?tab=events** - user's events section
 
-### Profile Views
-- **TRACKED AT**: `src/pages/BusinessProfile.tsx` when the page loads
+### Offer Views - Tracked From:
+1. **Feed** (/ or /feed) - boosted offers become visible
+2. **/offers** page - public offers discovery  
+3. **/dashboard-user?tab=offers** - user's offers section
+
+## NOT Tracked (Views are skipped):
+- Map (/xartis) - visibility on map does NOT count as view
+- Business profiles (/business/:id) - NOT tracked
+- My Reservations tab (/dashboard-user?tab=reservations)
+- Settings tab (/dashboard-user?tab=settings)
+- Any other pages
+
+## Profile Views (engagement_events)
+- **TRACKED AT**: `src/pages/BusinessProfile.tsx` when page loads
 - Uses `trackEngagement(businessId, 'profile_view', 'business', businessId)`
-- **NOT tracked** when profile card is visible in feed or map
+- **NOT tracked** from /dashboard-user/* (any tab)
 
-### Event Views
-- **TRACKED AT**: `src/pages/EventDetail.tsx` when the page loads
-- Uses `trackEventView(eventId, 'direct')`
-- **NOT tracked** when event card is visible in feed (UnifiedEventCard, FeaturedEventCard)
+## Technical Implementation
+- `src/lib/analyticsTracking.ts` - Central source filtering logic
+- `isAllowedEventViewSource()` - Checks current URL path + tab parameter
+- `isAllowedOfferViewSource()` - Checks current URL path + tab parameter
+- `useViewTracking` hook - IntersectionObserver for impression detection
 
-### Offer/Discount Views
-- **TRACKED AT**: `src/components/user/OfferPurchaseDialog.tsx` when dialog opens
-- Uses `trackDiscountView(offer.id, 'direct')`
-- **NOT tracked** when offer card is visible in feed (OfferCard)
+## Components Using View Tracking
+- `UnifiedEventCard.tsx` - calls `trackEventView` on visibility
+- `OfferCard.tsx` - calls `trackDiscountView` on visibility
+- `BoostedContentSection.tsx` - OfferCard calls `trackDiscountView` on visibility
 
-## Interaction Tracking
-
-### Profile Interactions
-- Follow: `business_followers` table
-- Share: `trackEngagement(businessId, 'share', 'business', businessId)`
-- Click from map: `trackEngagement(businessId, 'profile_click', 'business', businessId, { source: 'map' })`
-
-### Event Interactions
-- RSVP (Interested/Going): `rsvps` table
-- Click on card: navigates to EventDetail (which triggers view)
-
-### Offer Interactions
-- Redeem click: `trackOfferRedeemClick(businessId, discountId, source)`
-
-## Cards DO NOT Track Views
-
-The following components do NOT track views (only navigation to detail pages):
-- `UnifiedEventCard.tsx` - no view tracking
-- `FeaturedEventCard.tsx` - no view tracking
-- `OfferCard.tsx` - no view tracking
-- `BusinessDirectorySection.tsx` (BusinessCard) - no view tracking
-
-## Analytics Hooks Data Sources
-
-- **Profile Views**: `engagement_events` where `event_type = 'profile_view'`
-- **Offer Views**: `discount_views` table
+## Analytics Dashboard Data Sources
 - **Event Views**: `event_views` table
-- **Total Views** (Overview): Sum of profile + offer + event views
+- **Offer Views**: `discount_views` table
+- **Profile Views**: `engagement_events` where `event_type = 'profile_view'`
+- **Boosted Views**: Views with `source = 'feed'` (from Feed only)
+- **Organic Views**: Views with `source = 'direct'` (from /offers or /ekdiloseis)

@@ -4,102 +4,27 @@ import { useEffect } from 'react';
 let sessionId: string | null = null;
 
 /**
- * Hard kill-switch for view tracking while the user is browsing their own dashboard-user sections.
- * This is intentionally NOT based only on URL, because some mobile/webview cases can report
- * unexpected path/query values during SPA transitions.
- */
-const isUserDashboardNoViewsEnabled = (): boolean => {
-  try {
-    return (window as any)?.__NO_VIEWS_CONTEXT === 'dashboard_user_sections';
-  } catch {
-    return false;
-  }
-};
-
-/**
- * Views must NEVER be counted when the user is browsing from their own dashboard sections
- * (My Events / My Reservations / My Offers / Settings).
- *
- * We enforce this centrally to avoid missing any edge-case component.
- */
-const isDashboardUserContext = (): boolean => {
-  try {
-    // Strongest rule: if the UI explicitly marked this session as "user dashboard sections",
-    // do not count ANY views.
-    if (isUserDashboardNoViewsEnabled()) return true;
-
-    const path = window.location?.pathname || "";
-    // ONLY the *user* dashboard sections must never count as views.
-    // Business dashboard analytics must keep working normally.
-    if (path.startsWith('/dashboard-user')) return true;
-
-    const src = new URLSearchParams(window.location?.search || "").get('src');
-    if (src === 'dashboard_user') return true;
-
-    return false;
-  } catch {
-    return false;
-  }
-};
-
-/**
- * ALLOWED SOURCES for view tracking:
+ * VIEW TRACKING RULES (Updated):
+ * 
+ * Views are tracked as IMPRESSIONS (when the card becomes visible) from these sources ONLY:
  * 
  * EVENT VIEWS:
+ * - Feed (/ or /feed) - boosted events
  * - /ekdiloseis page (public events discovery)
- * - Feed (boosted events only - tracked via BoostedContentSection)
- * - /event/:id page (direct event detail view)
+ * - /dashboard-user?tab=events (user's events section)
  * 
  * OFFER VIEWS:
+ * - Feed (/ or /feed) - boosted offers
  * - /offers page (public offers discovery)
- * - Feed (boosted offers only - tracked via BoostedContentSection)
- * - Offer detail dialog when opened
+ * - /dashboard-user?tab=offers (user's offers section)
  * 
- * NOT ALLOWED (must never count as views):
- * - /dashboard-user/* (My Events, My Reservations, My Offers)
- * - /xartis (Map - views are NOT tracked here)
- * - Business profiles (views are NOT tracked here)
+ * NOT tracked:
+ * - Map (/xartis)
+ * - Business profiles (/business/:id)
+ * - My Reservations tab
+ * - Settings tab
+ * - Any other pages
  */
-const isAllowedEventViewSource = (): boolean => {
-  try {
-    if (isDashboardUserContext()) return false;
-    
-    const path = window.location?.pathname || "";
-    
-    // Allowed: /ekdiloseis page
-    if (path === '/ekdiloseis' || path.startsWith('/ekdiloseis')) return true;
-    
-    // Allowed: /event/:id detail page
-    if (path.startsWith('/event/')) return true;
-    
-    // Allowed: Feed page (root / or /feed)
-    if (path === '/' || path === '/feed') return true;
-    
-    // NOT allowed: Map, business profiles, dashboard sections
-    return false;
-  } catch {
-    return false;
-  }
-};
-
-const isAllowedOfferViewSource = (): boolean => {
-  try {
-    if (isDashboardUserContext()) return false;
-    
-    const path = window.location?.pathname || "";
-    
-    // Allowed: /offers page
-    if (path === '/offers' || path.startsWith('/offers')) return true;
-    
-    // Allowed: Feed page (root / or /feed) for boosted offers
-    if (path === '/' || path === '/feed') return true;
-    
-    // NOT allowed: Map, business profiles, dashboard sections
-    return false;
-  } catch {
-    return false;
-  }
-};
 
 const debugLog = (...args: any[]) => {
   // Keep noise out of production builds
@@ -107,6 +32,83 @@ const debugLog = (...args: any[]) => {
     // eslint-disable-next-line no-console
     console.debug(...args);
   }
+};
+
+/**
+ * Get current context for view tracking decisions
+ */
+const getCurrentContext = () => {
+  try {
+    const path = window.location?.pathname || "";
+    const search = window.location?.search || "";
+    const params = new URLSearchParams(search);
+    const tab = params.get('tab');
+    const src = params.get('src');
+    
+    return { path, tab, src };
+  } catch {
+    return { path: "", tab: null, src: null };
+  }
+};
+
+/**
+ * Check if event views are allowed from current page
+ */
+const isAllowedEventViewSource = (): boolean => {
+  const { path, tab, src } = getCurrentContext();
+  
+  // Never track if src=dashboard_user (safety fallback)
+  if (src === 'dashboard_user') return false;
+  
+  // Allowed: Feed page (root / or /feed)
+  if (path === '/' || path === '/feed') return true;
+  
+  // Allowed: /ekdiloseis page (public events discovery)
+  if (path === '/ekdiloseis' || path.startsWith('/ekdiloseis')) return true;
+  
+  // Allowed: Dashboard user - only "events" tab
+  if (path.startsWith('/dashboard-user') && tab === 'events') return true;
+  
+  // NOT allowed: Everything else (map, business profiles, reservations tab, settings, etc.)
+  return false;
+};
+
+/**
+ * Check if offer views are allowed from current page
+ */
+const isAllowedOfferViewSource = (): boolean => {
+  const { path, tab, src } = getCurrentContext();
+  
+  // Never track if src=dashboard_user (safety fallback)
+  if (src === 'dashboard_user') return false;
+  
+  // Allowed: Feed page (root / or /feed)
+  if (path === '/' || path === '/feed') return true;
+  
+  // Allowed: /offers page (public offers discovery)
+  if (path === '/offers' || path.startsWith('/offers')) return true;
+  
+  // Allowed: Dashboard user - only "offers" tab
+  if (path.startsWith('/dashboard-user') && tab === 'offers') return true;
+  
+  // NOT allowed: Everything else (map, business profiles, reservations tab, settings, etc.)
+  return false;
+};
+
+/**
+ * Check if we're in a context where profile views should NOT be counted
+ * (user browsing their own dashboard - any tab)
+ */
+const isDashboardUserContext = (): boolean => {
+  const { path, src } = getCurrentContext();
+  
+  // Strongest rule: if src=dashboard_user, never count profile views
+  if (src === 'dashboard_user') return true;
+  
+  // Block profile views from user dashboard entirely
+  if (path.startsWith('/dashboard-user')) return true;
+  
+  return false;
 };
 
 // Generate or retrieve session ID
@@ -136,13 +138,12 @@ export const trackEventView = async (
       debugLog('[trackEventView] skipped - not allowed source', { 
         eventId, 
         source, 
-        path: window.location?.pathname, 
-        search: window.location?.search 
+        ...getCurrentContext()
       });
       return;
     }
 
-    debugLog('[trackEventView] sending', { eventId, source, path: window.location?.pathname, search: window.location?.search });
+    debugLog('[trackEventView] sending', { eventId, source, ...getCurrentContext() });
 
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -173,13 +174,12 @@ export const trackDiscountView = async (
       debugLog('[trackDiscountView] skipped - not allowed source', { 
         discountId, 
         source, 
-        path: window.location?.pathname, 
-        search: window.location?.search 
+        ...getCurrentContext()
       });
       return;
     }
 
-    debugLog('[trackDiscountView] sending', { discountId, source, path: window.location?.pathname, search: window.location?.search });
+    debugLog('[trackDiscountView] sending', { discountId, source, ...getCurrentContext() });
 
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -210,12 +210,12 @@ export const trackEngagement = async (
   try {
     // Profile views are a *view metric*. Never count them from user dashboard context.
     if (eventType === 'profile_view' && isDashboardUserContext()) {
-      debugLog('[trackEngagement] profile_view skipped', { businessId, entityType, entityId, metadata, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+      debugLog('[trackEngagement] profile_view skipped', { businessId, entityType, entityId, metadata, ...getCurrentContext() });
       return;
     }
 
     if (eventType === 'profile_view') {
-      debugLog('[trackEngagement] profile_view sending', { businessId, entityType, entityId, metadata, path: window.location?.pathname, search: window.location?.search, noViews: (window as any)?.__NO_VIEWS_CONTEXT });
+      debugLog('[trackEngagement] profile_view sending', { businessId, entityType, entityId, metadata, ...getCurrentContext() });
     }
 
     const { data: { user } } = await supabase.auth.getUser();
