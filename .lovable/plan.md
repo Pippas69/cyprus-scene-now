@@ -1,77 +1,153 @@
 
-# Fix Share Fallback for Preview & Restricted Contexts
+# Ενισχυμένο Share System με Εικόνα
 
 ## Πρόβλημα
 
-Το native share αποτυγχάνει στο Lovable preview iframe με:
-```
-NotAllowedError: Third-party iframes are not allowed to call share()
-```
-
-Ο τρέχων κώδικας κάνει log το error αλλά **δεν κάνει fallback** στο copy link, με αποτέλεσμα να μην γίνεται τίποτα visible για τον χρήστη.
+Τώρα το share στέλνει **μόνο link και text**, ενώ εσύ θέλεις να στέλνει **και την εικόνα του event/offer/business** ώστε ο παραλήπτης να βλέπει αμέσως το preview.
 
 ## Λύση
 
-Θα ενημερώσω τη `share` function στο `useSimpleShare.ts` ώστε:
-1. Όταν αποτυγχάνει με `NotAllowedError`, να κάνει **αυτόματο fallback** στο copy link
-2. Να δείχνει toast "Το link αντιγράφηκε!" 
-3. Να διατηρεί την ίδια συμπεριφορά για `AbortError` (user cancelled - no toast)
+Χρήση του `navigator.share({ files: [imageFile] })` για να συμπεριληφθεί η εικόνα στο share.
 
-## Αλλαγή Κώδικα
+## Πώς θα λειτουργεί
 
-**Αρχείο:** `src/hooks/useSimpleShare.ts`
-
-**Πριν (γραμμές 166-171):**
-```typescript
-} catch (error) {
-  // User cancelled the share - don't show error toast
-  const err = error as Error;
-  if (err?.name !== 'AbortError') {
-    console.error('Share failed:', error);
-  }
-}
+```text
+┌─────────────────────────────────────────┐
+│           [Event Image]                 │
+│      "Summer Party @ Club XYZ"          │
+│                                         │
+│  ┌────────────────┐ ┌────────────────┐  │
+│  │   Copy Link    │ │     Share      │  │
+│  └────────────────┘ └────────────────┘  │
+│                                         │
+│  Πατάς "Share" →                        │
+│  ┌─────────────────────────────────┐    │
+│  │ iOS/Android Native Share Sheet  │    │
+│  │ ┌────────────────────────────┐  │    │
+│  │ │     [Event Image.jpg]      │  │    │
+│  │ │                            │  │    │
+│  │ │  Summer Party @ Club XYZ   │  │    │
+│  │ │  https://fomo.cy/e/xxx     │  │    │
+│  │ └────────────────────────────┘  │    │
+│  │                                 │    │
+│  │ WhatsApp · iMessage · Instagram │    │
+│  └─────────────────────────────────┘    │
+└─────────────────────────────────────────┘
 ```
 
-**Μετά:**
+## Τεχνικές Αλλαγές
+
+### 1. `useSimpleShare.ts` - Νέα `shareWithImage` function
+
 ```typescript
-} catch (error) {
-  const err = error as Error;
+interface ShareDataWithImage extends ShareData {
+  imageUrl?: string | null;
+}
+
+const shareWithImage = async (data: ShareDataWithImage, options?: ShareOptions) => {
+  setIsSharing(true);
   
-  // User cancelled the share - no action needed
-  if (err?.name === 'AbortError') {
-    return;
-  }
-  
-  // NotAllowedError: iframe restrictions or permissions denied
-  // Fall back to copy link
-  if (err?.name === 'NotAllowedError') {
-    const success = await copyToClipboard(data.url);
-    if (success) {
+  try {
+    let files: File[] = [];
+    
+    // Fetch image and convert to File
+    if (data.imageUrl) {
+      const response = await fetch(data.imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'share-image.jpg', { type: blob.type || 'image/jpeg' });
+      files = [file];
+    }
+    
+    const shareData: ShareDataWithFiles = {
+      title: data.title,
+      text: data.text,
+      url: data.url,
+      ...(files.length > 0 && { files })
+    };
+    
+    // Check if device supports file sharing
+    if (navigator.canShare && navigator.canShare(shareData)) {
+      await navigator.share(shareData);
+    } else if (navigator.share) {
+      // Fallback: share without image
+      await navigator.share({
+        title: data.title,
+        text: data.text,
+        url: data.url
+      });
+    } else {
+      // Final fallback: copy link
+      await copyToClipboard(data.url);
       toast.success(t.shareNotSupported);
     }
-    return;
+  } catch (error) {
+    // ... existing error handling with fallback to copy
   }
-  
-  // Other errors - log and fallback to copy
-  console.error('Share failed:', error);
-  const success = await copyToClipboard(data.url);
-  if (success) {
-    toast.success(t.shareNotSupported);
-  }
-}
+};
+```
+
+### 2. `SimpleShareSheet.tsx` - Περνάει imageUrl στο share
+
+```typescript
+const handleShare = useCallback(async () => {
+  await share({ title, text, url, imageUrl }, { objectType, objectId, businessId });
+  onOpenChange(false);
+}, [share, title, text, url, imageUrl, objectType, objectId, businessId, onOpenChange]);
+```
+
+### 3. CORS Handling για εικόνες
+
+Οι εικόνες από Supabase Storage έχουν proper CORS headers, οπότε το `fetch()` θα δουλέψει.
+
+## Flow Diagram
+
+```text
+User πατάει Share
+        │
+        ▼
+┌───────────────────┐
+│  Fetch image URL  │
+│  → Convert to Blob│
+│  → Create File    │
+└─────────┬─────────┘
+          │
+          ▼
+┌───────────────────┐
+│ navigator.canShare│──No──┐
+│   (with files)?   │      │
+└─────────┬─────────┘      │
+          │Yes             │
+          ▼                ▼
+┌───────────────────┐ ┌───────────────────┐
+│ navigator.share() │ │ navigator.share() │
+│   with image      │ │   text only       │
+└─────────┬─────────┘ └─────────┬─────────┘
+          │                     │
+          └──────────┬──────────┘
+                     ▼
+             Native Share Sheet
+            (WhatsApp, iMessage,
+             Instagram, etc.)
 ```
 
 ## Αποτέλεσμα
 
-| Περίπτωση | Πριν | Μετά |
+| Πλατφόρμα | Πριν | Μετά |
 |-----------|------|------|
-| Preview iframe | Τίποτα | Αντιγράφει link + toast |
-| User cancels | Τίποτα ✓ | Τίποτα ✓ |
-| Production (iOS/Android) | Native share ✓ | Native share ✓ |
-| Desktop no support | Αντιγράφει ✓ | Αντιγράφει ✓ |
+| WhatsApp | Link μόνο | Εικόνα + Link |
+| iMessage | Link μόνο | Εικόνα + Link |
+| Instagram | Link μόνο | Εικόνα + Link |
+| Messenger | Link μόνο | Εικόνα + Link |
+| Email | Link μόνο | Εικόνα + Link |
 
-## Testing
+## Σημαντικές Λεπτομέρειες
 
-Μετά την αλλαγή:
-1. **Στο preview**: Πάτα Share → Toast "Το link αντιγράφηκε στο clipboard"
-2. **Στο fomocy.lovable.app**: Πάτα Share → Native share sheet ανοίγει κανονικά
+1. **`navigator.canShare()`**: Ελέγχει αν η συσκευή υποστηρίζει sharing αρχείων
+2. **Fallback chain**: Image share → Text-only share → Copy link
+3. **CORS**: Οι εικόνες από Supabase έχουν ήδη σωστά headers
+4. **File type**: Δημιουργούμε `image/jpeg` ή χρησιμοποιούμε το blob type
+
+## Αρχεία προς τροποποίηση
+
+1. `src/hooks/useSimpleShare.ts` - Προσθήκη image fetching & file sharing logic
+2. `src/components/sharing/SimpleShareSheet.tsx` - Περνάει imageUrl στη share function
