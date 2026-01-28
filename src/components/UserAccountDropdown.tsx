@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,8 +30,14 @@ export const UserAccountDropdown = ({
   variant = 'avatar',
 }: UserAccountDropdownProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguage();
-  const { unreadCount } = useNotifications(userId);
+  
+  // Detect if we're on a business dashboard route
+  const isBusinessDashboard = location.pathname.startsWith('/dashboard-business');
+  const notificationContext = isBusinessDashboard ? 'business' : 'user';
+  
+  const { unreadCount } = useNotifications(userId, notificationContext);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -94,6 +100,7 @@ export const UserAccountDropdown = ({
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
         language={language}
+        context={notificationContext}
       />
 
       {/* Bell button (always visible) */}

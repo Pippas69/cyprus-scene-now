@@ -250,6 +250,20 @@ Deno.serve(async (req) => {
               }),
             });
             logStep("Ticket sale notification sent to business owner");
+
+            // Create in-app notification for business owner
+            await supabaseClient.from('notifications').insert({
+              user_id: businessUserId,
+              title: '🎟️ Νέα Πώληση Εισιτηρίων!',
+              message: `${orderDetails?.customer_name || 'Πελάτης'} αγόρασε ${ticketsToCreate.length} εισιτήρια για "${eventData.title}"`,
+              type: 'business',
+              event_type: 'ticket_sale',
+              entity_type: 'ticket_order',
+              entity_id: orderId,
+              deep_link: '/dashboard-business/tickets',
+              delivered_at: new Date().toISOString(),
+            });
+            logStep("Business in-app notification created for ticket sale");
           }
         } else {
           logStep("Ticket sale notifications disabled for business owner");

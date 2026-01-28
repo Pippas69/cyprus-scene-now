@@ -9,12 +9,14 @@ import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/useNotifications";
 
 type Language = "el" | "en";
+type NotificationContext = "user" | "business";
 
 interface InAppNotificationsSheetProps {
   userId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   language: Language;
+  context?: NotificationContext;
 }
 
 export const InAppNotificationsSheet = ({
@@ -22,8 +24,9 @@ export const InAppNotificationsSheet = ({
   open,
   onOpenChange,
   language,
+  context = "user",
 }: InAppNotificationsSheetProps) => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(userId);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(userId, context);
 
   const t =
     language === "el"

@@ -304,6 +304,33 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Create in-app notification for business owner
+    try {
+      // Fetch business owner user_id
+      const { data: businessData } = await supabaseClient
+        .from('businesses')
+        .select('user_id, name')
+        .eq('id', data.businessId)
+        .single();
+
+      if (businessData?.user_id) {
+        await supabaseClient.from('notifications').insert({
+          user_id: businessData.user_id,
+          title: '🎁 Νέα διεκδίκηση προσφοράς!',
+          message: `${data.userName || 'Πελάτης'} διεκδίκησε "${data.offerTitle}" για ${data.partySize} άτομα`,
+          type: 'business',
+          event_type: 'offer_claimed',
+          entity_type: 'offer',
+          entity_id: data.purchaseId,
+          deep_link: '/dashboard-business/discounts',
+          delivered_at: new Date().toISOString(),
+        });
+        logStep("Business in-app notification created for offer claim", { userId: businessData.user_id });
+      }
+    } catch (businessNotifError) {
+      logStep("Failed to create business in-app notification", businessNotifError);
+    }
+
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
