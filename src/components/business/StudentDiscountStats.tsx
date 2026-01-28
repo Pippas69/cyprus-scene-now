@@ -54,7 +54,7 @@ export function StudentDiscountStats({ businessId, language }: StudentDiscountSt
     queryKey: ['student-redemption-count', businessId],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from('student_redemptions')
+        .from('student_discount_redemptions')
         .select('*', { count: 'exact', head: true })
         .eq('business_id', businessId);
       
