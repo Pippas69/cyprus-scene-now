@@ -768,8 +768,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                <div className="flex items-start gap-2 flex-1 min-w-0">
                  <BarChart3 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                  <div className="min-w-0">
-                  <Label htmlFor="weekly-summary" className="font-medium text-[13px] sm:text-sm">{t.weeklySummary}</Label>
-                   <p className="text-[10px] sm:text-xs text-muted-foreground">
+                  <Label htmlFor="weekly-summary" className="font-medium text-[11px] sm:text-sm">{t.weeklySummary}</Label>
+                   <p className="text-[9px] sm:text-xs text-muted-foreground">
                      {language === 'el'
                        ? 'Λάβετε email με σύνοψη της εβδομάδας: κρατήσεις, εισιτήρια, προσφορές, QR check-ins και καλύτερη μέρα επισκέψεων'
                        : t.weeklySummaryDescription}
