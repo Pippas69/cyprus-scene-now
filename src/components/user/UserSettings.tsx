@@ -89,9 +89,9 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       // Mandatory section
       emailConfirmationsTitle: 'Email για Επιβεβαιώσεις',
       emailConfirmationsMandatory: '(Υποχρεωτικό)',
-      emailConfirmationsDesc: 'Αποστέλλεται για κρατήσεις/εισιτήρια/εξαργυρώσεις.',
-      confirmationsTitle: 'Επιβεβαιώσεις Κρατήσεων, Εισιτηρίων & Προσφορών',
-      confirmationsDesc: 'Απαραίτητες ειδοποιήσεις για τη λειτουργία του λογαριασμού σου.',
+      emailConfirmationsDesc: 'Για κρατήσεις, εισιτήρια & εξαργυρώσεις',
+      mandatoryNotificationsTitle: 'Απαραίτητες Ειδοποιήσεις',
+      mandatoryNotificationsDesc: 'Επιβεβαιώσεις κρατήσεων, εισιτηρίων & προσφορών',
       // Suggestions section
       suggestionsForYou: 'Προτάσεις για Σένα',
       suggestionsForYouDesc: 'Επιλεγμένες Εκδηλώσεις και Προσφορές που ταιριάζουν στα ενδιαφέροντά σου',
@@ -104,7 +104,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       expiringOffers: 'Υπενθυμίσεις Προσφορών',
       expiringOffersDesc: '2 ώρες πριν λήξουν οι προσφορές που εξαργύρωσες',
       pushNotifications: 'Push Ειδοποιήσεις',
-      pushNotificationsDesc: 'Λάβετε άμεσες ειδοποιήσεις στη συσκευή σας',
+      pushNotificationsDesc: 'Άμεσες ειδοποιήσεις στη συσκευή σας',
       pushDenied: 'Οι ειδοποιήσεις είναι απενεργοποιημένες στον browser',
       testPush: 'Δοκιμή',
       sendingTest: 'Αποστολή...',
@@ -151,9 +151,9 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       // Mandatory section
       emailConfirmationsTitle: 'Email for Confirmations',
       emailConfirmationsMandatory: '(Mandatory)',
-      emailConfirmationsDesc: 'Sent for reservations/tickets/redemptions.',
-      confirmationsTitle: 'Reservation, Ticket & Offer Confirmations',
-      confirmationsDesc: 'Essential notifications for your account functionality.',
+      emailConfirmationsDesc: 'For reservations, tickets & redemptions',
+      mandatoryNotificationsTitle: 'Essential Notifications',
+      mandatoryNotificationsDesc: 'Reservation, ticket & offer confirmations',
       // Suggestions section
       suggestionsForYou: 'Suggestions for You',
       suggestionsForYouDesc: 'Selected Events and Offers that match your interests',
@@ -166,7 +166,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       expiringOffers: 'Offer Reminders',
       expiringOffersDesc: '2 hours before your redeemed offers expire',
       pushNotifications: 'Push Notifications',
-      pushNotificationsDesc: 'Receive instant notifications on your device',
+      pushNotificationsDesc: 'Instant notifications on your device',
       pushDenied: 'Notifications are disabled in browser settings',
       testPush: 'Test',
       sendingTest: 'Sending...',
@@ -335,66 +335,66 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
       {/* Profile Details - Matching Signup Form */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <User className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
             {t.profileSection}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleProfileUpdate} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">{t.firstName}</Label>
+          <form onSubmit={handleProfileUpdate} className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="firstName" className="text-xs sm:text-sm">{t.firstName}</Label>
                 <Input
                   id="firstName"
                   value={profile.first_name || ''}
                   onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                  className="rounded-xl"
+                  className="rounded-xl text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">{t.lastName}</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="lastName" className="text-xs sm:text-sm">{t.lastName}</Label>
                 <Input
                   id="lastName"
                   value={profile.last_name || ''}
                   onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                  className="rounded-xl"
+                  className="rounded-xl text-sm"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="age">{t.age}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
               <Input
                 id="age"
                 type="number"
                 value={profile.age || ''}
                 onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || null })}
-                className="rounded-xl"
+                className="rounded-xl text-sm"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">{t.email}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="email" className="text-xs sm:text-sm">{t.email}</Label>
               <Input
                 id="email"
                 value={profile.email || ''}
                 disabled
-                className="rounded-xl bg-muted"
+                className="rounded-xl bg-muted text-sm"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="town" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="town" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 {t.town}
               </Label>
               <Select
                 value={profile.town || ''}
                 onValueChange={(value) => setProfile({ ...profile, town: value })}
               >
-                <SelectTrigger id="town" className="rounded-xl">
+                <SelectTrigger id="town" className="rounded-xl text-sm">
                   <SelectValue placeholder={t.townPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -405,13 +405,13 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="gender">{t.gender}</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="gender" className="text-xs sm:text-sm">{t.gender}</Label>
               <Select
                 value={profile.gender || ''}
                 onValueChange={(value) => setProfile({ ...profile, gender: value })}
               >
-                <SelectTrigger id="gender" className="rounded-xl">
+                <SelectTrigger id="gender" className="rounded-xl text-sm">
                   <SelectValue placeholder={t.genderPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -423,13 +423,13 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
             </div>
 
             {/* Interests - list rows (match Signup mock) */}
-            <div className="space-y-3 pt-4 border-t">
+            <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
               <div>
-                <Label className="flex items-center gap-2 text-base">
-                  <Heart className="h-4 w-4 text-primary" />
+                <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                  <Heart className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                   {t.interests}
                 </Label>
-                <p className="text-sm text-muted-foreground mt-1">{t.interestsDescription}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground mt-1">{t.interestsDescription}</p>
               </div>
 
               <InterestSelectorList
@@ -440,15 +440,15 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
             </div>
 
             {/* Student Verification Section */}
-            <div className="pt-4 border-t">
+            <div className="pt-3 sm:pt-4 border-t">
               <StudentVerificationSection 
                 userId={userId} 
                 userName={profile.first_name || profile.name || ''}
               />
             </div>
 
-            <Button type="submit" disabled={profileLoading} className="mt-4 gap-2">
-              <Save className="h-4 w-4" />
+            <Button type="submit" disabled={profileLoading} className="mt-3 sm:mt-4 gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10">
+              <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {t.saveProfile}
             </Button>
           </form>
@@ -457,65 +457,57 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
       {/* Notifications - MOVED ABOVE PASSWORD */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
             {t.notifications}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           {/* Mandatory: Email Confirmations - Always ON */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>{t.emailConfirmationsTitle}</Label>
-              <p className="text-xs text-muted-foreground">{t.emailConfirmationsDesc}</p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <Label className="text-xs sm:text-sm">{t.emailConfirmationsTitle}</Label>
+              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.emailConfirmationsDesc}</p>
             </div>
             <Switch
               checked={true}
               disabled
-              className="data-[state=checked]:bg-primary cursor-default"
+              className="data-[state=checked]:bg-primary cursor-default scale-90 sm:scale-100 flex-shrink-0"
             />
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>
-                {language === 'el' ? (
-                  <span className="inline">
-                    <span>Επιβεβαιώσεις Κρατήσεων, </span>
-                    <span className="text-[13px] sm:text-sm">Εισιτηρίων & Προσφορών</span>
-                  </span>
-                ) : (
-                  t.confirmationsTitle
-                )}
-              </Label>
-              <p className="text-xs text-muted-foreground">{t.confirmationsDesc}</p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <Label className="text-xs sm:text-sm">{t.mandatoryNotificationsTitle}</Label>
+              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.mandatoryNotificationsDesc}</p>
             </div>
             <Switch
               checked={true}
               disabled
-              className="data-[state=checked]:bg-primary cursor-default"
+              className="data-[state=checked]:bg-primary cursor-default scale-90 sm:scale-100 flex-shrink-0"
             />
           </div>
 
           {/* Push Notifications */}
           {pushSupported && (
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5 flex-1">
-                <Label className="flex items-center gap-2">
-                  <Smartphone className="h-4 w-4" />
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                  <Smartphone className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.pushNotifications}
                 </Label>
-                <p className="text-xs text-muted-foreground">{t.pushNotificationsDesc}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.pushNotificationsDesc}</p>
                 {permissionState === 'denied' && (
-                  <p className="text-xs text-destructive">{t.pushDenied}</p>
+                  <p className="text-[10px] sm:text-xs text-destructive">{t.pushDenied}</p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 {pushSubscribed && (
                   <Button
                     size="sm"
                     variant="outline"
+                    className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3"
                     onClick={async () => {
                       setIsSendingTest(true);
                       try {
@@ -537,7 +529,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                     }}
                     disabled={isSendingTest}
                   >
-                    <Send className="h-3 w-3 mr-1" />
+                    <Send className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                     {isSendingTest ? t.sendingTest : t.testPush}
                   </Button>
                 )}
@@ -545,6 +537,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                   checked={pushSubscribed}
                   disabled={pushLoading || permissionState === 'denied'}
                   onCheckedChange={(checked) => checked ? subscribePush() : unsubscribePush()}
+                  className="scale-90 sm:scale-100"
                 />
               </div>
             </div>
@@ -553,15 +546,15 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           <Separator />
 
           {/* Suggestions for You - Optional toggle */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
+          <div className="space-y-3 sm:space-y-4">
+            <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               {t.suggestionsForYou}
             </h4>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="suggestions-toggle">{t.suggestionsForYou}</Label>
-                <p className="text-xs text-muted-foreground">{t.suggestionsForYouDesc}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <Label htmlFor="suggestions-toggle" className="text-xs sm:text-sm">{t.suggestionsForYou}</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.suggestionsForYouDesc}</p>
               </div>
               <Switch
                 id="suggestions-toggle"
@@ -569,6 +562,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_boosted_content: checked })
                 }
+                className="scale-90 sm:scale-100 flex-shrink-0"
               />
             </div>
           </div>
@@ -576,15 +570,15 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           <Separator />
 
           {/* Reminders */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+          <div className="space-y-3 sm:space-y-4">
+            <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
               {t.reminders}
             </h4>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="event-reminders">{t.eventReminders}</Label>
-                <p className="text-xs text-muted-foreground">{t.eventRemindersDesc}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <Label htmlFor="event-reminders" className="text-xs sm:text-sm">{t.eventReminders}</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.eventRemindersDesc}</p>
               </div>
               <Switch
                 id="event-reminders"
@@ -592,12 +586,13 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_event_reminders: checked })
                 }
+                className="scale-90 sm:scale-100 flex-shrink-0"
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="reservation-reminders">{t.reservationReminders}</Label>
-                <p className="text-xs text-muted-foreground">{t.reservationRemindersDesc}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <Label htmlFor="reservation-reminders" className="text-xs sm:text-sm">{t.reservationReminders}</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.reservationRemindersDesc}</p>
               </div>
               <Switch
                 id="reservation-reminders"
@@ -605,12 +600,13 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_reservations: checked })
                 }
+                className="scale-90 sm:scale-100 flex-shrink-0"
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="expiring-offers">{t.expiringOffers}</Label>
-                <p className="text-xs text-muted-foreground">{t.expiringOffersDesc}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <Label htmlFor="expiring-offers" className="text-xs sm:text-sm">{t.expiringOffers}</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.expiringOffersDesc}</p>
               </div>
               <Switch
                 id="expiring-offers"
@@ -618,6 +614,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_expiring_offers: checked })
                 }
+                className="scale-90 sm:scale-100 flex-shrink-0"
               />
             </div>
           </div>
@@ -626,46 +623,47 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
       {/* Password Management - MOVED BELOW NOTIFICATIONS */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Lock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
             {t.passwordManagement}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current-password">{t.currentPassword}</Label>
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="current-password" className="text-xs sm:text-sm">{t.currentPassword}</Label>
             <Input
               id="current-password"
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="rounded-xl"
+              className="rounded-xl text-sm"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="new-password">{t.newPassword}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="new-password" className="text-xs sm:text-sm">{t.newPassword}</Label>
             <Input
               id="new-password"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="rounded-xl"
+              className="rounded-xl text-sm"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">{t.confirmPassword}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="confirm-password" className="text-xs sm:text-sm">{t.confirmPassword}</Label>
             <Input
               id="confirm-password"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="rounded-xl"
+              className="rounded-xl text-sm"
             />
           </div>
           <Button 
             onClick={handlePasswordChange}
             disabled={isChanging || !currentPassword || !newPassword || !confirmPassword}
+            className="text-xs sm:text-sm h-9 sm:h-10"
           >
             {t.changePassword}
           </Button>
@@ -674,20 +672,20 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
       {/* Privacy & Data */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
             {t.privacy}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="profile-visibility">{t.profileVisibility}</Label>
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="profile-visibility" className="text-xs sm:text-sm">{t.profileVisibility}</Label>
             <Select
               value={preferences.profile_visibility || 'public'}
               onValueChange={(value) => updatePreferences({ profile_visibility: value })}
             >
-              <SelectTrigger id="profile-visibility" className="rounded-xl">
+              <SelectTrigger id="profile-visibility" className="rounded-xl text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -697,13 +695,13 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
             </Select>
           </div>
           <Separator />
-          <div className="space-y-2">
-            <Label className="text-destructive">{t.deleteAccount}</Label>
-            <p className="text-sm text-muted-foreground">{t.deleteWarning}</p>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="text-destructive text-xs sm:text-sm">{t.deleteAccount}</Label>
+            <p className="text-[10px] sm:text-sm text-muted-foreground">{t.deleteWarning}</p>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full">
-                  <Trash2 className="h-4 w-4 mr-2" />
+                <Button variant="destructive" className="w-full text-xs sm:text-sm h-9 sm:h-10">
+                  <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                   {t.deleteAccount}
                 </Button>
               </AlertDialogTrigger>
@@ -726,20 +724,20 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
       {/* App Preferences */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 whitespace-nowrap">
-            <SettingsIcon className="h-5 w-5 flex-shrink-0" />
-            <span className="text-base">{t.appPreferences}</span>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 whitespace-nowrap text-sm sm:text-base">
+            <SettingsIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            {t.appPreferences}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="language">{t.languagePreference}</Label>
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="language" className="text-xs sm:text-sm">{t.languagePreference}</Label>
             <Select
               value={language}
               onValueChange={(value: 'el' | 'en') => setLanguage(value)}
             >
-              <SelectTrigger id="language" className="rounded-xl">
+              <SelectTrigger id="language" className="rounded-xl text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -748,13 +746,13 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="theme">{t.theme}</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="theme" className="text-xs sm:text-sm">{t.theme}</Label>
             <Select
               value={preferences.theme_preference || 'system'}
               onValueChange={(value) => updatePreferences({ theme_preference: value })}
             >
-              <SelectTrigger id="theme" className="rounded-xl">
+              <SelectTrigger id="theme" className="rounded-xl text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
