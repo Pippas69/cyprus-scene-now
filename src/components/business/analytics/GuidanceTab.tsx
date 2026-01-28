@@ -107,9 +107,9 @@ const translations = {
     pdfConclusionNotApplied: 'Το πλάνο δεν εφαρμόστηκε. Χωρίς εφαρμογή, δεν μπορούν να εξαχθούν αξιόπιστα συμπεράσματα.',
     pdfConclusionPending: 'Αναμονή επιλογής εφαρμογής από τον επιχειρηματία.',
     // Metrics sections
-    newCustomersFromProfile: 'Νέοι Πελάτες από Επιλεγμένο Προφίλ',
+    newCustomersFromProfile: 'Επισκέψεις από Επιλεγμένο Προφίλ',
     newCustomersDescription: 'Οι παρακάτω πελάτες ήρθαν επειδή το προφίλ σας εμφανίζεται επιλεγμένο στο ΦΟΜΟ.',
-    newCustomersTooltip: 'Χρήστες που έκαναν επίσκεψη από την ημέρα που το προφίλ μπήκε σε paid plan. Μετρά μόνο φυσικές επισκέψεις που επαληθεύτηκαν στο κατάστημα: QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου.',
+    newCustomersTooltip: 'QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου.',
     boostSpent: 'Χρήματα Boost',
     boostSpentTooltip: 'Πόσα χρήματα δαπάνησε σε boost.',
     visitsFromBoost: 'Επισκέψεις από Boost',
@@ -188,9 +188,9 @@ const translations = {
     pdfConclusionNotApplied: 'The plan was not applied. Without application, reliable conclusions cannot be drawn.',
     pdfConclusionPending: 'Awaiting application choice from the business owner.',
     // Metrics sections
-    newCustomersFromProfile: 'New Customers from Featured Profile',
+    newCustomersFromProfile: 'Visits from Featured Profile',
     newCustomersDescription: 'These customers came because your profile appears featured on ΦΟΜΟ.',
-    newCustomersTooltip: 'Users who visited since your profile went on a paid plan. Counts only verified physical visits: QR check-ins from reservations made directly through your profile.',
+    newCustomersTooltip: 'QR check-ins from reservations made directly through your profile.',
     boostSpent: 'Boost Money',
     boostSpentTooltip: 'How much money was spent on boost.',
     visitsFromBoost: 'Visits from Boost',
