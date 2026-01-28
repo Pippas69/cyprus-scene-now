@@ -61,9 +61,9 @@ export const SimpleShareSheet = ({
   }, [copyLink, url, objectType, objectId, businessId, onOpenChange]);
 
   const handleShare = useCallback(async () => {
-    await share({ title, text, url }, { objectType, objectId, businessId });
+    await share({ title, text, url, imageUrl }, { objectType, objectId, businessId });
     onOpenChange(false);
-  }, [share, title, text, url, objectType, objectId, businessId, onOpenChange]);
+  }, [share, title, text, url, imageUrl, objectType, objectId, businessId, onOpenChange]);
 
   // Image Preview Card
   const ImagePreviewCard = () => (

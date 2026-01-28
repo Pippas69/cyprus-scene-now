@@ -89,6 +89,7 @@ interface ShareData {
   title: string;
   text: string;
   url: string;
+  imageUrl?: string | null;
 }
 
 interface ShareOptions {
@@ -149,15 +150,51 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
       }
 
       try {
+        let files: File[] = [];
+
+        // Fetch image and convert to File if imageUrl provided
+        if (data.imageUrl) {
+          try {
+            const response = await fetch(data.imageUrl);
+            const blob = await response.blob();
+            const extension = blob.type.includes('png') ? 'png' : 'jpg';
+            const file = new File([blob], `share-image.${extension}`, { 
+              type: blob.type || 'image/jpeg' 
+            });
+            files = [file];
+          } catch (imgError) {
+            console.warn('Failed to fetch image for sharing:', imgError);
+            // Continue without image
+          }
+        }
+
+        // Build share data with files if available
+        const shareData: { title: string; text: string; url: string; files?: File[] } = {
+          title: data.title,
+          text: data.text,
+          url: data.url,
+        };
+
+        if (files.length > 0) {
+          shareData.files = files;
+        }
+
+        // Check if device supports file sharing
         if (hasNativeShare()) {
-          await navigator.share({
-            title: data.title,
-            text: data.text,
-            url: data.url,
-          });
-          // User successfully shared (didn't cancel)
+          const canShareWithFiles = files.length > 0 && navigator.canShare && navigator.canShare(shareData);
+          
+          if (canShareWithFiles) {
+            await navigator.share(shareData);
+          } else {
+            // Fallback: share without image
+            await navigator.share({
+              title: data.title,
+              text: data.text,
+              url: data.url,
+            });
+          }
         } else {
-          // Fallback: copy link to clipboard
+          // Final fallback: copy link to clipboard
           const success = await copyToClipboard(data.url);
           if (success) {
             toast.success(t.shareNotSupported);
