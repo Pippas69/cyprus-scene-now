@@ -702,7 +702,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <BellRing className="h-4 w-4 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <Label className="font-medium text-sm">{t.fomoNotifications}</Label>
+                  <Label className="font-medium text-[11px] sm:text-sm whitespace-nowrap">{t.fomoNotifications}</Label>
                   <p className="text-xs text-muted-foreground hidden sm:block">{t.fomoNotificationsSubtext}</p>
                 </div>
               </div>
