@@ -1,103 +1,117 @@
 
-# Fix: Missing User and Business Notifications for Offer Claims with Reservations
+# Fix Business In-App Notifications System
 
 ## Problem Summary
-When a user claims an offer (especially with a reservation), the following notifications are broken:
-1. **User in-app notification** - Not created because `userId` is not passed to `send-offer-claim-email`
-2. **User push notification** - Not sent for the same reason
-3. **User reservation notification** - Not triggered because `send-reservation-notification` is never called
-4. **Business reservation notification** - Not sent (only offer claim notification is sent)
 
-## Root Cause
-In `claim-offer/index.ts`:
-1. Line ~275: Missing `userId: user.id` in payload to `send-offer-claim-email`
-2. Line ~186: After creating reservation, no call to `send-reservation-notification`
+Οι επιχειρηματίες δεν βλέπουν τις ειδοποιήσεις της επιχείρησής τους στο Business Dashboard. Αυτό συμβαίνει γιατί:
 
----
+1. Οι transactional functions (reservations, ticket sales, offer claims) στέλνουν **push notifications** στους επιχειρηματίες, αλλά **ΔΕΝ δημιουργούν in-app notifications** για αυτούς
+2. Το σύστημα δημιουργεί in-app notifications μόνο για τους χρήστες (πελάτες)
+3. Η dedicated `sendBusinessNotification` helper υπάρχει αλλά δεν χρησιμοποιείται από τις κύριες functions
 
-## Implementation Plan
+## Solution
 
-### Phase 1: Fix `claim-offer/index.ts` - Pass userId to Email Function
+### Phase 1: Backend - Add Business In-App Notifications
 
-**File**: `supabase/functions/claim-offer/index.ts`
+Θα ενημερώσουμε τις edge functions να δημιουργούν in-app notifications για τους επιχειρηματίες:
 
-**Change**: Add `userId: user.id` to the payload when calling `send-offer-claim-email`
+**Functions to update:**
+- `send-reservation-notification` - Προσθήκη in-app notification για business owner (new reservations, cancellations)
+- `process-ticket-payment` - Προσθήκη in-app notification για business owner (ticket sales)
+- `send-offer-claim-email` - Προσθήκη in-app notification για business owner (offer claims)
+- `validate-qr` - Προσθήκη in-app notification για business owner (QR redemptions/check-ins)
 
+**Παράδειγμα αλλαγής (send-reservation-notification):**
 ```typescript
-// Around line 275, add userId to the body:
-body: JSON.stringify({
-  purchaseId: purchase.id,
-  userId: user.id,  // ADD THIS LINE
-  userEmail: user.email,
-  userName,
-  offerTitle: discount.title,
-  // ... rest of payload
-})
-```
-
----
-
-### Phase 2: Add Reservation Notification Trigger in `claim-offer/index.ts`
-
-**File**: `supabase/functions/claim-offer/index.ts`
-
-**Change**: After creating a reservation (around line 186), call `send-reservation-notification`
-
-```typescript
-// After line 185 (after reservationId = reservation.id):
-if (reservationId) {
-  try {
-    await fetch(`${supabaseUrl}/functions/v1/send-reservation-notification`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseServiceKey}`,
-      },
-      body: JSON.stringify({
-        reservationId,
-        type: "new",
-      }),
-    });
-    logStep("Reservation notification sent");
-  } catch (notifError) {
-    logStep("Reservation notification error", notifError);
-  }
+// After sending push notification to business owner, also create in-app notification
+if (businessData?.user_id && (type === 'new' || type === 'cancellation')) {
+  // Existing push notification code...
+  
+  // NEW: Create in-app notification for business owner
+  await supabase.from('notifications').insert({
+    user_id: businessData.user_id,
+    title: type === 'new' ? '📋 Νέα Κράτηση!' : '🚫 Ακύρωση Κράτησης',
+    message: `${reservation.reservation_name} • ${formattedDateTime} • ${reservation.party_size} άτομα`,
+    type: 'business',  // <-- IMPORTANT: Mark as business notification
+    event_type: type === 'new' ? 'new_reservation' : 'reservation_cancelled',
+    entity_type: 'reservation',
+    entity_id: reservationId,
+    deep_link: '/dashboard-business/reservations',
+    delivered_at: new Date().toISOString(),
+  });
 }
 ```
 
-This will:
-- Send reservation confirmation email to user
-- Create in-app notification for user
-- Send push notification to user
-- Notify the business about the new reservation
+### Phase 2: Frontend - Filter Notifications by Context
 
----
+**Create new hook: `useBusinessNotifications`**
+```typescript
+// src/hooks/useBusinessNotifications.ts
+export const useBusinessNotifications = (userId: string | undefined) => {
+  // Same as useNotifications but filters: WHERE type = 'business'
+  // Also subscribes to realtime for type = 'business' only
+};
+```
 
-## Files to Modify
+**Update `useNotifications` hook:**
+```typescript
+// Add optional parameter to filter by type
+export const useNotifications = (userId: string | undefined, type?: 'user' | 'business') => {
+  // If type = 'user': filter WHERE type != 'business'
+  // If type = 'business': filter WHERE type = 'business'
+  // If no type: return all (backward compatible)
+};
+```
 
-| File | Change |
-|------|--------|
-| `supabase/functions/claim-offer/index.ts` | 1. Add `userId: user.id` to email payload<br>2. Call `send-reservation-notification` after reservation creation |
+**Update `UserAccountDropdown`:**
+- When on `/dashboard-business/*` routes, pass `type: 'business'` to show only business notifications
+- When on user routes, pass `type: 'user'` to show only personal notifications
 
----
+### Phase 3: Notification Types to Create
 
-## Expected Results After Fix
+| Action | User Gets | Business Gets |
+|--------|-----------|---------------|
+| New Reservation | ✅ Κράτηση επιβεβαιώθηκε | ✅ Νέα Κράτηση! |
+| Reservation Cancelled | ✅ Κράτηση ακυρώθηκε | ✅ Ακύρωση Κράτησης |
+| Ticket Purchase | ✅ Τα εισιτήριά σου είναι έτοιμα! | ✅ Νέα Πώληση Εισιτηρίων! |
+| Offer Claimed | ✅ Προσφορά διεκδικήθηκε | ✅ Νέα διεκδίκηση προσφοράς |
+| QR Check-in | - | ✅ Check-in επιτυχές |
+| QR Redemption | - | ✅ Εξαργύρωση προσφοράς |
 
-| Notification | Before Fix | After Fix |
-|--------------|-----------|-----------|
-| User offer claim in-app | ❌ | ✅ |
-| User offer claim push | ❌ | ✅ |
-| User reservation in-app | ❌ | ✅ |
-| User reservation push | ❌ | ✅ |
-| User reservation email | ❌ | ✅ |
-| Business offer claim notification | ✅ | ✅ |
-| Business reservation notification | ❌ | ✅ |
+## Technical Details
 
----
+### Files to Modify:
 
-## Technical Notes
+**Backend (Edge Functions):**
+1. `supabase/functions/send-reservation-notification/index.ts`
+2. `supabase/functions/process-ticket-payment/index.ts`
+3. `supabase/functions/send-offer-claim-email/index.ts` (or the claim-offer function)
+4. `supabase/functions/validate-qr/index.ts`
 
-- The `send-reservation-notification` function already handles both user and business notifications (email + push + in-app)
-- The `send-offer-claim-email` function already has the logic to create in-app and push notifications, it just needs the `userId` passed in
-- No new functions need to be created
-- No database changes required
+**Frontend:**
+1. `src/hooks/useNotifications.ts` - Add type filter parameter
+2. `src/components/UserAccountDropdown.tsx` - Detect route and pass correct type
+3. `src/components/notifications/InAppNotificationsSheet.tsx` - Pass type from parent
+
+### Notification Schema (Existing - No DB Changes Needed):
+```sql
+notifications:
+  - user_id: uuid (business owner's user_id)
+  - type: 'business' (to differentiate from user notifications)
+  - event_type: 'new_reservation' | 'ticket_sale' | 'offer_claimed' | etc.
+  - entity_type: 'reservation' | 'ticket' | 'offer'
+  - deep_link: '/dashboard-business/...'
+```
+
+## Implementation Order
+
+1. Update `useNotifications` hook with optional type filter
+2. Update `UserAccountDropdown` to detect business route and pass filter
+3. Update each edge function to create business in-app notifications
+4. Test end-to-end with a reservation/ticket sale
+
+## Expected Result
+
+- **Business Dashboard**: Bell icon shows only business notifications (sales, reservations, claims)
+- **My Account / User pages**: Bell icon shows only personal notifications (purchases, confirmations)
+- Unread counts are separate for each context
