@@ -46,7 +46,7 @@ export const useUserRSVPs = (userId: string | null) => {
     setLoading(true);
     const now = new Date().toISOString();
 
-    // Fetch all RSVPs for the user with event data
+    // Fetch all RSVPs for the user with event data including entry type fields
     const { data: allData, error } = await supabase
       .from('rsvps')
       .select(`
@@ -64,7 +64,10 @@ export const useUserRSVPs = (userId: string | null) => {
           price_tier,
           cover_image_url,
           business_id,
-          business:businesses(id, name, logo_url)
+          event_type,
+          accepts_reservations,
+          external_ticket_url,
+          business:businesses(id, name, logo_url, city)
         )
       `)
       .eq('user_id', userId);
@@ -106,6 +109,21 @@ export const useUserRSVPs = (userId: string | null) => {
         });
       }
     }
+
+    // Check for active boosts for these events
+    const currentTime = new Date().toISOString();
+    const { data: boostsData } = await supabase
+      .from('event_boosts')
+      .select('event_id')
+      .in('event_id', eventIds)
+      .eq('status', 'active')
+      .lte('start_date', currentTime)
+      .gte('end_date', currentTime);
+
+    const boostedEventIds = new Set((boostsData || []).map((b: any) => b.event_id));
+    validRsvps.forEach((r: any) => {
+      r.event.isBoosted = boostedEventIds.has(r.event.id);
+    });
     
     const upcoming = validRsvps.filter(r => new Date(r.event.end_at) >= new Date(now));
     const past = validRsvps.filter(r => new Date(r.event.end_at) < new Date(now));

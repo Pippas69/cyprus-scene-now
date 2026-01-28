@@ -722,11 +722,11 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             <p className="text-xs text-muted-foreground pl-6">{t.optionalDescription}</p>
             
              {/* Cancellation / No-show / Check-in (FIRST) */}
-             <div className="flex items-center justify-between py-3 border-b border-border">
-               <div className="flex items-center gap-2">
-                 <CalendarCheck className="h-4 w-4 text-primary" />
-                 <div>
-                   <Label htmlFor="reservation-status" className="font-medium">{t.reservationStatus}</Label>
+             <div className="flex items-start justify-between py-3 border-b border-border gap-2">
+               <div className="flex items-start gap-2 flex-1 min-w-0">
+                 <CalendarCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                 <div className="min-w-0">
+                   <Label htmlFor="reservation-status" className="font-medium text-sm">{t.reservationStatus}</Label>
                    <p className="text-xs text-muted-foreground">{t.reservationStatusDescription}</p>
                  </div>
                </div>
@@ -736,16 +736,16 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                  onCheckedChange={(checked) =>
                    updatePreferences({ notification_reservation_cancelled: checked })
                  }
-                 className="data-[state=checked]:bg-primary"
+                 className="data-[state=checked]:bg-primary scale-90 sm:scale-100 shrink-0"
                />
              </div>
 
              {/* Almost Sold Out & Sold Out (SECOND) */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Ticket className="h-4 w-4 text-primary" />
-                <div>
-                  <Label htmlFor="inventory-alerts" className="font-medium">{t.inventoryAlerts}</Label>
+            <div className="flex items-start justify-between py-3 border-b border-border gap-2">
+              <div className="flex items-start gap-2 flex-1 min-w-0">
+                <Ticket className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <Label htmlFor="inventory-alerts" className="font-medium text-sm whitespace-nowrap">{t.inventoryAlerts}</Label>
                   <p className="text-xs text-muted-foreground">{t.inventoryAlertsDescription}</p>
                 </div>
               </div>
@@ -758,16 +758,16 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                     notification_sold_out: checked 
                   })
                 }
-                className="data-[state=checked]:bg-primary"
+                className="data-[state=checked]:bg-primary scale-90 sm:scale-100 shrink-0"
               />
             </div>
 
              {/* Weekly Summary (THIRD) */}
-             <div className="flex items-center justify-between py-3 border-b border-border">
-               <div className="flex items-center gap-2">
-                 <BarChart3 className="h-5 w-5 text-primary" />
-                 <div>
-                   <Label htmlFor="weekly-summary" className="font-medium">{t.weeklySummary}</Label>
+             <div className="flex items-start justify-between py-3 border-b border-border gap-2">
+               <div className="flex items-start gap-2 flex-1 min-w-0">
+                 <BarChart3 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                 <div className="min-w-0">
+                   <Label htmlFor="weekly-summary" className="font-medium text-sm">{t.weeklySummary}</Label>
                    <p className="text-xs text-muted-foreground">
                      {language === 'el'
                        ? 'Λάβετε email με σύνοψη της εβδομάδας: κρατήσεις, εισιτήρια, προσφορές, QR check-ins και καλύτερη μέρα επισκέψεων'
@@ -781,16 +781,16 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                  onCheckedChange={(checked) =>
                    updatePreferences({ notification_weekly_summary: checked })
                  }
-                 className="data-[state=checked]:bg-primary"
+                 className="data-[state=checked]:bg-primary scale-90 sm:scale-100 shrink-0"
                />
              </div>
 
              {/* All other notifications (LAST) */}
-            <div className="flex items-center justify-between py-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                <div>
-                   <Label htmlFor="user-engagement" className="font-medium">
+            <div className="flex items-start justify-between py-3 border-b border-border gap-2">
+              <div className="flex items-start gap-2 flex-1 min-w-0">
+                <Users className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                   <Label htmlFor="user-engagement" className="font-medium text-sm">
                      {language === 'el' ? 'Όλες οι υπόλοιπες ειδοποιήσεις' : t.userEngagement}
                    </Label>
                    <p className="text-xs text-muted-foreground">
@@ -818,7 +818,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                      notification_rsvp_updates: checked
                   })
                 }
-                className="data-[state=checked]:bg-primary"
+                className="data-[state=checked]:bg-primary scale-90 sm:scale-100 shrink-0"
               />
             </div>
           </div>

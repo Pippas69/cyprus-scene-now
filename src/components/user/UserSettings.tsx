@@ -350,7 +350,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                   id="firstName"
                   value={profile.first_name || ''}
                   onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                  className="rounded-xl text-sm"
+                  className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
                 />
               </div>
               <div className="space-y-1.5 sm:space-y-2">
@@ -359,7 +359,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                   id="lastName"
                   value={profile.last_name || ''}
                   onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                  className="rounded-xl text-sm"
+                  className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
                 />
               </div>
             </div>
@@ -371,7 +371,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 type="number"
                 value={profile.age || ''}
                 onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || null })}
-                className="rounded-xl text-sm"
+                className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
               />
             </div>
 
@@ -381,7 +381,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 id="email"
                 value={profile.email || ''}
                 disabled
-                className="rounded-xl bg-muted text-sm"
+                className="rounded-xl bg-muted text-xs sm:text-sm h-8 sm:h-10"
               />
             </div>
 
@@ -394,12 +394,12 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 value={profile.town || ''}
                 onValueChange={(value) => setProfile({ ...profile, town: value })}
               >
-                <SelectTrigger id="town" className="rounded-xl text-sm">
+                <SelectTrigger id="town" className="rounded-xl text-xs sm:text-sm h-8 sm:h-10">
                   <SelectValue placeholder={t.townPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {getCityOptions(language).map(city => (
-                    <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
+                    <SelectItem key={city.value} value={city.value} className="text-xs sm:text-sm">{city.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -411,13 +411,13 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 value={profile.gender || ''}
                 onValueChange={(value) => setProfile({ ...profile, gender: value })}
               >
-                <SelectTrigger id="gender" className="rounded-xl text-sm">
+                <SelectTrigger id="gender" className="rounded-xl text-xs sm:text-sm h-8 sm:h-10">
                   <SelectValue placeholder={t.genderPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">{t.male}</SelectItem>
-                  <SelectItem value="female">{t.female}</SelectItem>
-                  <SelectItem value="other">{t.other}</SelectItem>
+                  <SelectItem value="male" className="text-xs sm:text-sm">{t.male}</SelectItem>
+                  <SelectItem value="female" className="text-xs sm:text-sm">{t.female}</SelectItem>
+                  <SelectItem value="other" className="text-xs sm:text-sm">{t.other}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

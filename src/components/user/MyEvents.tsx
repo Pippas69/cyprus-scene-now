@@ -123,8 +123,14 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         {eventsList.map(item => {
-          const event = isRsvp ? item.event : item;
-          const key = isRsvp ? item.id : event.id;
+          const rawEvent = isRsvp ? item.event : item;
+          const key = isRsvp ? item.id : rawEvent.id;
+          const isBoosted = rawEvent.isBoosted || false;
+          // Map business (singular) to businesses (plural) for UnifiedEventCard
+          const event = {
+            ...rawEvent,
+            businesses: rawEvent.business || rawEvent.businesses,
+          };
           return (
             <div key={key} className="relative">
               {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
@@ -133,6 +139,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   event={event}
                   language={language}
                   size="mobileFixed"
+                  isBoosted={isBoosted}
                   disableViewTracking
                   linkSearch="?src=dashboard_user"
                 />
@@ -142,6 +149,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   event={event}
                   language={language}
                   size="full"
+                  isBoosted={isBoosted}
                   disableViewTracking
                   linkSearch="?src=dashboard_user"
                 />
@@ -160,8 +168,14 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         {eventsList.map(item => {
-          const event = isRsvp ? item.event : item;
-          const key = isRsvp ? item.id : event.id;
+          const rawEvent = isRsvp ? item.event : item;
+          const key = isRsvp ? item.id : rawEvent.id;
+          const isBoosted = rawEvent.isBoosted || false;
+          // Map business (singular) to businesses (plural) for UnifiedEventCard
+          const event = {
+            ...rawEvent,
+            businesses: rawEvent.business || rawEvent.businesses,
+          };
           return (
             <div key={key} className="relative opacity-60">
               {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
@@ -170,6 +184,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   event={event}
                   language={language}
                   size="mobileFixed"
+                  isBoosted={isBoosted}
                   disableViewTracking
                   linkSearch="?src=dashboard_user"
                 />
@@ -179,6 +194,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   event={event}
                   language={language}
                   size="full"
+                  isBoosted={isBoosted}
                   disableViewTracking
                   linkSearch="?src=dashboard_user"
                 />
