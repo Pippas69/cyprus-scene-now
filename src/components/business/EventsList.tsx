@@ -341,7 +341,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
             variant={showExpired ? 'secondary' : 'outline'}
             size="sm"
             onClick={() => setShowExpired(!showExpired)}
-            className="text-[10px] md:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 lg:text-base lg:h-9 lg:px-4"
+            className="text-[11px] md:text-sm h-7 md:h-8 px-2.5 md:px-3 whitespace-nowrap flex-shrink-0 lg:text-base lg:h-9 lg:px-4"
           >
             {t.expired} ({expiredEvents.length})
           </Button>
@@ -354,7 +354,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'all' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('all')}
-          className={`text-[9px] md:text-xs lg:text-sm h-7 md:h-8 px-1.5 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'all' ? 'bg-primary text-primary-foreground' : ''}`}
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'all' ? 'bg-primary text-primary-foreground' : ''}`}
         >
           {t.filterAll}
         </Button>
@@ -362,7 +362,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'ticket' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('ticket')}
-          className={`text-[9px] md:text-xs lg:text-sm h-7 md:h-8 px-1.5 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'ticket' ? 'bg-teal-600 text-white hover:bg-teal-700' : ''}`}
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'ticket' ? 'bg-teal-600 text-white hover:bg-teal-700' : ''}`}
         >
           <Ticket className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 mr-0.5 md:mr-1 flex-shrink-0" />
           {t.filterTicket}
@@ -371,7 +371,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'reservation' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('reservation')}
-          className={`text-[9px] md:text-xs lg:text-sm h-7 md:h-8 px-1.5 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'reservation' ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'reservation' ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}
         >
           <Grid3X3 className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 mr-0.5 md:mr-1 flex-shrink-0" />
           {t.filterReservation}
@@ -380,7 +380,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'free_entry' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('free_entry')}
-          className={`text-[9px] md:text-xs lg:text-sm h-7 md:h-8 px-1.5 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'free_entry' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90' : ''}`}
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'free_entry' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90' : ''}`}
         >
           <Gift className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 mr-0.5 md:mr-1 flex-shrink-0" />
           {t.filterFreeEntry}
