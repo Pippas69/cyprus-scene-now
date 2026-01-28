@@ -91,7 +91,7 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
         {/* Offer Card Container */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl">
           {/* Header with ΦΟΜΟ branding */}
-          <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-6 py-5 text-center">
+          <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-6 pt-8 pb-5 text-center">
             <h1 className="text-2xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
             {offer?.businessName && (
               <p className="text-white/70 text-xs mt-1">by {offer.businessName}</p>
