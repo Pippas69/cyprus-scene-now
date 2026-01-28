@@ -48,19 +48,19 @@ const OfferBoostSection = ({
   // 2-tier boost system with hourly and daily rates
   const tiers = {
     standard: { 
-      dailyRate: 35, 
-      dailyRateCents: 3500, 
-      hourlyRate: 7, 
-      hourlyRateCents: 700, 
+      dailyRate: 40, 
+      dailyRateCents: 4000, 
+      hourlyRate: 5.5, 
+      hourlyRateCents: 550, 
       icon: Target, 
       quality: 70, 
       color: "text-purple-500" 
     },
     premium: { 
-      dailyRate: 50, 
-      dailyRateCents: 5000, 
-      hourlyRate: 10, 
-      hourlyRateCents: 1000, 
+      dailyRate: 60, 
+      dailyRateCents: 6000, 
+      hourlyRate: 8.5, 
+      hourlyRateCents: 850, 
       icon: Rocket, 
       quality: 100, 
       color: "text-rose-500" 
