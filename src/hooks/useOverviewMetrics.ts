@@ -209,11 +209,12 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       // =====================================================
       // 6. VISITS (verified visits at venue) — SINGLE SOURCE OF TRUTH
       // Visits MUST match Performance / Boost Value / Audience:
-      // - Offer visits: successful offer QR scans (discount_scans.success=true)
+      // - Offer visits: successful offer QR scans (offer_purchases.redeemed_at)
       // - Ticket visits: ticket check-ins (tickets.checked_in_at)
-      // - Reservation visits: successful reservation QR scans (reservation_scans.success=true)
+      // - Reservation visits: reservation check-ins (reservations.checked_in_at)
       //   * direct reservations (reservation.event_id IS NULL)
       //   * event reservations (reservation.event_id IN business events)
+      // - Student discount visits: student discount redemptions (student_discount_redemptions.created_at)
       // =====================================================
 
       // A. Offer visits (verified redemptions)
@@ -266,11 +267,20 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         eventReservationVisits = count || 0;
       }
 
+      // D. Student discount visits (student discount redemptions at this business)
+      const { count: studentDiscountVisits } = await supabase
+        .from("student_discount_redemptions")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", businessId)
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
       const visitsViaQR =
         offerVisits +
         ticketVisits +
         (directReservationVisits || 0) +
-        eventReservationVisits;
+        eventReservationVisits +
+        (studentDiscountVisits || 0);
 
       return {
         totalViews,
