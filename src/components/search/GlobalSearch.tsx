@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { SearchResults } from './SearchResults';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { trackSearchResultView, trackSearchResultClick } from '@/lib/analyticsTracking';
 
 interface SearchResult {
   result_type: 'business' | 'event';
@@ -77,11 +78,16 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Track views for business results when they appear
+  const trackedViewsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const searchContent = async () => {
       if (query.length < 2) {
         setResults([]);
         setIsLoading(false);
+        // Reset tracked views when search is cleared
+        trackedViewsRef.current.clear();
         return;
       }
 
@@ -97,6 +103,14 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
           ? typed.filter((r) => resultTypes.includes(r.result_type))
           : typed;
         setResults(filtered);
+        
+        // Track profile views for businesses appearing in search results
+        filtered.forEach((result) => {
+          if (result.result_type === 'business' && !trackedViewsRef.current.has(result.id)) {
+            trackedViewsRef.current.add(result.id);
+            trackSearchResultView(result.id, 'general');
+          }
+        });
       }
 
       setIsLoading(false);
@@ -106,16 +120,18 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
     return () => clearTimeout(debounce);
   }, [query, resultTypes]);
 
-  const handleResultClick = (result: SearchResult) => {
+  const handleResultClick = useCallback((result: SearchResult) => {
     setIsOpen(false);
     setQuery('');
 
     if (result.result_type === 'business') {
+      // Track interaction when clicking on business in general search
+      trackSearchResultClick(result.id, 'general');
       navigate(`/business/${result.id}`);
     } else {
       navigate(`/event/${result.id}`);
     }
-  };
+  }, [navigate]);
 
   if (fullscreen) {
     return (

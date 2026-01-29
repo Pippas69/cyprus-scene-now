@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { translateCity } from "@/lib/cityTranslations";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { trackSearchResultView, trackSearchResultClick } from "@/lib/analyticsTracking";
 
 interface SearchResult {
   id: string;
@@ -12,6 +14,7 @@ interface SearchResult {
   city: string;
   category: string[];
   coordinates?: [number, number];
+  logo_url?: string;
   type: 'business';
 }
 
@@ -29,11 +32,16 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Track views for business results when they appear
+  const trackedViewsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
       setIsOpen(false);
+      // Reset tracked views when search is cleared
+      trackedViewsRef.current.clear();
       return;
     }
 
@@ -43,7 +51,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
         // Search businesses by name
         const { data: businessData, error } = await supabase
           .from("businesses")
-          .select("id, name, city, category")
+          .select("id, name, city, category, logo_url")
           .ilike("name", `%${query}%`)
           .limit(8);
 
@@ -69,12 +77,21 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
               name: b.name,
               city: b.city,
               category: b.category || [],
+              logo_url: b.logo_url,
               coordinates: coordsMap.get(b.id),
               type: 'business' as const,
             }));
 
           setResults(searchResults);
           setIsOpen(true);
+          
+          // Track profile views for businesses appearing in map search results
+          searchResults.forEach((result) => {
+            if (!trackedViewsRef.current.has(result.id)) {
+              trackedViewsRef.current.add(result.id);
+              trackSearchResultView(result.id, 'map');
+            }
+          });
         } else {
           setResults([]);
           setIsOpen(true);
@@ -90,6 +107,14 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
     const debounce = setTimeout(searchBusinesses, 300);
     return () => clearTimeout(debounce);
   }, [query]);
+
+  // Format categories with translation
+  const formatCategories = (categories: string[]) => {
+    return categories
+      .slice(0, 2)
+      .map(cat => getCategoryLabel(cat, language))
+      .join(' & ');
+  };
 
   return (
     <div className="relative">
@@ -111,50 +136,68 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
         />
       </div>
 
+      {/* Loading state */}
+      {isLoading && query.length >= 2 && (
+        <div className="absolute top-full mt-1.5 w-full min-w-[200px] bg-background border rounded-lg shadow-lg p-1 md:p-1.5 z-50">
+          <div className="flex items-center gap-2 md:gap-3 p-1.5 md:p-2">
+            <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-muted animate-pulse shrink-0" />
+            <div className="flex-1 space-y-1">
+              <div className="h-3 md:h-4 w-3/4 bg-muted animate-pulse rounded" />
+              <div className="h-2 md:h-3 w-1/2 bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Results dropdown */}
-      {isOpen && (
-        <div className="absolute top-full mt-2 w-full min-w-[200px] bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+      {isOpen && !isLoading && (
+        <div className="absolute top-full mt-1.5 w-full min-w-[200px] bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto p-1 md:p-1.5">
           {results.length > 0 ? (
             results.map((result) => (
               <button
                 key={result.id}
                 onClick={() => {
                   if (result.coordinates) {
+                    // Map search click = view only (navigates to pin, not profile)
+                    trackSearchResultClick(result.id, 'map');
                     onResultClick(result.coordinates, result.id);
                     setIsOpen(false);
                     setQuery("");
                   }
                 }}
-                className="w-full p-2 md:p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors text-left"
+                className="w-full flex items-center gap-2 md:gap-3 p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors text-left"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                  <h4 className="font-medium text-xs md:text-sm line-clamp-1">{result.name}</h4>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <MapPin size={10} className="md:w-3 md:h-3" />
-                    <span className="line-clamp-1">{translateCity(result.city, language)}</span>
+                {/* Compact circular avatar */}
+                <Avatar className="h-8 w-8 md:h-10 md:w-10 shrink-0 border border-border/50">
+                  <AvatarImage src={result.logo_url || ''} alt={result.name} className="object-cover" />
+                  <AvatarFallback className="bg-muted">
+                    <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                  </AvatarFallback>
+                </Avatar>
+                
+                {/* Content - compact layout matching design */}
+                <div className="flex-1 min-w-0">
+                  {/* First line: Name + Location */}
+                  <div className="flex items-center gap-1 md:gap-1.5 text-xs md:text-sm">
+                    <span className="font-medium truncate text-foreground">{result.name}</span>
+                    <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground shrink-0">{translateCity(result.city, language)}</span>
                   </div>
-                  {result.category[0] && (
-                    <span className="text-muted-foreground">
-                      · {getCategoryLabel(result.category[0], language)}
-                    </span>
+                  
+                  {/* Second line: Categories */}
+                  {result.category.length > 0 && (
+                    <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
+                      {formatCategories(result.category)}
+                    </p>
                   )}
                 </div>
               </button>
             ))
           ) : (
-            <div className="p-3 text-center text-xs text-muted-foreground">
+            <div className="p-3 md:p-4 text-center text-xs md:text-sm text-muted-foreground">
               {text[language].noResults}
             </div>
           )}
-        </div>
-      )}
-
-      {isLoading && (
-        <div className="absolute top-full mt-2 w-full bg-background border rounded-lg shadow-lg p-3 text-center text-xs text-muted-foreground">
-          {language === 'el' ? 'Αναζήτηση...' : 'Searching...'}
         </div>
       )}
     </div>
