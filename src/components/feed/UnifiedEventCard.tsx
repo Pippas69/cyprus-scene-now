@@ -103,6 +103,7 @@ export const UnifiedEventCard = ({
     // Source detection - the actual filtering is done inside trackEventView
     const path = window.location.pathname;
     const source = path.startsWith('/business/') ? 'profile' :
+                   path.startsWith('/event/') ? 'profile' :  // Similar events on event detail page
                    path.includes('/ekdiloseis') ? 'direct' :
                    path.includes('/feed') || path === '/' || path === '/dashboard-business' || path === '/dashboard-business/'
                      ? 'feed'

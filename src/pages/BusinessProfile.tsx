@@ -598,7 +598,7 @@ const BusinessProfile = () => {
                     businesses: event.businesses,
                   }}
                   language={language}
-                  size="default"
+                  size="full"
                 />
               </motion.div>
             ))}
