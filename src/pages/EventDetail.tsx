@@ -559,7 +559,12 @@ export default function EventDetail() {
                   <Separator />
 
                   <button
-                    onClick={() => navigate(`/xartis?business=${event.business_id}`)}
+                    onClick={() => {
+                      // Open Google Maps with the EVENT's location (not business address)
+                      // NO analytics tracking for this action
+                      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+                      window.open(mapsUrl, '_blank');
+                    }}
                     className="flex items-start gap-2 w-full text-left hover:bg-accent/50 -mx-1 px-1 py-0.5 rounded-md transition-colors cursor-pointer group"
                   >
                     <MapPin className="h-4 w-4 text-muted-foreground group-hover:text-primary mt-0.5 shrink-0 transition-colors" />
@@ -763,7 +768,12 @@ export default function EventDetail() {
                 <Separator />
 
                 <button
-                  onClick={() => navigate(`/xartis?business=${event.business_id}`)}
+                  onClick={() => {
+                    // Open Google Maps with the EVENT's location (not business address)
+                    // NO analytics tracking for this action
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+                    window.open(mapsUrl, '_blank');
+                  }}
                   className="flex items-start gap-3 w-full text-left hover:bg-accent/50 -mx-1 px-1 py-0.5 rounded-md transition-colors cursor-pointer group"
                 >
                   <MapPin className="h-5 w-5 text-muted-foreground group-hover:text-primary mt-0.5 transition-colors" />

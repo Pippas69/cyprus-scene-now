@@ -266,9 +266,10 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   {ticket.events?.location && (
                     <button
                       onClick={() => {
-                        if (ticket.events?.business_id) {
-                          navigate(`/xartis?business=${ticket.events.business_id}&src=dashboard_user`);
-                        }
+                        // Open Google Maps with the EVENT's location (not business address)
+                        // NO analytics tracking for this action
+                        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ticket.events?.location || '')}`;
+                        window.open(mapsUrl, '_blank');
                       }}
                       className="flex items-center gap-1 hover:text-primary transition-colors"
                     >
