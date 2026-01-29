@@ -1,16 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { trackEngagement, trackEventView, trackDiscountView } from "@/lib/analyticsTracking";
+import { trackEngagement } from "@/lib/analyticsTracking";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 import { RippleButton } from "@/components/ui/ripple-button";
@@ -118,9 +116,11 @@ const BusinessProfile = () => {
   const [imageViewerSrc, setImageViewerSrc] = useState<string | null>(null);
   const [imageViewerAlt, setImageViewerAlt] = useState<string>("");
 
-  // Track views for events and offers displayed on this profile
-  const trackedEventsRef = useRef<Set<string>>(new Set());
-  const trackedOffersRef = useRef<Set<string>>(new Set());
+  // NOTE: View tracking for events and offers is NOT done here!
+  // Each card (UnifiedEventCard, OfferCard) handles its own view tracking
+  // via IntersectionObserver when it becomes visible to the user.
+  // The path /business/:id is already included in isAllowedEventViewSource() 
+  // and isAllowedOfferViewSource() in analyticsTracking.ts
 
   const translations = {
     el: {
@@ -220,30 +220,6 @@ const BusinessProfile = () => {
       }
     }
   }, [businessId, location.search, location.state]);
-
-  // Track views for events displayed on this business profile
-  useEffect(() => {
-    if (events.length > 0) {
-      events.forEach((event) => {
-        if (!trackedEventsRef.current.has(event.id)) {
-          trackedEventsRef.current.add(event.id);
-          trackEventView(event.id, 'profile');
-        }
-      });
-    }
-  }, [events]);
-
-  // Track views for offers displayed on this business profile
-  useEffect(() => {
-    if (offers.length > 0) {
-      offers.forEach((offer) => {
-        if (!trackedOffersRef.current.has(offer.id)) {
-          trackedOffersRef.current.add(offer.id);
-          trackDiscountView(offer.id, 'profile');
-        }
-      });
-    }
-  }, [offers]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -575,7 +551,7 @@ const BusinessProfile = () => {
           {/* Phone Card */}
           {business.phone && (
             <motion.div variants={itemVariants} className="sm:flex-1 sm:min-w-[120px] sm:max-w-[200px]">
-              <a href={`tel:${business.phone}`} onClick={() => trackEngagement(business.id, 'phone_click', 'business', business.id)}>
+              <a href={`tel:${business.phone}`}>
                 <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer h-full">
                   <CardContent className="flex flex-col items-center text-center p-2 sm:p-4">
                     <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-0.5 sm:mb-1" />
@@ -590,12 +566,7 @@ const BusinessProfile = () => {
           {/* Website Card */}
           {business.website && (
             <motion.div variants={itemVariants} className="sm:flex-1 sm:min-w-[120px] sm:max-w-[200px]">
-              <a 
-                href={getWebsiteUrl(business.website)} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={() => trackEngagement(business.id, 'website_click', 'business', business.id)}
-              >
+              <a href={getWebsiteUrl(business.website)} target="_blank" rel="noopener noreferrer">
                 <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300 cursor-pointer h-full">
                   <CardContent className="flex flex-col items-center text-center p-2 sm:p-4">
                     <Globe className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-0.5 sm:mb-1" />
@@ -610,73 +581,47 @@ const BusinessProfile = () => {
           )}
         </motion.div>
 
+        {/* Events & Offers Grid */}
+        {(events.length > 0 || offers.length > 0) ? (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {/* Events Section */}
+            {events.map((event) => (
+              <motion.div key={event.id} variants={itemVariants}>
+                <UnifiedEventCard
+                  event={{
+                    ...event,
+                    businesses: event.businesses,
+                  }}
+                  language={language}
+                  size="default"
+                />
+              </motion.div>
+            ))}
 
-        {/* Unified Events & Offers List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          {events.length === 0 && offers.length === 0 ? (
-            <Card variant="glass">
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">
-                  {t.noContent}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {/* Render all events */}
-              {events.map((event) => (
-                <motion.div key={`event-${event.id}`} variants={itemVariants}>
-                  {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
-                  <div className="md:hidden">
-                    <UnifiedEventCard 
-                      event={event} 
-                      language={language} 
-                      size="mobileFixed"
-                      isFree={event.price_tier === "free"}
-                    />
-                  </div>
-                  <div className="hidden md:block">
-                    <UnifiedEventCard 
-                      event={event} 
-                      language={language} 
-                      size="full"
-                      isFree={event.price_tier === "free"}
-                    />
-                  </div>
-                </motion.div>
-              ))}
-              {/* Render all offers */}
-              {offers.map((offer) => (
-                <motion.div key={`offer-${offer.id}`} variants={itemVariants}>
-                  <OfferCard offer={offer} language={language} user={user} />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </motion.div>
+            {/* Offers Section */}
+            {offers.map((offer) => (
+              <motion.div key={offer.id} variants={itemVariants}>
+                <OfferCard
+                  offer={offer}
+                  language={language}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">{t.noContent}</p>
+          </div>
+        )}
       </div>
 
-      {/* Share Profile Dialog */}
-      {business && (
-        <ShareProfileDialog
-          open={showShareDialog}
-          onOpenChange={setShowShareDialog}
-          business={business}
-          language={language}
-        />
-      )}
-
       {/* Direct Reservation Dialog */}
-      {business.accepts_direct_reservations && user && (
+      {business && user && (
         <DirectReservationDialog
           open={reservationDialogOpen}
           onOpenChange={setReservationDialogOpen}
@@ -684,9 +629,24 @@ const BusinessProfile = () => {
           businessName={business.name}
           language={language}
           userId={user.id}
-          onSuccess={() => {
-            // Reservation tracked via the dialog
+          onSuccess={() => setReservationDialogOpen(false)}
+        />
+      )}
+
+      {/* Share Profile Dialog */}
+      {business && (
+        <ShareProfileDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          business={{
+            id: business.id,
+            name: business.name,
+            city: business.city,
+            address: business.address,
+            logo_url: business.logo_url,
+            cover_url: business.cover_url,
           }}
+          language={language}
         />
       )}
     </div>

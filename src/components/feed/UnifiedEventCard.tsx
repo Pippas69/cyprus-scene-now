@@ -102,7 +102,8 @@ export const UnifiedEventCard = ({
     if (disableViewTracking) return;
     // Source detection - the actual filtering is done inside trackEventView
     const path = window.location.pathname;
-    const source = path.includes('/ekdiloseis') ? 'direct' :
+    const source = path.startsWith('/business/') ? 'profile' :
+                   path.includes('/ekdiloseis') ? 'direct' :
                    path.includes('/feed') || path === '/' || path === '/dashboard-business' || path === '/dashboard-business/'
                      ? 'feed'
                      : 'direct';
