@@ -79,7 +79,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
       // Source detection - the actual filtering is done inside trackEventView
       const path = window.location.pathname;
       const source = path.includes('/ekdiloseis') ? 'direct' :
-                     path.includes('/feed') || path === '/'
+                     path.includes('/feed') || path === '/' || path === '/dashboard-business' || path === '/dashboard-business/'
                        ? 'feed'
                        : 'direct';
       trackEventView(event.id, source as 'feed' | 'map' | 'search' | 'profile' | 'direct');
@@ -345,10 +345,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           className
         )}
         style={{ ...style, ...tiltStyle }}
-        onClick={() => {
-          const src = window.location.pathname.startsWith('/dashboard-business') ? '?src=dashboard_business' : '';
-          navigate(`/event/${event.id}${src}`);
-        }}
+        onClick={() => navigate(`/event/${event.id}`)}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={handleMouseLeave}

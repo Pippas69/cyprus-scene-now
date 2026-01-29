@@ -96,15 +96,6 @@ export const UnifiedEventCard = ({
   const eventDate = new Date(event.start_at);
   const now = new Date();
 
-  const computedLinkSearch = (() => {
-    if (linkSearch) return linkSearch;
-    try {
-      return window.location.pathname.startsWith('/dashboard-business') ? '?src=dashboard_business' : '';
-    } catch {
-      return '';
-    }
-  })();
-
   // View tracking - trackEventView now handles source validation internally
   const cardRef = useRef<HTMLDivElement | null>(null);
   const handleView = useCallback(() => {
@@ -210,7 +201,7 @@ export const UnifiedEventCard = ({
     return (
       <Link
         ref={cardRef as any}
-        to={`/event/${event.id}${computedLinkSearch || ""}`}
+        to={`/event/${event.id}${linkSearch || ""}`}
         onClick={handleCardClick}
         className={cn(
           "flex flex-col rounded-xl bg-card border border-border",
@@ -221,7 +212,7 @@ export const UnifiedEventCard = ({
         )}
       >
         {/* Image section - larger on mobile for boosted */}
-          <div className={cn("relative overflow-visible", size === "boosted" ? "h-36 sm:h-40" : "h-32 sm:h-40")}>
+        <div className={cn("relative overflow-visible", size === "boosted" ? "h-36 sm:h-40" : "h-32 sm:h-40")}>
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
@@ -307,8 +298,8 @@ export const UnifiedEventCard = ({
     >
       <CardContent className="p-0 h-full flex flex-col">
         {/* Image section - increased height for mobile (h-48 instead of h-40) */}
-              <Link
-                to={`/event/${event.id}${computedLinkSearch || ""}`}
+        <Link
+          to={`/event/${event.id}${linkSearch || ""}`}
           onClick={handleCardClick}
           className="block relative h-48 sm:h-40 overflow-visible rounded-t-xl flex-shrink-0"
         >
@@ -351,7 +342,7 @@ export const UnifiedEventCard = ({
         {/* Content section - matching reference image layout */}
         <div className="p-2.5 sm:p-3 flex-1 flex flex-col gap-0.5">
           {/* Title */}
-          <Link to={`/event/${event.id}${computedLinkSearch || ""}`} onClick={handleCardClick}>
+          <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
             <h3 className="font-semibold text-sm leading-tight truncate hover:text-primary transition-colors">
               {event.title}
             </h3>

@@ -29,15 +29,6 @@ const EventListItem = ({
   language
 }: EventListItemProps) => {
   const navigate = useNavigate();
-
-  const eventHref = (() => {
-    try {
-      const src = window.location.pathname.startsWith('/dashboard-business') ? '?src=dashboard_business' : '';
-      return `/event/${event.id}${src}`;
-    } catch {
-      return `/event/${event.id}`;
-    }
-  })();
   
   const translations = {
     el: {
@@ -59,7 +50,7 @@ const EventListItem = ({
       <div className="flex gap-4 p-3">
         {/* Thumbnail Image */}
         <div className="relative flex-shrink-0 w-32 h-24 rounded-md overflow-hidden">
-          <Link to={eventHref}>
+          <Link to={`/event/${event.id}`}>
             <img
               src={event.cover_image_url || "/placeholder.svg"}
               alt={event.title}
@@ -90,7 +81,7 @@ const EventListItem = ({
             )}
 
             {/* Event Title */}
-            <Link to={eventHref}>
+            <Link to={`/event/${event.id}`}>
               <h3 className="font-semibold text-sm line-clamp-1 hover:text-primary transition-colors">
                 {event.title}
               </h3>
