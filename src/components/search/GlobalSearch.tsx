@@ -89,6 +89,14 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
   // For events and offers - ONLY click counts as view (not appearance)
   const trackedViewsRef = useRef<Set<string>>(new Set());
 
+  // Important: allow counting a business "profile_view" again on a new search open/close cycle.
+  // Without this, a business could be counted only once per component lifetime, which is not desired.
+  useEffect(() => {
+    if (!isOpen) {
+      trackedViewsRef.current.clear();
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const searchContent = async () => {
       if (query.length < 2) {
