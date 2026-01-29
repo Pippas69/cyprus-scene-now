@@ -4950,6 +4950,7 @@ export type Database = {
       search_content: {
         Args: { search_query: string }
         Returns: {
+          business_id: string
           business_name: string
           category: string[]
           city: string
