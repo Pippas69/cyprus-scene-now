@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { MapPin, Calendar, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PremiumBadge } from "@/components/ui/premium-badge";
@@ -91,7 +91,6 @@ export const UnifiedEventCard = ({
   disableViewTracking = false,
   linkSearch
 }: UnifiedEventCardProps) => {
-  const navigate = useNavigate();
   const t = translations[language];
   const eventDate = new Date(event.start_at);
   const now = new Date();
@@ -170,23 +169,18 @@ export const UnifiedEventCard = ({
   
   const entryBadgeLabel = getEntryBadgeLabel();
 
-  // Handle map click
+  // Handle map click - opens Google Maps with the EVENT's location (not business address)
+  // NO analytics tracking for this action - it's purely informational
   const handleMapClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    // If this card is rendered in user-dashboard context, we pass src so map pin clicks won't count as views.
-    const src = (() => {
-      if (!linkSearch) return null;
-      try {
-        const raw = linkSearch.startsWith('?') ? linkSearch.slice(1) : linkSearch;
-        return new URLSearchParams(raw).get('src');
-      } catch {
-        return null;
-      }
-    })();
-
-    navigate(`/xartis?business=${event.business_id}${src ? `&src=${encodeURIComponent(src)}` : ''}`);
+    
+    // Use the event's location text for Google Maps search
+    const eventLocation = event.location || '';
+    if (eventLocation) {
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventLocation)}`;
+      window.open(mapsUrl, '_blank');
+    }
   };
 
   // For Feed cards (compact, default, boosted) - keep horizontal scroller style

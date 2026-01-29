@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Calendar, MapPin, Users, Heart } from "lucide-react";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,6 @@ interface FeaturedEventCardProps {
 }
 
 const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) => {
-  const navigate = useNavigate();
   const translations = {
     el: {
       viewDetails: "Δείτε Λεπτομέρειες",
@@ -114,7 +113,10 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                navigate(`/xartis?business=${event.business_id || event.businesses?.id}`);
+                // Open Google Maps with the EVENT's location (not business address)
+                // NO analytics tracking for this action
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+                window.open(mapsUrl, '_blank');
               }}
               className="flex items-center gap-1.5 hover:text-white transition-colors"
             >
