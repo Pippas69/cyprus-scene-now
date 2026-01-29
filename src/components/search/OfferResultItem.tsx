@@ -22,6 +22,9 @@ interface OfferResultItemProps {
 
 export function OfferResultItem({ result, language, onClick }: OfferResultItemProps) {
   const dateLocale = language === 'el' ? el : enUS;
+  const expiryText = result.start_at
+    ? format(new Date(result.start_at), 'd MMMM • HH:mm', { locale: dateLocale })
+    : '';
   
   return (
     <button
@@ -38,26 +41,24 @@ export function OfferResultItem({ result, language, onClick }: OfferResultItemPr
       
       {/* Content - compact layout */}
       <div className="flex-1 min-w-0">
-        {/* First line: Title */}
+        {/* First line: Title + Location */}
         <div className="flex items-center gap-1 md:gap-1.5 text-xs md:text-sm min-w-0 whitespace-nowrap">
           <span className="font-medium truncate text-foreground">{result.title}</span>
-        </div>
-        
-        {/* Second line: Business name, location, expiry */}
-        <div className="flex items-center gap-2 md:gap-3 text-[9px] md:text-[10px] lg:text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
-          {result.business_name && (
-            <span className="truncate">{result.business_name}</span>
-          )}
           {result.city && (
-            <span className="flex items-center gap-0.5 shrink-0">
-              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3" />
-              <span>{translateCity(result.city, language)}</span>
+            <span className="flex items-center gap-0.5 shrink-0 min-w-0">
+              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 text-muted-foreground" />
+              <span className="text-muted-foreground truncate">{translateCity(result.city, language)}</span>
             </span>
           )}
-          {result.start_at && (
+        </div>
+
+        {/* Second line: Day + Time (expiry) */}
+        <div className="flex items-center gap-2 md:gap-3 text-[9px] md:text-[10px] lg:text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
+          {result.business_name && <span className="truncate">{result.business_name}</span>}
+          {expiryText && (
             <span className="flex items-center gap-0.5 shrink-0">
               <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3" />
-              <span>{format(new Date(result.start_at), 'd MMM', { locale: dateLocale })}</span>
+              <span className="truncate">{expiryText}</span>
             </span>
           )}
         </div>
