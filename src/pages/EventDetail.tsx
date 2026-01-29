@@ -91,17 +91,19 @@ export default function EventDetail() {
     checkUser();
     if (eventId) {
       fetchEventDetails();
-      // Do NOT count views when navigation originated from the user's dashboard sections.
+      // Do NOT count views when navigation originated from the user's dashboard sections
+      // or when the view was already tracked by the source component (e.g., search)
       const src = new URLSearchParams(location.search).get('src');
-      console.debug('[EventDetail] view check', { eventId, src, pathname: location.pathname, search: location.search });
-      if (src !== 'dashboard_user') {
+      const analyticsTracked = location.state?.analyticsTracked === true;
+      console.debug('[EventDetail] view check', { eventId, src, analyticsTracked, pathname: location.pathname, search: location.search });
+      if (src !== 'dashboard_user' && !analyticsTracked) {
         console.debug('[EventDetail] tracking view', { eventId });
         trackEventView(eventId, 'direct');
       } else {
-        console.debug('[EventDetail] skipped view (dashboard_user)', { eventId });
+        console.debug('[EventDetail] skipped view (dashboard_user or analyticsTracked)', { eventId, analyticsTracked });
       }
     }
-  }, [eventId, location.search]);
+  }, [eventId, location.search, location.state?.analyticsTracked]);
 
   useEffect(() => {
     if (event && user) {
