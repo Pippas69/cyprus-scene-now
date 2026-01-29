@@ -137,7 +137,7 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
     return (
       <div className="p-4 space-y-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-5 sm:w-5 text-muted-foreground" />
           <Input
             ref={inputRef}
             value={query}
@@ -146,7 +146,7 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
               setIsOpen(true);
             }}
             placeholder={t.searchPlaceholder}
-            className="pl-10 pr-10 h-10 sm:h-12 text-base sm:text-lg"
+            className="pl-8 pr-8 h-9 sm:h-12 text-sm sm:text-lg"
             autoFocus
           />
           {query && (
