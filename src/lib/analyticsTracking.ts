@@ -76,6 +76,9 @@ const isAllowedEventViewSource = (): boolean => {
   // Allowed: Business profile pages - viewing events on a business profile counts as views
   if (path.startsWith('/business/')) return true;
   
+  // Allowed: Event detail page - viewing similar events counts as views
+  if (path.startsWith('/event/')) return true;
+  
   // NOT allowed: Everything else (map, reservations tab, settings, etc.)
   return false;
 };
