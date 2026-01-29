@@ -2,9 +2,10 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BusinessResultItem } from './BusinessResultItem';
 import { EventResultItem } from './EventResultItem';
+import { OfferResultItem } from './OfferResultItem';
 
 interface SearchResult {
-  result_type: 'business' | 'event';
+  result_type: 'business' | 'event' | 'offer';
   id: string;
   name?: string;
   title?: string;
@@ -17,6 +18,7 @@ interface SearchResult {
   business_name?: string;
   verified?: boolean;
   relevance_score: number;
+  business_id?: string;
 }
 
 interface SearchResultsProps {
@@ -61,23 +63,37 @@ export function SearchResults({
   return (
     <Card className="p-1 md:p-1.5 bg-background border shadow-lg max-h-[400px] md:max-h-[500px] overflow-y-auto">
       <div className="space-y-0.5">
-        {results.map((result) =>
-          result.result_type === 'business' ? (
-            <BusinessResultItem
-              key={result.id}
-              result={result}
-              language={language}
-              onClick={() => onResultClick(result)}
-            />
-          ) : (
-            <EventResultItem
-              key={result.id}
-              result={result}
-              language={language}
-              onClick={() => onResultClick(result)}
-            />
-          )
-        )}
+        {results.map((result) => {
+          if (result.result_type === 'business') {
+            return (
+              <BusinessResultItem
+                key={`business-${result.id}`}
+                result={result}
+                language={language}
+                onClick={() => onResultClick(result)}
+              />
+            );
+          } else if (result.result_type === 'event') {
+            return (
+              <EventResultItem
+                key={`event-${result.id}`}
+                result={result}
+                language={language}
+                onClick={() => onResultClick(result)}
+              />
+            );
+          } else if (result.result_type === 'offer') {
+            return (
+              <OfferResultItem
+                key={`offer-${result.id}`}
+                result={result}
+                language={language}
+                onClick={() => onResultClick(result)}
+              />
+            );
+          }
+          return null;
+        })}
       </div>
     </Card>
   );

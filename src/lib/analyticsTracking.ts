@@ -292,6 +292,52 @@ export const trackSearchResultClick = async (
   });
 };
 
+// Track event search click (view counted ONLY on click from global search)
+export const trackEventSearchClick = async (eventId: string) => {
+  try {
+    debugLog('[trackEventSearchClick] sending', { eventId });
+
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const { error } = await supabase.from('event_views').insert({
+      event_id: eventId,
+      user_id: user?.id || null,
+      source: 'search',
+      device_type: getDeviceType(),
+      session_id: getSessionId(),
+    });
+
+    if (error) {
+      console.error('Error tracking event search click:', error);
+    }
+  } catch (error) {
+    console.error('Failed to track event search click:', error);
+  }
+};
+
+// Track offer search click (view counted ONLY on click from global search)
+export const trackOfferSearchClick = async (discountId: string) => {
+  try {
+    debugLog('[trackOfferSearchClick] sending', { discountId });
+
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const { error } = await supabase.from('discount_views').insert({
+      discount_id: discountId,
+      user_id: user?.id || null,
+      source: 'search',
+      device_type: getDeviceType(),
+      session_id: getSessionId(),
+    });
+
+    if (error) {
+      console.error('Error tracking offer search click:', error);
+    }
+  } catch (error) {
+    console.error('Failed to track offer search click:', error);
+  }
+};
+
 // Track business follow
 export const trackBusinessFollow = async (
   businessId: string,
