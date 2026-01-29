@@ -5,10 +5,15 @@ import { Button } from '@/components/ui/button';
 import { SearchResults } from './SearchResults';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { trackSearchResultView, trackSearchResultClick } from '@/lib/analyticsTracking';
+import { 
+  trackSearchResultView, 
+  trackSearchResultClick,
+  trackEventView,
+  trackDiscountView 
+} from '@/lib/analyticsTracking';
 
 interface SearchResult {
-  result_type: 'business' | 'event';
+  result_type: 'business' | 'event' | 'offer';
   id: string;
   name?: string;
   title?: string;
@@ -21,12 +26,13 @@ interface SearchResult {
   business_name?: string;
   verified?: boolean;
   relevance_score: number;
+  business_id?: string;
 }
 
 interface GlobalSearchProps {
   language: 'el' | 'en';
   fullscreen?: boolean;
-  resultTypes?: Array<'business' | 'event'>;
+  resultTypes?: Array<'business' | 'event' | 'offer'>;
 }
 
 export function GlobalSearch({ language, fullscreen = false, resultTypes }: GlobalSearchProps) {
@@ -41,12 +47,12 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
 
   const translations = {
     el: {
-      searchPlaceholder: 'Αναζήτηση επιχειρήσεων...',
+      searchPlaceholder: 'Αναζήτηση επιχειρήσεων, εκδηλώσεων, προσφορών...',
       searching: 'Αναζήτηση...',
       noResults: 'Δεν βρέθηκαν αποτελέσματα',
     },
     en: {
-      searchPlaceholder: 'Search businesses...',
+      searchPlaceholder: 'Search businesses, events, offers...',
       searching: 'Searching...',
       noResults: 'No results found',
     },
@@ -79,6 +85,8 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
   }, []);
 
   // Track views for business results when they appear
+  // NOTE: For businesses - appearing in search = profile_view
+  // For events and offers - ONLY click counts as view (not appearance)
   const trackedViewsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -104,7 +112,8 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
           : typed;
         setResults(filtered);
         
-        // Track profile views for businesses appearing in search results
+        // Track profile views ONLY for businesses appearing in search results
+        // Events and offers are NOT tracked on appearance - only on click
         filtered.forEach((result) => {
           if (result.result_type === 'business' && !trackedViewsRef.current.has(result.id)) {
             trackedViewsRef.current.add(result.id);
@@ -136,8 +145,33 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
           from: `${location.pathname}${location.search}`,
         },
       });
-    } else {
-      navigate(`/event/${result.id}`);
+    } else if (result.result_type === 'event') {
+      // Track event view ONLY when user clicks on the event (not on appearance)
+      // This counts as a view for analytics, not an interaction
+      trackEventView(result.id, 'search');
+      navigate(`/event/${result.id}`, {
+        state: {
+          analyticsTracked: true,
+          analyticsSource: 'search',
+          from: `${location.pathname}${location.search}`,
+        },
+      });
+    } else if (result.result_type === 'offer') {
+      // Track offer/discount view ONLY when user clicks on the offer (not on appearance)
+      // This counts as a view for analytics, not an interaction
+      trackDiscountView(result.id, 'search');
+      // Navigate to business profile with offer context
+      // The business_id is included in search results for offers
+      if (result.business_id) {
+        navigate(`/business/${result.business_id}`, {
+          state: {
+            analyticsTracked: true,
+            analyticsSource: 'search',
+            highlightOfferId: result.id,
+            from: `${location.pathname}${location.search}`,
+          },
+        });
+      }
     }
   }, [navigate, location.pathname, location.search]);
 

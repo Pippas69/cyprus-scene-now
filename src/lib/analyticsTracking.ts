@@ -136,13 +136,15 @@ const getDeviceType = (): 'mobile' | 'tablet' | 'desktop' => {
 };
 
 // Track event view - ONLY from allowed sources
+// EXCEPTION: 'search' source bypasses location check (tracked on click, not appearance)
 export const trackEventView = async (
   eventId: string,
   source: 'feed' | 'map' | 'search' | 'profile' | 'direct'
 ) => {
   try {
-    // Check if this is an allowed source for event views
-    if (!isAllowedEventViewSource()) {
+    // 'search' source is always allowed - it's tracked on click, not on appearance
+    // For other sources, check if this is an allowed source for event views
+    if (source !== 'search' && !isAllowedEventViewSource()) {
       debugLog('[trackEventView] skipped - not allowed source', { 
         eventId, 
         source, 
@@ -172,13 +174,15 @@ export const trackEventView = async (
 };
 
 // Track discount view - ONLY from allowed sources
+// EXCEPTION: 'search' source bypasses location check (tracked on click, not appearance)
 export const trackDiscountView = async (
   discountId: string,
-  source: 'feed' | 'event' | 'profile' | 'direct'
+  source: 'feed' | 'event' | 'profile' | 'direct' | 'search'
 ) => {
   try {
-    // Check if this is an allowed source for offer views
-    if (!isAllowedOfferViewSource()) {
+    // 'search' source is always allowed - it's tracked on click, not on appearance
+    // For other sources, check if this is an allowed source for offer views
+    if (source !== 'search' && !isAllowedOfferViewSource()) {
       debugLog('[trackDiscountView] skipped - not allowed source', { 
         discountId, 
         source, 
