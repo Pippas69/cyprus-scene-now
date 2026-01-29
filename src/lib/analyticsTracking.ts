@@ -73,7 +73,10 @@ const isAllowedEventViewSource = (): boolean => {
   // Allowed: Dashboard user - only "events" tab
   if (path.startsWith('/dashboard-user') && tab === 'events') return true;
   
-  // NOT allowed: Everything else (map, business profiles, reservations tab, settings, etc.)
+  // Allowed: Business profile pages - viewing events on a business profile counts as views
+  if (path.startsWith('/business/')) return true;
+  
+  // NOT allowed: Everything else (map, reservations tab, settings, etc.)
   return false;
 };
 
@@ -99,7 +102,10 @@ const isAllowedOfferViewSource = (): boolean => {
   // Allowed: Dashboard user - only "offers" tab
   if (path.startsWith('/dashboard-user') && tab === 'offers') return true;
   
-  // NOT allowed: Everything else (map, business profiles, reservations tab, settings, etc.)
+  // Allowed: Business profile pages - viewing offers on a business profile counts as views
+  if (path.startsWith('/business/')) return true;
+  
+  // NOT allowed: Everything else (map, reservations tab, settings, etc.)
   return false;
 };
 

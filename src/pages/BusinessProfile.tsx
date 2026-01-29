@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { trackEngagement } from "@/lib/analyticsTracking";
+import { trackEngagement, trackEventView, trackDiscountView } from "@/lib/analyticsTracking";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
@@ -118,6 +118,10 @@ const BusinessProfile = () => {
   const [imageViewerSrc, setImageViewerSrc] = useState<string | null>(null);
   const [imageViewerAlt, setImageViewerAlt] = useState<string>("");
 
+  // Track views for events and offers displayed on this profile
+  const trackedEventsRef = useRef<Set<string>>(new Set());
+  const trackedOffersRef = useRef<Set<string>>(new Set());
+
   const translations = {
     el: {
       businessNotFound: "Η επιχείρηση δεν βρέθηκε ή δεν είναι επαληθευμένη",
@@ -216,6 +220,30 @@ const BusinessProfile = () => {
       }
     }
   }, [businessId, location.search, location.state]);
+
+  // Track views for events displayed on this business profile
+  useEffect(() => {
+    if (events.length > 0) {
+      events.forEach((event) => {
+        if (!trackedEventsRef.current.has(event.id)) {
+          trackedEventsRef.current.add(event.id);
+          trackEventView(event.id, 'profile');
+        }
+      });
+    }
+  }, [events]);
+
+  // Track views for offers displayed on this business profile
+  useEffect(() => {
+    if (offers.length > 0) {
+      offers.forEach((offer) => {
+        if (!trackedOffersRef.current.has(offer.id)) {
+          trackedOffersRef.current.add(offer.id);
+          trackDiscountView(offer.id, 'profile');
+        }
+      });
+    }
+  }, [offers]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();

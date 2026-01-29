@@ -162,20 +162,18 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
       });
     } else if (result.result_type === 'offer') {
       // Track offer/discount view ONLY when user clicks on the offer (not on appearance)
-      // This counts as a view for analytics, not an interaction
+      // This counts as a view for analytics
       trackDiscountView(result.id, 'search');
-      // Navigate to business profile with offer context
-      // The business_id is included in search results for offers
-      if (result.business_id) {
-        navigate(`/business/${result.business_id}`, {
-          state: {
-            analyticsTracked: true,
-            analyticsSource: 'search',
-            highlightOfferId: result.id,
-            from: `${location.pathname}${location.search}`,
-          },
-        });
-      }
+      // Navigate to /offers page with highlight so clicking an offer in search
+      // takes user to the offers section (same as clicking in dashboard)
+      navigate(`/offers`, {
+        state: {
+          analyticsTracked: true,
+          analyticsSource: 'search',
+          highlightOfferId: result.id,
+          from: `${location.pathname}${location.search}`,
+        },
+      });
     }
   }, [navigate, location.pathname, location.search]);
 
