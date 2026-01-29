@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { trackEngagement } from '@/lib/analyticsTracking';
+import { generateStoryImage } from '@/lib/storyImageGenerator';
 
 // Types
 export type ShareObjectType = 'event' | 'discount' | 'business';
@@ -94,6 +95,12 @@ interface ShareData {
   imageUrl?: string | null;
 }
 
+interface StoryShareData extends ShareData {
+  subtitle?: string;
+  date?: string;
+  location?: string;
+}
+
 interface ShareOptions {
   objectType?: ShareObjectType;
   objectId?: string;
@@ -106,7 +113,7 @@ interface UseSimpleShareReturn {
   isSharing: boolean;
   share: (data: ShareData, options?: ShareOptions) => Promise<void>;
   copyLink: (url: string, options?: ShareOptions) => Promise<void>;
-  shareToInstagramStories: (data: ShareData, options?: ShareOptions) => Promise<void>;
+  shareToInstagramStories: (data: StoryShareData, options?: ShareOptions) => Promise<void>;
   shareToWhatsApp: (url: string, text: string, options?: ShareOptions) => void;
   shareToMessenger: (url: string, options?: ShareOptions) => void;
   hasNativeShare: boolean;
@@ -238,9 +245,9 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
     [copyToClipboard, t]
   );
 
-  // Instagram Stories - triggers native share with image file
+  // Instagram Stories - generates 9:16 Story image and triggers native share
   const shareToInstagramStories = useCallback(
-    async (data: ShareData, options?: ShareOptions) => {
+    async (data: StoryShareData, options?: ShareOptions) => {
       // Track analytics
       if (options?.businessId) {
         trackEngagement(options.businessId, 'share', options.objectType || 'event', options.objectId || '', {
@@ -258,26 +265,25 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
       setIsSharing(true);
 
       try {
-        let files: File[] = [];
+        let storyFile: File | null = null;
 
-        // Fetch image for Stories - image is essential for Stories
+        // Generate 9:16 Story image if we have a source image
         if (data.imageUrl) {
           try {
-            const response = await fetch(data.imageUrl);
-            const blob = await response.blob();
-            const extension = blob.type.includes('png') ? 'png' : 'jpg';
-            const file = new File([blob], `story-image.${extension}`, {
-              type: blob.type || 'image/jpeg',
+            storyFile = await generateStoryImage(data.imageUrl, {
+              title: data.title,
+              subtitle: data.subtitle,
+              date: data.date,
+              location: data.location,
             });
-            files = [file];
           } catch (imgError) {
-            console.warn('Failed to fetch image for Stories:', imgError);
+            console.warn('Failed to generate Story image:', imgError);
           }
         }
 
-        if (files.length > 0 && hasNativeShare()) {
+        if (storyFile && hasNativeShare()) {
           const shareData = {
-            files,
+            files: [storyFile],
             title: data.title,
             url: data.url,
           };

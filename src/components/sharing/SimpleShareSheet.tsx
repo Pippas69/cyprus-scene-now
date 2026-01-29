@@ -39,6 +39,10 @@ interface SimpleShareSheetProps {
   objectType?: 'event' | 'discount' | 'business';
   objectId?: string;
   businessId?: string;
+  /** Event/offer date for Story image overlay */
+  storyDate?: string;
+  /** Location for Story image overlay */
+  storyLocation?: string;
 }
 
 const translations = {
@@ -74,6 +78,8 @@ export const SimpleShareSheet = ({
   objectType,
   objectId,
   businessId,
+  storyDate,
+  storyLocation,
 }: SimpleShareSheetProps) => {
   const t = translations[language];
   const { share, copyLink, shareToInstagramStories, shareToWhatsApp, shareToMessenger, isSharing, hasNativeShare } = useSimpleShare(language);
@@ -96,9 +102,17 @@ export const SimpleShareSheet = ({
   }, [share, title, text, url, imageUrl, shareOptions, onOpenChange]);
 
   const handleInstagramStories = useCallback(async () => {
-    await shareToInstagramStories({ title, text, url, imageUrl }, shareOptions);
+    await shareToInstagramStories({ 
+      title, 
+      text, 
+      url, 
+      imageUrl,
+      subtitle,
+      date: storyDate,
+      location: storyLocation,
+    }, shareOptions);
     onOpenChange(false);
-  }, [shareToInstagramStories, title, text, url, imageUrl, shareOptions, onOpenChange]);
+  }, [shareToInstagramStories, title, text, url, imageUrl, subtitle, storyDate, storyLocation, shareOptions, onOpenChange]);
 
   const handleWhatsApp = useCallback(() => {
     shareToWhatsApp(url, text, shareOptions);
