@@ -11,7 +11,6 @@ import {
   trackEventView,
   trackDiscountView 
 } from '@/lib/analyticsTracking';
-import type { User } from '@supabase/supabase-js';
 
 interface SearchResult {
   result_type: 'business' | 'event' | 'offer';
@@ -41,26 +40,10 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Get current user
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-    };
-    getUser();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
 
   const translations = {
     el: {
@@ -118,25 +101,9 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
 
       setIsLoading(true);
 
-      // Use search_user_content for logged-in users (filters events/offers to user's own)
-      // Fall back to search_content for anonymous users
-      let data;
-      let error;
-      
-      if (user?.id) {
-        const result = await supabase.rpc('search_user_content', {
-          search_query: query,
-          p_user_id: user.id,
-        });
-        data = result.data;
-        error = result.error;
-      } else {
-        const result = await supabase.rpc('search_content', {
-          search_query: query,
-        });
-        data = result.data;
-        error = result.error;
-      }
+      const { data, error } = await supabase.rpc('search_content', {
+        search_query: query,
+      });
 
       if (!error && data) {
         const typed = data as SearchResult[];
@@ -160,7 +127,7 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
 
     const debounce = setTimeout(searchContent, 300);
     return () => clearTimeout(debounce);
-  }, [query, resultTypes, user?.id]);
+  }, [query, resultTypes]);
 
   const handleResultClick = useCallback((result: SearchResult) => {
     setIsOpen(false);

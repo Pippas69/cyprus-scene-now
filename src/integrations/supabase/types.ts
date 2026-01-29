@@ -4966,25 +4966,6 @@ export type Database = {
           verified: boolean
         }[]
       }
-      search_user_content: {
-        Args: { p_user_id: string; search_query: string }
-        Returns: {
-          business_id: string
-          business_name: string
-          category: string[]
-          city: string
-          cover_image_url: string
-          id: string
-          location: string
-          logo_url: string
-          name: string
-          relevance_score: number
-          result_type: string
-          start_at: string
-          title: string
-          verified: boolean
-        }[]
-      }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
