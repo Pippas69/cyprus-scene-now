@@ -76,12 +76,14 @@ const toasts = {
     shareSuccess: 'Κοινοποιήθηκε! 🎉',
     shareFailed: 'Η κοινοποίηση ακυρώθηκε',
     shareNotSupported: 'Το link αντιγράφηκε στο clipboard',
+    instagramMobileOnly: 'Διαθέσιμο μόνο σε κινητό',
   },
   en: {
     linkCopied: 'Link copied!',
     shareSuccess: 'Shared! 🎉',
     shareFailed: 'Share cancelled',
     shareNotSupported: 'Link copied to clipboard',
+    instagramMobileOnly: 'Available on mobile only',
   },
 };
 
@@ -98,10 +100,15 @@ interface ShareOptions {
   businessId?: string;
 }
 
+export type SocialChannel = 'instagram_stories' | 'whatsapp' | 'messenger';
+
 interface UseSimpleShareReturn {
   isSharing: boolean;
   share: (data: ShareData, options?: ShareOptions) => Promise<void>;
   copyLink: (url: string, options?: ShareOptions) => Promise<void>;
+  shareToInstagramStories: (data: ShareData, options?: ShareOptions) => Promise<void>;
+  shareToWhatsApp: (url: string, text: string, options?: ShareOptions) => void;
+  shareToMessenger: (url: string, options?: ShareOptions) => void;
   hasNativeShare: boolean;
 }
 
@@ -231,10 +238,146 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
     [copyToClipboard, t]
   );
 
+  // Instagram Stories - triggers native share with image file
+  const shareToInstagramStories = useCallback(
+    async (data: ShareData, options?: ShareOptions) => {
+      // Track analytics
+      if (options?.businessId) {
+        trackEngagement(options.businessId, 'share', options.objectType || 'event', options.objectId || '', {
+          channel: 'instagram_stories',
+          source: 'share_sheet',
+        });
+      }
+
+      // Instagram Stories only works on mobile via native share
+      if (!isMobile()) {
+        toast.info(t.instagramMobileOnly);
+        return;
+      }
+
+      setIsSharing(true);
+
+      try {
+        let files: File[] = [];
+
+        // Fetch image for Stories - image is essential for Stories
+        if (data.imageUrl) {
+          try {
+            const response = await fetch(data.imageUrl);
+            const blob = await response.blob();
+            const extension = blob.type.includes('png') ? 'png' : 'jpg';
+            const file = new File([blob], `story-image.${extension}`, {
+              type: blob.type || 'image/jpeg',
+            });
+            files = [file];
+          } catch (imgError) {
+            console.warn('Failed to fetch image for Stories:', imgError);
+          }
+        }
+
+        if (files.length > 0 && hasNativeShare()) {
+          const shareData = {
+            files,
+            title: data.title,
+            url: data.url,
+          };
+
+          if (navigator.canShare && navigator.canShare(shareData)) {
+            await navigator.share(shareData);
+          } else {
+            // Fallback to regular share
+            await navigator.share({
+              title: data.title,
+              text: data.text,
+              url: data.url,
+            });
+          }
+        } else if (hasNativeShare()) {
+          // No image available, use regular share
+          await navigator.share({
+            title: data.title,
+            text: data.text,
+            url: data.url,
+          });
+        } else {
+          const success = await copyToClipboard(data.url);
+          if (success) {
+            toast.success(t.shareNotSupported);
+          }
+        }
+      } catch (error) {
+        const err = error as Error;
+        if (err?.name === 'AbortError') return;
+
+        if (err?.name === 'NotAllowedError') {
+          const success = await copyToClipboard(data.url);
+          if (success) {
+            toast.success(t.shareNotSupported);
+          }
+          return;
+        }
+
+        console.error('Instagram Stories share failed:', error);
+        const success = await copyToClipboard(data.url);
+        if (success) {
+          toast.success(t.shareNotSupported);
+        }
+      } finally {
+        setIsSharing(false);
+      }
+    },
+    [copyToClipboard, t]
+  );
+
+  // WhatsApp direct share
+  const shareToWhatsApp = useCallback(
+    (url: string, text: string, options?: ShareOptions) => {
+      // Track analytics
+      if (options?.businessId) {
+        trackEngagement(options.businessId, 'share', options.objectType || 'event', options.objectId || '', {
+          channel: 'whatsapp',
+          source: 'share_sheet',
+        });
+      }
+
+      const message = encodeURIComponent(`${text}\n${url}`);
+      const whatsappUrl = isMobile()
+        ? `whatsapp://send?text=${message}`
+        : `https://web.whatsapp.com/send?text=${message}`;
+
+      window.open(whatsappUrl, '_blank');
+    },
+    []
+  );
+
+  // Messenger direct share
+  const shareToMessenger = useCallback(
+    (url: string, options?: ShareOptions) => {
+      // Track analytics
+      if (options?.businessId) {
+        trackEngagement(options.businessId, 'share', options.objectType || 'event', options.objectId || '', {
+          channel: 'messenger',
+          source: 'share_sheet',
+        });
+      }
+
+      const encodedUrl = encodeURIComponent(url);
+      const messengerUrl = isMobile()
+        ? `fb-messenger://share/?link=${encodedUrl}`
+        : `https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=966242223397117&redirect_uri=${encodeURIComponent(window.location.href)}`;
+
+      window.open(messengerUrl, '_blank');
+    },
+    []
+  );
+
   return {
     isSharing,
     share,
     copyLink,
+    shareToInstagramStories,
+    shareToWhatsApp,
+    shareToMessenger,
     hasNativeShare: hasNativeShare(),
   };
 };
