@@ -41,12 +41,12 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
 
   const translations = {
     el: {
-      searchPlaceholder: 'Αναζήτηση εκδηλώσεων, επιχειρήσεων...',
+      searchPlaceholder: 'Αναζήτηση επιχειρήσεων...',
       searching: 'Αναζήτηση...',
       noResults: 'Δεν βρέθηκαν αποτελέσματα',
     },
     en: {
-      searchPlaceholder: 'Search events, businesses...',
+      searchPlaceholder: 'Search businesses...',
       searching: 'Searching...',
       noResults: 'No results found',
     },
