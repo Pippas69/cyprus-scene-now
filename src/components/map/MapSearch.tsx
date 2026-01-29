@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { translateCity } from "@/lib/cityTranslations";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { trackSearchResultView, trackSearchResultClick } from "@/lib/analyticsTracking";
+import { trackSearchResultClick } from "@/lib/analyticsTracking";
 
 interface SearchResult {
   id: string;
@@ -33,15 +33,10 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Track views for business results when they appear
-  const trackedViewsRef = useRef<Set<string>>(new Set());
-
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
       setIsOpen(false);
-      // Reset tracked views when search is cleared
-      trackedViewsRef.current.clear();
       return;
     }
 
@@ -84,14 +79,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
 
           setResults(searchResults);
           setIsOpen(true);
-          
-          // Track profile views for businesses appearing in map search results
-          searchResults.forEach((result) => {
-            if (!trackedViewsRef.current.has(result.id)) {
-              trackedViewsRef.current.add(result.id);
-              trackSearchResultView(result.id, 'map');
-            }
-          });
+          // Views are tracked ONLY on click, not on appearance in map search
         } else {
           setResults([]);
           setIsOpen(true);

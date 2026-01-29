@@ -18,7 +18,8 @@ Updated: 2026-01-28
 3. **/dashboard-user?tab=offers** - user's offers section
 
 ## NOT Tracked (Views are skipped):
-- Map (/xartis) - visibility on map does NOT count as view
+- Map search (/xartis) - appearing in search results does NOT count as view
+  - View is ONLY counted when user CLICKS on the search result (navigates to pin)
 - Business profiles (/business/:id) - NOT tracked
 - My Reservations tab (/dashboard-user?tab=reservations)
 - Settings tab (/dashboard-user?tab=settings)
