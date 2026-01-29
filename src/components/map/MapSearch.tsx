@@ -129,17 +129,18 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           className={cn(
             "pl-7 md:pl-10 bg-background/95 backdrop-blur-sm shadow-lg",
-            "h-8 md:h-9 lg:h-10",
+            "h-9 md:h-10",
             "text-xs md:text-sm",
-            "w-[120px] md:w-[180px] lg:w-[240px]"
+            // Slightly wider so the dropdown can show more of the single-line text
+            "w-[160px] md:w-[220px] lg:w-[260px]"
           )}
         />
       </div>
 
       {/* Loading state */}
       {isLoading && query.length >= 2 && (
-        <div className="absolute top-full mt-1.5 w-full min-w-[200px] bg-background border rounded-lg shadow-lg p-1 md:p-1.5 z-50">
-          <div className="flex items-center gap-2 md:gap-3 p-1.5 md:p-2">
+        <div className="absolute left-0 top-full mt-1.5 w-[260px] md:w-[320px] lg:w-[360px] bg-background border rounded-lg shadow-lg p-1.5 md:p-2 z-50">
+          <div className="flex items-center gap-2 md:gap-3 p-2">
             <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-muted animate-pulse shrink-0" />
             <div className="flex-1 space-y-1">
               <div className="h-3 md:h-4 w-3/4 bg-muted animate-pulse rounded" />
@@ -151,7 +152,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
 
       {/* Results dropdown */}
       {isOpen && !isLoading && (
-        <div className="absolute top-full mt-1.5 w-full min-w-[200px] bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto p-1 md:p-1.5">
+        <div className="absolute left-0 top-full mt-1.5 w-[260px] md:w-[320px] lg:w-[360px] bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto p-1.5 md:p-2">
           {results.length > 0 ? (
             results.map((result) => (
               <button
@@ -178,15 +179,17 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
                 {/* Content - compact layout matching design */}
                 <div className="flex-1 min-w-0">
                   {/* First line: Name + Location */}
-                  <div className="flex items-center gap-1 md:gap-1.5 text-xs md:text-sm">
-                    <span className="font-medium truncate text-foreground">{result.name}</span>
-                    <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground shrink-0">{translateCity(result.city, language)}</span>
+                  <div className="flex items-center gap-1 text-[11px] md:text-xs lg:text-sm min-w-0 whitespace-nowrap">
+                    <span className="font-medium truncate text-foreground min-w-0">{result.name}</span>
+                    <span className="flex items-center gap-[2px] shrink-0">
+                      <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 text-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground">{translateCity(result.city, language)}</span>
+                    </span>
                   </div>
                   
                   {/* Second line: Categories */}
                   {result.category.length > 0 && (
-                    <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
+                    <p className="text-[9px] md:text-[10px] lg:text-xs text-muted-foreground truncate mt-0.5 whitespace-nowrap">
                       {formatCategories(result.category)}
                     </p>
                   )}
