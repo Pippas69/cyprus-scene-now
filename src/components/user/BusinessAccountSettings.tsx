@@ -83,7 +83,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
     resolver: zodResolver(createBusinessProfileSchema(language)),
     defaultValues: {
       category: [],
-    }
+    },
+    mode: 'onChange', // Validate on change for better UX
   });
 
   const selectedCategories = businessProfileForm.watch("category") || [];
@@ -643,6 +644,27 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
                 <p className="text-[10px] sm:text-sm font-mono text-muted-foreground mt-1 break-all">{businessId}</p>
               </div>
             </div>
+
+            {/* Validation Errors Display */}
+            {Object.keys(businessProfileForm.formState.errors).length > 0 && (
+              <div className="text-destructive text-xs space-y-1 p-3 bg-destructive/10 rounded-md">
+                {businessProfileForm.formState.errors.name && (
+                  <p>• {businessProfileForm.formState.errors.name.message}</p>
+                )}
+                {businessProfileForm.formState.errors.city && (
+                  <p>• {businessProfileForm.formState.errors.city.message}</p>
+                )}
+                {businessProfileForm.formState.errors.description && (
+                  <p>• {businessProfileForm.formState.errors.description.message}</p>
+                )}
+                {businessProfileForm.formState.errors.phone && (
+                  <p>• {businessProfileForm.formState.errors.phone.message}</p>
+                )}
+                {businessProfileForm.formState.errors.website && (
+                  <p>• {businessProfileForm.formState.errors.website.message}</p>
+                )}
+              </div>
+            )}
 
             {/* Save Button */}
             <Button type="submit" className="w-full h-9 sm:h-10 text-xs sm:text-sm" disabled={profileLoading}>
