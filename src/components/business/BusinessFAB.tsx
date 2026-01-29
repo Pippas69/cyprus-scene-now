@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus, Calendar, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const translations = {
@@ -18,8 +18,13 @@ const translations = {
 export function BusinessFAB() {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguage();
   const t = translations[language];
+
+  // The FAB can overlap the settings save button on some screens.
+  // Hide it on settings to avoid blocking interactions.
+  if (location.pathname === "/dashboard-business/settings") return null;
 
   return (
     <div className="fixed bottom-20 md:bottom-6 right-6 z-50 flex flex-col-reverse gap-3 items-end">
