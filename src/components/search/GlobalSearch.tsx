@@ -127,11 +127,19 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
     if (result.result_type === 'business') {
       // Track interaction when clicking on business in general search
       trackSearchResultClick(result.id, 'general');
-      navigate(`/business/${result.id}`);
+      // IMPORTANT: Prevent BusinessProfile from also tracking this as direct_navigation
+      // by providing a navigation state marker (same pattern as feed cards).
+      navigate(`/business/${result.id}`, {
+        state: {
+          analyticsTracked: true,
+          analyticsSource: 'search',
+          from: `${location.pathname}${location.search}`,
+        },
+      });
     } else {
       navigate(`/event/${result.id}`);
     }
-  }, [navigate]);
+  }, [navigate, location.pathname, location.search]);
 
   if (fullscreen) {
     return (
