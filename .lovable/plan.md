@@ -1,38 +1,44 @@
 
-# Plan: Replace Blurry Background with Clear Fade Background
+# Plan: Fix Background Zoom/Cropping Issue
 
 ## The Problem
-The current Story image generator uses heavy blur effects (scale to 10% + 20px blur filter) which makes the background image unrecognizable and visually poor quality.
+The background currently uses "cover" mode which forces the image to fill the entire 9:16 canvas. For horizontal images (16:9), this means:
+- The image gets massively scaled up vertically
+- Significant portions are cropped off the sides
+- The result looks overly zoomed and loses important parts of the image
 
 ## The Solution
-Replace the blur approach with a **clear, sharp background image** that uses smooth gradient overlays (fades) to create visual separation without losing image clarity.
+Switch from "cover" to **"contain"** mode for the background, then fill the remaining space with a solid color or extended edge colors.
 
 ---
 
 ## Visual Comparison
 
-**Before (Current - Blurry)**
+**Current (Cover Mode - Too Zoomed)**
 ```text
 ┌────────────────────┐
-│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │  ← Very blurry, unrecognizable
-│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
-│  ┌──────────────┐  │
-│  │   Main Image │  │
-│  └──────────────┘  │
-│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+│      CROPPED       │  ← Left/right parts cut off
+│   ╔════════════╗   │
+│   ║            ║   │  ← Original image stretched
+│   ║   IMAGE    ║   │     to fill height
+│   ║            ║   │
+│   ╚════════════╝   │
+│      CROPPED       │
 └────────────────────┘
 ```
 
-**After (New - Clear with Fade)**
+**New (Contain Mode - Full Image Visible)**
 ```text
 ┌────────────────────┐
-│ ░░░░░░░░░░░░░░░░░░ │  ← Clear image with dark gradient overlay
-│ ░░░ fade ░░░░░░░░░ │     at top and bottom for readability
-│  ┌──────────────┐  │
-│  │   Main Image │  │  ← Sharp foreground image
-│  └──────────────┘  │
-│ ░░░░░░░░ fade ░░░░ │
-│ ░░░░░░░░░░░░░░░░░░ │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │  ← Dark fill or edge-extended
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+│ ┌────────────────┐ │
+│ │                │ │  ← Full image visible
+│ │     IMAGE      │ │     (aspect ratio preserved)
+│ │                │ │
+│ └────────────────┘ │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
 └────────────────────┘
 ```
 
@@ -42,45 +48,37 @@ Replace the blur approach with a **clear, sharp background image** that uses smo
 
 ### File: `src/lib/storyImageGenerator.ts`
 
-**Replace `drawBlurredBackground` function with `drawClearBackground`:**
+**Update `drawClearBackground` function:**
 
-1. **Draw the image at full resolution** (no scaling down)
-2. **Cover the entire canvas** while maintaining aspect ratio
-3. **Apply smooth gradient overlays:**
-   - Top gradient: Fade from semi-transparent dark to transparent
-   - Bottom gradient: Fade from transparent to semi-transparent dark
-4. **Optional slight darkening** (brightness 0.85-0.9) to make foreground pop
+1. **Fill canvas with dark base color first** (e.g., `#1a1a1a` or sampled from image edges)
+2. **Calculate "contain" dimensions** instead of "cover":
+   - Fit the entire image within the canvas
+   - Maintain aspect ratio without cropping
+3. **Center the contained image** on the canvas
+4. **Keep the gradient overlays** for smooth transitions
 
-**New implementation approach:**
-
+**Logic change:**
 ```text
-Background Layer:
-├── Full-resolution image (cover mode)
-├── Overall slight darkening (brightness 0.85)
-├── Top gradient overlay (dark → transparent)
-└── Bottom gradient overlay (transparent → dark)
+Before (Cover):
+- Scale image to fill canvas height
+- Crop sides that overflow
+
+After (Contain):
+- Scale image to fit within canvas width
+- Center vertically with dark fill above/below
 ```
 
----
+### Updated Dimension Calculation
 
-## Implementation Details
+Current logic scales to fill, new logic will scale to fit:
+- For a 16:9 horizontal image on a 9:16 canvas:
+  - **Cover**: Scales to canvas height (1920px) → width becomes ~3413px → crops ~1166px per side
+  - **Contain**: Scales to canvas width (1080px) → height becomes ~607px → leaves ~656px above and below
 
-### Remove blur, keep image sharp:
-- Remove the `scale = 0.1` downscaling
-- Remove the `blur(20px)` filter
-- Draw image directly at canvas resolution
-
-### Add gradient fade overlays:
-- **Top fade**: Dark gradient from top (for potential status bar area)
-- **Center**: Clear/transparent to show the background image
-- **Bottom fade**: Dark gradient toward bottom for text readability
-
-### Keep slight darkening:
-- Apply `brightness(0.85)` to slightly darken the background
-- This ensures the centered foreground image stands out
+The empty space above/below will be filled with a dark color that blends with the gradient overlays, creating a cohesive premium look.
 
 ---
 
 ## Expected Result
 
-The background will show the **full, clear image** with elegant dark gradient fades at the top and bottom edges. The centered foreground image will pop against the slightly darkened but sharp background, creating a premium, Instagram-ready look.
+The background will show the **complete image without cropping**, centered on the canvas with dark fill areas above and below that blend seamlessly with the gradient overlays. The foreground image will still overlay on top as before.
