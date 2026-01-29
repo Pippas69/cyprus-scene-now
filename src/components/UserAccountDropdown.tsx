@@ -46,15 +46,12 @@ export const UserAccountDropdown = ({
       myAccount: 'Ο λογαριασμός μου',
       notifications: 'Ειδοποιήσεις',
       signOut: 'Αποσύνδεση',
-      noNotifications: 'Δεν υπάρχουν ειδοποιήσεις',
-      markAllRead: 'Σήμανση όλων ως αναγνωσμένα',
+      // (Dropdown no longer contains notifications; keep label for the bell icon)
     },
     en: {
       myAccount: 'My Account',
       notifications: 'Notifications',
       signOut: 'Sign Out',
-      noNotifications: 'No notifications yet',
-      markAllRead: 'Mark all as read',
     },
   };
 
@@ -70,13 +67,7 @@ export const UserAccountDropdown = ({
     navigate('/feed');
   };
 
-  const openNotifications = () => {
-    // IMPORTANT: close dropdown first so it never interferes (no hover-close / mousemove-close)
-    setDropdownOpen(false);
-    setNotificationsOpen(true);
-  };
-
-  // Badge component for reuse
+  // Badge component for the bell icon only
   const NotificationBadge = ({ className = '' }: { className?: string }) => {
     if (unreadCount <= 0) return null;
     return (
@@ -127,8 +118,6 @@ export const UserAccountDropdown = ({
                 {avatarUrl && <AvatarImage src={avatarUrl} alt={userName || 'User'} />}
               </Avatar>
               <span className="hidden lg:inline font-medium">{userName}</span>
-              {/* Badge on button variant */}
-              <NotificationBadge className="-top-1 -right-1" />
             </Button>
           ) : (
             <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full p-0">
@@ -138,8 +127,6 @@ export const UserAccountDropdown = ({
                 </AvatarFallback>
                 {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
               </Avatar>
-              {/* Badge on avatar */}
-              <NotificationBadge className="-top-1 -right-1" />
             </Button>
           )}
         </DropdownMenuTrigger>
@@ -151,24 +138,7 @@ export const UserAccountDropdown = ({
             {t.myAccount}
           </DropdownMenuItem>
 
-          {/* 2. Notifications - opens full panel and closes dropdown */}
-          <DropdownMenuItem
-            className="text-sm cursor-pointer"
-            onSelect={(e) => {
-              e.preventDefault();
-              openNotifications();
-            }}
-          >
-            <Bell className="mr-2 h-4 w-4" aria-hidden="true" />
-            {t.notifications}
-            {unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1.5 text-xs font-bold">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </Badge>
-            )}
-          </DropdownMenuItem>
-
-          {/* 3. Sign Out */}
+          {/* Sign Out */}
           <DropdownMenuItem
             onClick={() => {
               setDropdownOpen(false);
