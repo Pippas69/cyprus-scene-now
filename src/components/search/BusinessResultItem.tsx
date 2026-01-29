@@ -41,19 +41,19 @@ export function BusinessResultItem({ result, language, onClick }: BusinessResult
       {/* Content - compact layout */}
       <div className="flex-1 min-w-0">
         {/* First line: Name + Location */}
-        <div className="flex items-center gap-1 md:gap-1.5 text-xs md:text-sm">
+        <div className="flex items-center gap-1 md:gap-1.5 text-xs md:text-sm min-w-0 whitespace-nowrap">
           <span className="font-medium truncate text-foreground">{result.name}</span>
           {result.city && (
-            <>
-              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground shrink-0">{translateCity(result.city, language)}</span>
-            </>
+            <span className="flex items-center gap-0.5 shrink-0">
+              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 text-muted-foreground" />
+              <span className="text-muted-foreground">{translateCity(result.city, language)}</span>
+            </span>
           )}
         </div>
         
         {/* Second line: Categories */}
         {formattedCategories && (
-          <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
+          <p className="text-[9px] md:text-[10px] lg:text-xs text-muted-foreground truncate mt-0.5 whitespace-nowrap">
             {formattedCategories}
           </p>
         )}
