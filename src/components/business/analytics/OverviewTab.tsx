@@ -194,8 +194,8 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
                         <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Icon className="h-5 w-5 text-primary" />
+                        <div className="p-1.5 bg-primary/10 rounded-lg">
+                          <Icon className="h-4 w-4 text-primary" />
                         </div>
                         <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
