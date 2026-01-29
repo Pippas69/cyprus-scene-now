@@ -33,28 +33,34 @@ const drawClearBackground = (
   canvasWidth: number,
   canvasHeight: number
 ) => {
-  // Calculate cover dimensions for background
+  // Fill canvas with dark base color first
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+  // Calculate "contain" dimensions - fit entire image without cropping
   const imgRatio = img.width / img.height;
   const canvasRatio = canvasWidth / canvasHeight;
 
   let drawWidth: number, drawHeight: number, offsetX: number, offsetY: number;
 
   if (imgRatio > canvasRatio) {
-    drawHeight = canvasHeight;
-    drawWidth = drawHeight * imgRatio;
-    offsetX = (canvasWidth - drawWidth) / 2;
-    offsetY = 0;
-  } else {
+    // Image is wider than canvas ratio - fit to width
     drawWidth = canvasWidth;
     drawHeight = drawWidth / imgRatio;
     offsetX = 0;
     offsetY = (canvasHeight - drawHeight) / 2;
+  } else {
+    // Image is taller than canvas ratio - fit to height
+    drawHeight = canvasHeight;
+    drawWidth = drawHeight * imgRatio;
+    offsetX = (canvasWidth - drawWidth) / 2;
+    offsetY = 0;
   }
 
   // Apply slight darkening for contrast with foreground
   ctx.filter = 'brightness(0.75)';
   
-  // Draw full-resolution background image
+  // Draw full-resolution background image (contained, not cropped)
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   
   // Reset filter
