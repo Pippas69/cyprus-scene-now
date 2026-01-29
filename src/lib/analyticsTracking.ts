@@ -261,6 +261,37 @@ export const trackOfferRedeemClick = async (
   return trackEngagement(businessId, 'offer_redeem_click', 'discount', discountId, { source });
 };
 
+// Track search result view (when business appears in search results)
+export const trackSearchResultView = async (
+  businessId: string,
+  searchType: 'general' | 'map'
+) => {
+  return trackEngagement(businessId, 'profile_view', 'business', businessId, { 
+    source: 'search',
+    search_type: searchType 
+  });
+};
+
+// Track search result click (interaction - general search only)
+export const trackSearchResultClick = async (
+  businessId: string,
+  searchType: 'general' | 'map'
+) => {
+  // Only general search clicks count as interactions (map click = just view to pin)
+  if (searchType === 'general') {
+    return trackEngagement(businessId, 'profile_click', 'business', businessId, { 
+      source: 'search',
+      search_type: searchType 
+    });
+  }
+  // Map search click is just a view (already tracked when appearing in results)
+  // Additional view tracked when user clicks to go to pin
+  return trackEngagement(businessId, 'profile_view', 'business', businessId, { 
+    source: 'map_search_click',
+    search_type: searchType 
+  });
+};
+
 // Track business follow
 export const trackBusinessFollow = async (
   businessId: string,

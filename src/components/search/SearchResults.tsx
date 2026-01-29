@@ -36,13 +36,13 @@ export function SearchResults({
 }: SearchResultsProps) {
   if (isLoading) {
     return (
-      <Card className="p-4 space-y-3 bg-background border shadow-lg">
+      <Card className="p-2 md:p-3 space-y-1 bg-background border shadow-lg">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <Skeleton className="h-12 w-12 rounded-md" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
+          <div key={i} className="flex items-center gap-2 md:gap-3 p-1.5 md:p-2">
+            <Skeleton className="h-8 w-8 md:h-10 md:w-10 rounded-full shrink-0" />
+            <div className="flex-1 space-y-1">
+              <Skeleton className="h-3 md:h-4 w-3/4" />
+              <Skeleton className="h-2 md:h-3 w-1/2" />
             </div>
           </div>
         ))}
@@ -52,15 +52,15 @@ export function SearchResults({
 
   if (results.length === 0) {
     return (
-      <Card className="p-8 bg-background border shadow-lg text-center">
-        <p className="text-muted-foreground">{noResultsText}</p>
+      <Card className="p-4 md:p-6 bg-background border shadow-lg text-center">
+        <p className="text-xs md:text-sm text-muted-foreground">{noResultsText}</p>
       </Card>
     );
   }
 
   return (
-    <Card className="p-2 bg-background border shadow-lg max-h-[500px] overflow-y-auto">
-      <div className="space-y-1">
+    <Card className="p-1 md:p-1.5 bg-background border shadow-lg max-h-[400px] md:max-h-[500px] overflow-y-auto">
+      <div className="space-y-0.5">
         {results.map((result) =>
           result.result_type === 'business' ? (
             <BusinessResultItem
