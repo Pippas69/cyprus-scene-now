@@ -4,16 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOverviewMetrics } from "@/hooks/useOverviewMetrics";
 import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
-
 const translations = {
   el: {
     title: "Σύνοψη Δεδομένων",
@@ -47,8 +39,8 @@ const translations = {
       visits: "Επισκέψεις",
       visitsExplanation: "Πραγματικές επισκέψεις με QR scan",
       visitsDetails: "Όλες οι επισκέψεις που επαληθεύτηκαν στο κατάστημα: σαρώσεις προσφορών (με ή χωρίς κράτηση), check-ins εισιτηρίων, και σαρώσεις κρατήσεων από το προφίλ ή εκδηλώσεις.",
-      visitsSource: "Προσφορές + Εισιτήρια + Κρατήσεις",
-    },
+      visitsSource: "Προσφορές + Εισιτήρια + Κρατήσεις"
+    }
   },
   en: {
     title: "Performance Summary",
@@ -82,127 +74,123 @@ const translations = {
       visits: "Visits",
       visitsExplanation: "Real visits with QR scan",
       visitsDetails: "All visits verified at your venue: offer scans (walk-in or with reservation), ticket check-ins, and reservation scans from profile or events.",
-      visitsSource: "Offers + Tickets + Reservations",
-    },
-  },
+      visitsSource: "Offers + Tickets + Reservations"
+    }
+  }
 };
-
 interface OverviewTabProps {
   businessId: string;
-  dateRange?: { from: Date; to: Date };
+  dateRange?: {
+    from: Date;
+    to: Date;
+  };
   language: "el" | "en";
 }
-
-export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProps) => {
-  const { data, isLoading } = useOverviewMetrics(businessId, dateRange);
-  const { data: subscription } = useSubscriptionPlan(businessId);
+export const OverviewTab = ({
+  businessId,
+  dateRange,
+  language
+}: OverviewTabProps) => {
+  const {
+    data,
+    isLoading
+  } = useOverviewMetrics(businessId, dateRange);
+  const {
+    data: subscription
+  } = useSubscriptionPlan(businessId);
   const t = translations[language];
-  
   const isFreePlan = !subscription?.plan || subscription?.plan === 'free';
-
-  const metrics = [
-    { 
-      key: "views", 
-      icon: Eye, 
-      value: data?.totalViews || 0, 
-      label: t.metrics.views, 
-      explanation: t.metrics.viewsExplanation,
-      details: t.metrics.viewsDetails,
-      source: t.metrics.viewsSource,
-    },
-    { 
-      key: "customers", 
-      icon: Users, 
-      value: data?.customersThruFomo || 0, 
-      label: t.metrics.customers, 
-      explanation: t.metrics.customersExplanation,
-      details: t.metrics.customersDetails,
-      source: t.metrics.customersSource,
-    },
-    { 
-      key: "recurring", 
-      icon: Repeat, 
-      value: data?.repeatCustomers || 0, 
-      label: t.metrics.recurring, 
-      explanation: t.metrics.recurringExplanation,
-      details: t.metrics.recurringDetails,
-      source: t.metrics.recurringSource,
-    },
-    { 
-      key: "reservations", 
-      icon: CalendarCheck, 
-      value: data?.bookings || 0, 
-      label: t.metrics.reservations, 
-      explanation: t.metrics.reservationsExplanation,
-      details: t.metrics.reservationsDetails,
-      source: t.metrics.reservationsSource,
-    },
-    { 
-      key: "tickets", 
-      icon: Ticket, 
-      value: data?.tickets || 0, 
-      label: t.metrics.tickets, 
-      explanation: t.metrics.ticketsExplanation,
-      details: t.metrics.ticketsDetails,
-      source: t.metrics.ticketsSource,
-    },
-    { 
-      key: "visits", 
-      icon: QrCode, 
-      value: data?.visitsViaQR || 0, 
-      label: t.metrics.visits, 
-      explanation: t.metrics.visitsExplanation,
-      details: t.metrics.visitsDetails,
-      source: t.metrics.visitsSource,
-    },
-  ];
-
+  const metrics = [{
+    key: "views",
+    icon: Eye,
+    value: data?.totalViews || 0,
+    label: t.metrics.views,
+    explanation: t.metrics.viewsExplanation,
+    details: t.metrics.viewsDetails,
+    source: t.metrics.viewsSource
+  }, {
+    key: "customers",
+    icon: Users,
+    value: data?.customersThruFomo || 0,
+    label: t.metrics.customers,
+    explanation: t.metrics.customersExplanation,
+    details: t.metrics.customersDetails,
+    source: t.metrics.customersSource
+  }, {
+    key: "recurring",
+    icon: Repeat,
+    value: data?.repeatCustomers || 0,
+    label: t.metrics.recurring,
+    explanation: t.metrics.recurringExplanation,
+    details: t.metrics.recurringDetails,
+    source: t.metrics.recurringSource
+  }, {
+    key: "reservations",
+    icon: CalendarCheck,
+    value: data?.bookings || 0,
+    label: t.metrics.reservations,
+    explanation: t.metrics.reservationsExplanation,
+    details: t.metrics.reservationsDetails,
+    source: t.metrics.reservationsSource
+  }, {
+    key: "tickets",
+    icon: Ticket,
+    value: data?.tickets || 0,
+    label: t.metrics.tickets,
+    explanation: t.metrics.ticketsExplanation,
+    details: t.metrics.ticketsDetails,
+    source: t.metrics.ticketsSource
+  }, {
+    key: "visits",
+    icon: QrCode,
+    value: data?.visitsViaQR || 0,
+    label: t.metrics.visits,
+    explanation: t.metrics.visitsExplanation,
+    details: t.metrics.visitsDetails,
+    source: t.metrics.visitsSource
+  }];
   if (isLoading) {
-    return (
-      <div className="space-y-6">
+    return <div className="space-y-6">
         <div className="space-y-2">
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-28" />
-          ))}
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-28" />)}
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="space-y-2">
         <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
         <p className="text-sm text-muted-foreground whitespace-pre-line md:whitespace-normal">{t.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {metrics.map(({ key, icon: Icon, value, label, explanation, details, source }) => (
-          <Dialog key={key}>
+        {metrics.map(({
+        key,
+        icon: Icon,
+        value,
+        label,
+        explanation,
+        details,
+        source
+      }) => <Dialog key={key}>
             <DialogTrigger asChild>
               <Card className="hover:shadow-md transition-shadow cursor-pointer group">
                 <CardContent className="p-4">
                   {/* First card (views) - horizontal layout */}
-                  {key === "views" ? (
-                    <div className="flex items-start justify-between">
+                  {key === "views" ? <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">{label}</p>
                         <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <div className="p-1.5 bg-primary/10 rounded-lg">
-                          <Icon className="h-4 w-4 text-primary" />
-                        </div>
+                        
                         <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                    </div>
-                  ) : (
-                    /* Other cards (customers, recurring, etc.) - centered layout for tablet/mobile, horizontal for desktop */
-                    <>
+                    </div> : (/* Other cards (customers, recurring, etc.) - centered layout for tablet/mobile, horizontal for desktop */
+              <>
                       {/* Mobile/Tablet: Centered vertical layout - label, icon, then number */}
                       <div className="flex flex-col items-center text-center lg:hidden">
                         <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">{label}</p>
@@ -224,8 +212,7 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
                           <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                       </div>
-                    </>
-                  )}
+                    </>)}
                 </CardContent>
               </Card>
             </DialogTrigger>
@@ -253,29 +240,22 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
                 </div>
               </div>
             </DialogContent>
-          </Dialog>
-        ))}
+          </Dialog>)}
       </div>
 
       <p className="text-xs text-muted-foreground text-center">{t.footer}</p>
 
       {/* Upgrade prompt for free plan users */}
-      {isFreePlan && (
-        <div className="p-2 md:p-3 lg:p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
+      {isFreePlan && <div className="p-2 md:p-3 lg:p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
           <div className="flex items-start gap-1.5 md:gap-2 lg:gap-3">
             <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 lg:h-5 lg:w-5 text-primary flex-shrink-0 mt-0.5" />
             <div className="space-y-1 md:space-y-1.5 lg:space-y-2">
               <p className="text-[10px] md:text-xs lg:text-sm text-foreground leading-tight">{t.upgradePrompt}</p>
-              <Link 
-                to="/dashboard-business/subscription" 
-                className="inline-flex items-center text-[10px] md:text-xs lg:text-sm font-medium text-primary hover:underline"
-              >
+              <Link to="/dashboard-business/subscription" className="inline-flex items-center text-[10px] md:text-xs lg:text-sm font-medium text-primary hover:underline">
                 {t.upgradeLink} →
               </Link>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 };
