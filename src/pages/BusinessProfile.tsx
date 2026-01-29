@@ -55,6 +55,7 @@ interface Event {
     name: string;
     logo_url: string | null;
   };
+  isBoosted?: boolean;
 }
 
 interface Discount {
@@ -71,6 +72,7 @@ interface Discount {
     logo_url: string | null;
     city: string;
   };
+  isBoosted?: boolean;
 }
 
 // Staggered animation variants
@@ -258,7 +260,6 @@ const BusinessProfile = () => {
         .order("start_at", { ascending: true });
 
       if (eventsError) throw eventsError;
-      setEvents(eventsData || []);
 
       // Fetch offers - include full business details for OfferPurchaseDialog
       const { data: offersData, error: offersError } = await supabase
@@ -273,7 +274,52 @@ const BusinessProfile = () => {
         .order("start_at", { ascending: true });
 
       if (offersError) throw offersError;
-      setOffers(offersData || []);
+
+      // Check for active boosts on events
+      const today = new Date().toISOString().split('T')[0];
+      const eventIds = (eventsData || []).map(e => e.id);
+      const offerIds = (offersData || []).map(o => o.id);
+
+      let boostedEventIds: Set<string> = new Set();
+      let boostedOfferIds: Set<string> = new Set();
+
+      if (eventIds.length > 0) {
+        const { data: eventBoosts } = await supabase
+          .from("event_boosts")
+          .select("event_id")
+          .in("event_id", eventIds)
+          .eq("status", "active")
+          .lte("start_date", today)
+          .gte("end_date", today);
+        
+        boostedEventIds = new Set((eventBoosts || []).map(b => b.event_id));
+      }
+
+      if (offerIds.length > 0) {
+        const { data: offerBoosts } = await supabase
+          .from("offer_boosts")
+          .select("discount_id")
+          .in("discount_id", offerIds)
+          .eq("status", "active")
+          .lte("start_date", today)
+          .gte("end_date", today);
+        
+        boostedOfferIds = new Set((offerBoosts || []).map(b => b.discount_id));
+      }
+
+      // Mark events and offers as boosted
+      const eventsWithBoostFlag = (eventsData || []).map(e => ({
+        ...e,
+        isBoosted: boostedEventIds.has(e.id)
+      }));
+
+      const offersWithBoostFlag = (offersData || []).map(o => ({
+        ...o,
+        isBoosted: boostedOfferIds.has(o.id)
+      }));
+
+      setEvents(eventsWithBoostFlag);
+      setOffers(offersWithBoostFlag);
     } catch (error) {
       console.error("Error fetching business data:", error);
       toast.error(t.loadError);
@@ -581,7 +627,7 @@ const BusinessProfile = () => {
           )}
         </motion.div>
 
-        {/* Events & Offers Grid */}
+        {/* Events & Offers Grid - sorted by boost status then chronologically */}
         {(events.length > 0 || offers.length > 0) ? (
           <motion.div
             variants={containerVariants}
@@ -589,29 +635,63 @@ const BusinessProfile = () => {
             animate="visible"
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
           >
-            {/* Events Section */}
-            {events.map((event) => (
-              <motion.div key={event.id} variants={itemVariants}>
-                <UnifiedEventCard
-                  event={{
-                    ...event,
-                    businesses: event.businesses,
-                  }}
-                  language={language}
-                  size="full"
-                />
-              </motion.div>
-            ))}
+            {/* Combined and sorted items: boosted first (chronologically), then non-boosted (chronologically) */}
+            {(() => {
+              // Create unified items with type and sort date
+              const eventItems = events.map(event => ({
+                type: 'event' as const,
+                item: event,
+                isBoosted: event.isBoosted || false,
+                sortDate: new Date(event.start_at).getTime() // Events sort by start_at
+              }));
 
-            {/* Offers Section */}
-            {offers.map((offer) => (
-              <motion.div key={offer.id} variants={itemVariants}>
-                <OfferCard
-                  offer={offer}
-                  language={language}
-                />
-              </motion.div>
-            ))}
+              const offerItems = offers.map(offer => ({
+                type: 'offer' as const,
+                item: offer,
+                isBoosted: offer.isBoosted || false,
+                sortDate: new Date(offer.end_at).getTime() // Offers sort by end_at (expiration)
+              }));
+
+              // Combine all items
+              const allItems = [...eventItems, ...offerItems];
+
+              // Sort: boosted first, then by date (soonest first)
+              allItems.sort((a, b) => {
+                // First priority: boosted items come first
+                if (a.isBoosted && !b.isBoosted) return -1;
+                if (!a.isBoosted && b.isBoosted) return 1;
+                // Second priority: chronological order (soonest first)
+                return a.sortDate - b.sortDate;
+              });
+
+              return allItems.map((item) => {
+                if (item.type === 'event') {
+                  const event = item.item as Event;
+                  return (
+                    <motion.div key={`event-${event.id}`} variants={itemVariants}>
+                      <UnifiedEventCard
+                        event={{
+                          ...event,
+                          businesses: event.businesses,
+                        }}
+                        language={language}
+                        size="full"
+                      />
+                    </motion.div>
+                  );
+                } else {
+                  const offer = item.item as Discount;
+                  return (
+                    <motion.div key={`offer-${offer.id}`} variants={itemVariants}>
+                      <OfferCard
+                        offer={offer}
+                        language={language}
+                      />
+                    </motion.div>
+                  );
+                }
+              });
+            })()}
           </motion.div>
         ) : (
           <div className="text-center py-12">
