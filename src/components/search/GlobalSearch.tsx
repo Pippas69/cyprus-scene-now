@@ -4,11 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { SearchResults } from './SearchResults';
 import { supabase } from '@/integrations/supabase/client';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { trackSearchResultView, trackSearchResultClick } from '@/lib/analyticsTracking';
+import { useNavigate } from 'react-router-dom';
+import { 
+  trackSearchResultClick, 
+  trackEventSearchClick, 
+  trackOfferSearchClick 
+} from '@/lib/analyticsTracking';
 
 interface SearchResult {
-  result_type: 'business' | 'event';
+  result_type: 'business' | 'event' | 'offer';
   id: string;
   name?: string;
   title?: string;
@@ -21,12 +25,13 @@ interface SearchResult {
   business_name?: string;
   verified?: boolean;
   relevance_score: number;
+  business_id?: string;
 }
 
 interface GlobalSearchProps {
   language: 'el' | 'en';
   fullscreen?: boolean;
-  resultTypes?: Array<'business' | 'event'>;
+  resultTypes?: Array<'business' | 'event' | 'offer'>;
 }
 
 export function GlobalSearch({ language, fullscreen = false, resultTypes }: GlobalSearchProps) {
@@ -36,17 +41,16 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
   const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const location = useLocation();
   const navigate = useNavigate();
 
   const translations = {
     el: {
-      searchPlaceholder: 'Αναζήτηση επιχειρήσεων...',
+      searchPlaceholder: 'Αναζήτηση...',
       searching: 'Αναζήτηση...',
       noResults: 'Δεν βρέθηκαν αποτελέσματα',
     },
     en: {
-      searchPlaceholder: 'Search businesses...',
+      searchPlaceholder: 'Search...',
       searching: 'Searching...',
       noResults: 'No results found',
     },
@@ -78,16 +82,11 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Track views for business results when they appear
-  const trackedViewsRef = useRef<Set<string>>(new Set());
-
   useEffect(() => {
     const searchContent = async () => {
       if (query.length < 2) {
         setResults([]);
         setIsLoading(false);
-        // Reset tracked views when search is cleared
-        trackedViewsRef.current.clear();
         return;
       }
 
@@ -103,14 +102,7 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
           ? typed.filter((r) => resultTypes.includes(r.result_type))
           : typed;
         setResults(filtered);
-        
-        // Track profile views for businesses appearing in search results
-        filtered.forEach((result) => {
-          if (result.result_type === 'business' && !trackedViewsRef.current.has(result.id)) {
-            trackedViewsRef.current.add(result.id);
-            trackSearchResultView(result.id, 'general');
-          }
-        });
+        // Views are tracked ONLY on click, not on appearance
       }
 
       setIsLoading(false);
@@ -125,11 +117,20 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
     setQuery('');
 
     if (result.result_type === 'business') {
-      // Track interaction when clicking on business in general search
+      // Track profile view + click when clicking on business
       trackSearchResultClick(result.id, 'general');
       navigate(`/business/${result.id}`);
-    } else {
+    } else if (result.result_type === 'event') {
+      // Track event view when clicking on event
+      trackEventSearchClick(result.id);
       navigate(`/event/${result.id}`);
+    } else if (result.result_type === 'offer') {
+      // Track offer view when clicking on offer
+      trackOfferSearchClick(result.id);
+      // Navigate to business profile with offer highlighted
+      if (result.business_id) {
+        navigate(`/business/${result.business_id}?offer=${result.id}`);
+      }
     }
   }, [navigate]);
 
