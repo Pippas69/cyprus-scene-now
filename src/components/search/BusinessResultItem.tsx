@@ -28,32 +28,32 @@ export function BusinessResultItem({ result, language, onClick }: BusinessResult
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-2.5 md:gap-3 p-2 md:p-2.5 hover:bg-accent/50 rounded-lg transition-colors text-left"
+      className="w-full flex items-center gap-2 md:gap-3 p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors text-left"
     >
-      {/* Circular avatar - slightly larger for better visibility */}
-      <Avatar className="h-10 w-10 md:h-11 md:w-11 shrink-0 border border-border/50">
+      {/* Compact circular avatar */}
+      <Avatar className="h-8 w-8 md:h-10 md:w-10 shrink-0 border border-border/50">
         <AvatarImage src={result.logo_url || ''} alt={result.name} className="object-cover" />
         <AvatarFallback className="bg-muted">
-          <Building2 className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+          <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
         </AvatarFallback>
       </Avatar>
       
       {/* Content - compact layout */}
       <div className="flex-1 min-w-0">
-        {/* First line: Name + Location - always single line */}
-        <div className="flex items-center gap-1 text-sm md:text-base min-w-0 whitespace-nowrap">
+        {/* First line: Name + Location */}
+        <div className="flex items-center gap-1 md:gap-1.5 text-xs md:text-sm min-w-0 whitespace-nowrap">
           <span className="font-medium truncate text-foreground">{result.name}</span>
           {result.city && (
-            <span className="flex items-center gap-0.5 shrink-0 text-muted-foreground">
-              <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5" />
-              <span>{translateCity(result.city, language)}</span>
+            <span className="flex items-center gap-0.5 shrink-0">
+              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 text-muted-foreground" />
+              <span className="text-muted-foreground">{translateCity(result.city, language)}</span>
             </span>
           )}
         </div>
         
         {/* Second line: Categories */}
         {formattedCategories && (
-          <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5 whitespace-nowrap">
+          <p className="text-[9px] md:text-[10px] lg:text-xs text-muted-foreground truncate mt-0.5 whitespace-nowrap">
             {formattedCategories}
           </p>
         )}
