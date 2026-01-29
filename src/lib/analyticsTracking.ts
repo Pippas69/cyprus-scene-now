@@ -229,8 +229,12 @@ export const trackEngagement = async (
   metadata?: Record<string, any>
 ) => {
   try {
-    // Profile views are a *view metric*. Never count them from user dashboard context.
-    if (eventType === 'profile_view' && isDashboardUserContext()) {
+    // Profile views are a *view metric*.
+    // Rule: never count direct/profile-originated views from the user dashboard.
+    // Exception: search-driven views MUST be counted even inside /dashboard-user.
+    const viewSource = metadata?.source;
+    const isSearchDrivenView = viewSource === 'search' || viewSource === 'map_search_click';
+    if (eventType === 'profile_view' && isDashboardUserContext() && !isSearchDrivenView) {
       debugLog('[trackEngagement] profile_view skipped', { businessId, entityType, entityId, metadata, ...getCurrentContext() });
       return;
     }
