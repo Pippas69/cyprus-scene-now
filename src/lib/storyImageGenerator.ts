@@ -24,24 +24,15 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Apply a blur effect to the canvas
- * Since canvas blur is limited, we scale down, draw, and scale up
+ * Draw a clear background with smooth gradient fades
+ * Uses full-resolution image with darkening and gradient overlays
  */
-const drawBlurredBackground = (
+const drawClearBackground = (
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   canvasWidth: number,
   canvasHeight: number
 ) => {
-  // Create a smaller canvas for the blur effect
-  const tempCanvas = document.createElement('canvas');
-  const scale = 0.1; // Scale down for blur effect
-  tempCanvas.width = canvasWidth * scale;
-  tempCanvas.height = canvasHeight * scale;
-  const tempCtx = tempCanvas.getContext('2d');
-
-  if (!tempCtx) return;
-
   // Calculate cover dimensions for background
   const imgRatio = img.width / img.height;
   const canvasRatio = canvasWidth / canvasHeight;
@@ -49,28 +40,41 @@ const drawBlurredBackground = (
   let drawWidth: number, drawHeight: number, offsetX: number, offsetY: number;
 
   if (imgRatio > canvasRatio) {
-    drawHeight = tempCanvas.height;
+    drawHeight = canvasHeight;
     drawWidth = drawHeight * imgRatio;
-    offsetX = (tempCanvas.width - drawWidth) / 2;
+    offsetX = (canvasWidth - drawWidth) / 2;
     offsetY = 0;
   } else {
-    drawWidth = tempCanvas.width;
+    drawWidth = canvasWidth;
     drawHeight = drawWidth / imgRatio;
     offsetX = 0;
-    offsetY = (tempCanvas.height - drawHeight) / 2;
+    offsetY = (canvasHeight - drawHeight) / 2;
   }
 
-  // Draw scaled down image
-  tempCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-
-  // Apply CSS filter for blur (on supported browsers)
-  ctx.filter = 'blur(20px) brightness(0.7)';
+  // Apply slight darkening for contrast with foreground
+  ctx.filter = 'brightness(0.75)';
   
-  // Draw the blurred background scaled up
-  ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
+  // Draw full-resolution background image
+  ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   
   // Reset filter
   ctx.filter = 'none';
+
+  // Add smooth gradient fade at top
+  const topGradient = ctx.createLinearGradient(0, 0, 0, 350);
+  topGradient.addColorStop(0, 'rgba(0, 0, 0, 0.6)');
+  topGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.2)');
+  topGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = topGradient;
+  ctx.fillRect(0, 0, canvasWidth, 350);
+
+  // Add smooth gradient fade at bottom
+  const bottomGradient = ctx.createLinearGradient(0, canvasHeight - 500, 0, canvasHeight);
+  bottomGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  bottomGradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.3)');
+  bottomGradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+  ctx.fillStyle = bottomGradient;
+  ctx.fillRect(0, canvasHeight - 500, canvasWidth, 500);
 };
 
 /**
@@ -268,7 +272,7 @@ export const generateStoryImage = async (
   const img = await loadImage(imageUrl);
 
   // 1. Draw blurred background
-  drawBlurredBackground(ctx, img, canvas.width, canvas.height);
+  drawClearBackground(ctx, img, canvas.width, canvas.height);
 
   // 2. Draw centered main image
   const { imageBottom } = drawCenteredImage(ctx, img, canvas.width, canvas.height);
