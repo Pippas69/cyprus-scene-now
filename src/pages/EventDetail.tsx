@@ -91,14 +91,14 @@ export default function EventDetail() {
     checkUser();
     if (eventId) {
       fetchEventDetails();
-      // Do NOT count views when navigation originated from the user's dashboard sections.
+      // Do NOT count views when navigation originated from dashboard contexts.
       const src = new URLSearchParams(location.search).get('src');
       console.debug('[EventDetail] view check', { eventId, src, pathname: location.pathname, search: location.search });
-      if (src !== 'dashboard_user') {
+      if (src !== 'dashboard_user' && src !== 'dashboard_business') {
         console.debug('[EventDetail] tracking view', { eventId });
         trackEventView(eventId, 'direct');
       } else {
-        console.debug('[EventDetail] skipped view (dashboard_user)', { eventId });
+        console.debug('[EventDetail] skipped view (dashboard context)', { eventId, src });
       }
     }
   }, [eventId, location.search]);

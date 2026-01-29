@@ -37,6 +37,14 @@ import { UnifiedQRScanner } from "@/components/business/UnifiedQRScanner";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 
 const DashboardBusiness = () => {
+  // Analytics kill-switch: business dashboard must never inflate views/impressions.
+  // Set synchronously for first paint; cleaned up on unmount.
+  try {
+    (window as any).__NO_VIEWS_CONTEXT = true;
+  } catch {
+    // ignore
+  }
+
   const navigate = useNavigate();
   const location = useLocation();
   const { language } = useLanguage();
@@ -73,6 +81,16 @@ const DashboardBusiness = () => {
 
   useEffect(() => {
     checkVerificationStatus();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      try {
+        delete (window as any).__NO_VIEWS_CONTEXT;
+      } catch {
+        // ignore
+      }
+    };
   }, []);
 
   // Always jump to top when switching dashboard sections
