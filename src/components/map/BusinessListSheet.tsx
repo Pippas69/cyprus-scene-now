@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,7 @@ const getParentCategoryIcon = (categoryId: string): string => {
 
 export const BusinessListSheet = ({ businesses, language, onBusinessClick }: BusinessListSheetProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showAll, setShowAll] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const viewedInSessionRef = useRef<Set<string>>(new Set());
@@ -125,7 +126,19 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
   const handleProfile = (e: React.MouseEvent, business: BusinessLocation) => {
     e.stopPropagation();
     setIsOpen(false);
-    navigate(`/business/${business.id}`);
+
+    // Profile interaction: clicking the "Profile" badge counts as a profile_click.
+    trackEngagement(business.id, 'profile_click', 'business', business.id, {
+      source: 'map_profile_badge',
+    });
+
+    navigate(`/business/${business.id}`, {
+      state: {
+        analyticsTracked: true,
+        analyticsSource: 'map',
+        from: `${location.pathname}${location.search}`,
+      },
+    });
   };
 
   // Format location as "Address, City"

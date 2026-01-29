@@ -83,6 +83,8 @@ export default function EventDetail() {
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showReservationCheckout, setShowReservationCheckout] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+
+  const fromPath = `${location.pathname}${location.search}`;
   
   // Fetch ticket tiers for this event
   const { data: ticketTiers = [], isLoading: ticketsLoading } = useTicketTiers(eventId || '');
@@ -572,6 +574,17 @@ export default function EventDetail() {
                   <p className="text-[10px] text-muted-foreground mb-1">{text.hostedBy}</p>
                   <Link
                     to={`/business/${event.businesses.id}`}
+                    state={{
+                      analyticsTracked: true,
+                      analyticsSource: 'event',
+                      from: fromPath,
+                    }}
+                    onClick={() => {
+                      // Profile interaction: clicking the host business counts as profile_click
+                      trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
+                        source: 'event_host_link',
+                      });
+                    }}
                     className="flex items-center gap-2 hover:bg-accent p-1.5 -mx-1.5 rounded-lg transition-colors"
                   >
                     <Avatar className="h-8 w-8 border">
@@ -765,6 +778,17 @@ export default function EventDetail() {
                 <p className="text-sm text-muted-foreground mb-3">{text.hostedBy}</p>
                 <Link
                   to={`/business/${event.businesses.id}`}
+                  state={{
+                    analyticsTracked: true,
+                    analyticsSource: 'event',
+                    from: fromPath,
+                  }}
+                  onClick={() => {
+                    // Profile interaction: clicking the host business counts as profile_click
+                    trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
+                      source: 'event_host_link',
+                    });
+                  }}
                   className="flex items-center gap-3 hover:bg-accent p-2 rounded-lg transition-colors"
                 >
                   <Avatar className="h-12 w-12 border">
