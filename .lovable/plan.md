@@ -1,66 +1,111 @@
 
-# Plan: Add Instagram Stories & Social Media Share Buttons
+# Plan: Fix Instagram Stories Image Format (9:16)
 
-## Summary
-Add dedicated social media sharing buttons to the share sheet, including an Instagram Stories option that guides users through the native share flow with images.
+## The Problem
+Currently, when sharing to Instagram Stories, the system sends the original event/offer cover image which is in **horizontal format (16:9)**. Instagram Stories requires **vertical format (9:16 / 1080x1920px)**, causing the image to appear zoomed, cropped, or misaligned.
+
+## The Solution
+Create a Stories-optimized image generator that transforms any image into a properly formatted vertical Story image.
 
 ---
 
 ## How It Will Work
 
-The share sheet will be updated to include a row of social media icons before the main action buttons. On mobile, when users tap the "Instagram Stories" button, the system will trigger the native share with an image file attached - which shows Instagram Stories as a sharing destination.
+When a user taps "Instagram Stories", the system will:
+1. Fetch the original image
+2. Create a vertical 9:16 canvas (1080x1920px)
+3. Add a blurred version of the image as background
+4. Center the original image in the middle (maintaining aspect ratio)
+5. Add event/offer details as text overlay at the bottom
+6. Add ΦΟΜΟ branding/watermark
+7. Share the formatted image via native share
+
+---
+
+## Visual Result
+
+```text
+┌────────────────────┐
+│                    │
+│  ┌──────────────┐  │  ← Blurred background
+│  │              │  │
+│  │   Original   │  │  ← Centered image
+│  │    Image     │  │     (aspect ratio preserved)
+│  │              │  │
+│  └──────────────┘  │
+│                    │
+│  ━━━━━━━━━━━━━━━━  │
+│  Event Title       │  ← Text overlay
+│  📍 Location       │
+│  🗓️ Date & Time    │
+│                    │
+│        ΦΟΜΟ        │  ← Branding
+└────────────────────┘
+       1080x1920
+```
 
 ---
 
 ## Technical Details
 
-### Files to Modify
+### New File: `src/lib/storyImageGenerator.ts`
 
-**1. `src/components/sharing/SimpleShareSheet.tsx`**
-- Add a horizontal row of social media buttons between the image preview and the main action buttons
-- Include buttons for:
-  - **Instagram Stories** - Triggers native share with image (Instagram Stories appears as destination on iOS/Android)
-  - **WhatsApp** - Opens WhatsApp directly with the share link
-  - **Messenger** - Opens Facebook Messenger with the share link
-- Add translations for new button labels
+Creates a utility function that:
+- Takes the original image URL, title, subtitle, and optional event details
+- Uses HTML Canvas API to compose the story image
+- Returns a File object ready for native share
 
-**2. `src/hooks/useSimpleShare.ts`**
-- Add new functions:
-  - `shareToInstagramStories()` - Triggers native share with image file specifically for Stories
-  - `shareToWhatsApp()` - Opens WhatsApp share URL
-  - `shareToMessenger()` - Opens Messenger share URL
-- Track these as distinct channels in analytics (`instagram_stories`, `whatsapp`, `messenger`)
-
-### UI Layout
-
-```text
-┌────────────────────────────────────┐
-│         Κοινοποίηση            [X] │
-├────────────────────────────────────┤
-│   ┌────────────────────────────┐   │
-│   │     Image Preview          │   │
-│   │     with title overlay     │   │
-│   └────────────────────────────┘   │
-│                                    │
-│   ┌──────┐ ┌──────┐ ┌──────┐       │
-│   │  IG  │ │  WA  │ │  FB  │       │
-│   │Stories│ │      │ │Msgr │       │
-│   └──────┘ └──────┘ └──────┘       │
-│                                    │
-│   ┌───────────────────────────┐    │
-│   │      Copy Link            │    │
-│   └───────────────────────────┘    │
-│   ┌───────────────────────────┐    │
-│   │      More Options         │    │
-│   └───────────────────────────┘    │
-└────────────────────────────────────┘
+**Key logic:**
+```typescript
+export const generateStoryImage = async (
+  imageUrl: string,
+  title: string,
+  subtitle?: string,
+  details?: { date?: string; location?: string }
+): Promise<File> => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1920;
+  const ctx = canvas.getContext('2d');
+  
+  // 1. Draw blurred background
+  // 2. Draw centered image with proper sizing
+  // 3. Add gradient overlay for text readability
+  // 4. Draw title, subtitle, and details
+  // 5. Add ΦΟΜΟ branding
+  
+  return new File([blob], 'story.jpg', { type: 'image/jpeg' });
+};
 ```
 
-### Important Notes
+### Modified: `src/hooks/useSimpleShare.ts`
 
-1. **Instagram Stories Limitation**: From web browsers, we cannot open Instagram Stories directly. Instead, we trigger the native share with an image file - the OS share sheet will show "Instagram Stories" as a destination on mobile devices.
+Update `shareToInstagramStories()` to:
+1. Import and use the new `generateStoryImage` function
+2. Pass event/offer details for text overlay
+3. Share the formatted image instead of the original
 
-2. **Desktop Behavior**: On desktop, the Instagram Stories button will show a tooltip explaining it's mobile-only, while WhatsApp and Messenger buttons will open web versions.
+### Modified: `src/components/sharing/SimpleShareSheet.tsx`
 
-3. **Analytics Tracking**: Each button click will be tracked with its specific channel for business analytics.
+Pass additional context (date, location, business name) to the share handler for the text overlay.
+
+---
+
+## Design Decisions
+
+1. **Blurred background**: Uses a scaled-up, blurred version of the same image for cohesive look
+2. **Text overlay**: Keeps essential info visible without opening the link
+3. **ΦΟΜΟ branding**: Subtle watermark for attribution
+4. **Font choices**: Using system fonts for reliability across devices
+5. **Color scheme**: White text with dark gradient overlay for readability
+
+---
+
+## Files to Create/Modify
+
+| File | Action |
+|------|--------|
+| `src/lib/storyImageGenerator.ts` | **Create** - Canvas-based image generator |
+| `src/hooks/useSimpleShare.ts` | **Modify** - Use generator in Stories share |
+| `src/components/sharing/SimpleShareSheet.tsx` | **Modify** - Pass event details to handler |
 
