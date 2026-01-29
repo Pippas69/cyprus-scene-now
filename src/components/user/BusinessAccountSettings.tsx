@@ -667,7 +667,11 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
             )}
 
             {/* Save Button */}
-            <Button type="submit" className="w-full h-9 sm:h-10 text-xs sm:text-sm" disabled={profileLoading}>
+            <Button
+              type="submit"
+              className="w-full h-9 sm:h-10 text-xs sm:text-sm relative z-10 pointer-events-auto"
+              disabled={profileLoading}
+            >
               {profileLoading ? (
                 <>
                   <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
