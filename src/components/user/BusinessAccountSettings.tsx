@@ -39,7 +39,17 @@ const createBusinessProfileSchema = (language: 'el' | 'en') => {
     name: z.string().min(2, v.nameRequired),
     description: z.string().max(500, v.descriptionTooLong).optional(),
     phone: z.string().regex(/^[0-9\s\-\+\(\)]+$/, v.invalidPhone).optional().or(z.literal('')),
-    website: z.string().url(v.invalidUrl).optional().or(z.literal('')),
+    // Allow users to type a plain domain (e.g. "example.com") by auto-prefixing https://
+    website: z.preprocess(
+      (val) => {
+        if (typeof val !== 'string') return val;
+        const trimmed = val.trim();
+        if (!trimmed) return '';
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        return `https://${trimmed}`;
+      },
+      z.string().url(v.invalidUrl).optional().or(z.literal(''))
+    ),
     address: z.string().optional(),
     city: z.string().min(1, v.cityRequired),
     // In settings we allow 0..2 categories (no "select at least one" message)
