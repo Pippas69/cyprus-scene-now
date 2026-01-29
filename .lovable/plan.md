@@ -1,153 +1,66 @@
 
-# Ενισχυμένο Share System με Εικόνα
+# Plan: Add Instagram Stories & Social Media Share Buttons
 
-## Πρόβλημα
+## Summary
+Add dedicated social media sharing buttons to the share sheet, including an Instagram Stories option that guides users through the native share flow with images.
 
-Τώρα το share στέλνει **μόνο link και text**, ενώ εσύ θέλεις να στέλνει **και την εικόνα του event/offer/business** ώστε ο παραλήπτης να βλέπει αμέσως το preview.
+---
 
-## Λύση
+## How It Will Work
 
-Χρήση του `navigator.share({ files: [imageFile] })` για να συμπεριληφθεί η εικόνα στο share.
+The share sheet will be updated to include a row of social media icons before the main action buttons. On mobile, when users tap the "Instagram Stories" button, the system will trigger the native share with an image file attached - which shows Instagram Stories as a sharing destination.
 
-## Πώς θα λειτουργεί
+---
 
-```text
-┌─────────────────────────────────────────┐
-│           [Event Image]                 │
-│      "Summer Party @ Club XYZ"          │
-│                                         │
-│  ┌────────────────┐ ┌────────────────┐  │
-│  │   Copy Link    │ │     Share      │  │
-│  └────────────────┘ └────────────────┘  │
-│                                         │
-│  Πατάς "Share" →                        │
-│  ┌─────────────────────────────────┐    │
-│  │ iOS/Android Native Share Sheet  │    │
-│  │ ┌────────────────────────────┐  │    │
-│  │ │     [Event Image.jpg]      │  │    │
-│  │ │                            │  │    │
-│  │ │  Summer Party @ Club XYZ   │  │    │
-│  │ │  https://fomo.cy/e/xxx     │  │    │
-│  │ └────────────────────────────┘  │    │
-│  │                                 │    │
-│  │ WhatsApp · iMessage · Instagram │    │
-│  └─────────────────────────────────┘    │
-└─────────────────────────────────────────┘
-```
+## Technical Details
 
-## Τεχνικές Αλλαγές
+### Files to Modify
 
-### 1. `useSimpleShare.ts` - Νέα `shareWithImage` function
+**1. `src/components/sharing/SimpleShareSheet.tsx`**
+- Add a horizontal row of social media buttons between the image preview and the main action buttons
+- Include buttons for:
+  - **Instagram Stories** - Triggers native share with image (Instagram Stories appears as destination on iOS/Android)
+  - **WhatsApp** - Opens WhatsApp directly with the share link
+  - **Messenger** - Opens Facebook Messenger with the share link
+- Add translations for new button labels
 
-```typescript
-interface ShareDataWithImage extends ShareData {
-  imageUrl?: string | null;
-}
+**2. `src/hooks/useSimpleShare.ts`**
+- Add new functions:
+  - `shareToInstagramStories()` - Triggers native share with image file specifically for Stories
+  - `shareToWhatsApp()` - Opens WhatsApp share URL
+  - `shareToMessenger()` - Opens Messenger share URL
+- Track these as distinct channels in analytics (`instagram_stories`, `whatsapp`, `messenger`)
 
-const shareWithImage = async (data: ShareDataWithImage, options?: ShareOptions) => {
-  setIsSharing(true);
-  
-  try {
-    let files: File[] = [];
-    
-    // Fetch image and convert to File
-    if (data.imageUrl) {
-      const response = await fetch(data.imageUrl);
-      const blob = await response.blob();
-      const file = new File([blob], 'share-image.jpg', { type: blob.type || 'image/jpeg' });
-      files = [file];
-    }
-    
-    const shareData: ShareDataWithFiles = {
-      title: data.title,
-      text: data.text,
-      url: data.url,
-      ...(files.length > 0 && { files })
-    };
-    
-    // Check if device supports file sharing
-    if (navigator.canShare && navigator.canShare(shareData)) {
-      await navigator.share(shareData);
-    } else if (navigator.share) {
-      // Fallback: share without image
-      await navigator.share({
-        title: data.title,
-        text: data.text,
-        url: data.url
-      });
-    } else {
-      // Final fallback: copy link
-      await copyToClipboard(data.url);
-      toast.success(t.shareNotSupported);
-    }
-  } catch (error) {
-    // ... existing error handling with fallback to copy
-  }
-};
-```
-
-### 2. `SimpleShareSheet.tsx` - Περνάει imageUrl στο share
-
-```typescript
-const handleShare = useCallback(async () => {
-  await share({ title, text, url, imageUrl }, { objectType, objectId, businessId });
-  onOpenChange(false);
-}, [share, title, text, url, imageUrl, objectType, objectId, businessId, onOpenChange]);
-```
-
-### 3. CORS Handling για εικόνες
-
-Οι εικόνες από Supabase Storage έχουν proper CORS headers, οπότε το `fetch()` θα δουλέψει.
-
-## Flow Diagram
+### UI Layout
 
 ```text
-User πατάει Share
-        │
-        ▼
-┌───────────────────┐
-│  Fetch image URL  │
-│  → Convert to Blob│
-│  → Create File    │
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│ navigator.canShare│──No──┐
-│   (with files)?   │      │
-└─────────┬─────────┘      │
-          │Yes             │
-          ▼                ▼
-┌───────────────────┐ ┌───────────────────┐
-│ navigator.share() │ │ navigator.share() │
-│   with image      │ │   text only       │
-└─────────┬─────────┘ └─────────┬─────────┘
-          │                     │
-          └──────────┬──────────┘
-                     ▼
-             Native Share Sheet
-            (WhatsApp, iMessage,
-             Instagram, etc.)
+┌────────────────────────────────────┐
+│         Κοινοποίηση            [X] │
+├────────────────────────────────────┤
+│   ┌────────────────────────────┐   │
+│   │     Image Preview          │   │
+│   │     with title overlay     │   │
+│   └────────────────────────────┘   │
+│                                    │
+│   ┌──────┐ ┌──────┐ ┌──────┐       │
+│   │  IG  │ │  WA  │ │  FB  │       │
+│   │Stories│ │      │ │Msgr │       │
+│   └──────┘ └──────┘ └──────┘       │
+│                                    │
+│   ┌───────────────────────────┐    │
+│   │      Copy Link            │    │
+│   └───────────────────────────┘    │
+│   ┌───────────────────────────┐    │
+│   │      More Options         │    │
+│   └───────────────────────────┘    │
+└────────────────────────────────────┘
 ```
 
-## Αποτέλεσμα
+### Important Notes
 
-| Πλατφόρμα | Πριν | Μετά |
-|-----------|------|------|
-| WhatsApp | Link μόνο | Εικόνα + Link |
-| iMessage | Link μόνο | Εικόνα + Link |
-| Instagram | Link μόνο | Εικόνα + Link |
-| Messenger | Link μόνο | Εικόνα + Link |
-| Email | Link μόνο | Εικόνα + Link |
+1. **Instagram Stories Limitation**: From web browsers, we cannot open Instagram Stories directly. Instead, we trigger the native share with an image file - the OS share sheet will show "Instagram Stories" as a destination on mobile devices.
 
-## Σημαντικές Λεπτομέρειες
+2. **Desktop Behavior**: On desktop, the Instagram Stories button will show a tooltip explaining it's mobile-only, while WhatsApp and Messenger buttons will open web versions.
 
-1. **`navigator.canShare()`**: Ελέγχει αν η συσκευή υποστηρίζει sharing αρχείων
-2. **Fallback chain**: Image share → Text-only share → Copy link
-3. **CORS**: Οι εικόνες από Supabase έχουν ήδη σωστά headers
-4. **File type**: Δημιουργούμε `image/jpeg` ή χρησιμοποιούμε το blob type
+3. **Analytics Tracking**: Each button click will be tracked with its specific channel for business analytics.
 
-## Αρχεία προς τροποποίηση
-
-1. `src/hooks/useSimpleShare.ts` - Προσθήκη image fetching & file sharing logic
-2. `src/components/sharing/SimpleShareSheet.tsx` - Περνάει imageUrl στη share function
