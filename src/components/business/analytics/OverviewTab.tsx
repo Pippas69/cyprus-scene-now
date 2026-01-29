@@ -261,14 +261,14 @@ export const OverviewTab = ({ businessId, dateRange, language }: OverviewTabProp
 
       {/* Upgrade prompt for free plan users */}
       {isFreePlan && (
-        <div className="p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
-          <div className="flex items-start gap-3">
-            <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-            <div className="space-y-2">
-              <p className="text-sm text-foreground">{t.upgradePrompt}</p>
+        <div className="p-2 md:p-3 lg:p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
+          <div className="flex items-start gap-1.5 md:gap-2 lg:gap-3">
+            <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 lg:h-5 lg:w-5 text-primary flex-shrink-0 mt-0.5" />
+            <div className="space-y-1 md:space-y-1.5 lg:space-y-2">
+              <p className="text-[10px] md:text-xs lg:text-sm text-foreground leading-tight">{t.upgradePrompt}</p>
               <Link 
                 to="/dashboard-business/subscription" 
-                className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+                className="inline-flex items-center text-[10px] md:text-xs lg:text-sm font-medium text-primary hover:underline"
               >
                 {t.upgradeLink} →
               </Link>
