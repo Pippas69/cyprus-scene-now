@@ -11,13 +11,19 @@ Updated: 2026-01-29
 1. **Feed** (/ or /feed) - boosted events become visible
 2. **/ekdiloseis** page - public events discovery
 3. **/dashboard-user?tab=events** - user's events section
-4. **/business/:id** - events displayed on business profile pages
+4. **/business/:id** - events displayed on business profile pages (source: 'profile')
 
 ### Offer Views - Tracked From:
 1. **Feed** (/ or /feed) - boosted offers become visible
 2. **/offers** page - public offers discovery  
 3. **/dashboard-user?tab=offers** - user's offers section
-4. **/business/:id** - offers displayed on business profile pages
+4. **/business/:id** - offers displayed on business profile pages (source: 'profile')
+
+## How Business Profile Views Work
+- Views are tracked via **IntersectionObserver** when each card becomes visible
+- UnifiedEventCard and OfferCard handle their own view tracking
+- Source detection: `path.startsWith('/business/')` → source = 'profile'
+- NO bulk tracking on page load - only when user scrolls and sees the card
 
 ## Search Click Behavior
 - **Business results**: Navigate to `/business/:id` - tracked as profile_click
@@ -43,10 +49,9 @@ Updated: 2026-01-29
 - `useViewTracking` hook - IntersectionObserver for impression detection
 
 ## Components Using View Tracking
-- `UnifiedEventCard.tsx` - calls `trackEventView` on visibility
-- `OfferCard.tsx` - calls `trackDiscountView` on visibility
+- `UnifiedEventCard.tsx` - calls `trackEventView` on visibility (detects /business/ path → source: 'profile')
+- `OfferCard.tsx` - calls `trackDiscountView` on visibility (detects /business/ path → source: 'profile')
 - `BoostedContentSection.tsx` - OfferCard calls `trackDiscountView` on visibility
-- `BusinessProfile.tsx` - tracks views for all events/offers displayed on the page
 
 ## Analytics Dashboard Data Sources
 - **Event Views**: `event_views` table
