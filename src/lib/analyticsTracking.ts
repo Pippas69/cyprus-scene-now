@@ -35,6 +35,18 @@ const debugLog = (...args: any[]) => {
 };
 
 /**
+ * Global kill-switch for view impressions.
+ * Used to ensure dashboards never inflate analytics.
+ */
+const isNoViewsContext = (): boolean => {
+  try {
+    return Boolean((window as any)?.__NO_VIEWS_CONTEXT);
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Get current context for view tracking decisions
  */
 const getCurrentContext = () => {
@@ -59,13 +71,17 @@ const isAllowedEventViewSource = (): boolean => {
   
   // Never track if src=dashboard_user (safety fallback)
   if (src === 'dashboard_user') return false;
+
+  // Never track if src=dashboard_business (business dashboard should not inflate analytics)
+  if (src === 'dashboard_business') return false;
+
+  // Never track from the business dashboard routes
+  if (path.startsWith('/dashboard-business')) return false;
   
   // Allowed: Feed page (root / or /feed)
   if (path === '/' || path === '/feed') return true;
 
-  // Allowed: Business dashboard feed (index route renders the Feed component)
-  // IMPORTANT: Only the feed ("home") inside business dashboard should count as views.
-  if (path === '/dashboard-business' || path === '/dashboard-business/') return true;
+  // NOTE: Business dashboard is intentionally excluded from view tracking.
   
   // Allowed: /ekdiloseis page (public events discovery)
   if (path === '/ekdiloseis' || path.startsWith('/ekdiloseis')) return true;
@@ -91,13 +107,17 @@ const isAllowedOfferViewSource = (): boolean => {
   
   // Never track if src=dashboard_user (safety fallback)
   if (src === 'dashboard_user') return false;
+
+  // Never track if src=dashboard_business (business dashboard should not inflate analytics)
+  if (src === 'dashboard_business') return false;
+
+  // Never track from the business dashboard routes
+  if (path.startsWith('/dashboard-business')) return false;
   
   // Allowed: Feed page (root / or /feed)
   if (path === '/' || path === '/feed') return true;
 
-  // Allowed: Business dashboard feed (index route renders the Feed component)
-  // IMPORTANT: Only the feed ("home") inside business dashboard should count as views.
-  if (path === '/dashboard-business' || path === '/dashboard-business/') return true;
+  // NOTE: Business dashboard is intentionally excluded from view tracking.
   
   // Allowed: /offers page (public offers discovery)
   if (path === '/offers' || path.startsWith('/offers')) return true;
@@ -151,6 +171,13 @@ export const trackEventView = async (
   source: 'feed' | 'map' | 'search' | 'profile' | 'direct'
 ) => {
   try {
+    // Hard kill-switch: never record view impressions in protected contexts.
+    // (Dashboards must not inflate analytics)
+    if (isNoViewsContext()) {
+      debugLog('[trackEventView] skipped - __NO_VIEWS_CONTEXT', { eventId, source, ...getCurrentContext() });
+      return;
+    }
+
     // 'search' source is always allowed - it's tracked on click, not on appearance
     // For other sources, check if this is an allowed source for event views
     if (source !== 'search' && !isAllowedEventViewSource()) {
@@ -189,6 +216,12 @@ export const trackDiscountView = async (
   source: 'feed' | 'event' | 'profile' | 'direct' | 'search'
 ) => {
   try {
+    // Hard kill-switch: never record view impressions in protected contexts.
+    if (isNoViewsContext()) {
+      debugLog('[trackDiscountView] skipped - __NO_VIEWS_CONTEXT', { discountId, source, ...getCurrentContext() });
+      return;
+    }
+
     // 'search' source is always allowed - it's tracked on click, not on appearance
     // For other sources, check if this is an allowed source for offer views
     if (source !== 'search' && !isAllowedOfferViewSource()) {
