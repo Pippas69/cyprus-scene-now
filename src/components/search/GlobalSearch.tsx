@@ -101,8 +101,12 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
 
       setIsLoading(true);
 
+      // Get current user for personalized search
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { data, error } = await supabase.rpc('search_content', {
         search_query: query,
+        p_user_id: user?.id || null,
       });
 
       if (!error && data) {
