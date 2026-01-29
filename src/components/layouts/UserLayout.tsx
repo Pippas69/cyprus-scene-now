@@ -103,7 +103,7 @@ export function UserLayout({ children }: UserLayoutProps) {
 
           {/* Search - Desktop only in header */}
           <div className="hidden md:flex flex-1 max-w-md mx-4 min-w-0">
-            <GlobalSearch language={language} resultTypes={['business']} />
+            <GlobalSearch language={language} resultTypes={['business', 'event', 'offer']} />
           </div>
 
           {/* Mobile Search Button */}
@@ -115,7 +115,7 @@ export function UserLayout({ children }: UserLayoutProps) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="top" className="h-full">
-                <GlobalSearch language={language} fullscreen resultTypes={['business']} />
+                <GlobalSearch language={language} fullscreen resultTypes={['business', 'event', 'offer']} />
               </SheetContent>
             </Sheet>
           </div>

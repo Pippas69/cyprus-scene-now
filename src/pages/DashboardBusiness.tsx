@@ -280,7 +280,7 @@ const DashboardBusiness = () => {
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="top" className="h-full">
-                    <GlobalSearch language={language} fullscreen resultTypes={['business']} />
+                    <GlobalSearch language={language} fullscreen resultTypes={['business', 'event', 'offer']} />
                   </SheetContent>
                 </Sheet>
                 
