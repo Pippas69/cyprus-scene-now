@@ -862,11 +862,11 @@ const EventCreationForm = ({
                           <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
                             <Input type="number" value={tier.minPeople} onChange={e => updateTier(type, index, {
                       minPeople: parseInt(e.target.value) || 1
-                    })} min={1} className="w-12 sm:w-16 h-7 sm:h-10 text-[13px] sm:text-sm font-semibold tabular-nums text-center" placeholder={t.fromPersons} />
+                    })} min={1} className="w-12 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" placeholder={t.fromPersons} />
                             <span className="text-muted-foreground text-xs">-</span>
                             <Input type="number" value={tier.maxPeople} onChange={e => updateTier(type, index, {
                       maxPeople: parseInt(e.target.value) || 1
-                    })} min={tier.minPeople} className="w-12 sm:w-16 h-7 sm:h-10 text-[13px] sm:text-sm font-semibold tabular-nums text-center" placeholder={t.toPersons} />
+                    })} min={tier.minPeople} className="w-12 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" placeholder={t.toPersons} />
                             <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">
                               {language === 'el' ? 'άτ.' : 'ppl'}
                             </span>
@@ -876,7 +876,7 @@ const EventCreationForm = ({
                             <span className="text-muted-foreground text-xs">€</span>
                             <Input type="number" value={tier.prepaidChargeCents / 100} onChange={e => updateTier(type, index, {
                       prepaidChargeCents: Math.round(parseFloat(e.target.value || '0') * 100)
-                    })} min={0} step={5} className="w-16 sm:w-24 h-7 sm:h-10 text-[13px] sm:text-sm font-semibold tabular-nums text-center" />
+                    })} min={0} step={5} className="w-16 sm:w-24 h-7 sm:h-10 text-[11px] sm:text-sm" />
                           </div>
                           {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-6 w-6 sm:h-8 sm:w-8 text-destructive flex-shrink-0">
                               <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
