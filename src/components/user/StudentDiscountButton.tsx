@@ -101,8 +101,9 @@ export function StudentDiscountButton({
   };
 
   const handleVerify = () => {
-    // Navigate to signup to verify student status
-    navigate('/signup');
+    // Navigate to settings to verify student status
+    setDialogOpen(false);
+    navigate('/dashboard-user?tab=settings');
   };
 
   // Badge variant - small circular badge for avatar overlay
