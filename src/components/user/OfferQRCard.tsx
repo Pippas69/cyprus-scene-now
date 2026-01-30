@@ -161,14 +161,14 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
 
             {/* Download Button */}
             <div className="flex gap-2 mt-5">
-              <Button 
-                variant="outline" 
-                onClick={handleDownloadQR} 
-                className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {text.downloadQR}
-              </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleDownloadQR} 
+              className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+            >
+              <Download className="h-3 w-3 mr-1.5 shrink-0" />
+              {text.downloadQR}
+            </Button>
             </div>
           </div>
 
