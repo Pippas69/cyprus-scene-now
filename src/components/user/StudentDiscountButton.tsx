@@ -119,13 +119,16 @@ export function StudentDiscountButton({
 
     return (
       <>
-        <div 
-          onClick={handleClick}
-          className="bg-accent text-accent-foreground text-[9px] font-bold rounded-full h-7 w-7 flex flex-col items-center justify-center border-2 border-background shadow-md hover:scale-110 transition-transform cursor-pointer"
-        >
-          <GraduationCap className="h-3 w-3" />
-          <span className="-mt-0.5">{discountPercent}%</span>
-        </div>
+        {/* Hide badge when dialog is open to prevent overlap on mobile */}
+        {!dialogOpen && (
+          <div 
+            onClick={handleClick}
+            className="bg-accent text-accent-foreground text-[9px] font-bold rounded-full h-7 w-7 flex flex-col items-center justify-center border-2 border-background shadow-md hover:scale-110 transition-transform cursor-pointer"
+          >
+            <GraduationCap className="h-3 w-3" />
+            <span className="-mt-0.5">{discountPercent}%</span>
+          </div>
+        )}
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="sm:max-w-md">
