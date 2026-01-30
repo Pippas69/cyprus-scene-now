@@ -4868,6 +4868,29 @@ export type Database = {
         Args: { p_party_size: number; p_seating_type_id: string }
         Returns: number
       }
+      get_similar_events: {
+        Args: { p_event_id: string; p_limit?: number; p_user_id?: string }
+        Returns: {
+          business_city: string
+          business_id: string
+          business_logo_url: string
+          business_name: string
+          business_verified: boolean
+          category: string[]
+          cover_image_url: string
+          end_at: string
+          event_type: string
+          going_count: number
+          id: string
+          interested_count: number
+          is_boosted: boolean
+          location: string
+          price_tier: string
+          similarity_score: number
+          start_at: string
+          title: string
+        }[]
+      }
       get_similar_users: {
         Args: { limit_count?: number; target_user_id: string }
         Returns: {
