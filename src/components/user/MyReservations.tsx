@@ -759,43 +759,43 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* QR Code Enlarged Dialog - Premium Style */}
+      {/* QR Code Enlarged Dialog - Premium Compact Style */}
       <Dialog open={qrDialog?.open || false} onOpenChange={(open) => !open && setQrDialog(null)}>
-        <DialogContent className="max-w-sm p-0 overflow-hidden border-0 bg-transparent">
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-            {/* Header with ΦΟΜΟ branding */}
-            <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-6 py-5 text-center">
-              <h1 className="text-2xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
+        <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
+            {/* Header with ΦΟΜΟ branding - Compact */}
+            <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
+              <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
               {qrDialog?.businessName && (
-                <p className="text-white/70 text-xs mt-1">by {qrDialog.businessName}</p>
+                <p className="text-white/70 text-[10px] mt-0.5">by {qrDialog.businessName}</p>
               )}
             </div>
 
-            {/* Main Content */}
-            <div className="bg-white/95 backdrop-blur-xl px-6 py-5">
+            {/* Main Content - Compact */}
+            <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
               {/* Confirmation Code */}
               {qrDialog?.confirmationCode && (
-                <div className="text-center mb-4">
-                  <p className="text-[10px] text-[#64748b] uppercase tracking-wide mb-1">
+                <div className="text-center mb-2">
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide mb-0.5">
                     {language === 'el' ? 'Κωδικός' : 'Code'}
                   </p>
-                  <p className="text-3xl font-bold text-[#102b4a] tracking-widest">
+                  <p className="text-xl font-bold text-[#102b4a] tracking-widest">
                     {qrDialog.confirmationCode}
                   </p>
                 </div>
               )}
 
-              {/* QR Code */}
+              {/* QR Code - Slightly smaller */}
               {qrDialog?.qrCode && (
                 <div className="flex flex-col items-center">
-                  <div className="p-3 bg-white rounded-2xl shadow-lg border-2 border-[#3ec3b7]">
+                  <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
                     <img 
                       src={qrDialog.qrCode} 
                       alt="QR Code" 
-                      className="w-56 h-56"
+                      className="w-44 h-44"
                     />
                   </div>
-                  <p className="text-xs text-[#64748b] mt-3 text-center">
+                  <p className="text-[10px] text-[#64748b] mt-2 text-center">
                     {language === 'el' 
                       ? 'Παρουσιάστε αυτόν τον κωδικό QR στην επιχείρηση'
                       : 'Present this QR code at the venue'}
