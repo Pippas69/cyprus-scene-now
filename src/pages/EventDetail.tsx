@@ -156,7 +156,7 @@ export default function EventDetail() {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("first_name, last_name, avatar_url")
+        .select("first_name, last_name, avatar_url, interests, city")
         .eq("id", user.id)
         .single();
 
@@ -208,23 +208,44 @@ export default function EventDetail() {
       // Fetch RSVP counts (global)
       await refreshCounts(eventId);
 
-      // Fetch similar events (same category or location)
-      const { data: similar } = await supabase
-        .from("events")
-        .select(
-          `
-        *,
-        businesses!inner(name, logo_url, verified)
-      `
-        )
-        .neq("id", eventId)
-        .gte("end_at", new Date().toISOString())
-        .or(
-          `location.ilike.%${eventData.location}%,category.cs.{${eventData.category[0] || ""}}`
-        )
-        .limit(3);
+      // Fetch personalized similar events using the new RPC function
+      // Prioritizes: boosted events first, then user interests/city match
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      const { data: similar, error: similarError } = await supabase.rpc('get_similar_events', {
+        p_event_id: eventId,
+        p_user_id: currentUser?.id || null,
+        p_limit: 2  // Maximum 2 similar events
+      });
 
-      setSimilarEvents(similar || []);
+      if (similarError) {
+        console.error('Error fetching similar events:', similarError);
+        setSimilarEvents([]);
+      } else {
+        // Transform RPC result to match the expected format
+        const transformedSimilar = (similar || []).map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          start_at: item.start_at,
+          end_at: item.end_at,
+          location: item.location,
+          cover_image_url: item.cover_image_url,
+          category: item.category,
+          price_tier: item.price_tier,
+          event_type: item.event_type,
+          interested_count: item.interested_count,
+          going_count: item.going_count,
+          boostScore: item.is_boosted ? 100 : 0,
+          businesses: {
+            id: item.business_id,
+            name: item.business_name,
+            logo_url: item.business_logo_url,
+            verified: item.business_verified,
+            city: item.business_city,
+          }
+        }));
+        setSimilarEvents(transformedSimilar);
+      }
     } catch (err: any) {
       console.error("Event details error:", err);
       setError(err.message || "Failed to load event details");
@@ -624,38 +645,44 @@ export default function EventDetail() {
               </RippleButton>
             </div>
 
-            {/* Similar Events - use the SAME card as feed */}
-            {similarEvents.length > 0 && (
-              <div className="mt-4">
-                <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
-                {/* Mobile only: single column */}
-                <motion.div
-                  className="grid gap-2 md:hidden"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {similarEvents.map((similar) => (
-                    <motion.div key={similar.id} variants={itemVariants}>
-                      <UnifiedEventCard event={similar} language={language} size="mobileFixed" />
-                    </motion.div>
-                  ))}
-                </motion.div>
-                {/* Tablet/Desktop: 2-column grid */}
-                <motion.div
-                  className="hidden md:grid md:grid-cols-2 gap-2"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {similarEvents.map((similar) => (
-                    <motion.div key={similar.id} variants={itemVariants}>
-                      <UnifiedEventCard event={similar} language={language} size="full" />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-            )}
+            {/* Similar Events - Always show section, use personalized RPC */}
+            <div className="mt-4">
+              <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
+              {similarEvents.length > 0 ? (
+                <>
+                  {/* Mobile only: single column */}
+                  <motion.div
+                    className="grid gap-2 md:hidden"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {similarEvents.map((similar) => (
+                      <motion.div key={similar.id} variants={itemVariants}>
+                        <UnifiedEventCard event={similar} language={language} size="mobileFixed" />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                  {/* Tablet/Desktop: 2-column grid */}
+                  <motion.div
+                    className="hidden md:grid md:grid-cols-2 gap-2"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {similarEvents.map((similar) => (
+                      <motion.div key={similar.id} variants={itemVariants}>
+                        <UnifiedEventCard event={similar} language={language} size="full" />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {language === 'el' ? 'Δεν βρέθηκαν παρόμοια events' : 'No similar events found'}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Sidebar - hidden on mobile/tablet, shown on desktop (lg+) */}
