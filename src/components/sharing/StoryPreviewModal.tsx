@@ -99,12 +99,56 @@ export const StoryPreviewModal = ({
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="relative w-full h-full flex items-center justify-center"
               >
-                <img
-                  src={imageUrl}
-                  alt="Story preview"
-                  className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                  style={{ maxHeight: 'calc(100vh - 320px)' }}
-                />
+                {/* Animated wrapper with Spotify-style floating effect */}
+                <motion.div
+                  animate={{
+                    rotate: [-3, 3],
+                    y: [-12, 12],
+                  }}
+                  transition={{
+                    rotate: {
+                      duration: 4,
+                      repeat: Infinity,
+                      repeatType: "mirror",
+                      ease: "easeInOut",
+                    },
+                    y: {
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatType: "mirror",
+                      ease: "easeInOut",
+                    },
+                  }}
+                  style={{ perspective: 1000 }}
+                >
+                  <motion.div
+                    animate={{
+                      x: [-4, 4],
+                      scale: [0.99, 1.01],
+                    }}
+                    transition={{
+                      x: {
+                        duration: 5,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut",
+                      },
+                      scale: {
+                        duration: 6,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut",
+                      },
+                    }}
+                  >
+                    <img
+                      src={imageUrl}
+                      alt="Story preview"
+                      className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                      style={{ maxHeight: 'calc(100vh - 320px)' }}
+                    />
+                  </motion.div>
+                </motion.div>
               </motion.div>
             ) : null}
           </AnimatePresence>
