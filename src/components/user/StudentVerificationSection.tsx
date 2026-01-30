@@ -149,7 +149,7 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
   // Already verified
   if (verification?.status === 'approved') {
     return (
-      <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
+      <Card id="student-verification" className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
         <CardHeader className="p-3 sm:p-4">
           {/* Desktop/Tablet layout - badge next to status */}
           <div className="hidden sm:flex items-center justify-between gap-2">
@@ -202,7 +202,7 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
   // Pending verification
   if (verification?.status === 'pending') {
     return (
-      <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+      <Card id="student-verification" className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
         <CardHeader className="p-3 sm:p-4">
           <div className="flex items-center gap-1.5">
             <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
@@ -245,7 +245,7 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
 
   // Rejected or no verification - show form
   return (
-    <Card>
+    <Card id="student-verification">
       <CardHeader className="p-3 sm:p-4">
         <div className="flex items-center gap-1.5">
           <GraduationCap className="h-4 w-4 shrink-0 text-primary" />

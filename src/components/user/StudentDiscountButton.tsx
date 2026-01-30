@@ -101,9 +101,9 @@ export function StudentDiscountButton({
   };
 
   const handleVerify = () => {
-    // Navigate to settings to verify student status
+    // Navigate to settings and scroll to student verification section
     setDialogOpen(false);
-    navigate('/dashboard-user?tab=settings');
+    navigate('/dashboard-user?tab=settings#student-verification');
   };
 
   // Badge variant - small circular badge for avatar overlay
