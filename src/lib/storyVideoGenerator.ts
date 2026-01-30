@@ -4,7 +4,7 @@
  */
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { toBlobURL } from '@ffmpeg/util';
 
 interface StoryVideoOptions {
   title: string;
@@ -20,12 +20,13 @@ const FPS = 30;
 const DURATION_SECONDS = 3;
 const TOTAL_FRAMES = FPS * DURATION_SECONDS;
 
-// Animation configuration (Spotify-like)
+// Animation configuration - INCREASED amplitudes for unmistakable motion
 const ANIMATION = {
-  floatY: { amplitude: 15, period: 3000 },      // Float up/down ±15px, 3s cycle
-  rotation: { amplitude: 3, period: 4000 },      // Sway ±3°, 4s cycle  
-  scale: { min: 0.98, max: 1.02, period: 5000 }, // Breathing scale, 5s cycle
-  shadow: { min: 20, max: 35, period: 3500 },    // Shadow depth variation
+  floatY: { amplitude: 40, period: 3000 },       // Float up/down ±40px (was ±15)
+  floatX: { amplitude: 15, period: 4500 },       // NEW: Drift left/right ±15px
+  rotation: { amplitude: 7, period: 4000 },      // Sway ±7° (was ±3°)
+  scale: { min: 0.96, max: 1.04, period: 5000 }, // Breathing scale (increased range)
+  shadow: { min: 20, max: 45, period: 3500 },    // Shadow depth variation (increased)
   gradientShift: { period: 6000 },               // Background color shift
 };
 
@@ -75,6 +76,7 @@ const getAnimationValues = (frameIndex: number) => {
   
   // Sinusoidal animations with different phases for organic feel
   const floatY = Math.sin((timeMs / ANIMATION.floatY.period) * 2 * Math.PI) * ANIMATION.floatY.amplitude;
+  const floatX = Math.sin((timeMs / ANIMATION.floatX.period) * 2 * Math.PI + Math.PI / 4) * ANIMATION.floatX.amplitude;
   const rotation = Math.sin((timeMs / ANIMATION.rotation.period) * 2 * Math.PI) * ANIMATION.rotation.amplitude;
   
   const scaleProgress = (Math.sin((timeMs / ANIMATION.scale.period) * 2 * Math.PI) + 1) / 2;
@@ -85,7 +87,7 @@ const getAnimationValues = (frameIndex: number) => {
   
   const gradientPhase = (timeMs / ANIMATION.gradientShift.period) * 2 * Math.PI;
   
-  return { floatY, rotation, scale, shadowBlur, gradientPhase };
+  return { floatY, floatX, rotation, scale, shadowBlur, gradientPhase };
 };
 
 /**
@@ -122,10 +124,10 @@ const drawAnimatedBackground = (
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   ctx.filter = 'none';
 
-  // Animated color overlay with shifting hue
-  const hueShift = Math.sin(gradientPhase) * 10; // Subtle hue shift
-  const opacity = 0.25 + Math.sin(gradientPhase * 0.5) * 0.05;
-  ctx.fillStyle = `hsla(${260 + hueShift}, 30%, 10%, ${opacity})`;
+  // Animated color overlay with stronger shifting hue
+  const hueShift = Math.sin(gradientPhase) * 15; // Increased from 10
+  const opacity = 0.28 + Math.sin(gradientPhase * 0.5) * 0.08; // Increased variation
+  ctx.fillStyle = `hsla(${260 + hueShift}, 35%, 10%, ${opacity})`;
   ctx.fillRect(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
 
   // Top gradient
@@ -152,6 +154,7 @@ const drawAnimatedCard = (
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   floatY: number,
+  floatX: number,
   rotation: number,
   scale: number,
   shadowBlur: number
@@ -172,7 +175,7 @@ const drawAnimatedCard = (
     drawWidth = drawHeight * imgRatio;
   }
 
-  const centerX = VIDEO_WIDTH / 2;
+  const centerX = VIDEO_WIDTH / 2 + floatX;
   const centerY = baseOffsetY + drawHeight / 2 + floatY;
   const radius = 24;
 
@@ -191,7 +194,7 @@ const drawAnimatedCard = (
   ctx.shadowOffsetX = 0;
 
   // Calculate position
-  const x = (VIDEO_WIDTH - drawWidth) / 2;
+  const x = (VIDEO_WIDTH - drawWidth) / 2 + floatX;
   const y = baseOffsetY + floatY;
 
   // Draw rounded rectangle with image
@@ -333,16 +336,28 @@ const renderFrame = (
   options: StoryVideoOptions,
   frameIndex: number
 ) => {
-  const { floatY, rotation, scale, shadowBlur, gradientPhase } = getAnimationValues(frameIndex);
+  const { floatY, floatX, rotation, scale, shadowBlur, gradientPhase } = getAnimationValues(frameIndex);
 
   // Clear canvas
   ctx.clearRect(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
 
   // Draw layers
   drawAnimatedBackground(ctx, img, gradientPhase);
-  const { imageBottom } = drawAnimatedCard(ctx, img, floatY, rotation, scale, shadowBlur);
+  const { imageBottom } = drawAnimatedCard(ctx, img, floatY, floatX, rotation, scale, shadowBlur);
   drawTextOverlay(ctx, options, imageBottom);
   drawBranding(ctx);
+};
+
+/**
+ * Compute a simple hash of pixel data for frame comparison
+ */
+const computeFrameHash = (data: Uint8Array): number => {
+  let hash = 0;
+  // Sample every 1000th byte to keep it fast
+  for (let i = 0; i < data.length; i += 1000) {
+    hash = ((hash << 5) - hash + data[i]) | 0;
+  }
+  return hash;
 };
 
 /**
@@ -369,6 +384,7 @@ export const generateStoryVideo = async (
 
   // Generate frames as PNGs
   const frames: Uint8Array[] = [];
+  const sampleHashes: number[] = [];
   
   for (let i = 0; i < TOTAL_FRAMES; i++) {
     renderFrame(ctx, img, options, i);
@@ -379,11 +395,26 @@ export const generateStoryVideo = async (
     });
     
     const arrayBuffer = await blob.arrayBuffer();
-    frames.push(new Uint8Array(arrayBuffer));
+    const frameData = new Uint8Array(arrayBuffer);
+    frames.push(frameData);
+    
+    // Sample frames for hash validation (0, 15, 45, 89)
+    if (i === 0 || i === 15 || i === 45 || i === TOTAL_FRAMES - 1) {
+      sampleHashes.push(computeFrameHash(frameData));
+    }
     
     // Progress: 10% to 60% for frame generation
     onProgress?.(0.1 + (i / TOTAL_FRAMES) * 0.5);
   }
+
+  // Validate frames are different
+  const uniqueHashes = new Set(sampleHashes);
+  if (uniqueHashes.size <= 1) {
+    console.error('Frame validation failed: all sampled frames are identical!', sampleHashes);
+    throw new Error('Generated frames are identical - animation not rendering correctly');
+  }
+  
+  console.log(`Frame validation passed: ${uniqueHashes.size} unique frames detected out of ${sampleHashes.length} samples`);
 
   onProgress?.(0.6);
 
@@ -399,11 +430,14 @@ export const generateStoryVideo = async (
 
   onProgress?.(0.8);
 
-  // Encode to MP4
+  // Encode to MP4 with explicit start_number and duration
   await ffmpeg.exec([
     '-framerate', String(FPS),
+    '-start_number', '0',
     '-i', 'frame%04d.png',
+    '-t', String(DURATION_SECONDS),
     '-c:v', 'libx264',
+    '-r', String(FPS),
     '-pix_fmt', 'yuv420p',
     '-preset', 'fast',
     '-crf', '23',

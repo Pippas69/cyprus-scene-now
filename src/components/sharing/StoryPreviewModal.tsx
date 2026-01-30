@@ -172,12 +172,24 @@ export const StoryPreviewModal = ({
                     }}
                     className="rounded-xl"
                   >
-                    <img
-                      src={imageUrl}
-                      alt="Story preview"
-                      className="max-w-full max-h-full object-contain rounded-xl"
-                      style={{ maxHeight: 'calc(100vh - 340px)', transform: 'scale(0.92)' }}
-                    />
+                    {isVideo ? (
+                      <video
+                        src={imageUrl}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="max-w-full max-h-full object-contain rounded-xl"
+                        style={{ maxHeight: 'calc(100vh - 340px)', transform: 'scale(0.92)' }}
+                      />
+                    ) : (
+                      <img
+                        src={imageUrl}
+                        alt="Story preview"
+                        className="max-w-full max-h-full object-contain rounded-xl"
+                        style={{ maxHeight: 'calc(100vh - 340px)', transform: 'scale(0.92)' }}
+                      />
+                    )}
                   </motion.div>
                 </motion.div>
               </motion.div>

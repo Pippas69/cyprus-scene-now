@@ -481,16 +481,16 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
       }
 
       try {
-        const shareData = {
+        // iOS compatibility: share files WITHOUT url to avoid canShare returning false
+        const sharePayload = {
           files: [file],
           title: data.title,
-          url: data.url,
         };
 
-        if (navigator.canShare && navigator.canShare(shareData)) {
-          await navigator.share(shareData);
+        if (navigator.canShare && navigator.canShare(sharePayload)) {
+          await navigator.share(sharePayload);
         } else {
-          // Fallback to text-only share
+          // Fallback to text-only share with URL
           await navigator.share({
             title: data.title,
             text: data.text,
