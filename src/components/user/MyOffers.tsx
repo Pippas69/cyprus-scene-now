@@ -35,9 +35,11 @@ interface OfferPurchase {
     offer_type: string | null;
     bonus_percent: number | null;
     credit_amount_cents: number | null;
+    offer_image_url: string | null;
     businesses: {
       name: string;
       logo_url: string | null;
+      cover_url: string | null;
       city: string;
     };
   };
@@ -195,9 +197,11 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             offer_type,
             bonus_percent,
             credit_amount_cents,
+            offer_image_url,
             businesses (
               name,
               logo_url,
+              cover_url,
               city
             )
           )
@@ -304,13 +308,20 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       return language === "el" ? `${t.purchasedOn} ${day} ${month}` : `${t.purchasedOn} ${month} ${day}`;
     };
 
+    // Use same image priority as OfferCard: offer_image_url → cover_url → logo_url
+    const imageUrl =
+      purchase.discounts.offer_image_url ||
+      purchase.discounts.businesses.cover_url ||
+      purchase.discounts.businesses.logo_url ||
+      null;
+
      return (
        <Card className="overflow-hidden relative">
          {/* Image section - h-40 like event/offer cards */}
          <div className="h-40 relative overflow-hidden rounded-t-xl">
-           {purchase.discounts.businesses.logo_url ? (
+           {imageUrl ? (
              <img
-               src={purchase.discounts.businesses.logo_url}
+               src={imageUrl}
                alt={purchase.discounts.businesses.name}
                className="absolute inset-0 h-full w-full object-cover"
              />

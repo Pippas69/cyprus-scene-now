@@ -87,9 +87,9 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
 
   return (
     <Dialog open={!!offer} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-sm p-0 overflow-hidden border-0 bg-transparent">
-        {/* Offer Card Container */}
-        <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+      <DialogContent className="max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
+        {/* Offer Card Container - Start from top on mobile */}
+        <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
           {/* Header with ΦΟΜΟ branding */}
           <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-6 pt-8 pb-5 text-center">
             <h1 className="text-2xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
