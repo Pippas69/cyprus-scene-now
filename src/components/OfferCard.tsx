@@ -150,11 +150,11 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
       : `Expires ${month} ${day}`;
   };
   
-  // Handle map navigation
+  // Handle map navigation - NO tracking for location clicks on offers
   const handleMapClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/xartis?business=${offerData?.business_id}`);
+    navigate(`/xartis?business=${offerData?.business_id}&src=offer_location`);
   };
 
   // Generate benefit text - what the user gets (1 line, bold)

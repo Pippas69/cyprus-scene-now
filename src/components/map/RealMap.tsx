@@ -346,8 +346,12 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         if (target && lastFocusedRef.current !== focusBusinessId) {
           lastFocusedRef.current = focusBusinessId;
           const [lng, lat] = target.coordinates;
-          // URL navigation to specific business = profile INTERACTION (user clicked a link)
-          trackEngagement(target.id, 'profile_click', 'business', target.id, { source: 'url_navigation' });
+          // Check source - offer_location clicks should NOT be tracked
+          const src = new URLSearchParams(window.location.search).get('src');
+          if (src !== 'offer_location' && src !== 'dashboard_user') {
+            // URL navigation to specific business = profile INTERACTION (user clicked a link)
+            trackEngagement(target.id, 'profile_click', 'business', target.id, { source: 'url_navigation' });
+          }
           map.current.flyTo({ center: [lng, lat], zoom: 15, duration: 800, essential: true });
           setTimeout(() => openBusinessPopup(target), 500);
           return;
