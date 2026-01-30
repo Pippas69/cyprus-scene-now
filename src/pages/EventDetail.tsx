@@ -208,19 +208,7 @@ export default function EventDetail() {
       // Fetch RSVP counts (global)
       await refreshCounts(eventId);
 
-      // Fetch similar events (same category or location) with boost prioritization
-      // First fetch active boosts to know which events are boosted
-      const now = new Date().toISOString();
-      const { data: activeBoosts } = await supabase
-        .from("event_boosts")
-        .select("event_id")
-        .eq("status", "active")
-        .lte("start_date", now)
-        .gte("end_date", now);
-      
-      const boostedEventIds = new Set((activeBoosts || []).map(b => b.event_id));
-
-      // Fetch similar events - more than needed to allow for sorting
+      // Fetch similar events (same category or location)
       const { data: similar } = await supabase
         .from("events")
         .select(
@@ -230,27 +218,13 @@ export default function EventDetail() {
       `
         )
         .neq("id", eventId)
-        .gte("end_at", now)
+        .gte("end_at", new Date().toISOString())
         .or(
           `location.ilike.%${eventData.location}%,category.cs.{${eventData.category[0] || ""}}`
         )
-        .order("start_at", { ascending: true })
-        .limit(12);
+        .limit(3);
 
-      // Sort similar events: boosted first, then by start_at (soonest first)
-      const sortedSimilar = (similar || []).sort((a, b) => {
-        const aIsBoosted = boostedEventIds.has(a.id);
-        const bIsBoosted = boostedEventIds.has(b.id);
-        
-        // Boosted events come first
-        if (aIsBoosted && !bIsBoosted) return -1;
-        if (!aIsBoosted && bIsBoosted) return 1;
-        
-        // Within same boost status, sort by start_at (soonest first)
-        return new Date(a.start_at).getTime() - new Date(b.start_at).getTime();
-      }).slice(0, 3);
-
-      setSimilarEvents(sortedSimilar);
+      setSimilarEvents(similar || []);
     } catch (err: any) {
       console.error("Event details error:", err);
       setError(err.message || "Failed to load event details");
