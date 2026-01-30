@@ -1,96 +1,69 @@
 
-# Spotify-Style Animated Instagram Story Preview
+# Fix: Instagram Story Preview Animation Not Visible
 
-## Understanding the Request
+## Problem Identified
 
-You want the Instagram Story preview to have the same "cool" animated visual effect as Spotify's song share feature. Based on the session replay data I can see (with CSS transforms including `rotate()` and `translateY()`), this involves:
+The animation code is working (confirmed by session replay showing CSS transforms updating), but **the visual effect is not noticeable** due to two issues:
 
-- **Floating elements** that gently drift up and down
-- **Subtle rotation** creating a 3D parallax-like effect
-- **Continuous, smooth animation** that makes the preview feel "alive"
-
----
-
-## Current State vs. Desired State
-
-### Currently
-The `StoryPreviewModal` shows a **static image** with basic fade-in animation when the preview loads.
-
-### Desired (Spotify-style)
-An **animated, living preview** where:
-- The Story card gently rotates back and forth (±3-5 degrees)
-- Elements float up and down with slight offset
-- Background has subtle movement/parallax
-- Creates a premium, dynamic feel before sharing
+1. **Container clipping**: The `overflow-hidden` class on parent containers is clipping the animation when the image rotates/moves
+2. **Animation too subtle**: The current values (±3° rotation, ±12px movement) are barely perceptible
 
 ---
 
-## Implementation Plan
+## Solution
 
-### 1. Create Animated Story Preview Component
-A new component that wraps the static Story image with Framer Motion animations:
+### 1. Add Overflow Padding to Prevent Clipping
 
-**Animations to implement:**
-- **Card rotation**: Gentle oscillation between -4° and +4°
-- **Vertical float**: Subtle up/down movement (±15-20px)
-- **Background parallax**: Slower, opposite movement for depth
-- **Scale breathing**: Very subtle 0.98-1.02 scale pulse
+Wrap the animated image in a container with padding that gives room for the rotation and movement:
 
 ```text
-┌─────────────────────────────┐
-│     ╭─────────────────╮     │ ← Background layer (slower parallax)
-│     │                 │     │
-│     │  ╭───────────╮  │     │ ← Story card (floating + rotating)
-│     │  │  Image    │  │     │
-│     │  │  + Text   │  │     │
-│     │  ╰───────────╯  │     │
-│     │                 │     │
-│     ╰─────────────────╯     │
-│                             │
-│  [Download]     [Share]     │ ← Buttons remain static
-└─────────────────────────────┘
+Current:
+┌─────────────────────┐
+│ ┌─────────────────┐ │  ← overflow-hidden clips rotation
+│ │     Image       │ │
+│ └─────────────────╯ │
+└─────────────────────┘
+
+Fixed:
+┌─────────────────────┐
+│    ╭───────────╮    │  ← padding allows rotation to be visible
+│    │   Image   │    │
+│    ╰───────────╯    │
+└─────────────────────┘
 ```
 
-### 2. Update StoryPreviewModal
-Replace the static `<img>` with the new animated wrapper:
+### 2. Increase Animation Intensity
 
-- Wrap the Story image in a motion container
-- Apply continuous looping animations
-- Keep the modal structure and buttons unchanged
+Make the effect more noticeable:
 
-### 3. Animation Configuration (Spotify-like feel)
+| Property | Current | New |
+|----------|---------|-----|
+| Rotation | ±3° | ±5° |
+| Y-Float | ±12px | ±18px |
+| X-Drift | ±4px | ±8px |
+| Scale | 0.99-1.01 | 0.98-1.02 |
+
+### 3. Add Shadow Animation
+
+Add a dynamic shadow that changes with the movement to enhance the 3D effect (like Spotify does):
 
 ```text
-Rotation:     rotate(-3°) ←→ rotate(3°)   [4 second cycle]
-Y-Translate:  -15px ←→ 15px               [3 second cycle]
-X-Translate:  -5px ←→ 5px                 [5 second cycle, offset]
-Scale:        0.99 ←→ 1.01                [6 second cycle, subtle]
+boxShadow: ["0 20px 40px rgba(0,0,0,0.3)", "0 30px 50px rgba(0,0,0,0.4)"]
 ```
 
-The different cycle durations create organic, non-repetitive movement (similar to how Spotify does it).
+---
+
+## Technical Changes
+
+### File: `src/components/sharing/StoryPreviewModal.tsx`
+
+1. **Add overflow padding container** around the animated elements
+2. **Increase animation values** for more pronounced effect
+3. **Add animated shadow** for depth perception
+4. **Scale down image slightly** to ensure rotation doesn't get clipped
 
 ---
 
-## Technical Details
+## Expected Result
 
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/sharing/StoryPreviewModal.tsx` | Add Framer Motion animated wrapper with continuous floating/rotation animations around the preview image |
-
-### Animation Implementation
-
-Using Framer Motion's `animate` prop with `transition: { repeat: Infinity, repeatType: "mirror" }`:
-
-- **Primary motion**: Rotation + Y-translate on main container
-- **Secondary motion**: Slight X-translate with phase offset
-- **Tertiary motion**: Very subtle scale "breathing"
-
-The animations will be smooth and buttery using `ease: "easeInOut"` with staggered durations to prevent mechanical repetition.
-
----
-
-## Summary
-
-This creates the same "living" feel as Spotify's song share where the content appears to float and gently sway, making the share preview feel premium and engaging before the user taps Share or Download.
+After implementation, the Story preview will have a clearly visible, premium floating animation similar to Spotify's share preview - the image will gently sway, rotate, and appear to "breathe" with a dynamic shadow effect.
