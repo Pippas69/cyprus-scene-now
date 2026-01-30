@@ -207,10 +207,11 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
       : `${t.expiresOn} ${month} ${day}`;
   };
 
+  // Handle map navigation - NO tracking for location clicks on offers
   const handleMapClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/xartis?business=${offer.business_id}`);
+    navigate(`/xartis?business=${offer.business_id}&src=offer_location`);
   };
 
   const handleRedeemClick = (e: React.MouseEvent) => {
