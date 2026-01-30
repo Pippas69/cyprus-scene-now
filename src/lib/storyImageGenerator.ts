@@ -24,8 +24,8 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw a clear background with smooth gradient fades
- * Uses full-resolution image with darkening and gradient overlays
+ * Draw background with extended edges and smooth gradient fades
+ * Extends top/bottom edge pixels to fill the 9:16 canvas without cropping
  */
 const drawClearBackground = (
   ctx: CanvasRenderingContext2D,
@@ -57,8 +57,71 @@ const drawClearBackground = (
     offsetY = 0;
   }
 
-  // Apply slight darkening for contrast with foreground
-  ctx.filter = 'brightness(0.75)';
+  // Extend top edge pixels if there's a gap
+  if (offsetY > 0) {
+    // Create temporary canvas to sample top row
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = img.width;
+    tempCanvas.height = 1;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (tempCtx) {
+      // Sample top row of image
+      tempCtx.drawImage(img, 0, 0, img.width, 1, 0, 0, img.width, 1);
+      // Apply brightness filter for background
+      ctx.filter = 'brightness(0.8)';
+      // Stretch top row to fill gap above image
+      ctx.drawImage(tempCanvas, offsetX, 0, drawWidth, offsetY);
+    }
+  }
+
+  // Extend bottom edge pixels if there's a gap
+  if (offsetY > 0) {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = img.width;
+    tempCanvas.height = 1;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (tempCtx) {
+      // Sample bottom row of image
+      tempCtx.drawImage(img, 0, img.height - 1, img.width, 1, 0, 0, img.width, 1);
+      // Apply brightness filter for background
+      ctx.filter = 'brightness(0.8)';
+      // Stretch bottom row to fill gap below image
+      ctx.drawImage(tempCanvas, offsetX, offsetY + drawHeight, drawWidth, canvasHeight - offsetY - drawHeight);
+    }
+  }
+
+  // Extend left edge pixels if there's a gap (for vertical images)
+  if (offsetX > 0) {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 1;
+    tempCanvas.height = img.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (tempCtx) {
+      // Sample left column of image
+      tempCtx.drawImage(img, 0, 0, 1, img.height, 0, 0, 1, img.height);
+      ctx.filter = 'brightness(0.8)';
+      // Stretch left column to fill gap
+      ctx.drawImage(tempCanvas, 0, offsetY, offsetX, drawHeight);
+    }
+  }
+
+  // Extend right edge pixels if there's a gap (for vertical images)
+  if (offsetX > 0) {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 1;
+    tempCanvas.height = img.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (tempCtx) {
+      // Sample right column of image
+      tempCtx.drawImage(img, img.width - 1, 0, 1, img.height, 0, 0, 1, img.height);
+      ctx.filter = 'brightness(0.8)';
+      // Stretch right column to fill gap
+      ctx.drawImage(tempCanvas, offsetX + drawWidth, offsetY, canvasWidth - offsetX - drawWidth, drawHeight);
+    }
+  }
+
+  // Apply slight darkening for contrast with foreground card
+  ctx.filter = 'brightness(0.8)';
   
   // Draw full-resolution background image (contained, not cropped)
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
@@ -66,21 +129,21 @@ const drawClearBackground = (
   // Reset filter
   ctx.filter = 'none';
 
-  // Add smooth gradient fade at top
-  const topGradient = ctx.createLinearGradient(0, 0, 0, 350);
-  topGradient.addColorStop(0, 'rgba(0, 0, 0, 0.6)');
-  topGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.2)');
+  // Add medium gradient fade at top (0 to 300px)
+  const topGradient = ctx.createLinearGradient(0, 0, 0, 300);
+  topGradient.addColorStop(0, 'rgba(0, 0, 0, 0.5)');
+  topGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)');
   topGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = topGradient;
-  ctx.fillRect(0, 0, canvasWidth, 350);
+  ctx.fillRect(0, 0, canvasWidth, 300);
 
-  // Add smooth gradient fade at bottom
-  const bottomGradient = ctx.createLinearGradient(0, canvasHeight - 500, 0, canvasHeight);
+  // Add medium gradient fade at bottom (canvasHeight - 450px to canvasHeight)
+  const bottomGradient = ctx.createLinearGradient(0, canvasHeight - 450, 0, canvasHeight);
   bottomGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-  bottomGradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.3)');
-  bottomGradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+  bottomGradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.25)');
+  bottomGradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
   ctx.fillStyle = bottomGradient;
-  ctx.fillRect(0, canvasHeight - 500, canvasWidth, 500);
+  ctx.fillRect(0, canvasHeight - 450, canvasWidth, 450);
 };
 
 /**
