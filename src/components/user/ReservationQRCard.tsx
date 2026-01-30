@@ -59,77 +59,74 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
 
   return (
     <Dialog open={!!reservation} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-sm p-0 overflow-hidden border-0 bg-transparent">
-        {/* Reservation Card Container */}
-        <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-          {/* Header with ΦΟΜΟ branding */}
-          <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-6 py-5 text-center">
-            <h1 className="text-2xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
+      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
+        {/* Reservation Card Container - Start from top on mobile */}
+        <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
+          {/* Header with ΦΟΜΟ branding - Compact */}
+          <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
+            <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
             {reservation?.businessName && (
-              <p className="text-white/70 text-xs mt-1">by {reservation.businessName}</p>
+              <p className="text-white/70 text-[10px] mt-0.5">by {reservation.businessName}</p>
             )}
           </div>
 
-          {/* Main Content - Frosted Glass Effect */}
-          <div className="bg-white/95 backdrop-blur-xl px-6 py-5">
-            {/* Confirmation Code - Prominent Display */}
-            <div className="text-center mb-4">
-              <p className="text-[10px] text-[#64748b] uppercase tracking-wide mb-1">{text.code}</p>
-              <p className="text-3xl font-bold text-[#102b4a] tracking-widest">
-                {reservation?.confirmationCode}
-              </p>
-            </div>
+          {/* Main Content - Frosted Glass Effect - Compact */}
+          <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
+            {/* Event Title */}
+            <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">
+              {reservation?.confirmationCode}
+            </h2>
 
-            {/* Info Grid */}
-            <div className="grid grid-cols-3 gap-3 mb-5">
+            {/* Info Grid - Compact */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
               {/* Date */}
-              <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
-                <Calendar className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                <p className="text-[10px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
                 <p className="text-xs font-semibold text-[#102b4a]">{formattedDate || '-'}</p>
               </div>
               
               {/* Time */}
-              <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
-                <Clock className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                <p className="text-[10px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-                <p className="text-sm font-semibold text-[#102b4a]">{reservation?.reservationTime || '-'}</p>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+                <p className="text-xs font-semibold text-[#102b4a]">{reservation?.reservationTime || '-'}</p>
               </div>
               
               {/* Party Size */}
-              <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
-                <Users className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                <p className="text-[10px] text-[#64748b] uppercase tracking-wide">{text.party}</p>
-                <p className="text-sm font-semibold text-[#102b4a]">
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Users className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.party}</p>
+                <p className="text-xs font-semibold text-[#102b4a]">
                   {reservation?.partySize || 1}
                 </p>
               </div>
             </div>
 
-            {/* QR Code */}
+            {/* QR Code - Slightly smaller */}
             {reservation?.qrCode && (
               <div className="flex flex-col items-center">
-                <div className="p-3 bg-white rounded-2xl shadow-lg border-2 border-[#3ec3b7]">
+                <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
                   <img 
                     src={reservation.qrCode} 
                     alt="Reservation QR Code" 
-                    className="w-56 h-56"
+                    className="w-44 h-44"
                   />
                 </div>
-                <p className="text-xs text-[#64748b] mt-3 text-center">
+                <p className="text-[10px] text-[#64748b] mt-2 text-center">
                   {text.scanAtVenue}
                 </p>
               </div>
             )}
 
-            {/* Download Button */}
-            <div className="flex gap-2 mt-5">
+            {/* Download Buttons - Compact */}
+            <div className="flex gap-2 mt-3">
               <Button 
                 variant="outline" 
                 onClick={handleDownloadQR} 
-                className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10"
+                className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-3 w-3 mr-1.5 shrink-0" />
                 {text.downloadQR}
               </Button>
             </div>
