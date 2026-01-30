@@ -211,7 +211,12 @@ export function DateTimePicker({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 z-50" align="start" sideOffset={4}>
+      <PopoverContent
+        className="w-auto p-0 z-50 max-h-[80vh] overflow-y-auto"
+        align="start"
+        sideOffset={8}
+        collisionPadding={12}
+      >
         <div className="pointer-events-auto">
           <Calendar
             mode="single"
@@ -223,7 +228,7 @@ export function DateTimePicker({
               return false;
             }}
             initialFocus
-            className={cn("p-3 pointer-events-auto")}
+            className={cn("p-2 sm:p-3 pointer-events-auto")}
           />
           
           <div className="border-t p-3 space-y-3">
