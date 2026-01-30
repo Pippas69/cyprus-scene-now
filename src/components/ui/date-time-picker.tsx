@@ -185,29 +185,33 @@ export function DateTimePicker({
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "w-full justify-start text-left font-normal h-9 sm:h-10",
             !displayValue && "text-muted-foreground"
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+          <CalendarIcon className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
           {displayValue ? (
             <>
-              {/* Mobile: Short date format */}
-              <span className="truncate sm:hidden text-xs">
-                {format(displayValue, dateOnlyDisplay ? "dd/MM/yy" : "dd/MM/yy HH:mm", { locale })}
+              {/* Mobile: Short date format with smaller text */}
+              <span className="truncate sm:hidden text-[10px]">
+                {format(displayValue, dateOnlyDisplay ? "dd/MM/yy" : "dd/MM HH:mm", { locale })}
+              </span>
+              {/* Tablet: Medium date format */}
+              <span className="truncate hidden sm:inline md:hidden text-xs">
+                {format(displayValue, dateOnlyDisplay ? "dd MMM yyyy" : "dd MMM, HH:mm", { locale })}
               </span>
               {/* Desktop: Full date format */}
-              <span className="truncate hidden sm:inline">
+              <span className="truncate hidden md:inline text-sm">
                 {format(displayValue, dateOnlyDisplay ? "PPP" : "PPP, HH:mm", { locale })}
               </span>
             </>
           ) : (
-            <span className="truncate text-xs sm:text-sm">{placeholder || (language === 'el' ? 'Επιλέξτε ημερομηνία' : 'Select date')}</span>
+            <span className="truncate text-[10px] sm:text-xs md:text-sm">{placeholder || (language === 'el' ? 'Επιλέξτε ημερομηνία' : 'Select date')}</span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 z-50" align="start" sideOffset={4}>
         <div className="pointer-events-auto">
           <Calendar
             mode="single"
