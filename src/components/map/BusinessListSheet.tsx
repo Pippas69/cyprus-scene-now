@@ -156,13 +156,13 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
         <button
           className={cn(
             "flex items-center gap-1.5 bg-gradient-to-r from-aegean to-seafoam text-white rounded-lg shadow-lg",
-            "px-2 py-1 md:px-3 md:py-1.5",
-            "text-[10px] md:text-xs font-medium",
+            "px-2.5 py-1.5 md:px-3 md:py-1.5",
+            "text-xs md:text-sm font-medium",
             "hover:opacity-90 transition-opacity cursor-pointer"
           )}
         >
-          <Building2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
-          <span>{businesses.length}</span>
+          <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <span>{businesses.length} Businesses</span>
         </button>
       </SheetTrigger>
       <SheetContent side="right" className="w-[320px] sm:w-[400px] p-0">
