@@ -90,52 +90,52 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
       <DialogContent className="max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
         {/* Offer Card Container - Start from top on mobile */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
-          {/* Header with ΦΟΜΟ branding */}
-          <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-6 pt-8 pb-5 text-center">
-            <h1 className="text-2xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
+          {/* Header with ΦΟΜΟ branding - Compact */}
+          <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
+            <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
             {offer?.businessName && (
-              <p className="text-white/70 text-xs mt-1">by {offer.businessName}</p>
+              <p className="text-white/70 text-[10px] mt-0.5">by {offer.businessName}</p>
             )}
           </div>
 
-          {/* Main Content - Frosted Glass Effect */}
-          <div className="bg-white/95 backdrop-blur-xl px-6 py-5">
+          {/* Main Content - Frosted Glass Effect - Compact */}
+          <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
             {/* Offer Title */}
-            <h2 className="text-lg font-semibold text-[#102b4a] text-center mb-4 line-clamp-2">
+            <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">
               {offer?.title}
             </h2>
 
-            {/* Info Grid */}
-            <div className="grid grid-cols-3 gap-3 mb-5">
+            {/* Info Grid - Compact */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
               {/* Purchase Date */}
-              <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
-                <Calendar className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                <p className="text-[10px] text-[#64748b] uppercase tracking-wide">{text.purchased}</p>
-                <p className="text-sm font-semibold text-[#102b4a]">{formattedPurchase}</p>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.purchased}</p>
+                <p className="text-xs font-semibold text-[#102b4a]">{formattedPurchase}</p>
               </div>
               
               {/* Expiry Date */}
-              <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
-                <Clock className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                <p className="text-[10px] text-[#64748b] uppercase tracking-wide">{text.expiry}</p>
-                <p className="text-sm font-semibold text-[#102b4a]">{formattedExpiry}</p>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.expiry}</p>
+                <p className="text-xs font-semibold text-[#102b4a]">{formattedExpiry}</p>
               </div>
               
               {/* Discount/Credit */}
-              <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
                 {offer?.isCredit ? (
                   <>
-                    <Wallet className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                    <p className="text-[10px] text-[#64748b] uppercase tracking-wide">{text.balance}</p>
-                    <p className="text-sm font-semibold text-[#102b4a]">
+                    <Wallet className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                    <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.balance}</p>
+                    <p className="text-xs font-semibold text-[#102b4a]">
                       €{((offer.balanceRemaining ?? 0) / 100).toFixed(0)}
                     </p>
                   </>
                 ) : (
                   <>
-                    <Tag className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                    <p className="text-[10px] text-[#64748b] uppercase tracking-wide">{text.offer}</p>
-                    <p className="text-sm font-semibold text-[#102b4a]">
+                    <Tag className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                    <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.offer}</p>
+                    <p className="text-xs font-semibold text-[#102b4a]">
                       -{offer?.discountPercent ?? 0}%
                     </p>
                   </>
@@ -143,32 +143,32 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
               </div>
             </div>
 
-            {/* QR Code */}
+            {/* QR Code - Slightly smaller */}
             {qrDataUrl && (
               <div className="flex flex-col items-center">
-                <div className="p-3 bg-white rounded-2xl shadow-lg border-2 border-[#3ec3b7]">
+                <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
                   <img 
                     src={qrDataUrl} 
                     alt="Offer QR Code" 
-                    className="w-56 h-56"
+                    className="w-44 h-44"
                   />
                 </div>
-                <p className="text-xs text-[#64748b] mt-3 text-center">
+                <p className="text-[10px] text-[#64748b] mt-2 text-center">
                   {text.scanAtVenue}
                 </p>
               </div>
             )}
 
             {/* Download Button */}
-            <div className="flex gap-2 mt-5">
-            <Button 
-              variant="outline" 
-              onClick={handleDownloadQR} 
-              className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
-            >
-              <Download className="h-3 w-3 mr-1.5 shrink-0" />
-              {text.downloadQR}
-            </Button>
+            <div className="flex gap-2 mt-3">
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadQR} 
+                className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+              >
+                <Download className="h-3 w-3 mr-1.5 shrink-0" />
+                {text.downloadQR}
+              </Button>
             </div>
           </div>
 
