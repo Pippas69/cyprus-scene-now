@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { trackEngagement } from '@/lib/analyticsTracking';
 import { generateStoryImage } from '@/lib/storyImageGenerator';
+import { getCacheKey, getCachedStoryImage, setCachedStoryImage } from '@/lib/storyImageCache';
 
 // Types
 export type ShareObjectType = 'event' | 'discount' | 'business';
@@ -109,6 +110,11 @@ interface ShareOptions {
 
 export type SocialChannel = 'instagram_stories' | 'whatsapp' | 'messenger';
 
+interface StoryPreviewResult {
+  blobUrl: string;
+  file: File;
+}
+
 interface UseSimpleShareReturn {
   isSharing: boolean;
   share: (data: ShareData, options?: ShareOptions) => Promise<void>;
@@ -116,6 +122,9 @@ interface UseSimpleShareReturn {
   shareToInstagramStories: (data: StoryShareData, options?: ShareOptions) => Promise<void>;
   shareToWhatsApp: (url: string, text: string, options?: ShareOptions) => void;
   shareToMessenger: (url: string, options?: ShareOptions) => void;
+  generateStoryPreview: (data: StoryShareData, options?: ShareOptions) => Promise<StoryPreviewResult | null>;
+  shareStoryFile: (file: File, data: StoryShareData, options?: ShareOptions) => Promise<void>;
+  downloadStoryFile: (file: File, title: string) => void;
   hasNativeShare: boolean;
 }
 
@@ -377,6 +386,111 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
     []
   );
 
+  // Generate Story preview image (with caching)
+  const generateStoryPreview = useCallback(
+    async (data: StoryShareData, options?: ShareOptions): Promise<StoryPreviewResult | null> => {
+      if (!data.imageUrl) {
+        return null;
+      }
+
+      // Check cache first
+      const cacheKey = options?.objectId && options?.objectType 
+        ? getCacheKey(options.objectType, options.objectId)
+        : null;
+      
+      if (cacheKey) {
+        const cached = getCachedStoryImage(cacheKey);
+        if (cached) {
+          return { blobUrl: cached.blobUrl, file: cached.file };
+        }
+      }
+
+      // Generate new image
+      try {
+        const file = await generateStoryImage(data.imageUrl, {
+          title: data.title,
+          subtitle: data.subtitle,
+          date: data.date,
+          location: data.location,
+        });
+
+        // Cache the result
+        if (cacheKey) {
+          const entry = setCachedStoryImage(cacheKey, file);
+          return { blobUrl: entry.blobUrl, file };
+        }
+
+        // No caching, create temporary blob URL
+        const blobUrl = URL.createObjectURL(file);
+        return { blobUrl, file };
+      } catch (error) {
+        console.error('Failed to generate Story preview:', error);
+        return null;
+      }
+    },
+    []
+  );
+
+  // Share the generated Story file via native share
+  const shareStoryFile = useCallback(
+    async (file: File, data: StoryShareData, options?: ShareOptions) => {
+      // Track analytics
+      if (options?.businessId) {
+        trackEngagement(options.businessId, 'share', options.objectType || 'event', options.objectId || '', {
+          channel: 'instagram_stories',
+          source: 'story_preview',
+        });
+      }
+
+      if (!hasNativeShare()) {
+        toast.info(t.shareNotSupported);
+        return;
+      }
+
+      try {
+        const shareData = {
+          files: [file],
+          title: data.title,
+          url: data.url,
+        };
+
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          // Fallback to text-only share
+          await navigator.share({
+            title: data.title,
+            text: data.text,
+            url: data.url,
+          });
+        }
+      } catch (error) {
+        const err = error as Error;
+        if (err?.name === 'AbortError') return;
+
+        console.error('Story share failed:', error);
+        const success = await copyToClipboard(data.url);
+        if (success) {
+          toast.success(t.shareNotSupported);
+        }
+      }
+    },
+    [copyToClipboard, t]
+  );
+
+  // Download Story file to device
+  const downloadStoryFile = useCallback((file: File, title: string) => {
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '-')}-story.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(language === 'el' ? 'Η εικόνα αποθηκεύτηκε!' : 'Image saved!');
+  }, [language]);
+
   return {
     isSharing,
     share,
@@ -384,6 +498,9 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
     shareToInstagramStories,
     shareToWhatsApp,
     shareToMessenger,
+    generateStoryPreview,
+    shareStoryFile,
+    downloadStoryFile,
     hasNativeShare: hasNativeShare(),
   };
 };

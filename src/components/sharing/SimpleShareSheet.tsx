@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useSimpleShare, isMobile } from '@/hooks/useSimpleShare';
+import { StoryPreviewModal } from './StoryPreviewModal';
 
 // Social media icons as simple SVG components
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -82,8 +83,14 @@ export const SimpleShareSheet = ({
   storyLocation,
 }: SimpleShareSheetProps) => {
   const t = translations[language];
-  const { share, copyLink, shareToInstagramStories, shareToWhatsApp, shareToMessenger, isSharing, hasNativeShare } = useSimpleShare(language);
+  const { share, copyLink, shareToWhatsApp, shareToMessenger, generateStoryPreview, shareStoryFile, downloadStoryFile, isSharing, hasNativeShare } = useSimpleShare(language);
   const [isDesktop, setIsDesktop] = useState(false);
+  
+  // Story preview modal state
+  const [showStoryPreview, setShowStoryPreview] = useState(false);
+  const [storyPreviewUrl, setStoryPreviewUrl] = useState<string | null>(null);
+  const [storyFile, setStoryFile] = useState<File | null>(null);
+  const [isGeneratingStory, setIsGeneratingStory] = useState(false);
 
   useEffect(() => {
     setIsDesktop(!isMobile());
@@ -101,18 +108,45 @@ export const SimpleShareSheet = ({
     onOpenChange(false);
   }, [share, title, text, url, imageUrl, shareOptions, onOpenChange]);
 
+  // Open Story preview modal and generate image
   const handleInstagramStories = useCallback(async () => {
-    await shareToInstagramStories({ 
-      title, 
-      text, 
-      url, 
+    setIsGeneratingStory(true);
+    setShowStoryPreview(true);
+    
+    const storyData = {
+      title,
+      text,
+      url,
       imageUrl,
       subtitle,
       date: storyDate,
       location: storyLocation,
-    }, shareOptions);
+    };
+    
+    const result = await generateStoryPreview(storyData, shareOptions);
+    
+    if (result) {
+      setStoryPreviewUrl(result.blobUrl);
+      setStoryFile(result.file);
+    }
+    
+    setIsGeneratingStory(false);
+  }, [generateStoryPreview, title, text, url, imageUrl, subtitle, storyDate, storyLocation, shareOptions]);
+
+  // Share the generated Story via native share
+  const handleShareStory = useCallback(async () => {
+    if (!storyFile) return;
+    
+    await shareStoryFile(storyFile, { title, text, url, imageUrl, subtitle, date: storyDate, location: storyLocation }, shareOptions);
+    setShowStoryPreview(false);
     onOpenChange(false);
-  }, [shareToInstagramStories, title, text, url, imageUrl, subtitle, storyDate, storyLocation, shareOptions, onOpenChange]);
+  }, [shareStoryFile, storyFile, title, text, url, imageUrl, subtitle, storyDate, storyLocation, shareOptions, onOpenChange]);
+
+  // Download the generated Story image
+  const handleDownloadStory = useCallback(() => {
+    if (!storyFile) return;
+    downloadStoryFile(storyFile, title);
+  }, [downloadStoryFile, storyFile, title]);
 
   const handleWhatsApp = useCallback(() => {
     shareToWhatsApp(url, text, shareOptions);
@@ -264,29 +298,51 @@ export const SimpleShareSheet = ({
   // Desktop: Dialog
   if (isDesktop) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-          <ShareContent />
-        </DialogContent>
-      </Dialog>
+      <>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+            <ShareContent />
+          </DialogContent>
+        </Dialog>
+        <StoryPreviewModal
+          open={showStoryPreview}
+          onOpenChange={setShowStoryPreview}
+          imageUrl={storyPreviewUrl}
+          isLoading={isGeneratingStory}
+          onShare={handleShareStory}
+          onDownload={handleDownloadStory}
+          language={language}
+        />
+      </>
     );
   }
 
   // Mobile: Bottom Drawer
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent
-        className={cn(
-          'max-h-[85vh] rounded-t-3xl',
-          'bg-background/95 backdrop-blur-xl',
-          'border-t border-border/50'
-        )}
-      >
-        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted mt-3" />
-        <ShareContent />
-        {/* Safe area padding for iOS */}
-        <div className="h-safe-area-inset-bottom" />
-      </DrawerContent>
-    </Drawer>
+    <>
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent
+          className={cn(
+            'max-h-[85vh] rounded-t-3xl',
+            'bg-background/95 backdrop-blur-xl',
+            'border-t border-border/50'
+          )}
+        >
+          <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted mt-3" />
+          <ShareContent />
+          {/* Safe area padding for iOS */}
+          <div className="h-safe-area-inset-bottom" />
+        </DrawerContent>
+      </Drawer>
+      <StoryPreviewModal
+        open={showStoryPreview}
+        onOpenChange={setShowStoryPreview}
+        imageUrl={storyPreviewUrl}
+        isLoading={isGeneratingStory}
+        onShare={handleShareStory}
+        onDownload={handleDownloadStory}
+        language={language}
+      />
+    </>
   );
 };
