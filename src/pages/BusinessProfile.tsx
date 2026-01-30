@@ -375,12 +375,11 @@ const BusinessProfile = () => {
         {/* Back Button */}
         <RippleButton
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={handleBack}
-          className="absolute top-4 left-4 z-[60] bg-background/80 backdrop-blur-sm hover:bg-background safe-area-top"
+          className="absolute top-4 left-4 z-[60] bg-background/80 backdrop-blur-sm hover:bg-background safe-area-top h-8 w-8 p-0"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t.back}
+          <ArrowLeft className="h-4 w-4" />
         </RippleButton>
 
         {/* Avatar centered, follow/share icons positioned to the right */}
