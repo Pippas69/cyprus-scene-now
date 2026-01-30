@@ -40,6 +40,7 @@ export function DateTimePicker({
 }: DateTimePickerProps) {
   const { language } = useLanguage();
   const [open, setOpen] = React.useState(false);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(() => {
     // Initialize only if value is a valid date
     if (value && !Number.isNaN(value.getTime())) return value;
@@ -84,6 +85,27 @@ export function DateTimePicker({
       }
     };
   }, []);
+
+  // Ensure the month header is always visible when the popover opens.
+  // On some mobile browsers, focus/scroll heuristics can scroll the popover content
+  // down to the selected day, which hides the caption/navigation.
+  React.useEffect(() => {
+    if (!open) return;
+
+    const el = contentRef.current;
+    if (!el) return;
+
+    // Reset immediately, then once more after layout to defeat late scrollIntoView.
+    el.scrollTop = 0;
+    const raf = window.requestAnimationFrame(() => {
+      el.scrollTop = 0;
+      window.setTimeout(() => {
+        el.scrollTop = 0;
+      }, 0);
+    });
+
+    return () => window.cancelAnimationFrame(raf);
+  }, [open]);
 
   // Schedule an onChange call with macrotask deferral (single-flight)
   const scheduleOnChange = React.useCallback((date: Date | undefined) => {
@@ -216,6 +238,7 @@ export function DateTimePicker({
         align="start"
         sideOffset={8}
         collisionPadding={12}
+        ref={contentRef}
         onOpenAutoFocus={(e) => {
           // Prevent Radix from auto-focusing inside the calendar, which can scroll the
           // popover content and hide the month navigation on small screens.
