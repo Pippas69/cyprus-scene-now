@@ -128,7 +128,7 @@ export function StudentDiscountButton({
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md mt-16 sm:mt-0">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-primary" />
@@ -196,7 +196,7 @@ export function StudentDiscountButton({
                 <Button 
                   variant="outline" 
                   onClick={() => setDialogOpen(false)} 
-                  className="w-full"
+                  className="w-full h-8 text-xs"
                 >
                   {t.close}
                 </Button>
@@ -233,7 +233,7 @@ export function StudentDiscountButton({
       </RippleButton>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md mt-16 sm:mt-0">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <GraduationCap className="h-5 w-5 text-primary" />
@@ -302,7 +302,7 @@ export function StudentDiscountButton({
               <Button 
                 variant="outline" 
                 onClick={() => setDialogOpen(false)} 
-                className="w-full"
+                className="w-full h-8 text-xs"
               >
                 {t.close}
               </Button>
