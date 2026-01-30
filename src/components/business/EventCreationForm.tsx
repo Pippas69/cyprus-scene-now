@@ -38,7 +38,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
   children
 }) => <div className="space-y-3 sm:space-y-4">
     <div className="flex items-center gap-2 sm:gap-3 pb-2 border-b">
-      <h3 className="font-semibold text-sm sm:text-lg whitespace-nowrap">{title}</h3>
+      <h3 className="font-semibold text-[11px] sm:text-lg whitespace-normal leading-tight">{title}</h3>
       {required && <span className="text-[9px] sm:text-xs bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded-full">
           {requiredLabel}
         </span>}
@@ -184,11 +184,11 @@ const translations = {
     vip: "VIP",
     sofa: "Καναπές",
     availableBookings: "Διαθέσιμες κρατήσεις",
-    personRanges: "Εύρος ατόμων & Prepaid Minimum Charge",
+    personRanges: "Εύρος ατόμων & Minimum Charge",
     rangeHint: "Έως 3 εύρη ανά τύπο. Το ποσό αφορά όλη την παρέα.",
     fromPersons: "Από άτομα",
     toPersons: "Έως άτομα",
-    prepaidCharge: "Prepaid Charge (€)",
+    prepaidCharge: "Minimum Charge (€)",
     addRange: "Προσθήκη εύρους",
     cancellationPolicy: "Πολιτική Ακύρωσης",
     freeCancellationUpTo: "Δωρεάν ακύρωση έως",
@@ -267,11 +267,11 @@ const translations = {
     vip: "VIP",
     sofa: "Sofa",
     availableBookings: "Available bookings",
-    personRanges: "Person Range & Prepaid Minimum Charge",
+    personRanges: "Person Range & Minimum Charge",
     rangeHint: "Up to 3 ranges per type. The amount is for the entire group.",
     fromPersons: "From persons",
     toPersons: "To persons",
-    prepaidCharge: "Prepaid Charge (€)",
+    prepaidCharge: "Minimum Charge (€)",
     addRange: "Add range",
     cancellationPolicy: "Cancellation Policy",
     freeCancellationUpTo: "Free cancellation up to",
@@ -858,27 +858,27 @@ const EventCreationForm = ({
                       </div>
                       <p className="text-[10px] sm:text-xs text-muted-foreground">{t.rangeHint}</p>
                       
-                      {config.tiers.map((tier, index) => <div key={index} className="flex flex-wrap items-center gap-1.5 sm:gap-3 bg-background p-2 sm:p-3 rounded-lg">
-                          <div className="flex items-center gap-1 sm:gap-2">
+                      {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1.5 sm:gap-3 bg-background p-2 sm:p-3 rounded-lg flex-nowrap overflow-x-auto">
+                          <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
                             <Input type="number" value={tier.minPeople} onChange={e => updateTier(type, index, {
                       minPeople: parseInt(e.target.value) || 1
-                    })} min={1} className="w-14 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm" placeholder={t.fromPersons} />
+                    })} min={1} className="w-12 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" placeholder={t.fromPersons} />
                             <span className="text-muted-foreground text-xs">-</span>
                             <Input type="number" value={tier.maxPeople} onChange={e => updateTier(type, index, {
                       maxPeople: parseInt(e.target.value) || 1
-                    })} min={tier.minPeople} className="w-14 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm" placeholder={t.toPersons} />
+                    })} min={tier.minPeople} className="w-12 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" placeholder={t.toPersons} />
                             <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">
                               {language === 'el' ? 'άτ.' : 'ppl'}
                             </span>
                           </div>
                           <span className="text-muted-foreground text-xs">→</span>
-                          <div className="flex items-center gap-1 sm:gap-2">
+                          <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
                             <span className="text-muted-foreground text-xs">€</span>
                             <Input type="number" value={tier.prepaidChargeCents / 100} onChange={e => updateTier(type, index, {
                       prepaidChargeCents: Math.round(parseFloat(e.target.value || '0') * 100)
-                    })} min={0} step={5} className="w-16 sm:w-24 h-7 sm:h-10 text-xs sm:text-sm" />
+                    })} min={0} step={5} className="w-16 sm:w-24 h-7 sm:h-10 text-[11px] sm:text-sm" />
                           </div>
-                          {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-6 w-6 sm:h-8 sm:w-8 text-destructive">
+                          {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-6 w-6 sm:h-8 sm:w-8 text-destructive flex-shrink-0">
                               <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>}
                         </div>)}
