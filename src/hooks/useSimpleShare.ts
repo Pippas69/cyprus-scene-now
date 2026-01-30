@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { trackEngagement } from '@/lib/analyticsTracking';
 import { generateStoryImage } from '@/lib/storyImageGenerator';
-import { getCacheKey, getCachedStoryImage, setCachedStoryImage } from '@/lib/storyImageCache';
+import { generateStoryVideo, isVideoGenerationSupported } from '@/lib/storyVideoGenerator';
+import { getCacheKey, getCachedStoryMedia, setCachedStoryMedia } from '@/lib/storyMediaCache';
 
 // Types
 export type ShareObjectType = 'event' | 'discount' | 'business';
@@ -122,7 +123,7 @@ interface UseSimpleShareReturn {
   shareToInstagramStories: (data: StoryShareData, options?: ShareOptions) => Promise<void>;
   shareToWhatsApp: (url: string, text: string, options?: ShareOptions) => void;
   shareToMessenger: (url: string, options?: ShareOptions) => void;
-  generateStoryPreview: (data: StoryShareData, options?: ShareOptions) => Promise<StoryPreviewResult | null>;
+  generateStoryPreview: (data: StoryShareData, options?: ShareOptions, onProgress?: (progress: number) => void) => Promise<StoryPreviewResult | null>;
   shareStoryFile: (file: File, data: StoryShareData, options?: ShareOptions) => Promise<void>;
   downloadStoryFile: (file: File, title: string) => void;
   hasNativeShare: boolean;
@@ -386,26 +387,60 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
     []
   );
 
-  // Generate Story preview image (with caching)
+  // Generate Story preview video (with caching) - returns MP4 for animated Instagram Stories
   const generateStoryPreview = useCallback(
-    async (data: StoryShareData, options?: ShareOptions): Promise<StoryPreviewResult | null> => {
+    async (data: StoryShareData, options?: ShareOptions, onProgress?: (progress: number) => void): Promise<StoryPreviewResult | null> => {
       if (!data.imageUrl) {
         return null;
       }
 
-      // Check cache first
-      const cacheKey = options?.objectId && options?.objectType 
-        ? getCacheKey(options.objectType, options.objectId)
+      // Check cache first (video cache)
+      const videoCacheKey = options?.objectId && options?.objectType 
+        ? getCacheKey(options.objectType, options.objectId, 'video')
         : null;
       
-      if (cacheKey) {
-        const cached = getCachedStoryImage(cacheKey);
+      if (videoCacheKey) {
+        const cached = getCachedStoryMedia(videoCacheKey);
         if (cached) {
           return { blobUrl: cached.blobUrl, file: cached.file };
         }
       }
 
-      // Generate new image
+      // Try to generate video first (animated Story)
+      if (isVideoGenerationSupported()) {
+        try {
+          const videoFile = await generateStoryVideo(data.imageUrl, {
+            title: data.title,
+            subtitle: data.subtitle,
+            date: data.date,
+            location: data.location,
+          }, onProgress);
+
+          // Cache the video result
+          if (videoCacheKey) {
+            const entry = setCachedStoryMedia(videoCacheKey, videoFile, 'video');
+            return { blobUrl: entry.blobUrl, file: videoFile };
+          }
+
+          const blobUrl = URL.createObjectURL(videoFile);
+          return { blobUrl, file: videoFile };
+        } catch (videoError) {
+          console.warn('Video generation failed, falling back to image:', videoError);
+        }
+      }
+
+      // Fallback: Generate static image
+      const imageCacheKey = options?.objectId && options?.objectType 
+        ? getCacheKey(options.objectType, options.objectId, 'image')
+        : null;
+
+      if (imageCacheKey) {
+        const cached = getCachedStoryMedia(imageCacheKey);
+        if (cached) {
+          return { blobUrl: cached.blobUrl, file: cached.file };
+        }
+      }
+
       try {
         const file = await generateStoryImage(data.imageUrl, {
           title: data.title,
@@ -414,13 +449,11 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
           location: data.location,
         });
 
-        // Cache the result
-        if (cacheKey) {
-          const entry = setCachedStoryImage(cacheKey, file);
+        if (imageCacheKey) {
+          const entry = setCachedStoryMedia(imageCacheKey, file, 'image');
           return { blobUrl: entry.blobUrl, file };
         }
 
-        // No caching, create temporary blob URL
         const blobUrl = URL.createObjectURL(file);
         return { blobUrl, file };
       } catch (error) {
@@ -478,17 +511,26 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
     [copyToClipboard, t]
   );
 
-  // Download Story file to device
+  // Download Story file to device (supports both image and video)
   const downloadStoryFile = useCallback((file: File, title: string) => {
     const url = URL.createObjectURL(file);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${title.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '-')}-story.png`;
+    
+    // Detect file type from MIME type
+    const isVideo = file.type.startsWith('video/');
+    const extension = isVideo ? 'mp4' : 'png';
+    link.download = `${title.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '-')}-story.${extension}`;
+    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success(language === 'el' ? 'Η εικόνα αποθηκεύτηκε!' : 'Image saved!');
+    
+    const message = isVideo 
+      ? (language === 'el' ? 'Το βίντεο αποθηκεύτηκε!' : 'Video saved!')
+      : (language === 'el' ? 'Η εικόνα αποθηκεύτηκε!' : 'Image saved!');
+    toast.success(message);
   }, [language]);
 
   return {
