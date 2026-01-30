@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -860,13 +861,21 @@ const EventCreationForm = ({
                       
                       {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1.5 sm:gap-3 bg-background p-2 sm:p-3 rounded-lg flex-nowrap overflow-x-auto">
                           <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
-                            <Input type="number" value={tier.minPeople} onChange={e => updateTier(type, index, {
-                      minPeople: parseInt(e.target.value) || 1
-                    })} min={1} className="w-12 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" placeholder={t.fromPersons} />
+                            <NumberInput 
+                              value={tier.minPeople} 
+                              onChange={value => updateTier(type, index, { minPeople: value })} 
+                              min={1} 
+                              max={99}
+                              className="w-14 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" 
+                            />
                             <span className="text-muted-foreground text-xs">-</span>
-                            <Input type="number" value={tier.maxPeople} onChange={e => updateTier(type, index, {
-                      maxPeople: parseInt(e.target.value) || 1
-                    })} min={tier.minPeople} className="w-12 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" placeholder={t.toPersons} />
+                            <NumberInput 
+                              value={tier.maxPeople} 
+                              onChange={value => updateTier(type, index, { maxPeople: value })} 
+                              min={tier.minPeople} 
+                              max={99}
+                              className="w-14 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" 
+                            />
                             <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">
                               {language === 'el' ? 'άτ.' : 'ppl'}
                             </span>
