@@ -158,7 +158,8 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
             "flex items-center gap-1.5 bg-gradient-to-r from-aegean to-seafoam text-white rounded-lg shadow-lg",
             "px-2.5 py-1.5 md:px-3 md:py-1.5",
             "text-xs md:text-sm font-medium",
-            "hover:opacity-90 transition-opacity cursor-pointer"
+            "hover:opacity-90 transition-opacity cursor-pointer",
+            "mr-4 mt-4"
           )}
         >
           <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
