@@ -294,7 +294,7 @@ const SectionCard = ({
 }) => (
   <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
     <CardHeader className="pb-1 p-3 sm:p-4 md:p-6 sm:pb-0 md:pb-0">
-      <CardTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2 whitespace-nowrap">
+      <CardTitle className="text-[11px] sm:text-lg font-semibold flex items-start gap-2 whitespace-normal leading-tight">
         {title}
         {required && (
           <span className="text-[9px] sm:text-xs font-medium text-primary bg-primary/10 px-1.5 sm:px-2 py-0.5 rounded-full">

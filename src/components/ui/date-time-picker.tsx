@@ -212,10 +212,15 @@ export function DateTimePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 z-50 max-h-[80vh] overflow-y-auto"
+        className="w-auto p-0 z-[200] max-h-[80vh] overflow-y-auto"
         align="start"
         sideOffset={8}
         collisionPadding={12}
+        onOpenAutoFocus={(e) => {
+          // Prevent Radix from auto-focusing inside the calendar, which can scroll the
+          // popover content and hide the month navigation on small screens.
+          e.preventDefault();
+        }}
       >
         <div className="pointer-events-auto">
           <Calendar
@@ -227,7 +232,6 @@ export function DateTimePicker({
               if (maxDate && date > maxDate) return true;
               return false;
             }}
-            initialFocus
             className={cn("p-2 sm:p-3 pointer-events-auto")}
           />
           
