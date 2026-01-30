@@ -160,7 +160,7 @@ export const SimpleShareSheet = ({
 
   // Image Preview Card
   const ImagePreviewCard = () => (
-    <div className="relative w-full h-40 rounded-2xl overflow-hidden bg-muted">
+    <div className="relative w-full h-28 sm:h-40 rounded-2xl overflow-hidden bg-muted">
       {imageUrl ? (
         <img
           src={imageUrl}
@@ -201,12 +201,12 @@ export const SimpleShareSheet = ({
         </button>
       </div>
 
-      <div className="px-4 py-4 space-y-4">
+      <div className="px-3 py-3 sm:px-4 sm:py-4 space-y-3 sm:space-y-4">
         {/* Image Preview */}
         <ImagePreviewCard />
 
         {/* Social Media Buttons */}
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-2 sm:gap-4">
           {/* Instagram Stories */}
           <TooltipProvider>
             <Tooltip>
@@ -216,15 +216,15 @@ export const SimpleShareSheet = ({
                   onClick={handleInstagramStories}
                   disabled={isSharing}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors",
+                    "flex flex-col items-center gap-1 sm:gap-1.5 p-2 sm:p-3 rounded-xl transition-colors",
                     "hover:bg-muted/80 active:bg-muted",
                     isDesktop && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
-                    <InstagramIcon className="w-6 h-6 text-white" />
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
+                    <InstagramIcon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground">{t.instagramStories}</span>
+                  <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">{t.instagramStories}</span>
                 </motion.button>
               </TooltipTrigger>
               {isDesktop && (
@@ -240,12 +240,12 @@ export const SimpleShareSheet = ({
             whileTap={{ scale: 0.95 }}
             onClick={handleWhatsApp}
             disabled={isSharing}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors hover:bg-muted/80 active:bg-muted"
+            className="flex flex-col items-center gap-1 sm:gap-1.5 p-2 sm:p-3 rounded-xl transition-colors hover:bg-muted/80 active:bg-muted"
           >
-            <div className="w-12 h-12 rounded-full bg-[#25D366] flex items-center justify-center">
-              <WhatsAppIcon className="w-6 h-6 text-white" />
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-[#25D366] flex items-center justify-center">
+              <WhatsAppIcon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
-            <span className="text-xs font-medium text-muted-foreground">{t.whatsapp}</span>
+            <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">{t.whatsapp}</span>
           </motion.button>
 
           {/* Messenger */}
@@ -253,26 +253,26 @@ export const SimpleShareSheet = ({
             whileTap={{ scale: 0.95 }}
             onClick={handleMessenger}
             disabled={isSharing}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors hover:bg-muted/80 active:bg-muted"
+            className="flex flex-col items-center gap-1 sm:gap-1.5 p-2 sm:p-3 rounded-xl transition-colors hover:bg-muted/80 active:bg-muted"
           >
-            <div className="w-12 h-12 rounded-full bg-gradient-to-b from-[#00B2FF] to-[#006AFF] flex items-center justify-center">
-              <MessengerIcon className="w-6 h-6 text-white" />
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gradient-to-b from-[#00B2FF] to-[#006AFF] flex items-center justify-center">
+              <MessengerIcon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
-            <span className="text-xs font-medium text-muted-foreground">{t.messenger}</span>
+            <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">{t.messenger}</span>
           </motion.button>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           {/* Copy Link Button */}
           <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
             <Button
               variant="outline"
-              className="w-full h-12 gap-2 text-base font-medium"
+              className="w-full h-9 sm:h-12 gap-1.5 sm:gap-2 text-xs sm:text-base font-medium"
               onClick={handleCopyLink}
               disabled={isSharing}
             >
-              <Copy className="h-5 w-5" />
+              <Copy className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
               {t.copyLink}
             </Button>
           </motion.div>
@@ -281,11 +281,11 @@ export const SimpleShareSheet = ({
           {hasNativeShare && (
             <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
               <Button
-                className="w-full h-12 gap-2 text-base font-medium"
+                className="w-full h-9 sm:h-12 gap-1.5 sm:gap-2 text-xs sm:text-base font-medium"
                 onClick={handleShare}
                 disabled={isSharing}
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                 {t.shareNative}
               </Button>
             </motion.div>
