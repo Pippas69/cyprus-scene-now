@@ -97,13 +97,13 @@ export const StoryPreviewModal = ({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="relative w-full h-full flex items-center justify-center"
+                className="relative w-full h-full flex items-center justify-center p-8"
               >
                 {/* Animated wrapper with Spotify-style floating effect */}
                 <motion.div
                   animate={{
-                    rotate: [-3, 3],
-                    y: [-12, 12],
+                    rotate: [-5, 5],
+                    y: [-18, 18],
                   }}
                   transition={{
                     rotate: {
@@ -123,8 +123,12 @@ export const StoryPreviewModal = ({
                 >
                   <motion.div
                     animate={{
-                      x: [-4, 4],
-                      scale: [0.99, 1.01],
+                      x: [-8, 8],
+                      scale: [0.98, 1.02],
+                      boxShadow: [
+                        "0 20px 40px rgba(0,0,0,0.3)",
+                        "0 35px 60px rgba(0,0,0,0.45)",
+                      ],
                     }}
                     transition={{
                       x: {
@@ -139,13 +143,20 @@ export const StoryPreviewModal = ({
                         repeatType: "mirror",
                         ease: "easeInOut",
                       },
+                      boxShadow: {
+                        duration: 3.5,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut",
+                      },
                     }}
+                    className="rounded-xl"
                   >
                     <img
                       src={imageUrl}
                       alt="Story preview"
-                      className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                      style={{ maxHeight: 'calc(100vh - 320px)' }}
+                      className="max-w-full max-h-full object-contain rounded-xl"
+                      style={{ maxHeight: 'calc(100vh - 340px)', transform: 'scale(0.92)' }}
                     />
                   </motion.div>
                 </motion.div>
