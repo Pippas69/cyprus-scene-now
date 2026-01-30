@@ -66,48 +66,46 @@ export function StudentQRCard({ verification, language, discountMode = null, isR
   }
   
   return (
-    <Card className="overflow-hidden max-w-[85vw] sm:max-w-sm mx-auto">
-      <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 py-3 sm:py-4 px-3 sm:px-6">
-        <CardTitle className="flex items-center gap-1.5 text-sm sm:text-base font-semibold">
-          <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+    <Card className="overflow-hidden w-[320px] mx-auto">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 py-3 px-4">
+        <CardTitle className="flex items-center gap-1.5 text-sm font-semibold">
+          <GraduationCap className="h-4 w-4 shrink-0" />
           {t.title}
         </CardTitle>
-        <CardDescription className="text-[10px] sm:text-sm leading-tight">{t.description}</CardDescription>
+        <CardDescription className="text-[11px] leading-tight">{t.description}</CardDescription>
       </CardHeader>
-      <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
-        <div className="flex flex-col items-center gap-2 sm:gap-4">
-          <div className="p-2 sm:p-4 bg-white rounded-xl shadow-lg">
-            <canvas ref={canvasRef} className="w-36 h-36 sm:w-[200px] sm:h-[200px]" />
+      <CardContent className="pt-4 px-4 pb-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="p-3 bg-white rounded-xl shadow-lg">
+            <canvas ref={canvasRef} className="w-[160px] h-[160px]" />
           </div>
           
-          <p className="text-[10px] sm:text-sm text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground text-center">
             {t.scanInstructions}
           </p>
           
-          <div className="w-full space-y-1.5 sm:space-y-3 pt-2 sm:pt-4 border-t">
+          <div className="w-full space-y-2 pt-3 border-t">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] sm:text-sm text-muted-foreground">{t.university}</span>
-              <Badge variant="secondary" className="text-[10px] sm:text-xs h-5 sm:h-6 px-1.5 sm:px-2.5">{verification.university_name}</Badge>
+              <span className="text-xs text-muted-foreground">{t.university}</span>
+              <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-orange-500 text-white hover:bg-orange-600">{verification.university_name}</Badge>
             </div>
             
-            {/* Only show usage type when a specific business discount mode is provided */}
             {discountMode !== null && (
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-sm text-muted-foreground">{t.usageType}</span>
+                <span className="text-xs text-muted-foreground">{t.usageType}</span>
                 {isRedeemed ? (
-                  <Badge variant="destructive" className="text-[10px] sm:text-xs h-5 sm:h-6 px-1.5 sm:px-2.5">{t.redeemed}</Badge>
+                  <Badge variant="destructive" className="text-[10px] h-5 px-2">{t.redeemed}</Badge>
                 ) : discountMode === 'once' ? (
-                  <Badge variant="outline" className="border-amber-500 text-amber-600 text-[10px] sm:text-xs h-5 sm:h-6 px-1.5 sm:px-2.5">{t.oneTime}</Badge>
+                  <Badge variant="outline" className="border-amber-500 text-amber-600 text-[10px] h-5 px-2">{t.oneTime}</Badge>
                 ) : (
-                  <Badge variant="default" className="bg-green-600 text-[10px] sm:text-xs h-5 sm:h-6 px-1.5 sm:px-2.5">{t.unlimited}</Badge>
+                  <Badge variant="default" className="bg-green-600 text-[10px] h-5 px-2">{t.unlimited}</Badge>
                 )}
               </div>
             )}
           </div>
           
-          {/* Usage note */}
-          <div className="w-full mt-2 sm:mt-4 p-2 sm:p-3 rounded-lg bg-muted/50 text-center">
-            <p className="text-[10px] sm:text-sm text-muted-foreground leading-tight">
+          <div className="w-full mt-2 p-2.5 rounded-lg bg-muted/50 text-center">
+            <p className="text-[11px] text-muted-foreground leading-tight">
               {discountMode === null 
                 ? t.genericNote 
                 : isRedeemed 
