@@ -12,6 +12,8 @@ interface StoryPreviewModalProps {
   onOpenChange: (open: boolean) => void;
   imageUrl: string | null;
   isLoading: boolean;
+  isVideo?: boolean;
+  generationProgress?: number;
   onShare: () => Promise<void>;
   onDownload: () => void;
   language: 'el' | 'en';
@@ -21,18 +23,22 @@ const translations = {
   el: {
     preview: 'Προεπισκόπηση Story',
     shareToInstagram: 'Κοινοποίηση',
-    downloadImage: 'Λήψη εικόνας',
+    downloadImage: 'Λήψη',
     generating: 'Δημιουργία Story...',
+    generatingVideo: 'Δημιουργία βίντεο...',
     webInstructions: 'Άνοιξε την εικόνα στο Instagram και κοινοποίησε στο Story σου',
     mobileInstructions: 'Επίλεξε το Instagram Stories από το μενού',
+    videoReady: 'Το βίντεο είναι έτοιμο για κοινοποίηση!',
   },
   en: {
     preview: 'Story Preview',
     shareToInstagram: 'Share',
-    downloadImage: 'Download Image',
+    downloadImage: 'Download',
     generating: 'Generating Story...',
+    generatingVideo: 'Generating video...',
     webInstructions: 'Open the image on Instagram and share to your Story',
     mobileInstructions: 'Select Instagram Stories from the menu',
+    videoReady: 'Video is ready to share!',
   },
 };
 
@@ -41,6 +47,8 @@ export const StoryPreviewModal = ({
   onOpenChange,
   imageUrl,
   isLoading,
+  isVideo = false,
+  generationProgress = 0,
   onShare,
   onDownload,
   language,
@@ -89,7 +97,19 @@ export const StoryPreviewModal = ({
                 className="flex flex-col items-center justify-center gap-3"
               >
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">{t.generating}</p>
+                <p className="text-sm text-muted-foreground">
+                  {generationProgress > 0 ? t.generatingVideo : t.generating}
+                </p>
+                {generationProgress > 0 && (
+                  <div className="w-48 h-2 bg-muted rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-primary"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${generationProgress * 100}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                )}
               </motion.div>
             ) : imageUrl ? (
               <motion.div
