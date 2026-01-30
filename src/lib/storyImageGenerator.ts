@@ -24,10 +24,10 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw background with extended edges and smooth gradient fades
- * Extends top/bottom edge pixels to fill the 9:16 canvas without cropping
+ * Draw blurred background with dark overlay
+ * Scales image to cover the entire canvas and applies Gaussian blur
  */
-const drawClearBackground = (
+const drawBlurredBackground = (
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   canvasWidth: number,
@@ -37,97 +37,38 @@ const drawClearBackground = (
   ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-  // Calculate "contain" dimensions - fit entire image without cropping
+  // Calculate "cover" dimensions - fill entire canvas, may crop edges
   const imgRatio = img.width / img.height;
   const canvasRatio = canvasWidth / canvasHeight;
 
   let drawWidth: number, drawHeight: number, offsetX: number, offsetY: number;
 
   if (imgRatio > canvasRatio) {
-    // Image is wider than canvas ratio - fit to width
-    drawWidth = canvasWidth;
-    drawHeight = drawWidth / imgRatio;
-    offsetX = 0;
-    offsetY = (canvasHeight - drawHeight) / 2;
-  } else {
-    // Image is taller than canvas ratio - fit to height
+    // Image is wider than canvas ratio - fit to height, crop sides
     drawHeight = canvasHeight;
     drawWidth = drawHeight * imgRatio;
     offsetX = (canvasWidth - drawWidth) / 2;
     offsetY = 0;
+  } else {
+    // Image is taller than canvas ratio - fit to width, crop top/bottom
+    drawWidth = canvasWidth;
+    drawHeight = drawWidth / imgRatio;
+    offsetX = 0;
+    offsetY = (canvasHeight - drawHeight) / 2;
   }
 
-  // Extend top edge pixels if there's a gap
-  if (offsetY > 0) {
-    // Create temporary canvas to sample top row
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = img.width;
-    tempCanvas.height = 1;
-    const tempCtx = tempCanvas.getContext('2d');
-    if (tempCtx) {
-      // Sample top row of image
-      tempCtx.drawImage(img, 0, 0, img.width, 1, 0, 0, img.width, 1);
-      // Apply brightness filter for background
-      ctx.filter = 'brightness(0.8)';
-      // Stretch top row to fill gap above image
-      ctx.drawImage(tempCanvas, offsetX, 0, drawWidth, offsetY);
-    }
-  }
-
-  // Extend bottom edge pixels if there's a gap
-  if (offsetY > 0) {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = img.width;
-    tempCanvas.height = 1;
-    const tempCtx = tempCanvas.getContext('2d');
-    if (tempCtx) {
-      // Sample bottom row of image
-      tempCtx.drawImage(img, 0, img.height - 1, img.width, 1, 0, 0, img.width, 1);
-      // Apply brightness filter for background
-      ctx.filter = 'brightness(0.8)';
-      // Stretch bottom row to fill gap below image
-      ctx.drawImage(tempCanvas, offsetX, offsetY + drawHeight, drawWidth, canvasHeight - offsetY - drawHeight);
-    }
-  }
-
-  // Extend left edge pixels if there's a gap (for vertical images)
-  if (offsetX > 0) {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = 1;
-    tempCanvas.height = img.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    if (tempCtx) {
-      // Sample left column of image
-      tempCtx.drawImage(img, 0, 0, 1, img.height, 0, 0, 1, img.height);
-      ctx.filter = 'brightness(0.8)';
-      // Stretch left column to fill gap
-      ctx.drawImage(tempCanvas, 0, offsetY, offsetX, drawHeight);
-    }
-  }
-
-  // Extend right edge pixels if there's a gap (for vertical images)
-  if (offsetX > 0) {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = 1;
-    tempCanvas.height = img.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    if (tempCtx) {
-      // Sample right column of image
-      tempCtx.drawImage(img, img.width - 1, 0, 1, img.height, 0, 0, 1, img.height);
-      ctx.filter = 'brightness(0.8)';
-      // Stretch right column to fill gap
-      ctx.drawImage(tempCanvas, offsetX + drawWidth, offsetY, canvasWidth - offsetX - drawWidth, drawHeight);
-    }
-  }
-
-  // Apply slight darkening for contrast with foreground card
-  ctx.filter = 'brightness(0.8)';
+  // Apply blur filter before drawing
+  ctx.filter = 'blur(30px)';
   
-  // Draw full-resolution background image (contained, not cropped)
+  // Draw image scaled to cover (may crop edges)
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   
   // Reset filter
   ctx.filter = 'none';
+
+  // Add dark overlay (28% opacity)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Add medium gradient fade at top (0 to 300px)
   const topGradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -147,7 +88,7 @@ const drawClearBackground = (
 };
 
 /**
- * Draw the main image centered on the canvas
+ * Draw the main image centered on the canvas with rounded corners and shadow
  */
 const drawCenteredImage = (
   ctx: CanvasRenderingContext2D,
@@ -318,7 +259,14 @@ const wrapText = (
     lines.push(currentLine);
   }
 
-  return lines.slice(0, 3); // Max 3 lines
+  // Max 2 lines with ellipsis on last line if truncated
+  if (lines.length > 2) {
+    const truncatedLines = lines.slice(0, 2);
+    truncatedLines[1] = truncatedLines[1].slice(0, -3) + '...';
+    return truncatedLines;
+  }
+
+  return lines;
 };
 
 /**
@@ -340,10 +288,10 @@ export const generateStoryImage = async (
   // Load the source image
   const img = await loadImage(imageUrl);
 
-  // 1. Draw blurred background
-  drawClearBackground(ctx, img, canvas.width, canvas.height);
+  // 1. Draw blurred background with dark overlay
+  drawBlurredBackground(ctx, img, canvas.width, canvas.height);
 
-  // 2. Draw centered main image
+  // 2. Draw centered main image with rounded corners
   const { imageBottom } = drawCenteredImage(ctx, img, canvas.width, canvas.height);
 
   // 3. Draw text overlay
@@ -352,13 +300,13 @@ export const generateStoryImage = async (
   // 4. Draw branding
   drawBranding(ctx, canvas.width, canvas.height);
 
-  // Convert to blob and return as File
+  // Convert to blob and return as File (PNG for better quality)
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          const file = new File([blob], 'fomo-story.jpg', {
-            type: 'image/jpeg',
+          const file = new File([blob], 'fomo-story.png', {
+            type: 'image/png',
             lastModified: Date.now(),
           });
           resolve(file);
@@ -366,8 +314,7 @@ export const generateStoryImage = async (
           reject(new Error('Failed to generate story image'));
         }
       },
-      'image/jpeg',
-      0.92
+      'image/png'
     );
   });
 };
