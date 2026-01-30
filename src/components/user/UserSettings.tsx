@@ -16,7 +16,7 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from '@/hooks/use-toast';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon, GraduationCap, Smartphone, Send } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getCategoriesForUser } from '@/lib/unifiedCategories';
 import { getCityOptions, translateCity } from '@/lib/cityTranslations';
 import { InterestSelectorList } from '@/components/categories/InterestSelectorList';
@@ -29,6 +29,7 @@ interface UserSettingsProps {
 
 export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setLanguage } = useLanguage();
   const { preferences, isLoading: prefsLoading, updatePreferences, isUpdating } = useUserPreferences(userId);
   const { changePassword, isChanging } = usePasswordChange();
@@ -51,6 +52,20 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   useEffect(() => {
     fetchProfile();
   }, [userId]);
+
+  // Scroll to hash target (e.g., #student-verification)
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      // Wait for the component to render
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [location.hash, profile]);
 
   const fetchProfile = async () => {
     const { data } = await supabase
