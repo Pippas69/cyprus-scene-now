@@ -66,13 +66,13 @@ export function StudentQRCard({ verification, language, discountMode = null, isR
   }
   
   return (
-    <Card className="overflow-hidden w-[260px] sm:w-[320px] mx-auto">
+    <Card className="overflow-hidden w-[280px] sm:w-[320px] mx-auto">
       <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 py-2 sm:py-3 px-3 sm:px-4">
-        <CardTitle className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold">
+        <CardTitle className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
           <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
           {t.title}
         </CardTitle>
-        <CardDescription className="text-[10px] sm:text-[11px] leading-tight text-center">{t.description}</CardDescription>
+        <CardDescription className="text-[10px] sm:text-[11px] leading-tight">{t.description}</CardDescription>
       </CardHeader>
       <CardContent className="pt-3 sm:pt-4 px-3 sm:px-4 pb-3 sm:pb-4">
         <div className="flex flex-col items-center gap-2 sm:gap-3">
