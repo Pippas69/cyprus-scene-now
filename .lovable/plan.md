@@ -1,95 +1,96 @@
 
+# Spotify-Style Animated Instagram Story Preview
 
-# Πλάνο: Βελτιστοποίηση Share Sheet για Κινητό
+## Understanding the Request
 
-## Το Πρόβλημα
-Στη φωτογραφία φαίνεται ότι στο κινητό:
-- Το κουμπί "Περισσότερα" κόβεται (δεν χωράει)
-- Η εικόνα preview είναι πολύ μεγάλη
-- Γενικά τα στοιχεία είναι εκτός πλαισίου
+You want the Instagram Story preview to have the same "cool" animated visual effect as Spotify's song share feature. Based on the session replay data I can see (with CSS transforms including `rotate()` and `translateY()`), this involves:
 
-## Αλλαγές (Μόνο για Mobile)
+- **Floating elements** that gently drift up and down
+- **Subtle rotation** creating a 3D parallax-like effect
+- **Continuous, smooth animation** that makes the preview feel "alive"
 
-### 1. Μικρότερη Εικόνα Preview
-```
-Τώρα:    h-40 (160px ύψος)
-Νέο:     h-32 (128px ύψος) στο mobile
-```
+---
 
-### 2. Μικρότερα Social Media Icons
-```
-Τώρα:    w-12 h-12 (48px) με icon w-6 h-6
-Νέο:     w-10 h-10 (40px) με icon w-5 h-5 στο mobile
-```
+## Current State vs. Desired State
 
-### 3. Μικρότερα Action Buttons
-```
-Τώρα:    h-12, text-base, icon h-5 w-5
-Νέο:     h-10, text-sm, icon h-4 w-4 στο mobile
-```
+### Currently
+The `StoryPreviewModal` shows a **static image** with basic fade-in animation when the preview loads.
 
-### 4. Μικρότερο padding/gaps
-```
-Τώρα:    px-4 py-4 space-y-4 gap-3
-Νέο:     px-3 py-3 space-y-3 gap-2 στο mobile
-```
+### Desired (Spotify-style)
+An **animated, living preview** where:
+- The Story card gently rotates back and forth (±3-5 degrees)
+- Elements float up and down with slight offset
+- Background has subtle movement/parallax
+- Creates a premium, dynamic feel before sharing
 
-## Τεχνικές Αλλαγές
+---
 
-### Αρχείο: `src/components/sharing/SimpleShareSheet.tsx`
+## Implementation Plan
 
-**ImagePreviewCard** - Μικρότερο ύψος:
-```
-h-40 → h-28 sm:h-40
-```
+### 1. Create Animated Story Preview Component
+A new component that wraps the static Story image with Framer Motion animations:
 
-**Social Media Buttons** - Μικρότερα:
-```
-w-12 h-12 → w-9 h-9 sm:w-12 sm:h-12
-w-6 h-6 → w-4 h-4 sm:w-6 sm:h-6 (icons)
-gap-4 → gap-2 sm:gap-4
-p-3 → p-2 sm:p-3
-```
+**Animations to implement:**
+- **Card rotation**: Gentle oscillation between -4° and +4°
+- **Vertical float**: Subtle up/down movement (±15-20px)
+- **Background parallax**: Slower, opposite movement for depth
+- **Scale breathing**: Very subtle 0.98-1.02 scale pulse
 
-**Action Buttons** (Αντιγραφή Link / Περισσότερα):
-```
-h-12 → h-9 sm:h-12
-text-base → text-xs sm:text-base
-h-5 w-5 → h-3.5 w-3.5 sm:h-5 sm:w-5 (icons)
-gap-3 → gap-2 sm:gap-3
+```text
+┌─────────────────────────────┐
+│     ╭─────────────────╮     │ ← Background layer (slower parallax)
+│     │                 │     │
+│     │  ╭───────────╮  │     │ ← Story card (floating + rotating)
+│     │  │  Image    │  │     │
+│     │  │  + Text   │  │     │
+│     │  ╰───────────╯  │     │
+│     │                 │     │
+│     ╰─────────────────╯     │
+│                             │
+│  [Download]     [Share]     │ ← Buttons remain static
+└─────────────────────────────┘
 ```
 
-**Container padding**:
-```
-px-4 py-4 → px-3 py-3 sm:px-4 sm:py-4
-space-y-4 → space-y-3 sm:space-y-4
-```
+### 2. Update StoryPreviewModal
+Replace the static `<img>` with the new animated wrapper:
 
-## Αναμενόμενο Αποτέλεσμα
+- Wrap the Story image in a motion container
+- Apply continuous looping animations
+- Keep the modal structure and buttons unchanged
 
-```
-┌─────────────────────────┐
-│     Κοινοποίηση    ✕    │
-├─────────────────────────┤
-│ ┌─────────────────────┐ │  ← Μικρότερη εικόνα (h-28)
-│ │   Summer Beach      │ │
-│ └─────────────────────┘ │
-│                         │
-│  [IG]  [WA]  [Msg]      │  ← Μικρότερα icons (w-9)
-│                         │
-│ [Αντιγραφή] [Περισσότ]  │  ← Μικρότερα κουμπιά (h-9)
-│                         │     ΧΩΡΑΝΕ ΚΑΙ ΤΑ ΔΥΟ!
-└─────────────────────────┘
+### 3. Animation Configuration (Spotify-like feel)
+
+```text
+Rotation:     rotate(-3°) ←→ rotate(3°)   [4 second cycle]
+Y-Translate:  -15px ←→ 15px               [3 second cycle]
+X-Translate:  -5px ←→ 5px                 [5 second cycle, offset]
+Scale:        0.99 ←→ 1.01                [6 second cycle, subtle]
 ```
 
-## Αλλαγές σε Αρχεία
+The different cycle durations create organic, non-repetitive movement (similar to how Spotify does it).
 
-| Αρχείο | Ενέργεια | Περιγραφή |
-|--------|----------|-----------|
-| `src/components/sharing/SimpleShareSheet.tsx` | Τροποποίηση | Responsive classes για mobile-first sizing |
+---
 
-## Σημείωση
-Όλες οι αλλαγές χρησιμοποιούν Tailwind responsive prefixes (`sm:`) έτσι ώστε:
-- **Κινητό (< 640px)**: Μικρότερα μεγέθη
-- **Desktop (≥ 640px)**: Παραμένει όπως είναι τώρα
+## Technical Details
 
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/sharing/StoryPreviewModal.tsx` | Add Framer Motion animated wrapper with continuous floating/rotation animations around the preview image |
+
+### Animation Implementation
+
+Using Framer Motion's `animate` prop with `transition: { repeat: Infinity, repeatType: "mirror" }`:
+
+- **Primary motion**: Rotation + Y-translate on main container
+- **Secondary motion**: Slight X-translate with phase offset
+- **Tertiary motion**: Very subtle scale "breathing"
+
+The animations will be smooth and buttery using `ease: "easeInOut"` with staggered durations to prevent mechanical repetition.
+
+---
+
+## Summary
+
+This creates the same "living" feel as Spotify's song share where the content appears to float and gently sway, making the share preview feel premium and engaging before the user taps Share or Download.
