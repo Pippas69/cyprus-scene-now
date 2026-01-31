@@ -38,8 +38,8 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw the crisp image in the top portion
- * Fit to full width, crop only from bottom (wave covers it)
+ * Draw the image in the top portion
+ * Shows FULL image (no side/top cropping), clipped at the wave boundary
  */
 const drawTopImage = (
   ctx: CanvasRenderingContext2D,
@@ -47,28 +47,49 @@ const drawTopImage = (
   canvasWidth: number,
   imageHeight: number
 ) => {
+  ctx.save();
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
+  // Clip to the image region so nothing bleeds past the wave area
+  ctx.beginPath();
+  ctx.rect(0, 0, canvasWidth, imageHeight);
+  ctx.clip();
+
   const imgRatio = img.width / img.height;
+  const targetRatio = canvasWidth / imageHeight;
 
-  // Always fit to full width - no side cropping
-  const drawWidth = canvasWidth;
-  const drawHeight = canvasWidth / imgRatio;
+  let drawWidth: number, drawHeight: number, drawX: number, drawY: number;
 
-  // Start from top (y=0), so any overflow is cropped at the bottom by the wave
-  const drawX = 0;
-  const drawY = 0;
+  if (imgRatio > targetRatio) {
+    // Landscape image: fit to width, image will be shorter than area (navy shows at bottom)
+    drawWidth = canvasWidth;
+    drawHeight = canvasWidth / imgRatio;
+    drawX = 0;
+    drawY = 0; // Align to top
+  } else {
+    // Portrait/square image: fit to width, image will be taller (bottom gets clipped by wave)
+    drawWidth = canvasWidth;
+    drawHeight = canvasWidth / imgRatio;
+    drawX = 0;
+    drawY = 0; // Align to top, excess clipped at bottom
+  }
 
-  // Draw the image (bottom may extend past imageHeight, but wave covers it)
-  ctx.drawImage(img, 0, 0, img.width, img.height, drawX, drawY, drawWidth, drawHeight);
+  // Draw the FULL source image (no source cropping)
+  ctx.drawImage(
+    img,
+    0, 0, img.width, img.height,  // Source: full image
+    drawX, drawY, drawWidth, drawHeight  // Dest: scaled to fit width
+  );
 
-  // Add a subtle gradient at the bottom edge for smooth transition
-  const edgeGradient = ctx.createLinearGradient(0, imageHeight - 80, 0, imageHeight);
+  ctx.restore();
+
+  // Add a subtle gradient at the bottom edge for smooth transition to wave
+  const edgeGradient = ctx.createLinearGradient(0, imageHeight - 100, 0, imageHeight);
   edgeGradient.addColorStop(0, 'rgba(13, 59, 102, 0)');
-  edgeGradient.addColorStop(1, 'rgba(13, 59, 102, 0.6)');
+  edgeGradient.addColorStop(1, 'rgba(13, 59, 102, 0.7)');
   ctx.fillStyle = edgeGradient;
-  ctx.fillRect(0, imageHeight - 80, canvasWidth, 80);
+  ctx.fillRect(0, imageHeight - 100, canvasWidth, 100);
 };
 
 /**
