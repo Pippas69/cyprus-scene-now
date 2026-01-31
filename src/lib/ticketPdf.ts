@@ -156,11 +156,6 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
   pdf.setFont("NotoSans", "normal");
   pdf.text("ΦΟΜΟ", 145, 285);
 
-  // === FOOTER ===
-  pdf.setTextColor(mutedColor.r, mutedColor.g, mutedColor.b);
-  pdf.setFontSize(9);
-  pdf.text("Present this QR code at the event entrance for check-in", 105, 297, { align: "center" });
-
   // Download with ΦΟΜΟ branding
   const fileName = `fomo-ticket-${ticket.eventTitle.slice(0, 20).replace(/[^a-zA-Z0-9]/g, "-")}-${ticket.ticketId.slice(0, 8)}.pdf`;
   pdf.save(fileName);
