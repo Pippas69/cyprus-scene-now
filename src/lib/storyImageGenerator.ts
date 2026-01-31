@@ -31,7 +31,7 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 
 /**
  * Draw blurred background with dark overlay
- * Scales image to cover the entire canvas and applies Gaussian blur
+ * Uses minimal zoom to show more of the original image while ensuring full coverage
  */
 const drawBlurredBackground = (
   ctx: CanvasRenderingContext2D,
@@ -43,30 +43,31 @@ const drawBlurredBackground = (
   ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-  // Calculate "cover" dimensions - fill entire canvas, may crop edges
+  // Calculate dimensions - fit to fill canvas with minimal crop
   const imgRatio = img.width / img.height;
   const canvasRatio = canvasWidth / canvasHeight;
 
   let drawWidth: number, drawHeight: number, offsetX: number, offsetY: number;
 
   if (imgRatio > canvasRatio) {
-    // Image is wider than canvas ratio - fit to height, crop sides
+    // Image is wider - fit to height, center horizontally
     drawHeight = canvasHeight;
     drawWidth = drawHeight * imgRatio;
     offsetX = (canvasWidth - drawWidth) / 2;
     offsetY = 0;
   } else {
-    // Image is taller than canvas ratio - fit to width, crop top/bottom
+    // Image is taller - fit to width, bias toward center-top
     drawWidth = canvasWidth;
     drawHeight = drawWidth / imgRatio;
     offsetX = 0;
-    offsetY = (canvasHeight - drawHeight) / 2;
+    // Bias slightly toward top to show more relevant content
+    offsetY = Math.min(0, (canvasHeight - drawHeight) / 3);
   }
 
-  // Apply blur filter before drawing
-  ctx.filter = 'blur(30px)';
+  // Apply lighter blur for better image recognition (was 30px)
+  ctx.filter = 'blur(20px)';
   
-  // Draw image scaled to cover (may crop edges)
+  // Draw image
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   
   // Reset filter
