@@ -185,8 +185,26 @@ All colors MUST be HSL.
     filter: none !important;
   }
 
+  /* Extra-specific overrides for our pin label popup (prevents any white wrapper in some builds) */
+  .fomo-pin-label.mapboxgl-popup {
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
   .mapboxgl-popup-content {
     /* Make the outer Mapbox container invisible so only our custom bubble (BusinessPopup) is visible */
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  .fomo-pin-label .mapboxgl-popup-content {
     background-color: transparent !important;
     background: transparent !important;
     border: none !important;

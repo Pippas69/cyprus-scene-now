@@ -41,22 +41,22 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
 
   return (
     <div className="flex flex-col items-center">
-      {/* Small circular profile photo - no background */}
+      {/* Circular profile photo with in-image text overlay (like the reference) */}
       <button
         type="button"
         onClick={handleProfileClick}
         className="relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={language === "el" ? "Άνοιγμα προφίλ" : "Open profile"}
         style={{
-          boxShadow: `0 4px 12px -4px hsl(var(${planVar}) / 0.5)`,
+          boxShadow: `0 10px 20px -10px hsl(var(${planVar}) / 0.6)`,
         }}
       >
         <div
           className="relative overflow-hidden rounded-full"
           style={{
-            width: 72,
-            height: 72,
-            border: `2.5px solid hsl(var(${planVar}))`,
+            width: 124,
+            height: 124,
+            border: `3px solid hsl(var(${planVar}))`,
           }}
         >
           {imageUrl ? (
@@ -70,27 +70,30 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
           ) : (
             <div className="h-full w-full bg-muted" />
           )}
+
+          {/* Text overlay */}
+          <div className="absolute inset-x-0 bottom-0 px-3 pb-2 pt-6 text-center">
+            <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[hsl(var(--foreground)/0.55)] to-transparent" />
+            <div className="relative">
+              <div className="text-[12px] font-semibold leading-tight text-[hsl(var(--background))]">
+                {business.name}
+              </div>
+              <div className="mt-0.5 text-[10px] leading-tight text-[hsl(var(--background))] opacity-90">
+                {cityLabel}
+              </div>
+            </div>
+          </div>
         </div>
       </button>
 
-      {/* Name and city - compact */}
-      <div className="mt-1 text-center">
-        <div className="text-[11px] font-semibold leading-tight text-foreground drop-shadow-sm">
-          {business.name}
-        </div>
-        <div className="text-[9px] leading-tight text-muted-foreground">
-          {cityLabel}
-        </div>
-      </div>
-
-      {/* Compact directions badge */}
+      {/* Compact directions badge (directly under the pin area) */}
       <button
         type="button"
         onClick={handleDirectionsClick}
-        className="mt-1.5 inline-flex items-center justify-center rounded-full border bg-background/90 px-2.5 py-0.5 text-[9px] font-medium backdrop-blur-sm transition-transform hover:scale-[1.02]"
+        className="-mt-0.5 inline-flex items-center justify-center rounded-full border bg-background/90 px-2 py-0.5 text-[9px] font-medium backdrop-blur-sm transition-transform hover:scale-[1.02]"
         style={{
           borderColor: `hsl(var(${planVar}))`,
-          boxShadow: `0 2px 6px -2px hsl(var(${planVar}) / 0.3)`,
+          boxShadow: `0 6px 14px -10px hsl(var(${planVar}) / 0.5)`,
         }}
         aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
       >
