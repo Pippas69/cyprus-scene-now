@@ -32,7 +32,8 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw the crisp cover image in the top portion (no blur, sharp scaling)
+ * Draw the crisp cover image in the top portion using CONTAIN fit
+ * (shows full image without cropping, letterboxed if needed)
  */
 const drawTopImage = (
   ctx: CanvasRenderingContext2D,
@@ -46,19 +47,24 @@ const drawTopImage = (
   const imgRatio = img.width / img.height;
   const targetRatio = canvasWidth / imageHeight;
 
-  let sourceX = 0, sourceY = 0, sourceW = img.width, sourceH = img.height;
+  let drawWidth: number, drawHeight: number, drawX: number, drawY: number;
 
   if (imgRatio > targetRatio) {
-    // Image is wider – crop sides
-    sourceW = img.height * targetRatio;
-    sourceX = (img.width - sourceW) / 2;
+    // Image is wider – fit to width, center vertically
+    drawWidth = canvasWidth;
+    drawHeight = canvasWidth / imgRatio;
+    drawX = 0;
+    drawY = (imageHeight - drawHeight) / 2;
   } else {
-    // Image is taller – crop top/bottom (bias toward top)
-    sourceH = img.width / targetRatio;
-    sourceY = 0; // keep top
+    // Image is taller – fit to height, center horizontally
+    drawHeight = imageHeight;
+    drawWidth = imageHeight * imgRatio;
+    drawX = (canvasWidth - drawWidth) / 2;
+    drawY = 0;
   }
 
-  ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, canvasWidth, imageHeight);
+  // Draw the full image (no cropping)
+  ctx.drawImage(img, 0, 0, img.width, img.height, drawX, drawY, drawWidth, drawHeight);
 
   // Add a subtle gradient at the bottom edge for smooth transition
   const edgeGradient = ctx.createLinearGradient(0, imageHeight - 80, 0, imageHeight);
