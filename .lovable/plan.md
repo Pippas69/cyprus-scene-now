@@ -1,90 +1,110 @@
 
-# Plan: Fix Instagram Story Animation Not Appearing
+# Plan: Fix Instagram Story Animation on Mobile Devices
 
-## Problem Analysis
+## Problem Diagnosis
 
-The Instagram Story share system has a video generation pipeline that should produce an animated MP4 with a "Spotify-like floating" effect. The animation appears in the **preview modal** (via framer-motion) but does **NOT** appear in the actual shared file to Instagram.
+After analyzing the codebase and the screenshot you provided, I identified the **root cause**:
 
-### Root Cause Investigation
+**FFmpeg WASM requires `SharedArrayBuffer`** which is only available when the site has **Cross-Origin Isolation headers** configured. These headers are:
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Embedder-Policy: require-corp` (or `credentialless`)
 
-After analyzing the codebase, I identified several potential issues:
-
-1. **FFmpeg WASM Loading Failure**: The video generator relies on FFmpeg WASM which may fail to load on certain devices/browsers, causing a silent fallback to static PNG
-2. **Frame Validation Logic**: There's frame validation code that checks if frames are different, but if this fails, it throws an error and falls back to image
-3. **iOS Safari Limitations**: WebAssembly and FFmpeg have known limitations on iOS Safari
-4. **Video Not Recognized**: The generated video file might not be recognized as animated by Instagram
+Without these headers, `SharedArrayBuffer` is undefined, and FFmpeg WASM cannot function. That's why you see "Animation not supported on this device. Will share as image."
 
 ---
 
-## Technical Solution
+## Solution Options
 
-### Phase 1: Add Robust Logging & Error Visibility
+### Option A: Enable Cross-Origin Isolation Headers (Recommended for FFmpeg)
 
-**File: `src/lib/storyVideoGenerator.ts`**
-- Add detailed console logging at each step of video generation
-- Surface errors to the user instead of silent fallbacks
-- Track success/failure metrics
+Add the required headers in Vite config for development, and configure the production server to send these headers.
 
-### Phase 2: Improve Video Generation Fallback Visibility
+**Pros:**
+- FFmpeg WASM will work properly
+- Video generation will be available on iOS Safari and all modern browsers
 
-**File: `src/hooks/useSimpleShare.ts`**
-- When video generation fails, show a toast notification explaining the fallback
-- Track whether the final shared file is video or image
-- Add a flag in the preview modal to indicate if animation is preserved
+**Cons:**
+- May cause issues with third-party resources (images, iframes) that are not CORS-configured
+- Requires server configuration for production
 
-### Phase 3: Fix the Animation Encoding
+### Option B: Alternative Animation Approach - Animated GIF (More Compatible)
 
-**File: `src/lib/storyVideoGenerator.ts`**
-- Ensure the `renderFrame()` function actually produces different output per frame
-- Increase animation amplitude for more noticeable movement
-- Verify that the canvas context is not being reused incorrectly
+Instead of relying on FFmpeg WASM, use a pure JavaScript GIF encoder (like `gif.js` or custom canvas-based encoding) that doesn't require `SharedArrayBuffer`.
 
-### Phase 4: Add GIF Fallback for Wider Compatibility
+**Pros:**
+- Works on ALL devices including iOS Safari in-app browsers
+- No cross-origin isolation requirements
+- Instagram supports GIF in Stories
 
-Since FFmpeg WASM may fail on mobile Safari, I will:
-- Create a fallback mechanism that generates an animated GIF instead of MP4
-- Use canvas-based GIF encoding (no external dependencies)
-- This provides animation support even when video encoding fails
+**Cons:**
+- GIF has lower quality than MP4
+- Larger file sizes for same quality
+- Limited to 256 colors per frame
+
+### Option C: Use FFmpeg Single-Threaded Mode (Workaround)
+
+FFmpeg WASM can run in single-threaded mode without SharedArrayBuffer, though slower.
+
+**Pros:**
+- Keeps MP4 output
+- Works without header changes
+
+**Cons:**
+- Significantly slower on mobile devices
+- May timeout on older devices
 
 ---
 
-## Implementation Details
+## Recommended Solution: Option A + C Hybrid
 
-### 1. Enhanced Error Tracking in Video Generator
+1. **Add Cross-Origin Isolation headers** for browsers that support it
+2. **Use single-threaded FFmpeg as fallback** for browsers where headers don't work
+3. **Keep static image as final fallback** for very old browsers
+
+---
+
+## Implementation Plan
+
+### Step 1: Update Vite Configuration for Development
+
+Add headers to `vite.config.ts`:
+
 ```text
-Add try/catch with detailed error messages at:
-- FFmpeg loading
-- Frame generation  
-- Video encoding
-- File output
-
-Show user-friendly toast when falling back to static image
+server: {
+  host: "::",
+  port: 8080,
+  headers: {
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Embedder-Policy': 'credentialless',
+  },
+}
 ```
 
-### 2. Preview Modal Indicator
+### Step 2: Update `isVideoGenerationSupported()` Function
+
+Improve detection to check for actual SharedArrayBuffer availability:
+
 ```text
-Add visual indicator showing:
-- "Video" badge when animation is preserved
-- "Image" badge when fallback to static
+- Check if crossOriginIsolated === true
+- Check if SharedArrayBuffer is available
+- Log detailed diagnostics for debugging
 ```
 
-### 3. Fix Frame Generation Timing
-```text
-Current issue: Animation values are calculated correctly,
-but the canvas may not be clearing properly between frames.
+### Step 3: Add Single-Threaded FFmpeg Fallback
 
-Fix:
-- Explicitly clear canvas before each frame
-- Verify ctx state is not carried over
-- Add debugging canvas output for first/middle/last frames
+Modify `loadFFmpeg()` to try single-threaded mode when multi-threaded fails:
+
+```text
+- First try: Multi-threaded FFmpeg with SharedArrayBuffer
+- Second try: Single-threaded FFmpeg without SharedArrayBuffer
+- Final fallback: Static image
 ```
 
-### 4. Improve FFmpeg Compatibility
-```text
-- Use more compatible FFmpeg parameters
-- Test with lower resolution for faster processing
-- Add timeout handling for slow devices
-```
+### Step 4: Production Headers (Supabase Edge Function or Service Worker)
+
+For production, we have two options:
+- **Option A**: Create an edge function proxy that adds the required headers
+- **Option B**: Use a Service Worker to inject headers (more complex but works without server changes)
 
 ---
 
@@ -92,27 +112,33 @@ Fix:
 
 | File | Changes |
 |------|---------|
-| `src/lib/storyVideoGenerator.ts` | Add logging, fix frame clearing, improve error handling |
-| `src/hooks/useSimpleShare.ts` | Add fallback notifications, track media type |
-| `src/components/sharing/StoryPreviewModal.tsx` | Add video/image indicator badge |
-| `src/components/sharing/SimpleShareSheet.tsx` | Pass media type info to preview |
+| `vite.config.ts` | Add COOP/COEP headers for development |
+| `src/lib/storyVideoGenerator.ts` | Improve detection logic, add single-threaded fallback |
+| `src/hooks/useSimpleShare.ts` | Better error messaging and diagnostics |
 
 ---
 
-## Testing Plan
+## Technical Notes
 
-1. Test on iOS Safari (most problematic browser)
-2. Test on Android Chrome
-3. Test on Desktop (for download functionality)
-4. Verify the shared file contains animation when opened independently
-5. Verify fallback to static image works gracefully with notification
+### Why FFmpeg WASM Needs SharedArrayBuffer
+
+FFmpeg uses WebAssembly threads (multi-threading) for performance. These threads require shared memory (`SharedArrayBuffer`) to communicate. Without it, FFmpeg cannot spawn worker threads.
+
+### Cross-Origin Isolation on iOS Safari
+
+iOS Safari 15+ supports `SharedArrayBuffer` ONLY when:
+1. The page is served with COOP/COEP headers
+2. The page is NOT inside a webview or in-app browser
+3. The device is not in a restrictive corporate MDM profile
+
+This means even with correct headers, some users may still fall back to static images - but this should cover ~80% of iOS users.
 
 ---
 
 ## Expected Outcome
 
 After this fix:
-- Users will see clear feedback when animation generation fails
-- Animation will work more reliably across browsers
-- When animation fails, users understand they're sharing a static image
-- Downloaded files will clearly indicate if they're animated or static
+- **Most iOS Safari users** will get animated video Stories
+- **All Android Chrome users** will get animated video Stories  
+- **In-app browsers** will gracefully fallback to static image with clear messaging
+- **Better debugging** through detailed console logs
