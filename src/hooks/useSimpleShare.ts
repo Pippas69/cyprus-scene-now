@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { trackEngagement } from '@/lib/analyticsTracking';
 import { generateStoryImage } from '@/lib/storyImageGenerator';
-import { generateStoryVideo, isVideoGenerationSupported } from '@/lib/storyVideoGenerator';
+import { generateStoryVideo, isVideoGenerationSupported, getVideoGenerationDiagnostics } from '@/lib/storyVideoGenerator';
 import { getCacheKey, getCachedStoryMedia, setCachedStoryMedia } from '@/lib/storyMediaCache';
 
 // Types
@@ -411,7 +411,13 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
       }
 
       // Try to generate video first (animated Story)
-      if (isVideoGenerationSupported()) {
+      const videoSupported = isVideoGenerationSupported();
+      console.log('[StoryPreview] Video support check', { 
+        supported: videoSupported,
+        diagnostics: getVideoGenerationDiagnostics()
+      });
+      
+      if (videoSupported) {
         try {
           console.log('[StoryPreview] Attempting video generation...');
           const videoFile = await generateStoryVideo(data.imageUrl, {
@@ -425,6 +431,9 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
             size: videoFile.size, 
             type: videoFile.type 
           });
+          
+          // Show success notification for video
+          toast.success(t.videoReady, { duration: 2000 });
 
           // Cache the video result
           if (videoCacheKey) {
@@ -440,7 +449,11 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
           toast.info(t.videoFallback, { duration: 4000 });
         }
       } else {
-        console.log('[StoryPreview] Video generation not supported on this device');
+        console.log('[StoryPreview] Video generation not supported on this device', {
+          diagnostics: getVideoGenerationDiagnostics()
+        });
+        // Notify user that animation won't be available
+        toast.info(t.videoFallback, { duration: 3000 });
       }
 
       // Fallback: Generate static image
