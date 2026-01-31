@@ -230,9 +230,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     return p.status === 'expired' || (p.status === 'paid' && isExpired);
   });
 
-  // Navigate to map with business
+  // Navigate to map (Χάρτης) with business highlight
   const handleLocationClick = (businessId: string) => {
-    navigate(`/map?business=${businessId}`);
+    navigate(`/xartis?business=${businessId}&src=offer_location`);
   };
 
   if (isLoading) {
@@ -272,17 +272,23 @@ export function MyOffers({ userId, language }: MyOffersProps) {
 
     // Format date with time - "5 Φεβρουαρίου, 20:00" (no year)
     const formatDateWithTime = () => {
-      const date = new Date(purchase.expires_at);
-      const day = date.getDate();
-      const month = date.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
-      
       if (isReservation && purchase.reservations?.preferred_time) {
-        // Format reservation time (e.g., "20:00")
-        const time = purchase.reservations.preferred_time.slice(0, 5);
-        return language === "el" 
-          ? `${day} ${month}, ${time}` 
+        // preferred_time is a timestamptz (ISO string) -> parse and format correctly
+        const reservationDate = new Date(purchase.reservations.preferred_time);
+        const day = reservationDate.getDate();
+        const month = reservationDate.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
+        const time = reservationDate.toLocaleTimeString(language === "el" ? "el-GR" : "en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        return language === "el"
+          ? `${day} ${month}, ${time}`
           : `${month} ${day}, ${time}`;
       } else {
+        const date = new Date(purchase.expires_at);
+        const day = date.getDate();
+        const month = date.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
         // Walk-in: show time range
         const startTime = purchase.discounts?.valid_start_time?.slice(0, 5) || "00:00";
         const endTime = purchase.discounts?.valid_end_time?.slice(0, 5) || "23:59";
@@ -383,7 +389,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 e.stopPropagation();
                 const businessId = purchase.discounts?.businesses?.id;
                 if (businessId) {
-                  navigate(`/map?business=${businessId}&src=offer_location`);
+                  handleLocationClick(businessId);
                 }
               }}
               className="p-0.5 hover:bg-muted rounded-full transition-colors shrink-0"
