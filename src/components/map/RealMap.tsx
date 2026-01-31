@@ -357,7 +357,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       maxWidth: 'none',
       anchor: 'bottom',
       // Minimal offset for tight spacing between popup and pin
-      offset: [0, -34],
+      offset: [0, -22],
       className: 'fomo-pin-label',
     })
       .setLngLat([lng, lat])
@@ -370,6 +370,12 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       el.style.zIndex = '60';
       // Remove default tip spacing that can cause awkward gaps.
       el.style.pointerEvents = 'auto';
+
+      // Absolute fallback: remove the tip node if Mapbox injects it (prevents the tiny white triangle)
+      const tip = el.querySelector('.mapboxgl-popup-tip');
+      if (tip && tip.parentElement) {
+        tip.parentElement.removeChild(tip);
+      }
     } catch {
       // ignore
     }
