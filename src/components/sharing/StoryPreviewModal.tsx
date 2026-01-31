@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Share2, Loader2, Video, Image } from 'lucide-react';
+import { X, Download, Share2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { isMobile, hasNativeShare } from '@/hooks/useSimpleShare';
 
@@ -13,8 +12,6 @@ interface StoryPreviewModalProps {
   onOpenChange: (open: boolean) => void;
   imageUrl: string | null;
   isLoading: boolean;
-  isVideo?: boolean;
-  generationProgress?: number;
   onShare: () => Promise<void>;
   onDownload: () => void;
   language: 'el' | 'en';
@@ -26,22 +23,16 @@ const translations = {
     shareToInstagram: 'Κοινοποίηση',
     downloadImage: 'Λήψη',
     generating: 'Δημιουργία Story...',
-    generatingVideo: 'Δημιουργία βίντεο με κίνηση...',
     webInstructions: 'Άνοιξε την εικόνα στο Instagram και κοινοποίησε στο Story σου',
     mobileInstructions: 'Επίλεξε το Instagram Stories από το μενού',
-    videoReady: 'Βίντεο με κίνηση!',
-    imageReady: 'Στατική εικόνα',
   },
   en: {
     preview: 'Story Preview',
     shareToInstagram: 'Share',
     downloadImage: 'Download',
     generating: 'Generating Story...',
-    generatingVideo: 'Generating animated video...',
     webInstructions: 'Open the image on Instagram and share to your Story',
     mobileInstructions: 'Select Instagram Stories from the menu',
-    videoReady: 'Animated video!',
-    imageReady: 'Static image',
   },
 };
 
@@ -50,8 +41,6 @@ export const StoryPreviewModal = ({
   onOpenChange,
   imageUrl,
   isLoading,
-  isVideo = false,
-  generationProgress = 0,
   onShare,
   onDownload,
   language,
@@ -78,31 +67,7 @@ export const StoryPreviewModal = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
         <div className="w-8" />
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-foreground">{t.preview}</h2>
-          {/* Video/Image Badge - only show when content is ready */}
-          {!isLoading && imageUrl && (
-            <Badge 
-              variant={isVideo ? "default" : "secondary"} 
-              className={cn(
-                "text-[10px] px-1.5 py-0.5 h-5",
-                isVideo && "bg-primary hover:bg-primary/90"
-              )}
-            >
-              {isVideo ? (
-                <>
-                  <Video className="h-3 w-3 mr-0.5" />
-                  {t.videoReady}
-                </>
-              ) : (
-                <>
-                  <Image className="h-3 w-3 mr-0.5" />
-                  {t.imageReady}
-                </>
-              )}
-            </Badge>
-          )}
-        </div>
+        <h2 className="text-base font-semibold text-foreground">{t.preview}</h2>
         <button
           onClick={() => onOpenChange(false)}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
@@ -124,19 +89,7 @@ export const StoryPreviewModal = ({
                 className="flex flex-col items-center justify-center gap-3"
               >
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">
-                  {generationProgress > 0 ? t.generatingVideo : t.generating}
-                </p>
-                {generationProgress > 0 && (
-                  <div className="w-48 h-2 bg-muted rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-primary"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${generationProgress * 100}%` }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                )}
+                <p className="text-sm text-muted-foreground">{t.generating}</p>
               </motion.div>
             ) : imageUrl ? (
               <motion.div
@@ -149,8 +102,8 @@ export const StoryPreviewModal = ({
                 {/* Animated wrapper with Spotify-style floating effect */}
                 <motion.div
                   animate={{
-                    rotate: [-5, 5],
-                    y: [-18, 18],
+                    rotate: [-3, 3],
+                    y: [-8, 8],
                   }}
                   transition={{
                     rotate: {
@@ -166,58 +119,14 @@ export const StoryPreviewModal = ({
                       ease: "easeInOut",
                     },
                   }}
-                  style={{ perspective: 1000 }}
+                  className="rounded-xl shadow-2xl"
                 >
-                  <motion.div
-                    animate={{
-                      x: [-8, 8],
-                      scale: [0.98, 1.02],
-                      boxShadow: [
-                        "0 20px 40px rgba(0,0,0,0.3)",
-                        "0 35px 60px rgba(0,0,0,0.45)",
-                      ],
-                    }}
-                    transition={{
-                      x: {
-                        duration: 5,
-                        repeat: Infinity,
-                        repeatType: "mirror",
-                        ease: "easeInOut",
-                      },
-                      scale: {
-                        duration: 6,
-                        repeat: Infinity,
-                        repeatType: "mirror",
-                        ease: "easeInOut",
-                      },
-                      boxShadow: {
-                        duration: 3.5,
-                        repeat: Infinity,
-                        repeatType: "mirror",
-                        ease: "easeInOut",
-                      },
-                    }}
-                    className="rounded-xl"
-                  >
-                    {isVideo ? (
-                      <video
-                        src={imageUrl}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="max-w-full max-h-full object-contain rounded-xl"
-                        style={{ maxHeight: 'calc(100vh - 340px)', transform: 'scale(0.92)' }}
-                      />
-                    ) : (
-                      <img
-                        src={imageUrl}
-                        alt="Story preview"
-                        className="max-w-full max-h-full object-contain rounded-xl"
-                        style={{ maxHeight: 'calc(100vh - 340px)', transform: 'scale(0.92)' }}
-                      />
-                    )}
-                  </motion.div>
+                  <img
+                    src={imageUrl}
+                    alt="Story preview"
+                    className="max-w-full max-h-full object-contain rounded-xl"
+                    style={{ maxHeight: 'calc(100vh - 340px)' }}
+                  />
                 </motion.div>
               </motion.div>
             ) : null}
