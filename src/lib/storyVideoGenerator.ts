@@ -390,7 +390,7 @@ const drawBranding = (ctx: CanvasRenderingContext2D) => {
 
   ctx.font = '300 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.fillText('fomo.cy', VIDEO_WIDTH / 2, brandY + 36);
+  ctx.fillText('fomo.com.cy', VIDEO_WIDTH / 2, brandY + 36);
 };
 
 /**

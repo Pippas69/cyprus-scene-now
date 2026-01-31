@@ -8,6 +8,12 @@ interface StoryImageOptions {
   subtitle?: string;
   date?: string;
   location?: string;
+  /** Price info (e.g., "€15" or "Δωρεάν") */
+  price?: string;
+  /** Discount percentage (e.g., "30%") */
+  discountPercent?: string;
+  /** Category or event type */
+  category?: string;
 }
 
 /**
@@ -150,7 +156,7 @@ const drawTextOverlay = (
   imageBottom: number
 ) => {
   const padding = 60;
-  const textAreaTop = imageBottom + 60;
+  const textAreaTop = imageBottom + 50;
   const centerX = canvasWidth / 2;
 
   // Semi-transparent overlay for text area
@@ -164,40 +170,62 @@ const drawTextOverlay = (
   ctx.textAlign = 'center';
   ctx.fillStyle = '#FFFFFF';
 
-  let currentY = textAreaTop + 40;
+  let currentY = textAreaTop + 30;
+
+  // Category tag (if available)
+  if (options.category) {
+    ctx.font = '500 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = 'rgba(78, 205, 196, 0.95)'; // Seafoam teal
+    ctx.fillText(options.category.toUpperCase(), centerX, currentY);
+    currentY += 40;
+  }
 
   // Title
-  ctx.font = 'bold 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
   const titleLines = wrapText(ctx, options.title, canvasWidth - padding * 2);
   titleLines.forEach((line) => {
     ctx.fillText(line, centerX, currentY);
-    currentY += 64;
+    currentY += 58;
   });
 
-  currentY += 20;
+  currentY += 12;
 
   // Subtitle (business name)
   if (options.subtitle) {
-    ctx.font = '500 36px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '500 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.fillText(options.subtitle, centerX, currentY);
-    currentY += 50;
+    currentY += 44;
+  }
+
+  // Price or Discount badge (if available)
+  if (options.discountPercent || options.price) {
+    currentY += 8;
+    const badgeText = options.discountPercent 
+      ? `🔥 ${options.discountPercent} OFF` 
+      : `💰 ${options.price}`;
+    
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = 'rgba(255, 200, 50, 0.95)'; // Gold accent
+    ctx.fillText(badgeText, centerX, currentY);
+    currentY += 44;
   }
 
   // Location
   if (options.location) {
-    ctx.font = '400 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '400 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(`📍 ${options.location}`, centerX, currentY);
-    currentY += 48;
+    currentY += 40;
   }
 
   // Date
   if (options.date) {
-    ctx.font = '400 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '400 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(`🗓️ ${options.date}`, centerX, currentY);
-    currentY += 48;
+    currentY += 40;
   }
 };
 
@@ -228,7 +256,7 @@ const drawBranding = (
   // Tagline
   ctx.font = '300 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.fillText('fomo.cy', canvasWidth / 2, brandY + 36);
+  ctx.fillText('fomo.com.cy', canvasWidth / 2, brandY + 36);
 };
 
 /**
