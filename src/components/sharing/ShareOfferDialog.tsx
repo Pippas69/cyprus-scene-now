@@ -11,10 +11,12 @@ interface ShareOfferDialogProps {
     percent_off?: number | null;
     special_deal_text?: string | null;
     end_at: string;
+    category?: string | null;
     offer_image_url?: string | null;
     businesses: {
       id: string;
       name: string;
+      city?: string | null;
       cover_url?: string | null;
       logo_url?: string | null;
     };
@@ -39,23 +41,26 @@ export const ShareOfferDialog = ({
   );
   const imageUrl = offer.offer_image_url || offer.businesses.cover_url || offer.businesses.logo_url;
 
-  // Build subtitle
-  const getSubtitle = () => {
-    if (offer.percent_off && offer.percent_off > 0) {
-      return `-${offer.percent_off}%`;
-    }
-    if (offer.special_deal_text) {
-      return offer.special_deal_text;
-    }
-    return offer.businesses.name;
-  };
+  // Format end date for story
+  const endDate = new Date(offer.end_at);
+  const storyDate = language === 'el' 
+    ? `Ισχύει έως ${endDate.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}`
+    : `Valid until ${endDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`;
+
+  // Get discount percent for story
+  const storyDiscountPercent = offer.percent_off && offer.percent_off > 0 
+    ? `${offer.percent_off}%` 
+    : undefined;
+
+  // Get location from business
+  const storyLocation = offer.businesses.city || undefined;
 
   return (
     <SimpleShareSheet
       open={open}
       onOpenChange={onOpenChange}
       title={offer.title}
-      subtitle={getSubtitle()}
+      subtitle={offer.businesses.name}
       text={shareText}
       url={url}
       imageUrl={imageUrl}
@@ -63,6 +68,10 @@ export const ShareOfferDialog = ({
       objectType="discount"
       objectId={offer.id}
       businessId={offer.businesses.id}
+      storyDate={storyDate}
+      storyLocation={storyLocation}
+      storyDiscountPercent={storyDiscountPercent}
+      storyCategory={offer.category || undefined}
     />
   );
 };

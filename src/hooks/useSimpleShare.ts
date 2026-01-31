@@ -100,6 +100,12 @@ interface StoryShareData extends ShareData {
   subtitle?: string;
   date?: string;
   location?: string;
+  /** Price info (e.g., "€15" or "Δωρεάν") */
+  price?: string;
+  /** Discount percentage (e.g., "30%") */
+  discountPercent?: string;
+  /** Category or event type */
+  category?: string;
 }
 
 interface ShareOptions {
@@ -284,6 +290,9 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
               subtitle: data.subtitle,
               date: data.date,
               location: data.location,
+              price: data.price,
+              discountPercent: data.discountPercent,
+              category: data.category,
             });
           } catch (imgError) {
             console.warn('Failed to generate Story image:', imgError);
@@ -411,6 +420,9 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
           subtitle: data.subtitle,
           date: data.date,
           location: data.location,
+          price: data.price,
+          discountPercent: data.discountPercent,
+          category: data.category,
         });
 
         if (cacheKey) {

@@ -9,6 +9,7 @@ interface ShareProfileDialogProps {
     name: string;
     city?: string | null;
     address?: string | null;
+    category?: string[];
     logo_url?: string | null;
     cover_url?: string | null;
   };
@@ -19,6 +20,9 @@ export const ShareProfileDialog = ({ open, onOpenChange, business, language }: S
   const url = getBusinessUrlFallback(business.id);
   const shareText = formatBusinessShareText({ name: business.name }, language);
   const imageUrl = business.cover_url || business.logo_url;
+
+  // Get first category for story
+  const storyCategory = business.category?.[0];
 
   return (
     <SimpleShareSheet
@@ -33,6 +37,8 @@ export const ShareProfileDialog = ({ open, onOpenChange, business, language }: S
       objectType="business"
       objectId={business.id}
       businessId={business.id}
+      storyLocation={business.city || business.address || undefined}
+      storyCategory={storyCategory}
     />
   );
 };
