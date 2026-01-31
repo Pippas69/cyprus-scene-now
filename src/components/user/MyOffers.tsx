@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,8 +56,11 @@ interface OfferPurchase {
 
 export function MyOffers({ userId, language }: MyOffersProps) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const highlightedPurchaseId = searchParams.get('purchaseId');
 
   const text = {
     title: { el: "Οι Αγορές Μου", en: "My Purchases" },
@@ -235,6 +238,28 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     navigate(`/xartis?business=${businessId}&src=offer_location`);
   };
 
+  // Auto-scroll to highlighted purchase and clear the param after
+  useEffect(() => {
+    if (highlightedPurchaseId && !isLoading) {
+      // Small delay to ensure cards are rendered
+      setTimeout(() => {
+        const cardElement = cardRefs.current.get(highlightedPurchaseId);
+        if (cardElement) {
+          cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight animation
+          cardElement.classList.add('ring-2', 'ring-orange-400', 'ring-offset-2');
+          // Remove highlight after animation
+          setTimeout(() => {
+            cardElement.classList.remove('ring-2', 'ring-orange-400', 'ring-offset-2');
+            // Clear the URL parameter
+            searchParams.delete('purchaseId');
+            setSearchParams(searchParams, { replace: true });
+          }, 3000);
+        }
+      }, 300);
+    }
+  }, [highlightedPurchaseId, isLoading, searchParams, setSearchParams]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -306,7 +331,10 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       null;
 
     return (
-      <Card className="overflow-hidden relative">
+      <Card 
+        ref={(el) => { if (el) cardRefs.current.set(purchase.id, el); }}
+        className="overflow-hidden relative transition-all duration-300"
+      >
         {/* Image section - increased height */}
         <div className="h-48 relative overflow-hidden rounded-t-xl">
           {imageUrl ? (
