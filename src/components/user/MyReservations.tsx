@@ -642,15 +642,17 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
             <span className="text-xs">{reservation.party_size} {t.people}</span>
           </div>
 
-          {/* Row 5: Location */}
+          {/* Row 5: Location - opens Google Maps */}
           {location && (
-            <button
-              onClick={() => businessInfo?.id && navigate(`/xartis?business=${businessInfo.id}&src=dashboard_user`)}
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
             >
               <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
               <span className="text-xs truncate">{location}</span>
-            </button>
+            </a>
           )}
 
           {/* Prepaid Credit Info */}
