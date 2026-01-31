@@ -15,7 +15,7 @@ import {
   GlassWater, TableIcon, Crown, Sofa, Users, Shirt, 
   Clock, Phone, User, MessageSquare, CreditCard, 
   CheckCircle, ArrowRight, ArrowLeft, Loader2, Euro,
-  AlertCircle, Info
+  AlertCircle, Info, Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -213,6 +213,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [seatingOptions, setSeatingOptions] = useState<SeatingTypeOption[]>([]);
   const [paymentsReady, setPaymentsReady] = useState<boolean | null>(null);
 
+  // Success state for showing premium QR card
+  const [successData, setSuccessData] = useState<{
+    qrToken: string;
+    confirmationCode: string;
+    prepaidAmount: number;
+  } | null>(null);
+
   // Selection state
   const [selectedSeating, setSelectedSeating] = useState<SeatingTypeOption | null>(null);
   const [partySize, setPartySize] = useState(minPartySize);
@@ -344,9 +351,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
 
-      toast.success(language === 'el' ? 'Η δοκιμαστική κράτηση δημιουργήθηκε!' : 'Test reservation created!');
-      onSuccess?.();
-      onOpenChange(false);
+      // Show success screen
+      setSuccessData({
+        qrToken: (data as any)?.qr_code_token || '',
+        confirmationCode: (data as any)?.confirmation_code || '',
+        prepaidAmount: total,
+      });
     } catch (err) {
       console.error('Error creating free reservation:', err);
       toast.error(language === 'el' ? 'Σφάλμα δημιουργίας κράτησης' : 'Error creating reservation');
@@ -711,6 +721,65 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       ))}
     </div>
   );
+
+  // Success Screen
+  if (successData) {
+    const successContent = (
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full max-w-sm mx-auto">
+        <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
+          <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
+        </div>
+        <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
+          <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-green-50 rounded-lg">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <p className="text-sm font-semibold text-green-700">
+              {language === 'el' ? 'Η κράτησή σας έγινε επιτυχώς!' : 'Your reservation was successful!'}
+            </p>
+          </div>
+          <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2">{eventTitle}</h2>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase">{language === 'el' ? 'ΗΜΕΡ/ΝΙΑ' : 'DATE'}</p>
+              <p className="text-xs font-semibold text-[#102b4a]">{format(new Date(eventDate), 'EEE, d MMM')}</p>
+            </div>
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase">{language === 'el' ? 'ΩΡΑ' : 'TIME'}</p>
+              <p className="text-xs font-semibold text-[#102b4a]">{format(new Date(eventDate), 'HH:mm')}</p>
+            </div>
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+              <CreditCard className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase">{language === 'el' ? 'ΚΡΑΤΗΣΗ' : 'RESERVATION'}</p>
+              <p className="text-xs font-semibold text-[#102b4a]">{formatPrice(successData.prepaidAmount)}</p>
+            </div>
+          </div>
+          <p className="text-[10px] text-[#64748b] text-center mb-3">{language === 'el' ? 'Σαρώστε στην επιχείρηση' : 'Scan at the venue'}</p>
+          <Button onClick={() => { onSuccess?.(); onOpenChange(false); }} className="w-full bg-[#102b4a] hover:bg-[#1a3d5c] h-8 text-xs">
+            {language === 'el' ? 'Κλείσιμο' : 'Close'}
+          </Button>
+        </div>
+      </div>
+    );
+
+    if (isMobile) {
+      return (
+        <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerContent className="max-h-[95vh] bg-transparent border-0">
+            <DrawerHeader className="sr-only"><DrawerTitle>{t.title}</DrawerTitle><DrawerDescription>{eventTitle}</DrawerDescription></DrawerHeader>
+            <div className="px-4 pb-6">{successContent}</div>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
+          {successContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const content = (
     <div className="space-y-4">
