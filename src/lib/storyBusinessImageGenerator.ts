@@ -26,6 +26,7 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 
 /**
  * Draw full-bleed cover image as background with subtle gradient overlay
+ * Uses minimal zoom to show more of the original image
  */
 const drawCoverBackground = (
   ctx: CanvasRenderingContext2D,
@@ -33,25 +34,32 @@ const drawCoverBackground = (
   canvasWidth: number,
   canvasHeight: number
 ) => {
-  // Calculate "cover" dimensions
+  // Fill with dark base first
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+  // Calculate dimensions to fill canvas with minimal crop
   const imgRatio = img.width / img.height;
   const canvasRatio = canvasWidth / canvasHeight;
 
   let drawWidth: number, drawHeight: number, offsetX: number, offsetY: number;
 
   if (imgRatio > canvasRatio) {
+    // Image is wider - fit to height with minimal overflow
     drawHeight = canvasHeight;
     drawWidth = drawHeight * imgRatio;
     offsetX = (canvasWidth - drawWidth) / 2;
     offsetY = 0;
   } else {
+    // Image is taller - fit to width with minimal overflow
     drawWidth = canvasWidth;
     drawHeight = drawWidth / imgRatio;
     offsetX = 0;
-    offsetY = (canvasHeight - drawHeight) / 2;
+    // Center vertically but bias slightly toward top to show more content
+    offsetY = Math.min(0, (canvasHeight - drawHeight) / 3);
   }
 
-  // Draw the cover image full-bleed
+  // Draw the cover image
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
   // Add gradient overlay for text readability (stronger at bottom)
@@ -76,9 +84,10 @@ const drawLogo = async (
   try {
     const logo = await loadImage(logoUrl);
     
-    const logoSize = 160;
+    // Larger logo for better visibility (was 160)
+    const logoSize = 240;
     const logoX = canvasWidth / 2;
-    const logoY = canvasHeight * 0.35;
+    const logoY = canvasHeight * 0.32;
     
     // Draw circular clip for logo
     ctx.save();
