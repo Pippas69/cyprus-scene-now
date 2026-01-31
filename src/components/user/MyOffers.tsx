@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Store, CheckCircle, Calendar, Clock, QrCode, ShoppingBag, AlertCircle, Wallet, History, TrendingDown } from "lucide-react";
+import { Loader2, Store, CheckCircle, Calendar, Clock, QrCode, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { CreditTransactionHistory } from "./CreditTransactionHistory";
 import { OfferQRCard } from "./OfferQRCard";
 
@@ -27,6 +28,8 @@ interface OfferPurchase {
   expires_at: string;
   redeemed_at: string | null;
   balance_remaining_cents: number | null;
+  claim_type: string | null;
+  reservation_id: string | null;
   discounts: {
     id: string;
     title: string;
@@ -36,18 +39,24 @@ interface OfferPurchase {
     bonus_percent: number | null;
     credit_amount_cents: number | null;
     offer_image_url: string | null;
+    valid_start_time: string | null;
+    valid_end_time: string | null;
     businesses: {
+      id: string;
       name: string;
       logo_url: string | null;
       cover_url: string | null;
       city: string;
     };
-  };
+  } | null;
+  reservations: {
+    preferred_time: string | null;
+  } | null;
 }
 
 export function MyOffers({ userId, language }: MyOffersProps) {
+  const navigate = useNavigate();
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
-
   const [showHistory, setShowHistory] = useState<string | null>(null);
 
   const text = {
@@ -83,6 +92,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: { el: "Εξαντλημένο", en: "Depleted" },
     totalCredit: { el: "Συνολική Πίστωση", en: "Total Credit" },
     used: { el: "Χρησιμοποιημένα", en: "Used" },
+    reservation: { el: "Κράτηση", en: "Reservation" },
   };
 
   const t = language === "el" ? {
@@ -118,6 +128,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: text.depleted.el,
     totalCredit: text.totalCredit.el,
     used: text.used.el,
+    reservation: text.reservation.el,
   } : {
     title: text.title.en,
     active: text.active.en,
@@ -151,37 +162,10 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: text.depleted.en,
     totalCredit: text.totalCredit.en,
     used: text.used.en,
+    reservation: text.reservation.en,
   };
 
-  const getTimeRemaining = (endDate: string) => {
-    const now = new Date();
-    const end = new Date(endDate);
-    
-    const days = differenceInDays(end, now);
-    const hours = differenceInHours(end, now) % 24;
-    const minutes = differenceInMinutes(end, now) % 60;
-    
-    if (days > 0) {
-      return {
-        value: `${days} ${days === 1 ? t.day : t.days}${hours > 0 ? ` ${hours} ${hours === 1 ? t.hour : t.hours}` : ''}`,
-        urgency: days <= 1 ? 'high' : days <= 3 ? 'medium' : 'low'
-      };
-    } else if (hours > 0) {
-      return {
-        value: `${hours} ${hours === 1 ? t.hour : t.hours}${minutes > 0 ? ` ${minutes} ${minutes === 1 ? t.minute : t.minutes}` : ''}`,
-        urgency: 'high'
-      };
-    } else if (minutes > 0) {
-      return {
-        value: `${minutes} ${minutes === 1 ? t.minute : t.minutes}`,
-        urgency: 'critical'
-      };
-    } else {
-      return { value: '', urgency: 'expired' };
-    }
-  };
-
-  // Fetch purchased offers
+  // Fetch purchased offers with expanded data
   const { data: purchases, isLoading } = useQuery({
     queryKey: ["user-offer-purchases", userId],
     queryFn: async () => {
@@ -198,12 +182,18 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             bonus_percent,
             credit_amount_cents,
             offer_image_url,
+            valid_start_time,
+            valid_end_time,
             businesses (
+              id,
               name,
               logo_url,
               cover_url,
               city
             )
+          ),
+          reservations (
+            preferred_time
           )
         `)
         .eq("user_id", userId)
@@ -214,40 +204,35 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     },
   });
 
-  // Helper to check if credit offer is depleted
-  const isCreditDepleted = (purchase: OfferPurchase) => {
-    return purchase.discounts?.offer_type === 'credit' && 
-           (purchase.balance_remaining_cents === 0 || purchase.balance_remaining_cents === null);
-  };
+  // Filter out null discounts (deleted offers) BEFORE any categorization
+  const validPurchases = purchases?.filter(p => p.discounts !== null) || [];
 
   // Separate purchases by status
-  const activePurchases = purchases?.filter(p => {
+  const activePurchases = validPurchases.filter(p => {
     const isExpired = new Date(p.expires_at) <= new Date();
     const isCredit = p.discounts?.offer_type === 'credit';
-    // Credit offers are active if they have balance and aren't expired
     if (isCredit) {
       return p.status === 'paid' && !isExpired && (p.balance_remaining_cents ?? 0) > 0;
     }
-    // Regular offers are active if paid and not expired
     return p.status === 'paid' && !isExpired;
-  }) || [];
+  });
   
-  const redeemedPurchases = purchases?.filter(p => {
+  const redeemedPurchases = validPurchases.filter(p => {
     const isCredit = p.discounts?.offer_type === 'credit';
-    // Credit offers are "redeemed" (depleted) when balance is 0
     if (isCredit && p.status === 'paid') {
       return (p.balance_remaining_cents ?? 0) === 0;
     }
     return p.status === 'redeemed';
-  }) || [];
+  });
   
-  const expiredPurchases = purchases?.filter(p => {
+  const expiredPurchases = validPurchases.filter(p => {
     const isExpired = new Date(p.expires_at) <= new Date();
     return p.status === 'expired' || (p.status === 'paid' && isExpired);
-  }) || [];
+  });
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), language === "el" ? "dd/MM/yyyy" : "MM/dd/yyyy");
+  // Navigate to map with business
+  const handleLocationClick = (businessId: string) => {
+    navigate(`/map?business=${businessId}`);
   };
 
   if (isLoading) {
@@ -261,23 +246,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   const PurchaseCard = ({ purchase, showQR = true }: { purchase: OfferPurchase; showQR?: boolean }) => {
     // Guard against null discounts (can happen if discount was deleted)
     if (!purchase.discounts || !purchase.discounts.businesses) {
-      return (
-        <Card className="overflow-hidden opacity-60 aspect-square">
-          <div className="h-full flex flex-col">
-            <div className="h-1/2 bg-muted flex items-center justify-center rounded-t-xl">
-              <Store className="h-12 w-12 text-muted-foreground/50" />
-            </div>
-            <div className="h-1/2 p-3 flex flex-col justify-center">
-              <p className="font-semibold text-sm text-muted-foreground">
-                {language === "el" ? "Προσφορά μη διαθέσιμη" : "Offer unavailable"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {language === "el" ? "Αυτή η προσφορά δεν υπάρχει πλέον" : "This offer no longer exists"}
-              </p>
-            </div>
-          </div>
-        </Card>
-      );
+      return null;
     }
 
     const isCredit = purchase.discounts.offer_type === 'credit';
@@ -285,8 +254,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     const isDepleted = isCredit && balanceRemaining === 0;
     const isExpired = new Date(purchase.expires_at) <= new Date();
     const isRedeemed = purchase.status === 'redeemed';
+    const isReservation = purchase.claim_type === 'with_reservation';
 
-    // Format expiry date
+    // Format expiry date - Greek style "Λήγει στις 4 Φεβρουαρίου"
     const formatExpiryDate = (dateString: string) => {
       const date = new Date(dateString);
       const now = new Date();
@@ -300,112 +270,158 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       return language === "el" ? `Λήγει στις ${day} ${month}` : `Expires ${month} ${day}`;
     };
 
-    // Format purchase date
-    const formatPurchaseDate = (dateString: string) => {
-      const date = new Date(dateString);
+    // Format date with time - "5 Φεβρουαρίου 2026, 20:00" or "5 Φεβρουαρίου, 18:00-21:00"
+    const formatDateWithTime = () => {
+      const date = new Date(purchase.expires_at);
       const day = date.getDate();
       const month = date.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
-      return language === "el" ? `${t.purchasedOn} ${day} ${month}` : `${t.purchasedOn} ${month} ${day}`;
+      const year = date.getFullYear();
+      
+      if (isReservation && purchase.reservations?.preferred_time) {
+        // Format reservation time (e.g., "20:00")
+        const time = purchase.reservations.preferred_time.slice(0, 5);
+        return language === "el" 
+          ? `${day} ${month} ${year}, ${time}` 
+          : `${month} ${day} ${year}, ${time}`;
+      } else {
+        // Walk-in: show time range
+        const startTime = purchase.discounts?.valid_start_time?.slice(0, 5) || "00:00";
+        const endTime = purchase.discounts?.valid_end_time?.slice(0, 5) || "23:59";
+        return language === "el" 
+          ? `${day} ${month}, ${startTime}-${endTime}` 
+          : `${month} ${day}, ${startTime}-${endTime}`;
+      }
     };
 
-    // Use same image priority as OfferCard: offer_image_url → cover_url → logo_url
+    // Image priority: offer_image_url → cover_url → logo_url
     const imageUrl =
       purchase.discounts.offer_image_url ||
       purchase.discounts.businesses.cover_url ||
       purchase.discounts.businesses.logo_url ||
       null;
 
-     return (
-       <Card className="overflow-hidden relative">
-         {/* Image section - h-40 like event/offer cards */}
-         <div className="h-40 relative overflow-hidden rounded-t-xl">
-           {imageUrl ? (
-             <img
-               src={imageUrl}
-               alt={purchase.discounts.businesses.name}
-               className="absolute inset-0 h-full w-full object-cover"
-             />
-           ) : (
-             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-muted" />
-           )}
-           {/* Gradient overlay */}
-           <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
-           
-           {/* BADGES - Inside image, top right */}
-           <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-             {isDepleted ? (
-               <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow-sm">
-                 <TrendingDown className="h-3 w-3 mr-0.5" />
-               </Badge>
-             ) : isCredit ? (
-               <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-emerald-600 shadow-sm">
-                 <Wallet className="h-3 w-3 mr-0.5" />
-                 €{(balanceRemaining / 100).toFixed(0)}
-               </Badge>
-             ) : isRedeemed ? (
-               <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow-sm flex items-center gap-1 whitespace-nowrap">
-                 <CheckCircle className="h-3 w-3" />
-                 <span>{language === "el" ? "Χρησιμοποιημένο" : "Used"}</span>
-               </Badge>
-             ) : isExpired ? (
-               <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 shadow-sm">
-                 <AlertCircle className="h-3 w-3" />
-               </Badge>
-             ) : purchase.discount_percent > 0 && (
-               <Badge variant="default" className="text-[10px] px-1.5 py-0.5 shadow-sm">
-                 -{purchase.discount_percent}%
-               </Badge>
-             )}
-           </div>
-         </div>
+    return (
+      <Card className="overflow-hidden relative">
+        {/* Image section - h-40 */}
+        <div className="h-40 relative overflow-hidden rounded-t-xl">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={purchase.discounts.businesses.name}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-muted" />
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
+          
+          {/* Reservation Badge - Top Left (only for reservations) */}
+          {isReservation && (
+            <Badge 
+              variant="default" 
+              className="absolute top-2 left-2 z-10 text-[10px] px-2 py-0.5 shadow-sm"
+            >
+              {t.reservation}
+            </Badge>
+          )}
+          
+          {/* Status/Discount Badge - Top Right */}
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+            {isDepleted ? (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow-sm">
+                <TrendingDown className="h-3 w-3 mr-0.5" />
+              </Badge>
+            ) : isCredit ? (
+              <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-emerald-600 shadow-sm">
+                <Wallet className="h-3 w-3 mr-0.5" />
+                €{(balanceRemaining / 100).toFixed(0)}
+              </Badge>
+            ) : isRedeemed ? (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow-sm flex items-center gap-1 whitespace-nowrap">
+                <CheckCircle className="h-3 w-3" />
+                <span>{language === "el" ? "Χρησιμοποιημένο" : "Used"}</span>
+              </Badge>
+            ) : isExpired ? (
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 shadow-sm">
+                <AlertCircle className="h-3 w-3" />
+              </Badge>
+            ) : purchase.discount_percent > 0 && (
+              <Badge variant="default" className="text-[10px] px-1.5 py-0.5 shadow-sm">
+                -{purchase.discount_percent}%
+              </Badge>
+            )}
+          </div>
+        </div>
 
-         {/* Content section - below image */}
-         <div className="p-2.5 space-y-1">
-           {/* Title */}
-           <h4 className="text-sm font-semibold line-clamp-1">
-             {purchase.discounts.title}
-           </h4>
+        {/* Content section */}
+        <div className="p-3 space-y-1.5">
+          {/* Title */}
+          <h4 className="text-sm font-semibold line-clamp-1">
+            {purchase.discounts.title}
+          </h4>
 
-           {/* Purchased date */}
-           <div className="flex items-center gap-1.5 text-muted-foreground">
-             <ShoppingBag className="h-3 w-3 text-primary" />
-             <span className="text-xs">{formatPurchaseDate(purchase.created_at)}</span>
-           </div>
+          {/* Business row with logo */}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            {purchase.discounts.businesses.logo_url ? (
+              <img 
+                src={purchase.discounts.businesses.logo_url} 
+                alt={purchase.discounts.businesses.name}
+                className="h-4 w-4 rounded-full object-cover"
+              />
+            ) : (
+              <Store className="h-4 w-4 text-primary" />
+            )}
+            <span className="text-xs line-clamp-1">{purchase.discounts.businesses.name}</span>
+          </div>
 
-           {/* Expiry date */}
-           <div className="flex items-center gap-1.5 text-muted-foreground">
-             <Calendar className="h-3 w-3 text-primary" />
-             <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
-           </div>
+          {/* Date + Time + Location row */}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-xs line-clamp-1 flex-1">{formatDateWithTime()}</span>
+            <button 
+              onClick={() => handleLocationClick(purchase.discounts!.businesses.id)}
+              className="p-1 hover:bg-muted rounded-full transition-colors shrink-0"
+              aria-label={language === "el" ? "Δείτε στον χάρτη" : "View on map"}
+            >
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+            </button>
+          </div>
 
-           {/* Action buttons */}
-           <div className="flex items-center gap-2 pt-1">
-             {showQR && !isExpired && !isRedeemed && !isDepleted && (
-               <Button 
-                 onClick={() => setSelectedPurchase(purchase)}
-                 size="sm" 
-                 variant="default"
-                 className="flex-1 text-xs h-7"
-               >
-                 <QrCode className="h-3 w-3 mr-1" />
-                 {t.viewQR}
-               </Button>
-             )}
-             {isCredit && (
-               <Button
-                 onClick={() => setShowHistory(purchase.id)}
-                 variant="outline"
-                 size="sm"
-                 className="flex-1 text-xs h-7"
-               >
-                 <History className="h-3 w-3 mr-1" />
-                 {t.viewHistory}
-               </Button>
-             )}
-           </div>
-         </div>
-       </Card>
-     );
+          {/* Expiry row */}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 pt-1.5">
+            {showQR && !isExpired && !isRedeemed && !isDepleted && (
+              <Button 
+                onClick={() => setSelectedPurchase(purchase)}
+                size="sm" 
+                variant="default"
+                className="flex-1 text-xs h-8"
+              >
+                <QrCode className="h-3.5 w-3.5 mr-1.5" />
+                {t.viewQR}
+              </Button>
+            )}
+            {isCredit && (
+              <Button
+                onClick={() => setShowHistory(purchase.id)}
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs h-8"
+              >
+                <History className="h-3.5 w-3.5 mr-1.5" />
+                {t.viewHistory}
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
   };
 
   return (
@@ -501,9 +517,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         offer={selectedPurchase ? {
           id: selectedPurchase.id,
           qrToken: selectedPurchase.qr_code_token || '',
-          title: selectedPurchase.discounts.title,
-          businessName: selectedPurchase.discounts.businesses.name,
-          businessLogo: selectedPurchase.discounts.businesses.logo_url,
+          title: selectedPurchase.discounts!.title,
+          businessName: selectedPurchase.discounts!.businesses.name,
+          businessLogo: selectedPurchase.discounts!.businesses.logo_url,
           discountPercent: selectedPurchase.discount_percent,
           expiresAt: selectedPurchase.expires_at,
           purchasedAt: selectedPurchase.created_at,
