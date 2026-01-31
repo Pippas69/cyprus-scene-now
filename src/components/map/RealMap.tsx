@@ -9,7 +9,7 @@ import { BusinessMarker } from './BusinessMarker';
 import { BusinessPopup } from './BusinessPopup';
 import { MapSearch } from './MapSearch';
 import { BusinessListSheet } from './BusinessListSheet';
-import { Loader2, Maximize2, Minimize2, Navigation } from 'lucide-react';
+import { Loader2, Maximize2, Minimize2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { trackEngagement } from '@/lib/analyticsTracking';
 import { Button } from '@/components/ui/button';
@@ -247,6 +247,19 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
   // Show directions icon below the business pin - icon only, responsive size
   const showDirectionsIcon = (business: any) => {
     if (!map.current) return;
+
+    const getPlanColorVar = (planSlug: any): string => {
+      switch (planSlug) {
+        case 'elite':
+          return '--plan-elite';
+        case 'pro':
+          return '--plan-pro';
+        case 'basic':
+          return '--plan-basic';
+        default:
+          return '--ocean';
+      }
+    };
     
     // Remove existing directions marker
     if (directionsMarkerRef.current) {
@@ -255,32 +268,40 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     }
 
     const [lng, lat] = business.coordinates;
+    const planVar = getPlanColorVar(business.planSlug);
     
-    // Create directions icon-only button element
+    // Create directions pill element (must sit directly under the pin)
     const div = document.createElement('div');
     div.className = 'directions-marker';
     const root = ReactDOM.createRoot(div);
-     root.render(
-       <button
-         className={
-           "flex items-center justify-center bg-background/95 backdrop-blur-sm shadow-lg rounded-full border border-border hover:bg-accent transition-colors " +
-           // Smaller than pins; slightly smaller on mobile.
-           "h-4 w-4 md:h-5 md:w-5"
-         }
-         onClick={() => {
-           window.open(getDirectionsUrl(lat, lng), "_blank");
-         }}
-         aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
-       >
-         <Navigation className="h-2.5 w-2.5 md:h-3 md:w-3 text-foreground" />
-       </button>
-     );
+    root.render(
+      <button
+        type="button"
+        className={
+          "inline-flex items-center justify-center whitespace-nowrap rounded-full border bg-background/90 px-2 " +
+          "text-[9px] font-medium leading-none backdrop-blur-sm transition-transform hover:scale-[1.02] " +
+          // Hard height cap so it never gets tall
+          "h-4"
+        }
+        style={{
+          borderColor: `hsl(var(${planVar}))`,
+          boxShadow: `0 10px 20px -16px hsl(var(${planVar}) / 0.65)`,
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          window.open(getDirectionsUrl(lat, lng), "_blank", "noopener,noreferrer");
+        }}
+        aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
+      >
+        {language === 'el' ? 'Οδηγίες' : 'Directions'}
+      </button>
+    );
 
-    // Position the marker slightly down-left from the pin
+    // Position the pill directly under the pin (centered)
     directionsMarkerRef.current = new mapboxgl.Marker({ 
       element: div,
       anchor: 'top',
-      offset: [-14, 22]
+      offset: [0, 26]
     })
       .setLngLat([lng, lat])
       .addTo(map.current);
@@ -336,7 +357,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       maxWidth: 'none',
       anchor: 'bottom',
       // Minimal offset for tight spacing between popup and pin
-      offset: [0, -8],
+      offset: [0, -34],
       className: 'fomo-pin-label',
     })
       .setLngLat([lng, lat])
@@ -352,7 +373,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     } catch {
       // ignore
     }
-    // Directions icon is now integrated directly into the popup
+    // Directions badge lives as a separate marker so it can sit BELOW the pin
+    showDirectionsIcon(business);
   };
 
   // Update markers when businesses change or map moves

@@ -244,8 +244,31 @@ All colors MUST be HSL.
 
   .mapboxgl-popup-tip {
     /* Hide the default popup tip completely (prevents extra spacing/visual artifacts) */
-    display: none;
-    border-top-color: transparent;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Some Mapbox builds set tip styles with higher specificity; neutralize all anchor variants too */
+  .mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+  .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+  .mapboxgl-popup-anchor-left .mapboxgl-popup-tip,
+  .mapboxgl-popup-anchor-right .mapboxgl-popup-tip,
+  .mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+  .mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip,
+  .mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+  .mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: 0 !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
