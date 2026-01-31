@@ -1,103 +1,160 @@
 
-## What’s actually happening (based on code + your answers)
+# Design Overhaul: "Οι Προσφορές Μου" Section
 
-- You are on **iOS**.
-- The file you download from the preview modal is **not animated** (it plays as a still).
-- Instagram Story editor shows a **still frame**.
+## Στόχος
+Πλήρης αναδιαμόρφωση του design των καρτών στο section "Οι Προσφορές Μου" ώστε να ταιριάζουν ακριβώς με το mockup που παρείχες.
 
-That means the issue is **not Instagram stripping animation**. The issue is earlier: **we are producing a “video” that effectively contains identical frames (or a 0–1 frame video)** on iOS.
+---
 
-## Most likely root causes in the current implementation
+## Αλλαγές Design
 
-### A) FFmpeg is only encoding one frame (or not reading the frame sequence correctly)
-In `src/lib/storyVideoGenerator.ts`, we write frames `frame0000.png … frame0089.png`, but when encoding we call:
+### 1. Αφαίρεση "Προσφορά μη διαθέσιμη"
+- Όταν μια προσφορά έχει διαγραφεί (`discounts === null`), δεν θα εμφανίζεται καθόλου
+- Θα φιλτράρονται εντελώς από active, redeemed, και expired tabs
 
-- `-i frame%04d.png` without explicitly telling FFmpeg where to start (`-start_number 0`)
-- On some FFmpeg builds / demuxer behavior, **it may start at 1** (expecting `frame0001.png`) or behave unexpectedly when frame numbering starts at 0.
-Result: it can end up encoding only a single frame (or failing silently in wasm), producing an MP4 that “plays” but doesn’t change.
+### 2. Νέα Δομή Κάρτας
 
-### B) We are not verifying that frames differ before encoding
-We currently generate 90 PNG blobs but do not validate whether they’re identical (e.g., due to iOS canvas quirks, timing, or a subtle bug).
+```text
+┌─────────────────────────────────────────┐
+│  ┌──────────┐                    ┌────┐ │
+│  │ Κράτηση  │                    │-20%│ │
+│  └──────────┘                    └────┘ │
+│                                         │
+│         [ΕΙΚΟΝΑ ΠΡΟΣΦΟΡΑΣ]              │
+│                                         │
+├─────────────────────────────────────────┤
+│ Ο Μαρίνος είναι Κουσπιτής              │
+│ 🏪 DermaLissere                         │
+│ 📅 5 Φεβρουαρίου 2026, 20:00    📍      │
+│ 🕐 Λήγει στις 4 Φεβρουαρίου            │
+│                                         │
+│  ┌────────────────────────────────────┐ │
+│  │   📱 Εμφάνιση QR                   │ │
+│  └────────────────────────────────────┘ │
+└─────────────────────────────────────────┘
+```
 
-### C) The share step may fall back to “text-only share” in some cases
-In `shareStoryFile()` (useSimpleShare), we include `{ files: [file], title, url }`.
-On iOS, `navigator.canShare()` can return false if `url` is included with certain file types. In that case we fallback to text-only share (no file).  
-However: you said Instagram opens the Story editor with a still background, so you are likely sharing *a file*, but we’ll harden this anyway.
+### 3. Λογική Badge "Κράτηση"
+- Εμφανίζεται **μόνο** όταν `claim_type === 'with_reservation'`
+- **ΔΕΝ** εμφανίζεται για walk-in προσφορές
 
-## The fix (implementation)
+### 4. Λογική Ώρας
+| Τύπος | Εμφάνιση Ώρας |
+|-------|---------------|
+| `with_reservation` | Συγκεκριμένη ώρα κράτησης (π.χ. "20:00") |
+| `walk_in` | Εύρος ωρών (π.χ. "18:00-21:00") |
 
-### 1) Make FFmpeg read the full sequence reliably
-Update `generateStoryVideo()` encoding command to include:
-- `-start_number 0`
-- optionally `-vcodec libx264` + `-r 30` explicitly, and ensure duration is right
+### 5. Location Badge (Clickable)
+- Νέο badge τοποθεσίας δίπλα από ημερομηνία/ώρα
+- Κλικ → navigate στον χάρτη με `business_id`
+- Icon: MapPin (📍)
 
-Example direction:
-- `-framerate 30`
-- `-start_number 0`
-- `-i frame%04d.png`
-- `-t 3` (optional, but helps enforce duration)
-- `-pix_fmt yuv420p`
-- `-movflags +faststart`
+---
 
-This is the single most important change for “only first frame” bugs.
+## Τεχνικές Αλλαγές
 
-### 2) Add “frame-difference verification” before encoding (debug + safety)
-During generation we will:
-- sample a few frames (e.g., frame 0, frame 10, frame 20, frame last)
-- compute a quick hash / checksum from their bytes
-- if they’re all identical, we log a clear error and fallback to a known-working path.
+### Αρχείο: `src/components/user/MyOffers.tsx`
 
-This will prevent shipping a “fake video” silently and give us clear console output.
+1. **Query Updates**
+   - Προσθήκη στο select: `claim_type`, `reservation_id`
+   - Join με `reservations` για να πάρουμε `preferred_time`
+   - Προσθήκη business `city`, `id` στο nested select
 
-### 3) Make the animation unmistakable in the exported video
-Increase the animation amplitude inside `storyVideoGenerator.ts` so even Instagram’s rendering and iOS playback make it obvious:
-- rotation: ±3° → ±6–8°
-- floatY: ±15px → ±35–45px
-- add subtle x drift (currently preview has x drift but exported video does not)
-- increase background hue shift/opacity a bit
+2. **Filter Update**
+   - Φιλτράρισμα: `purchases.filter(p => p.discounts !== null)` πριν από κάθε κατηγοριοποίηση
 
-This removes any doubt that “it is moving but too subtle”.
+3. **PurchaseCard Redesign**
+   - Αφαίρεση του placeholder για "Προσφορά μη διαθέσιμη"
+   - Νέο layout με:
+     - Badge "Κράτηση" (conditional)
+     - Discount badge στο πάνω δεξί μέρος της εικόνας
+     - Business row με logo + name
+     - Date/Time row με location badge
+     - Expiry row
+     - QR button (styled όπως στο mockup)
 
-### 4) Fix iOS sharing compatibility (avoid canShare false)
-In `shareStoryFile()`:
-- When sharing a file, build the share payload as **files + title only** (no `url`).
-- If we want the link included, put it in `text` only when not attaching files, or provide a “Copy link” UX separately (which you already have).
+4. **Responsive Spacing**
+   - Mobile: Compact spacing, text-xs
+   - Tablet: Balanced
+   - Desktop: Full spacing
 
-This prevents iOS from downgrading the share (and ensures the actual MP4 is sent).
+---
 
-### 5) Ensure the preview modal plays the generated MP4 (so you can confirm before sharing)
-Right now `StoryPreviewModal` always renders an `<img src={imageUrl} />` even when `isVideo === true`.
-That means:
-- you cannot visually confirm the MP4 is animated in-app
-- and you might think it’s working when it isn’t
+## Παράδειγμα Νέας Κάρτας (Pseudo-code)
 
-We will update `StoryPreviewModal`:
-- If `isVideo`, render a `<video src={blobUrl} autoPlay loop muted playsInline />`
-- If not, render `<img />`
+```tsx
+<Card>
+  {/* Image Section */}
+  <div className="h-40 relative">
+    <img src={imageUrl} />
+    
+    {/* Κράτηση Badge - Only for reservations */}
+    {claim_type === 'with_reservation' && (
+      <Badge className="absolute top-2 left-2 bg-primary">
+        Κράτηση
+      </Badge>
+    )}
+    
+    {/* Discount Badge */}
+    <Badge className="absolute top-2 right-2">
+      -{percent}%
+    </Badge>
+  </div>
+  
+  {/* Content Section */}
+  <div className="p-3">
+    {/* Title */}
+    <h4>{title}</h4>
+    
+    {/* Business */}
+    <div className="flex items-center gap-1.5">
+      <img src={logo} className="h-4 w-4 rounded-full" />
+      <span>{businessName}</span>
+    </div>
+    
+    {/* Date + Time + Location */}
+    <div className="flex items-center gap-2">
+      <Calendar />
+      <span>
+        {formatDate}
+        {claim_type === 'with_reservation' 
+          ? `, ${reservationTime}` 
+          : `, ${validStartTime}-${validEndTime}`
+        }
+      </span>
+      <button onClick={navigateToMap}>
+        <MapPin />
+      </button>
+    </div>
+    
+    {/* Expiry */}
+    <div className="flex items-center gap-1.5">
+      <Clock />
+      <span>Λήγει στις {expiryDate}</span>
+    </div>
+    
+    {/* QR Button */}
+    <Button>
+      <QrCode /> Εμφάνιση QR
+    </Button>
+  </div>
+</Card>
+```
 
-This is critical: you should see the exported video moving before tapping Share.
+---
 
-## Files that will be changed
+## Αρχεία που θα τροποποιηθούν
 
-1) `src/lib/storyVideoGenerator.ts`
-- add x drift animation
-- increase amplitudes
-- add frame checksum validation
-- update ffmpeg command with `-start_number 0` and stronger encoding args
+| Αρχείο | Αλλαγές |
+|--------|---------|
+| `src/components/user/MyOffers.tsx` | Πλήρης redesign του PurchaseCard, νέο query, φιλτράρισμα |
 
-2) `src/hooks/useSimpleShare.ts`
-- adjust `shareStoryFile()` so sharing files on iOS doesn’t include `url` (avoid canShare failures)
+---
 
-3) `src/components/sharing/StoryPreviewModal.tsx`
-- show `<video>` when `isVideo` so you can verify it’s truly animated
-- keep existing loading/progress UI
+## Responsive Behavior
 
-## How we’ll confirm it’s fixed (end-to-end)
+- **Mobile**: Ίδιο layout, compact spacing
+- **Tablet**: Grid 2 columns  
+- **Desktop**: Grid 3 columns
 
-On iPhone:
-1) Tap Instagram Stories
-2) In preview modal, you must see the video moving (autoplay loop)
-3) Tap Download → open Photos → confirm it plays and moves
-4) Tap Share → choose Instagram → confirm Story editor shows moving background
-
-If step (2) fails, we know generation is still wrong and we’ll have frame hashes + logs to pinpoint why.
+Οι αποστάσεις θα είναι ακριβώς όπως στο mockup σε όλες τις συσκευές.
