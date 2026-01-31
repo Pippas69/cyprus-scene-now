@@ -34,6 +34,11 @@ const drawCoverBackground = (
   canvasWidth: number,
   canvasHeight: number
 ) => {
+  // Ensure best possible scaling quality (helps avoid extra softness when upscaling)
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.filter = 'none';
+
   // Fill with dark base first
   ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -62,13 +67,13 @@ const drawCoverBackground = (
   // Draw the cover image
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
-  // Add subtle gradient overlay for text readability (lighter for smoother look)
+  // Add VERY subtle gradient overlay for text readability (even less "blurry/veiled")
   const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.05)');
-  gradient.addColorStop(0.35, 'rgba(0, 0, 0, 0.02)');
-  gradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.15)');
-  gradient.addColorStop(0.85, 'rgba(0, 0, 0, 0.45)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.65)');
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  gradient.addColorStop(0.55, 'rgba(0, 0, 0, 0.02)');
+  gradient.addColorStop(0.75, 'rgba(0, 0, 0, 0.10)');
+  gradient.addColorStop(0.9, 'rgba(0, 0, 0, 0.28)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.40)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 };
