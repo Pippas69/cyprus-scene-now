@@ -297,11 +297,11 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       </button>
     );
 
-    // Position the pill directly under the pin (centered)
+    // Position the pill directly under the pin (centered, barely touching)
     directionsMarkerRef.current = new mapboxgl.Marker({ 
       element: div,
       anchor: 'top',
-      offset: [0, 26]
+      offset: [0, 12]
     })
       .setLngLat([lng, lat])
       .addTo(map.current);
