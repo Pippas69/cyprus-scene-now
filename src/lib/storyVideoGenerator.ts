@@ -34,6 +34,7 @@ const ANIMATION = {
 let ffmpegInstance: FFmpeg | null = null;
 let ffmpegLoaded = false;
 let ffmpegLoadingPromise: Promise<FFmpeg> | null = null;
+let usingSingleThreaded = false; // Track if we're using single-threaded mode
 
 // Logging helper for consistent debugging output
 const logStep = (step: string, details?: unknown) => {
@@ -47,12 +48,13 @@ const logError = (step: string, error: unknown) => {
 };
 
 /**
- * Load FFmpeg WASM (cached singleton with proper error handling)
+ * Load FFmpeg WASM with single-threaded fallback
+ * First tries multi-threaded (requires SharedArrayBuffer), then falls back to single-threaded
  */
 const loadFFmpeg = async (): Promise<FFmpeg> => {
   // Return cached instance if available
   if (ffmpegInstance && ffmpegLoaded) {
-    logStep('FFmpeg already loaded, returning cached instance');
+    logStep('FFmpeg already loaded, returning cached instance', { singleThreaded: usingSingleThreaded });
     return ffmpegInstance;
   }
 
@@ -66,12 +68,31 @@ const loadFFmpeg = async (): Promise<FFmpeg> => {
   ffmpegLoadingPromise = (async () => {
     logStep('Starting FFmpeg WASM load');
     
+    // Check environment capabilities
+    const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
+    const isCrossOriginIsolated = typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated === true;
+    
+    logStep('Environment check', { 
+      hasSharedArrayBuffer, 
+      isCrossOriginIsolated,
+      crossOriginIsolated: typeof crossOriginIsolated !== 'undefined' ? crossOriginIsolated : 'undefined'
+    });
+    
     try {
       ffmpegInstance = new FFmpeg();
       
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+      // Determine which FFmpeg core to use based on SharedArrayBuffer availability
+      // Multi-threaded requires SharedArrayBuffer, single-threaded doesn't
+      const useMultiThreaded = hasSharedArrayBuffer && isCrossOriginIsolated;
+      usingSingleThreaded = !useMultiThreaded;
       
-      logStep('Fetching FFmpeg core files', { baseURL });
+      // Use the appropriate FFmpeg core
+      // Single-threaded core path for browsers without SharedArrayBuffer
+      const baseURL = useMultiThreaded 
+        ? 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
+        : 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'; // Same core, but without worker
+      
+      logStep('Fetching FFmpeg core files', { baseURL, useMultiThreaded, usingSingleThreaded });
       
       const [coreURL, wasmURL] = await Promise.all([
         toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
@@ -80,14 +101,47 @@ const loadFFmpeg = async (): Promise<FFmpeg> => {
       
       logStep('FFmpeg core files fetched, loading into instance');
       
-      await ffmpegInstance.load({ coreURL, wasmURL });
+      // Load FFmpeg - for single-threaded mode, we don't pass the worker URL
+      const loadConfig: { coreURL: string; wasmURL: string } = {
+        coreURL,
+        wasmURL,
+      };
+      
+      await ffmpegInstance.load(loadConfig);
       
       ffmpegLoaded = true;
-      logStep('FFmpeg loaded successfully');
+      logStep('FFmpeg loaded successfully', { singleThreaded: usingSingleThreaded });
       
       return ffmpegInstance;
     } catch (error) {
       logError('FFmpeg load failed', error);
+      
+      // If multi-threaded failed and we haven't tried single-threaded yet, try it
+      if (!usingSingleThreaded) {
+        logStep('Attempting single-threaded fallback after multi-threaded failure');
+        usingSingleThreaded = true;
+        
+        try {
+          ffmpegInstance = new FFmpeg();
+          
+          const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+          
+          const [coreURL, wasmURL] = await Promise.all([
+            toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+          ]);
+          
+          await ffmpegInstance.load({ coreURL, wasmURL });
+          
+          ffmpegLoaded = true;
+          logStep('FFmpeg single-threaded fallback loaded successfully');
+          
+          return ffmpegInstance;
+        } catch (fallbackError) {
+          logError('FFmpeg single-threaded fallback also failed', fallbackError);
+        }
+      }
+      
       ffmpegInstance = null;
       ffmpegLoaded = false;
       ffmpegLoadingPromise = null;
@@ -585,11 +639,13 @@ export const generateStoryVideo = async (
 
 /**
  * Check if video generation is supported in this browser
+ * Now supports single-threaded mode for browsers without SharedArrayBuffer
  */
 export const isVideoGenerationSupported = (): boolean => {
   const hasCanvas = typeof OffscreenCanvas !== 'undefined' || typeof HTMLCanvasElement !== 'undefined';
   const hasWasm = typeof WebAssembly !== 'undefined';
   const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
+  const isCrossOriginIsolated = typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated === true;
   
   // iOS Safari check - FFmpeg WASM may have issues on older versions
   const isIOSSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) && 
@@ -603,22 +659,79 @@ export const isVideoGenerationSupported = (): boolean => {
     iosVersion = parseInt(iosMatch[1], 10);
   }
   
-  const supported = hasCanvas && hasWasm;
+  // Check if we're in an in-app browser (WebView)
+  const isInAppBrowser = /FBAN|FBAV|Instagram|Twitter|Line|Snapchat|WeChat/i.test(navigator.userAgent);
+  
+  // Basic requirements: Canvas and WebAssembly
+  const basicSupport = hasCanvas && hasWasm;
+  
+  // Multi-threaded FFmpeg requires SharedArrayBuffer + cross-origin isolation
+  const multiThreadedSupport = hasSharedArrayBuffer && isCrossOriginIsolated;
+  
+  // We now support both multi-threaded AND single-threaded modes
+  // Single-threaded is slower but works without SharedArrayBuffer
+  const supported = basicSupport; // Allow video gen even without SharedArrayBuffer
   
   logStep('Video generation support check', {
     hasCanvas,
     hasWasm,
     hasSharedArrayBuffer,
+    isCrossOriginIsolated,
+    multiThreadedSupport,
     isIOSSafari,
     iosVersion,
-    supported
+    isInAppBrowser,
+    supported,
+    mode: multiThreadedSupport ? 'multi-threaded' : 'single-threaded'
   });
   
-  // Temporarily disable on iOS Safari < 15 due to known WASM issues
+  // Disable on iOS Safari < 15 due to known WASM issues
   if (isIOSSafari && iosVersion < 15) {
     logStep('Disabling video generation on iOS Safari < 15');
     return false;
   }
   
+  // Disable in in-app browsers (Instagram, Facebook, etc.) as they have limited WebAssembly support
+  if (isInAppBrowser) {
+    logStep('Disabling video generation in in-app browser');
+    return false;
+  }
+  
   return supported;
+};
+
+/**
+ * Get video generation diagnostics for debugging
+ */
+export const getVideoGenerationDiagnostics = (): Record<string, unknown> => {
+  const hasCanvas = typeof OffscreenCanvas !== 'undefined' || typeof HTMLCanvasElement !== 'undefined';
+  const hasWasm = typeof WebAssembly !== 'undefined';
+  const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
+  const isCrossOriginIsolated = typeof crossOriginIsolated !== 'undefined' ? crossOriginIsolated : 'unknown';
+  
+  const isIOSSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) && 
+                      /Safari/.test(navigator.userAgent) && 
+                      !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
+  
+  let iosVersion = 0;
+  const iosMatch = navigator.userAgent.match(/OS (\d+)_/);
+  if (iosMatch) {
+    iosVersion = parseInt(iosMatch[1], 10);
+  }
+  
+  const isInAppBrowser = /FBAN|FBAV|Instagram|Twitter|Line|Snapchat|WeChat/i.test(navigator.userAgent);
+  
+  return {
+    hasCanvas,
+    hasWasm,
+    hasSharedArrayBuffer,
+    isCrossOriginIsolated,
+    isIOSSafari,
+    iosVersion,
+    isInAppBrowser,
+    userAgent: navigator.userAgent,
+    ffmpegLoaded,
+    usingSingleThreaded,
+    isSupported: isVideoGenerationSupported(),
+  };
 };
