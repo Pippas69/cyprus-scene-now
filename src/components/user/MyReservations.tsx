@@ -3,8 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, X, QrCode, Clock, ChevronDown, Building2, CreditCard, Tag, Ticket } from 'lucide-react';
-import { format } from 'date-fns';
+import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, Building2, CreditCard, Tag, Ticket } from 'lucide-react';
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
@@ -21,11 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ReservationQRCard } from './ReservationQRCard';
 
 interface MyReservationsProps {
   userId: string;
@@ -90,7 +86,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     reservationId: null,
   });
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
-  const [qrDialog, setQrDialog] = useState<{ open: boolean; qrCode: string; confirmationCode: string; businessName: string } | null>(null);
+  const [selectedReservationForQR, setSelectedReservationForQR] = useState<ReservationData | null>(null);
   const [offerLinkedReservationIds, setOfferLinkedReservationIds] = useState<Map<string, { title: string; percentOff: number; purchaseId: string }>>(new Map());
   const tt = toastTranslations[language];
 
@@ -490,12 +486,7 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
           {reservation.confirmation_code && !isPast && (
             <button
               type="button"
-              onClick={() => qrCodes[reservation.id] && setQrDialog({
-                open: true,
-                qrCode: qrCodes[reservation.id],
-                confirmationCode: reservation.confirmation_code || '',
-                businessName: businessInfo?.name || ''
-              })}
+              onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
               className="mt-2 w-full flex items-center justify-between bg-muted/50 border border-border rounded-lg px-3 py-2 hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
@@ -679,12 +670,7 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
           {reservation.confirmation_code && !isPast && (
             <button
               type="button"
-              onClick={() => qrCodes[reservation.id] && setQrDialog({
-                open: true,
-                qrCode: qrCodes[reservation.id],
-                confirmationCode: reservation.confirmation_code || '',
-                businessName: businessInfo?.name || ''
-              })}
+              onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
               className="mt-2 w-full flex items-center justify-between bg-muted/50 border border-border rounded-lg px-3 py-2 hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
@@ -841,51 +827,23 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       </AlertDialog>
 
       {/* QR Code Dialog - Premium Style */}
-      <Dialog open={qrDialog?.open || false} onOpenChange={(open) => !open && setQrDialog(null)}>
-        <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
-            <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
-              <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
-              {qrDialog?.businessName && (
-                <p className="text-white/70 text-[10px] mt-0.5">by {qrDialog.businessName}</p>
-              )}
-            </div>
-
-            <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
-              {qrDialog?.confirmationCode && (
-                <div className="text-center mb-2">
-                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide mb-0.5">
-                    {language === 'el' ? 'Κωδικός' : 'Code'}
-                  </p>
-                  <p className="text-xl font-bold text-[#102b4a] tracking-widest">
-                    {qrDialog.confirmationCode}
-                  </p>
-                </div>
-              )}
-
-              {qrDialog?.qrCode && (
-                <div className="flex flex-col items-center">
-                  <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
-                    <img src={qrDialog.qrCode} alt="QR Code" className="w-44 h-44" />
-                  </div>
-                  <p className="text-[10px] text-[#64748b] mt-2 text-center">
-                    {language === 'el' 
-                      ? 'Παρουσιάστε αυτόν τον κωδικό QR στην επιχείρηση'
-                      : 'Present this QR code at the venue'}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="relative h-6 bg-white/95">
-              <svg viewBox="0 0 400 24" className="absolute bottom-0 left-0 w-full h-6" preserveAspectRatio="none">
-                <path d="M0,24 C100,0 300,0 400,24 L400,24 L0,24 Z" fill="#3ec3b7" opacity="0.3" />
-                <path d="M0,24 C150,8 250,8 400,24 L400,24 L0,24 Z" fill="#3ec3b7" opacity="0.5" />
-              </svg>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ReservationQRCard
+        reservation={selectedReservationForQR ? {
+          qrCodeToken: selectedReservationForQR.qr_code_token || undefined,
+          qrCode: qrCodes[selectedReservationForQR.id],
+          confirmationCode: selectedReservationForQR.confirmation_code || '',
+          businessName: selectedReservationForQR.events?.businesses?.name || selectedReservationForQR.businesses?.name || '',
+          businessLogo: selectedReservationForQR.events?.businesses?.logo_url || selectedReservationForQR.businesses?.logo_url,
+          reservationDate: selectedReservationForQR.preferred_time || selectedReservationForQR.events?.start_at,
+          partySize: selectedReservationForQR.party_size,
+          seatingType: selectedReservationForQR.seating_preference || undefined,
+          eventTitle: selectedReservationForQR.events?.title,
+          prepaidAmountCents: selectedReservationForQR.prepaid_min_charge_cents || 0,
+          isEventBased: !!selectedReservationForQR.events,
+        } : null}
+        language={language}
+        onClose={() => setSelectedReservationForQR(null)}
+      />
     </div>
   );
 };

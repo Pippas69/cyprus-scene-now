@@ -1,12 +1,15 @@
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Calendar, Clock, Users } from "lucide-react";
+import { Download, Calendar, Clock, CreditCard, QrCode } from "lucide-react";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
+import QRCode from "qrcode";
 
 interface ReservationQRCardProps {
   reservation: {
-    qrCode: string;
+    qrCodeToken?: string;
+    qrCode?: string; // Legacy: pre-generated data URL
     confirmationCode: string;
     businessName: string;
     businessLogo?: string | null;
@@ -14,6 +17,10 @@ interface ReservationQRCardProps {
     reservationTime?: string;
     partySize?: number;
     seatingType?: string;
+    // For event-based reservations
+    eventTitle?: string;
+    prepaidAmountCents?: number;
+    isEventBased?: boolean;
   } | null;
   language: "el" | "en";
   onClose: () => void;
@@ -21,48 +28,83 @@ interface ReservationQRCardProps {
 
 const translations = {
   el: {
-    scanAtVenue: "Παρουσιάστε αυτόν τον κωδικό QR στην επιχείρηση",
+    scanAtVenue: "Σαρώστε στην επιχείρηση",
     downloadQR: "QR Εικόνα",
-    date: "Ημερομηνία",
-    time: "Ώρα",
-    party: "Άτομα",
-    code: "Κωδικός",
+    date: "ΗΜΕΡΟΜΗΝΙΑ",
+    time: "ΩΡΑ",
+    reservation: "ΚΡΑΤΗΣΗ",
+    code: "ΚΩΔΙΚΟΣ",
   },
   en: {
-    scanAtVenue: "Present this QR code at the venue",
+    scanAtVenue: "Scan at the venue",
     downloadQR: "QR Image",
-    date: "Date",
-    time: "Time",
-    party: "Party",
-    code: "Code",
+    date: "DATE",
+    time: "TIME",
+    reservation: "RESERVATION",
+    code: "CODE",
   },
 };
 
 export const ReservationQRCard = ({ reservation, language, onClose }: ReservationQRCardProps) => {
   const text = translations[language];
   const dateLocale = language === "el" ? el : enUS;
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (reservation?.qrCodeToken) {
+      QRCode.toDataURL(reservation.qrCodeToken, {
+        width: 512,
+        margin: 2,
+        color: {
+          dark: "#102b4a",
+          light: "#ffffff",
+        },
+      })
+        .then(setQrDataUrl)
+        .catch(console.error);
+    } else if (reservation?.qrCode) {
+      // Legacy fallback
+      setQrDataUrl(reservation.qrCode);
+    }
+  }, [reservation?.qrCodeToken, reservation?.qrCode]);
 
   const handleDownloadQR = () => {
-    if (!reservation?.qrCode) return;
+    if (!qrDataUrl || !reservation) return;
     
     const link = document.createElement("a");
     link.download = `fomo-reservation-${reservation.confirmationCode}.png`;
-    link.href = reservation.qrCode;
+    link.href = qrDataUrl;
     link.click();
   };
 
-  // Parse date
+  // Parse date and time
   const reservationDateObj = reservation?.reservationDate ? new Date(reservation.reservationDate) : null;
   const formattedDate = reservationDateObj 
     ? format(reservationDateObj, "EEE, d MMM", { locale: dateLocale })
     : "";
+  const formattedTime = reservationDateObj 
+    ? format(reservationDateObj, "HH:mm", { locale: dateLocale })
+    : reservation?.reservationTime || "";
+
+  // Format price for event reservations
+  const formatPrice = (cents: number) => {
+    if (cents === 0) return language === "el" ? "Δωρεάν" : "Free";
+    return `€${(cents / 100).toFixed(2)}`;
+  };
+
+  // Determine the third column content
+  const isEventBased = reservation?.isEventBased || !!reservation?.eventTitle;
+  const thirdColumnLabel = isEventBased ? text.reservation : text.code;
+  const thirdColumnValue = isEventBased 
+    ? formatPrice(reservation?.prepaidAmountCents || 0)
+    : reservation?.confirmationCode || "";
 
   return (
     <Dialog open={!!reservation} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
-        {/* Reservation Card Container - Start from top on mobile */}
+        {/* Reservation Card Container */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
-          {/* Header with ΦΟΜΟ branding - Compact */}
+          {/* Header with ΦΟΜΟ branding */}
           <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
             <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
             {reservation?.businessName && (
@@ -70,14 +112,14 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
             )}
           </div>
 
-          {/* Main Content - Frosted Glass Effect - Compact */}
+          {/* Main Content - Frosted Glass Effect */}
           <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
-            {/* Event Title */}
+            {/* Title - Event or Table Reservation */}
             <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">
-              {reservation?.confirmationCode}
+              {reservation?.eventTitle || (language === "el" ? "Κράτηση Τραπεζιού" : "Table Reservation")}
             </h2>
 
-            {/* Info Grid - Compact */}
+            {/* Info Grid - 3 columns like ticket */}
             <div className="grid grid-cols-3 gap-2 mb-3">
               {/* Date */}
               <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
@@ -90,25 +132,27 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
               <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
                 <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
                 <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-                <p className="text-xs font-semibold text-[#102b4a]">{reservation?.reservationTime || '-'}</p>
+                <p className="text-xs font-semibold text-[#102b4a]">{formattedTime || '-'}</p>
               </div>
               
-              {/* Party Size */}
+              {/* Third Column: Code for direct, Amount for event */}
               <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-                <Users className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.party}</p>
-                <p className="text-xs font-semibold text-[#102b4a]">
-                  {reservation?.partySize || 1}
-                </p>
+                {isEventBased ? (
+                  <CreditCard className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                ) : (
+                  <QrCode className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                )}
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{thirdColumnLabel}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{thirdColumnValue}</p>
               </div>
             </div>
 
-            {/* QR Code - Slightly smaller */}
-            {reservation?.qrCode && (
+            {/* QR Code */}
+            {qrDataUrl && (
               <div className="flex flex-col items-center">
                 <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
                   <img 
-                    src={reservation.qrCode} 
+                    src={qrDataUrl} 
                     alt="Reservation QR Code" 
                     className="w-44 h-44"
                   />
@@ -119,7 +163,7 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
               </div>
             )}
 
-            {/* Download Buttons - Compact */}
+            {/* Download Button - Only QR, no PDF */}
             <div className="flex gap-2 mt-3">
               <Button 
                 variant="outline" 
