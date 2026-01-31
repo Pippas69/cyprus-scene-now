@@ -45,10 +45,8 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
         }}
       >
         <div
-          className="relative overflow-hidden rounded-full"
+          className="relative overflow-hidden rounded-full w-[100px] h-[100px] md:w-[110px] md:h-[110px] lg:w-[124px] lg:h-[124px]"
           style={{
-            width: 124,
-            height: 124,
             border: `3px solid hsl(var(${planVar}))`,
           }}
         >
