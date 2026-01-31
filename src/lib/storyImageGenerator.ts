@@ -1,6 +1,9 @@
 /**
  * Generates a 9:16 vertical image optimized for Instagram Stories
- * Creates a blurred background with centered original image and text overlay
+ * AEGEAN NIGHT GLOW theme with SPLIT LAYOUT:
+ *   - Top: Crisp image (no blur)
+ *   - Middle: Wavy divider
+ *   - Bottom: Navy panel with seafoam accents
  */
 
 interface StoryImageOptions {
@@ -16,6 +19,11 @@ interface StoryImageOptions {
   category?: string;
 }
 
+// Brand colors
+const AEGEAN_NAVY = '#0D3B66';
+const SEAFOAM_TEAL = '#4ECDC4';
+const OCEAN_BLUE = '#3D6B99';
+
 /**
  * Load an image from URL and return as HTMLImageElement
  */
@@ -30,234 +38,226 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw blurred background with dark overlay
- * Uses minimal zoom to show more of the original image while ensuring full coverage
+ * Draw the crisp image in the top portion (no blur, sharp scaling)
  */
-const drawBlurredBackground = (
+const drawTopImage = (
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   canvasWidth: number,
-  canvasHeight: number
+  imageHeight: number
 ) => {
-  // Fill canvas with dark base color first
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
-  // Calculate dimensions - fit to fill canvas with minimal crop
   const imgRatio = img.width / img.height;
-  const canvasRatio = canvasWidth / canvasHeight;
+  const targetRatio = canvasWidth / imageHeight;
 
-  let drawWidth: number, drawHeight: number, offsetX: number, offsetY: number;
+  let sourceX = 0, sourceY = 0, sourceW = img.width, sourceH = img.height;
 
-  if (imgRatio > canvasRatio) {
-    // Image is wider - fit to height, center horizontally
-    drawHeight = canvasHeight;
-    drawWidth = drawHeight * imgRatio;
-    offsetX = (canvasWidth - drawWidth) / 2;
-    offsetY = 0;
+  if (imgRatio > targetRatio) {
+    // Image is wider – crop sides
+    sourceW = img.height * targetRatio;
+    sourceX = (img.width - sourceW) / 2;
   } else {
-    // Image is taller - fit to width, bias toward center-top
-    drawWidth = canvasWidth;
-    drawHeight = drawWidth / imgRatio;
-    offsetX = 0;
-    // Bias slightly toward top to show more relevant content
-    offsetY = Math.min(0, (canvasHeight - drawHeight) / 3);
+    // Image is taller – crop top/bottom (bias toward top)
+    sourceH = img.width / targetRatio;
+    sourceY = 0; // keep top
   }
 
-  // Apply lighter blur for better image recognition (was 30px)
-  ctx.filter = 'blur(20px)';
-  
-  // Draw image
-  ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-  
-  // Reset filter
-  ctx.filter = 'none';
+  ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, canvasWidth, imageHeight);
 
-  // Add dark overlay (28% opacity)
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-  // Add medium gradient fade at top (0 to 300px)
-  const topGradient = ctx.createLinearGradient(0, 0, 0, 300);
-  topGradient.addColorStop(0, 'rgba(0, 0, 0, 0.5)');
-  topGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)');
-  topGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = topGradient;
-  ctx.fillRect(0, 0, canvasWidth, 300);
-
-  // Add medium gradient fade at bottom (canvasHeight - 450px to canvasHeight)
-  const bottomGradient = ctx.createLinearGradient(0, canvasHeight - 450, 0, canvasHeight);
-  bottomGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-  bottomGradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.25)');
-  bottomGradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
-  ctx.fillStyle = bottomGradient;
-  ctx.fillRect(0, canvasHeight - 450, canvasWidth, 450);
+  // Add a subtle gradient at the bottom edge for smooth transition
+  const edgeGradient = ctx.createLinearGradient(0, imageHeight - 80, 0, imageHeight);
+  edgeGradient.addColorStop(0, 'rgba(13, 59, 102, 0)');
+  edgeGradient.addColorStop(1, 'rgba(13, 59, 102, 0.6)');
+  ctx.fillStyle = edgeGradient;
+  ctx.fillRect(0, imageHeight - 80, canvasWidth, 80);
 };
 
 /**
- * Draw the main image centered on the canvas with rounded corners and shadow
+ * Draw the wavy divider between image and text panel
  */
-const drawCenteredImage = (
+const drawWaveDivider = (
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
   canvasWidth: number,
-  canvasHeight: number
+  waveY: number
 ) => {
-  const padding = 60;
-  const availableWidth = canvasWidth - padding * 2;
-  const availableHeight = canvasHeight * 0.45; // Use 45% of height for image
-  const offsetY = canvasHeight * 0.15; // Start 15% from top
+  const amplitude = 30;
+  const wavelength = canvasWidth / 2;
 
-  const imgRatio = img.width / img.height;
-  let drawWidth: number, drawHeight: number;
+  ctx.beginPath();
+  ctx.moveTo(0, waveY);
 
-  if (img.width / availableWidth > img.height / availableHeight) {
-    drawWidth = availableWidth;
-    drawHeight = drawWidth / imgRatio;
-  } else {
-    drawHeight = availableHeight;
-    drawWidth = drawHeight * imgRatio;
+  // Draw a smooth sine wave
+  for (let x = 0; x <= canvasWidth; x += 5) {
+    const y = waveY + Math.sin((x / wavelength) * Math.PI * 2) * amplitude;
+    ctx.lineTo(x, y);
   }
 
-  const x = (canvasWidth - drawWidth) / 2;
-  const y = offsetY;
+  ctx.lineTo(canvasWidth, waveY + 200);
+  ctx.lineTo(0, waveY + 200);
+  ctx.closePath();
 
-  // Draw rounded rectangle clip path
-  const radius = 24;
+  // Fill with navy
+  ctx.fillStyle = AEGEAN_NAVY;
+  ctx.fill();
+
+  // Seafoam glow line on top of wave
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(x, y, drawWidth, drawHeight, radius);
-  ctx.clip();
-  ctx.drawImage(img, x, y, drawWidth, drawHeight);
-  ctx.restore();
-
-  // Add subtle shadow effect around the image
-  ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 30;
-  ctx.shadowOffsetY = 10;
-  ctx.strokeStyle = 'transparent';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.roundRect(x, y, drawWidth, drawHeight, radius);
+  ctx.moveTo(0, waveY);
+  for (let x = 0; x <= canvasWidth; x += 5) {
+    const y = waveY + Math.sin((x / wavelength) * Math.PI * 2) * amplitude;
+    ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = SEAFOAM_TEAL;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = SEAFOAM_TEAL;
+  ctx.shadowBlur = 15;
   ctx.stroke();
   ctx.restore();
-
-  return { imageBottom: y + drawHeight };
 };
 
 /**
- * Draw text overlay with title, subtitle, and details
+ * Draw the bottom navy panel
  */
-const drawTextOverlay = (
+const drawBottomPanel = (
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  panelTop: number
+) => {
+  ctx.fillStyle = AEGEAN_NAVY;
+  ctx.fillRect(0, panelTop, canvasWidth, canvasHeight - panelTop);
+};
+
+/**
+ * Draw text content on the bottom panel
+ */
+const drawTextContent = (
   ctx: CanvasRenderingContext2D,
   options: StoryImageOptions,
   canvasWidth: number,
-  canvasHeight: number,
-  imageBottom: number
+  startY: number
 ) => {
-  const padding = 60;
-  const textAreaTop = imageBottom + 50;
   const centerX = canvasWidth / 2;
-
-  // Semi-transparent overlay for text area
-  const gradient = ctx.createLinearGradient(0, textAreaTop - 40, 0, canvasHeight);
-  gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-  gradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.3)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, textAreaTop - 40, canvasWidth, canvasHeight - textAreaTop + 40);
-
+  const padding = 60;
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#FFFFFF';
 
-  let currentY = textAreaTop + 30;
+  let currentY = startY;
 
-  // Category tag (if available)
+  // Category badge
   if (options.category) {
-    ctx.font = '500 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = 'rgba(78, 205, 196, 0.95)'; // Seafoam teal
+    ctx.font = '600 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = SEAFOAM_TEAL;
     ctx.fillText(options.category.toUpperCase(), centerX, currentY);
-    currentY += 40;
+    currentY += 50;
   }
 
-  // Title
-  ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  // Title (large, white)
+  ctx.font = 'bold 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillStyle = '#FFFFFF';
   const titleLines = wrapText(ctx, options.title, canvasWidth - padding * 2);
   titleLines.forEach((line) => {
     ctx.fillText(line, centerX, currentY);
-    currentY += 58;
+    currentY += 64;
   });
 
-  currentY += 12;
+  currentY += 10;
 
   // Subtitle (business name)
   if (options.subtitle) {
-    ctx.font = '500 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = '500 30px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.fillText(options.subtitle, centerX, currentY);
-    currentY += 44;
+    currentY += 50;
   }
 
-  // Price or Discount badge (if available)
+  // Price/Discount badge
   if (options.discountPercent || options.price) {
-    currentY += 8;
-    const badgeText = options.discountPercent 
-      ? `🔥 ${options.discountPercent} OFF` 
+    const badgeText = options.discountPercent
+      ? `🔥 ${options.discountPercent} OFF`
       : `💰 ${options.price}`;
-    
-    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = 'rgba(255, 200, 50, 0.95)'; // Gold accent
+
+    // Draw pill background
+    ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const textWidth = ctx.measureText(badgeText).width;
+    const pillWidth = textWidth + 40;
+    const pillHeight = 48;
+    const pillX = centerX - pillWidth / 2;
+    const pillY = currentY - 32;
+
+    // Seafoam glow pill
+    ctx.save();
+    ctx.shadowColor = SEAFOAM_TEAL;
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = 'rgba(78, 205, 196, 0.25)';
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 24);
+    ctx.fill();
+    ctx.restore();
+
+    // Pill border
+    ctx.strokeStyle = SEAFOAM_TEAL;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 24);
+    ctx.stroke();
+
+    // Text
+    ctx.fillStyle = '#FFFFFF';
     ctx.fillText(badgeText, centerX, currentY);
-    currentY += 44;
+    currentY += 60;
   }
 
   // Location
   if (options.location) {
-    ctx.font = '400 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = '400 26px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
     ctx.fillText(`📍 ${options.location}`, centerX, currentY);
     currentY += 40;
   }
 
   // Date
   if (options.date) {
-    ctx.font = '400 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = '400 26px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
     ctx.fillText(`🗓️ ${options.date}`, centerX, currentY);
     currentY += 40;
   }
+
+  return currentY;
 };
 
 /**
- * Draw ΦΟΜΟ branding at the bottom
+ * Draw ΦΟΜΟ branding at the very bottom
  */
 const drawBranding = (
   ctx: CanvasRenderingContext2D,
   canvasWidth: number,
   canvasHeight: number
 ) => {
-  const brandY = canvasHeight - 80;
+  const brandY = canvasHeight - 90;
+  const centerX = canvasWidth / 2;
 
-  // Subtle divider line
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  // Subtle divider
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(canvasWidth * 0.3, brandY - 40);
-  ctx.lineTo(canvasWidth * 0.7, brandY - 40);
+  ctx.moveTo(canvasWidth * 0.25, brandY - 50);
+  ctx.lineTo(canvasWidth * 0.75, brandY - 50);
   ctx.stroke();
 
-  // Brand name
-  ctx.font = 'bold 40px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  // ΦΟΜΟ
+  ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
   ctx.textAlign = 'center';
-  ctx.fillText('ΦΟΜΟ', canvasWidth / 2, brandY);
+  ctx.fillText('ΦΟΜΟ', centerX, brandY);
 
-  // Tagline
-  ctx.font = '300 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.fillText('fomo.com.cy', canvasWidth / 2, brandY + 36);
+  // fomo.com.cy
+  ctx.font = '300 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillStyle = SEAFOAM_TEAL;
+  ctx.fillText('fomo.com.cy', centerX, brandY + 34);
 };
 
 /**
@@ -300,6 +300,7 @@ const wrapText = (
 
 /**
  * Generate a Story-optimized image (1080x1920, 9:16 aspect ratio)
+ * Uses Aegean Night Glow theme with split layout
  */
 export const generateStoryImage = async (
   imageUrl: string,
@@ -314,22 +315,33 @@ export const generateStoryImage = async (
     throw new Error('Could not get canvas context');
   }
 
-  // Load the source image
+  // Layout constants
+  const imageHeight = canvas.height * 0.48; // Top 48% for image
+  const waveY = imageHeight - 30;
+  const panelTop = waveY + 30;
+  const textStartY = panelTop + 80;
+
+  // 1. Fill background with navy first (in case image doesn't cover)
+  ctx.fillStyle = AEGEAN_NAVY;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 2. Load and draw the crisp top image
   const img = await loadImage(imageUrl);
+  drawTopImage(ctx, img, canvas.width, imageHeight);
 
-  // 1. Draw blurred background with dark overlay
-  drawBlurredBackground(ctx, img, canvas.width, canvas.height);
+  // 3. Draw the wave divider
+  drawWaveDivider(ctx, canvas.width, waveY);
 
-  // 2. Draw centered main image with rounded corners
-  const { imageBottom } = drawCenteredImage(ctx, img, canvas.width, canvas.height);
+  // 4. Draw bottom panel
+  drawBottomPanel(ctx, canvas.width, canvas.height, panelTop);
 
-  // 3. Draw text overlay
-  drawTextOverlay(ctx, options, canvas.width, canvas.height, imageBottom);
+  // 5. Draw text content
+  drawTextContent(ctx, options, canvas.width, textStartY);
 
-  // 4. Draw branding
+  // 6. Draw branding
   drawBranding(ctx, canvas.width, canvas.height);
 
-  // Convert to blob and return as File (PNG for better quality)
+  // Convert to blob and return as File (PNG for best quality)
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
