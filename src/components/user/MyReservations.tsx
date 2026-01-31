@@ -70,6 +70,7 @@ interface ReservationData {
   isOfferBased?: boolean;
   offerTitle?: string;
   offerPercentOff?: number;
+  offerPurchaseId?: string;
 }
 
 type ReservationType = 'direct' | 'offer' | 'event';
@@ -87,7 +88,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   });
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
   const [qrDialog, setQrDialog] = useState<{ open: boolean; qrCode: string; confirmationCode: string; businessName: string } | null>(null);
-  const [offerLinkedReservationIds, setOfferLinkedReservationIds] = useState<Map<string, { title: string; percentOff: number }>>(new Map());
+  const [offerLinkedReservationIds, setOfferLinkedReservationIds] = useState<Map<string, { title: string; percentOff: number; purchaseId: string }>>(new Map());
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -124,6 +125,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const { data: offerPurchases } = await supabase
       .from('offer_purchases')
       .select(`
+        id,
         reservation_id,
         discounts (
           title,
@@ -133,12 +135,13 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       .eq('user_id', userId)
       .not('reservation_id', 'is', null);
 
-    const offerReservationMap = new Map<string, { title: string; percentOff: number }>();
+const offerReservationMap = new Map<string, { title: string; percentOff: number; purchaseId: string }>();
     (offerPurchases || []).forEach(p => {
       if (p.reservation_id && p.discounts) {
         offerReservationMap.set(p.reservation_id, {
           title: (p.discounts as any).title || '',
-          percentOff: (p.discounts as any).percent_off || 0
+          percentOff: (p.discounts as any).percent_off || 0,
+          purchaseId: (p as any).id || ''
         });
       }
     });
@@ -215,7 +218,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           ...r,
           isOfferBased: !!offerInfo,
           offerTitle: offerInfo?.title,
-          offerPercentOff: offerInfo?.percentOff
+          offerPercentOff: offerInfo?.percentOff,
+          offerPurchaseId: offerInfo?.purchaseId
         };
       });
 
@@ -563,7 +567,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               variant="outline"
               className="mt-2 w-full h-8 text-xs border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300"
             >
-              <Link to="/dashboard-user?tab=offers">
+              <Link to={`/dashboard-user?tab=offers${reservation.offerPurchaseId ? `&purchaseId=${reservation.offerPurchaseId}` : ''}`}>
                 <QrCode className="h-3.5 w-3.5 mr-1.5" />
                 {t.qrInOffers}
               </Link>
