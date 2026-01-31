@@ -618,102 +618,111 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     const content = (
       <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto max-w-sm">
         {/* Header with ΦΟΜΟ branding */}
-        <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-6 py-5 text-center">
-          <h1 className="text-2xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
-          <p className="text-white/70 text-xs mt-1">by {claimSuccess.businessName}</p>
+        <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
+          <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
+          <p className="text-white/70 text-[10px] mt-0.5">by {claimSuccess.businessName}</p>
         </div>
 
         {/* Main Content */}
-        <div className="bg-white/95 backdrop-blur-xl px-6 py-5">
+        <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
+          {/* Success Message */}
+          <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-green-50 rounded-lg">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <p className="text-sm font-semibold text-green-700">
+              {language === "el" ? "Η προσφορά εξαργυρώθηκε επιτυχώς!" : "Offer redeemed successfully!"}
+            </p>
+          </div>
+
           {/* Offer Title */}
-          <h2 className="text-lg font-semibold text-[#102b4a] text-center mb-4 line-clamp-2">
+          <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">
             {claimSuccess.offerTitle}
           </h2>
 
-          {/* Info Grid */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
+          {/* Info Grid - 3 columns */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
             {/* Party Size */}
-            <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
-              <Users className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-              <p className="text-[10px] text-[#64748b] uppercase tracking-wide">
-                {language === "el" ? "Άτομα" : "Party"}
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+              <Users className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">
+                {language === "el" ? "ΑΤΟΜΑ" : "PARTY"}
               </p>
-              <p className="text-sm font-semibold text-[#102b4a]">{claimSuccess.partySize}</p>
+              <p className="text-xs font-semibold text-[#102b4a]">{claimSuccess.partySize}</p>
             </div>
             
-            {/* Reservation/Walk-in Status */}
-            <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
+            {/* Reservation/Walk-in */}
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               {claimSuccess.hasReservation ? (
                 <>
-                  <CalendarCheck className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                  <p className="text-[10px] text-[#64748b] uppercase tracking-wide">
-                    {language === "el" ? "Κράτηση" : "Reserved"}
+                  <CalendarCheck className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">
+                    {language === "el" ? "ΚΡΑΤΗΣΗ" : "RESERVED"}
                   </p>
-                  <p className="text-sm font-semibold text-[#102b4a]">{claimSuccess.reservationTime}</p>
+                  <p className="text-xs font-semibold text-[#102b4a]">{claimSuccess.reservationTime}</p>
                 </>
               ) : (
                 <>
-                  <Tag className="h-4 w-4 text-[#3ec3b7] mx-auto mb-1" />
-                  <p className="text-[10px] text-[#64748b] uppercase tracking-wide">
-                    {language === "el" ? "Τύπος" : "Type"}
+                  <Tag className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">
+                    {language === "el" ? "ΤΥΠΟΣ" : "TYPE"}
                   </p>
-                  <p className="text-sm font-semibold text-[#102b4a]">Walk-in</p>
+                  <p className="text-xs font-semibold text-[#102b4a]">Walk-in</p>
                 </>
               )}
+            </div>
+
+            {/* Reservation Date or Expiry */}
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+              <CalendarDays className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">
+                {claimSuccess.hasReservation 
+                  ? (language === "el" ? "ΗΜΕΡ/ΝΙΑ" : "DATE") 
+                  : (language === "el" ? "ΛΗΞΗ" : "EXPIRY")}
+              </p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">
+                {claimSuccess.hasReservation && claimSuccess.reservationDate 
+                  ? claimSuccess.reservationDate 
+                  : "-"}
+              </p>
             </div>
           </div>
 
           {/* QR Code */}
           <div className="flex flex-col items-center">
-            <div className="p-3 bg-white rounded-2xl shadow-lg border-2 border-[#3ec3b7]">
+            <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
               {qrCodeDataUrl ? (
-                <img src={qrCodeDataUrl} alt="QR Code" className="w-48 h-48" />
+                <img src={qrCodeDataUrl} alt="QR Code" className="w-44 h-44" />
               ) : (
-                <div className="w-48 h-48 flex items-center justify-center">
+                <div className="w-44 h-44 flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-[#3ec3b7]" />
                 </div>
               )}
             </div>
-            <p className="text-xs text-[#64748b] mt-3 text-center">
+            <p className="text-[10px] text-[#64748b] mt-2 text-center">
               {t("showQrCode")}
             </p>
           </div>
 
-          {/* Reservation Date */}
-          {claimSuccess.hasReservation && claimSuccess.reservationDate && (
-            <div className="flex items-center gap-2 mt-4 text-sm text-[#102b4a] bg-[#f0f9ff] p-3 rounded-lg justify-center">
-              <CalendarDays className="h-4 w-4 text-[#3ec3b7]" />
-              <span className="font-medium">{claimSuccess.reservationDate}</span>
-            </div>
-          )}
-
-          {/* Email Confirmation */}
-          <div className="flex items-center gap-2 mt-4 text-sm text-green-600 bg-green-50 p-3 rounded-lg justify-center">
-            <CheckCircle className="h-4 w-4" />
-            <span>{t("emailSent")}</span>
-          </div>
-
           {/* Walk-in Note - only show if NO reservation */}
           {!claimSuccess.hasReservation && (
-            <div className="flex items-start gap-2 mt-3 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2 mt-3 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
+              <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
               <span>{t("walkInNote")}</span>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-2 mt-5">
+          <div className="flex gap-2 mt-3">
             <Button 
-              onClick={handleViewMyOffers} 
               variant="outline" 
-              className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10"
+              onClick={handleViewMyOffers}
+              className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
             >
-              <Tag className="mr-2 h-4 w-4" />
+              <Tag className="h-3 w-3 mr-1.5 shrink-0" />
               {t("viewMyOffers")}
             </Button>
             <Button 
               onClick={onClose}
-              className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white"
+              className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
             >
               {t("done")}
             </Button>
@@ -742,7 +751,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
         {/* Business Logo */}
         {claimSuccess.businessLogo && (
-          <div className="relative h-20 overflow-hidden">
+          <div className="relative h-24 overflow-hidden">
             <img 
               src={claimSuccess.businessLogo} 
               alt={claimSuccess.businessName}
@@ -770,7 +779,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-sm p-0 overflow-hidden border-0 bg-transparent">
+        <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
           {content}
         </DialogContent>
       </Dialog>
