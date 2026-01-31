@@ -1,144 +1,152 @@
 
-# Plan: Fix Instagram Story Animation on Mobile Devices
+# Σχέδιο: Επανασχεδιασμός Email Επαλήθευσης Φοιτητή με ΦΟΜΟ Aesthetic
 
-## Problem Diagnosis
+## Επισκόπηση
 
-After analyzing the codebase and the screenshot you provided, I identified the **root cause**:
-
-**FFmpeg WASM requires `SharedArrayBuffer`** which is only available when the site has **Cross-Origin Isolation headers** configured. These headers are:
-- `Cross-Origin-Opener-Policy: same-origin`
-- `Cross-Origin-Embedder-Policy: require-corp` (or `credentialless`)
-
-Without these headers, `SharedArrayBuffer` is undefined, and FFmpeg WASM cannot function. That's why you see "Animation not supported on this device. Will share as image."
+Το τρέχον email επαλήθευσης φοιτητικής ιδιότητας έχει ασυνεπές design σε σχέση με τα υπόλοιπα ΦΟΜΟ emails (π.χ. business notifications). Θα το αναβαθμίσουμε στο **Aegean Night Glow** theme για ενιαία brand ταυτότητα.
 
 ---
 
-## Solution Options
-
-### Option A: Enable Cross-Origin Isolation Headers (Recommended for FFmpeg)
-
-Add the required headers in Vite config for development, and configure the production server to send these headers.
-
-**Pros:**
-- FFmpeg WASM will work properly
-- Video generation will be available on iOS Safari and all modern browsers
-
-**Cons:**
-- May cause issues with third-party resources (images, iframes) that are not CORS-configured
-- Requires server configuration for production
-
-### Option B: Alternative Animation Approach - Animated GIF (More Compatible)
-
-Instead of relying on FFmpeg WASM, use a pure JavaScript GIF encoder (like `gif.js` or custom canvas-based encoding) that doesn't require `SharedArrayBuffer`.
-
-**Pros:**
-- Works on ALL devices including iOS Safari in-app browsers
-- No cross-origin isolation requirements
-- Instagram supports GIF in Stories
-
-**Cons:**
-- GIF has lower quality than MP4
-- Larger file sizes for same quality
-- Limited to 256 colors per frame
-
-### Option C: Use FFmpeg Single-Threaded Mode (Workaround)
-
-FFmpeg WASM can run in single-threaded mode without SharedArrayBuffer, though slower.
-
-**Pros:**
-- Keeps MP4 output
-- Works without header changes
-
-**Cons:**
-- Significantly slower on mobile devices
-- May timeout on older devices
-
----
-
-## Recommended Solution: Option A + C Hybrid
-
-1. **Add Cross-Origin Isolation headers** for browsers that support it
-2. **Use single-threaded FFmpeg as fallback** for browsers where headers don't work
-3. **Keep static image as final fallback** for very old browsers
-
----
-
-## Implementation Plan
-
-### Step 1: Update Vite Configuration for Development
-
-Add headers to `vite.config.ts`:
+## Τρέχουσα vs Νέα Προσέγγιση
 
 ```text
-server: {
-  host: "::",
-  port: 8080,
-  headers: {
-    'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Embedder-Policy': 'credentialless',
-  },
-}
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ΤΡΕΧΟΝ EMAIL                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│  • Απλό gradient header χωρίς frosted glass effect                  │
+│  • Ασυνεπές footer (χωρίς navy background)                          │
+│  • Βασικό button design                                             │
+│  • Διαφορετική δομή από τα business emails                          │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ΝΕΟ ΦΟΜΟ EMAIL                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  GRADIENT HEADER (Navy → Seafoam)                           │    │
+│  │  ┌─────────┐                                                │    │
+│  │  │  ΦΟΜΟ   │  ← Cinzel font, 42px, letter-spacing           │    │
+│  │  └─────────┘                                                │    │
+│  │  "Cyprus Events & Nightlife"                                │    │
+│  │  🎓 Επαλήθευση Φοιτητικής Ιδιότητας (badge)                 │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  WHITE CONTENT CARD                                         │    │
+│  │  • Χαιρετισμός με όνομα χρήστη                              │    │
+│  │  • Πανεπιστήμιο highlight                                   │    │
+│  │  • Premium CTA button (seafoam gradient + glow)             │    │
+│  │  • Info box με seafoam border (24h expiry)                  │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  NAVY FOOTER                                                │    │
+│  │  ΦΟΜΟ logo + copyright + tagline                            │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
 ```
-
-### Step 2: Update `isVideoGenerationSupported()` Function
-
-Improve detection to check for actual SharedArrayBuffer availability:
-
-```text
-- Check if crossOriginIsolated === true
-- Check if SharedArrayBuffer is available
-- Log detailed diagnostics for debugging
-```
-
-### Step 3: Add Single-Threaded FFmpeg Fallback
-
-Modify `loadFFmpeg()` to try single-threaded mode when multi-threaded fails:
-
-```text
-- First try: Multi-threaded FFmpeg with SharedArrayBuffer
-- Second try: Single-threaded FFmpeg without SharedArrayBuffer
-- Final fallback: Static image
-```
-
-### Step 4: Production Headers (Supabase Edge Function or Service Worker)
-
-For production, we have two options:
-- **Option A**: Create an edge function proxy that adds the required headers
-- **Option B**: Use a Service Worker to inject headers (more complex but works without server changes)
 
 ---
 
-## Files to Modify
+## Βασικές Αλλαγές Design
 
-| File | Changes |
-|------|---------|
-| `vite.config.ts` | Add COOP/COEP headers for development |
-| `src/lib/storyVideoGenerator.ts` | Improve detection logic, add single-threaded fallback |
-| `src/hooks/useSimpleShare.ts` | Better error messaging and diagnostics |
+### 1. Reusable Email Template Components
+Θα χρησιμοποιήσουμε την ίδια δομή με το `send-business-notification`:
+- **emailHeader**: Gradient navy→seafoam, ΦΟΜΟ με Cinzel font
+- **emailFooter**: Solid navy background, seafoam logo
+- **wrapEmailContent**: Unified wrapper function
 
----
+### 2. Visual Upgrades
 
-## Technical Notes
+| Στοιχείο | Τρέχον | Νέο |
+|----------|--------|-----|
+| Header | Rounded bottom corners | Flat bottom (12px top corners only) |
+| Footer | Light gray, centered text | Navy (#102b4a) με seafoam accent |
+| Button | Basic gradient | Seafoam gradient + box-shadow glow |
+| Info Box | Blue theme | Seafoam teal (#4ecdc4) border |
+| Font | System fonts only | Cinzel για "ΦΟΜΟ" |
 
-### Why FFmpeg WASM Needs SharedArrayBuffer
-
-FFmpeg uses WebAssembly threads (multi-threading) for performance. These threads require shared memory (`SharedArrayBuffer`) to communicate. Without it, FFmpeg cannot spawn worker threads.
-
-### Cross-Origin Isolation on iOS Safari
-
-iOS Safari 15+ supports `SharedArrayBuffer` ONLY when:
-1. The page is served with COOP/COEP headers
-2. The page is NOT inside a webview or in-app browser
-3. The device is not in a restrictive corporate MDM profile
-
-This means even with correct headers, some users may still fall back to static images - but this should cover ~80% of iOS users.
+### 3. Αλλαγές Περιεχομένου
+- Αφαίρεση του inline emoji badge στο header (🎓) - πιο clean
+- Πιο compact layout
+- Unified color palette: Navy (#0d3b66), Seafoam (#4ecdc4), Aegean Deep (#102b4a)
 
 ---
 
-## Expected Outcome
+## Τεχνικές Λεπτομέρειες
 
-After this fix:
-- **Most iOS Safari users** will get animated video Stories
-- **All Android Chrome users** will get animated video Stories  
-- **In-app browsers** will gracefully fallback to static image with clear messaging
-- **Better debugging** through detailed console logs
+### Αρχείο προς τροποποίηση
+```
+supabase/functions/send-student-verification-email/index.ts
+```
+
+### Νέα δομή email:
+```typescript
+// Shared template components (ίδια με business-notification)
+const emailHeader = `
+  <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); 
+              padding: 48px 24px 36px 24px; 
+              text-align: center; 
+              border-radius: 12px 12px 0 0;">
+    <h1 style="color: #ffffff; 
+               font-size: 42px; 
+               font-weight: bold; 
+               letter-spacing: 4px; 
+               font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</h1>
+    <p style="color: rgba(255,255,255,0.85); 
+              font-size: 11px; 
+              letter-spacing: 3px;">CYPRUS EVENTS & NIGHTLIFE</p>
+  </div>
+`;
+
+const emailFooter = `
+  <div style="background: #102b4a; 
+              padding: 28px; 
+              text-align: center; 
+              border-radius: 0 0 12px 12px;">
+    <p style="color: #3ec3b7; 
+              font-size: 18px; 
+              font-weight: bold; 
+              letter-spacing: 2px; 
+              font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</p>
+    <p style="color: #94a3b8; 
+              font-size: 12px;">© 2025 ΦΟΜΟ. Discover events in Cyprus.</p>
+  </div>
+`;
+```
+
+### Button με Glow Effect:
+```html
+<td style="border-radius: 12px; 
+           background: linear-gradient(135deg, #4ecdc4 0%, #3ec3b7 100%); 
+           box-shadow: 0 4px 20px rgba(78, 205, 196, 0.5);">
+  <a href="${verificationUrl}" style="display: inline-block; 
+                                       color: #ffffff; 
+                                       padding: 16px 40px; 
+                                       font-weight: 600;">
+    ✓ Επαλήθευση Φοιτητικής Ιδιότητας
+  </a>
+</td>
+```
+
+---
+
+## Checklist Υλοποίησης
+
+1. Προσθήκη Cinzel Google Font στο `<head>`
+2. Αντικατάσταση header με unified template
+3. Αντικατάσταση footer με navy background
+4. Upgrade button με seafoam gradient + glow
+5. Αλλαγή info box border σε seafoam (#4ecdc4)
+6. Ενοποίηση color palette σε όλο το email
+7. Deploy και test
+
+---
+
+## Αναμενόμενο Αποτέλεσμα
+
+Το νέο email θα έχει:
+- **Ενιαία ΦΟΜΟ ταυτότητα** με όλα τα transactional emails
+- **Premium Aegean Night Glow** aesthetic
+- **Καλύτερη αναγνωσιμότητα** με proper contrast
+- **Επαγγελματικό look** που ταιριάζει με τη Mediterranean brand identity
