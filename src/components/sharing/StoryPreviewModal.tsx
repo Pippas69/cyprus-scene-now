@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Share2, Loader2 } from 'lucide-react';
+import { X, Download, Share2, Loader2, Video, Image } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { isMobile, hasNativeShare } from '@/hooks/useSimpleShare';
 
@@ -25,20 +26,22 @@ const translations = {
     shareToInstagram: 'Κοινοποίηση',
     downloadImage: 'Λήψη',
     generating: 'Δημιουργία Story...',
-    generatingVideo: 'Δημιουργία βίντεο...',
+    generatingVideo: 'Δημιουργία βίντεο με κίνηση...',
     webInstructions: 'Άνοιξε την εικόνα στο Instagram και κοινοποίησε στο Story σου',
     mobileInstructions: 'Επίλεξε το Instagram Stories από το μενού',
-    videoReady: 'Το βίντεο είναι έτοιμο για κοινοποίηση!',
+    videoReady: 'Βίντεο με κίνηση!',
+    imageReady: 'Στατική εικόνα',
   },
   en: {
     preview: 'Story Preview',
     shareToInstagram: 'Share',
     downloadImage: 'Download',
     generating: 'Generating Story...',
-    generatingVideo: 'Generating video...',
+    generatingVideo: 'Generating animated video...',
     webInstructions: 'Open the image on Instagram and share to your Story',
     mobileInstructions: 'Select Instagram Stories from the menu',
-    videoReady: 'Video is ready to share!',
+    videoReady: 'Animated video!',
+    imageReady: 'Static image',
   },
 };
 
@@ -75,7 +78,31 @@ export const StoryPreviewModal = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
         <div className="w-8" />
-        <h2 className="text-base font-semibold text-foreground">{t.preview}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold text-foreground">{t.preview}</h2>
+          {/* Video/Image Badge - only show when content is ready */}
+          {!isLoading && imageUrl && (
+            <Badge 
+              variant={isVideo ? "default" : "secondary"} 
+              className={cn(
+                "text-[10px] px-1.5 py-0.5 h-5",
+                isVideo && "bg-primary hover:bg-primary/90"
+              )}
+            >
+              {isVideo ? (
+                <>
+                  <Video className="h-3 w-3 mr-0.5" />
+                  {t.videoReady}
+                </>
+              ) : (
+                <>
+                  <Image className="h-3 w-3 mr-0.5" />
+                  {t.imageReady}
+                </>
+              )}
+            </Badge>
+          )}
+        </div>
         <button
           onClick={() => onOpenChange(false)}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
