@@ -19,10 +19,15 @@ interface ShareProfileDialogProps {
 export const ShareProfileDialog = ({ open, onOpenChange, business, language }: ShareProfileDialogProps) => {
   const url = getBusinessUrlFallback(business.id);
   const shareText = formatBusinessShareText({ name: business.name }, language);
+  
+  // For story: use cover as main image, logo as overlay
   const imageUrl = business.cover_url || business.logo_url;
-
+  
   // Get first category for story
   const storyCategory = business.category?.[0];
+  
+  // Location: prefer city, fallback to address
+  const storyLocation = business.city || business.address || undefined;
 
   return (
     <SimpleShareSheet
@@ -37,8 +42,10 @@ export const ShareProfileDialog = ({ open, onOpenChange, business, language }: S
       objectType="business"
       objectId={business.id}
       businessId={business.id}
-      storyLocation={business.city || business.address || undefined}
+      storyLocation={storyLocation}
       storyCategory={storyCategory}
+      storyLogoUrl={business.logo_url}
+      isBusinessProfile={true}
     />
   );
 };

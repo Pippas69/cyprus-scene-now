@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { trackEngagement } from '@/lib/analyticsTracking';
 import { generateStoryImage } from '@/lib/storyImageGenerator';
+import { generateBusinessStoryImage } from '@/lib/storyBusinessImageGenerator';
 import { getCacheKey, getCachedStoryMedia, setCachedStoryMedia } from '@/lib/storyMediaCache';
 
 // Types
@@ -106,6 +107,10 @@ interface StoryShareData extends ShareData {
   discountPercent?: string;
   /** Category or event type */
   category?: string;
+  /** Logo URL for business profiles */
+  logoUrl?: string | null;
+  /** Whether this is a business profile share (uses different layout) */
+  isBusinessProfile?: boolean;
 }
 
 interface ShareOptions {
@@ -415,15 +420,28 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
       }
 
       try {
-        const file = await generateStoryImage(data.imageUrl, {
-          title: data.title,
-          subtitle: data.subtitle,
-          date: data.date,
-          location: data.location,
-          price: data.price,
-          discountPercent: data.discountPercent,
-          category: data.category,
-        });
+        let file: File;
+        
+        // Use business-specific layout for business profiles
+        if (data.isBusinessProfile) {
+          file = await generateBusinessStoryImage(data.imageUrl, {
+            name: data.title,
+            category: data.category,
+            location: data.location,
+            logoUrl: data.logoUrl,
+          });
+        } else {
+          // Use standard event/offer layout
+          file = await generateStoryImage(data.imageUrl, {
+            title: data.title,
+            subtitle: data.subtitle,
+            date: data.date,
+            location: data.location,
+            price: data.price,
+            discountPercent: data.discountPercent,
+            category: data.category,
+          });
+        }
 
         if (cacheKey) {
           const entry = setCachedStoryMedia(cacheKey, file, 'image');

@@ -50,6 +50,10 @@ interface SimpleShareSheetProps {
   storyDiscountPercent?: string;
   /** Category for Story image */
   storyCategory?: string;
+  /** Logo URL for business profile stories */
+  storyLogoUrl?: string | null;
+  /** Whether this is a business profile share */
+  isBusinessProfile?: boolean;
 }
 
 const translations = {
@@ -90,6 +94,8 @@ export const SimpleShareSheet = ({
   storyPrice,
   storyDiscountPercent,
   storyCategory,
+  storyLogoUrl,
+  isBusinessProfile,
 }: SimpleShareSheetProps) => {
   const t = translations[language];
   const { share, copyLink, shareToWhatsApp, shareToMessenger, generateStoryPreview, shareStoryFile, downloadStoryFile, isSharing, hasNativeShare } = useSimpleShare(language);
@@ -133,6 +139,8 @@ export const SimpleShareSheet = ({
       price: storyPrice,
       discountPercent: storyDiscountPercent,
       category: storyCategory,
+      logoUrl: storyLogoUrl,
+      isBusinessProfile,
     };
     
     const result = await generateStoryPreview(storyData, shareOptions);
@@ -143,7 +151,7 @@ export const SimpleShareSheet = ({
     }
     
     setIsGeneratingStory(false);
-  }, [generateStoryPreview, title, text, url, imageUrl, subtitle, storyDate, storyLocation, storyPrice, storyDiscountPercent, storyCategory, shareOptions]);
+  }, [generateStoryPreview, title, text, url, imageUrl, subtitle, storyDate, storyLocation, storyPrice, storyDiscountPercent, storyCategory, storyLogoUrl, isBusinessProfile, shareOptions]);
 
   // Share the generated Story via native share
   const handleShareStory = useCallback(async () => {
@@ -152,11 +160,12 @@ export const SimpleShareSheet = ({
     await shareStoryFile(storyFile, { 
       title, text, url, imageUrl, subtitle, 
       date: storyDate, location: storyLocation,
-      price: storyPrice, discountPercent: storyDiscountPercent, category: storyCategory
+      price: storyPrice, discountPercent: storyDiscountPercent, category: storyCategory,
+      logoUrl: storyLogoUrl, isBusinessProfile
     }, shareOptions);
     setShowStoryPreview(false);
     onOpenChange(false);
-  }, [shareStoryFile, storyFile, title, text, url, imageUrl, subtitle, storyDate, storyLocation, storyPrice, storyDiscountPercent, storyCategory, shareOptions, onOpenChange]);
+  }, [shareStoryFile, storyFile, title, text, url, imageUrl, subtitle, storyDate, storyLocation, storyPrice, storyDiscountPercent, storyCategory, storyLogoUrl, isBusinessProfile, shareOptions, onOpenChange]);
 
   // Download the generated Story image
   const handleDownloadStory = useCallback(() => {
