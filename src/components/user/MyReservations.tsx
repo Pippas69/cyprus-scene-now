@@ -78,6 +78,9 @@ type ReservationType = 'direct' | 'offer' | 'event';
 export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const navigate = useNavigate();
   const dateLocale = language === 'el' ? el : enUS;
+  const isPreviewOrigin =
+    typeof window !== 'undefined' &&
+    (window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
   const [upcomingReservations, setUpcomingReservations] = useState<ReservationData[]>([]);
   const [pastReservations, setPastReservations] = useState<ReservationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,6 +243,24 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       const dateB = b.events?.end_at || b.preferred_time || '';
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
+
+    // Preview-only: if the user has no event-based reservations at all,
+    // create one demo reservation so the section can be previewed.
+    try {
+      const hasAnyEventReservations = (upcomingEventRes?.length || 0) + (pastEventRes?.length || 0) > 0;
+      const seedKey = `seeded_event_reservation_${userId}`;
+
+      if (isPreviewOrigin && !hasAnyEventReservations && !localStorage.getItem(seedKey)) {
+        localStorage.setItem(seedKey, '1');
+        await supabase.functions.invoke('create-free-reservation-event', { body: {} });
+        // Re-fetch after seeding
+        await fetchReservations();
+        return;
+      }
+    } catch (e) {
+      // Silent fail: seeding is just for preview UX.
+      console.warn('Event reservation seeding failed', e);
+    }
 
     setUpcomingReservations(allUpcoming);
     setPastReservations(allPast);

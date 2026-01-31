@@ -200,6 +200,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const isMobile = useIsMobile();
   const t = translations[language];
 
+  // Preview-only: allow a free (0€) reservation to avoid Stripe for testing.
+  const isPreviewOrigin =
+    typeof window !== 'undefined' &&
+    (window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
+  const allowFreePreviewBooking = isPreviewOrigin && import.meta.env.MODE !== 'production';
+
   // State
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -283,7 +289,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   const price = getPrice();
   // Customer pays the prepaid amount only - commission is deducted from this on the backend
-  const total = price || 0;
+  const total = allowFreePreviewBooking ? 0 : (price || 0);
 
   // Handle checkout
   const handleCheckout = async () => {
@@ -318,9 +324,40 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     }
   };
 
+  const handleFreeReservation = async () => {
+    if (!allowFreePreviewBooking) return;
+    if (!selectedSeating) return;
+
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-free-reservation-event', {
+        body: {
+          event_id: eventId,
+          seating_type_id: selectedSeating.id,
+          party_size: partySize,
+          reservation_name: reservationName,
+          phone_number: phoneNumber,
+          special_requests: specialRequests || null,
+        },
+      });
+
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+
+      toast.success(language === 'el' ? 'Η δοκιμαστική κράτηση δημιουργήθηκε!' : 'Test reservation created!');
+      onSuccess?.();
+      onOpenChange(false);
+    } catch (err) {
+      console.error('Error creating free reservation:', err);
+      toast.error(language === 'el' ? 'Σφάλμα δημιουργίας κράτησης' : 'Error creating reservation');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const canProceedToStep3 = price !== null;
+  const canProceedToStep3 = allowFreePreviewBooking ? true : price !== null;
   const canProceedToStep4 = reservationName.trim().length >= 2;
 
   // Format price
@@ -586,7 +623,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t.prepaidAmount}</span>
-                <span>{price ? formatPrice(price) : '-'}</span>
+                <span>
+                  {allowFreePreviewBooking
+                    ? formatPrice(0)
+                    : price
+                      ? formatPrice(price)
+                      : '-'}
+                </span>
               </div>
               <div className="flex justify-between font-bold text-lg">
                 <span>{t.total}</span>
@@ -627,8 +670,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         </Button>
       ) : (
         <Button
-          onClick={handleCheckout}
-          disabled={submitting || !price}
+          onClick={allowFreePreviewBooking ? handleFreeReservation : handleCheckout}
+          disabled={
+            submitting ||
+            !selectedSeating ||
+            (!allowFreePreviewBooking && !price)
+          }
           className="gap-2"
         >
           {submitting ? (
@@ -639,7 +686,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           ) : (
             <>
               <CreditCard className="h-4 w-4" />
-              {t.pay} {formatPrice(total)}
+              {allowFreePreviewBooking
+                ? (language === 'el' ? 'Δωρεάν Κράτηση' : 'Free Reservation')
+                : t.pay}{' '}
+              {formatPrice(total)}
             </>
           )}
         </Button>
