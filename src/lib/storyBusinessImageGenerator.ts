@@ -62,12 +62,13 @@ const drawCoverBackground = (
   // Draw the cover image
   ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
-  // Add gradient overlay for text readability (stronger at bottom)
+  // Add subtle gradient overlay for text readability (lighter for smoother look)
   const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.15)');
-  gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.1)');
-  gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.4)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.75)');
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.05)');
+  gradient.addColorStop(0.35, 'rgba(0, 0, 0, 0.02)');
+  gradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.15)');
+  gradient.addColorStop(0.85, 'rgba(0, 0, 0, 0.45)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.65)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 };

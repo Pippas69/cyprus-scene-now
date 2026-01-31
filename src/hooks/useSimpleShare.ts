@@ -475,21 +475,40 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
       }
 
       try {
-        // iOS compatibility: share files WITHOUT url to avoid canShare returning false
-        const sharePayload = {
+        // Try sharing with both file AND URL for Instagram link sticker support
+        const sharePayloadWithUrl = {
           files: [file],
           title: data.title,
+          text: `${data.text}\n${data.url}`,
+          url: data.url,
         };
 
-        if (navigator.canShare && navigator.canShare(sharePayload)) {
-          await navigator.share(sharePayload);
+        // First try with URL included (Android and some iOS versions support this)
+        if (navigator.canShare && navigator.canShare(sharePayloadWithUrl)) {
+          await navigator.share(sharePayloadWithUrl);
         } else {
-          // Fallback to text-only share with URL
-          await navigator.share({
+          // iOS fallback: share files only, then copy URL to clipboard for manual paste
+          const sharePayloadFilesOnly = {
+            files: [file],
             title: data.title,
-            text: data.text,
-            url: data.url,
-          });
+          };
+          
+          if (navigator.canShare && navigator.canShare(sharePayloadFilesOnly)) {
+            // Copy URL to clipboard so user can paste as link sticker
+            await navigator.clipboard.writeText(data.url);
+            await navigator.share(sharePayloadFilesOnly);
+            // Toast informing user the link is copied
+            toast.info(language === 'el' 
+              ? 'Το link αντιγράφηκε! Επικόλλησέ το ως sticker' 
+              : 'Link copied! Paste it as a sticker');
+          } else {
+            // Final fallback to text-only share with URL
+            await navigator.share({
+              title: data.title,
+              text: data.text,
+              url: data.url,
+            });
+          }
         }
       } catch (error) {
         const err = error as Error;
@@ -502,7 +521,7 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
         }
       }
     },
-    [copyToClipboard, t]
+    [copyToClipboard, t, language]
   );
 
   // Download Story file to device (supports both image and video)
