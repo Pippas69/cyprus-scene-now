@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import ReactDOM from 'react-dom/client';
@@ -140,6 +141,7 @@ const MIN_ZOOM_FOR_PLAN: Record<'free' | 'basic' | 'pro' | 'elite', number> = {
 };
 
 const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: RealMapProps) => {
+  const navigate = useNavigate();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -288,6 +290,28 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     if (!map.current) return;
     const [lng, lat] = business.coordinates;
 
+    const handlePopupProfileClick = (b: any) => {
+      // Close popup immediately to avoid overlays persisting over the routed page
+      popupRef.current?.remove();
+      if (directionsMarkerRef.current) {
+        directionsMarkerRef.current.remove();
+        directionsMarkerRef.current = null;
+      }
+
+      const src = new URLSearchParams(window.location.search).get('src');
+      if (src !== 'dashboard_user') {
+        trackEngagement(b.id, 'profile_click', 'business', b.id, { source: 'map_popup_photo' });
+      }
+
+      navigate(`/business/${b.id}`, {
+        state: {
+          analyticsTracked: true,
+          analyticsSource: 'map',
+          from: `${window.location.pathname}${window.location.search}`,
+        },
+      });
+    };
+
     if (popupRef.current) popupRef.current.remove();
     const popupDiv = document.createElement('div');
     const popupRoot = ReactDOM.createRoot(popupDiv);
@@ -302,6 +326,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
           }
         }}
         language={language}
+        onProfileClick={handlePopupProfileClick}
       />
     );
     // Pin label must sit just above the pin - very close spacing
