@@ -1,5 +1,4 @@
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
-import { getDirectionsUrl } from "@/lib/mapUtils";
 import { translateCity } from "@/lib/cityTranslations";
 
 interface BusinessPopupProps {
@@ -24,15 +23,9 @@ const getPlanColorVar = (planSlug: BusinessLocation["planSlug"]): string => {
 
 export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPopupProps) => {
   const planVar = getPlanColorVar(business.planSlug);
-  const directionsUrl = getDirectionsUrl(business.coordinates[1], business.coordinates[0]);
   // Use profile photo (logo_url) instead of cover photo
   const imageUrl = business.logo_url || business.cover_url;
   const cityLabel = translateCity(business.city, language);
-
-  const handleDirectionsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    window.open(directionsUrl, '_blank', 'noopener,noreferrer');
-  };
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -84,20 +77,6 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
             </div>
           </div>
         </div>
-      </button>
-
-      {/* Compact directions badge (directly under the pin area) */}
-      <button
-        type="button"
-        onClick={handleDirectionsClick}
-        className="-mt-0.5 inline-flex items-center justify-center rounded-full border bg-background/90 px-2 py-0.5 text-[9px] font-medium backdrop-blur-sm transition-transform hover:scale-[1.02]"
-        style={{
-          borderColor: `hsl(var(${planVar}))`,
-          boxShadow: `0 6px 14px -10px hsl(var(${planVar}) / 0.5)`,
-        }}
-        aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
-      >
-        {language === "el" ? "Οδηγίες" : "Directions"}
       </button>
     </div>
   );
