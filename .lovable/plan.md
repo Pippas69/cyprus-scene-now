@@ -1,160 +1,118 @@
 
-# Design Overhaul: "Οι Προσφορές Μου" Section
+# Plan: Fix Instagram Story Animation Not Appearing
 
-## Στόχος
-Πλήρης αναδιαμόρφωση του design των καρτών στο section "Οι Προσφορές Μου" ώστε να ταιριάζουν ακριβώς με το mockup που παρείχες.
+## Problem Analysis
+
+The Instagram Story share system has a video generation pipeline that should produce an animated MP4 with a "Spotify-like floating" effect. The animation appears in the **preview modal** (via framer-motion) but does **NOT** appear in the actual shared file to Instagram.
+
+### Root Cause Investigation
+
+After analyzing the codebase, I identified several potential issues:
+
+1. **FFmpeg WASM Loading Failure**: The video generator relies on FFmpeg WASM which may fail to load on certain devices/browsers, causing a silent fallback to static PNG
+2. **Frame Validation Logic**: There's frame validation code that checks if frames are different, but if this fails, it throws an error and falls back to image
+3. **iOS Safari Limitations**: WebAssembly and FFmpeg have known limitations on iOS Safari
+4. **Video Not Recognized**: The generated video file might not be recognized as animated by Instagram
 
 ---
 
-## Αλλαγές Design
+## Technical Solution
 
-### 1. Αφαίρεση "Προσφορά μη διαθέσιμη"
-- Όταν μια προσφορά έχει διαγραφεί (`discounts === null`), δεν θα εμφανίζεται καθόλου
-- Θα φιλτράρονται εντελώς από active, redeemed, και expired tabs
+### Phase 1: Add Robust Logging & Error Visibility
 
-### 2. Νέα Δομή Κάρτας
+**File: `src/lib/storyVideoGenerator.ts`**
+- Add detailed console logging at each step of video generation
+- Surface errors to the user instead of silent fallbacks
+- Track success/failure metrics
 
+### Phase 2: Improve Video Generation Fallback Visibility
+
+**File: `src/hooks/useSimpleShare.ts`**
+- When video generation fails, show a toast notification explaining the fallback
+- Track whether the final shared file is video or image
+- Add a flag in the preview modal to indicate if animation is preserved
+
+### Phase 3: Fix the Animation Encoding
+
+**File: `src/lib/storyVideoGenerator.ts`**
+- Ensure the `renderFrame()` function actually produces different output per frame
+- Increase animation amplitude for more noticeable movement
+- Verify that the canvas context is not being reused incorrectly
+
+### Phase 4: Add GIF Fallback for Wider Compatibility
+
+Since FFmpeg WASM may fail on mobile Safari, I will:
+- Create a fallback mechanism that generates an animated GIF instead of MP4
+- Use canvas-based GIF encoding (no external dependencies)
+- This provides animation support even when video encoding fails
+
+---
+
+## Implementation Details
+
+### 1. Enhanced Error Tracking in Video Generator
 ```text
-┌─────────────────────────────────────────┐
-│  ┌──────────┐                    ┌────┐ │
-│  │ Κράτηση  │                    │-20%│ │
-│  └──────────┘                    └────┘ │
-│                                         │
-│         [ΕΙΚΟΝΑ ΠΡΟΣΦΟΡΑΣ]              │
-│                                         │
-├─────────────────────────────────────────┤
-│ Ο Μαρίνος είναι Κουσπιτής              │
-│ 🏪 DermaLissere                         │
-│ 📅 5 Φεβρουαρίου 2026, 20:00    📍      │
-│ 🕐 Λήγει στις 4 Φεβρουαρίου            │
-│                                         │
-│  ┌────────────────────────────────────┐ │
-│  │   📱 Εμφάνιση QR                   │ │
-│  └────────────────────────────────────┘ │
-└─────────────────────────────────────────┘
+Add try/catch with detailed error messages at:
+- FFmpeg loading
+- Frame generation  
+- Video encoding
+- File output
+
+Show user-friendly toast when falling back to static image
 ```
 
-### 3. Λογική Badge "Κράτηση"
-- Εμφανίζεται **μόνο** όταν `claim_type === 'with_reservation'`
-- **ΔΕΝ** εμφανίζεται για walk-in προσφορές
+### 2. Preview Modal Indicator
+```text
+Add visual indicator showing:
+- "Video" badge when animation is preserved
+- "Image" badge when fallback to static
+```
 
-### 4. Λογική Ώρας
-| Τύπος | Εμφάνιση Ώρας |
-|-------|---------------|
-| `with_reservation` | Συγκεκριμένη ώρα κράτησης (π.χ. "20:00") |
-| `walk_in` | Εύρος ωρών (π.χ. "18:00-21:00") |
+### 3. Fix Frame Generation Timing
+```text
+Current issue: Animation values are calculated correctly,
+but the canvas may not be clearing properly between frames.
 
-### 5. Location Badge (Clickable)
-- Νέο badge τοποθεσίας δίπλα από ημερομηνία/ώρα
-- Κλικ → navigate στον χάρτη με `business_id`
-- Icon: MapPin (📍)
+Fix:
+- Explicitly clear canvas before each frame
+- Verify ctx state is not carried over
+- Add debugging canvas output for first/middle/last frames
+```
 
----
-
-## Τεχνικές Αλλαγές
-
-### Αρχείο: `src/components/user/MyOffers.tsx`
-
-1. **Query Updates**
-   - Προσθήκη στο select: `claim_type`, `reservation_id`
-   - Join με `reservations` για να πάρουμε `preferred_time`
-   - Προσθήκη business `city`, `id` στο nested select
-
-2. **Filter Update**
-   - Φιλτράρισμα: `purchases.filter(p => p.discounts !== null)` πριν από κάθε κατηγοριοποίηση
-
-3. **PurchaseCard Redesign**
-   - Αφαίρεση του placeholder για "Προσφορά μη διαθέσιμη"
-   - Νέο layout με:
-     - Badge "Κράτηση" (conditional)
-     - Discount badge στο πάνω δεξί μέρος της εικόνας
-     - Business row με logo + name
-     - Date/Time row με location badge
-     - Expiry row
-     - QR button (styled όπως στο mockup)
-
-4. **Responsive Spacing**
-   - Mobile: Compact spacing, text-xs
-   - Tablet: Balanced
-   - Desktop: Full spacing
-
----
-
-## Παράδειγμα Νέας Κάρτας (Pseudo-code)
-
-```tsx
-<Card>
-  {/* Image Section */}
-  <div className="h-40 relative">
-    <img src={imageUrl} />
-    
-    {/* Κράτηση Badge - Only for reservations */}
-    {claim_type === 'with_reservation' && (
-      <Badge className="absolute top-2 left-2 bg-primary">
-        Κράτηση
-      </Badge>
-    )}
-    
-    {/* Discount Badge */}
-    <Badge className="absolute top-2 right-2">
-      -{percent}%
-    </Badge>
-  </div>
-  
-  {/* Content Section */}
-  <div className="p-3">
-    {/* Title */}
-    <h4>{title}</h4>
-    
-    {/* Business */}
-    <div className="flex items-center gap-1.5">
-      <img src={logo} className="h-4 w-4 rounded-full" />
-      <span>{businessName}</span>
-    </div>
-    
-    {/* Date + Time + Location */}
-    <div className="flex items-center gap-2">
-      <Calendar />
-      <span>
-        {formatDate}
-        {claim_type === 'with_reservation' 
-          ? `, ${reservationTime}` 
-          : `, ${validStartTime}-${validEndTime}`
-        }
-      </span>
-      <button onClick={navigateToMap}>
-        <MapPin />
-      </button>
-    </div>
-    
-    {/* Expiry */}
-    <div className="flex items-center gap-1.5">
-      <Clock />
-      <span>Λήγει στις {expiryDate}</span>
-    </div>
-    
-    {/* QR Button */}
-    <Button>
-      <QrCode /> Εμφάνιση QR
-    </Button>
-  </div>
-</Card>
+### 4. Improve FFmpeg Compatibility
+```text
+- Use more compatible FFmpeg parameters
+- Test with lower resolution for faster processing
+- Add timeout handling for slow devices
 ```
 
 ---
 
-## Αρχεία που θα τροποποιηθούν
+## Files to Modify
 
-| Αρχείο | Αλλαγές |
-|--------|---------|
-| `src/components/user/MyOffers.tsx` | Πλήρης redesign του PurchaseCard, νέο query, φιλτράρισμα |
+| File | Changes |
+|------|---------|
+| `src/lib/storyVideoGenerator.ts` | Add logging, fix frame clearing, improve error handling |
+| `src/hooks/useSimpleShare.ts` | Add fallback notifications, track media type |
+| `src/components/sharing/StoryPreviewModal.tsx` | Add video/image indicator badge |
+| `src/components/sharing/SimpleShareSheet.tsx` | Pass media type info to preview |
 
 ---
 
-## Responsive Behavior
+## Testing Plan
 
-- **Mobile**: Ίδιο layout, compact spacing
-- **Tablet**: Grid 2 columns  
-- **Desktop**: Grid 3 columns
+1. Test on iOS Safari (most problematic browser)
+2. Test on Android Chrome
+3. Test on Desktop (for download functionality)
+4. Verify the shared file contains animation when opened independently
+5. Verify fallback to static image works gracefully with notification
 
-Οι αποστάσεις θα είναι ακριβώς όπως στο mockup σε όλες τις συσκευές.
+---
+
+## Expected Outcome
+
+After this fix:
+- Users will see clear feedback when animation generation fails
+- Animation will work more reliably across browsers
+- When animation fails, users understand they're sharing a static image
+- Downloaded files will clearly indicate if they're animated or static
