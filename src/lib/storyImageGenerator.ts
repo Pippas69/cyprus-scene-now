@@ -6,6 +6,8 @@
  *   - Bottom: Navy panel with seafoam accents
  */
 
+import { drawTopImage } from '@/lib/story/drawTopImage';
+
 interface StoryImageOptions {
   title: string;
   subtitle?: string;
@@ -38,51 +40,23 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw the image in the top portion
- * Shows FULL image (no side/top cropping), clipped at the wave boundary
+ * Draw the image in the top portion.
+ * Keeps the wave overlay, but prevents top/left/right cropping by drawing
+ * the crisp image as "contain" over a blurred "cover" background.
  */
-const drawTopImage = (
+const drawTopStoryImage = (
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   canvasWidth: number,
   imageHeight: number
 ) => {
-  ctx.save();
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  // Clip to the image region so nothing bleeds past the wave area
-  ctx.beginPath();
-  ctx.rect(0, 0, canvasWidth, imageHeight);
-  ctx.clip();
-
-  const imgRatio = img.width / img.height;
-  const targetRatio = canvasWidth / imageHeight;
-
-  let drawWidth: number, drawHeight: number, drawX: number, drawY: number;
-
-  if (imgRatio > targetRatio) {
-    // Landscape image: fit to width, image will be shorter than area (navy shows at bottom)
-    drawWidth = canvasWidth;
-    drawHeight = canvasWidth / imgRatio;
-    drawX = 0;
-    drawY = 0; // Align to top
-  } else {
-    // Portrait/square image: fit to width, image will be taller (bottom gets clipped by wave)
-    drawWidth = canvasWidth;
-    drawHeight = canvasWidth / imgRatio;
-    drawX = 0;
-    drawY = 0; // Align to top, excess clipped at bottom
-  }
-
-  // Draw the FULL source image (no source cropping)
-  ctx.drawImage(
-    img,
-    0, 0, img.width, img.height,  // Source: full image
-    drawX, drawY, drawWidth, drawHeight  // Dest: scaled to fit width
-  );
-
-  ctx.restore();
+  drawTopImage(ctx, img, {
+    canvasWidth,
+    imageHeight,
+    backgroundFill: AEGEAN_NAVY,
+    backgroundBlurPx: 18,
+    backgroundDarken: 0.2,
+  });
 
   // Add a subtle gradient at the bottom edge for smooth transition to wave
   const edgeGradient = ctx.createLinearGradient(0, imageHeight - 100, 0, imageHeight);
@@ -345,7 +319,7 @@ export const generateStoryImage = async (
 
   // 2. Load and draw the crisp top image
   const img = await loadImage(imageUrl);
-  drawTopImage(ctx, img, canvas.width, imageHeight);
+  drawTopStoryImage(ctx, img, canvas.width, imageHeight);
 
   // 3. Draw the wave divider
   drawWaveDivider(ctx, canvas.width, waveY);
