@@ -6,8 +6,6 @@
  *   - Bottom: Navy panel with logo, name, and "Follow us on ΦΟΜΟ" CTA
  */
 
-import { drawTopImage } from '@/lib/story/drawTopImage';
-
 interface BusinessStoryOptions {
   name: string;
   category?: string;
@@ -34,30 +32,40 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw the cover image in the top portion.
- * Keeps the wave overlay, but prevents top/left/right cropping by drawing
- * the crisp image as "contain" over a blurred "cover" background.
+ * Draw the crisp cover image in the top portion (no blur, sharp scaling)
  */
-const drawTopBusinessCover = (
+const drawTopImage = (
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   canvasWidth: number,
   imageHeight: number
 ) => {
-  drawTopImage(ctx, img, {
-    canvasWidth,
-    imageHeight,
-    backgroundFill: AEGEAN_NAVY,
-    backgroundBlurPx: 18,
-    backgroundDarken: 0.18,
-  });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
-  // Add a subtle gradient at the bottom edge for smooth transition to wave
-  const edgeGradient = ctx.createLinearGradient(0, imageHeight - 100, 0, imageHeight);
+  const imgRatio = img.width / img.height;
+  const targetRatio = canvasWidth / imageHeight;
+
+  let sourceX = 0, sourceY = 0, sourceW = img.width, sourceH = img.height;
+
+  if (imgRatio > targetRatio) {
+    // Image is wider – crop sides
+    sourceW = img.height * targetRatio;
+    sourceX = (img.width - sourceW) / 2;
+  } else {
+    // Image is taller – crop top/bottom (bias toward top)
+    sourceH = img.width / targetRatio;
+    sourceY = 0; // keep top
+  }
+
+  ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, canvasWidth, imageHeight);
+
+  // Add a subtle gradient at the bottom edge for smooth transition
+  const edgeGradient = ctx.createLinearGradient(0, imageHeight - 80, 0, imageHeight);
   edgeGradient.addColorStop(0, 'rgba(13, 59, 102, 0)');
-  edgeGradient.addColorStop(1, 'rgba(13, 59, 102, 0.7)');
+  edgeGradient.addColorStop(1, 'rgba(13, 59, 102, 0.6)');
   ctx.fillStyle = edgeGradient;
-  ctx.fillRect(0, imageHeight - 100, canvasWidth, 100);
+  ctx.fillRect(0, imageHeight - 80, canvasWidth, 80);
 };
 
 /**
@@ -319,7 +327,7 @@ export const generateBusinessStoryImage = async (
 
   // 2. Load and draw the crisp top image
   const coverImg = await loadImage(coverUrl);
-  drawTopBusinessCover(ctx, coverImg, canvas.width, imageHeight);
+  drawTopImage(ctx, coverImg, canvas.width, imageHeight);
 
   // 3. Draw the wave divider
   drawWaveDivider(ctx, canvas.width, waveY);
