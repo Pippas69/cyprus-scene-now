@@ -91,8 +91,6 @@ export const SimpleShareSheet = ({
   const [storyPreviewUrl, setStoryPreviewUrl] = useState<string | null>(null);
   const [storyFile, setStoryFile] = useState<File | null>(null);
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [isVideoStory, setIsVideoStory] = useState(false);
 
   useEffect(() => {
     setIsDesktop(!isMobile());
@@ -113,9 +111,7 @@ export const SimpleShareSheet = ({
   // Open Story preview modal and generate video
   const handleInstagramStories = useCallback(async () => {
     setIsGeneratingStory(true);
-    setGenerationProgress(0);
     setShowStoryPreview(true);
-    setIsVideoStory(false);
     
     const storyData = {
       title,
@@ -127,14 +123,11 @@ export const SimpleShareSheet = ({
       location: storyLocation,
     };
     
-    const result = await generateStoryPreview(storyData, shareOptions, (progress) => {
-      setGenerationProgress(progress);
-    });
+    const result = await generateStoryPreview(storyData, shareOptions);
     
     if (result) {
       setStoryPreviewUrl(result.blobUrl);
       setStoryFile(result.file);
-      setIsVideoStory(result.file.type.startsWith('video/'));
     }
     
     setIsGeneratingStory(false);
@@ -316,8 +309,6 @@ export const SimpleShareSheet = ({
           onOpenChange={setShowStoryPreview}
           imageUrl={storyPreviewUrl}
           isLoading={isGeneratingStory}
-          isVideo={isVideoStory}
-          generationProgress={generationProgress}
           onShare={handleShareStory}
           onDownload={handleDownloadStory}
           language={language}
@@ -348,8 +339,6 @@ export const SimpleShareSheet = ({
         onOpenChange={setShowStoryPreview}
         imageUrl={storyPreviewUrl}
         isLoading={isGeneratingStory}
-        isVideo={isVideoStory}
-        generationProgress={generationProgress}
         onShare={handleShareStory}
         onDownload={handleDownloadStory}
         language={language}
