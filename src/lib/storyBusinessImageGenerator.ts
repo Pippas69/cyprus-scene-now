@@ -32,8 +32,8 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw the crisp cover image in the top portion using CONTAIN fit
- * (shows full image without cropping, letterboxed if needed)
+ * Draw the crisp cover image in the top portion
+ * Fit to full width, crop only from bottom (wave covers it)
  */
 const drawTopImage = (
   ctx: CanvasRenderingContext2D,
@@ -45,25 +45,16 @@ const drawTopImage = (
   ctx.imageSmoothingQuality = 'high';
 
   const imgRatio = img.width / img.height;
-  const targetRatio = canvasWidth / imageHeight;
 
-  let drawWidth: number, drawHeight: number, drawX: number, drawY: number;
+  // Always fit to full width - no side cropping
+  const drawWidth = canvasWidth;
+  const drawHeight = canvasWidth / imgRatio;
 
-  if (imgRatio > targetRatio) {
-    // Image is wider – fit to width, center vertically
-    drawWidth = canvasWidth;
-    drawHeight = canvasWidth / imgRatio;
-    drawX = 0;
-    drawY = (imageHeight - drawHeight) / 2;
-  } else {
-    // Image is taller – fit to height, center horizontally
-    drawHeight = imageHeight;
-    drawWidth = imageHeight * imgRatio;
-    drawX = (canvasWidth - drawWidth) / 2;
-    drawY = 0;
-  }
+  // Start from top (y=0), so any overflow is cropped at the bottom by the wave
+  const drawX = 0;
+  const drawY = 0;
 
-  // Draw the full image (no cropping)
+  // Draw the image (bottom may extend past imageHeight, but wave covers it)
   ctx.drawImage(img, 0, 0, img.width, img.height, drawX, drawY, drawWidth, drawHeight);
 
   // Add a subtle gradient at the bottom edge for smooth transition
