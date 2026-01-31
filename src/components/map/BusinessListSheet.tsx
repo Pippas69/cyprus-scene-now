@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, ChevronRight, Navigation } from "lucide-react";
+import { Building2, MapPin } from "lucide-react";
 import { translateCity } from "@/lib/cityTranslations";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { getCategoryIcon } from "@/lib/unifiedCategories";
@@ -208,7 +208,6 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                           onClick={(e) => handleProfile(e, business)}
                         >
                           {t.profile}
-                          <ChevronRight className="h-2.5 w-2.5 ml-0.5" />
                         </Badge>
                       </div>
 
@@ -224,7 +223,6 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
                           onClick={(e) => handleDirections(e, business)}
                         >
                           {t.directions}
-                          <Navigation className="h-2.5 w-2.5 ml-0.5" />
                         </Badge>
                       </div>
 
