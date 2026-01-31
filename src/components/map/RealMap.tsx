@@ -351,13 +351,16 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       />
     );
     // Pin label must sit just above the pin - very close spacing
+    // Responsive offset: smaller on mobile/tablet to bring popup closer to pin
+    const isMobileOrTablet = window.innerWidth < 1024;
+    const popupOffset: [number, number] = isMobileOrTablet ? [0, -8] : [0, -22];
+    
     popupRef.current = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
       maxWidth: 'none',
       anchor: 'bottom',
-      // Minimal offset for tight spacing between popup and pin
-      offset: [0, -22],
+      offset: popupOffset,
       className: 'fomo-pin-label',
     })
       .setLngLat([lng, lat])
