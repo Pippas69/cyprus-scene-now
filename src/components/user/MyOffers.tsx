@@ -270,19 +270,18 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       return language === "el" ? `Λήγει στις ${day} ${month}` : `Expires ${month} ${day}`;
     };
 
-    // Format date with time - "5 Φεβρουαρίου 2026, 20:00" or "5 Φεβρουαρίου, 18:00-21:00"
+    // Format date with time - "5 Φεβρουαρίου, 20:00" (no year)
     const formatDateWithTime = () => {
       const date = new Date(purchase.expires_at);
       const day = date.getDate();
       const month = date.toLocaleDateString(language === "el" ? "el-GR" : "en-GB", { month: "long" });
-      const year = date.getFullYear();
       
       if (isReservation && purchase.reservations?.preferred_time) {
         // Format reservation time (e.g., "20:00")
         const time = purchase.reservations.preferred_time.slice(0, 5);
         return language === "el" 
-          ? `${day} ${month} ${year}, ${time}` 
-          : `${month} ${day} ${year}, ${time}`;
+          ? `${day} ${month}, ${time}` 
+          : `${month} ${day}, ${time}`;
       } else {
         // Walk-in: show time range
         const startTime = purchase.discounts?.valid_start_time?.slice(0, 5) || "00:00";
@@ -302,8 +301,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
 
     return (
       <Card className="overflow-hidden relative">
-        {/* Image section - h-40 */}
-        <div className="h-40 relative overflow-hidden rounded-t-xl">
+        {/* Image section - increased height */}
+        <div className="h-48 relative overflow-hidden rounded-t-xl">
           {imageUrl ? (
             <img
               src={imageUrl}
@@ -354,8 +353,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           </div>
         </div>
 
-        {/* Content section */}
-        <div className="p-3 space-y-1.5">
+        {/* Content section - reduced spacing */}
+        <div className="p-2.5 space-y-0.5">
           {/* Title */}
           <h4 className="text-sm font-semibold line-clamp-1">
             {purchase.discounts.title}
@@ -375,13 +374,19 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             <span className="text-xs line-clamp-1">{purchase.discounts.businesses.name}</span>
           </div>
 
-          {/* Date + Time + Location row */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
+          {/* Date + Time + Location row - location icon right after time */}
+          <div className="flex items-center gap-1 text-muted-foreground">
             <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs line-clamp-1 flex-1">{formatDateWithTime()}</span>
+            <span className="text-xs line-clamp-1">{formatDateWithTime()}</span>
             <button 
-              onClick={() => handleLocationClick(purchase.discounts!.businesses.id)}
-              className="p-1 hover:bg-muted rounded-full transition-colors shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                const businessId = purchase.discounts?.businesses?.id;
+                if (businessId) {
+                  navigate(`/map?business=${businessId}&src=offer_location`);
+                }
+              }}
+              className="p-0.5 hover:bg-muted rounded-full transition-colors shrink-0"
               aria-label={language === "el" ? "Δείτε στον χάρτη" : "View on map"}
             >
               <MapPin className="h-3.5 w-3.5 text-primary" />
@@ -395,7 +400,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 pt-1.5">
+          <div className="flex items-center gap-2 pt-1">
             {showQR && !isExpired && !isRedeemed && !isDepleted && (
               <Button 
                 onClick={() => setSelectedPurchase(purchase)}
