@@ -25,7 +25,8 @@ const getPlanColorVar = (planSlug: BusinessLocation["planSlug"]): string => {
 export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPopupProps) => {
   const planVar = getPlanColorVar(business.planSlug);
   const directionsUrl = getDirectionsUrl(business.coordinates[1], business.coordinates[0]);
-  const imageUrl = business.cover_url || business.logo_url;
+  // Use profile photo (logo_url) instead of cover photo
+  const imageUrl = business.logo_url || business.cover_url;
   const cityLabel = translateCity(business.city, language);
 
   const handleDirectionsClick = (e: React.MouseEvent) => {
@@ -40,22 +41,22 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
 
   return (
     <div className="flex flex-col items-center">
-      {/* Circular premium card (exact focus state) */}
+      {/* Small circular profile photo - no background */}
       <button
         type="button"
         onClick={handleProfileClick}
         className="relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={language === "el" ? "Άνοιγμα προφίλ" : "Open profile"}
         style={{
-          boxShadow: `0 14px 28px -12px hsl(var(${planVar}) / 0.35)`,
+          boxShadow: `0 4px 12px -4px hsl(var(${planVar}) / 0.5)`,
         }}
       >
         <div
           className="relative overflow-hidden rounded-full"
           style={{
-            width: 200,
-            height: 200,
-            border: `3px solid hsl(var(${planVar}))`,
+            width: 72,
+            height: 72,
+            border: `2.5px solid hsl(var(${planVar}))`,
           }}
         >
           {imageUrl ? (
@@ -69,30 +70,27 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
           ) : (
             <div className="h-full w-full bg-muted" />
           )}
-
-          {/* Text overlay */}
-          <div className="absolute inset-x-0 bottom-0 px-4 pb-3 pt-8 text-center">
-            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[hsl(var(--foreground)/0.55)] to-transparent" />
-            <div className="relative">
-              <div className="text-[16px] font-semibold leading-tight text-[hsl(var(--background))]">
-                {business.name}
-              </div>
-              <div className="mt-0.5 text-[12px] leading-tight text-[hsl(var(--background))] opacity-90">
-                {cityLabel}
-              </div>
-            </div>
-          </div>
         </div>
       </button>
 
-      {/* Directions badge - premium (colored border per plan) */}
+      {/* Name and city - compact */}
+      <div className="mt-1 text-center">
+        <div className="text-[11px] font-semibold leading-tight text-foreground drop-shadow-sm">
+          {business.name}
+        </div>
+        <div className="text-[9px] leading-tight text-muted-foreground">
+          {cityLabel}
+        </div>
+      </div>
+
+      {/* Compact directions badge */}
       <button
         type="button"
         onClick={handleDirectionsClick}
-        className="-mt-2 inline-flex items-center justify-center rounded-full border bg-[hsl(var(--background)/0.92)] px-4 py-1.5 text-[12px] font-medium backdrop-blur-sm transition-transform hover:scale-[1.02]"
+        className="mt-1.5 inline-flex items-center justify-center rounded-full border bg-background/90 px-2.5 py-0.5 text-[9px] font-medium backdrop-blur-sm transition-transform hover:scale-[1.02]"
         style={{
           borderColor: `hsl(var(${planVar}))`,
-          boxShadow: `0 10px 22px -14px hsl(var(${planVar}) / 0.45)`,
+          boxShadow: `0 2px 6px -2px hsl(var(${planVar}) / 0.3)`,
         }}
         aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
       >
