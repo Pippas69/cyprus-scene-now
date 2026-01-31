@@ -80,6 +80,8 @@ const toasts = {
     shareFailed: 'Η κοινοποίηση ακυρώθηκε',
     shareNotSupported: 'Το link αντιγράφηκε στο clipboard',
     instagramMobileOnly: 'Διαθέσιμο μόνο σε κινητό',
+    videoFallback: 'Η κίνηση δεν υποστηρίζεται σε αυτή τη συσκευή. Θα κοινοποιηθεί ως εικόνα.',
+    videoReady: 'Βίντεο έτοιμο με κίνηση! 🎬',
   },
   en: {
     linkCopied: 'Link copied!',
@@ -87,6 +89,8 @@ const toasts = {
     shareFailed: 'Share cancelled',
     shareNotSupported: 'Link copied to clipboard',
     instagramMobileOnly: 'Available on mobile only',
+    videoFallback: 'Animation not supported on this device. Will share as image.',
+    videoReady: 'Video ready with animation! 🎬',
   },
 };
 
@@ -409,12 +413,18 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
       // Try to generate video first (animated Story)
       if (isVideoGenerationSupported()) {
         try {
+          console.log('[StoryPreview] Attempting video generation...');
           const videoFile = await generateStoryVideo(data.imageUrl, {
             title: data.title,
             subtitle: data.subtitle,
             date: data.date,
             location: data.location,
           }, onProgress);
+
+          console.log('[StoryPreview] Video generated successfully', { 
+            size: videoFile.size, 
+            type: videoFile.type 
+          });
 
           // Cache the video result
           if (videoCacheKey) {
@@ -425,8 +435,12 @@ export const useSimpleShare = (language: 'el' | 'en' = 'el'): UseSimpleShareRetu
           const blobUrl = URL.createObjectURL(videoFile);
           return { blobUrl, file: videoFile };
         } catch (videoError) {
-          console.warn('Video generation failed, falling back to image:', videoError);
+          console.warn('[StoryPreview] Video generation failed, falling back to image:', videoError);
+          // Show user-friendly notification about fallback
+          toast.info(t.videoFallback, { duration: 4000 });
         }
+      } else {
+        console.log('[StoryPreview] Video generation not supported on this device');
       }
 
       // Fallback: Generate static image

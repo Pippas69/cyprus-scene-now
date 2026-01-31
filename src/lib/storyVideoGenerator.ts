@@ -22,37 +22,80 @@ const TOTAL_FRAMES = FPS * DURATION_SECONDS;
 
 // Animation configuration - INCREASED amplitudes for unmistakable motion
 const ANIMATION = {
-  floatY: { amplitude: 40, period: 3000 },       // Float up/down ±40px (was ±15)
-  floatX: { amplitude: 15, period: 4500 },       // NEW: Drift left/right ±15px
-  rotation: { amplitude: 7, period: 4000 },      // Sway ±7° (was ±3°)
-  scale: { min: 0.96, max: 1.04, period: 5000 }, // Breathing scale (increased range)
-  shadow: { min: 20, max: 45, period: 3500 },    // Shadow depth variation (increased)
+  floatY: { amplitude: 40, period: 3000 },       // Float up/down ±40px
+  floatX: { amplitude: 15, period: 4500 },       // Drift left/right ±15px
+  rotation: { amplitude: 7, period: 4000 },      // Sway ±7°
+  scale: { min: 0.96, max: 1.04, period: 5000 }, // Breathing scale
+  shadow: { min: 20, max: 45, period: 3500 },    // Shadow depth variation
   gradientShift: { period: 6000 },               // Background color shift
 };
 
 // FFmpeg instance (singleton)
 let ffmpegInstance: FFmpeg | null = null;
 let ffmpegLoaded = false;
+let ffmpegLoadingPromise: Promise<FFmpeg> | null = null;
+
+// Logging helper for consistent debugging output
+const logStep = (step: string, details?: unknown) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[StoryVideo ${timestamp}] ${step}`, details ?? '');
+};
+
+const logError = (step: string, error: unknown) => {
+  const timestamp = new Date().toISOString();
+  console.error(`[StoryVideo ERROR ${timestamp}] ${step}:`, error);
+};
 
 /**
- * Load FFmpeg WASM (cached singleton)
+ * Load FFmpeg WASM (cached singleton with proper error handling)
  */
 const loadFFmpeg = async (): Promise<FFmpeg> => {
+  // Return cached instance if available
   if (ffmpegInstance && ffmpegLoaded) {
+    logStep('FFmpeg already loaded, returning cached instance');
     return ffmpegInstance;
   }
 
-  ffmpegInstance = new FFmpeg();
-  
-  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-  
-  await ffmpegInstance.load({
-    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-  });
-  
-  ffmpegLoaded = true;
-  return ffmpegInstance;
+  // If already loading, wait for that promise
+  if (ffmpegLoadingPromise) {
+    logStep('FFmpeg already loading, waiting for existing promise');
+    return ffmpegLoadingPromise;
+  }
+
+  // Create new loading promise
+  ffmpegLoadingPromise = (async () => {
+    logStep('Starting FFmpeg WASM load');
+    
+    try {
+      ffmpegInstance = new FFmpeg();
+      
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+      
+      logStep('Fetching FFmpeg core files', { baseURL });
+      
+      const [coreURL, wasmURL] = await Promise.all([
+        toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      ]);
+      
+      logStep('FFmpeg core files fetched, loading into instance');
+      
+      await ffmpegInstance.load({ coreURL, wasmURL });
+      
+      ffmpegLoaded = true;
+      logStep('FFmpeg loaded successfully');
+      
+      return ffmpegInstance;
+    } catch (error) {
+      logError('FFmpeg load failed', error);
+      ffmpegInstance = null;
+      ffmpegLoaded = false;
+      ffmpegLoadingPromise = null;
+      throw new Error(`FFmpeg WASM failed to load: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  })();
+
+  return ffmpegLoadingPromise;
 };
 
 /**
@@ -62,8 +105,14 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onload = () => {
+      logStep('Image loaded', { width: img.width, height: img.height });
+      resolve(img);
+    };
+    img.onerror = (e) => {
+      logError('Image load failed', e);
+      reject(new Error('Failed to load image'));
+    };
     img.src = url;
   });
 };
@@ -125,8 +174,8 @@ const drawAnimatedBackground = (
   ctx.filter = 'none';
 
   // Animated color overlay with stronger shifting hue
-  const hueShift = Math.sin(gradientPhase) * 15; // Increased from 10
-  const opacity = 0.28 + Math.sin(gradientPhase * 0.5) * 0.08; // Increased variation
+  const hueShift = Math.sin(gradientPhase) * 15;
+  const opacity = 0.28 + Math.sin(gradientPhase * 0.5) * 0.08;
   ctx.fillStyle = `hsla(${260 + hueShift}, 35%, 10%, ${opacity})`;
   ctx.fillRect(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
 
@@ -328,7 +377,7 @@ const wrapText = (
 };
 
 /**
- * Render a single frame
+ * Render a single frame - creates new canvas context state each time
  */
 const renderFrame = (
   ctx: CanvasRenderingContext2D,
@@ -338,7 +387,17 @@ const renderFrame = (
 ) => {
   const { floatY, floatX, rotation, scale, shadowBlur, gradientPhase } = getAnimationValues(frameIndex);
 
-  // Clear canvas
+  // Reset canvas context state completely
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.filter = 'none';
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  
+  // Clear canvas completely
   ctx.clearRect(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
 
   // Draw layers
@@ -361,6 +420,16 @@ const computeFrameHash = (data: Uint8Array): number => {
 };
 
 /**
+ * Result of video generation attempt
+ */
+export interface VideoGenerationResult {
+  success: boolean;
+  file: File;
+  isVideo: boolean;
+  error?: string;
+}
+
+/**
  * Generate all frames and encode to video
  */
 export const generateStoryVideo = async (
@@ -368,15 +437,23 @@ export const generateStoryVideo = async (
   options: StoryVideoOptions,
   onProgress?: (progress: number) => void
 ): Promise<File> => {
-  // Create canvas
+  logStep('Starting video generation', { title: options.title });
+  
+  // Create canvas with fresh context
   const canvas = document.createElement('canvas');
   canvas.width = VIDEO_WIDTH;
   canvas.height = VIDEO_HEIGHT;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { 
+    willReadFrequently: true,
+    alpha: false  // Opaque canvas for better performance
+  });
 
   if (!ctx) {
+    logError('Canvas context creation', 'Could not get 2D context');
     throw new Error('Could not get canvas context');
   }
+
+  logStep('Canvas created', { width: VIDEO_WIDTH, height: VIDEO_HEIGHT });
 
   // Load image
   const img = await loadImage(imageUrl);
@@ -385,42 +462,65 @@ export const generateStoryVideo = async (
   // Generate frames as PNGs
   const frames: Uint8Array[] = [];
   const sampleHashes: number[] = [];
+  const sampleFrameIndices = [0, 15, 45, TOTAL_FRAMES - 1];
   
+  logStep('Starting frame generation', { totalFrames: TOTAL_FRAMES, fps: FPS });
+
   for (let i = 0; i < TOTAL_FRAMES; i++) {
     renderFrame(ctx, img, options, i);
     
     // Convert canvas to PNG blob
     const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Failed to create frame')), 'image/png');
+      canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Failed to create frame blob')), 'image/png');
     });
     
     const arrayBuffer = await blob.arrayBuffer();
     const frameData = new Uint8Array(arrayBuffer);
     frames.push(frameData);
     
-    // Sample frames for hash validation (0, 15, 45, 89)
-    if (i === 0 || i === 15 || i === 45 || i === TOTAL_FRAMES - 1) {
-      sampleHashes.push(computeFrameHash(frameData));
+    // Sample frames for hash validation
+    if (sampleFrameIndices.includes(i)) {
+      const hash = computeFrameHash(frameData);
+      sampleHashes.push(hash);
+      logStep(`Frame ${i} hash`, { hash, size: frameData.length });
     }
     
     // Progress: 10% to 60% for frame generation
     onProgress?.(0.1 + (i / TOTAL_FRAMES) * 0.5);
   }
 
+  logStep('Frame generation complete', { framesGenerated: frames.length });
+
   // Validate frames are different
   const uniqueHashes = new Set(sampleHashes);
   if (uniqueHashes.size <= 1) {
-    console.error('Frame validation failed: all sampled frames are identical!', sampleHashes);
+    logError('Frame validation', { 
+      message: 'All sampled frames are identical!',
+      hashes: sampleHashes 
+    });
     throw new Error('Generated frames are identical - animation not rendering correctly');
   }
   
-  console.log(`Frame validation passed: ${uniqueHashes.size} unique frames detected out of ${sampleHashes.length} samples`);
+  logStep('Frame validation passed', { 
+    uniqueHashes: uniqueHashes.size, 
+    totalSamples: sampleHashes.length 
+  });
 
   onProgress?.(0.6);
 
-  // Load FFmpeg
-  const ffmpeg = await loadFFmpeg();
+  // Load FFmpeg with timeout
+  logStep('Loading FFmpeg WASM');
+  
+  const ffmpegTimeout = 30000; // 30 seconds timeout
+  const ffmpeg = await Promise.race([
+    loadFFmpeg(),
+    new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('FFmpeg load timeout')), ffmpegTimeout)
+    )
+  ]);
+  
   onProgress?.(0.7);
+  logStep('FFmpeg loaded, writing frames to virtual filesystem');
 
   // Write frames to FFmpeg filesystem
   for (let i = 0; i < frames.length; i++) {
@@ -428,9 +528,12 @@ export const generateStoryVideo = async (
     await ffmpeg.writeFile(`frame${frameNum}.png`, frames[i]);
   }
 
+  logStep('All frames written to FFmpeg filesystem');
   onProgress?.(0.8);
 
-  // Encode to MP4 with explicit start_number and duration
+  // Encode to MP4 with explicit settings for maximum compatibility
+  logStep('Starting MP4 encoding');
+  
   await ffmpeg.exec([
     '-framerate', String(FPS),
     '-start_number', '0',
@@ -442,38 +545,80 @@ export const generateStoryVideo = async (
     '-preset', 'fast',
     '-crf', '23',
     '-movflags', '+faststart',
+    '-brand', 'mp42',  // Better iOS compatibility
+    '-vf', 'scale=1080:1920:flags=lanczos',  // Ensure exact dimensions
     'output.mp4'
   ]);
 
+  logStep('MP4 encoding complete');
   onProgress?.(0.95);
 
   // Read output file
   const data = await ffmpeg.readFile('output.mp4') as Uint8Array;
+  logStep('Output file read', { size: data.length });
   
-  // Cleanup
+  // Cleanup virtual filesystem
   for (let i = 0; i < frames.length; i++) {
     const frameNum = String(i).padStart(4, '0');
     await ffmpeg.deleteFile(`frame${frameNum}.png`);
   }
   await ffmpeg.deleteFile('output.mp4');
-
+  
+  logStep('Cleanup complete');
   onProgress?.(1);
 
-  // Create File object - copy to ensure we have ArrayBuffer
+  // Create File object
   const videoBlob = new Blob([new Uint8Array(data)], { type: 'video/mp4' });
-  return new File([videoBlob], 'fomo-story.mp4', {
+  const videoFile = new File([videoBlob], 'fomo-story.mp4', {
     type: 'video/mp4',
     lastModified: Date.now(),
   });
+  
+  logStep('Video file created successfully', { 
+    size: videoFile.size, 
+    type: videoFile.type,
+    name: videoFile.name 
+  });
+
+  return videoFile;
 };
 
 /**
  * Check if video generation is supported in this browser
  */
 export const isVideoGenerationSupported = (): boolean => {
-  // Check for required APIs
-  return (
-    typeof OffscreenCanvas !== 'undefined' || 
-    typeof HTMLCanvasElement !== 'undefined'
-  ) && typeof WebAssembly !== 'undefined';
+  const hasCanvas = typeof OffscreenCanvas !== 'undefined' || typeof HTMLCanvasElement !== 'undefined';
+  const hasWasm = typeof WebAssembly !== 'undefined';
+  const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
+  
+  // iOS Safari check - FFmpeg WASM may have issues on older versions
+  const isIOSSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) && 
+                      /Safari/.test(navigator.userAgent) && 
+                      !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
+  
+  // Check for iOS version (FFmpeg WASM works better on iOS 15+)
+  let iosVersion = 0;
+  const iosMatch = navigator.userAgent.match(/OS (\d+)_/);
+  if (iosMatch) {
+    iosVersion = parseInt(iosMatch[1], 10);
+  }
+  
+  const supported = hasCanvas && hasWasm;
+  
+  logStep('Video generation support check', {
+    hasCanvas,
+    hasWasm,
+    hasSharedArrayBuffer,
+    isIOSSafari,
+    iosVersion,
+    supported
+  });
+  
+  // Temporarily disable on iOS Safari < 15 due to known WASM issues
+  if (isIOSSafari && iosVersion < 15) {
+    logStep('Disabling video generation on iOS Safari < 15');
+    return false;
+  }
+  
+  return supported;
 };
