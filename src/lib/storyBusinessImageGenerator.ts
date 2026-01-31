@@ -1,6 +1,9 @@
 /**
  * Generates a 9:16 vertical image optimized for Instagram Stories - Business Profile variant
- * Features cover-focused layout with business branding and "Follow us on ΦΟΜΟ" CTA
+ * AEGEAN NIGHT GLOW theme with SPLIT LAYOUT:
+ *   - Top: Crisp cover image (no blur)
+ *   - Middle: Wavy divider with seafoam glow
+ *   - Bottom: Navy panel with logo, name, and "Follow us on ΦΟΜΟ" CTA
  */
 
 interface BusinessStoryOptions {
@@ -10,6 +13,10 @@ interface BusinessStoryOptions {
   /** Logo URL for brand presence */
   logoUrl?: string | null;
 }
+
+// Brand colors
+const AEGEAN_NAVY = '#0D3B66';
+const SEAFOAM_TEAL = '#4ECDC4';
 
 /**
  * Load an image from URL and return as HTMLImageElement
@@ -25,84 +32,130 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Draw full-bleed cover image as background with subtle gradient overlay
- * Uses minimal zoom to show more of the original image
+ * Draw the crisp cover image in the top portion (no blur, sharp scaling)
  */
-const drawCoverBackground = (
+const drawTopImage = (
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   canvasWidth: number,
-  canvasHeight: number
+  imageHeight: number
 ) => {
-  // Ensure best possible scaling quality (helps avoid extra softness when upscaling)
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.filter = 'none';
 
-  // Fill with dark base first
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-  // Calculate dimensions to fill canvas with minimal crop
   const imgRatio = img.width / img.height;
-  const canvasRatio = canvasWidth / canvasHeight;
+  const targetRatio = canvasWidth / imageHeight;
 
-  let drawWidth: number, drawHeight: number, offsetX: number, offsetY: number;
+  let sourceX = 0, sourceY = 0, sourceW = img.width, sourceH = img.height;
 
-  if (imgRatio > canvasRatio) {
-    // Image is wider - fit to height with minimal overflow
-    drawHeight = canvasHeight;
-    drawWidth = drawHeight * imgRatio;
-    offsetX = (canvasWidth - drawWidth) / 2;
-    offsetY = 0;
+  if (imgRatio > targetRatio) {
+    // Image is wider – crop sides
+    sourceW = img.height * targetRatio;
+    sourceX = (img.width - sourceW) / 2;
   } else {
-    // Image is taller - fit to width with minimal overflow
-    drawWidth = canvasWidth;
-    drawHeight = drawWidth / imgRatio;
-    offsetX = 0;
-    // Center vertically but bias slightly toward top to show more content
-    offsetY = Math.min(0, (canvasHeight - drawHeight) / 3);
+    // Image is taller – crop top/bottom (bias toward top)
+    sourceH = img.width / targetRatio;
+    sourceY = 0; // keep top
   }
 
-  // Draw the cover image
-  ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+  ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, canvasWidth, imageHeight);
 
-  // Add VERY subtle gradient overlay for text readability (even less "blurry/veiled")
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-  gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-  gradient.addColorStop(0.55, 'rgba(0, 0, 0, 0.02)');
-  gradient.addColorStop(0.75, 'rgba(0, 0, 0, 0.10)');
-  gradient.addColorStop(0.9, 'rgba(0, 0, 0, 0.28)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.40)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  // Add a subtle gradient at the bottom edge for smooth transition
+  const edgeGradient = ctx.createLinearGradient(0, imageHeight - 80, 0, imageHeight);
+  edgeGradient.addColorStop(0, 'rgba(13, 59, 102, 0)');
+  edgeGradient.addColorStop(1, 'rgba(13, 59, 102, 0.6)');
+  ctx.fillStyle = edgeGradient;
+  ctx.fillRect(0, imageHeight - 80, canvasWidth, 80);
 };
 
 /**
- * Draw circular logo if available
+ * Draw the wavy divider between image and text panel
+ */
+const drawWaveDivider = (
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  waveY: number
+) => {
+  const amplitude = 35;
+  const wavelength = canvasWidth / 2;
+
+  ctx.beginPath();
+  ctx.moveTo(0, waveY);
+
+  // Draw a smooth sine wave
+  for (let x = 0; x <= canvasWidth; x += 5) {
+    const y = waveY + Math.sin((x / wavelength) * Math.PI * 2) * amplitude;
+    ctx.lineTo(x, y);
+  }
+
+  ctx.lineTo(canvasWidth, waveY + 200);
+  ctx.lineTo(0, waveY + 200);
+  ctx.closePath();
+
+  // Fill with navy
+  ctx.fillStyle = AEGEAN_NAVY;
+  ctx.fill();
+
+  // Seafoam glow line on top of wave
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(0, waveY);
+  for (let x = 0; x <= canvasWidth; x += 5) {
+    const y = waveY + Math.sin((x / wavelength) * Math.PI * 2) * amplitude;
+    ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = SEAFOAM_TEAL;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = SEAFOAM_TEAL;
+  ctx.shadowBlur = 20;
+  ctx.stroke();
+  ctx.restore();
+};
+
+/**
+ * Draw the bottom navy panel
+ */
+const drawBottomPanel = (
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  panelTop: number
+) => {
+  ctx.fillStyle = AEGEAN_NAVY;
+  ctx.fillRect(0, panelTop, canvasWidth, canvasHeight - panelTop);
+};
+
+/**
+ * Draw circular logo centered in the bottom panel
  */
 const drawLogo = async (
   ctx: CanvasRenderingContext2D,
   logoUrl: string,
   canvasWidth: number,
-  canvasHeight: number
-): Promise<number> => {
+  logoY: number
+): Promise<void> => {
   try {
     const logo = await loadImage(logoUrl);
-    
-    // Larger logo for better visibility (was 160)
-    const logoSize = 240;
+
+    const logoSize = 180;
     const logoX = canvasWidth / 2;
-    const logoY = canvasHeight * 0.32;
-    
-    // Draw circular clip for logo
+
+    // White circle background
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(logoX, logoY, logoSize / 2 + 8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.fill();
+    ctx.restore();
+
+    // Circular clip for logo
     ctx.save();
     ctx.beginPath();
     ctx.arc(logoX, logoY, logoSize / 2, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    
-    // Draw logo centered in circle
+
+    // Draw logo to fill the circle
     const logoRatio = logo.width / logo.height;
     let drawW: number, drawH: number;
     if (logoRatio > 1) {
@@ -114,29 +167,25 @@ const drawLogo = async (
     }
     ctx.drawImage(logo, logoX - drawW / 2, logoY - drawH / 2, drawW, drawH);
     ctx.restore();
-    
-    // Draw white border around logo
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+
+    // Seafoam ring around logo
+    ctx.strokeStyle = SEAFOAM_TEAL;
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(logoX, logoY, logoSize / 2 + 2, 0, Math.PI * 2);
+    ctx.arc(logoX, logoY, logoSize / 2 + 4, 0, Math.PI * 2);
     ctx.stroke();
-    
-    return logoY + logoSize / 2 + 40; // Return bottom position + padding
   } catch {
-    console.warn('Failed to load logo for story');
-    return canvasHeight * 0.45;
+    console.warn('Failed to load logo for business story');
   }
 };
 
 /**
- * Draw business info overlay (name, category, location)
+ * Draw business info (category, name, location)
  */
 const drawBusinessInfo = (
   ctx: CanvasRenderingContext2D,
   options: BusinessStoryOptions,
   canvasWidth: number,
-  canvasHeight: number,
   startY: number
 ) => {
   const centerX = canvasWidth / 2;
@@ -144,40 +193,38 @@ const drawBusinessInfo = (
 
   let currentY = startY;
 
-  // Category tag
+  // Category badge
   if (options.category) {
-    ctx.font = '600 26px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = 'rgba(78, 205, 196, 0.95)'; // Seafoam teal
+    ctx.font = '600 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = SEAFOAM_TEAL;
     ctx.fillText(options.category.toUpperCase(), centerX, currentY);
     currentY += 50;
   }
 
-  // Business Name (large, bold)
-  ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  // Business name (large, white)
+  ctx.font = 'bold 54px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillStyle = '#FFFFFF';
-  
-  // Wrap text if needed
-  const nameLines = wrapText(ctx, options.name, canvasWidth - 120);
+  const nameLines = wrapText(ctx, options.name, canvasWidth - 100);
   nameLines.forEach((line) => {
     ctx.fillText(line, centerX, currentY);
-    currentY += 68;
+    currentY += 66;
   });
 
-  currentY += 20;
+  currentY += 10;
 
   // Location
   if (options.location) {
-    ctx.font = '400 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = '400 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(`📍 ${options.location}`, centerX, currentY);
-    currentY += 48;
+    currentY += 44;
   }
 
   return currentY;
 };
 
 /**
- * Draw "Follow us on ΦΟΜΟ" CTA section
+ * Draw "Follow us on ΦΟΜΟ" CTA and branding
  */
 const drawFollowCTA = (
   ctx: CanvasRenderingContext2D,
@@ -185,10 +232,10 @@ const drawFollowCTA = (
   canvasHeight: number
 ) => {
   const centerX = canvasWidth / 2;
-  const ctaY = canvasHeight - 200;
+  const ctaY = canvasHeight - 180;
 
   // Decorative line
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(canvasWidth * 0.2, ctaY - 40);
@@ -196,20 +243,20 @@ const drawFollowCTA = (
   ctx.stroke();
 
   // "Follow us on" text
-  ctx.font = '400 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.font = '400 26px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
   ctx.textAlign = 'center';
   ctx.fillText('Follow us on', centerX, ctaY);
 
-  // ΦΟΜΟ brand (large, bold)
-  ctx.font = 'bold 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  // ΦΟΜΟ (large, bold)
+  ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText('ΦΟΜΟ', centerX, ctaY + 55);
+  ctx.fillText('ΦΟΜΟ', centerX, ctaY + 52);
 
-  // Website
-  ctx.font = '300 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.fillText('fomo.com.cy', centerX, ctaY + 95);
+  // fomo.com.cy
+  ctx.font = '300 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillStyle = SEAFOAM_TEAL;
+  ctx.fillText('fomo.com.cy', centerX, ctaY + 88);
 };
 
 /**
@@ -252,6 +299,7 @@ const wrapText = (
 
 /**
  * Generate a Business Profile Story image (1080x1920, 9:16 aspect ratio)
+ * Uses Aegean Night Glow theme with split layout
  */
 export const generateBusinessStoryImage = async (
   coverUrl: string,
@@ -266,20 +314,36 @@ export const generateBusinessStoryImage = async (
     throw new Error('Could not get canvas context');
   }
 
-  // Load and draw cover image as full-bleed background
-  const coverImg = await loadImage(coverUrl);
-  drawCoverBackground(ctx, coverImg, canvas.width, canvas.height);
+  // Layout constants
+  const imageHeight = canvas.height * 0.45; // Top 45% for cover image
+  const waveY = imageHeight - 35;
+  const panelTop = waveY + 35;
+  const logoY = panelTop + 120; // Logo position
+  const textStartY = logoY + 140; // Below logo
 
-  // Draw logo if available
-  let infoStartY = canvas.height * 0.5;
+  // 1. Fill background with navy first
+  ctx.fillStyle = AEGEAN_NAVY;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 2. Load and draw the crisp top image
+  const coverImg = await loadImage(coverUrl);
+  drawTopImage(ctx, coverImg, canvas.width, imageHeight);
+
+  // 3. Draw the wave divider
+  drawWaveDivider(ctx, canvas.width, waveY);
+
+  // 4. Draw bottom panel
+  drawBottomPanel(ctx, canvas.width, canvas.height, panelTop);
+
+  // 5. Draw logo if available
   if (options.logoUrl) {
-    infoStartY = await drawLogo(ctx, options.logoUrl, canvas.width, canvas.height);
+    await drawLogo(ctx, options.logoUrl, canvas.width, logoY);
   }
 
-  // Draw business info
-  drawBusinessInfo(ctx, options, canvas.width, canvas.height, infoStartY);
+  // 6. Draw business info
+  drawBusinessInfo(ctx, options, canvas.width, options.logoUrl ? textStartY : panelTop + 80);
 
-  // Draw CTA section
+  // 7. Draw CTA section
   drawFollowCTA(ctx, canvas.width, canvas.height);
 
   // Convert to File
