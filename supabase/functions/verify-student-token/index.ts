@@ -100,7 +100,10 @@ Deno.serve(async (req) => {
         verified_at: new Date().toISOString(),
         expires_at: expiresAt.toISOString(),
         qr_code_token: qrToken,
-        verification_token: null, // Clear the token after use
+        // IMPORTANT: Keep verification_token so the link remains idempotent.
+        // Some email clients/browser previews may open the link more than once.
+        // If we clear the token, the second open returns invalid_token even though
+        // the user has already been verified.
         token_expires_at: null,
       })
       .eq('id', verification.id);
