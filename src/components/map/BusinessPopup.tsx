@@ -63,13 +63,13 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
           )}
 
           {/* Text overlay */}
-          <div className="absolute inset-x-0 bottom-1 px-2 pb-1 pt-4 text-center">
-            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[hsl(var(--foreground)/0.6)] to-transparent rounded-b-full" />
+          <div className="absolute inset-x-0 bottom-0 px-1 pb-2 pt-6 text-center">
+            <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[hsl(var(--foreground)/0.7)] to-transparent rounded-b-full" />
             <div className="relative">
-              <div className="text-[10px] md:text-[11px] lg:text-[12px] font-semibold leading-tight text-[hsl(var(--background))] line-clamp-1 px-1">
+              <div className="text-[9px] md:text-[10px] lg:text-[11px] font-semibold leading-tight text-[hsl(var(--background))] whitespace-nowrap">
                 {business.name}
               </div>
-              <div className="mt-0.5 text-[9px] md:text-[10px] leading-tight text-[hsl(var(--background))] opacity-90">
+              <div className="mt-0.5 text-[8px] md:text-[9px] leading-tight text-[hsl(var(--background))] opacity-90">
                 {cityLabel}
               </div>
             </div>

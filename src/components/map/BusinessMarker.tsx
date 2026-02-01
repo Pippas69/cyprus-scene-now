@@ -38,9 +38,9 @@ const PIN_CONFIG: Record<PlanSlug, {
 }> = {
   // Free - smallest pins
   free: {
-    desktopSize: 11,
-    tabletSize: 11,
-    mobileSize: 10,
+    desktopSize: 9,
+    tabletSize: 9,
+    mobileSize: 8,
     opacity: 0.7,
     shadowBlur: 2,
     strokeWidth: 1,
@@ -49,9 +49,9 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   basic: {
-    desktopSize: 13,
-    tabletSize: 12,
-    mobileSize: 11,
+    desktopSize: 11,
+    tabletSize: 10,
+    mobileSize: 9,
     opacity: 1,
     shadowBlur: 3,
     strokeWidth: 1.5,
@@ -60,9 +60,9 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   pro: {
-    desktopSize: 16,
-    tabletSize: 15,
-    mobileSize: 13,
+    desktopSize: 14,
+    tabletSize: 13,
+    mobileSize: 11,
     opacity: 1,
     shadowBlur: 4,
     strokeWidth: 2,
@@ -71,9 +71,9 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   elite: {
-    desktopSize: 18,
-    tabletSize: 16,
-    mobileSize: 14,
+    desktopSize: 16,
+    tabletSize: 15,
+    mobileSize: 13,
     opacity: 1,
     shadowBlur: 4,
     strokeWidth: 2,
