@@ -70,75 +70,106 @@ Deno.serve(async (req) => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+          <meta http-equiv="X-UA-Compatible" content="IE=edge">
+          <!--[if mso]>
+          <style type="text/css">
+            table, td, div, p, span { font-family: Arial, sans-serif !important; }
+          </style>
+          <![endif]-->
         </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0d3b66;">
+        <body style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0d3b66;">
           <!-- Container with rounded corners -->
-          <div style="background-color: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.3);">
-            
-            <!-- Header with ΦΟΜΟ branding - Aegean Night Glow -->
-            <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 48px 24px 36px 24px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 42px; font-weight: bold; letter-spacing: 4px; font-family: 'Cinzel', Georgia, serif; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">ΦΟΜΟ</h1>
-              <p style="color: rgba(255,255,255,0.85); margin: 0 0 20px 0; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">Cyprus Events & Nightlife</p>
-              <div style="display: inline-block; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 24px; padding: 10px 24px; border: 1px solid rgba(255,255,255,0.2);">
-                <span style="color: #ffffff; font-size: 14px; font-weight: 500;">🎓 Επαλήθευση Φοιτητικής Ιδιότητας</span>
-              </div>
-            </div>
-            
-            <!-- Content Card -->
-            <div style="background-color: #ffffff; padding: 32px 24px;">
-              <p style="color: #102b4a; font-size: 18px; line-height: 1.6; margin: 0 0 20px 0;">
-                Γεια σου${userName ? ` <strong>${userName}</strong>` : ''}! 👋
-              </p>
-              
-              <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 20px 0;">
-                Λάβαμε αίτημα επαλήθευσης της φοιτητικής σου ιδιότητας από το <strong style="color: #0d3b66;">${universityName}</strong>.
-              </p>
-              
-              <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 28px 0;">
-                Πάτησε το παρακάτω κουμπί για να ολοκληρώσεις την επαλήθευση και να αποκτήσεις πρόσβαση σε αποκλειστικές φοιτητικές εκπτώσεις!
-              </p>
-              
-              <!-- CTA Button with Glow -->
-              <div style="text-align: center; margin: 32px 0;">
-                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #f8fafc; border-radius: 12px; overflow: hidden;">
+            <tr>
+              <td>
+                <!-- Header with ΦΟΜΟ branding -->
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0d3b66;">
                   <tr>
-                    <td style="border-radius: 12px; background: linear-gradient(135deg, #4ecdc4 0%, #3ec3b7 100%); box-shadow: 0 4px 20px rgba(78, 205, 196, 0.5);">
-                      <a href="${verificationUrl}" target="_blank" style="display: inline-block; color: #ffffff; text-decoration: none; padding: 16px 40px; font-weight: 600; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                        ✓ Επαλήθευση Φοιτητικής Ιδιότητας
-                      </a>
+                    <td style="padding: 48px 24px 36px 24px; text-align: center; background-color: #0d3b66;">
+                      <h1 style="color: #4ecdc4; margin: 0 0 8px 0; font-size: 42px; font-weight: bold; letter-spacing: 4px; font-family: Georgia, serif;">ΦΟΜΟ</h1>
+                      <p style="color: #8bc4c0; margin: 0 0 20px 0; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">CYPRUS EVENTS & NIGHTLIFE</p>
+                      <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                        <tr>
+                          <td style="background-color: rgba(78, 205, 196, 0.2); border-radius: 24px; padding: 10px 24px; border: 1px solid rgba(78, 205, 196, 0.3);">
+                            <span style="color: #ffffff; font-size: 14px; font-weight: bold;">🎓 Επαλήθευση Φοιτητικής Ιδιότητας</span>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
                 </table>
-              </div>
+                
+                <!-- Content Card -->
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #ffffff;">
+                  <tr>
+                    <td style="padding: 32px 24px;">
+                      <p style="color: #102b4a; font-size: 18px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Γεια σου${userName ? ` <strong>${userName}</strong>` : ''}! 👋
+                      </p>
+                      
+                      <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 20px 0;">
+                        Λάβαμε αίτημα επαλήθευσης της φοιτητικής σου ιδιότητας από το <strong style="color: #0d3b66;">${universityName}</strong>.
+                      </p>
+                      
+                      <p style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0 0 28px 0;">
+                        Πάτησε το παρακάτω κουμπί για να ολοκληρώσεις την επαλήθευση και να αποκτήσεις πρόσβαση σε αποκλειστικές φοιτητικές εκπτώσεις!
+                      </p>
+                      
+                      <!-- CTA Button - Email Client Safe -->
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 32px 0;">
+                        <tr>
+                          <td align="center">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td align="center" bgcolor="#4ecdc4" style="border-radius: 12px; background-color: #4ecdc4;">
+                                  <a href="${verificationUrl}" target="_blank" style="display: inline-block; color: #ffffff; text-decoration: none; padding: 16px 40px; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border-radius: 12px;">
+                                    ✓ Επαλήθευση Φοιτητικής Ιδιότητας
+                                  </a>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
 
-              <p style="color: #64748b; font-size: 12px; margin: 24px 0 0 0; text-align: center;">
-                Ή αντίγραψε αυτόν τον σύνδεσμο στο browser σου:
-              </p>
-              <p style="color: #4ecdc4; font-size: 11px; word-break: break-all; text-align: center; margin: 8px 0 0 0;">
-                ${verificationUrl}
-              </p>
-              
-              <!-- Info Box with Seafoam accent -->
-              <div style="background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 100%); border-radius: 12px; padding: 16px; margin-top: 28px; border-left: 4px solid #4ecdc4;">
-                <p style="color: #0d3b66; font-size: 13px; margin: 0; line-height: 1.5;">
-                  <strong>⏱ Σημαντικό:</strong> Ο σύνδεσμος ισχύει για 24 ώρες. Αν λήξει, θα χρειαστεί να ζητήσεις νέο από τις ρυθμίσεις του προφίλ σου.
-                </p>
-              </div>
-              
-              <p style="color: #94a3b8; font-size: 12px; margin: 28px 0 0 0; line-height: 1.5; text-align: center;">
-                Αν δεν ζήτησες εσύ αυτή την επαλήθευση, αγνόησε αυτό το email.
-              </p>
-            </div>
-            
-            <!-- Navy Footer -->
-            <div style="background: #102b4a; padding: 28px; text-align: center;">
-              <p style="color: #4ecdc4; font-size: 20px; font-weight: bold; letter-spacing: 3px; font-family: 'Cinzel', Georgia, serif; margin: 0 0 8px 0;">ΦΟΜΟ</p>
-              <p style="color: #94a3b8; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} ΦΟΜΟ Cyprus. Όλα τα δικαιώματα διατηρούνται.</p>
-              <p style="color: #64748b; font-size: 11px; margin: 8px 0 0 0;">Discover. Experience. Connect.</p>
-            </div>
-            
-          </div>
+                      <p style="color: #64748b; font-size: 12px; margin: 24px 0 0 0; text-align: center;">
+                        Ή αντίγραψε αυτόν τον σύνδεσμο στο browser σου:
+                      </p>
+                      <p style="color: #4ecdc4; font-size: 11px; word-break: break-all; text-align: center; margin: 8px 0 0 0;">
+                        <a href="${verificationUrl}" style="color: #4ecdc4;">${verificationUrl}</a>
+                      </p>
+                      
+                      <!-- Info Box with Seafoam accent -->
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 28px;">
+                        <tr>
+                          <td style="background-color: #f0fdfa; border-radius: 12px; padding: 16px; border-left: 4px solid #4ecdc4;">
+                            <p style="color: #0d3b66; font-size: 13px; margin: 0; line-height: 1.5;">
+                              <strong>⏱ Σημαντικό:</strong> Ο σύνδεσμος ισχύει για 24 ώρες. Αν λήξει, θα χρειαστεί να ζητήσεις νέο από τις ρυθμίσεις του προφίλ σου.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <p style="color: #94a3b8; font-size: 12px; margin: 28px 0 0 0; line-height: 1.5; text-align: center;">
+                        Αν δεν ζήτησες εσύ αυτή την επαλήθευση, αγνόησε αυτό το email.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+                
+                <!-- Navy Footer -->
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #102b4a;">
+                  <tr>
+                    <td style="padding: 28px; text-align: center;">
+                      <p style="color: #4ecdc4; font-size: 20px; font-weight: bold; letter-spacing: 3px; font-family: Georgia, serif; margin: 0 0 8px 0;">ΦΟΜΟ</p>
+                      <p style="color: #94a3b8; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} ΦΟΜΟ Cyprus. Όλα τα δικαιώματα διατηρούνται.</p>
+                      <p style="color: #64748b; font-size: 11px; margin: 8px 0 0 0;">Discover. Experience. Connect.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
         </body>
       </html>
     `;

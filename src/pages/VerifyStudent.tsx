@@ -13,7 +13,7 @@ const VerifyStudent = () => {
   const { language } = useLanguage();
   const confetti = useConfetti();
   
-  const [status, setStatus] = useState<'loading' | 'success' | 'already_verified' | 'expired' | 'invalid' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'already_verified' | 'expired' | 'invalid' | 'email_already_used' | 'error'>('loading');
   const [universityName, setUniversityName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -43,6 +43,9 @@ const VerifyStudent = () => {
             setStatus('expired');
           } else if (data.error === 'invalid_token') {
             setStatus('invalid');
+          } else if (data.error === 'email_already_used') {
+            setStatus('email_already_used');
+            setErrorMessage(data.message || '');
           } else {
             setStatus('error');
             setErrorMessage(data.message || 'Unknown error');
@@ -78,6 +81,8 @@ const VerifyStudent = () => {
       expiredDesc: "This verification link has expired. Please request a new one from your profile settings.",
       invalid: "Invalid Link",
       invalidDesc: "This verification link is invalid or has already been used.",
+      emailAlreadyUsed: "Email Already Used",
+      emailAlreadyUsedDesc: "This university email is already verified with another account. Each student email can only be used once.",
       error: "Verification Failed",
       errorDesc: "Something went wrong during verification. Please try again.",
       goToFeed: "Explore Events",
@@ -94,6 +99,8 @@ const VerifyStudent = () => {
       expiredDesc: "Αυτός ο σύνδεσμος επαλήθευσης έχει λήξει. Ζήτησε νέο από τις ρυθμίσεις του προφίλ σου.",
       invalid: "Μη Έγκυρος Σύνδεσμος",
       invalidDesc: "Αυτός ο σύνδεσμος επαλήθευσης δεν είναι έγκυρος ή έχει ήδη χρησιμοποιηθεί.",
+      emailAlreadyUsed: "Email Ήδη Χρησιμοποιείται",
+      emailAlreadyUsedDesc: "Αυτό το φοιτητικό email είναι ήδη επαληθευμένο σε άλλο λογαριασμό. Κάθε φοιτητικό email μπορεί να χρησιμοποιηθεί μόνο μία φορά.",
       error: "Αποτυχία Επαλήθευσης",
       errorDesc: "Κάτι πήγε στραβά κατά την επαλήθευση. Παρακαλώ δοκίμασε ξανά.",
       goToFeed: "Εξερεύνηση Εκδηλώσεων",
@@ -183,6 +190,26 @@ const VerifyStudent = () => {
             </div>
             <Button onClick={() => navigate('/')} variant="outline" size="lg">
               {language === 'el' ? 'Αρχική' : 'Home'}
+            </Button>
+          </div>
+        );
+      
+      case 'email_already_used':
+        return (
+          <div className="text-center space-y-6">
+            <div className="w-24 h-24 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto">
+              <GraduationCap className="h-12 w-12 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">{t.emailAlreadyUsed}</h1>
+              <p className="text-muted-foreground">{t.emailAlreadyUsedDesc}</p>
+              {errorMessage && (
+                <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
+              )}
+            </div>
+            <Button onClick={() => navigate('/dashboard-user?tab=settings')} variant="outline" size="lg" className="gap-2">
+              {t.goToProfile}
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         );

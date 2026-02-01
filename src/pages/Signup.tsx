@@ -185,43 +185,68 @@ const Signup = () => {
         if (isStudent && universityEmail && selectedUniversity) {
           const universityData = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
           if (universityData) {
-            const { data: verificationData, error: verificationError } = await supabase
-              .from('student_verifications')
-              .insert({
-                user_id: data.user.id,
-                university_email: universityEmail,
-                university_name: universityData.name,
-                university_domain: universityData.domain,
-                status: 'pending'
-              } as any)
-              .select('id')
-              .single();
+            const normalizedEmail = universityEmail.toLowerCase().trim();
             
-            if (verificationError) {
-              console.error('Student verification insert error:', verificationError);
-              toast.error(language === 'el' ? 'Αποτυχία δημιουργίας επαλήθευσης φοιτητή' : 'Failed to create student verification');
-            } else if (verificationData) {
-              // Send verification email (non-blocking for signup success)
-              try {
-                setSendingVerification(true);
-                const { error: emailError } = await supabase.functions.invoke('send-student-verification-email', {
-                  body: {
-                    verificationId: verificationData.id,
-                    universityEmail,
-                    universityName: universityData.name,
-                    userName: `${values.firstName} ${values.lastName}`,
-                  },
-                });
-
-                if (emailError) {
-                  console.error('Student verification email error:', emailError);
-                  toast.error(language === 'el' ? 'Δεν στάλθηκε email επαλήθευσης στο πανεπιστήμιο' : 'Verification email was not sent');
+            // Check if this university email is already used by an approved verification
+            const { data: existingApproved } = await supabase
+              .from('student_verifications')
+              .select('id')
+              .eq('university_email', normalizedEmail)
+              .eq('status', 'approved')
+              .maybeSingle();
+            
+            if (existingApproved) {
+              toast.error(language === 'el' 
+                ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό' 
+                : 'This university email is already used by another account'
+              );
+            } else {
+              const { data: verificationData, error: verificationError } = await supabase
+                .from('student_verifications')
+                .insert({
+                  user_id: data.user.id,
+                  university_email: normalizedEmail,
+                  university_name: universityData.name,
+                  university_domain: universityData.domain,
+                  status: 'pending'
+                } as any)
+                .select('id')
+                .single();
+              
+              if (verificationError) {
+                console.error('Student verification insert error:', verificationError);
+                // Check for unique constraint violation
+                if (verificationError.code === '23505') {
+                  toast.error(language === 'el' 
+                    ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό' 
+                    : 'This university email is already used by another account'
+                  );
                 } else {
-                  setStudentVerificationSent(true);
-                  toast.success(language === 'el' ? 'Στάλθηκε email επαλήθευσης στο πανεπιστήμιο σου' : 'Verification email sent to your university inbox');
+                  toast.error(language === 'el' ? 'Αποτυχία δημιουργίας επαλήθευσης φοιτητή' : 'Failed to create student verification');
                 }
-              } finally {
-                setSendingVerification(false);
+              } else if (verificationData) {
+                // Send verification email (non-blocking for signup success)
+                try {
+                  setSendingVerification(true);
+                  const { error: emailError } = await supabase.functions.invoke('send-student-verification-email', {
+                    body: {
+                      verificationId: verificationData.id,
+                      universityEmail: normalizedEmail,
+                      universityName: universityData.name,
+                      userName: `${values.firstName} ${values.lastName}`,
+                    },
+                  });
+
+                  if (emailError) {
+                    console.error('Student verification email error:', emailError);
+                    toast.error(language === 'el' ? 'Δεν στάλθηκε email επαλήθευσης στο πανεπιστήμιο' : 'Verification email was not sent');
+                  } else {
+                    setStudentVerificationSent(true);
+                    toast.success(language === 'el' ? 'Στάλθηκε email επαλήθευσης στο πανεπιστήμιο σου' : 'Verification email sent to your university inbox');
+                  }
+                } finally {
+                  setSendingVerification(false);
+                }
               }
             }
           }

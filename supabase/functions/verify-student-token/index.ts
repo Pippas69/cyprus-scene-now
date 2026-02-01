@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     if (verification.status === 'approved') {
       logStep("Already verified");
       return new Response(
-        JSON.stringify({ success: true, already_verified: true, message: "Η φοιτητική σου ιδιότητα έχει ήδη επαληθευτεί!" }),
+        JSON.stringify({ success: true, already_verified: true, message: "Η φοιτητική σου ιδιότητα έχει ήδη επαληθευτεί!", university_name: verification.university_name }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -59,6 +59,30 @@ Deno.serve(async (req) => {
       logStep("Token expired");
       return new Response(
         JSON.stringify({ error: "token_expired", message: "Ο σύνδεσμος έχει λήξει. Παρακαλώ ζήτησε νέο." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if this university email is already verified by another user
+    const { data: existingApproved, error: checkError } = await supabaseClient
+      .from('student_verifications')
+      .select('id, user_id')
+      .eq('university_email', verification.university_email)
+      .eq('status', 'approved')
+      .neq('id', verification.id)
+      .maybeSingle();
+
+    if (checkError) {
+      logStep("Error checking existing approvals", checkError);
+    }
+
+    if (existingApproved) {
+      logStep("Email already verified by another user", { existingUserId: existingApproved.user_id });
+      return new Response(
+        JSON.stringify({ 
+          error: "email_already_used", 
+          message: "Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό. Κάθε φοιτητικό email μπορεί να χρησιμοποιηθεί μόνο μία φορά." 
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -83,6 +107,18 @@ Deno.serve(async (req) => {
 
     if (updateVerificationError) {
       logStep("Failed to update verification", updateVerificationError);
+      
+      // Check if it's a unique constraint violation (email already used)
+      if (updateVerificationError.code === '23505') {
+        return new Response(
+          JSON.stringify({ 
+            error: "email_already_used", 
+            message: "Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό. Κάθε φοιτητικό email μπορεί να χρησιμοποιηθεί μόνο μία φορά." 
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
       throw updateVerificationError;
     }
 
@@ -113,7 +149,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     logStep("Error", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "server_error", message: "Κάτι πήγε στραβά. Παρακαλώ δοκίμασε ξανά." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
