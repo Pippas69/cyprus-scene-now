@@ -589,7 +589,7 @@ const Signup = () => {
                           value={universityEmail}
                           onChange={(e) => setUniversityEmail(e.target.value)}
                           placeholder={`example@${selectedUniversity}`}
-                          className="rounded-xl"
+                          className="rounded-xl text-[13px] sm:text-sm"
                         />
                         {studentEmailError && (
                           <p className="text-[10px] sm:text-sm text-destructive">{studentEmailError}</p>
