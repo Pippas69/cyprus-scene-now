@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, QrCode, CalendarCheck, CalendarDays } from "lucide-react";
+import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, QrCode, CalendarCheck, CalendarDays, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ import { format, addDays, isAfter, isBefore } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { trackDiscountView } from "@/lib/analyticsTracking";
 import { expandSlotsForDay, timeToMinutes } from "@/lib/timeSlots";
+import { useClosedSlots } from "@/hooks/useClosedSlots";
 
 interface TimeSlot {
   id?: string;
@@ -100,6 +101,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
   const [checkingCapacity, setCheckingCapacity] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
+  
+  // Fetch closed slots for the selected reservation date
+  const businessId = offer?.business_id || offer?.businesses?.id;
+  const { closedSlots } = useClosedSlots(businessId, reservationDate);
 
   // NOTE: View tracking is handled by OfferCard when the card becomes visible
   // DO NOT track views here - "Εξαργύρωσε" click is ONLY an interaction, not a view
@@ -141,6 +146,14 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       setCapacityError(null);
     }
   }, [wantsReservation, reservationDate, reservationTime, offer?.business_id]);
+
+  // Clear or update reservationTime if selected slot is closed
+  useEffect(() => {
+    if (reservationTime && closedSlots.has(reservationTime)) {
+      // Clear the selection when the slot is closed
+      setReservationTime("");
+    }
+  }, [closedSlots, reservationTime]);
 
   const checkCapacity = async () => {
     if (!reservationDate || !reservationTime || !offer?.business_id) return;
@@ -210,6 +223,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     walkInOnly: { el: "Μόνο walk-in", en: "Walk-in only" },
     withReservation: { el: "Με κράτηση", en: "With reservation" },
     noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" },
+    closedSlot: { el: "Κλειστό", en: "Closed" },
     policyTitle: { el: "Πολιτική Κρατήσεων", en: "Reservation Policy" },
     noShowPolicy: { el: "Περιθώριο 15 λεπτά. (Ακύρωση αν δεν γίνει check in)", en: "15 min grace. (Cancel if no check-in)" },
     cancellationPolicy: { el: "Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων.", en: "After 3 cancellations, 2-week restriction." },
@@ -354,7 +368,6 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       ? `-${offer.percent_off}%`
       : null;
 
-  const businessId = offer.business_id || offer.businesses?.id;
   const businessAcceptsReservations = offer.businesses?.accepts_direct_reservations === true;
   // Show reservation option on ALL offers if business accepts reservations
   const showReservationOption = businessAcceptsReservations && businessId;
@@ -554,16 +567,35 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                     {t("noSlotsForDay")}
                   </div>
                 ) : (
-                  <Select value={reservationTime} onValueChange={setReservationTime}>
+                  <Select 
+                    value={closedSlots.has(reservationTime) ? '' : reservationTime} 
+                    onValueChange={setReservationTime}
+                  >
                     <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
                       <SelectValue placeholder={t("selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {timeSlots.map((slot) => (
-                        <SelectItem key={slot} value={slot}>
-                          {slot}
-                        </SelectItem>
-                      ))}
+                      {timeSlots.map((slot) => {
+                        const isClosed = closedSlots.has(slot);
+                        return (
+                          <SelectItem 
+                            key={slot} 
+                            value={slot} 
+                            disabled={isClosed}
+                            className={isClosed ? 'opacity-50 cursor-not-allowed' : ''}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={isClosed ? 'line-through' : ''}>{slot}</span>
+                              {isClosed && (
+                                <span className="flex items-center gap-1 text-destructive text-[10px] sm:text-xs">
+                                  <Ban className="h-3 w-3" />
+                                  {t("closedSlot")}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 )}

@@ -10,12 +10,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Users, Phone, MapPin, User, Clock } from 'lucide-react';
+import { CalendarIcon, Users, Phone, MapPin, User, Clock, Ban } from 'lucide-react';
 import { format, isBefore, startOfDay, parse } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { expandSlotsForDay, normalizeTime } from '@/lib/timeSlots';
 import { ReservationSuccessDialog } from '@/components/user/ReservationSuccessDialog';
+import { useClosedSlots } from '@/hooks/useClosedSlots';
 
 interface DirectReservationDialogProps {
   open: boolean;
@@ -86,6 +87,9 @@ export const DirectReservationDialog = ({
   }>({ open: false, reservation: null });
 
   const isMobile = useIsMobile();
+  
+  // Fetch closed slots for the selected date
+  const { closedSlots } = useClosedSlots(businessId, formData.preferred_date);
 
   const text = {
     el: {
@@ -113,6 +117,7 @@ export const DirectReservationDialog = ({
       fullyBooked: 'Πλήρως κατειλημμένο',
       selectTime: 'Επιλέξτε ώρα',
       noSlotsForDay: 'Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα',
+      closedSlot: 'Κλειστό',
       policyTitle: 'Πολιτική Κρατήσεων',
       noShowPolicy: 'Περιθώριο 15 λεπτά. (Ακύρωση αν δεν γίνει check in)',
       cancellationPolicy: 'Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων.',
@@ -143,6 +148,7 @@ export const DirectReservationDialog = ({
       fullyBooked: 'Fully booked',
       selectTime: 'Select time',
       noSlotsForDay: 'No available slots for this day',
+      closedSlot: 'Closed',
       policyTitle: 'Reservation Policy',
       noShowPolicy: '15 min grace. (Cancel if no check-in)',
       cancellationPolicy: 'After 3 cancellations, 2-week restriction.',
@@ -423,11 +429,21 @@ export const DirectReservationDialog = ({
   const timeSlots = getAvailableTimeSlots();
 
   // Set default time when date changes and slots are available
+  // Skip closed slots when auto-selecting
   useEffect(() => {
-    if (timeSlots.length > 0 && !timeSlots.includes(formData.preferred_time)) {
-      setFormData((prev) => ({ ...prev, preferred_time: timeSlots[0] }));
+    if (timeSlots.length > 0) {
+      const currentSlotClosed = closedSlots.has(formData.preferred_time);
+      const currentSlotMissing = !timeSlots.includes(formData.preferred_time);
+      
+      if (currentSlotClosed || currentSlotMissing) {
+        // Find the first open slot
+        const firstOpenSlot = timeSlots.find(slot => !closedSlots.has(slot));
+        if (firstOpenSlot) {
+          setFormData((prev) => ({ ...prev, preferred_time: firstOpenSlot }));
+        }
+      }
     }
-  }, [formData.preferred_date, timeSlots.length]);
+  }, [formData.preferred_date, timeSlots.length, closedSlots]);
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -566,18 +582,34 @@ export const DirectReservationDialog = ({
               </div>
             ) : (
               <Select
-                value={formData.preferred_time}
+                value={closedSlots.has(formData.preferred_time) ? '' : formData.preferred_time}
                 onValueChange={(value) => setFormData({ ...formData, preferred_time: value })}
               >
                 <SelectTrigger className="text-xs sm:text-sm font-normal h-9 sm:h-10">
                   <SelectValue placeholder={t.selectTime} />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
+                  {timeSlots.map((time) => {
+                    const isClosed = closedSlots.has(time);
+                    return (
+                      <SelectItem 
+                        key={time} 
+                        value={time} 
+                        disabled={isClosed}
+                        className={isClosed ? 'opacity-50 cursor-not-allowed' : ''}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className={isClosed ? 'line-through' : ''}>{time}</span>
+                          {isClosed && (
+                            <span className="flex items-center gap-1 text-destructive text-[10px] sm:text-xs">
+                              <Ban className="h-3 w-3" />
+                              {t.closedSlot}
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}
