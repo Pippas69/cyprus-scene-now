@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { OceanLoader } from "@/components/ui/ocean-loader";
 import { CheckCircle2, XCircle, GraduationCap, ArrowRight, Clock } from "lucide-react";
 import { Confetti, useConfetti } from "@/components/ui/confetti";
+import { parseEdgeFunctionStructuredError } from "@/utils/parseEdgeFunctionError";
 
 const VerifyStudent = () => {
   const [searchParams] = useSearchParams();
@@ -66,22 +67,12 @@ const VerifyStudent = () => {
         if (error) {
           console.error('Verification error:', error);
 
-          // Supabase Functions errors include a Response in `context`.
-          // We must read its JSON body asynchronously to access { error, message }.
-          const anyError: any = error;
-          const ctx: Response | undefined = anyError?.context;
-          if (ctx && typeof ctx.json === 'function') {
-            try {
-              const payload = await ctx.json();
-              if (handleStructuredError(payload)) return;
-            } catch {
-              // ignore
-            }
-          }
+          const payload = await parseEdgeFunctionStructuredError(error);
+          if (handleStructuredError(payload)) return;
 
-          // Fallback
+          // Fallback (never show the generic SDK message to users)
           setStatus('error');
-          setErrorMessage(anyError?.message || 'Unknown error');
+          setErrorMessage('');
           return;
         }
 
