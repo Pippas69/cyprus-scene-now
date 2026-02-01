@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <tickets@fomo.cy>",
+      from: "ΦΟΜΟ <tickets@fomocy.com>",
       to: [userEmail],
       subject: `🎟️ Your tickets for ${eventTitle}`,
       html: emailHtml,

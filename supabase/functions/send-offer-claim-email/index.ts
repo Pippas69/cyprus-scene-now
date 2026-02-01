@@ -262,7 +262,7 @@ Deno.serve(async (req) => {
     `);
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <offers@fomo.cy>",
+      from: "ΦΟΜΟ <offers@fomocy.com>",
       to: [data.userEmail],
       subject: `✓ Η προσφορά σας: ${data.offerTitle}`,
       html,

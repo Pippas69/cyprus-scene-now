@@ -308,7 +308,7 @@ Deno.serve(async (req) => {
         `;
 
         const { error: emailError } = await resend.emails.send({
-          from: "ΦΟΜΟ Cyprus <noreply@fomo.cy>",
+          from: "ΦΟΜΟ Cyprus <noreply@fomocy.com>",
           to: [profile.email],
           subject: `📊 Εβδομαδιαία Σύνοψη - ${business.name}`,
           html: wrapEmailContent(emailContent),

@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       if (profile?.email) {
         try {
           await resend.emails.send({
-            from: "ΦΟΜΟ <notifications@fomo.cy>",
+            from: "ΦΟΜΟ <notifications@fomocy.com>",
             to: [profile.email],
             subject: data.emailSubject,
             html: data.emailHtml,

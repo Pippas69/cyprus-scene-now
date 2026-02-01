@@ -148,7 +148,7 @@ serve(async (req) => {
         const feeRetained = (feeRetainedCents / 100).toFixed(2);
 
         await resend.emails.send({
-          from: "ΦΟΜΟ <noreply@fomo.cy>",
+          from: "ΦΟΜΟ <noreply@fomocy.com>",
           to: [userProfile.email],
           subject: "Your reservation was declined - Partial refund processed",
           html: `

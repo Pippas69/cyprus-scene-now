@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
     `);
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <noreply@fomo.cy>",
+      from: "ΦΟΜΟ <noreply@fomocy.com>",
       to: [data.businessEmail],
       subject: `🎁 Νέα διεκδίκηση: ${data.partySize} ${data.partySize === 1 ? 'άτομο' : 'άτομα'} για "${data.offerTitle}"`,
       html,
