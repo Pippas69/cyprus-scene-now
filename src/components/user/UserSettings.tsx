@@ -700,7 +700,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               value={preferences.profile_visibility || 'public'}
               onValueChange={(value) => updatePreferences({ profile_visibility: value })}
             >
-              <SelectTrigger id="profile-visibility" className="rounded-xl text-sm">
+              <SelectTrigger id="profile-visibility" className="rounded-xl text-xs sm:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -752,7 +752,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               value={language}
               onValueChange={(value: 'el' | 'en') => setLanguage(value)}
             >
-              <SelectTrigger id="language" className="rounded-xl text-sm">
+              <SelectTrigger id="language" className="rounded-xl text-xs sm:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -767,7 +767,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               value={preferences.theme_preference || 'system'}
               onValueChange={(value) => updatePreferences({ theme_preference: value })}
             >
-              <SelectTrigger id="theme" className="rounded-xl text-sm">
+              <SelectTrigger id="theme" className="rounded-xl text-xs sm:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
