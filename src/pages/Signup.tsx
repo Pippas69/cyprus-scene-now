@@ -589,21 +589,20 @@ const Signup = () => {
                           value={universityEmail}
                           onChange={(e) => setUniversityEmail(e.target.value)}
                           placeholder={`example@${selectedUniversity}`}
-                          className="rounded-xl"
+                          className="rounded-xl text-[11px] sm:text-sm"
                         />
                         {studentEmailError && (
-                          <p className="text-sm text-destructive">{studentEmailError}</p>
+                          <p className="text-[10px] sm:text-sm text-destructive">{studentEmailError}</p>
                         )}
                         {universityEmail && !studentEmailError && isValidUniversityEmail(universityEmail) && (
-                          <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                            <AlertDescription className="text-green-700 dark:text-green-400">
+                          <div className="border border-green-500 bg-green-50 dark:bg-green-950/20 rounded-lg px-3 py-2">
+                            <p className="text-[10px] sm:text-xs text-green-700 dark:text-green-400 leading-tight">
                               {language === "el" 
-                                ? "Θα λάβετε email επαλήθευσης μετά την εγγραφή."
-                                : "You will receive a verification email after signup."
+                                ? "Θα λάβετε email επαλήθευσης στις ρυθμίσεις μετά την εγγραφή."
+                                : "You will receive a verification email in settings after signup."
                               }
-                            </AlertDescription>
-                          </Alert>
+                            </p>
+                          </div>
                         )}
                       </div>
                     )}
