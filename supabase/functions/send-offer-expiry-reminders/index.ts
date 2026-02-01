@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
       try {
         // Send email
         await resend.emails.send({
-          from: "ΦΟΜΟ <offers@fomo.cy>",
+          from: "ΦΟΜΟ <offers@fomocy.com>",
           to: [reminder.userEmail],
           subject: `⚠️ Η προσφορά σου λήγει σε 2 ώρες! - ${reminder.offerTitle}`,
           html: emailHtml,

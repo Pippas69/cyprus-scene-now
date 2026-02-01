@@ -165,10 +165,10 @@ const Footer = () => {
               </li>
               <li>
                 <a 
-                  href="mailto:hello@fomo.cy" 
+                  href="mailto:support@fomocy.com" 
                   className="text-[#0d3b4a] hover:text-[#1a5a6a] transition-colors text-xs sm:text-sm"
                 >
-                  hello@fomo.cy
+                  support@fomocy.com
                 </a>
               </li>
             </ul>
@@ -197,7 +197,7 @@ const Footer = () => {
                 <TikTokIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-white" />
               </a>
               <a
-                href="mailto:hello@fomo.cy"
+                href="mailto:support@fomocy.com"
                 className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-gradient-to-r from-seafoam to-aegean rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md"
                 aria-label="Email"
               >

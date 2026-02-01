@@ -615,7 +615,7 @@ const ForBusinesses = () => {
                   </p>
                 </div>
                 <Button asChild variant="secondary" size="lg" className="gap-2">
-                  <a href="mailto:hello@fomo.cy">
+                  <a href="mailto:support@fomocy.com">
                     <Mail className="w-4 h-4" />
                     {content.enterprise.cta}
                   </a>

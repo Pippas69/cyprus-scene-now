@@ -16,7 +16,7 @@ const PrivacyPolicy = () => {
         {
           icon: FileText,
           title: "1. Υπεύθυνος Επεξεργασίας",
-          content: "Υπεύθυνος επεξεργασίας των προσωπικών σας δεδομένων είναι η εταιρεία ΦΟΜΟ με έδρα τη Λευκωσία, Κύπρος. Για οποιοδήποτε θέμα σχετικά με τα προσωπικά σας δεδομένα, μπορείτε να επικοινωνήσετε μαζί μας στο hello@fomo.cy.",
+          content: "Υπεύθυνος επεξεργασίας των προσωπικών σας δεδομένων είναι η εταιρεία ΦΟΜΟ με έδρα τη Λευκωσία, Κύπρος. Για οποιοδήποτε θέμα σχετικά με τα προσωπικά σας δεδομένα, μπορείτε να επικοινωνήσετε μαζί μας στο support@fomocy.com.",
         },
         {
           icon: Database,
@@ -106,7 +106,7 @@ const PrivacyPolicy = () => {
             "Εναντίωση: αντιταχθείτε στην επεξεργασία για marketing ή profilin",
             "Ανάκληση συγκατάθεσης: οποτεδήποτε, χωρίς επηρεασμό της νομιμότητας προηγούμενης επεξεργασίας",
           ],
-          note: "Για να ασκήσετε τα δικαιώματά σας, επικοινωνήστε στο hello@fomo.cy. Θα απαντήσουμε εντός 30 ημερών.",
+          note: "Για να ασκήσετε τα δικαιώματά σας, επικοινωνήστε στο support@fomocy.com. Θα απαντήσουμε εντός 30 ημερών.",
         },
         {
           icon: Bell,
@@ -163,7 +163,7 @@ const PrivacyPolicy = () => {
       contact: {
         title: "14. Επικοινωνία & Καταγγελίες",
         content: "Για ερωτήσεις, αιτήματα άσκησης δικαιωμάτων ή καταγγελίες:",
-        email: "hello@fomo.cy",
+        email: "support@fomocy.com",
         address: "ΦΟΜΟ, Λευκωσία, Κύπρος",
         supervisory: "Έχετε επίσης δικαίωμα να υποβάλετε καταγγελία στην Επίτροπο Προστασίας Δεδομένων Προσωπικού Χαρακτήρα Κύπρου (www.dataprotection.gov.cy).",
       },
@@ -176,7 +176,7 @@ const PrivacyPolicy = () => {
         {
           icon: FileText,
           title: "1. Data Controller",
-          content: "The data controller for your personal data is ΦΟΜΟ, based in Nicosia, Cyprus. For any matters regarding your personal data, you can contact us at hello@fomo.cy.",
+          content: "The data controller for your personal data is ΦΟΜΟ, based in Nicosia, Cyprus. For any matters regarding your personal data, you can contact us at support@fomocy.com.",
         },
         {
           icon: Database,
@@ -266,7 +266,7 @@ const PrivacyPolicy = () => {
             "Object: oppose processing for marketing or profiling",
             "Withdraw consent: at any time, without affecting the lawfulness of prior processing",
           ],
-          note: "To exercise your rights, contact hello@fomo.cy. We will respond within 30 days.",
+          note: "To exercise your rights, contact support@fomocy.com. We will respond within 30 days.",
         },
         {
           icon: Bell,
@@ -323,7 +323,7 @@ const PrivacyPolicy = () => {
       contact: {
         title: "14. Contact & Complaints",
         content: "For questions, rights requests, or complaints:",
-        email: "hello@fomo.cy",
+        email: "support@fomocy.com",
         address: "ΦΟΜΟ, Nicosia, Cyprus",
         supervisory: "You also have the right to file a complaint with the Commissioner for Personal Data Protection of Cyprus (www.dataprotection.gov.cy).",
       },

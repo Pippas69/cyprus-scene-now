@@ -784,11 +784,11 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">{t.contactUs}</span>
                 <a 
-                  href="mailto:hello@fomo.cy"
+                  href="mailto:support@fomocy.com"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background font-medium text-sm hover:opacity-90 transition-opacity"
                 >
                   <Mail className="w-4 h-4" />
-                  hello@fomo.cy
+                  support@fomocy.com
                 </a>
               </div>
             </div>

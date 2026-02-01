@@ -339,7 +339,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           `);
 
           await resend.emails.send({
-            from: "ΦΟΜΟ <reminders@fomo.cy>",
+            from: "ΦΟΜΟ <reminders@fomocy.com>",
             to: [notification.user_email],
             subject: `${notification.reminder_type === '1_day' ? '📅' : '⏰'} ${notification.event_title} - ${timeText}!`,
             html: emailHtml,
