@@ -27,18 +27,16 @@ const VerifyStudent = () => {
       }
 
       try {
-        const { data, error } = await supabase.functions.invoke('verify-student-token', {
+        const response = await supabase.functions.invoke('verify-student-token', {
           body: { token }
         });
 
-        if (error) {
-          console.error('Verification error:', error);
-          setStatus('error');
-          setErrorMessage(error.message);
-          return;
-        }
+        // Handle both successful responses and error responses with data
+        const data = response.data;
+        const error = response.error;
 
-        if (data.error) {
+        // If we have data with an error field, handle it appropriately
+        if (data?.error) {
           if (data.error === 'token_expired') {
             setStatus('expired');
           } else if (data.error === 'invalid_token') {
@@ -53,15 +51,40 @@ const VerifyStudent = () => {
           return;
         }
 
-        if (data.already_verified) {
+        // If there's an error but no data, try to parse the error context
+        if (error) {
+          console.error('Verification error:', error);
+          // Check if the error context contains our structured response
+          try {
+            const errorData = error.context?.json || JSON.parse(error.message || '{}');
+            if (errorData.error === 'email_already_used') {
+              setStatus('email_already_used');
+              setErrorMessage(errorData.message || '');
+              return;
+            } else if (errorData.error === 'token_expired') {
+              setStatus('expired');
+              return;
+            } else if (errorData.error === 'invalid_token') {
+              setStatus('invalid');
+              return;
+            }
+          } catch {
+            // Ignore parse errors
+          }
+          setStatus('error');
+          setErrorMessage(error.message);
+          return;
+        }
+
+        if (data?.already_verified) {
           setStatus('already_verified');
           setUniversityName(data.university_name || '');
-        } else if (data.success) {
+        } else if (data?.success) {
           setStatus('success');
           setUniversityName(data.university_name || '');
           confetti.trigger();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Verification error:', err);
         setStatus('error');
       }
