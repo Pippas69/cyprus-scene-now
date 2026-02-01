@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const baseUrl = Deno.env.get("SITE_URL") || "https://fomocy.lovable.app";
     const verificationUrl = `${baseUrl}/verify-student?token=${verificationToken}`;
 
-    logStep("Sending verification email", { verificationUrl });
+    logStep("Sending verification email to university email");
 
     const emailHtml = `
       <!DOCTYPE html>
