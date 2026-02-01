@@ -63,7 +63,7 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
           )}
 
           {/* Text overlay */}
-          <div className="absolute inset-x-0 bottom-1 px-2 pb-1 pt-4 text-center">
+          <div className="absolute inset-x-0 bottom-3 px-2 pb-1 pt-4 text-center">
             <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[hsl(var(--foreground)/0.6)] to-transparent rounded-b-full" />
             <div className="relative">
               <div className="text-[10px] md:text-[11px] lg:text-[12px] font-semibold leading-tight text-[hsl(var(--background))] line-clamp-1 px-1">
