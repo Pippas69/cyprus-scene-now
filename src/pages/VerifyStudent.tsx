@@ -35,44 +35,53 @@ const VerifyStudent = () => {
         const data = response.data;
         const error = response.error;
 
-        // If we have data with an error field, handle it appropriately
-        if (data?.error) {
-          if (data.error === 'token_expired') {
+        const handleStructuredError = (payload: any) => {
+          if (!payload?.error) return false;
+
+          if (payload.error === 'token_expired') {
             setStatus('expired');
-          } else if (data.error === 'invalid_token') {
-            setStatus('invalid');
-          } else if (data.error === 'email_already_used') {
-            setStatus('email_already_used');
-            setErrorMessage(data.message || '');
-          } else {
-            setStatus('error');
-            setErrorMessage(data.message || 'Unknown error');
+            return true;
           }
+          if (payload.error === 'invalid_token') {
+            setStatus('invalid');
+            return true;
+          }
+          if (payload.error === 'email_already_used') {
+            setStatus('email_already_used');
+            setErrorMessage(payload.message || '');
+            return true;
+          }
+
+          setStatus('error');
+          setErrorMessage(payload.message || 'Unknown error');
+          return true;
+        };
+
+        // If we have data with an error field, handle it appropriately
+        if (handleStructuredError(data)) {
           return;
         }
 
-        // If there's an error but no data, try to parse the error context
+        // If there's an error but no data, parse the HTTP error response body (Supabase throws on non-2xx)
         if (error) {
           console.error('Verification error:', error);
-          // Check if the error context contains our structured response
-          try {
-            const errorData = error.context?.json || JSON.parse(error.message || '{}');
-            if (errorData.error === 'email_already_used') {
-              setStatus('email_already_used');
-              setErrorMessage(errorData.message || '');
-              return;
-            } else if (errorData.error === 'token_expired') {
-              setStatus('expired');
-              return;
-            } else if (errorData.error === 'invalid_token') {
-              setStatus('invalid');
-              return;
+
+          // Supabase Functions errors include a Response in `context`.
+          // We must read its JSON body asynchronously to access { error, message }.
+          const anyError: any = error;
+          const ctx: Response | undefined = anyError?.context;
+          if (ctx && typeof ctx.json === 'function') {
+            try {
+              const payload = await ctx.json();
+              if (handleStructuredError(payload)) return;
+            } catch {
+              // ignore
             }
-          } catch {
-            // Ignore parse errors
           }
+
+          // Fallback
           setStatus('error');
-          setErrorMessage(error.message);
+          setErrorMessage(anyError?.message || 'Unknown error');
           return;
         }
 
