@@ -72,6 +72,7 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
   const [selectedUniversity, setSelectedUniversity] = useState<string>('');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
 
   const handleSubmit = async () => {
     // Validate email
@@ -208,8 +209,8 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
     );
   }
 
-  // Pending verification
-  if (verification?.status === 'pending') {
+  // Pending verification - show form if user wants to edit, otherwise show pending state
+  if (verification?.status === 'pending' && !isEditingEmail) {
     return (
       <Card id="student-verification" className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
         <CardHeader className="p-3 sm:p-4">
@@ -224,10 +225,19 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4 space-y-3">
-          <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
-            <Mail className="h-3 w-3 shrink-0" />
-            <span className="truncate">{verification.university_email}</span>
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
+              <Mail className="h-3 w-3 shrink-0" />
+              <span className="truncate">{verification.university_email}</span>
+            </p>
+            <Badge 
+              variant="outline" 
+              className="cursor-pointer hover:bg-muted/50 transition-colors text-[9px] px-1.5 py-0.5 shrink-0"
+              onClick={() => setIsEditingEmail(true)}
+            >
+              {language === 'el' ? 'Αλλαγή' : 'Change'}
+            </Badge>
+          </div>
           <Button
             variant="outline"
             onClick={handleResend}
