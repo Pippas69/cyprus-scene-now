@@ -53,7 +53,8 @@ export function useClosedDates(businessId: string | undefined) {
           closuresByDate.get(date)?.add(closure.slot_time);
         });
 
-        // Count total slots per day from business config
+        // Count total slot WINDOWS per day from business config.
+        // IMPORTANT: Staff controls toggle slot windows (slot_time == window start), not every 30-min interval.
         const timeSlots = business?.reservation_time_slots as any[] | null;
         
         // Find dates where ALL slots are closed
@@ -65,24 +66,12 @@ export function useClosedDates(businessId: string | undefined) {
           const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
           const dayName = dayNames[dateObj.getDay()];
           
-          // Count total slots for this day
-          let totalSlotsForDay = 0;
+           // Count total slot windows for this day
+           let totalSlotsForDay = 0;
           if (timeSlots && Array.isArray(timeSlots)) {
             timeSlots.forEach(slot => {
               if (slot.days && slot.days.includes(dayName)) {
-                // Count 30-min intervals in the slot
-                const fromParts = (slot.timeFrom || '00:00').split(':').map(Number);
-                const toParts = (slot.timeTo || '00:00').split(':').map(Number);
-                let fromMinutes = fromParts[0] * 60 + fromParts[1];
-                let toMinutes = toParts[0] * 60 + toParts[1];
-                
-                // Handle overnight slots
-                if (toMinutes <= fromMinutes) {
-                  toMinutes += 1440; // Add 24 hours
-                }
-                
-                const intervals = Math.floor((toMinutes - fromMinutes) / 30);
-                totalSlotsForDay += intervals;
+                  totalSlotsForDay += 1;
               }
             });
           }

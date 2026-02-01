@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { expandTimeRange, normalizeTime } from '@/lib/timeSlots';
 
 /**
  * Hook to fetch closed slots for a business on a specific date.
@@ -20,20 +21,58 @@ export function useClosedSlots(businessId: string | undefined, date: Date | unde
       setLoading(true);
       try {
         const formattedDate = format(date, 'yyyy-MM-dd');
-        
-        const { data, error } = await supabase
-          .from('reservation_slot_closures')
-          .select('slot_time')
-          .eq('business_id', businessId)
-          .eq('closure_date', formattedDate);
 
-        if (error) {
-          console.error('Error fetching closed slots:', error);
+        // Fetch closures + business slot windows to correctly map a closed WINDOW
+        // (e.g. one closure record for timeFrom) to all 30-min arrival times.
+        const [{ data: closures, error: closuresError }, { data: business, error: businessError }] =
+          await Promise.all([
+            supabase
+              .from('reservation_slot_closures')
+              .select('slot_time')
+              .eq('business_id', businessId)
+              .eq('closure_date', formattedDate),
+            supabase
+              .from('businesses')
+              .select('reservation_time_slots')
+              .eq('id', businessId)
+              .maybeSingle(),
+          ]);
+
+        if (closuresError) {
+          console.error('Error fetching closed slots:', closuresError);
           setClosedSlots(new Set());
-        } else {
-          const closedTimes = new Set(data?.map(row => row.slot_time) || []);
-          setClosedSlots(closedTimes);
+          return;
         }
+
+        if (businessError) {
+          console.error('Error fetching business slots:', businessError);
+          // Fallback: still apply raw closures
+          setClosedSlots(new Set((closures ?? []).map((row) => normalizeTime(row.slot_time))));
+          return;
+        }
+
+        const configuredSlots = (business?.reservation_time_slots as any[] | null) ?? null;
+        const out = new Set<string>();
+
+        for (const row of closures ?? []) {
+          const closureTime = normalizeTime(row.slot_time);
+
+          // If we can map this closure to a configured slot window, expand to all 30-min intervals
+          const matchingWindow = Array.isArray(configuredSlots)
+            ? configuredSlots.find((s) => normalizeTime(s?.timeFrom ?? s?.time) === closureTime)
+            : null;
+
+          if (matchingWindow?.timeFrom && matchingWindow?.timeTo) {
+            for (const t of expandTimeRange(matchingWindow.timeFrom, matchingWindow.timeTo, 30)) {
+              out.add(t);
+            }
+          } else {
+            // Otherwise treat it as a single closed time
+            out.add(closureTime);
+          }
+        }
+
+        setClosedSlots(out);
       } catch (error) {
         console.error('Error fetching closed slots:', error);
         setClosedSlots(new Set());
