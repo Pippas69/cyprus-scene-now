@@ -280,28 +280,38 @@ export const DirectReservationDialog = ({
   };
 
   const isDateDisabled = (date: Date) => {
-    if (!settings?.reservation_days?.length) return false;
+    if (!settings) return false;
+    if (settings.accepts_direct_reservations === false) return true;
+    if (!settings.reservation_days?.length && !settings.reservation_time_slots?.length) return false;
     
     const dayName = format(date, 'EEEE').toLowerCase();
     const isBeforeToday = isBefore(startOfDay(date), startOfDay(new Date()));
+
+    const hasDayEnabled = settings.reservation_days?.length
+      ? settings.reservation_days.includes(dayName)
+      : true;
+
+    const hasSlotWindowForDay =
+      settings.reservation_capacity_type === 'time_slots' && settings.reservation_time_slots?.length
+        ? settings.reservation_time_slots.some((slot) => slot.days?.includes(dayName))
+        : true;
     
     // Check if this date is fully closed by the business
     const dateStr = format(date, 'yyyy-MM-dd');
     const isFullyClosed = closedDates.has(dateStr);
     
-    return isBeforeToday || !settings.reservation_days.includes(dayName) || isFullyClosed;
+    return isBeforeToday || !hasDayEnabled || !hasSlotWindowForDay || isFullyClosed;
   };
   
-  // Custom modifiers for the calendar to show closed dates with reduced opacity
+  // Custom modifiers for the calendar to show closed/unavailable dates with reduced opacity
   const closedDatesModifiers = {
-    closed: (date: Date) => {
-      const dateStr = format(date, 'yyyy-MM-dd');
-      return closedDates.has(dateStr);
-    }
+    closed: (date: Date) => closedDates.has(format(date, 'yyyy-MM-dd')),
+    unavailable: (date: Date) => isDateDisabled(date),
   };
   
   const closedDatesModifiersStyles = {
-    closed: { opacity: 0.4 }
+    closed: { opacity: 0.35 },
+    unavailable: { opacity: 0.35 },
   };
 
   const getAvailableTimeSlots = (): string[] => {

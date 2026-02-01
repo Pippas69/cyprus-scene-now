@@ -367,16 +367,15 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     return true;
   };
   
-  // Custom modifiers for the calendar to show closed dates with reduced opacity
+  // Calendar modifiers: show fully closed dates + generally unavailable dates (offer/business rules)
   const closedDatesModifiers = {
-    closed: (date: Date) => {
-      const dateStr = format(date, 'yyyy-MM-dd');
-      return closedDates.has(dateStr);
-    }
+    closed: (date: Date) => closedDates.has(format(date, 'yyyy-MM-dd')),
+    unavailable: (date: Date) => !isDateValidForOffer(date),
   };
   
   const closedDatesModifiersStyles = {
-    closed: { opacity: 0.4 }
+    closed: { opacity: 0.35 },
+    unavailable: { opacity: 0.35 },
   };
 
   if (!offer) return null;
