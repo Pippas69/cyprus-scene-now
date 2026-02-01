@@ -20,6 +20,7 @@ import { el, enUS } from "date-fns/locale";
 import { trackDiscountView } from "@/lib/analyticsTracking";
 import { expandSlotsForDay, timeToMinutes } from "@/lib/timeSlots";
 import { useClosedSlots } from "@/hooks/useClosedSlots";
+import { useClosedDates } from "@/hooks/useClosedDates";
 
 interface TimeSlot {
   id?: string;
@@ -105,6 +106,9 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   // Fetch closed slots for the selected reservation date
   const businessId = offer?.business_id || offer?.businesses?.id;
   const { closedSlots } = useClosedSlots(businessId, reservationDate);
+  
+  // Fetch all fully closed dates for the calendar
+  const { closedDates } = useClosedDates(businessId);
 
   // NOTE: View tracking is handled by OfferCard when the card becomes visible
   // DO NOT track views here - "Εξαργύρωσε" click is ONLY an interaction, not a view
@@ -324,6 +328,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
   // Check if a date is valid for this offer (within valid_days and date range)
   // AND has business reservation slots available for that day
+  // AND is not fully closed by the business
   const isDateValidForOffer = (date: Date): boolean => {
     if (!offer) return false;
     
@@ -355,7 +360,23 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       if (!hasSlotForDay) return false;
     }
     
+    // Check if this date is fully closed by the business
+    const dateStr = format(date, 'yyyy-MM-dd');
+    if (closedDates.has(dateStr)) return false;
+    
     return true;
+  };
+  
+  // Custom modifiers for the calendar to show closed dates with reduced opacity
+  const closedDatesModifiers = {
+    closed: (date: Date) => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      return closedDates.has(dateStr);
+    }
+  };
+  
+  const closedDatesModifiersStyles = {
+    closed: { opacity: 0.4 }
   };
 
   if (!offer) return null;
@@ -548,6 +569,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                       today.setHours(0, 0, 0, 0);
                       return isBefore(date, today) || !isDateValidForOffer(date);
                     }}
+                    modifiers={closedDatesModifiers}
+                    modifiersStyles={closedDatesModifiersStyles}
                     initialFocus
                     locale={language === "el" ? el : enUS}
                   />

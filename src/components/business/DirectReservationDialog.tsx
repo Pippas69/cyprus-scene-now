@@ -17,6 +17,7 @@ import { toastTranslations } from '@/translations/toastTranslations';
 import { expandSlotsForDay, normalizeTime } from '@/lib/timeSlots';
 import { ReservationSuccessDialog } from '@/components/user/ReservationSuccessDialog';
 import { useClosedSlots } from '@/hooks/useClosedSlots';
+import { useClosedDates } from '@/hooks/useClosedDates';
 
 interface DirectReservationDialogProps {
   open: boolean;
@@ -90,6 +91,9 @@ export const DirectReservationDialog = ({
   
   // Fetch closed slots for the selected date
   const { closedSlots } = useClosedSlots(businessId, formData.preferred_date);
+  
+  // Fetch all fully closed dates for the calendar
+  const { closedDates } = useClosedDates(businessId);
 
   const text = {
     el: {
@@ -281,7 +285,23 @@ export const DirectReservationDialog = ({
     const dayName = format(date, 'EEEE').toLowerCase();
     const isBeforeToday = isBefore(startOfDay(date), startOfDay(new Date()));
     
-    return isBeforeToday || !settings.reservation_days.includes(dayName);
+    // Check if this date is fully closed by the business
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const isFullyClosed = closedDates.has(dateStr);
+    
+    return isBeforeToday || !settings.reservation_days.includes(dayName) || isFullyClosed;
+  };
+  
+  // Custom modifiers for the calendar to show closed dates with reduced opacity
+  const closedDatesModifiers = {
+    closed: (date: Date) => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      return closedDates.has(dateStr);
+    }
+  };
+  
+  const closedDatesModifiersStyles = {
+    closed: { opacity: 0.4 }
   };
 
   const getAvailableTimeSlots = (): string[] => {
@@ -565,6 +585,8 @@ export const DirectReservationDialog = ({
                     }
                   }}
                   disabled={isDateDisabled}
+                  modifiers={closedDatesModifiers}
+                  modifiersStyles={closedDatesModifiersStyles}
                 />
               </PopoverContent>
             </Popover>
