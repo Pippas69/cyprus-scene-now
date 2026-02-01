@@ -104,9 +104,18 @@ export function StudentVerificationSection({ userId, userName }: StudentVerifica
       if (error) throw error;
 
       toast.success(t.success);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to submit verification:', err);
-      toast.error(t.error);
+      
+      // Check for email already used error
+      if (err?.message === 'EMAIL_ALREADY_USED') {
+        toast.error(language === 'el' 
+          ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό'
+          : 'This university email is already used by another account'
+        );
+      } else {
+        toast.error(t.error);
+      }
     } finally {
       setSubmitting(false);
     }

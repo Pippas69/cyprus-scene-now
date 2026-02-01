@@ -50,11 +50,39 @@ export function useSubmitStudentVerification() {
         throw new Error('Invalid university email');
       }
       
+      const normalizedEmail = email.toLowerCase().trim();
+      
+      // Check if this university email is already used by an approved verification
+      const { data: existingApproved } = await supabase
+        .from('student_verifications')
+        .select('id, user_id')
+        .eq('university_email', normalizedEmail)
+        .eq('status', 'approved')
+        .maybeSingle();
+      
+      if (existingApproved) {
+        throw new Error('EMAIL_ALREADY_USED');
+      }
+      
+      // Check if this user already has a pending verification for this email
+      const { data: existingPending } = await supabase
+        .from('student_verifications')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('university_email', normalizedEmail)
+        .eq('status', 'pending')
+        .maybeSingle();
+      
+      if (existingPending) {
+        // Return existing record instead of creating new one
+        return existingPending;
+      }
+      
       const { data, error } = await supabase
         .from('student_verifications')
         .insert({
           user_id: userId,
-          university_email: email.toLowerCase(),
+          university_email: normalizedEmail,
           university_name: university.name,
           university_domain: university.domain,
           status: 'pending',
@@ -62,7 +90,13 @@ export function useSubmitStudentVerification() {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        // Handle unique constraint violation
+        if (error.code === '23505') {
+          throw new Error('EMAIL_ALREADY_USED');
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: (_, variables) => {
