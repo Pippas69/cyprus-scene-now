@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -18,6 +18,9 @@ const VerifyStudent = () => {
   const [universityName, setUniversityName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  // Prevent double-verification calls (e.g., dev StrictMode effect re-run)
+  const hasVerifiedRef = useRef(false);
+
   const token = searchParams.get('token');
 
   useEffect(() => {
@@ -26,6 +29,9 @@ const VerifyStudent = () => {
         setStatus('invalid');
         return;
       }
+
+      if (hasVerifiedRef.current) return;
+      hasVerifiedRef.current = true;
 
       try {
         const response = await supabase.functions.invoke('verify-student-token', {
@@ -91,7 +97,7 @@ const VerifyStudent = () => {
     };
 
     verifyToken();
-  }, [token]);
+  }, [token, confetti]);
 
   const translations = {
     en: {
