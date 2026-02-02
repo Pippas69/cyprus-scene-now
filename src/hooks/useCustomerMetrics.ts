@@ -104,26 +104,20 @@ export const useCustomerMetrics = (businessId: string, dateRange?: DateRange) =>
       }
 
       // D) Student discount check-ins (student QR)
-      // Prefer scanned_by (actual user who checked in). Fallback to student_verification_id -> user_id.
+      // NOTE: scanned_by is the staff user who scans (NOT the student), so we always resolve via student_verifications.
       const { data: studentDiscountData } = await supabase
         .from('student_discount_redemptions')
-        .select('student_verification_id, scanned_by, created_at')
+        .select('student_verification_id, created_at')
         .eq('business_id', businessId)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString());
 
-      const scannedByEvents: CheckinEvent[] = (studentDiscountData || [])
-        .filter((s: any) => s?.scanned_by && s?.created_at)
-        .map((s: any) => ({ user_id: s.scanned_by, created_at: s.created_at }));
-      checkinEvents.push(...scannedByEvents);
-
-      const fallbackVerificationIds: string[] = (studentDiscountData || [])
-        .filter((s: any) => !s?.scanned_by)
+      const verificationIds: string[] = (studentDiscountData || [])
         .map((s: any) => s?.student_verification_id)
         .filter(Boolean);
 
-      if (fallbackVerificationIds.length > 0) {
-        const uniqueVerificationIds = Array.from(new Set(fallbackVerificationIds));
+      if (verificationIds.length > 0) {
+        const uniqueVerificationIds = Array.from(new Set(verificationIds));
         const { data: verifications } = await supabase
           .from('student_verifications')
           .select('id, user_id')
@@ -136,7 +130,7 @@ export const useCustomerMetrics = (businessId: string, dateRange?: DateRange) =>
 
         // Preserve multiplicity: one event per redemption
         (studentDiscountData || []).forEach((s: any) => {
-          if (s?.scanned_by || !s?.created_at) return;
+          if (!s?.created_at) return;
           const userId = mapByVerificationId.get(s?.student_verification_id);
           if (userId) checkinEvents.push({ user_id: userId, created_at: s.created_at });
         });
