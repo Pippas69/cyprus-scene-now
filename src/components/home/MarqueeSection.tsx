@@ -18,7 +18,7 @@ const MarqueeSection = () => {
   ];
 
   return (
-    <section className="relative py-6 sm:py-8 md:py-12 overflow-hidden">
+    <section className="relative pt-2 sm:pt-3 md:pt-4 pb-6 sm:pb-8 md:pb-12 overflow-hidden">
       {/* Gradient from white (top) to seafoam (bottom) - covering the marquee */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-[#c5f0ea] to-[#4dd4c4]" />
 
