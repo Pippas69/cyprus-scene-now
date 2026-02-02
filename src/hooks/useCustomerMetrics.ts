@@ -13,6 +13,11 @@ export interface CustomerMetrics {
   peakTime: string | null;
 }
 
+type CheckinEvent = {
+  user_id: string;
+  created_at: string;
+};
+
 export const useCustomerMetrics = (businessId: string, dateRange?: DateRange) => {
   return useQuery({
     queryKey: ['customer-metrics', businessId, dateRange?.from, dateRange?.to],
@@ -20,53 +25,159 @@ export const useCustomerMetrics = (businessId: string, dateRange?: DateRange) =>
       const startDate = dateRange?.from || startOfMonth(new Date());
       const endDate = dateRange?.to || endOfMonth(new Date());
 
-      // Get ticket orders for this business
+      // =====================================================
+      // Customers + Repeat Customers MUST be based on verified QR check-ins
+      // (reservations, tickets, offer redemptions, student discounts)
+      // =====================================================
+
+      // Get business events for ticket/reservation filtering
+      const { data: events } = await supabase
+        .from('events')
+        .select('id')
+        .eq('business_id', businessId);
+      const eventIds = events?.map(e => e.id) || [];
+
+      const checkinEvents: CheckinEvent[] = [];
+
+      // A) Offer check-ins = offer purchases that were redeemed at venue (QR verified)
+      const { data: offerCheckins } = await supabase
+        .from('offer_purchases')
+        .select('user_id, redeemed_at')
+        .eq('business_id', businessId)
+        .not('redeemed_at', 'is', null)
+        .gte('redeemed_at', startDate.toISOString())
+        .lte('redeemed_at', endDate.toISOString());
+
+      (offerCheckins || []).forEach((o: any) => {
+        if (o?.user_id && o?.redeemed_at) {
+          checkinEvents.push({ user_id: o.user_id, created_at: o.redeemed_at });
+        }
+      });
+
+      // B) Ticket check-ins
+      if (eventIds.length > 0) {
+        const { data: ticketCheckins } = await supabase
+          .from('tickets')
+          .select('user_id, checked_in_at')
+          .in('event_id', eventIds)
+          .not('checked_in_at', 'is', null)
+          .gte('checked_in_at', startDate.toISOString())
+          .lte('checked_in_at', endDate.toISOString());
+
+        (ticketCheckins || []).forEach((t: any) => {
+          if (t?.user_id && t?.checked_in_at) {
+            checkinEvents.push({ user_id: t.user_id, created_at: t.checked_in_at });
+          }
+        });
+      }
+
+      // C) Reservation check-ins (direct + event)
+      const { data: directReservationCheckins } = await supabase
+        .from('reservations')
+        .select('user_id, checked_in_at')
+        .eq('business_id', businessId)
+        .is('event_id', null)
+        .not('checked_in_at', 'is', null)
+        .gte('checked_in_at', startDate.toISOString())
+        .lte('checked_in_at', endDate.toISOString());
+
+      (directReservationCheckins || []).forEach((r: any) => {
+        if (r?.user_id && r?.checked_in_at) {
+          checkinEvents.push({ user_id: r.user_id, created_at: r.checked_in_at });
+        }
+      });
+
+      if (eventIds.length > 0) {
+        const { data: eventReservationCheckins } = await supabase
+          .from('reservations')
+          .select('user_id, checked_in_at')
+          .in('event_id', eventIds)
+          .not('checked_in_at', 'is', null)
+          .gte('checked_in_at', startDate.toISOString())
+          .lte('checked_in_at', endDate.toISOString());
+
+        (eventReservationCheckins || []).forEach((r: any) => {
+          if (r?.user_id && r?.checked_in_at) {
+            checkinEvents.push({ user_id: r.user_id, created_at: r.checked_in_at });
+          }
+        });
+      }
+
+      // D) Student discount check-ins (student QR)
+      // Prefer scanned_by (actual user who checked in). Fallback to student_verification_id -> user_id.
+      const { data: studentDiscountData } = await supabase
+        .from('student_discount_redemptions')
+        .select('student_verification_id, scanned_by, created_at')
+        .eq('business_id', businessId)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString());
+
+      const scannedByEvents: CheckinEvent[] = (studentDiscountData || [])
+        .filter((s: any) => s?.scanned_by && s?.created_at)
+        .map((s: any) => ({ user_id: s.scanned_by, created_at: s.created_at }));
+      checkinEvents.push(...scannedByEvents);
+
+      const fallbackVerificationIds: string[] = (studentDiscountData || [])
+        .filter((s: any) => !s?.scanned_by)
+        .map((s: any) => s?.student_verification_id)
+        .filter(Boolean);
+
+      if (fallbackVerificationIds.length > 0) {
+        const uniqueVerificationIds = Array.from(new Set(fallbackVerificationIds));
+        const { data: verifications } = await supabase
+          .from('student_verifications')
+          .select('id, user_id')
+          .in('id', uniqueVerificationIds);
+
+        const mapByVerificationId = new Map<string, string>();
+        (verifications || []).forEach((v: any) => {
+          if (v?.id && v?.user_id) mapByVerificationId.set(v.id, v.user_id);
+        });
+
+        // Preserve multiplicity: one event per redemption
+        (studentDiscountData || []).forEach((s: any) => {
+          if (s?.scanned_by || !s?.created_at) return;
+          const userId = mapByVerificationId.get(s?.student_verification_id);
+          if (userId) checkinEvents.push({ user_id: userId, created_at: s.created_at });
+        });
+      }
+
+      // Calculate unique customers from verified check-ins
+      const uniqueCustomers = new Set(checkinEvents.map(e => e.user_id));
+      const totalCustomers = uniqueCustomers.size;
+
+      // Repeat customers (2+ check-ins total across ALL sources)
+      const checkinCountByUser: Record<string, number> = {};
+      checkinEvents.forEach(e => {
+        checkinCountByUser[e.user_id] = (checkinCountByUser[e.user_id] || 0) + 1;
+      });
+      const repeatCustomers = Object.values(checkinCountByUser).filter(count => count >= 2).length;
+      const repeatRate = totalCustomers > 0 ? (repeatCustomers / totalCustomers) * 100 : 0;
+
+      // =====================================================
+      // Average spend still based on purchases (not check-ins)
+      // but divided by unique verified customers to stay consistent
+      // =====================================================
       const { data: ticketOrders } = await supabase
         .from('ticket_orders')
-        .select('user_id, total_cents, created_at')
+        .select('total_cents')
         .eq('business_id', businessId)
         .eq('status', 'completed')
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString());
 
-      // Get offer purchases for this business
       const { data: offerPurchases } = await supabase
         .from('offer_purchases')
-        .select('user_id, final_price_cents, created_at')
+        .select('final_price_cents')
         .eq('business_id', businessId)
         .eq('status', 'paid')
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString());
 
-      // Combine all purchases
-      const allPurchases = [
-        ...(ticketOrders || []).map(o => ({
-          user_id: o.user_id,
-          amount: o.total_cents,
-          created_at: o.created_at,
-        })),
-        ...(offerPurchases || []).map(p => ({
-          user_id: p.user_id,
-          amount: p.final_price_cents,
-          created_at: p.created_at,
-        })),
-      ];
-
-      // Calculate unique customers
-      const uniqueCustomers = new Set(allPurchases.map(p => p.user_id));
-      const totalCustomers = uniqueCustomers.size;
-
-      // Calculate repeat customers (2+ purchases)
-      const purchaseCountByUser: Record<string, number> = {};
-      allPurchases.forEach(p => {
-        purchaseCountByUser[p.user_id] = (purchaseCountByUser[p.user_id] || 0) + 1;
-      });
-      const repeatCustomers = Object.values(purchaseCountByUser).filter(count => count >= 2).length;
-      const repeatRate = totalCustomers > 0 ? (repeatCustomers / totalCustomers) * 100 : 0;
-
-      // Calculate average spend
-      const totalRevenue = allPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
-      const averageSpend = totalCustomers > 0 ? totalRevenue / totalCustomers / 100 : 0;
+      const totalRevenueCents =
+        (ticketOrders || []).reduce((sum: number, o: any) => sum + (o?.total_cents || 0), 0) +
+        (offerPurchases || []).reduce((sum: number, p: any) => sum + (p?.final_price_cents || 0), 0);
+      const averageSpend = totalCustomers > 0 ? totalRevenueCents / totalCustomers / 100 : 0;
 
       // Get city breakdown from profiles
       const userIds = Array.from(uniqueCustomers);
@@ -97,9 +208,9 @@ export const useCustomerMetrics = (businessId: string, dateRange?: DateRange) =>
       const dayCounts: Record<number, number> = {};
       const hourCounts: Record<number, number> = {};
 
-      allPurchases.forEach(p => {
-        if (p.created_at) {
-          const date = new Date(p.created_at);
+      checkinEvents.forEach(e => {
+        if (e.created_at) {
+          const date = new Date(e.created_at);
           const day = date.getDay();
           const hour = date.getHours();
           dayCounts[day] = (dayCounts[day] || 0) + 1;
