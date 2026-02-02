@@ -30,7 +30,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const t = text[language];
 
   return (
-    <section className="relative min-h-screen flex items-start justify-center overflow-hidden bg-gradient-to-br from-background via-background to-seafoam/5 pt-32 sm:pt-36 md:pt-40 pb-10 sm:pb-12">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-seafoam/5">
       {/* Particle background */}
       <ParticleBackground particleCount={25} className="z-0" />
       
@@ -82,8 +82,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         </span>
       </motion.div>
 
-      <div className="container mx-auto px-3 sm:px-4 py-0 mt-0">
-        <div className="flex flex-col items-center text-center space-y-4 sm:space-y-5 md:space-y-6">
+      <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-10 md:py-12 mt-4 sm:mt-8 md:mt-12">
+        <div className="flex flex-col items-center text-center space-y-5 sm:space-y-6 md:space-y-8">
 
           {/* Main heading */}
           <motion.div
@@ -119,7 +119,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-1 pt-1 sm:pt-2 px-4"
+            className="space-y-1 pt-2 sm:pt-4 px-4"
           >
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground italic">
               {t.subText}
@@ -134,7 +134,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-row gap-2 sm:gap-3 md:gap-4 justify-center pt-1 sm:pt-2"
+            className="flex flex-row gap-2 sm:gap-3 md:gap-4 justify-center pt-2 sm:pt-4"
           >
             {/* App Store Button */}
             <button
