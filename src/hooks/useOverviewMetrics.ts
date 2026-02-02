@@ -73,81 +73,117 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       const totalViews = (profileViews || 0) + offerViews + eventViews;
 
       // =====================================================
-      // 2. CUSTOMERS (unique users who got a QR code)
-      // - Reservations (direct, offer-linked, event-linked)
-      // - Offer claims (with or without reservation)
-      // - Ticket purchases
+      // 2. CUSTOMERS (unique users who CHECKED IN at venue)
+      // Only count users with verified visits (QR scan):
+      // - Offer redemptions (redeemed_at IS NOT NULL)
+      // - Ticket check-ins (checked_in_at IS NOT NULL)
+      // - Reservation check-ins (checked_in_at IS NOT NULL)
+      // - Student discount redemptions
       // =====================================================
       
-      // Direct reservations (from business profile)
-      const { data: directReservationUsers } = await supabase
-        .from("reservations")
-        .select("user_id")
-        .eq("business_id", businessId)
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      // Event-linked reservations
-      let eventReservationUsers: { user_id: string | null }[] = [];
-      if (eventIds.length > 0) {
-        const { data } = await supabase
-          .from("reservations")
-          .select("user_id")
-          .in("event_id", eventIds)
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString());
-        eventReservationUsers = data || [];
-      }
-
-      // Offer claims (from offer_purchases - these are customers who claimed an offer)
-      let offerClaimUsers: { user_id: string }[] = [];
+      // A. Users from offer redemptions (verified at venue)
+      let offerCheckinUsers: { user_id: string }[] = [];
       if (discountIds.length > 0) {
         const { data } = await supabase
           .from("offer_purchases")
           .select("user_id")
           .in("discount_id", discountIds)
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString());
-        offerClaimUsers = data || [];
+          .not("redeemed_at", "is", null)
+          .gte("redeemed_at", startDate.toISOString())
+          .lte("redeemed_at", endDate.toISOString());
+        offerCheckinUsers = data || [];
       }
 
-      // Ticket purchases
-      const { data: ticketUsers } = await supabase
-        .from("ticket_orders")
+      // B. Users from ticket check-ins
+      let ticketCheckinUsers: { user_id: string }[] = [];
+      if (eventIds.length > 0) {
+        const { data } = await supabase
+          .from("tickets")
+          .select("user_id")
+          .in("event_id", eventIds)
+          .not("checked_in_at", "is", null)
+          .gte("checked_in_at", startDate.toISOString())
+          .lte("checked_in_at", endDate.toISOString());
+        ticketCheckinUsers = data || [];
+      }
+
+      // C. Users from direct reservation check-ins (profile reservations)
+      const { data: directReservationCheckinUsers } = await supabase
+        .from("reservations")
         .select("user_id")
+        .eq("business_id", businessId)
+        .is("event_id", null)
+        .not("checked_in_at", "is", null)
+        .gte("checked_in_at", startDate.toISOString())
+        .lte("checked_in_at", endDate.toISOString());
+
+      // D. Users from event reservation check-ins
+      let eventReservationCheckinUsers: { user_id: string | null }[] = [];
+      if (eventIds.length > 0) {
+        const { data } = await supabase
+          .from("reservations")
+          .select("user_id")
+          .in("event_id", eventIds)
+          .not("checked_in_at", "is", null)
+          .gte("checked_in_at", startDate.toISOString())
+          .lte("checked_in_at", endDate.toISOString());
+        eventReservationCheckinUsers = data || [];
+      }
+
+      // E. Users from student discount redemptions (need to join with student_verifications to get user_id)
+      const { data: studentDiscountData } = await supabase
+        .from("student_discount_redemptions")
+        .select("student_verification_id")
         .eq("business_id", businessId)
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
-      // Combine all unique customer user IDs
-      const allUserIds = new Set([
-        ...(directReservationUsers?.map(r => r.user_id) || []),
-        ...(eventReservationUsers?.map(r => r.user_id) || []),
-        ...(offerClaimUsers?.map(o => o.user_id) || []),
-        ...(ticketUsers?.map(t => t.user_id) || [])
+      // Get user_ids from student_verifications
+      let studentDiscountUserIds: string[] = [];
+      if (studentDiscountData && studentDiscountData.length > 0) {
+        const verificationIds = studentDiscountData.map(s => s.student_verification_id).filter(Boolean);
+        if (verificationIds.length > 0) {
+          const { data: verifications } = await supabase
+            .from("student_verifications")
+            .select("user_id")
+            .in("id", verificationIds);
+          studentDiscountUserIds = verifications?.map(v => v.user_id).filter(Boolean) as string[] || [];
+        }
+      }
+
+      // Combine all unique customer user IDs (only verified check-ins)
+      const allCheckinUserIds = new Set([
+        ...(offerCheckinUsers?.map(o => o.user_id) || []),
+        ...(ticketCheckinUsers?.map(t => t.user_id) || []),
+        ...(directReservationCheckinUsers?.map(r => r.user_id) || []),
+        ...(eventReservationCheckinUsers?.map(r => r.user_id) || []),
+        ...studentDiscountUserIds
       ].filter(Boolean));
       
-      const customersThruFomo = allUserIds.size;
+      const customersThruFomo = allCheckinUserIds.size;
 
       // =====================================================
-      // 3. REPEAT CUSTOMERS (users with 2+ QR codes obtained)
+      // 3. REPEAT CUSTOMERS (users with 2+ verified check-ins)
       // =====================================================
-      const userCounts: Record<string, number> = {};
+      const userCheckinCounts: Record<string, number> = {};
       
-      directReservationUsers?.forEach(r => {
-        if (r.user_id) userCounts[r.user_id] = (userCounts[r.user_id] || 0) + 1;
+      offerCheckinUsers?.forEach(o => {
+        if (o.user_id) userCheckinCounts[o.user_id] = (userCheckinCounts[o.user_id] || 0) + 1;
       });
-      eventReservationUsers?.forEach(r => {
-        if (r.user_id) userCounts[r.user_id] = (userCounts[r.user_id] || 0) + 1;
+      ticketCheckinUsers?.forEach(t => {
+        if (t.user_id) userCheckinCounts[t.user_id] = (userCheckinCounts[t.user_id] || 0) + 1;
       });
-      offerClaimUsers?.forEach(o => {
-        if (o.user_id) userCounts[o.user_id] = (userCounts[o.user_id] || 0) + 1;
+      directReservationCheckinUsers?.forEach(r => {
+        if (r.user_id) userCheckinCounts[r.user_id] = (userCheckinCounts[r.user_id] || 0) + 1;
       });
-      ticketUsers?.forEach(t => {
-        if (t.user_id) userCounts[t.user_id] = (userCounts[t.user_id] || 0) + 1;
+      eventReservationCheckinUsers?.forEach(r => {
+        if (r.user_id) userCheckinCounts[r.user_id] = (userCheckinCounts[r.user_id] || 0) + 1;
+      });
+      studentDiscountUserIds.forEach(userId => {
+        userCheckinCounts[userId] = (userCheckinCounts[userId] || 0) + 1;
       });
       
-      const repeatCustomers = Object.values(userCounts).filter(c => c >= 2).length;
+      const repeatCustomers = Object.values(userCheckinCounts).filter(c => c >= 2).length;
 
       // =====================================================
       // 4. BOOKINGS (all accepted reservations - 3 types)
