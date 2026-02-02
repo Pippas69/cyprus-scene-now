@@ -131,36 +131,23 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       }
 
       // E. Users from student discount redemptions
-      // IMPORTANT: count *each redemption* as a separate check-in.
-      // student_discount_redemptions does not have user_id, so we resolve it via student_verifications.
+      // IMPORTANT: 1 redemption = 1 verified check-in.
+      // NOTE: scanned_by is the staff user who scans (NOT the student), so we always resolve via student_verifications.
       const { data: studentDiscountData } = await supabase
         .from("student_discount_redemptions")
-        // Prefer scanned_by (the user who actually checked in). Fallback to resolving via student_verifications.
-        .select("student_verification_id, scanned_by")
+        .select("student_verification_id")
         .eq("business_id", businessId)
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
       // Build a list of userIds PER redemption (keeps duplicates for repeat customers)
-      // IMPORTANT: student_discount_redemptions has scanned_by (the user who checked in) — this is the most reliable.
-      // We only fallback to resolving via student_verifications when scanned_by is null.
       let studentDiscountUserIdsPerRedemption: string[] = [];
       if (studentDiscountData && studentDiscountData.length > 0) {
-        // 1) Use scanned_by when available (one entry per redemption)
-        const scannedByIds = studentDiscountData
-          .map((s) => (s as { scanned_by: string | null }).scanned_by)
-          .filter(Boolean) as string[];
-
-        studentDiscountUserIdsPerRedemption.push(...scannedByIds);
-
-        // 2) Fallback path for older rows (or edge cases) where scanned_by is null
-        const fallbackVerificationIds = studentDiscountData
-          .filter((s) => !(s as { scanned_by: string | null }).scanned_by)
+        const verificationIds = studentDiscountData
           .map((s) => (s as { student_verification_id: string | null }).student_verification_id)
           .filter(Boolean) as string[];
 
-        const uniqueVerificationIds = Array.from(new Set(fallbackVerificationIds));
-
+        const uniqueVerificationIds = Array.from(new Set(verificationIds));
         if (uniqueVerificationIds.length > 0) {
           const { data: verifications } = await supabase
             .from("student_verifications")
@@ -173,11 +160,9 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           });
 
           // Preserve multiplicity: one entry per redemption
-          studentDiscountUserIdsPerRedemption.push(
-            ...fallbackVerificationIds
-              .map((verificationId) => mapByVerificationId.get(verificationId))
-              .filter(Boolean) as string[]
-          );
+          studentDiscountUserIdsPerRedemption = verificationIds
+            .map((verificationId) => mapByVerificationId.get(verificationId))
+            .filter(Boolean) as string[];
         }
       }
 
