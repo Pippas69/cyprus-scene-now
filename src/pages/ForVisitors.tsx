@@ -216,7 +216,7 @@ const ForVisitors = () => {
             <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-6 tracking-tight">
               {content.hero.title}
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               {content.hero.subtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -335,10 +335,10 @@ const ForVisitors = () => {
             <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-foreground mb-4">
               {content.cta.title}
             </h2>
-            <p className="text-xl text-muted-foreground mb-8">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8">
               {content.cta.subtitle}
             </p>
-            <Button asChild size="lg" className="text-lg px-8">
+            <Button asChild size="lg" className="text-base sm:text-lg px-6 sm:px-8">
               <Link to="/signup">{content.cta.button}</Link>
             </Button>
           </motion.div>
