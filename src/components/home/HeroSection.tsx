@@ -92,11 +92,11 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="space-y-3 sm:space-y-4"
           >
-            <h1 className={`${language === 'el' ? 'font-cinzel' : 'font-urbanist'} text-3xl sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-black bg-gradient-to-r from-aegean via-foreground to-aegean bg-clip-text text-transparent leading-tight tracking-tight px-2`}>
+            <h1 className={`${language === 'el' ? 'font-cinzel' : 'font-urbanist'} text-3xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black bg-gradient-to-r from-aegean via-foreground to-aegean bg-clip-text text-transparent leading-tight tracking-tight px-2`}>
               {t.heroMain}
             </h1>
             <div className="relative inline-block">
-              <h2 className={`${language === 'el' ? 'font-cinzel' : 'font-urbanist'} text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold min-h-[1.2em] px-2`}>
+              <h2 className={`${language === 'el' ? 'font-cinzel' : 'font-urbanist'} text-xl sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold min-h-[1.2em] px-2`}>
                 <Typewriter 
                   phrases={phrases[language]} 
                   typingSpeed={70}
