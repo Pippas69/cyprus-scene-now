@@ -82,7 +82,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         </span>
       </motion.div>
 
-      <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 mt-8 sm:mt-16 md:mt-20">
+      <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-10 md:py-12 mt-4 sm:mt-8 md:mt-12">
         <div className="flex flex-col items-center text-center space-y-5 sm:space-y-6 md:space-y-8">
 
           {/* Main heading */}
