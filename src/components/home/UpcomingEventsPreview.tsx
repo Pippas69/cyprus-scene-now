@@ -121,7 +121,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       </div>
 
       {/* Events cards on white background - using UnifiedEventCard like MyEvents */}
-      <div className="bg-background py-6 sm:py-8 md:py-12">
+      <div className="bg-background py-6 sm:py-8 md:py-12 pb-10 sm:pb-12 md:pb-16">
         <div className="container mx-auto px-3 sm:px-4">
           {/* Mobile: show only 1 event, Tablet/Desktop: show 2 - same grid as MyEvents */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 sm:mb-10 md:mb-12 max-w-4xl mx-auto">
