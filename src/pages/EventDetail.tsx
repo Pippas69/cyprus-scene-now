@@ -652,7 +652,7 @@ export default function EventDetail() {
                 <>
                   {/* Mobile only: single column */}
                   <motion.div
-                    className="grid gap-2 md:hidden"
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-2"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -660,19 +660,6 @@ export default function EventDetail() {
                     {similarEvents.map((similar) => (
                       <motion.div key={similar.id} variants={itemVariants}>
                         <UnifiedEventCard event={similar} language={language} size="mobileFixed" />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                  {/* Tablet/Desktop: 2-column grid */}
-                  <motion.div
-                    className="hidden md:grid md:grid-cols-2 gap-2"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {similarEvents.map((similar) => (
-                      <motion.div key={similar.id} variants={itemVariants}>
-                        <UnifiedEventCard event={similar} language={language} size="full" />
                       </motion.div>
                     ))}
                   </motion.div>

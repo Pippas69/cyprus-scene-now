@@ -96,16 +96,11 @@ export const SavedEvents = ({ userId, language }: SavedEventsProps) => {
   }
 
   const renderEvents = (eventsList: any[]) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
       {eventsList.map(event => (
         <div key={event.id}>
-          {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
-          <div className="md:hidden">
-            <UnifiedEventCard event={event} language={language} size="mobileFixed" />
-          </div>
-          <div className="hidden md:block">
-            <UnifiedEventCard event={event} language={language} size="full" />
-          </div>
+          {/* Use mobile card style on all devices for visual consistency */}
+          <UnifiedEventCard event={event} language={language} size="mobileFixed" />
         </div>
       ))}
     </div>

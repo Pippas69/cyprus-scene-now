@@ -674,7 +674,7 @@ const BusinessProfile = () => {
                           businesses: event.businesses,
                         }}
                         language={language}
-                        size="full"
+                        size="mobileFixed"
                       />
                     </motion.div>
                   );
