@@ -133,27 +133,15 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           };
           return (
             <div key={key} className="relative">
-              {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
-              <div className="md:hidden">
-                <UnifiedEventCard
-                  event={event}
-                  language={language}
-                  size="mobileFixed"
-                  isBoosted={isBoosted}
-                  disableViewTracking
-                  linkSearch="?src=dashboard_user"
-                />
-              </div>
-              <div className="hidden md:block">
-                <UnifiedEventCard
-                  event={event}
-                  language={language}
-                  size="full"
-                  isBoosted={isBoosted}
-                  disableViewTracking
-                  linkSearch="?src=dashboard_user"
-                />
-              </div>
+              {/* Use mobile card style on all devices for visual consistency */}
+              <UnifiedEventCard
+                event={event}
+                language={language}
+                size="mobileFixed"
+                isBoosted={isBoosted}
+                disableViewTracking
+                linkSearch="?src=dashboard_user"
+              />
             </div>
           );
         })}
@@ -178,27 +166,15 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           };
           return (
             <div key={key} className="relative opacity-60">
-              {/* Mobile: mobileFixed matches MyOffers card, Desktop: full */}
-              <div className="md:hidden">
-                <UnifiedEventCard
-                  event={event}
-                  language={language}
-                  size="mobileFixed"
-                  isBoosted={isBoosted}
-                  disableViewTracking
-                  linkSearch="?src=dashboard_user"
-                />
-              </div>
-              <div className="hidden md:block">
-                <UnifiedEventCard
-                  event={event}
-                  language={language}
-                  size="full"
-                  isBoosted={isBoosted}
-                  disableViewTracking
-                  linkSearch="?src=dashboard_user"
-                />
-              </div>
+              {/* Use mobile card style on all devices for visual consistency */}
+              <UnifiedEventCard
+                event={event}
+                language={language}
+                size="mobileFixed"
+                isBoosted={isBoosted}
+                disableViewTracking
+                linkSearch="?src=dashboard_user"
+              />
               <Badge variant="secondary" className="absolute top-2 right-2 bg-background/90 backdrop-blur text-xs z-20">
                 <Clock className="h-3 w-3 mr-1" />
                 {t.eventEnded}
@@ -215,7 +191,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       return <p className="text-center text-muted-foreground py-6 text-sm">{emptyMessage}</p>;
     }
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {ticketsList.map(ticket => {
           const businessName = (ticket.events as any)?.businesses?.name;
           return (
