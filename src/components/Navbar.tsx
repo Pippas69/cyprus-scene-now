@@ -105,76 +105,77 @@ const Navbar = () => {
     )}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo - Desktop/Tablet: simple button, Mobile: dropdown with navigation */}
-          {/* Desktop/Tablet Logo (md+) */}
-          <button onClick={() => navigate("/")} className="hidden md:block hover:opacity-80 transition-opacity">
-            <Logo size="md" />
-          </button>
+          {/* Left Section: Logo + Nav Links */}
+          <div className="flex items-center">
+            {/* Desktop/Tablet Logo (md+) */}
+            <button onClick={() => navigate("/")} className="hidden md:block hover:opacity-80 transition-opacity">
+              <Logo size="md" />
+            </button>
 
-          {/* Mobile Logo with Dropdown (<md) */}
-          <div className="md:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                  <Logo size="md" />
-                  <ChevronDown className="w-5 h-5 text-aegean" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
-                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/")}>
-                  {language === "el" ? "Αρχική" : "Home"}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/feed")}>
-                  {language === "el" ? "Εξερεύνηση" : "Explore"}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-visitors")}>
-                  {language === "el" ? "Επισκέπτες" : "Visitors"}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-businesses")}>
-                  {language === "el" ? "Επιχειρήσεις" : "Businesses"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            {/* Mobile Logo with Dropdown (<md) */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                    <Logo size="md" />
+                    <ChevronDown className="w-5 h-5 text-aegean" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
+                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/")}>
+                    {language === "el" ? "Αρχική" : "Home"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/feed")}>
+                    {language === "el" ? "Εξερεύνηση" : "Explore"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-visitors")}>
+                    {language === "el" ? "Επισκέπτες" : "Visitors"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/for-businesses")}>
+                    {language === "el" ? "Επιχειρήσεις" : "Businesses"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-          {/* Tablet Horizontal Navigation Links (md to lg) - smaller text */}
-          <div className="hidden md:flex lg:hidden items-center gap-2 ml-2">
+            {/* Tablet Horizontal Navigation Links (md to lg) - consistent gap with logo */}
+            <div className="hidden md:flex lg:hidden items-center gap-3 ml-3">
+              <button 
+                onClick={() => navigate("/")} 
+                className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+              >
+                {language === "el" ? "Αρχική" : "Home"}
+              </button>
+              <button 
+                onClick={() => navigate("/feed")} 
+                className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+              >
+                {language === "el" ? "Εξερεύνηση" : "Explore"}
+              </button>
+              <button 
+                onClick={() => navigate("/for-visitors")} 
+                className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+              >
+                {language === "el" ? "Επισκέπτες" : "Visitors"}
+              </button>
+              <button 
+                onClick={() => navigate("/for-businesses")} 
+                className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+              >
+                {language === "el" ? "Επιχειρήσεις" : "Businesses"}
+              </button>
+            </div>
+
+            {/* Desktop Horizontal Navigation Links (lg+) - consistent gap with logo */}
+            <div className="hidden lg:flex items-center gap-4 ml-4">
             <button 
               onClick={() => navigate("/")} 
-              className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
             >
               {language === "el" ? "Αρχική" : "Home"}
             </button>
             <button 
               onClick={() => navigate("/feed")} 
-              className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
-            >
-              {language === "el" ? "Εξερεύνηση" : "Explore"}
-            </button>
-            <button 
-              onClick={() => navigate("/for-visitors")} 
-              className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
-            >
-              {language === "el" ? "Επισκέπτες" : "Visitors"}
-            </button>
-            <button 
-              onClick={() => navigate("/for-businesses")} 
-              className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
-            >
-              {language === "el" ? "Επιχειρήσεις" : "Businesses"}
-            </button>
-          </div>
-
-          {/* Desktop Horizontal Navigation Links (lg+) */}
-          <div className="hidden lg:flex items-center gap-4 ml-4">
-            <button 
-              onClick={() => navigate("/")} 
-              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
-            >
-              {language === "el" ? "Αρχική" : "Home"}
-            </button>
-            <button 
-              onClick={() => navigate("/feed")} 
               className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
             >
               {language === "el" ? "Εξερεύνηση" : "Explore"}
@@ -191,10 +192,12 @@ const Navbar = () => {
             >
               {language === "el" ? "Επιχειρήσεις" : "Businesses"}
             </button>
+            </div>
           </div>
 
-          {/* Desktop Search Icon (lg+) - opens functional search, no text */}
-          <div className="hidden lg:flex items-center mr-2">
+          {/* Right Section: Search + Auth buttons */}
+          <div className="hidden lg:flex items-center gap-2">
+            {/* Desktop Search Icon (lg+) */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button
@@ -210,10 +213,8 @@ const Navbar = () => {
                 <GlobalSearch language={language} fullscreen resultTypes={['business']} />
               </SheetContent>
             </Sheet>
-          </div>
 
-          {/* Desktop Navigation (lg+) */}
-          <div className="hidden lg:flex items-center gap-2 ml-0">
+            {/* Login button */}
             {!user && (
               <Button 
                 onClick={() => navigate("/login")}
@@ -226,7 +227,7 @@ const Navbar = () => {
             {/* Language Toggle */}
             <LanguageToggle />
 
-            {/* User Profile Menu or Join Dropdown - Unified 3 options */}
+            {/* User Profile Menu or Join Dropdown */}
             {user ? (
               <UserAccountDropdown
                 userId={user.id}
