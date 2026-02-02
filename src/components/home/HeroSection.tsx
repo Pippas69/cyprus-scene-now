@@ -68,23 +68,22 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         className="absolute bottom-[40%] right-[5%] w-5 h-5 rounded-full bg-seafoam/60"
       />
 
-      <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 -mt-24 sm:mt-0">
+      {/* Tagline badge - positioned at top */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="absolute top-24 sm:top-28 md:top-32 left-1/2 -translate-x-1/2 z-20"
+      >
+        <span className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-seafoam/15 to-aegean/15 border border-seafoam/30 shadow-lg">
+          <span className="font-serif text-sm sm:text-base md:text-lg tracking-wide bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase">
+            {language === 'el' ? 'ΦΟΒΟΣ' : 'FEAR'} OF MISSING OUT
+          </span>
+        </span>
+      </motion.div>
+
+      <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 mt-8 sm:mt-16 md:mt-20">
         <div className="flex flex-col items-center text-center space-y-5 sm:space-y-6 md:space-y-8">
-          {/* Tagline badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-seafoam/15 to-aegean/15 border border-seafoam/30 shadow-lg">
-              <span className="font-cinzel font-bold text-xs sm:text-base md:text-lg tracking-wider bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase">
-                {language === 'el' ? 'ΦΟΒΟΣ' : 'FEAR'}
-              </span>
-              <span className="font-cinzel font-bold text-xs sm:text-base md:text-lg tracking-wider bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase">
-                OF MISSING OUT
-              </span>
-            </span>
-          </motion.div>
 
           {/* Main heading */}
           <motion.div
