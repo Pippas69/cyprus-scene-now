@@ -385,7 +385,7 @@ const ForBusinesses = () => {
             <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-6 tracking-tight">
               {content.hero.title}
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               {content.hero.subtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -412,7 +412,7 @@ const ForBusinesses = () => {
             <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-seafoam mb-4">
               {content.platform.title}
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
               {content.platform.description}
             </p>
           </motion.div>
@@ -475,7 +475,7 @@ const ForBusinesses = () => {
                 ))}
               </div>
             </div>
-            <div className="relative">
+            <div className="relative hidden md:block">
               <div className="bg-gradient-to-br from-accent/20 to-primary/20 rounded-2xl p-8 aspect-square flex items-center justify-center">
                 <BarChart3 className="w-32 h-32 text-accent/50" />
               </div>
@@ -488,7 +488,7 @@ const ForBusinesses = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="order-2 md:order-1">
+            <div className="order-2 md:order-1 hidden md:block">
               <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl p-8 aspect-square flex items-center justify-center">
                 <Rocket className="w-32 h-32 text-primary/50" />
               </div>
@@ -566,34 +566,41 @@ const ForBusinesses = () => {
                   transition={{ duration: 0.4 }}
                   viewport={{ once: true }}
                 >
-                  <Card className={`h-full relative ${colorClass}`}>
+                  <Card className={`h-full relative ${colorClass} overflow-visible`}>
                     {"popular" in plan && plan.popular && (
-                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">
+                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] sm:text-xs whitespace-nowrap">
                         {language === "el" ? "Δημοφιλέστερη" : "Most Popular"}
                       </Badge>
                     )}
-                    <CardHeader>
-                      <div className="flex items-center gap-2 mb-2">
-                        {Icon && <Icon className="w-5 h-5 text-accent" />}
-                        <CardTitle className="font-poppins">{plan.name}</CardTitle>
+                    <CardHeader className="pb-2 sm:pb-4">
+                      <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                        {Icon && (
+                          <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${
+                            planKey === 'basic' ? 'bg-gradient-to-br from-blue-500 to-cyan-500' :
+                            planKey === 'pro' ? 'bg-gradient-to-br from-primary to-sunset-coral' :
+                            'bg-gradient-to-br from-purple-500 to-pink-500'
+                          }`}>
+                            <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                          </div>
+                        )}
+                        <CardTitle className="font-poppins text-base sm:text-lg uppercase tracking-wide">{plan.name}</CardTitle>
                       </div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-bold text-foreground">{plan.price}</span>
-                        <span className="text-muted-foreground text-sm">{content.pricing.perMonth}</span>
+                        <span className="text-2xl sm:text-3xl font-bold text-foreground">{plan.price}</span>
+                        <span className="text-muted-foreground text-xs sm:text-sm">{content.pricing.perMonth}</span>
                       </div>
-                      <p className="text-muted-foreground text-sm">{plan.description}</p>
                     </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2 mb-6">
+                    <CardContent className="pt-0">
+                      <ul className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
                         {plan.features.map((feature, index) => (
-                          <li key={index} className="flex items-start gap-2 text-sm">
-                            <Check className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                          <li key={index} className="flex items-start gap-2 text-xs sm:text-sm">
+                            <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0 mt-0.5" />
                             <span className="text-foreground">{feature}</span>
                           </li>
                         ))}
                       </ul>
-                      <Button asChild className="w-full" variant={"popular" in plan && plan.popular ? "default" : "outline"}>
-                        <Link to="/signup-business">{content.pricing.cta}</Link>
+                      <Button asChild className="w-full text-sm sm:text-base" variant={"popular" in plan && plan.popular ? "default" : "outline"}>
+                        <Link to="/signup-business">{language === "el" ? "Επιλογή" : "Select"}</Link>
                       </Button>
                     </CardContent>
                   </Card>
@@ -604,19 +611,19 @@ const ForBusinesses = () => {
 
           {/* Enterprise */}
           <Card className="bg-primary text-primary-foreground">
-            <CardContent className="p-8">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <CardContent className="p-4 sm:p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
                 <div>
-                  <h3 className="font-cinzel text-2xl font-bold mb-2">
+                  <h3 className="font-cinzel text-lg sm:text-xl md:text-2xl font-bold mb-1.5 sm:mb-2">
                     {content.enterprise.title}
                   </h3>
-                  <p className="text-primary-foreground/80 max-w-xl">
+                  <p className="text-primary-foreground/80 max-w-xl text-xs sm:text-sm md:text-base">
                     {content.enterprise.description}
                   </p>
                 </div>
-                <Button asChild variant="secondary" size="lg" className="gap-2">
+                <Button asChild variant="secondary" size="default" className="gap-2 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11 px-3 sm:px-4 md:px-6 w-fit">
                   <a href="mailto:support@fomocy.com">
-                    <Mail className="w-4 h-4" />
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     {content.enterprise.cta}
                   </a>
                 </Button>
@@ -661,20 +668,20 @@ const ForBusinesses = () => {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
               {content.cta.title}
             </h2>
-            <p className="text-xl text-muted-foreground mb-8">
+            <p className="text-sm sm:text-base md:text-xl text-muted-foreground mb-6 sm:mb-8">
               {content.cta.subtitle}
             </p>
             <Button
               asChild
               size="lg"
-              className="text-lg px-6 md:px-8 gap-2 w-full sm:w-auto whitespace-normal sm:whitespace-nowrap h-auto py-3 leading-tight"
+              className="text-sm sm:text-base md:text-lg px-4 sm:px-6 md:px-8 gap-2 w-full sm:w-auto whitespace-normal sm:whitespace-nowrap h-auto py-2.5 sm:py-3 leading-tight"
             >
               <Link to="/signup-business" className="text-center">
                 {content.cta.button}
-                <ArrowRight className="w-5 h-5 flex-shrink-0" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               </Link>
             </Button>
           </motion.div>
