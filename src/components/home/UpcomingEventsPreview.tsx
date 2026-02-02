@@ -101,7 +101,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
     <section className="relative overflow-hidden">
       {/* Title area with gradient from seafoam to white */}
       <div className="relative py-8 sm:py-10 md:py-16">
-        <div className="absolute inset-0 bg-[#7de4d4]" />
+        <div className="absolute inset-0 bg-[#4dd4c4]" />
         
         <div className="container mx-auto px-3 sm:px-4 relative z-10">
           <motion.div
@@ -122,8 +122,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
       {/* Events cards on seafoam background with fade-to-white AFTER the CTA (matches reference) */}
       <div className="relative py-6 sm:py-8 md:py-12 pb-10 sm:pb-12 md:pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-[#7de4d4]" />
-        <div className="absolute inset-x-0 bottom-0 h-28 sm:h-32 md:h-40 bg-gradient-to-b from-transparent to-background" />
+        <div className="absolute inset-0 bg-[#4dd4c4]" />
 
         <div className="container mx-auto px-3 sm:px-4 relative z-10">
           {/* Mobile: show only 1 event, Tablet/Desktop: show 2 - same grid as MyEvents */}
