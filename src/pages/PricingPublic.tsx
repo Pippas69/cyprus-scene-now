@@ -2,86 +2,98 @@ import { useLanguage } from "@/hooks/useLanguage";
 import InfoNavbar from "@/components/info/InfoNavbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, Zap, TrendingUp, Crown, Building2 } from "lucide-react";
+import { 
+  Check, Zap, Star, Crown, Building2, Sparkles, Mail, Gift, TrendingUp,
+  MapPin, BarChart3, Target, Percent, Rocket, Lightbulb, Calendar
+} from "lucide-react";
 import { useState } from "react";
+
+// Plan configuration matching SubscriptionPlans.tsx
+const PLAN_CONFIG = {
+  basic: {
+    icon: Zap,
+    gradient: 'from-blue-500 to-cyan-500',
+    monthlyPrice: 5999,
+  },
+  pro: {
+    icon: Star,
+    gradient: 'from-primary to-sunset-coral',
+    monthlyPrice: 11999,
+  },
+  elite: {
+    icon: Crown,
+    gradient: 'from-purple-500 to-pink-500',
+    monthlyPrice: 23999,
+  },
+};
 
 const PricingPublic = () => {
   const { language } = useLanguage();
-  const [isAnnual, setIsAnnual] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+
+  const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
 
   const text = {
     el: {
-      heroTitle: "Απλή, Διαφανής Τιμολόγηση",
-      heroSubtitle:
-        "Επίλεξε το πλάνο που ταιριάζει στην επιχείρησή σου. Χωρίς κρυφές χρεώσεις.",
-      monthly: "Μηνιαία",
-      annual: "Ετήσια",
-      annualSave: "Εξοικονόμησε 2 μήνες",
+      heroTitle: "Επιλέξτε το πλάνο σας",
+      monthly: "Μηνιαίο",
+      annual: "Ετήσιο",
+      saveMonths: "2 μήνες δωρεάν!",
       perMonth: "/μήνα",
-      getStarted: "Ξεκίνα Τώρα",
-      contactSales: "Επικοινωνία",
-      mostPopular: "Πιο Δημοφιλές",
+      billedAnnually: "χρέωση ετησίως",
+      choosePlan: "Επιλογή",
+      mostPopular: "Δημοφιλέστερη",
       enterprise: "Enterprise",
-      enterpriseDesc: "Για μεγάλες επιχειρήσεις με εξειδικευμένες ανάγκες",
+      enterpriseDesc: "Για μεγάλες επιχειρήσεις με ειδικές ανάγκες",
+      contactUs: "Επικοινωνήστε μαζί μας:",
       faq: "Συχνές Ερωτήσεις",
-      plans: [
-        {
-          name: "Free",
-          price: 0,
-          description: "Για επιχειρήσεις που ξεκινούν",
-          icon: Building2,
-          features: [
-            "Δημιουργία εκδηλώσεων",
-            "Βασικά στατιστικά",
-            "Προσφορές με προμήθεια",
-            "Pay-per-boost προώθηση",
-          ],
-        },
-        {
-          name: "Starter",
-          price: 100,
-          description: "Για αναπτυσσόμενες επιχειρήσεις",
-          icon: Zap,
-          features: [
-            "Όλα τα Free +",
-            "€120 boost budget/μήνα",
-            "5 προσφορές χωρίς προμήθεια",
-            "Βασική στόχευση κοινού",
-            "Email υποστήριξη",
-          ],
-        },
-        {
-          name: "Growth",
-          price: 200,
-          popular: true,
-          description: "Για επιχειρήσεις σε ανάπτυξη",
-          icon: TrendingUp,
-          features: [
-            "Όλα τα Starter +",
-            "€250 boost budget/μήνα",
-            "10 προσφορές χωρίς προμήθεια",
-            "Προηγμένη στόχευση κοινού",
-            "Αναλυτικά demographics",
-            "Priority υποστήριξη",
-          ],
-        },
-        {
-          name: "Professional",
-          price: 400,
-          description: "Για κορυφαίες επιχειρήσεις",
-          icon: Crown,
-          features: [
-            "Όλα τα Growth +",
-            "€800 boost budget/μήνα",
-            "20 προσφορές χωρίς προμήθεια",
-            "Premium στόχευση κοινού",
-            "API access",
-            "Dedicated account manager",
-          ],
-        },
-      ],
+      // Free plan
+      freeTitle: "FREE",
+      freeBusinessProfile: "Προφίλ επιχείρησης",
+      freeEventCreation: "Εκδηλώσεις",
+      freeOfferCreation: "Προσφορές",
+      freeMarketplace: "Marketplace",
+      freeMapPresence: "Χάρτης",
+      freeAnalytics: "Αναλυτικά (Επισκόπηση)",
+      freeCommission: "12%",
+      freeBoostCredits: "0€",
+      // Basic plan
+      basicAllFree: "Όλα τα οφέλη του Free",
+      basicMarketplace: "Βελτιωμένη προβολή",
+      basicMarketplaceNote: "(ισχυρότερη από του Free)",
+      basicMapPresence: "Κανονική παρουσία στον χάρτη",
+      basicAnalytics: "Αναλυτικά απόδοσης",
+      basicAnalyticsNote: "(προφίλ + προσφορών + εκδηλώσεων)",
+      basicAudience: "Κοινό Επισκεπτών",
+      basicCommission: "Commission: 10%",
+      basicBoostCredits: "Boost credits: 50€",
+      basicSupport: "Basic Support",
+      // Pro plan
+      proAllBasic: "Όλα τα οφέλη του Basic",
+      proMarketplace: "Αυξημένη προβολή",
+      proMarketplaceNote: "(ισχυρότερη από Basic)",
+      proMapPresence: "Ενισχυμένη παρουσία στον χάρτη",
+      proBoostAnalytics: "Αναλυτικά Αξίας Προώθησης",
+      proBoostCompare: "Σύγκριση Απόδοσης Boosted vs non-Boosted",
+      proAudienceTargeting: "Καλύτερη στόχευση κοινού",
+      proCommission: "Commission: 8%",
+      proBoostCredits: "Boost credits: 150€",
+      proSupport: "Pro Support",
+      // Elite plan
+      eliteAllPro: "Όλα τα οφέλη του Pro",
+      eliteMarketplace: "Μέγιστη προτεραιότητα προβολής Παγκύπρια",
+      eliteMapPresence: "Κυρίαρχη παρουσία στον χάρτη",
+      eliteFullAnalytics: "Πλήρης πρόσβαση στα αναλυτικά",
+      eliteGuidance: "Καθοδήγηση και στρατηγικές προτάσεις",
+      eliteBestTimes: "Καλύτερες μέρες και ώρες",
+      eliteGrowthPlan: "Πλάνο αύξησης πελατών",
+      eliteCommission: "Commission: 6%",
+      eliteBoostCredits: "Boost credits: 300€",
+      eliteSupport: "Elite Support",
       faqs: [
         {
           q: "Τι είναι το boost budget;",
@@ -102,75 +114,61 @@ const PricingPublic = () => {
       ],
     },
     en: {
-      heroTitle: "Simple, Transparent Pricing",
-      heroSubtitle:
-        "Choose the plan that fits your business. No hidden fees.",
+      heroTitle: "Choose Your Plan",
       monthly: "Monthly",
       annual: "Annual",
-      annualSave: "Save 2 months",
+      saveMonths: "2 months free!",
       perMonth: "/month",
-      getStarted: "Get Started",
-      contactSales: "Contact Sales",
+      billedAnnually: "billed annually",
+      choosePlan: "Get Started",
       mostPopular: "Most Popular",
       enterprise: "Enterprise",
-      enterpriseDesc: "For large businesses with specialized needs",
+      enterpriseDesc: "For large businesses with special needs",
+      contactUs: "Contact us:",
       faq: "Frequently Asked Questions",
-      plans: [
-        {
-          name: "Free",
-          price: 0,
-          description: "For businesses just starting",
-          icon: Building2,
-          features: [
-            "Event creation",
-            "Basic analytics",
-            "Offers with commission",
-            "Pay-per-boost promotion",
-          ],
-        },
-        {
-          name: "Starter",
-          price: 100,
-          description: "For growing businesses",
-          icon: Zap,
-          features: [
-            "Everything in Free +",
-            "€120 boost budget/month",
-            "5 commission-free offers",
-            "Basic audience targeting",
-            "Email support",
-          ],
-        },
-        {
-          name: "Growth",
-          price: 200,
-          popular: true,
-          description: "For scaling businesses",
-          icon: TrendingUp,
-          features: [
-            "Everything in Starter +",
-            "€250 boost budget/month",
-            "10 commission-free offers",
-            "Advanced audience targeting",
-            "Detailed demographics",
-            "Priority support",
-          ],
-        },
-        {
-          name: "Professional",
-          price: 400,
-          description: "For top businesses",
-          icon: Crown,
-          features: [
-            "Everything in Growth +",
-            "€800 boost budget/month",
-            "20 commission-free offers",
-            "Premium audience targeting",
-            "API access",
-            "Dedicated account manager",
-          ],
-        },
-      ],
+      // Free plan
+      freeTitle: "FREE",
+      freeBusinessProfile: "Business profile",
+      freeEventCreation: "Events",
+      freeOfferCreation: "Offers",
+      freeMarketplace: "Marketplace",
+      freeMapPresence: "Map",
+      freeAnalytics: "Analytics (Overview)",
+      freeCommission: "12%",
+      freeBoostCredits: "€0",
+      // Basic plan
+      basicAllFree: "All Free benefits",
+      basicMarketplace: "Improved visibility",
+      basicMarketplaceNote: "(stronger than Free)",
+      basicMapPresence: "Normal map presence",
+      basicAnalytics: "Performance analytics",
+      basicAnalyticsNote: "(profile + offers + events)",
+      basicAudience: "Visitor Audience",
+      basicCommission: "Commission: 10%",
+      basicBoostCredits: "Boost credits: €50",
+      basicSupport: "Basic Support",
+      // Pro plan
+      proAllBasic: "All Basic benefits",
+      proMarketplace: "Enhanced visibility",
+      proMarketplaceNote: "(stronger than Basic)",
+      proMapPresence: "Enhanced map presence",
+      proBoostAnalytics: "Boost Value Analytics",
+      proBoostCompare: "Boosted vs non-Boosted Performance Comparison",
+      proAudienceTargeting: "Better audience targeting",
+      proCommission: "Commission: 8%",
+      proBoostCredits: "Boost credits: €150",
+      proSupport: "Pro Support",
+      // Elite plan
+      eliteAllPro: "All Pro benefits",
+      eliteMarketplace: "Maximum visibility priority Cyprus-wide",
+      eliteMapPresence: "Dominant map presence",
+      eliteFullAnalytics: "Full analytics access",
+      eliteGuidance: "Guidance and strategic recommendations",
+      eliteBestTimes: "Best days and hours",
+      eliteGrowthPlan: "Customer growth plan",
+      eliteCommission: "Commission: 6%",
+      eliteBoostCredits: "Boost credits: €300",
+      eliteSupport: "Elite Support",
       faqs: [
         {
           q: "What is boost budget?",
@@ -194,150 +192,278 @@ const PricingPublic = () => {
 
   const t = text[language];
 
-  const getAnnualPrice = (monthly: number) =>
-    Math.round(monthly * 10); // 2 months free
+  // Helper functions for features
+  const getBasicFeatures = () => [
+    { icon: Gift, text: t.basicAllFree },
+    { icon: TrendingUp, text: t.basicMarketplace, note: t.basicMarketplaceNote },
+    { icon: MapPin, text: t.basicMapPresence },
+    { icon: BarChart3, text: t.basicAnalytics, note: t.basicAnalyticsNote },
+    { icon: Target, text: t.basicAudience },
+    { icon: Percent, text: t.basicCommission },
+    { icon: Rocket, text: t.basicBoostCredits },
+    { icon: null, text: t.basicSupport },
+  ];
+
+  const getProFeatures = () => [
+    { icon: Gift, text: t.proAllBasic },
+    { icon: TrendingUp, text: t.proMarketplace, note: t.proMarketplaceNote },
+    { icon: MapPin, text: t.proMapPresence },
+    { icon: BarChart3, text: t.proBoostAnalytics },
+    { icon: Lightbulb, text: t.proBoostCompare },
+    { icon: Target, text: t.proAudienceTargeting },
+    { icon: Percent, text: t.proCommission },
+    { icon: Rocket, text: t.proBoostCredits },
+    { icon: null, text: t.proSupport },
+  ];
+
+  const getEliteFeatures = () => [
+    { icon: Gift, text: t.eliteAllPro },
+    { icon: Crown, text: t.eliteMarketplace },
+    { icon: MapPin, text: t.eliteMapPresence },
+    { icon: BarChart3, text: t.eliteFullAnalytics },
+    { icon: Lightbulb, text: t.eliteGuidance },
+    { icon: Calendar, text: t.eliteBestTimes },
+    { icon: TrendingUp, text: t.eliteGrowthPlan },
+    { icon: Percent, text: t.eliteCommission },
+    { icon: Rocket, text: t.eliteBoostCredits },
+    { icon: null, text: t.eliteSupport },
+  ];
+
+  const renderFeatureItem = (feature: { icon: any; text: string; note?: string }, gradient: string, index: number) => (
+    <li key={index} className="flex items-start gap-2.5">
+      <div className={`p-0.5 rounded-full bg-gradient-to-br ${gradient} mt-0.5 shrink-0`}>
+        <Check className="w-3 h-3 text-white" />
+      </div>
+      <div className="flex flex-col">
+        <span className="text-xs sm:text-sm text-foreground/90">{feature.text}</span>
+        {feature.note && (
+          <span className="text-[10px] sm:text-xs text-muted-foreground">{feature.note}</span>
+        )}
+      </div>
+    </li>
+  );
+
+  const plans = ['basic', 'pro', 'elite'] as const;
 
   return (
     <div className="min-h-screen bg-background">
       <InfoNavbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-12 px-4">
-        <div className="container mx-auto text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-urbanist text-4xl md:text-6xl font-bold mb-6"
-          >
-            {t.heroTitle}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
-          >
-            {t.heroSubtitle}
-          </motion.p>
-
-          {/* Billing Toggle */}
+      {/* Pricing Section - Matching In-App Design */}
+      <section className="pt-32 pb-20 px-4">
+        <div className="container mx-auto max-w-7xl">
+          {/* Free Plan - Compact Horizontal Section */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center justify-center gap-4 mb-12"
+            transition={{ duration: 0.4 }}
+            className="mb-4"
           >
-            <span
-              className={`font-medium ${
-                !isAnnual ? "text-foreground" : "text-muted-foreground"
-              }`}
-            >
-              {t.monthly}
-            </span>
-            <button
-              onClick={() => setIsAnnual(!isAnnual)}
-              className={`relative w-14 h-7 rounded-full transition-colors ${
-                isAnnual ? "bg-primary" : "bg-muted"
-              }`}
-            >
-              <div
-                className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
-                  isAnnual ? "translate-x-8" : "translate-x-1"
-                }`}
-              />
-            </button>
-            <span
-              className={`font-medium ${
-                isAnnual ? "text-foreground" : "text-muted-foreground"
-              }`}
-            >
-              {t.annual}
-            </span>
-            {isAnnual && (
-              <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">
-                {t.annualSave}
-              </span>
-            )}
+            <div className="px-4 py-3 rounded-lg bg-muted/20 border border-border/30">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                {/* Free Plan Title */}
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium text-sm text-foreground">{t.freeTitle}</span>
+                </div>
+                
+                {/* Separator */}
+                <div className="hidden sm:block h-4 w-px bg-border" />
+                
+                {/* Features - All inline with consistent styling */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    {t.freeBusinessProfile}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    {t.freeEventCreation}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    {t.freeOfferCreation}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    {t.freeMarketplace}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    {t.freeMapPresence}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    {t.freeAnalytics}
+                  </span>
+                </div>
+                
+                {/* Separator */}
+                <div className="hidden lg:block h-4 w-px bg-border" />
+                
+                {/* Stats - compact pills */}
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Commission: {t.freeCommission}</span>
+                  <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Boost: {t.freeBoostCredits}</span>
+                </div>
+              </div>
+            </div>
           </motion.div>
-        </div>
-      </section>
 
-      {/* Pricing Cards */}
-      <section className="pb-20 px-4">
-        <div className="container mx-auto">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {t.plans.map((plan, index) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-                className={`relative bg-card rounded-2xl border p-6 ${
-                  plan.popular
-                    ? "border-primary shadow-lg scale-105"
-                    : "border-border"
+          {/* Title & Billing Toggle */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex flex-col items-center gap-4 mb-6 lg:flex-row lg:justify-between"
+          >
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">{t.heroTitle}</h2>
+            
+            {/* Billing Toggle */}
+            <div className="inline-flex items-center gap-2 p-1.5 bg-muted rounded-full">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                  billingCycle === 'monthly'
+                    ? 'bg-background text-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full">
-                    {t.mostPopular}
-                  </div>
-                )}
-                <div className="mb-4">
-                  <plan.icon className="w-10 h-10 text-primary mb-3" />
-                  <h3 className="font-urbanist text-2xl font-bold">
-                    {plan.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {plan.description}
-                  </p>
-                </div>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">
-                    €{isAnnual ? getAnnualPrice(plan.price) : plan.price}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {plan.price > 0
-                      ? isAnnual
-                        ? `/${language === "el" ? "έτος" : "year"}`
-                        : t.perMonth
-                      : ""}
-                  </span>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link to="/signup-business">
-                  <Button
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
+                {t.monthly}
+              </button>
+              <button
+                onClick={() => setBillingCycle('annual')}
+                className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                  billingCycle === 'annual'
+                    ? 'bg-background text-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t.annual}
+                <Badge className="bg-gradient-to-r from-primary to-sunset-coral text-white border-0 text-[10px] sm:text-xs">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  {t.saveMonths}
+                </Badge>
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Plans Grid - Single column on mobile/tablet, 3 columns on desktop */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6 mb-8">
+            {plans.map((planSlug, index) => {
+              const config = PLAN_CONFIG[planSlug];
+              const price = billingCycle === 'monthly' 
+                ? config.monthlyPrice 
+                : Math.round(config.monthlyPrice * 10 / 12); // Annual: 10 months price / 12
+              const isMostPopular = planSlug === 'pro';
+              const PlanIconComponent = config.icon;
+              
+              const features = planSlug === 'basic' 
+                ? getBasicFeatures() 
+                : planSlug === 'pro' 
+                  ? getProFeatures() 
+                  : getEliteFeatures();
+
+              return (
+                <motion.div
+                  key={planSlug}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <Card 
+                    className={`relative h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                      isMostPopular ? 'shadow-lg border-primary/30' : ''
+                    }`}
                   >
-                    {t.getStarted}
-                  </Button>
-                </Link>
-              </motion.div>
-            ))}
+                    {/* Gradient Top Border & Most Popular Badge for Pro */}
+                    {isMostPopular && (
+                      <>
+                        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient} rounded-t-lg`} />
+                        <div className="absolute -top-3 left-4">
+                          <Badge className={`bg-gradient-to-r ${config.gradient} text-white border-0 shadow-md px-2 sm:px-3 py-1 text-[10px] sm:text-xs`}>
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            {t.mostPopular}
+                          </Badge>
+                        </div>
+                      </>
+                    )}
+                    
+                    <CardHeader className="pb-3">
+                      {/* Plan Icon & Name */}
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`p-2 sm:p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} text-white`}>
+                          <PlanIconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-bold uppercase">{planSlug}</h3>
+                      </div>
+
+                      {/* Price */}
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl sm:text-3xl font-bold">{formatPrice(price)}</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground">{t.perMonth}</span>
+                      </div>
+                      {billingCycle === 'annual' && (
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                          {t.billedAnnually}
+                        </p>
+                      )}
+                    </CardHeader>
+
+                    <CardContent className="flex-1 pb-4">
+                      {/* Features List */}
+                      <ul className="space-y-2 sm:space-y-2.5">
+                        {features.map((feature, idx) => 
+                          renderFeatureItem(feature, config.gradient, idx)
+                        )}
+                      </ul>
+                    </CardContent>
+
+                    <CardFooter className="pt-4 border-t">
+                      <Button
+                        asChild
+                        className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`}
+                        variant={isMostPopular ? "default" : "outline"}
+                        size="lg"
+                      >
+                        <Link to="/signup-business">{t.choosePlan}</Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
 
-          {/* Enterprise */}
+          {/* Enterprise Section - Horizontal (matching in-app design) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-12 max-w-4xl mx-auto bg-gradient-to-r from-primary/10 to-accent/30 rounded-2xl p-8 text-center"
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <h3 className="font-urbanist text-2xl font-bold mb-2">
-              {t.enterprise}
-            </h3>
-            <p className="text-muted-foreground mb-6">{t.enterpriseDesc}</p>
-            <Link to="/contact">
-              <Button size="lg">{t.contactSales}</Button>
-            </Link>
+            <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 border border-border/50">
+              <div className="flex flex-col items-center gap-4 lg:flex-row lg:justify-between">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+                    <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-foreground">{t.enterprise}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{t.enterpriseDesc}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs sm:text-sm text-muted-foreground">{t.contactUs}</span>
+                  <a 
+                    href="mailto:support@fomocy.com"
+                    className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-foreground text-background font-medium text-xs sm:text-sm hover:opacity-90 transition-opacity"
+                  >
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    support@fomocy.com
+                  </a>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
