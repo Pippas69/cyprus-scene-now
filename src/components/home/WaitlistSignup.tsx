@@ -134,7 +134,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
   }
 
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-background">
+    <section className="py-12 sm:py-16 md:py-20 bg-white">
       <div className="container mx-auto px-3 sm:px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -151,7 +151,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
           </div>
 
           {/* Title */}
-          <h2 className="font-cinzel text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-foreground italic mb-3 sm:mb-4 px-2">
+          <h2 className="font-cinzel text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-seafoam italic mb-3 sm:mb-4 px-2">
             {t.title}
           </h2>
           
