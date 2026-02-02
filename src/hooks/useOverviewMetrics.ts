@@ -130,7 +130,9 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         eventReservationCheckinUsers = data || [];
       }
 
-      // E. Users from student discount redemptions (need to join with student_verifications to get user_id)
+      // E. Users from student discount redemptions
+      // IMPORTANT: count *each redemption* as a separate check-in.
+      // student_discount_redemptions does not have user_id, so we resolve it via student_verifications.
       const { data: studentDiscountData } = await supabase
         .from("student_discount_redemptions")
         .select("student_verification_id")
@@ -138,16 +140,30 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
-      // Get user_ids from student_verifications
-      let studentDiscountUserIds: string[] = [];
+      // Build a list of userIds PER redemption (keeps duplicates for repeat customers)
+      let studentDiscountUserIdsPerRedemption: string[] = [];
       if (studentDiscountData && studentDiscountData.length > 0) {
-        const verificationIds = studentDiscountData.map(s => s.student_verification_id).filter(Boolean);
-        if (verificationIds.length > 0) {
+        const verificationIds = studentDiscountData
+          .map((s) => s.student_verification_id)
+          .filter(Boolean) as string[];
+
+        const uniqueVerificationIds = Array.from(new Set(verificationIds));
+
+        if (uniqueVerificationIds.length > 0) {
           const { data: verifications } = await supabase
             .from("student_verifications")
-            .select("user_id")
-            .in("id", verificationIds);
-          studentDiscountUserIds = verifications?.map(v => v.user_id).filter(Boolean) as string[] || [];
+            .select("id, user_id")
+            .in("id", uniqueVerificationIds);
+
+          const mapByVerificationId = new Map<string, string>();
+          (verifications || []).forEach((v) => {
+            if (v.id && v.user_id) mapByVerificationId.set(v.id, v.user_id);
+          });
+
+          // Preserve multiplicity: one entry per redemption
+          studentDiscountUserIdsPerRedemption = verificationIds
+            .map((verificationId) => mapByVerificationId.get(verificationId))
+            .filter(Boolean) as string[];
         }
       }
 
@@ -157,7 +173,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         ...(ticketCheckinUsers?.map(t => t.user_id) || []),
         ...(directReservationCheckinUsers?.map(r => r.user_id) || []),
         ...(eventReservationCheckinUsers?.map(r => r.user_id) || []),
-        ...studentDiscountUserIds
+        ...studentDiscountUserIdsPerRedemption
       ].filter(Boolean));
       
       const customersThruFomo = allCheckinUserIds.size;
@@ -179,7 +195,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       eventReservationCheckinUsers?.forEach(r => {
         if (r.user_id) userCheckinCounts[r.user_id] = (userCheckinCounts[r.user_id] || 0) + 1;
       });
-      studentDiscountUserIds.forEach(userId => {
+      studentDiscountUserIdsPerRedemption.forEach(userId => {
         userCheckinCounts[userId] = (userCheckinCounts[userId] || 0) + 1;
       });
       
