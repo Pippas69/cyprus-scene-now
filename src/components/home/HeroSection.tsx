@@ -75,8 +75,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         transition={{ duration: 0.6 }}
         className="absolute top-24 sm:top-28 md:top-32 left-1/2 -translate-x-1/2 z-20"
       >
-        <span className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-seafoam/15 to-aegean/15 border border-seafoam/30 shadow-lg">
-          <span className="font-serif text-sm sm:text-base md:text-lg tracking-wide bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase">
+        <span className="inline-flex items-center px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-seafoam/15 to-aegean/15 border border-seafoam/30 shadow-lg whitespace-nowrap">
+          <span className="font-serif text-[13px] sm:text-base md:text-lg tracking-wide bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent uppercase whitespace-nowrap">
             {language === 'el' ? 'ΦΟΒΟΣ' : 'FEAR'} OF MISSING OUT
           </span>
         </span>
