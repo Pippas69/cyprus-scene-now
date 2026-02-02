@@ -120,9 +120,12 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
         </div>
       </div>
 
-      {/* Events cards on pure white background */}
-      <div className="bg-white py-6 sm:py-8 md:py-12 pb-10 sm:pb-12 md:pb-16">
-        <div className="container mx-auto px-3 sm:px-4">
+      {/* Events cards on seafoam background with fade-to-white AFTER the CTA (matches reference) */}
+      <div className="relative py-6 sm:py-8 md:py-12 pb-10 sm:pb-12 md:pb-16 overflow-hidden">
+        <div className="absolute inset-0 bg-[#7de4d4]" />
+        <div className="absolute inset-x-0 bottom-0 h-28 sm:h-32 md:h-40 bg-gradient-to-b from-transparent to-background" />
+
+        <div className="container mx-auto px-3 sm:px-4 relative z-10">
           {/* Mobile: show only 1 event, Tablet/Desktop: show 2 - same grid as MyEvents */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 sm:mb-10 md:mb-12 max-w-4xl mx-auto">
             {events.slice(0, 2).map((event, index) => (
