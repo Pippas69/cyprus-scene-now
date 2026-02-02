@@ -144,7 +144,7 @@ const FAQSection = ({ language }: FAQSectionProps) => {
   const currentBusinessFaqs = businessFaqs[language];
 
   return (
-    <section className="py-8 sm:py-10 md:py-16 bg-gradient-to-b from-[#2da0b0] via-[#35b5b5] to-[#4dd4c4]">
+    <section className="py-8 sm:py-10 md:py-16 bg-gradient-to-b from-[#c5f0ea] via-[#7ee5d8] to-[#4dd4c4]">
       <div className="container mx-auto px-3 sm:px-4">
         {/* Two Column FAQs - No title, reduced spacing */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 max-w-6xl mx-auto mb-10 sm:mb-12 md:mb-16">

@@ -81,11 +81,8 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
   };
 
   return (
-    <section className="relative py-10 sm:py-12 md:py-16 overflow-hidden">
-      {/* Background with gradient transition to seafoam */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-[#4dd4c4]" />
-      
-      <div className="container mx-auto px-3 sm:px-4 relative z-10">
+    <section className="relative py-10 sm:py-12 md:py-16 overflow-hidden bg-white">
+      <div className="container mx-auto px-3 sm:px-4 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -159,9 +156,6 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
           </div>
         </div>
       </div>
-      
-      {/* Smooth gradient transition to seafoam section */}
-      <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-b from-transparent to-[#4dd4c4]" />
     </section>
   );
 };
