@@ -101,7 +101,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
     <section className="relative overflow-hidden">
       {/* Title area with gradient from seafoam to white */}
       <div className="relative py-8 sm:py-10 md:py-16">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#4dd4c4] via-[#7de4d4] to-background" />
+        <div className="absolute inset-0 bg-[#7de4d4]" />
         
         <div className="container mx-auto px-3 sm:px-4 relative z-10">
           <motion.div
