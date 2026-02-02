@@ -138,7 +138,7 @@ const Navbar = () => {
           </div>
 
           {/* Tablet Horizontal Navigation Links (md to lg) - smaller text */}
-          <div className="hidden md:flex lg:hidden items-center gap-2 ml-4">
+          <div className="hidden md:flex lg:hidden items-center gap-2 ml-2">
             <button 
               onClick={() => navigate("/")} 
               className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
@@ -166,7 +166,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Horizontal Navigation Links (lg+) */}
-          <div className="hidden lg:flex items-center gap-4 ml-8 mr-6">
+          <div className="hidden lg:flex items-center gap-4 ml-4">
             <button 
               onClick={() => navigate("/")} 
               className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
@@ -194,7 +194,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Search Icon (lg+) - opens functional search, no text */}
-          <div className="hidden lg:flex items-center">
+          <div className="hidden lg:flex items-center mr-2">
             <Sheet>
               <SheetTrigger asChild>
                 <Button
@@ -213,7 +213,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Navigation (lg+) */}
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2 ml-0">
             {!user && (
               <Button 
                 onClick={() => navigate("/login")}
