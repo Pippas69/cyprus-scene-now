@@ -376,6 +376,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
         discount_type: formData.discountType,
         percent_off: formData.discountType === 'percentage' ? formData.percentOff : null,
         special_deal_text: formData.discountType === 'special_deal' ? formData.specialDealText : null,
+        terms: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
         valid_days: formData.allDays ? DAYS_OF_WEEK : formData.validDays,
         valid_start_time: formData.allDay ? '00:00' : formData.validStartTime,
         valid_end_time: formData.allDay ? '23:59' : formData.validEndTime,

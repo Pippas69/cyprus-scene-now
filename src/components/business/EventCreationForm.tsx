@@ -591,7 +591,8 @@ const EventCreationForm = ({
         requires_approval: formData.eventType === 'reservation',
         dress_code: formData.eventType === 'ticket' && formData.ticketTiers.length > 0 ? formData.ticketTiers[0].dress_code : null,
         reservation_hours_from: formData.eventType === 'reservation' ? formData.reservationFromTime : null,
-        reservation_hours_to: formData.eventType === 'reservation' ? formData.reservationToTime : null
+        reservation_hours_to: formData.eventType === 'reservation' ? formData.reservationToTime : null,
+        terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
       };
       const {
         data: createdEvent,
