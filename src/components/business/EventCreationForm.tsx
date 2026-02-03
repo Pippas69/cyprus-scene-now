@@ -731,11 +731,11 @@ const EventCreationForm = ({
           {formData.appearanceMode === 'days' && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t.fromDate}</Label>
-                <DateTimePicker value={formData.appearanceStartDate || undefined} onChange={date => updateField('appearanceStartDate', date || null)} minDate={new Date()} />
+                <DateTimePicker value={formData.appearanceStartDate || undefined} onChange={date => updateField('appearanceStartDate', date || null)} />
               </div>
               <div className="space-y-2">
                 <Label>{t.toDate}</Label>
-                <DateTimePicker value={formData.appearanceEndDate || undefined} onChange={date => updateField('appearanceEndDate', date || null)} minDate={formData.appearanceStartDate || new Date()} />
+                <DateTimePicker value={formData.appearanceEndDate || undefined} onChange={date => updateField('appearanceEndDate', date || null)} minDate={formData.appearanceStartDate || undefined} />
               </div>
             </div>}
         </SectionCard>
