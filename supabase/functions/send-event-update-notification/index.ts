@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
             : `Αλλαγή ώρας Event: ${event.title}`;
 
           await resend.emails.send({
-            from: "ΦΟΜΟ <noreply@fomocy.com>",
+            from: "ΦΟΜΟ <noreply@fomo.com.cy>",
             to: [order.customer_email],
             subject: emailSubject,
             html: `

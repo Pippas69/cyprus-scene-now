@@ -472,7 +472,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send to user
     const userEmailPromise = resend.emails.send({
-      from: "ΦΟΜΟ <noreply@fomocy.com>",
+      from: "ΦΟΜΟ <noreply@fomo.com.cy>",
       to: [userProfile.email],
       subject: userSubject,
       html: userHtml,
@@ -482,7 +482,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send to business if applicable
     if (businessEmail && businessSubject) {
       const businessEmailPromise = resend.emails.send({
-        from: "ΦΟΜΟ <noreply@fomocy.com>",
+        from: "ΦΟΜΟ <noreply@fomo.com.cy>",
         to: [businessEmail],
         subject: businessSubject,
         html: businessHtml,

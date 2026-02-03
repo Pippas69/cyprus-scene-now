@@ -124,7 +124,7 @@ async function sendEmailNotification(
 ): Promise<boolean> {
   try {
     await resend.emails.send({
-      from: "ΦΟΜΟ <notifications@fomocy.com>",
+      from: "ΦΟΜΟ <notifications@fomo.com.cy>",
       to: [userEmail],
       subject,
       html,
