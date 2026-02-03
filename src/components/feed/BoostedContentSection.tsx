@@ -48,6 +48,8 @@ interface BoostedOffer {
   percent_off: number | null;
   original_price_cents: number | null;
   offer_image_url?: string | null;
+  discount_type?: string | null;
+  special_deal_text?: string | null;
   end_at: string;
   start_at?: string;
   business_id: string;
@@ -55,9 +57,18 @@ interface BoostedOffer {
   total_people?: number | null;
   people_remaining?: number | null;
   max_people_per_redemption?: number | null;
+  one_per_user?: boolean | null;
+  show_reservation_cta?: boolean | null;
+  requires_reservation?: boolean | null;
+  offer_type?: string | null;
+  bonus_percent?: number | null;
+  credit_amount_cents?: number | null;
+  pricing_type?: string | null;
+  bundle_price_cents?: number | null;
   valid_days?: string[] | null;
   valid_start_time?: string | null;
   valid_end_time?: string | null;
+  terms?: string | null;
   businesses: {
     name: string;
     logo_url: string | null;
@@ -333,16 +344,27 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           id: offer.id,
           title: offer.title,
           description: offer.description,
-          percent_off: offer.percent_off || 0,
+          percent_off: offer.percent_off,
+          discount_type: offer.discount_type,
+          special_deal_text: offer.special_deal_text,
           end_at: offer.end_at,
           start_at: offer.start_at,
           business_id: offer.business_id,
           total_people: offer.total_people,
           people_remaining: offer.people_remaining,
           max_people_per_redemption: offer.max_people_per_redemption,
+          one_per_user: offer.one_per_user,
+          show_reservation_cta: offer.show_reservation_cta,
+          requires_reservation: offer.requires_reservation,
+          offer_type: offer.offer_type,
+          bonus_percent: offer.bonus_percent,
+          credit_amount_cents: offer.credit_amount_cents,
+          pricing_type: offer.pricing_type,
+          bundle_price_cents: offer.bundle_price_cents,
           valid_days: offer.valid_days,
           valid_start_time: offer.valid_start_time,
           valid_end_time: offer.valid_end_time,
+          terms: offer.terms,
           businesses: {
             name: offer.businesses?.name || "",
             logo_url: offer.businesses?.logo_url,
@@ -365,7 +387,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           title: offer.title,
           description: offer.description,
           percent_off: offer.percent_off,
-          special_deal_text: null,
+          special_deal_text: offer.special_deal_text ?? null,
           end_at: offer.end_at,
           offer_image_url: offer.offer_image_url ?? null,
           businesses: {

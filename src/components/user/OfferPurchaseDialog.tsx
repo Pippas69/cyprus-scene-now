@@ -39,6 +39,11 @@ interface Offer {
   category?: string | null;
   discount_type?: string | null;
   special_deal_text?: string | null;
+  // Additional optional fields supported by the offers queries
+  offer_type?: string | null;
+  bonus_percent?: number | null;
+  credit_amount_cents?: number | null;
+  bundle_price_cents?: number | null;
   valid_days?: string[] | null;
   valid_start_time?: string | null;
   valid_end_time?: string | null;
