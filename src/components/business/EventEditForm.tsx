@@ -636,6 +636,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           appearance_end_at: appearanceEnd?.toISOString() || null,
           reservation_hours_from: formData.eventType === 'reservation' ? formData.reservationFromTime : null,
           reservation_hours_to: formData.eventType === 'reservation' ? formData.reservationToTime : null,
+          terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
         })
         .eq('id', event.id);
 
