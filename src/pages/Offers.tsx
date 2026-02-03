@@ -320,7 +320,11 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
        let query = supabase
          .from('discounts')
          .select(`
-           *,
+           id, title, description, percent_off, original_price_cents, offer_image_url,
+           start_at, end_at, business_id, terms, max_per_user,
+           valid_days, valid_start_time, valid_end_time, category, discount_type, special_deal_text,
+           total_people, people_remaining, max_people_per_redemption, one_per_user, show_reservation_cta, requires_reservation,
+           offer_type, bonus_percent, credit_amount_cents, pricing_type, bundle_price_cents,
            businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations, reservation_time_slots, reservation_days)
          `)
         .in('id', Array.from(boostedOfferIds))
