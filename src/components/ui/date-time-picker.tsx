@@ -41,6 +41,19 @@ export function DateTimePicker({
   const { language } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const contentRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Use current time as the default when no value is provided.
+  // This matches the business flow expectations (e.g., "start from now")
+  // while still requiring the user to pick a date before committing.
+  const nowPartsRef = React.useRef<{ hours: string; minutes: string } | null>(null);
+  if (nowPartsRef.current === null) {
+    const now = new Date();
+    nowPartsRef.current = {
+      hours: now.getHours().toString().padStart(2, "0"),
+      minutes: now.getMinutes().toString().padStart(2, "0"),
+    };
+  }
+
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(() => {
     // Initialize only if value is a valid date
     if (value && !Number.isNaN(value.getTime())) return value;
@@ -50,13 +63,13 @@ export function DateTimePicker({
     if (value && !Number.isNaN(value.getTime())) {
       return value.getHours().toString().padStart(2, '0');
     }
-    return '12';
+    return nowPartsRef.current?.hours ?? '12';
   });
   const [minutes, setMinutes] = React.useState(() => {
     if (value && !Number.isNaN(value.getTime())) {
       return value.getMinutes().toString().padStart(2, '0');
     }
-    return '00';
+    return nowPartsRef.current?.minutes ?? '00';
   });
   
   // Use ref to track previous timestamp (number | undefined) to prevent infinite loops
@@ -189,8 +202,10 @@ export function DateTimePicker({
 
   const handleClear = () => {
     setSelectedDate(undefined);
-    setHours('12');
-    setMinutes('00');
+    // Reset to current time defaults (not 12:00) to match "start from now" behavior.
+    const now = new Date();
+    setHours(now.getHours().toString().padStart(2, '0'));
+    setMinutes(now.getMinutes().toString().padStart(2, '0'));
     // Use macrotask deferral for clear as well
     scheduleOnChange(undefined);
     setOpen(false);
