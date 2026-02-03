@@ -667,49 +667,76 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
 
       // Update seating types if reservation event
       if (formData.eventType === 'reservation') {
-        // Get existing seating types
+        // Get existing seating types with their details
         const { data: existingSeating } = await supabase
           .from('reservation_seating_types')
-          .select('id')
+          .select('id, seating_type')
           .eq('event_id', event.id);
 
-        // Delete existing tiers first (they have FK to seating types)
-        if (existingSeating && existingSeating.length > 0) {
-          for (const s of existingSeating) {
-            await supabase.from('seating_type_tiers').delete().eq('seating_type_id', s.id);
-          }
-          // Delete all existing seating types and wait for completion
-          const { error: deleteError } = await supabase
-            .from('reservation_seating_types')
-            .delete()
-            .eq('event_id', event.id);
+        const existingMap = new Map(existingSeating?.map(s => [s.seating_type, s.id]) || []);
+        const newSeatingTypes = new Set(formData.selectedSeatingTypes as string[]);
+
+        // Find seating types to remove (not in new selection)
+        const toRemove = existingSeating?.filter(s => !newSeatingTypes.has(s.seating_type)) || [];
+        
+        // Only delete seating types that are NOT referenced by reservations
+        for (const s of toRemove) {
+          // Check if this seating type has any reservations
+          const { count } = await supabase
+            .from('reservations')
+            .select('id', { count: 'exact', head: true })
+            .eq('seating_type_id', s.id);
           
-          if (deleteError) {
-            console.error('Error deleting seating types:', deleteError);
-            throw deleteError;
+          if (count === 0) {
+            // Safe to delete - no reservations reference this
+            await supabase.from('seating_type_tiers').delete().eq('seating_type_id', s.id);
+            await supabase.from('reservation_seating_types').delete().eq('id', s.id);
           }
+          // If count > 0, we keep it but it won't be active/selectable anymore
         }
 
-        // Insert new seating types
+        // Upsert seating types
         for (const seatingType of formData.selectedSeatingTypes) {
           const config = formData.seatingConfigs[seatingType];
+          const existingId = existingMap.get(seatingType);
 
-          const { data: seatingData, error: seatingError } = await supabase
-            .from('reservation_seating_types')
-            .insert({
-              event_id: event.id,
-              seating_type: seatingType,
-              available_slots: config.availableSlots,
-              slots_booked: 0,
-              no_show_policy: 'non_refundable',
-            })
-            .select()
-            .single();
+          let seatingId: string;
 
-          if (seatingError || !seatingData) throw seatingError || new Error('Failed to create seating type');
+          if (existingId) {
+            // Update existing seating type
+            const { error: updateError } = await supabase
+              .from('reservation_seating_types')
+              .update({
+                available_slots: config.availableSlots,
+              })
+              .eq('id', existingId);
 
+            if (updateError) throw updateError;
+            seatingId = existingId;
+
+            // Delete old tiers for this seating type
+            await supabase.from('seating_type_tiers').delete().eq('seating_type_id', existingId);
+          } else {
+            // Insert new seating type
+            const { data: seatingData, error: seatingError } = await supabase
+              .from('reservation_seating_types')
+              .insert({
+                event_id: event.id,
+                seating_type: seatingType,
+                available_slots: config.availableSlots,
+                slots_booked: 0,
+                no_show_policy: 'non_refundable',
+              })
+              .select()
+              .single();
+
+            if (seatingError || !seatingData) throw seatingError || new Error('Failed to create seating type');
+            seatingId = seatingData.id;
+          }
+
+          // Insert new tiers
           const tiersToInsert = config.tiers.map((tier) => ({
-            seating_type_id: seatingData.id,
+            seating_type_id: seatingId,
             min_people: tier.minPeople,
             max_people: tier.maxPeople,
             prepaid_min_charge_cents: tier.prepaidChargeCents,
