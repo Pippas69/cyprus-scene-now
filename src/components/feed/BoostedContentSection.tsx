@@ -324,9 +324,9 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
                        </Badge>
                      </button>
                    </PopoverTrigger>
-                   <PopoverContent className="w-64 p-3" side="top" align="start">
-                     <p className="text-sm font-medium">{offer.special_deal_text}</p>
-                   </PopoverContent>
+                    <PopoverContent className="w-48 p-2" side="top" align="start">
+                      <p className="text-xs font-medium">{offer.special_deal_text}</p>
+                    </PopoverContent>
                  </Popover>
                )}
              </div>
