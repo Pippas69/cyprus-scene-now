@@ -54,12 +54,16 @@ const msg = (language: Language) => ({
 });
 
 // Detect QR type from data
-const detectQRType = (qrData: string): { type: QRType; token: string } => {
+const detectQRType = (qrData: string): { type: QRType; token: string; qrBusinessId?: string } => {
   const cleaned = String(qrData || "").trim();
   
-  // Student QR format: fomo-student:{token}
+  // Student QR format: fomo-student:{token}:{businessId}
+  // The businessId is required to ensure QR is only valid for the specific business
   if (cleaned.startsWith("fomo-student:")) {
-    return { type: "student", token: cleaned.replace("fomo-student:", "") };
+    const parts = cleaned.replace("fomo-student:", "").split(":");
+    const token = parts[0];
+    const qrBusinessId = parts[1]; // May be undefined for old QR codes
+    return { type: "student", token, qrBusinessId };
   }
   
   // Try to extract token from URL if present
@@ -172,12 +176,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { type: detectedType, token } = detectQRType(body.qrData);
-    logStep("Detected QR", { detectedType, token: token.substring(0, 20) });
+    const { type: detectedType, token, qrBusinessId } = detectQRType(body.qrData);
+    logStep("Detected QR", { detectedType, token: token.substring(0, 20), qrBusinessId });
 
-    // If type is student, handle it
+    // If type is student, handle it with the qrBusinessId for validation
     if (detectedType === "student") {
-      return await handleStudentQR(supabaseAdmin, token, body.businessId, business, user.id, m, language);
+      return await handleStudentQR(supabaseAdmin, token, body.businessId, business, user.id, m, language, qrBusinessId);
     }
 
     // Try to identify the QR type by querying each table
@@ -735,9 +739,39 @@ async function handleStudentQR(
   business: any,
   staffUserId: string,
   m: ReturnType<typeof msg>,
-  language: Language
+  language: Language,
+  qrBusinessId?: string // The businessId encoded in the QR code
 ) {
-  logStep("Processing student", { token: token.substring(0, 20) });
+  logStep("Processing student", { token: token.substring(0, 20), qrBusinessId });
+
+  // CRITICAL: Validate that the QR code was generated for THIS business
+  // If qrBusinessId is present in the QR, it MUST match the scanning business
+  if (qrBusinessId && qrBusinessId !== businessId) {
+    return new Response(JSON.stringify({
+      success: false,
+      message: language === "el" 
+        ? "Αυτός ο QR κώδικας δεν ισχύει για αυτή την επιχείρηση" 
+        : "This QR code is not valid for this business",
+      qrType: "student"
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // If no qrBusinessId in the QR code, reject it (old format not supported anymore)
+  if (!qrBusinessId) {
+    return new Response(JSON.stringify({
+      success: false,
+      message: language === "el" 
+        ? "Μη έγκυρος QR κώδικας - παρακαλώ ζητήστε νέο κώδικα από τη σελίδα της επιχείρησης" 
+        : "Invalid QR code - please request a new code from the business page",
+      qrType: "student"
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   if (!business.student_discount_enabled) {
     return new Response(JSON.stringify({
