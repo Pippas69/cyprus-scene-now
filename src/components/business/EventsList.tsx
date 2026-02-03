@@ -152,7 +152,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
         .from('events')
         .select('*')
         .eq('business_id', businessId)
-        .order('created_at', { ascending: false });
+        .order('start_at', { ascending: true });
 
       if (eventsError) throw eventsError;
       if (!eventsData || eventsData.length === 0) return [];
