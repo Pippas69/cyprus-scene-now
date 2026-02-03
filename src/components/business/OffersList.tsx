@@ -113,7 +113,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
         .from('discounts')
         .select('*')
         .eq('business_id', businessId)
-        .order('start_at', { ascending: true });
+        .order('end_at', { ascending: true });
 
       if (error) throw error;
       return data;
