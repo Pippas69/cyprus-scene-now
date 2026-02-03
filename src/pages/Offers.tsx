@@ -166,7 +166,6 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
         .eq('businesses.verified', true)
         .lte('start_at', now)
         .gte('end_at', now)
-        .gt('original_price_cents', 0)
         .order('end_at', { ascending: true })
         .limit(12);
 
