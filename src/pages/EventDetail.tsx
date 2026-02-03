@@ -857,6 +857,13 @@ export default function EventDetail() {
               <Share2 className="h-4 w-4" />
               {text.share}
             </RippleButton>
+            
+            {/* Terms & Conditions (desktop) - below share button */}
+            {event.terms_and_conditions && (
+              <p className="text-[9px] text-muted-foreground/70 leading-tight">
+                <span className="font-medium">{language === 'el' ? 'Όροι:' : 'Terms:'}</span> {event.terms_and_conditions}
+              </p>
+            )}
           </motion.div>
         </div>
       </div>
