@@ -1,8 +1,9 @@
-import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck, Sparkles, Share2 } from "lucide-react";
+import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck, Sparkles, Share2, Gift } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
 import { useCallback, useRef, useState } from "react";
 import { PremiumBadge } from "@/components/ui/premium-badge";
@@ -263,10 +264,28 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           {/* Bottom row: Discount badge + Share + Redeem button */}
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-1">
-              {offerData.percent_off && offerData.percent_off > 0 && (
+              {/* Percentage discount badge */}
+              {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
                 <Badge variant="outline" className="text-xs px-2 py-0.5 h-6 font-semibold">
                   -{offerData.percent_off}%
                 </Badge>
+              )}
+              {/* Special Offer badge - clickable with popover showing special_deal_text */}
+              {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs px-2 py-0.5 h-6 font-semibold cursor-pointer hover:bg-accent transition-colors"
+                    >
+                      <Gift className="h-3 w-3 mr-1" />
+                      Special Offer
+                    </Badge>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3" side="top" align="start">
+                    <p className="text-sm font-medium">{offerData.special_deal_text}</p>
+                  </PopoverContent>
+                </Popover>
               )}
               {isCredit && (
                 <Badge variant="outline" className="text-xs px-2 py-0.5 h-6">
