@@ -477,6 +477,11 @@ export default function EventDetail() {
                   {event.description}
                 </p>
               )}
+              {event.terms_and_conditions && (
+                <p className="text-[9px] text-muted-foreground/70 mt-2 leading-tight">
+                  <span className="font-medium">{language === 'el' ? 'Όροι:' : 'Terms:'}</span> {event.terms_and_conditions}
+                </p>
+              )}
             </div>
 
             {/* Mobile/Tablet info section - shown below lg breakpoint */}

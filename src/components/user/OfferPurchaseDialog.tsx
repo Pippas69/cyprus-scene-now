@@ -936,9 +936,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
       {/* Terms */}
       {offer.terms && (
-        <div className="bg-muted/50 rounded-lg p-3 text-sm">
-          <p className="font-medium mb-1">{t("terms")}</p>
-          <p className="text-muted-foreground">{offer.terms}</p>
+        <div className="mt-2">
+          <p className="text-[9px] text-muted-foreground/70 leading-tight">
+            <span className="font-medium">{t("terms")}:</span> {offer.terms}
+          </p>
         </div>
       )}
 
@@ -1103,9 +1104,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
             {/* Terms */}
             {offer.terms && (
-              <div className="bg-muted/50 rounded-lg p-3 text-sm mb-4">
-                <p className="font-medium mb-1">{t("terms")}</p>
-                <p className="text-muted-foreground">{offer.terms}</p>
+              <div className="mb-3">
+                <p className="text-[9px] text-muted-foreground/70 leading-tight">
+                  <span className="font-medium">{t("terms")}:</span> {offer.terms}
+                </p>
               </div>
             )}
 
