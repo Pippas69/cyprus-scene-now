@@ -47,6 +47,7 @@ interface BoostedOffer {
   description: string | null;
   percent_off: number | null;
   original_price_cents: number | null;
+  offer_image_url?: string | null;
   end_at: string;
   start_at?: string;
   business_id: string;
@@ -227,7 +228,9 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
     setIsShareOpen(true);
   };
 
-  const coverImage = offer.businesses?.cover_url || offer.businesses?.logo_url;
+  // CRITICAL: Boosted offers must show the exact custom image chosen by the business (offer_image_url)
+  // to match the business/user dashboards and the general offers page.
+  const coverImage = offer.offer_image_url || offer.businesses?.cover_url || offer.businesses?.logo_url;
 
   return (
     <>
@@ -364,7 +367,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           percent_off: offer.percent_off,
           special_deal_text: null,
           end_at: offer.end_at,
-          offer_image_url: offer.businesses?.cover_url ?? null,
+          offer_image_url: offer.offer_image_url ?? null,
           businesses: {
             id: offer.business_id,
             name: offer.businesses?.name || "",
