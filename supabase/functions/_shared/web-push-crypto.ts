@@ -305,7 +305,7 @@ async function sendToSubscription(
     // Create VAPID JWT
     const jwt = await createVapidJwt(
       audience,
-      "mailto:notifications@fomocy.com",
+      "mailto:notifications@fomo.com.cy",
       vapidPublicKey,
       vapidPrivateKey
     );

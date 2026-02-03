@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <noreply@fomocy.com>",
+      from: "ΦΟΜΟ <noreply@fomo.com.cy>",
       to: [universityEmail],
       subject: "🎓 Επαλήθευση Φοιτητικής Ιδιότητας - ΦΟΜΟ",
       html: emailHtml,

@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
         `);
 
         await resend.emails.send({
-          from: "ΦΟΜΟ <noreply@fomocy.com>",
+          from: "ΦΟΜΟ <noreply@fomo.com.cy>",
           to: [profile.email],
           subject: `📊 Ημερήσια Αναφορά: ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} - ${formattedRevenue}`,
           html,
