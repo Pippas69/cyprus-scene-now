@@ -692,7 +692,7 @@ const EventCreationForm = ({
 
         {/* Step 3: Start Date & Time */}
         <SectionCard title={t.step3} required requiredLabel={t.required}>
-          <DateTimePicker value={formData.startAt || undefined} onChange={date => updateField('startAt', date || null)} placeholder={t.selectDateTime} minDate={new Date()} />
+          <DateTimePicker value={formData.startAt || undefined} onChange={date => updateField('startAt', date || null)} placeholder={t.selectDateTime} />
         </SectionCard>
 
         {/* Step 4: Appearance Duration */}
