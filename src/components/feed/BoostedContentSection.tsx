@@ -5,6 +5,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import { differenceInDays } from "date-fns";
 import { useCallback, useRef, useState } from "react";
@@ -307,11 +308,28 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
           {/* LINE 4: Discount badge + Share + Redeem button */}
           <div className="flex items-center justify-between mt-0.5">
             {/* Discount badge on left */}
-            {offer.percent_off && offer.percent_off > 0 && (
-              <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 h-5 sm:h-6">
-                -{offer.percent_off}%
-              </Badge>
-            )}
+             <div className="flex items-center gap-1">
+               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
+                 <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 h-5 sm:h-6">
+                   -{offer.percent_off}%
+                 </Badge>
+               )}
+
+               {offer.discount_type === "special_deal" && offer.special_deal_text && (
+                 <Popover>
+                   <PopoverTrigger asChild>
+                     <button type="button" className="inline-flex">
+                       <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 h-5 sm:h-6">
+                         Offer
+                       </Badge>
+                     </button>
+                   </PopoverTrigger>
+                   <PopoverContent className="w-64 p-3" side="top" align="start">
+                     <p className="text-sm font-medium">{offer.special_deal_text}</p>
+                   </PopoverContent>
+                 </Popover>
+               )}
+             </div>
             {/* Share + Redeem buttons on right */}
             <div className="flex items-center gap-1 ml-auto">
               <Button
@@ -333,6 +351,13 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
               </Button>
             </div>
           </div>
+
+           {/* Terms & Conditions (if provided) - below Share/Redeem row */}
+           {offer.terms && (
+             <p className="text-[9px] text-muted-foreground/70 leading-tight line-clamp-2">
+               <span className="font-medium">{language === "el" ? "Όροι:" : "Terms:"}</span> {offer.terms}
+             </p>
+           )}
         </div>
       </div>
 
