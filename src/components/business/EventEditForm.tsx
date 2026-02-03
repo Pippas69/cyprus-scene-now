@@ -674,7 +674,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           .eq('event_id', event.id);
 
         const existingMap = new Map(existingSeating?.map(s => [s.seating_type, s.id]) || []);
-        const newSeatingTypes = new Set(formData.selectedSeatingTypes);
+        const newSeatingTypes = new Set(formData.selectedSeatingTypes as string[]);
 
         // Find seating types to remove (not in new selection)
         const toRemove = existingSeating?.filter(s => !newSeatingTypes.has(s.seating_type)) || [];
