@@ -1122,15 +1122,6 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
               </div>
             </div>
 
-            {/* Terms */}
-            {offer.terms && (
-              <div className="mb-3">
-                <p className="text-[9px] text-muted-foreground/70 leading-tight">
-                  <span className="font-medium">{t("terms")}:</span> {offer.terms}
-                </p>
-              </div>
-            )}
-
             {/* Walk-in Note */}
             <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg mb-4">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
@@ -1141,6 +1132,15 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
             <div className="mb-4">
               <ReservationSection />
             </div>
+
+            {/* Terms - Below reservation section */}
+            {offer.terms && (
+              <div className="mb-3">
+                <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
+                  <span className="font-medium">{t("terms")}:</span> {offer.terms}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Fixed bottom section */}
