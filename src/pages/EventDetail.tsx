@@ -646,7 +646,7 @@ export default function EventDetail() {
               
               {/* Terms & Conditions (mobile/tablet) - below share button */}
               {event.terms_and_conditions && (
-                <p className="text-[9px] text-muted-foreground/70 leading-tight">
+                <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
                   <span className="font-medium">{language === 'el' ? 'Όροι:' : 'Terms:'}</span> {event.terms_and_conditions}
                 </p>
               )}
