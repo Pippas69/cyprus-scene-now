@@ -195,7 +195,7 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
     // Check if this is "once" mode and the student has already redeemed
     if (businessSettings?.student_discount_mode === 'once') {
       const { data: existingRedemptions } = await supabase
-        .from('student_redemptions' as any)
+        .from('student_discount_redemptions')
         .select('id')
         .eq('student_verification_id', verification.id)
         .eq('business_id', businessId)
