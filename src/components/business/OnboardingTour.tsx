@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { Gift, Calendar, Ticket, Zap, TrendingUp, ChevronRight, ChevronLeft, X, Check } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -16,84 +15,80 @@ const translations = {
   el: {
     skipTour: 'Παράλειψη',
     next: 'Επόμενο',
-    previous: 'Προηγούμενο',
-    startExploring: 'Ξεκινήστε την Εξερεύνηση',
+    previous: 'Πίσω',
     letsGo: 'Πάμε!',
     step1Title: 'Καλώς ήρθατε στο ΦΟΜΟ!',
-    step1Subtitle: 'Ως beta tester, έχετε ΔΩΡΕΑΝ πρόσβαση στο Growth Plan μας!',
-    step1Feature1: '€250 μηνιαίο budget boost',
+    step1Subtitle: 'ΔΩΡΕΑΝ πρόσβαση στο Elite Plan!',
+    step1Feature1: '€300 boost budget/μήνα',
     step1Feature2: '10 προσφορές χωρίς προμήθεια',
-    step1Feature3: 'Πλήρες dashboard analytics',
+    step1Feature3: 'Πλήρη analytics',
     step1Feature4: 'Απεριόριστες εκδηλώσεις',
-    step1Feature5: 'Προτεραιότητα υποστήριξης',
-    step1Bonus: 'Αξίας €200/μήνα - Δωρεάν για εσάς!',
-    step2Title: 'Δημιουργήστε Εκδηλώσεις',
-    step2Subtitle: 'Μοιραστείτε τι συμβαίνει στην επιχείρησή σας',
-    step2Feature1: 'Προσθέστε τίτλο, περιγραφή και εικόνα',
-    step2Feature2: 'Ορίστε ημερομηνία, ώρα και τοποθεσία',
-    step2Feature3: 'Ενεργοποιήστε κρατήσεις αν θέλετε',
-    step2Feature4: 'Δημοσιεύστε με ένα κλικ',
-    step3Title: 'Διαχειριστείτε Προσφορές',
-    step3Subtitle: 'Δημιουργήστε εκπτώσεις με μοναδικούς QR κωδικούς',
-    step3Feature1: 'Ορίστε ποσοστό έκπτωσης',
-    step3Feature2: 'Κάθε προσφορά έχει μοναδικό QR code',
-    step3Feature3: 'Παρακολουθήστε τις εξαργυρώσεις',
-    step3Feature4: '10 προσφορές/μήνα χωρίς προμήθεια',
-    step4Title: 'Ενισχύστε την Εμβέλειά σας',
-    step4Subtitle: 'Ο αλγόριθμός μας στοχεύει ενδιαφερόμενους χρήστες',
-    step4Feature1: 'Έξυπνη στόχευση βάσει ενδιαφερόντων',
-    step4Feature2: 'Υψηλότερο budget = καλύτερη στόχευση',
-    step4Feature3: 'Παρακολουθήστε την απόδοση σε real-time',
-    step4Feature4: '€250 budget περιλαμβάνεται στο πλάνο σας',
-    step5Title: 'Παρακολουθήστε την Απόδοση',
-    step5Subtitle: 'Αναλυτικά στατιστικά για την επιχείρησή σας',
-    step5Feature1: 'Προβολές εκδηλώσεων και προσφορών',
-    step5Feature2: 'RSVPs και κρατήσεις',
-    step5Feature3: 'Δημογραφικά στοιχεία κοινού',
-    step5Feature4: 'Εξαγωγή αναφορών σε PDF',
-    completeTitle: 'Είστε Έτοιμοι!',
-    completeSubtitle: 'Ξεκινήστε να εξερευνάτε το dashboard σας',
+    step1Bonus: 'Αξίας €339.99/μήνα - Δωρεάν!',
+    step2Title: 'Εκδηλώσεις',
+    step2Subtitle: 'Δημοσιεύστε εύκολα',
+    step2Feature1: 'Τίτλος, περιγραφή, εικόνα',
+    step2Feature2: 'Ημερομηνία & τοποθεσία',
+    step2Feature3: 'Κρατήσεις (προαιρετικά)',
+    step2Feature4: 'Δημοσίευση με 1 κλικ',
+    step3Title: 'Προσφορές',
+    step3Subtitle: 'Με μοναδικό QR code',
+    step3Feature1: 'Ορίστε έκπτωση',
+    step3Feature2: 'Μοναδικό QR ανά προσφορά',
+    step3Feature3: 'Παρακολούθηση εξαργυρώσεων',
+    step3Feature4: '10 χωρίς προμήθεια/μήνα',
+    step4Title: 'Boost',
+    step4Subtitle: 'Στοχευμένη προβολή',
+    step4Feature1: 'Έξυπνη στόχευση',
+    step4Feature2: 'Real-time απόδοση',
+    step4Feature3: '€300 budget στο πλάνο',
+    step4Feature4: 'Μέγιστη εμβέλεια',
+    step5Title: 'Analytics',
+    step5Subtitle: 'Πλήρη στατιστικά',
+    step5Feature1: 'Προβολές & RSVPs',
+    step5Feature2: 'Κρατήσεις',
+    step5Feature3: 'Δημογραφικά κοινού',
+    step5Feature4: 'Εξαγωγή PDF',
+    completeTitle: 'Έτοιμοι!',
+    completeSubtitle: 'Εξερευνήστε το dashboard',
   },
   en: {
-    skipTour: 'Skip Tour',
+    skipTour: 'Skip',
     next: 'Next',
-    previous: 'Previous',
-    startExploring: 'Start Exploring',
+    previous: 'Back',
     letsGo: "Let's Go!",
     step1Title: 'Welcome to ΦΟΜΟ!',
-    step1Subtitle: 'As a beta tester, you have FREE access to our Growth Plan!',
-    step1Feature1: '€250 monthly boost budget',
+    step1Subtitle: 'FREE access to Elite Plan!',
+    step1Feature1: '€300 boost budget/month',
     step1Feature2: '10 commission-free offers',
-    step1Feature3: 'Full analytics dashboard',
+    step1Feature3: 'Full analytics',
     step1Feature4: 'Unlimited events',
-    step1Feature5: 'Priority support',
-    step1Bonus: 'Worth €200/month - Free for you!',
-    step2Title: 'Create Events',
-    step2Subtitle: 'Share what\'s happening at your business',
-    step2Feature1: 'Add title, description and cover image',
-    step2Feature2: 'Set date, time and location',
-    step2Feature3: 'Enable reservations if you want',
-    step2Feature4: 'Publish with one click',
-    step3Title: 'Manage Offers',
-    step3Subtitle: 'Create discounts with unique QR codes',
-    step3Feature1: 'Set discount percentage',
-    step3Feature2: 'Each offer gets a unique QR code',
-    step3Feature3: 'Track redemptions in real-time',
-    step3Feature4: '10 offers/month commission-free',
-    step4Title: 'Boost Your Reach',
-    step4Subtitle: 'Our algorithm targets interested users',
-    step4Feature1: 'Smart targeting based on interests',
-    step4Feature2: 'Higher budget = better targeting',
-    step4Feature3: 'Track performance in real-time',
-    step4Feature4: '€250 budget included in your plan',
-    step5Title: 'Track Performance',
-    step5Subtitle: 'Detailed analytics for your business',
-    step5Feature1: 'Event and offer views',
-    step5Feature2: 'RSVPs and reservations',
+    step1Bonus: 'Worth €339.99/month - Free!',
+    step2Title: 'Events',
+    step2Subtitle: 'Publish easily',
+    step2Feature1: 'Title, description, image',
+    step2Feature2: 'Date & location',
+    step2Feature3: 'Reservations (optional)',
+    step2Feature4: 'Publish with 1 click',
+    step3Title: 'Offers',
+    step3Subtitle: 'With unique QR code',
+    step3Feature1: 'Set discount',
+    step3Feature2: 'Unique QR per offer',
+    step3Feature3: 'Track redemptions',
+    step3Feature4: '10 commission-free/month',
+    step4Title: 'Boost',
+    step4Subtitle: 'Targeted reach',
+    step4Feature1: 'Smart targeting',
+    step4Feature2: 'Real-time performance',
+    step4Feature3: '€300 budget included',
+    step4Feature4: 'Maximum reach',
+    step5Title: 'Analytics',
+    step5Subtitle: 'Full statistics',
+    step5Feature1: 'Views & RSVPs',
+    step5Feature2: 'Reservations',
     step5Feature3: 'Audience demographics',
-    step5Feature4: 'Export reports to PDF',
-    completeTitle: "You're All Set!",
-    completeSubtitle: 'Start exploring your dashboard',
+    step5Feature4: 'Export to PDF',
+    completeTitle: 'Ready!',
+    completeSubtitle: 'Explore your dashboard',
   }
 };
 
@@ -108,7 +103,6 @@ const steps = [
 export function OnboardingTour({ isOpen, onComplete, language }: OnboardingTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
-  const navigate = useNavigate();
   const confetti = useConfetti();
   const t = translations[language];
 
@@ -143,7 +137,7 @@ export function OnboardingTour({ isOpen, onComplete, language }: OnboardingTourP
     const Icon = stepData.icon;
 
     const features = {
-      0: [t.step1Feature1, t.step1Feature2, t.step1Feature3, t.step1Feature4, t.step1Feature5],
+      0: [t.step1Feature1, t.step1Feature2, t.step1Feature3, t.step1Feature4],
       1: [t.step2Feature1, t.step2Feature2, t.step2Feature3, t.step2Feature4],
       2: [t.step3Feature1, t.step3Feature2, t.step3Feature3, t.step3Feature4],
       3: [t.step4Feature1, t.step4Feature2, t.step4Feature3, t.step4Feature4],
@@ -159,27 +153,27 @@ export function OnboardingTour({ isOpen, onComplete, language }: OnboardingTourP
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.3 }}
-        className="flex flex-col items-center text-center px-2"
+        transition={{ duration: 0.2 }}
+        className="flex flex-col items-center text-center"
       >
-        <div className={`w-20 h-20 rounded-full ${stepData.bg} flex items-center justify-center mb-6`}>
-          <Icon className={`w-10 h-10 ${stepData.color}`} />
+        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full ${stepData.bg} flex items-center justify-center mb-3`}>
+          <Icon className={`w-6 h-6 sm:w-7 sm:h-7 ${stepData.color}`} />
         </div>
 
-        <h2 className="text-2xl font-bold text-foreground mb-2">{titles[step]}</h2>
-        <p className="text-muted-foreground mb-6">{subtitles[step]}</p>
+        <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1">{titles[step]}</h2>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-3">{subtitles[step]}</p>
 
-        <div className="w-full space-y-3 text-left">
+        <div className="w-full space-y-1.5">
           {features[step as keyof typeof features].map((feature, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+              transition={{ delay: idx * 0.05 }}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-muted/50"
             >
-              <Check className="w-5 h-5 text-primary flex-shrink-0" />
-              <span className="text-sm text-foreground">{feature}</span>
+              <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+              <span className="text-xs text-foreground text-left">{feature}</span>
             </motion.div>
           ))}
         </div>
@@ -188,10 +182,10 @@ export function OnboardingTour({ isOpen, onComplete, language }: OnboardingTourP
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-6 px-4 py-2 bg-primary/10 rounded-full"
+            transition={{ delay: 0.3 }}
+            className="mt-3 px-3 py-1.5 bg-primary/10 rounded-full"
           >
-            <span className="text-primary font-semibold text-sm">{t.step1Bonus}</span>
+            <span className="text-primary font-semibold text-xs">{t.step1Bonus}</span>
           </motion.div>
         )}
       </motion.div>
@@ -202,36 +196,36 @@ export function OnboardingTour({ isOpen, onComplete, language }: OnboardingTourP
     <>
       <Confetti isActive={confetti.isActive} onComplete={confetti.reset} />
       <Dialog open={isOpen} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden [&>button]:hidden">
+        <DialogContent className="max-w-[90vw] sm:max-w-sm p-0 overflow-hidden [&>button]:hidden">
           <div className="relative">
             {/* Skip button */}
             <button
               onClick={handleSkip}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10"
+              className="absolute top-2.5 right-2.5 text-muted-foreground hover:text-foreground transition-colors z-10 p-1"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             {/* Content */}
-            <div className="p-6 pt-12 pb-4">
+            <div className="px-4 pt-8 pb-3">
               <AnimatePresence mode="wait">
                 {isCompleting ? (
                   <motion.div
                     key="complete"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center text-center py-8"
+                    className="flex flex-col items-center text-center py-6"
                   >
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', bounce: 0.5 }}
-                      className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6"
+                      className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4"
                     >
-                      <Check className="w-10 h-10 text-primary" />
+                      <Check className="w-7 h-7 text-primary" />
                     </motion.div>
-                    <h2 className="text-2xl font-bold text-foreground mb-2">{t.completeTitle}</h2>
-                    <p className="text-muted-foreground">{t.completeSubtitle}</p>
+                    <h2 className="text-xl font-bold text-foreground mb-1">{t.completeTitle}</h2>
+                    <p className="text-sm text-muted-foreground">{t.completeSubtitle}</p>
                   </motion.div>
                 ) : (
                   getStepContent(currentStep)
@@ -241,15 +235,15 @@ export function OnboardingTour({ isOpen, onComplete, language }: OnboardingTourP
 
             {/* Progress dots */}
             {!isCompleting && (
-              <div className="flex justify-center gap-2 pb-4">
+              <div className="flex justify-center gap-1.5 pb-2.5">
                 {steps.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentStep(idx)}
-                    className={`w-2 h-2 rounded-full transition-all ${
+                    className={`h-1.5 rounded-full transition-all ${
                       idx === currentStep 
-                        ? 'bg-primary w-6' 
-                        : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                        ? 'bg-primary w-4' 
+                        : 'bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5'
                     }`}
                   />
                 ))}
@@ -258,31 +252,34 @@ export function OnboardingTour({ isOpen, onComplete, language }: OnboardingTourP
 
             {/* Navigation buttons */}
             {!isCompleting && (
-              <div className="flex items-center justify-between p-4 border-t">
+              <div className="flex items-center justify-between px-3 py-2.5 border-t bg-muted/30">
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={handlePrevious}
                   disabled={currentStep === 0}
-                  className="gap-1"
+                  className="gap-0.5 h-8 px-2 text-xs"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-3.5 h-3.5" />
                   {t.previous}
                 </Button>
 
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={handleSkip}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground h-8 px-2 text-xs"
                 >
                   {t.skipTour}
                 </Button>
 
                 <Button
+                  size="sm"
                   onClick={handleNext}
-                  className="gap-1"
+                  className="gap-0.5 h-8 px-3 text-xs"
                 >
                   {currentStep === 4 ? t.letsGo : t.next}
-                  {currentStep < 4 && <ChevronRight className="w-4 h-4" />}
+                  {currentStep < 4 && <ChevronRight className="w-3.5 h-3.5" />}
                 </Button>
               </div>
             )}
