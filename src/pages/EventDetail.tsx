@@ -648,6 +648,13 @@ export default function EventDetail() {
                 <Share2 className="h-3.5 w-3.5" />
                 {text.share}
               </RippleButton>
+              
+              {/* Terms & Conditions (mobile/tablet) - below share button */}
+              {event.terms_and_conditions && (
+                <p className="text-[9px] text-muted-foreground/70 leading-tight">
+                  <span className="font-medium">{language === 'el' ? 'Όροι:' : 'Terms:'}</span> {event.terms_and_conditions}
+                </p>
+              )}
             </div>
 
             {/* Similar Events - Always show section, use personalized RPC */}
