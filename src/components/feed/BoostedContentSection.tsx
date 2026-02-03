@@ -352,12 +352,6 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
             </div>
           </div>
 
-           {/* Terms & Conditions (if provided) - below Share/Redeem row */}
-           {offer.terms && (
-             <p className="text-[9px] text-muted-foreground/70 leading-tight line-clamp-2">
-               <span className="font-medium">{language === "el" ? "Όροι:" : "Terms:"}</span> {offer.terms}
-             </p>
-           )}
         </div>
       </div>
 
