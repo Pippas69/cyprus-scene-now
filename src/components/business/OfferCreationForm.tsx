@@ -592,6 +592,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         discount_type: formData.discountType,
         percent_off: formData.discountType === 'percentage' ? formData.percentOff : null,
         special_deal_text: formData.discountType === 'special_deal' ? formData.specialDealText : null,
+        terms: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
         valid_days: formData.validDays,
         valid_start_time: formData.validStartTime,
         valid_end_time: formData.validEndTime,
