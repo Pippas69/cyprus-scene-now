@@ -70,22 +70,25 @@ export function StudentDiscountButton({
   const isVerifiedStudent = verification?.status === 'approved' && verification?.qr_code_token;
   const isPendingVerification = verification?.status === 'pending';
 
-  // Check if one-time discount was already redeemed
+  // Check if one-time discount was already redeemed at THIS specific business
   useEffect(() => {
     const checkRedemption = async () => {
-      if (userId && discountMode === 'one_time') {
+      if (userId && verification?.id && discountMode === 'one_time') {
+        // Use the correct table and check by student_verification_id + business_id
         const { data } = await supabase
-          .from('student_redemptions')
+          .from('student_discount_redemptions')
           .select('id')
-          .eq('user_id', userId)
+          .eq('student_verification_id', verification.id)
           .eq('business_id', businessId)
-          .maybeSingle();
+          .limit(1);
         
-        setIsRedeemed(!!data);
+        setIsRedeemed(!!(data && data.length > 0));
+      } else {
+        setIsRedeemed(false);
       }
     };
     checkRedemption();
-  }, [userId, businessId, discountMode]);
+  }, [userId, businessId, discountMode, verification?.id]);
 
   const handleClick = () => {
     if (!userId) {
