@@ -673,13 +673,22 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           .select('id')
           .eq('event_id', event.id);
 
-        // Delete existing tiers and seating types
-        if (existingSeating) {
+        // Delete existing tiers first (they have FK to seating types)
+        if (existingSeating && existingSeating.length > 0) {
           for (const s of existingSeating) {
             await supabase.from('seating_type_tiers').delete().eq('seating_type_id', s.id);
           }
+          // Delete all existing seating types and wait for completion
+          const { error: deleteError } = await supabase
+            .from('reservation_seating_types')
+            .delete()
+            .eq('event_id', event.id);
+          
+          if (deleteError) {
+            console.error('Error deleting seating types:', deleteError);
+            throw deleteError;
+          }
         }
-        await supabase.from('reservation_seating_types').delete().eq('event_id', event.id);
 
         // Insert new seating types
         for (const seatingType of formData.selectedSeatingTypes) {
