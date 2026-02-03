@@ -781,7 +781,7 @@ async function handleStudentQR(
   // Check if "once" mode and already redeemed
   if (business.student_discount_mode === 'once') {
     const { data: existingRedemptions } = await supabaseAdmin
-      .from('student_redemptions')
+      .from('student_discount_redemptions')
       .select('id')
       .eq('student_verification_id', verification.id)
       .eq('business_id', businessId)
