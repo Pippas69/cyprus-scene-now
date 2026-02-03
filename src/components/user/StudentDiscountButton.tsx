@@ -189,9 +189,10 @@ export function StudentDiscountButton({
             {/* Verified - show QR */}
             {userId && isVerifiedStudent && verification && (
               <div className="space-y-4">
-                <StudentQRCard 
+              <StudentQRCard 
                   verification={verification} 
                   language={language}
+                  businessId={businessId}
                   discountMode={discountMode === 'one_time' ? 'once' : 'unlimited'}
                   isRedeemed={isRedeemed}
                 />
@@ -294,10 +295,11 @@ export function StudentDiscountButton({
           {/* Verified - show QR */}
           {userId && isVerifiedStudent && verification && (
             <div className="space-y-4">
-              {/* Show the student QR card with discount mode and redemption status */}
+              {/* Show the student QR card with businessId to ensure QR is business-specific */}
               <StudentQRCard 
                 verification={verification} 
                 language={language}
+                businessId={businessId}
                 discountMode={discountMode === 'one_time' ? 'once' : 'unlimited'}
                 isRedeemed={isRedeemed}
               />

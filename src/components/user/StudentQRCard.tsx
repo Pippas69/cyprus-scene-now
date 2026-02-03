@@ -8,6 +8,7 @@ import { StudentVerification } from '@/hooks/useStudentVerification';
 interface StudentQRCardProps {
   verification: StudentVerification;
   language: 'en' | 'el';
+  businessId?: string; // Required when showing discount for a specific business
   discountMode?: 'once' | 'unlimited' | null; // null = generic view (settings page)
   isRedeemed?: boolean;
 }
@@ -43,13 +44,16 @@ const translations = {
   },
 };
 
-export function StudentQRCard({ verification, language, discountMode = null, isRedeemed = false }: StudentQRCardProps) {
+export function StudentQRCard({ verification, language, businessId, discountMode = null, isRedeemed = false }: StudentQRCardProps) {
   const t = translations[language];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   useEffect(() => {
     if (canvasRef.current && verification.qr_code_token) {
-      const qrData = `fomo-student:${verification.qr_code_token}`;
+      // Include businessId in QR if provided - this ensures QR is only valid for this specific business
+      const qrData = businessId 
+        ? `fomo-student:${verification.qr_code_token}:${businessId}`
+        : `fomo-student:${verification.qr_code_token}`;
       QRCode.toCanvas(canvasRef.current, qrData, {
         width: 200,
         margin: 2,
@@ -59,7 +63,7 @@ export function StudentQRCard({ verification, language, discountMode = null, isR
         },
       });
     }
-  }, [verification.qr_code_token]);
+  }, [verification.qr_code_token, businessId]);
   
   if (!verification.qr_code_token) {
     return null;
