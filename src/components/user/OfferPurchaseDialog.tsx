@@ -385,8 +385,11 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
   if (!offer) return null;
 
-  const maxPerRedemption = offer.max_people_per_redemption || 5;
-  const peopleRemaining = offer.people_remaining ?? offer.total_people ?? 999;
+  // IMPORTANT: Never show fake placeholder limits.
+  // If the business didn't set a limit, we treat it as "no limit" in the UI.
+  const maxPerRedemption = offer.max_people_per_redemption ?? null;
+  const peopleRemaining = offer.people_remaining ?? offer.total_people ?? null;
+  const maxSelectablePartySize = Math.min(maxPerRedemption ?? 10, peopleRemaining ?? 10);
   const discountDisplay = offer.discount_type === "special_deal" && offer.special_deal_text
     ? offer.special_deal_text
     : offer.percent_off
@@ -846,7 +849,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   }
 
   // Check if claim button should be enabled
-  const canClaim = acceptedTerms && peopleRemaining >= partySize && !isLoading;
+  const canClaim = acceptedTerms && (peopleRemaining === null || peopleRemaining >= partySize) && !isLoading;
   const reservationValid = !wantsReservation || (reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError);
   const claimEnabled = canClaim && reservationValid;
 
@@ -878,7 +881,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {Array.from({ length: Math.min(maxPerRedemption, peopleRemaining) }, (_, i) => i + 1).map((num) => (
+            {Array.from({ length: maxSelectablePartySize }, (_, i) => i + 1).map((num) => (
               <SelectItem key={num} value={num.toString()}>
                 {num} {num === 1 ? t("person") : t("people")}
               </SelectItem>
@@ -899,13 +902,17 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
           <div className="flex flex-col">
             <span className="text-muted-foreground text-xs">{language === "el" ? "Διαθέσιμα" : "Available"}</span>
             <span className="font-medium">
-              {peopleRemaining} {language === "el" ? "άτομα" : "people"}
+              {peopleRemaining === null
+                ? (language === "el" ? "Χωρίς όριο" : "No limit")
+                : `${peopleRemaining} ${language === "el" ? "άτομα" : "people"}`}
             </span>
           </div>
           <div className="flex flex-col">
             <span className="text-muted-foreground text-xs">{language === "el" ? "Μέγ. ανά εξαργύρωση" : "Max per redemption"}</span>
             <span className="font-medium">
-              {maxPerRedemption} {language === "el" ? "άτομα" : "people"}
+              {maxPerRedemption === null
+                ? (language === "el" ? "Χωρίς όριο" : "No limit")
+                : `${maxPerRedemption} ${language === "el" ? "άτομα" : "people"}`}
             </span>
           </div>
         </div>
@@ -1064,7 +1071,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: Math.min(maxPerRedemption, peopleRemaining) }, (_, i) => i + 1).map((num) => (
+                  {Array.from({ length: maxSelectablePartySize }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={num.toString()}>
                       {num} {num === 1 ? t("person") : t("people")}
                     </SelectItem>
@@ -1082,11 +1089,19 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex flex-col">
                   <span className="text-muted-foreground text-xs">{language === "el" ? "Διαθέσιμα" : "Available"}</span>
-                  <span className="font-medium">{peopleRemaining} {language === "el" ? "άτομα" : "people"}</span>
+                  <span className="font-medium">
+                    {peopleRemaining === null
+                      ? (language === "el" ? "Χωρίς όριο" : "No limit")
+                      : `${peopleRemaining} ${language === "el" ? "άτομα" : "people"}`}
+                  </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-muted-foreground text-xs">{language === "el" ? "Μέγ. ανά εξαργύρωση" : "Max per redemption"}</span>
-                  <span className="font-medium">{maxPerRedemption} {language === "el" ? "άτομα" : "people"}</span>
+                  <span className="font-medium">
+                    {maxPerRedemption === null
+                      ? (language === "el" ? "Χωρίς όριο" : "No limit")
+                      : `${maxPerRedemption} ${language === "el" ? "άτομα" : "people"}`}
+                  </span>
                 </div>
               </div>
             </div>

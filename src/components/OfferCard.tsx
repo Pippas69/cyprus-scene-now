@@ -1,4 +1,4 @@
-import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck, Sparkles, Share2, Gift } from "lucide-react";
+import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck, Sparkles, Share2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -270,17 +270,18 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                   -{offerData.percent_off}%
                 </Badge>
               )}
-              {/* Special Offer badge - clickable with popover showing special_deal_text */}
+              {/* Special deal badge (non-percentage) - clickable with popover showing special_deal_text */}
               {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs px-2 py-0.5 h-6 font-semibold cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <Gift className="h-3 w-3 mr-1" />
-                      Special Offer
-                    </Badge>
+                    <button type="button" className="inline-flex">
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs px-2 py-0.5 h-6 font-semibold cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        Offer
+                      </Badge>
+                    </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-3" side="top" align="start">
                     <p className="text-sm font-medium">{offerData.special_deal_text}</p>
