@@ -29,7 +29,8 @@ export const expandTimeRange = (timeFrom: string, timeTo: string, stepMinutes = 
   if (end <= start) end += 1440;
 
   const out: string[] = [];
-  for (let t = start; t < end; t += stepMinutes) {
+  // Include the end time as a valid arrival slot (e.g., 18:00-20:00 includes 20:00)
+  for (let t = start; t <= end; t += stepMinutes) {
     out.push(minutesToTime(t));
   }
   return out;
