@@ -215,8 +215,8 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
           
           {/* Premium badge for boosted */}
-          {/* Optional Reservation badge - ONLY shown when business explicitly enabled show_reservation_cta */}
-          {offerData.show_reservation_cta === true && offerData.businesses?.accepts_direct_reservations === true && (
+          {/* Reservation badge */}
+          {offerData.requires_reservation && (
             <div className="absolute left-3 top-3 z-10">
               <Badge variant="secondary" className="bg-background/85 backdrop-blur text-xs">
                 <CalendarCheck className="h-3 w-3 mr-1" />
