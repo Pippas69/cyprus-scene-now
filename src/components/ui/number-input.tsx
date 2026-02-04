@@ -78,7 +78,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           onChange={handleChange}
           onBlur={handleBlur}
           className={cn(
-            "w-full h-full rounded-md border border-input bg-background pl-1.5 pr-4 py-0.5 text-center text-xs sm:text-sm",
+            "w-12 h-full rounded-md border border-input bg-background pl-1.5 pr-4 py-0.5 text-center text-xs sm:text-sm",
             "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:cursor-not-allowed disabled:opacity-50"
           )}
