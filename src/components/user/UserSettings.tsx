@@ -380,17 +380,58 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </div>
             </div>
 
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
-              <NumberInput
-                value={profile.age || 18}
-                onChange={(value) => setProfile({ ...profile, age: value })}
-                min={13}
-                max={120}
-                className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
-              />
+            {/* Age, City, Gender in one row */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
+                <NumberInput
+                  value={profile.age || 18}
+                  onChange={(value) => setProfile({ ...profile, age: value })}
+                  min={13}
+                  max={120}
+                  className="rounded-xl text-xs sm:text-sm h-8 sm:h-10 w-full"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="town" className="flex items-center gap-1 text-xs sm:text-sm">
+                  <MapPin className="h-3 w-3 text-primary" />
+                  {t.town}
+                </Label>
+                <Select
+                  value={profile.town || ''}
+                  onValueChange={(value) => setProfile({ ...profile, town: value })}
+                >
+                  <SelectTrigger id="town" className="rounded-xl text-xs sm:text-sm h-8 sm:h-10">
+                    <SelectValue placeholder={t.townPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getCityOptions(language).map(city => (
+                      <SelectItem key={city.value} value={city.value} className="text-xs sm:text-sm">{city.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="gender" className="text-xs sm:text-sm">{t.gender}</Label>
+                <Select
+                  value={profile.gender || ''}
+                  onValueChange={(value) => setProfile({ ...profile, gender: value })}
+                >
+                  <SelectTrigger id="gender" className="rounded-xl text-xs sm:text-sm h-8 sm:h-10">
+                    <SelectValue placeholder={t.genderPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male" className="text-xs sm:text-sm">{t.male}</SelectItem>
+                    <SelectItem value="female" className="text-xs sm:text-sm">{t.female}</SelectItem>
+                    <SelectItem value="other" className="text-xs sm:text-sm">{t.other}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
+            {/* Email below */}
             <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="email" className="text-xs sm:text-sm">{t.email}</Label>
               <Input
@@ -399,43 +440,6 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 disabled
                 className="rounded-xl bg-muted text-xs sm:text-sm h-8 sm:h-10"
               />
-            </div>
-
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="town" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                {t.town}
-              </Label>
-              <Select
-                value={profile.town || ''}
-                onValueChange={(value) => setProfile({ ...profile, town: value })}
-              >
-                <SelectTrigger id="town" className="rounded-xl text-xs sm:text-sm h-8 sm:h-10">
-                  <SelectValue placeholder={t.townPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {getCityOptions(language).map(city => (
-                    <SelectItem key={city.value} value={city.value} className="text-xs sm:text-sm">{city.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="gender" className="text-xs sm:text-sm">{t.gender}</Label>
-              <Select
-                value={profile.gender || ''}
-                onValueChange={(value) => setProfile({ ...profile, gender: value })}
-              >
-                <SelectTrigger id="gender" className="rounded-xl text-xs sm:text-sm h-8 sm:h-10">
-                  <SelectValue placeholder={t.genderPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male" className="text-xs sm:text-sm">{t.male}</SelectItem>
-                  <SelectItem value="female" className="text-xs sm:text-sm">{t.female}</SelectItem>
-                  <SelectItem value="other" className="text-xs sm:text-sm">{t.other}</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Interests - list rows (match Signup mock) */}
