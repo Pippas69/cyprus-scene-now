@@ -395,7 +395,7 @@ export const ReservationSlotManager = ({
                 {t.enableReservations}
               </Label>
               <p className="text-[10px] sm:text-xs lg:text-sm text-muted-foreground whitespace-nowrap">
-                {t.enableDescription} {t.enableDescriptionSub}
+                {t.enableDescription}
               </p>
               {/* Show warning if trying to enable without slots */}
               {!canEnableReservations && !settings.accepts_direct_reservations && <p className="text-[8px] sm:text-[9px] md:text-[10px] text-orange-600 mt-1.5 flex items-center gap-1 whitespace-nowrap ml-0 sm:-ml-4 md:ml-0">
