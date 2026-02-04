@@ -105,6 +105,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       success: 'Οι ρυθμίσεις αποθηκεύτηκαν',
       error: 'Σφάλμα αποθήκευσης',
       noSlotsWarning: 'Προσθέστε τουλάχιστον ένα χρονικό slot για να δέχεστε κρατήσεις',
+      noSlotsToEnableWarning: 'Πρέπει να υπάρχει τουλάχιστον ένα χρονικό slot για να ενεργοποιήσετε τις κρατήσεις',
       noDaysWarning: 'Επιλέξτε ημέρες για αυτό το slot',
       instantConfirmation: 'Άμεση Επιβεβαίωση',
       instantConfirmationDescription: 'Αυτόματη επιβεβαίωση αν υπάρχει διαθεσιμότητα',
@@ -160,6 +161,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       success: 'Settings saved',
       error: 'Error saving settings',
       noSlotsWarning: 'Add at least one time slot to accept reservations',
+      noSlotsToEnableWarning: 'You need at least one time slot to enable reservations',
       noDaysWarning: 'Select days for this slot',
       instantConfirmation: 'Instant Confirmation',
       instantConfirmationDescription: 'Reservations are automatically confirmed if availability exists',
@@ -229,7 +231,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                 timeFrom: slot.timeFrom,
                 timeTo: slot.timeTo,
                 capacity: slot.capacity || 10,
-                maxPartySize: slot.maxPartySize || 50,
+                maxPartySize: slot.maxPartySize || 7,
                 days: slot.days || DAYS,
               };
             } else if (slot.time) {
@@ -241,7 +243,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                 timeFrom: slot.time,
                 timeTo: `${toHour.toString().padStart(2, '0')}:00`,
                 capacity: slot.capacity || 10,
-                maxPartySize: 50,
+                maxPartySize: 7,
                 days: DAYS, // Default to all days for migrated slots
               };
             }
@@ -315,7 +317,7 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
       timeFrom: '18:00', 
       timeTo: '20:00', 
       capacity: 10,
-      maxPartySize: 50,
+      maxPartySize: 7,
       days: [...DAYS] // Default to all days
     };
     setSettings((prev) => ({
@@ -351,11 +353,33 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
     updateTimeSlot(slotId, 'days', [...DAYS]);
   };
 
-  const removeTimeSlot = (slotId: string) => {
+  const removeTimeSlot = async (slotId: string) => {
+    const remainingSlots = settings.reservation_time_slots?.filter((slot) => slot.id !== slotId) || [];
+    
     setSettings((prev) => ({
       ...prev,
-      reservation_time_slots: prev.reservation_time_slots?.filter((slot) => slot.id !== slotId) || [],
+      reservation_time_slots: remainingSlots,
     }));
+    
+    // If no slots remain and reservations are enabled, auto-disable
+    if (remainingSlots.length === 0 && settings.accepts_direct_reservations) {
+      setSettings((prev) => ({ ...prev, accepts_direct_reservations: false }));
+      try {
+        await supabase
+          .from('businesses')
+          .update({
+            accepts_direct_reservations: false,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', businessId);
+        toast.success(language === 'el' 
+          ? 'Οι κρατήσεις απενεργοποιήθηκαν (δεν υπάρχουν slots)' 
+          : 'Reservations disabled (no slots available)'
+        );
+      } catch (error) {
+        console.error('Error auto-disabling reservations:', error);
+      }
+    }
   };
 
   const duplicateSlot = (slot: TimeSlot) => {
@@ -403,6 +427,10 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
     );
   }
 
+  // Check if there are valid time slots configured
+  const hasTimeSlots = settings.reservation_time_slots && settings.reservation_time_slots.length > 0;
+  const canEnableReservations = hasTimeSlots;
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Main Toggle */}
@@ -416,12 +444,26 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
               <p className="text-[10px] sm:text-xs lg:text-sm text-muted-foreground whitespace-nowrap">
                 {t.enableDescription} {t.enableDescriptionSub}
               </p>
+              {/* Show warning if trying to enable without slots */}
+              {!canEnableReservations && !settings.accepts_direct_reservations && (
+                <p className="text-[9px] sm:text-[10px] text-orange-600 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                  {t.noSlotsToEnableWarning}
+                </p>
+              )}
             </div>
             <Switch
               id="enable-reservations"
               className="flex-shrink-0 scale-75 md:scale-90 lg:scale-100"
               checked={settings.accepts_direct_reservations}
+              disabled={!canEnableReservations && !settings.accepts_direct_reservations}
               onCheckedChange={async (checked) => {
+                // Prevent enabling if no slots exist
+                if (checked && !canEnableReservations) {
+                  toast.error(t.noSlotsToEnableWarning);
+                  return;
+                }
+                
                 setSettings((prev) => ({ ...prev, accepts_direct_reservations: checked }));
                 // Auto-save immediately for this toggle
                 try {
@@ -450,69 +492,22 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
         </CardContent>
       </Card>
 
-      {settings.accepts_direct_reservations && (
-        <>
-          {/* Policy Info Cards - compact on mobile/tablet */}
-          <div className="grid grid-cols-1 gap-2 sm:gap-3">
-            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
-              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                    <Clock className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-medium text-[10px] sm:text-xs text-green-800 dark:text-green-200 whitespace-nowrap">{t.instantConfirmation}</h4>
-                    <p className="text-[9px] sm:text-[11px] text-green-700 dark:text-green-300 whitespace-nowrap">{t.instantConfirmationDescription}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30">
-              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-medium text-[10px] sm:text-xs text-orange-800 dark:text-orange-200 whitespace-nowrap">{t.noShowPolicy}</h4>
-                    <p className="text-[9px] sm:text-[11px] text-orange-700 dark:text-orange-300 whitespace-nowrap">{t.noShowPolicyDescription}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
-              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-medium text-[10px] sm:text-xs text-blue-800 dark:text-blue-200 whitespace-nowrap">{t.cancellationPolicy}</h4>
-                    <p className="text-[9px] sm:text-[11px] text-blue-700 dark:text-blue-300 whitespace-nowrap">{t.cancellationPolicyDescription}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Time Slots */}
-          <Card>
-            <CardHeader className="pb-3 sm:pb-4">
-              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base whitespace-nowrap">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                {t.timeSlots}
-              </CardTitle>
-              <CardDescription className="text-[10px] sm:text-xs">{t.timeSlotsDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {(!settings.reservation_time_slots || settings.reservation_time_slots.length === 0) && (
-                <div className="text-center py-8 bg-muted/50 rounded-lg border border-dashed">
-                  <Clock className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-                  <p className="text-sm text-muted-foreground">{t.noSlotsWarning}</p>
-                </div>
-              )}
+      {/* Time Slots - Always visible so user can configure before enabling */}
+      <Card>
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base whitespace-nowrap">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            {t.timeSlots}
+          </CardTitle>
+          <CardDescription className="text-[10px] sm:text-xs">{t.timeSlotsDescription}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {(!settings.reservation_time_slots || settings.reservation_time_slots.length === 0) && (
+            <div className="text-center py-8 bg-muted/50 rounded-lg border border-dashed">
+              <Clock className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+              <p className="text-sm text-muted-foreground">{t.noSlotsWarning}</p>
+            </div>
+          )}
 
               {sortedSlots.map((slot) => (
                 <Collapsible
@@ -737,6 +732,53 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
               </Button>
             </CardContent>
           </Card>
+
+      {settings.accepts_direct_reservations && (
+        <>
+          {/* Policy Info Cards - compact on mobile/tablet */}
+          <div className="grid grid-cols-1 gap-2 sm:gap-3">
+            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
+              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                    <Clock className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-[10px] sm:text-xs text-green-800 dark:text-green-200 whitespace-nowrap">{t.instantConfirmation}</h4>
+                    <p className="text-[9px] sm:text-[11px] text-green-700 dark:text-green-300 whitespace-nowrap">{t.instantConfirmationDescription}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30">
+              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-[10px] sm:text-xs text-orange-800 dark:text-orange-200 whitespace-nowrap">{t.noShowPolicy}</h4>
+                    <p className="text-[9px] sm:text-[11px] text-orange-700 dark:text-orange-300 whitespace-nowrap">{t.noShowPolicyDescription}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-[10px] sm:text-xs text-blue-800 dark:text-blue-200 whitespace-nowrap">{t.cancellationPolicy}</h4>
+                    <p className="text-[9px] sm:text-[11px] text-blue-700 dark:text-blue-300 whitespace-nowrap">{t.cancellationPolicyDescription}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Seating Options */}
           <Card>

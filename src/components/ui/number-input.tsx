@@ -12,36 +12,75 @@ interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
 
 const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
   ({ className, value, onChange, min = 1, max = 999, step = 1, ...props }, ref) => {
+    // Track internal string value to allow empty field during editing
+    const [internalValue, setInternalValue] = React.useState(String(value));
+    
+    // Sync internal value when external value changes
+    React.useEffect(() => {
+      setInternalValue(String(value));
+    }, [value]);
+
     const handleIncrement = () => {
       const newValue = Math.min(value + step, max);
       onChange(newValue);
+      setInternalValue(String(newValue));
     };
 
     const handleDecrement = () => {
       const newValue = Math.max(value - step, min);
       onChange(newValue);
+      setInternalValue(String(newValue));
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = parseInt(e.target.value) || min;
-      onChange(Math.min(Math.max(newValue, min), max));
+      const rawValue = e.target.value;
+      
+      // Allow empty string during editing
+      if (rawValue === '') {
+        setInternalValue('');
+        return;
+      }
+      
+      // Only allow digits
+      if (!/^\d*$/.test(rawValue)) {
+        return;
+      }
+      
+      setInternalValue(rawValue);
+      const parsed = parseInt(rawValue, 10);
+      if (!isNaN(parsed)) {
+        onChange(Math.min(Math.max(parsed, min), max));
+      }
+    };
+
+    const handleBlur = () => {
+      // On blur, if empty or invalid, reset to min
+      if (internalValue === '' || isNaN(parseInt(internalValue, 10))) {
+        setInternalValue(String(min));
+        onChange(min);
+      } else {
+        // Ensure value is within bounds
+        const parsed = parseInt(internalValue, 10);
+        const bounded = Math.min(Math.max(parsed, min), max);
+        setInternalValue(String(bounded));
+        onChange(bounded);
+      }
     };
 
     return (
       <div className={cn("relative flex items-center", className)}>
         <input
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           ref={ref}
-          value={value}
+          value={internalValue}
           onChange={handleChange}
-          min={min}
-          max={max}
-          step={step}
+          onBlur={handleBlur}
           className={cn(
             "w-full h-full rounded-md border border-input bg-background pl-2 pr-6 py-1 text-center",
             "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-            "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            "disabled:cursor-not-allowed disabled:opacity-50"
           )}
           {...props}
         />
