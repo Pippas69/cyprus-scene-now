@@ -42,17 +42,17 @@ export const getCityDbValue = (city: string): string => {
 };
 
 /**
- * List of cities for dropdowns - STANDARD ORDER: Λεμεσός, Λευκωσία, Λάρνακα, Πάφος, Παραλίμνι, Αγία Νάπα
+ * List of cities for dropdowns - STANDARD ORDER: Λεμεσός, Λευκωσία, Λάρνακα, Πάφος, Παραλίμνι, Αγία Νάπα, Αμμόχωστος
  */
 export const cyprusCities = {
-  el: ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"],
-  en: ["Limassol", "Nicosia", "Larnaca", "Paphos", "Paralimni", "Ayia Napa"],
+  el: ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα", "Αμμόχωστος"],
+  en: ["Limassol", "Nicosia", "Larnaca", "Paphos", "Paralimni", "Ayia Napa", "Famagusta"],
 };
 
 /**
  * Standard city order for sorting - used to sort dynamic city lists
  */
-export const CITY_ORDER = ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"];
+export const CITY_ORDER = ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα", "Αμμόχωστος"];
 
 /**
  * Normalizes a raw city/town string (from DB or analytics aggregations) into the
