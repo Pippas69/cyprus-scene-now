@@ -241,16 +241,26 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const expiredOffers = (offers || []).filter(offer => isOfferExpired(offer));
   const displayedOffers = showExpired ? [...activeOffers, ...expiredOffers] : activeOffers;
 
-  if (!offers || offers.length === 0) {
+  const hasNoOffers = !offers || offers.length === 0;
+
+  // Always show student discount if enabled, even when no regular offers exist
+  if (hasNoOffers) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            {t.noOffers}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-4 md:space-y-6">
+        <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{t.title}</h1>
+        
+        {/* Student Discount Stats - show even if no regular offers */}
+        <StudentDiscountStats businessId={businessId} language={language} />
+        
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              {t.noOffers}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
