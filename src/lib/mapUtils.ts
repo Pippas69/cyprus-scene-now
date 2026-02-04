@@ -76,9 +76,18 @@ export const formatEventTime = (startAt: string, endAt: string, language: "el" |
   return `${dateStr} • ${timeStr}`;
 };
 
-// Get directions URL
-export const getDirectionsUrl = (lat: number, lng: number): string => {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+// Get directions URL - use address if available, fallback to coordinates
+export const getDirectionsUrl = (address: string | null, lat?: number, lng?: number): string => {
+  // If address is available, use it for more accurate directions
+  if (address && address.trim()) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address.trim())}`;
+  }
+  // Fallback to coordinates if no address
+  if (lat !== undefined && lng !== undefined) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  }
+  // Last resort: just open Google Maps
+  return 'https://www.google.com/maps';
 };
 
 // Share event

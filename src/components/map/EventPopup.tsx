@@ -55,7 +55,8 @@ export const EventPopup = ({ event, onClose, language }: EventPopupProps) => {
 
   const handleDirections = () => {
     const [lng, lat] = event.coordinates;
-    window.open(getDirectionsUrl(lat, lng), "_blank");
+    // For events, use the event location (venue address), fallback to coordinates
+    window.open(getDirectionsUrl(event.location, lat, lng), "_blank");
   };
 
   return (
