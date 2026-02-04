@@ -389,20 +389,41 @@ export const ReservationSlotManager = ({
       {/* Main Toggle */}
       <Card>
         <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 lg:pt-6 lg:pb-6">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex-1 min-w-0 pr-12 sm:pr-14">
-              <Label htmlFor="enable-reservations" className="text-[11px] sm:text-sm lg:text-base font-semibold whitespace-nowrap">
-                {t.enableReservations}
-              </Label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="flex items-center justify-between sm:block sm:flex-1 sm:min-w-0 sm:pr-14">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="enable-reservations" className="text-[11px] sm:text-sm lg:text-base font-semibold whitespace-nowrap">
+                  {t.enableReservations}
+                </Label>
+                <Switch id="enable-reservations" className="flex-shrink-0 scale-[0.6] sm:hidden" checked={settings.accepts_direct_reservations} disabled={!canEnableReservations && !settings.accepts_direct_reservations} onCheckedChange={async checked => {
+                  if (checked && !canEnableReservations) {
+                    toast.error(t.noSlotsToEnableWarning);
+                    return;
+                  }
+                  setSettings(prev => ({
+                    ...prev,
+                    accepts_direct_reservations: checked
+                  }));
+                  try {
+                    const { error } = await supabase.from('businesses').update({
+                      accepts_direct_reservations: checked,
+                      updated_at: new Date().toISOString()
+                    }).eq('id', businessId);
+                    if (error) throw error;
+                  } catch (error) {
+                    console.error('Error saving reservation toggle:', error);
+                  }
+                }} />
+              </div>
               <p className="text-[10px] sm:text-xs lg:text-sm text-muted-foreground whitespace-nowrap">
                 {t.enableDescription} {t.enableDescriptionSub}
               </p>
               {/* Show warning if trying to enable without slots */}
-              {!canEnableReservations && !settings.accepts_direct_reservations && <p className="text-[8px] sm:text-[9px] md:text-[10px] text-orange-600 mt-1.5 flex items-center gap-1 whitespace-nowrap ml-0 sm:-ml-4 md:ml-0">
+              {!canEnableReservations && !settings.accepts_direct_reservations && <p className="text-[8px] sm:text-[9px] md:text-[10px] text-orange-600 mt-1.5 flex items-center gap-1 whitespace-nowrap">
                   <span className="whitespace-nowrap">{t.noSlotsToEnableWarning}</span>
                 </p>}
             </div>
-            <Switch id="enable-reservations" className="flex-shrink-0 scale-75 md:scale-90 lg:scale-100" checked={settings.accepts_direct_reservations} disabled={!canEnableReservations && !settings.accepts_direct_reservations} onCheckedChange={async checked => {
+            <Switch id="enable-reservations-desktop" className="flex-shrink-0 scale-75 md:scale-90 lg:scale-100 hidden sm:flex" checked={settings.accepts_direct_reservations} disabled={!canEnableReservations && !settings.accepts_direct_reservations} onCheckedChange={async checked => {
             // Prevent enabling if no slots exist
             if (checked && !canEnableReservations) {
               toast.error(t.noSlotsToEnableWarning);
