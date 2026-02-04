@@ -844,9 +844,13 @@ const EventCreationForm = ({
                     {/* Available Slots */}
                     <div className="space-y-1.5 sm:space-y-2">
                       <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
-                      <Input type="number" value={config.availableSlots} onChange={e => updateSeatingConfig(type, {
-                  availableSlots: parseInt(e.target.value) || 1
-                })} min={1} className="w-24 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
+                      <NumberInput 
+                        value={config.availableSlots} 
+                        onChange={value => updateSeatingConfig(type, { availableSlots: value })} 
+                        min={1}
+                        max={999}
+                        className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm" 
+                      />
                     </div>
                     
                     {/* Person Tiers */}
@@ -884,9 +888,13 @@ const EventCreationForm = ({
                           <span className="text-muted-foreground text-xs">→</span>
                           <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
                             <span className="text-muted-foreground text-xs">€</span>
-                            <Input type="number" value={tier.prepaidChargeCents / 100} onChange={e => updateTier(type, index, {
-                      prepaidChargeCents: Math.round(parseFloat(e.target.value || '0') * 100)
-                    })} min={0} step={5} className="w-16 sm:w-24 h-7 sm:h-10 text-[11px] sm:text-sm" />
+                            <NumberInput 
+                              value={Math.round(tier.prepaidChargeCents / 100)} 
+                              onChange={value => updateTier(type, index, { prepaidChargeCents: value * 100 })} 
+                              min={0}
+                              max={9999}
+                              className="w-14 sm:w-20 h-7 sm:h-10 text-[11px] sm:text-sm" 
+                            />
                           </div>
                           {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-6 w-6 sm:h-8 sm:w-8 text-destructive flex-shrink-0">
                               <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
