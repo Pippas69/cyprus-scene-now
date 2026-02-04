@@ -86,7 +86,7 @@ export function StudentDiscountStats({ businessId, language }: StudentDiscountSt
           </div>
 
           <div className="hidden md:flex items-center gap-3 lg:gap-4 flex-nowrap">
-            <div className="flex items-center gap-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground flex-shrink-0">
+            <div className="flex items-center gap-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground flex-shrink-0 md:-ml-2.5 lg:ml-0">
               <Hash className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
               <span className="whitespace-nowrap">{redemptionCount || 0} {t.redemptions}</span>
             </div>
