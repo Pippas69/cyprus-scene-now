@@ -68,7 +68,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     };
 
     return (
-      <div className={cn("relative flex items-center w-16 h-10", className)}>
+      <div className={cn("relative flex items-center w-14 h-[18px] sm:h-6", className)}>
         <input
           type="text"
           inputMode="numeric"
@@ -78,31 +78,28 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           onChange={handleChange}
           onBlur={handleBlur}
           className={cn(
-            // Match default <Input /> styling (height, padding, font sizing) so it aligns with other fields like "Ώρα Άφιξης"
-            "w-full h-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm",
-            // Leave room for the increment/decrement controls on the right
-            "pr-8 text-center",
+            "w-full h-full rounded-md border border-input bg-background pl-1.5 pr-5 py-0.5 text-center text-sm",
             "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:cursor-not-allowed disabled:opacity-50"
           )}
           {...props}
         />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex flex-col">
           <button
             type="button"
             onClick={handleIncrement}
-            className="h-4 w-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="h-2.5 w-3.5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             tabIndex={-1}
           >
-            <ChevronUp className="h-3 w-3" />
+            <ChevronUp className="h-2.5 w-2.5" />
           </button>
           <button
             type="button"
             onClick={handleDecrement}
-            className="h-4 w-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="h-2.5 w-3.5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             tabIndex={-1}
           >
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDown className="h-2.5 w-2.5" />
           </button>
         </div>
       </div>
