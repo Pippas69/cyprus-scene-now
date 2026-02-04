@@ -380,8 +380,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </div>
             </div>
 
-            {/* Age, City, Gender in one row */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {/* Age, City, Gender in one row - uniform spacing */}
+            <div className="flex gap-3 sm:gap-4">
               <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
                 <NumberInput
