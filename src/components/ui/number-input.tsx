@@ -68,7 +68,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     };
 
     return (
-      <div className={cn("relative flex items-center w-14 h-[18px] sm:h-6", className)}>
+      <div className={cn("relative flex items-center", className)}>
         <input
           type="text"
           inputMode="numeric"
@@ -78,7 +78,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           onChange={handleChange}
           onBlur={handleBlur}
           className={cn(
-            "w-full h-full rounded-md border border-input bg-background pl-1.5 pr-5 py-0.5 text-center text-xs sm:text-sm",
+            "w-full h-full rounded-md border border-input bg-background pl-1.5 pr-4 py-0.5 text-center text-xs sm:text-sm",
             "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:cursor-not-allowed disabled:opacity-50"
           )}
@@ -88,18 +88,18 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           <button
             type="button"
             onClick={handleIncrement}
-            className="h-2.5 w-3.5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="h-2 w-3 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             tabIndex={-1}
           >
-            <ChevronUp className="h-2.5 w-2.5" />
+            <ChevronUp className="h-2 w-2" />
           </button>
           <button
             type="button"
             onClick={handleDecrement}
-            className="h-2.5 w-3.5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="h-2 w-3 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             tabIndex={-1}
           >
-            <ChevronDown className="h-2.5 w-2.5" />
+            <ChevronDown className="h-2 w-2" />
           </button>
         </div>
       </div>

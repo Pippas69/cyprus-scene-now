@@ -864,40 +864,40 @@ const EventCreationForm = ({
                       </div>
                       <p className="text-[10px] sm:text-xs text-muted-foreground">{t.rangeHint}</p>
                       
-                      {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1.5 sm:gap-3 bg-background p-2 sm:p-3 rounded-lg flex-nowrap overflow-x-auto">
-                          <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
+                      {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1 sm:gap-3 bg-background p-1.5 sm:p-3 rounded-lg flex-nowrap overflow-x-auto">
+                          <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
                             <NumberInput 
                               value={tier.minPeople} 
                               onChange={value => updateTier(type, index, { minPeople: value })} 
                               min={1} 
                               max={99}
-                              className="w-14 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" 
+                              className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
                             />
-                            <span className="text-muted-foreground text-xs">-</span>
+                            <span className="text-muted-foreground text-[10px] sm:text-xs">-</span>
                             <NumberInput 
                               value={tier.maxPeople} 
                               onChange={value => updateTier(type, index, { maxPeople: value })} 
                               min={tier.minPeople} 
                               max={99}
-                              className="w-14 sm:w-16 h-7 sm:h-10 text-[11px] sm:text-sm" 
+                              className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
                             />
-                            <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">
+                            <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap">
                               {language === 'el' ? 'άτ.' : 'ppl'}
                             </span>
                           </div>
-                          <span className="text-muted-foreground text-xs">→</span>
-                          <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
-                            <span className="text-muted-foreground text-xs">€</span>
+                          <span className="text-muted-foreground text-[10px] sm:text-xs">→</span>
+                          <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
+                            <span className="text-muted-foreground text-[10px] sm:text-xs">€</span>
                             <NumberInput 
                               value={Math.round(tier.prepaidChargeCents / 100)} 
                               onChange={value => updateTier(type, index, { prepaidChargeCents: value * 100 })} 
                               min={0}
                               max={9999}
-                              className="w-14 sm:w-20 h-7 sm:h-10 text-[11px] sm:text-sm" 
+                              className="w-12 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" 
                             />
                           </div>
-                          {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-6 w-6 sm:h-8 sm:w-8 text-destructive flex-shrink-0">
-                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                          {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-5 w-5 sm:h-8 sm:w-8 text-destructive flex-shrink-0 p-0">
+                              <Trash2 className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
                             </Button>}
                         </div>)}
                     </div>
