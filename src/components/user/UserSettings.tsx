@@ -393,7 +393,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 />
               </div>
 
-              <div className="space-y-1.5 sm:space-y-2">
+              <div className="flex-1 space-y-1.5 sm:space-y-2">
                 <Label htmlFor="town" className="flex items-center gap-1 text-xs sm:text-sm">
                   <MapPin className="h-3 w-3 text-primary" />
                   {t.town}
