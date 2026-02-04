@@ -120,7 +120,8 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
   const handleDirections = (e: React.MouseEvent, business: BusinessLocation) => {
     e.stopPropagation();
     const [lng, lat] = business.coordinates;
-    window.open(getDirectionsUrl(lat, lng), "_blank");
+    // Use business address for directions, fallback to coordinates
+    window.open(getDirectionsUrl(business.address, lat, lng), "_blank");
   };
 
   const handleProfile = (e: React.MouseEvent, business: BusinessLocation) => {

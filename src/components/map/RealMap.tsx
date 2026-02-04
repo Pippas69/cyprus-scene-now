@@ -289,7 +289,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         }}
         onClick={(e) => {
           e.stopPropagation();
-          window.open(getDirectionsUrl(lat, lng), "_blank", "noopener,noreferrer");
+          // Use business address for directions, fallback to coordinates
+          window.open(getDirectionsUrl(business.address, lat, lng), "_blank", "noopener,noreferrer");
         }}
         aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
       >
