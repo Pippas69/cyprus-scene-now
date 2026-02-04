@@ -447,9 +447,9 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
               </p>
               {/* Show warning if trying to enable without slots */}
               {!canEnableReservations && !settings.accepts_direct_reservations && (
-                <p className="text-[9px] sm:text-[10px] text-orange-600 mt-1 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-                  {t.noSlotsToEnableWarning}
+                <p className="text-[8px] sm:text-[9px] md:text-[10px] text-orange-600 mt-1.5 flex items-center gap-1 whitespace-nowrap">
+                  <AlertTriangle className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
+                  <span className="whitespace-nowrap">{t.noSlotsToEnableWarning}</span>
                 </p>
               )}
             </div>
