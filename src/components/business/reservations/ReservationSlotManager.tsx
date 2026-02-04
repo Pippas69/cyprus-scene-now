@@ -39,6 +39,7 @@ export const ReservationSlotManager = ({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedSlots, setExpandedSlots] = useState<Record<string, boolean>>({});
+  const [savedSlotsCount, setSavedSlotsCount] = useState(0); // Track saved slots from database
   const [settings, setSettings] = useState<ReservationSettings>({
     accepts_direct_reservations: false,
     reservations_globally_paused: false,
@@ -231,6 +232,8 @@ export const ReservationSlotManager = ({
           reservation_time_slots: parsedTimeSlots,
           reservation_seating_options: data.reservation_seating_options ?? []
         });
+        // Track how many slots are actually saved in database
+        setSavedSlotsCount(parsedTimeSlots?.length ?? 0);
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -258,6 +261,8 @@ export const ReservationSlotManager = ({
       }).eq('id', businessId);
       if (error) throw error;
       toast.success(t.success);
+      // Update saved slots count after successful save
+      setSavedSlotsCount(settings.reservation_time_slots?.length ?? 0);
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error(t.error);
@@ -394,9 +399,9 @@ export const ReservationSlotManager = ({
       </div>;
   }
 
-  // Check if there are valid time slots configured
-  const hasTimeSlots = settings.reservation_time_slots && settings.reservation_time_slots.length > 0;
-  const canEnableReservations = hasTimeSlots;
+  // Check if there are SAVED time slots in database (not just local unsaved ones)
+  const hasSavedTimeSlots = savedSlotsCount > 0;
+  const canEnableReservations = hasSavedTimeSlots;
   return <div className="space-y-4 sm:space-y-6">
       {/* Main Toggle */}
       <Card>
