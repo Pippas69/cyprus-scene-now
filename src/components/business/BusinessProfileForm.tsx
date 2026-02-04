@@ -14,7 +14,8 @@ import { ImageUploadField } from "./ImageUploadField";
 import { Loader2 } from "lucide-react";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
 import { useLanguage } from "@/hooks/useLanguage";
-import { businessTranslations, businessCategories, cities } from "./translations";
+import { businessTranslations, businessCategories } from "./translations";
+import { getCityOptions } from "@/lib/cityTranslations";
 import { validationTranslations } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 
@@ -336,8 +337,8 @@ export default function BusinessProfileForm({ businessId }: BusinessProfileFormP
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="">{t.selectCity}</option>
-              {cities[language].map((city) => (
-                <option key={city} value={city}>{city}</option>
+              {getCityOptions(language).map((city) => (
+                <option key={city.value} value={city.value}>{city.label}</option>
               ))}
             </select>
             {errors.city && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}

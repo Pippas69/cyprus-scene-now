@@ -85,8 +85,8 @@ export const businessCategories = {
 };
 
 export const cities = {
-  el: ["Λευκωσία", "Λεμεσός", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα"],
-  en: ["Nicosia", "Limassol", "Larnaca", "Paphos", "Paralimni", "Ayia Napa"],
+  el: ["Λεμεσός", "Λευκωσία", "Λάρνακα", "Πάφος", "Παραλίμνι", "Αγία Νάπα", "Αμμόχωστος"],
+  en: ["Limassol", "Nicosia", "Larnaca", "Paphos", "Paralimni", "Ayia Napa", "Famagusta"],
 };
 
 export const seatingOptions = {
