@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -858,10 +859,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
             <div className="space-y-2">
               <Label className="text-xs sm:text-sm">{t.percentOffLabel}</Label>
               <div className="flex items-center gap-2">
-                <Input
-                  type="number"
+                <NumberInput
                   value={formData.percentOff}
-                  onChange={(e) => updateField('percentOff', Math.max(1, Math.min(99, parseInt(e.target.value) || 0)))}
+                  onChange={(value) => updateField('percentOff', Math.max(1, Math.min(99, value)))}
                   min={1}
                   max={99}
                   className="w-20 sm:w-24 text-sm sm:text-base"
@@ -1031,10 +1031,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               
               {formData.appearanceHours === -1 && (
                 <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
+                  <NumberInput
                     value={formData.appearanceCustomHours}
-                    onChange={(e) => updateField('appearanceCustomHours', Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(value) => updateField('appearanceCustomHours', Math.max(1, value))}
                     min={1}
                     max={168}
                     className="w-20 sm:w-24 text-xs sm:text-base"
@@ -1078,11 +1077,11 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
               <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
               <Label className="text-xs sm:text-sm">{t.totalPeople}</Label>
             </div>
-            <Input
-              type="number"
+            <NumberInput
               value={formData.totalPeople}
-              onChange={(e) => updateField('totalPeople', Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(value) => updateField('totalPeople', Math.max(1, value))}
               min={1}
+              max={9999}
               className="w-28 sm:w-32 text-xs sm:text-base"
             />
             <p className="text-[10px] sm:text-xs text-muted-foreground">{t.totalPeopleDesc}</p>
@@ -1091,10 +1090,9 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
           {/* Max Per Redemption */}
           <div className="space-y-1.5 sm:space-y-2">
             <Label className="text-xs sm:text-sm">{t.maxPerRedemption}</Label>
-            <Input
-              type="number"
+            <NumberInput
               value={formData.maxPeoplePerRedemption}
-              onChange={(e) => updateField('maxPeoplePerRedemption', Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(value) => updateField('maxPeoplePerRedemption', Math.max(1, value))}
               min={1}
               max={formData.totalPeople}
               className="w-28 sm:w-32 text-xs sm:text-base"

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -320,18 +321,16 @@ export const DirectReservationSettings = ({ businessId, language }: DirectReserv
               {settings.reservation_capacity_type === 'daily' && (
                 <div className="space-y-2">
                   <Label htmlFor="daily-limit">{t.dailyLimitValue}</Label>
-                  <Input
-                    id="daily-limit"
-                    type="number"
-                    min="1"
-                    value={settings.daily_reservation_limit ?? ''}
-                    onChange={(e) =>
+                  <NumberInput
+                    value={settings.daily_reservation_limit ?? 20}
+                    onChange={(value) =>
                       setSettings((prev) => ({
                         ...prev,
-                        daily_reservation_limit: e.target.value ? parseInt(e.target.value) : null,
+                        daily_reservation_limit: value,
                       }))
                     }
-                    placeholder="20"
+                    min={1}
+                    max={999}
                   />
                 </div>
               )}
@@ -348,13 +347,12 @@ export const DirectReservationSettings = ({ businessId, language }: DirectReserv
                         onChange={(e) => updateTimeSlot(index, 'time', e.target.value)}
                         className="w-32"
                       />
-                      <Input
-                        type="number"
-                        min="1"
+                      <NumberInput
                         value={slot.capacity}
-                        onChange={(e) => updateTimeSlot(index, 'capacity', parseInt(e.target.value) || 1)}
+                        onChange={(value) => updateTimeSlot(index, 'capacity', value)}
+                        min={1}
+                        max={999}
                         className="w-24"
-                        placeholder={t.timeSlotCapacity}
                       />
                       <Button
                         type="button"

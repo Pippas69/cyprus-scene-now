@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -546,21 +547,16 @@ export const DirectReservationDialog = ({
               <Users className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.partySize}
             </Label>
-            <Input
-              id="party_size"
-              type="number"
-              min="1"
-              max={slotMaxPartySize}
+            <NumberInput
               value={formData.party_size}
-              onChange={(e) => {
-                const raw = parseInt(e.target.value, 10);
-                const next = Number.isFinite(raw) ? raw : 1;
+              onChange={(value) => {
                 setFormData({
                   ...formData,
-                  party_size: Math.min(Math.max(1, next), slotMaxPartySize),
+                  party_size: Math.min(Math.max(1, value), slotMaxPartySize),
                 });
               }}
-              required
+              min={1}
+              max={slotMaxPartySize}
               disabled={availableCapacity === 0}
               className="text-xs sm:text-sm h-9 sm:h-10"
             />

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -545,12 +546,11 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               {formData.discountType === 'percentage' && (
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label className="text-xs sm:text-sm">{t.percentOffLabel}</Label>
-                  <Input
-                    type="number"
+                  <NumberInput
+                    value={formData.percentOff}
+                    onChange={(value) => updateField('percentOff', value)}
                     min={1}
                     max={100}
-                    value={formData.percentOff}
-                    onChange={(e) => updateField('percentOff', parseInt(e.target.value) || 0)}
                     className="h-9 sm:h-10 text-sm"
                   />
                 </div>
@@ -680,22 +680,21 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
               <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 <div className="space-y-1 sm:space-y-2">
                   <Label className="text-[9px] sm:text-sm whitespace-nowrap">{t.totalPeopleLabel}</Label>
-                  <Input
-                    type="number"
-                    min={1}
+                  <NumberInput
                     value={formData.totalPeople}
-                    onChange={(e) => updateField('totalPeople', parseInt(e.target.value) || 1)}
+                    onChange={(value) => updateField('totalPeople', value)}
+                    min={1}
+                    max={9999}
                     className="h-8 sm:h-10 text-xs sm:text-sm"
                   />
                 </div>
                 <div className="space-y-1 sm:space-y-2">
                   <Label className="text-[9px] sm:text-sm whitespace-nowrap">{t.maxPerRedemptionLabel}</Label>
-                  <Input
-                    type="number"
+                  <NumberInput
+                    value={formData.maxPeoplePerRedemption}
+                    onChange={(value) => updateField('maxPeoplePerRedemption', value)}
                     min={1}
                     max={20}
-                    value={formData.maxPeoplePerRedemption}
-                    onChange={(e) => updateField('maxPeoplePerRedemption', parseInt(e.target.value) || 1)}
                     className="h-8 sm:h-10 text-xs sm:text-sm"
                   />
                 </div>

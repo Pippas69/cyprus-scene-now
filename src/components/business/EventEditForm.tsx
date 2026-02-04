@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -859,10 +860,9 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
 
             {formData.appearanceMode === 'hours' && formData.appearanceHours === -1 && (
               <div className="flex items-center gap-2">
-                <Input
-                  type="number"
+                <NumberInput
                   value={formData.appearanceCustomHours}
-                  onChange={(e) => updateField('appearanceCustomHours', parseInt(e.target.value) || 1)}
+                  onChange={(value) => updateField('appearanceCustomHours', value)}
                   min={1}
                   max={168}
                   className="w-24"
@@ -1053,11 +1053,11 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                       
                       <div className="space-y-1.5 sm:space-y-2">
                         <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
-                        <Input
-                          type="number"
+                        <NumberInput
                           value={config.availableSlots}
-                          onChange={(e) => updateSeatingConfig(type, { availableSlots: parseInt(e.target.value) || 1 })}
+                          onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
                           min={1}
+                          max={999}
                           className="w-24 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm"
                         />
                       </div>
@@ -1083,19 +1083,19 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                         {config.tiers.map((tier, index) => (
                           <div key={index} className="flex flex-wrap items-center gap-1.5 sm:gap-3 bg-background p-2 sm:p-3 rounded-lg">
                             <div className="flex items-center gap-1 sm:gap-2">
-                              <Input
-                                type="number"
+                              <NumberInput
                                 value={tier.minPeople}
-                                onChange={(e) => updateTier(type, index, { minPeople: parseInt(e.target.value) || 1 })}
+                                onChange={(value) => updateTier(type, index, { minPeople: value })}
                                 min={1}
+                                max={99}
                                 className="w-12 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm"
                               />
                               <span className="text-muted-foreground text-xs">-</span>
-                              <Input
-                                type="number"
+                              <NumberInput
                                 value={tier.maxPeople}
-                                onChange={(e) => updateTier(type, index, { maxPeople: parseInt(e.target.value) || 1 })}
+                                onChange={(value) => updateTier(type, index, { maxPeople: value })}
                                 min={tier.minPeople}
+                                max={99}
                                 className="w-14 sm:w-16 h-7 sm:h-10 text-xs sm:text-sm px-1.5 sm:px-3"
                               />
                               <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">
@@ -1105,12 +1105,11 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                             <span className="text-muted-foreground text-xs">→</span>
                             <div className="flex items-center gap-1 sm:gap-2">
                               <span className="text-muted-foreground text-xs">€</span>
-                              <Input
-                                type="number"
+                              <NumberInput
                                 value={tier.prepaidChargeCents / 100}
-                                onChange={(e) => updateTier(type, index, { prepaidChargeCents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                                onChange={(value) => updateTier(type, index, { prepaidChargeCents: Math.round(value * 100) })}
                                 min={0}
-                                step={5}
+                                max={9999}
                                 className="w-16 sm:w-24 h-7 sm:h-10 text-xs sm:text-sm"
                               />
                             </div>

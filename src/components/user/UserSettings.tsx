@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -381,11 +382,11 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
             <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
-              <Input
-                id="age"
-                type="number"
-                value={profile.age || ''}
-                onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || null })}
+              <NumberInput
+                value={profile.age || 18}
+                onChange={(value) => setProfile({ ...profile, age: value })}
+                min={13}
+                max={120}
                 className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
               />
             </div>

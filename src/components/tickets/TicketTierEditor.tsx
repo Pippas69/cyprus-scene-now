@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -314,13 +315,13 @@ export const TicketTierEditor = ({
                         <Users className="h-3 w-3" />
                         {text.quantity}
                       </Label>
-                      <Input
-                        type="number"
-                        min="1"
+                      <NumberInput
                         value={tier.quantity_total}
-                        onChange={(e) => updateTier(index, { 
-                          quantity_total: parseInt(e.target.value || "1") 
+                        onChange={(value) => updateTier(index, { 
+                          quantity_total: value 
                         })}
+                        min={1}
+                        max={99999}
                         className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                     </div>
@@ -332,14 +333,13 @@ export const TicketTierEditor = ({
                     <Label className="text-xs sm:text-sm whitespace-nowrap">
                       {text.maxPerOrderFull}
                     </Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max={tier.quantity_total}
+                    <NumberInput
                       value={tier.max_per_order}
-                      onChange={(e) => updateTier(index, { 
-                        max_per_order: parseInt(e.target.value || "1") 
+                      onChange={(value) => updateTier(index, { 
+                        max_per_order: value 
                       })}
+                      min={1}
+                      max={tier.quantity_total}
                       className="h-8 sm:h-10 text-xs sm:text-sm"
                     />
                   </div>

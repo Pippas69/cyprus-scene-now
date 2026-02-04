@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -626,11 +627,11 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                         <div>
                           <Label className="text-[10px] sm:text-sm font-medium">{t.slotCapacity}</Label>
                           <div className="flex items-center gap-2 mt-1">
-                            <Input
-                              type="number"
-                              min="1"
+                            <NumberInput
                               value={slot.capacity}
-                              onChange={(e) => updateTimeSlot(slot.id, 'capacity', parseInt(e.target.value) || 1)}
+                              onChange={(value) => updateTimeSlot(slot.id, 'capacity', value)}
+                              min={1}
+                              max={999}
                               className="max-w-[120px] h-8 sm:h-10 text-[11px] sm:text-sm"
                             />
                             <Users className="h-4 w-4 text-muted-foreground" />
@@ -644,12 +645,11 @@ export const ReservationSlotManager = ({ businessId, language }: ReservationSlot
                         <div>
                           <Label className="text-[10px] sm:text-sm font-medium">{t.slotMaxPartySize}</Label>
                           <div className="flex items-center gap-2 mt-1">
-                            <Input
-                              type="number"
-                              min="1"
-                              max="50"
+                            <NumberInput
                               value={slot.maxPartySize}
-                              onChange={(e) => updateTimeSlot(slot.id, 'maxPartySize', parseInt(e.target.value) || 1)}
+                              onChange={(value) => updateTimeSlot(slot.id, 'maxPartySize', value)}
+                              min={1}
+                              max={50}
                               className="max-w-[120px] h-8 sm:h-10 text-[11px] sm:text-sm"
                             />
                             <Users className="h-4 w-4 text-muted-foreground" />
