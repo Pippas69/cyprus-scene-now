@@ -251,13 +251,9 @@ export const ReservationSlotManager = ({
       const {
         error
       } = await supabase.from('businesses').update({
-        accepts_direct_reservations: settings.accepts_direct_reservations,
-        reservations_globally_paused: settings.reservations_globally_paused,
         reservation_time_slots: timeSlotsJson,
         reservation_days: Array.from(allDays),
-        reservation_seating_options: settings.reservation_seating_options,
         reservation_capacity_type: 'time_slots',
-        reservation_requires_approval: false,
         updated_at: new Date().toISOString()
       }).eq('id', businessId);
       if (error) throw error;
@@ -269,11 +265,27 @@ export const ReservationSlotManager = ({
       setSaving(false);
     }
   };
-  const toggleSeating = (option: string) => {
+  const toggleSeating = async (option: string) => {
+    const newOptions = settings.reservation_seating_options.includes(option) 
+      ? settings.reservation_seating_options.filter(o => o !== option) 
+      : [...settings.reservation_seating_options, option];
+    
     setSettings(prev => ({
       ...prev,
-      reservation_seating_options: prev.reservation_seating_options.includes(option) ? prev.reservation_seating_options.filter(o => o !== option) : [...prev.reservation_seating_options, option]
+      reservation_seating_options: newOptions
     }));
+    
+    // Auto-save seating options immediately
+    try {
+      const { error } = await supabase.from('businesses').update({
+        reservation_seating_options: newOptions,
+        updated_at: new Date().toISOString()
+      }).eq('id', businessId);
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving seating options:', error);
+      toast.error(t.error);
+    }
   };
   const addTimeSlot = () => {
     const newSlot: TimeSlot = {
@@ -448,7 +460,7 @@ export const ReservationSlotManager = ({
         <CardContent className="space-y-4">
           {(!settings.reservation_time_slots || settings.reservation_time_slots.length === 0) && <div className="text-center py-8 bg-muted/50 rounded-lg border border-dashed">
               <Clock className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-sm text-muted-foreground">{t.noSlotsWarning}</p>
+              <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground px-4">{t.noSlotsWarning}</p>
             </div>}
 
               {sortedSlots.map(slot => <Collapsible key={slot.id} open={expandedSlots[slot.id] ?? false} onOpenChange={() => toggleSlotExpanded(slot.id)}>
@@ -605,10 +617,21 @@ export const ReservationSlotManager = ({
                   </Card>
                 </Collapsible>)}
 
-              <Button type="button" variant="outline" onClick={addTimeSlot} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                {t.addSlot}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" onClick={addTimeSlot} className="flex-1 sm:flex-none">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t.addSlot}
+                </Button>
+                <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="flex-1 sm:flex-none">
+                  {saving ? <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t.saving}
+                  </> : <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {t.save}
+                  </>}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -684,16 +707,6 @@ export const ReservationSlotManager = ({
             </CardContent>
           </Card>
 
-          {/* Save Button */}
-          <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="w-full" size="lg">
-            {saving ? <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t.saving}
-              </> : <>
-                <Save className="h-4 w-4 mr-2" />
-                {t.save}
-              </>}
-          </Button>
         </>}
     </div>;
 };
