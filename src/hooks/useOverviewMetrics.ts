@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { endOfDay, startOfDay } from "date-fns";
 
 export interface OverviewMetrics {
   totalViews: number;
@@ -13,17 +12,10 @@ export interface OverviewMetrics {
 
 export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date; to: Date }) => {
   return useQuery({
-    queryKey: [
-      "overview-metrics",
-      businessId,
-      dateRange?.from ? startOfDay(dateRange.from).toISOString() : undefined,
-      dateRange?.to ? endOfDay(dateRange.to).toISOString() : undefined,
-    ],
+    queryKey: ["overview-metrics", businessId, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
     queryFn: async (): Promise<OverviewMetrics> => {
-      // IMPORTANT: react-day-picker dates come in at 00:00 local time.
-      // We must normalize to full-day boundaries, otherwise same-day events after midnight get excluded.
-      const startDate = dateRange?.from ? startOfDay(dateRange.from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const endDate = dateRange?.to ? endOfDay(dateRange.to) : new Date();
+      const startDate = dateRange?.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const endDate = dateRange?.to || new Date();
 
       // Get business events for filtering
       const { data: events } = await supabase

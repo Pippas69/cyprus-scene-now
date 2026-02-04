@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DateRange } from 'react-day-picker';
-import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 export interface CustomerMetrics {
   totalCustomers: number;
@@ -22,9 +22,8 @@ export const useCustomerMetrics = (businessId: string, dateRange?: DateRange) =>
   return useQuery({
     queryKey: ['customer-metrics', businessId, dateRange?.from, dateRange?.to],
     queryFn: async (): Promise<CustomerMetrics> => {
-      // Normalize picker boundaries to full-day range (fixes missing "last day" events)
-      const startDate = dateRange?.from ? startOfDay(dateRange.from) : startOfMonth(new Date());
-      const endDate = dateRange?.to ? endOfDay(dateRange.to) : endOfMonth(new Date());
+      const startDate = dateRange?.from || startOfMonth(new Date());
+      const endDate = dateRange?.to || endOfMonth(new Date());
 
       // =====================================================
       // Customers + Repeat Customers MUST be based on verified QR check-ins
