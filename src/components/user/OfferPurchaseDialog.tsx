@@ -1034,7 +1034,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                 <DrawerTitle className="text-left text-[13px] font-semibold leading-tight whitespace-nowrap overflow-hidden">
                   {offer.title}
                 </DrawerTitle>
-                <p className="text-sm text-muted-foreground truncate">{offer.businesses.name}</p>
+                <p className="text-sm text-muted-foreground truncate -ml-0.5 sm:ml-0">{offer.businesses.name}</p>
               </div>
               {discountDisplay && (
                 <Badge className="bg-primary text-primary-foreground shrink-0 text-xs h-6 px-2 mr-1">
