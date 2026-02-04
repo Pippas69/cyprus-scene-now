@@ -1201,7 +1201,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
               <DialogDescription className="text-left">{offer.businesses.name}</DialogDescription>
             </div>
             {discountDisplay && (
-              <Badge className="bg-primary text-primary-foreground shrink-0 text-base sm:text-lg py-1.5 px-3 mr-1">
+              <Badge className="bg-primary text-primary-foreground shrink-0 text-base sm:text-sm py-1.5 sm:py-1 px-3 sm:px-2 mr-1">
                 {discountDisplay}
               </Badge>
             )}
