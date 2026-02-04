@@ -337,26 +337,55 @@ export const ReservationSlotManager = ({
   };
   const removeTimeSlot = async (slotId: string) => {
     const remainingSlots = settings.reservation_time_slots?.filter(slot => slot.id !== slotId) || [];
+    
+    // Update local state immediately
     setSettings(prev => ({
       ...prev,
-      reservation_time_slots: remainingSlots
+      reservation_time_slots: remainingSlots.length > 0 ? remainingSlots : null
     }));
 
-    // If no slots remain and reservations are enabled, auto-disable
-    if (remainingSlots.length === 0 && settings.accepts_direct_reservations) {
-      setSettings(prev => ({
-        ...prev,
-        accepts_direct_reservations: false
-      }));
-      try {
+    try {
+      // Collect all unique days from remaining slots
+      const allDays = new Set<string>();
+      remainingSlots.forEach(slot => {
+        slot.days.forEach(day => allDays.add(day));
+      });
+
+      const timeSlotsJson = remainingSlots.length > 0 ? JSON.parse(JSON.stringify(remainingSlots)) : null;
+
+      // If no slots remain and reservations are enabled, auto-disable
+      if (remainingSlots.length === 0 && settings.accepts_direct_reservations) {
+        setSettings(prev => ({
+          ...prev,
+          accepts_direct_reservations: false,
+          reservation_time_slots: null
+        }));
+        
         await supabase.from('businesses').update({
           accepts_direct_reservations: false,
+          reservation_time_slots: null,
+          reservation_days: [],
           updated_at: new Date().toISOString()
         }).eq('id', businessId);
+        
+        setSavedSlotsCount(0);
         toast.success(language === 'el' ? 'Οι κρατήσεις απενεργοποιήθηκαν (δεν υπάρχουν slots)' : 'Reservations disabled (no slots available)');
-      } catch (error) {
-        console.error('Error auto-disabling reservations:', error);
+      } else {
+        // Save the remaining slots to database
+        await supabase.from('businesses').update({
+          reservation_time_slots: timeSlotsJson,
+          reservation_days: Array.from(allDays),
+          updated_at: new Date().toISOString()
+        }).eq('id', businessId);
+        
+        setSavedSlotsCount(remainingSlots.length);
+        toast.success(language === 'el' ? 'Το slot διαγράφηκε' : 'Slot deleted');
       }
+    } catch (error) {
+      console.error('Error removing slot:', error);
+      toast.error(t.error);
+      // Revert local state on error
+      await fetchSettings();
     }
   };
   const duplicateSlot = (slot: TimeSlot) => {
