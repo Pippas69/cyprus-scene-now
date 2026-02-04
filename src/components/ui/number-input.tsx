@@ -1,6 +1,5 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
 interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
   value: number;
   onChange: (value: number) => void;
@@ -73,7 +72,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(({
             
           </button>
           <button type="button" onClick={handleDecrement} className="h-2 w-3 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" tabIndex={-1}>
-            <ChevronDown className="h-2 w-2" />
+            
           </button>
         </div>
       </div>;
