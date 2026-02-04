@@ -391,7 +391,9 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
             {status === 'connected' && (payoutsEnabled ? t.payoutsEnabled : t.connected)}
           </Badge>
         </div>
-        <CardDescription className="text-xs sm:text-sm mt-1 sm:whitespace-nowrap">{t.description}</CardDescription>
+        {status !== 'connected' && (
+          <CardDescription className="text-xs sm:text-sm mt-1 sm:whitespace-nowrap">{t.description}</CardDescription>
+        )}
       </CardHeader>
       <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
         {status === 'not_connected' && (
