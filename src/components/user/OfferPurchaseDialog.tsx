@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -383,26 +383,6 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     unavailable: { opacity: 0.35 },
   };
 
-  const businessAcceptsReservations = offer?.businesses?.accepts_direct_reservations === true;
-  // Show reservation option ONLY if offer's show_reservation_cta is enabled AND business accepts reservations
-  const showReservationOption = useMemo(
-    () => offer?.show_reservation_cta === true && businessAcceptsReservations && !!businessId,
-    [offer?.show_reservation_cta, businessAcceptsReservations, businessId]
-  );
-
-  // FAILSAFE: if the offer/business no longer supports the reservation CTA, force-clear any reservation state.
-  // This prevents stale UI/state from previous offers or previous dialog sessions.
-  useEffect(() => {
-    if (showReservationOption) return;
-    if (wantsReservation || reservationDate || reservationTime) {
-      setWantsReservation(false);
-      setReservationDate(undefined);
-      setReservationTime("");
-      setAvailableCapacity(null);
-      setCapacityError(null);
-    }
-  }, [showReservationOption, wantsReservation, reservationDate, reservationTime]);
-
   if (!offer) return null;
 
   // IMPORTANT: Never show fake placeholder limits.
@@ -415,6 +395,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     : offer.percent_off
       ? `-${offer.percent_off}%`
       : null;
+
+  const businessAcceptsReservations = offer.businesses?.accepts_direct_reservations === true;
+  // Show reservation option ONLY if offer's show_reservation_cta is enabled AND business accepts reservations
+  const showReservationOption = offer.show_reservation_cta === true && businessAcceptsReservations && businessId;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(language === "el" ? "el-GR" : "en-US", {
