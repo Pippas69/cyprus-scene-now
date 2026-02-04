@@ -68,7 +68,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     };
 
     return (
-      <div className={cn("relative flex items-center w-16", className)}>
+      <div className={cn("relative flex items-center w-16 h-7", className)}>
         <input
           type="text"
           inputMode="numeric"
@@ -78,28 +78,28 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           onChange={handleChange}
           onBlur={handleBlur}
           className={cn(
-            "w-full h-full rounded-md border border-input bg-background pl-2 pr-6 py-1 text-center",
+            "w-full h-full rounded-md border border-input bg-background pl-1.5 pr-5 py-0.5 text-center text-sm",
             "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:cursor-not-allowed disabled:opacity-50"
           )}
           {...props}
         />
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col">
+        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex flex-col">
           <button
             type="button"
             onClick={handleIncrement}
-            className="h-3 w-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="h-2.5 w-3.5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             tabIndex={-1}
           >
-            <ChevronUp className="h-3 w-3" />
+            <ChevronUp className="h-2.5 w-2.5" />
           </button>
           <button
             type="button"
             onClick={handleDecrement}
-            className="h-3 w-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="h-2.5 w-3.5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             tabIndex={-1}
           >
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDown className="h-2.5 w-2.5" />
           </button>
         </div>
       </div>
