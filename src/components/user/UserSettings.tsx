@@ -380,9 +380,9 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </div>
             </div>
 
-            {/* Age, City, Gender in one row */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              <div className="space-y-1.5 sm:space-y-2">
+            {/* Age, City, Gender in one row - uniform spacing */}
+            <div className="flex gap-3 sm:gap-4">
+              <div className="flex-1 space-y-1.5 sm:space-y-2">
                 <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
                 <NumberInput
                   value={profile.age || 18}
@@ -393,7 +393,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 />
               </div>
 
-              <div className="space-y-1.5 sm:space-y-2">
+              <div className="flex-1 space-y-1.5 sm:space-y-2">
                 <Label htmlFor="town" className="flex items-center gap-1 text-xs sm:text-sm">
                   <MapPin className="h-3 w-3 text-primary" />
                   {t.town}
@@ -413,7 +413,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 </Select>
               </div>
 
-              <div className="space-y-1.5 sm:space-y-2">
+              <div className="flex-1 space-y-1.5 sm:space-y-2">
                 <Label htmlFor="gender" className="text-xs sm:text-sm">{t.gender}</Label>
                 <Select
                   value={profile.gender || ''}
