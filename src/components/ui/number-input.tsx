@@ -68,7 +68,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     };
 
     return (
-      <div className={cn("relative flex items-center w-16 h-6", className)}>
+      <div className={cn("relative flex items-center w-14 h-5", className)}>
         <input
           type="text"
           inputMode="numeric"
