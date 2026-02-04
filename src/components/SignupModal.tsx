@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -341,16 +342,13 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
             {/* Age */}
             <div>
               <Label htmlFor="age">{t.age}</Label>
-              <Input
-                id="age"
-                type="number"
+              <NumberInput
                 value={formData.age}
-                onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 18 })}
-                disabled={loading}
-                className="rounded-xl"
+                onChange={(value) => setFormData({ ...formData, age: value })}
                 min={15}
                 max={100}
-                required
+                disabled={loading}
+                className="rounded-xl"
               />
             </div>
 

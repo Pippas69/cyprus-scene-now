@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GraduationCap, Percent, Infinity, RotateCcw, Loader2, Save } from "lucide-react";
@@ -158,17 +159,14 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
                 {t.percent}
               </Label>
               <div className="relative">
-                <Input
-                  id="discount-percent"
-                  type="number"
+                <NumberInput
+                  value={percent}
+                  onChange={(value) => setPercent(Math.min(100, Math.max(1, value)))}
                   min={1}
                   max={100}
-                  value={percent}
-                  onChange={(e) => setPercent(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
-                  placeholder={t.percentPlaceholder}
                   className="pr-8 text-xs sm:text-sm"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs sm:text-sm">%</span>
+                <span className="absolute right-8 top-1/2 -translate-y-1/2 text-muted-foreground text-xs sm:text-sm">%</span>
               </div>
             </div>
 
