@@ -101,11 +101,11 @@ Deno.serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep('Found Stripe customer', { customerId });
 
+    // Don't use expand - Stripe limits nested expansion depth
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: 'active',
       limit: 1,
-      expand: ['data.items.data.price.product'],
     });
 
     const hasActiveSub = subscriptions.data.length > 0;
@@ -123,13 +123,17 @@ Deno.serve(async (req) => {
     const subscriptionStart = safeTimestampToISO(subscription.current_period_start);
     
     const priceItem = subscription.items.data[0];
+    
+    // Get product ID from price - product is always a string ID when not expanded
+    const priceId = priceItem.price.id;
     const productId = typeof priceItem.price.product === 'string' 
       ? priceItem.price.product 
-      : priceItem.price.product.id;
+      : priceItem.price.product?.id || '';
     
     const planSlug = PRODUCT_TO_PLAN[productId] || 'basic';
     logStep('Determined subscription details', { 
       subscriptionId: subscription.id, 
+      priceId,
       productId, 
       planSlug,
       periodEnd: subscriptionEnd 
