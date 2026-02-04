@@ -617,18 +617,20 @@ export const ReservationSlotManager = ({
                   </Card>
                 </Collapsible>)}
 
-              <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" onClick={addTimeSlot} className="flex-1 sm:flex-none">
-                  <Plus className="h-4 w-4 mr-2" />
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Button type="button" variant="outline" onClick={addTimeSlot} className="flex-1 sm:flex-none h-8 sm:h-9 md:h-10 text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 md:px-4">
+                  <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1 sm:mr-1.5 md:mr-2" />
                   {t.addSlot}
                 </Button>
-                <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="flex-1 sm:flex-none">
+                <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="flex-1 sm:flex-none h-8 sm:h-9 md:h-10 text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 md:px-4">
                   {saving ? <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t.saving}
+                    <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1 sm:mr-1.5 md:mr-2 animate-spin" />
+                    <span className="hidden sm:inline">{t.saving}</span>
+                    <span className="sm:hidden">{language === 'el' ? 'Αποθήκ...' : 'Saving...'}</span>
                   </> : <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {t.save}
+                    <Save className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1 sm:mr-1.5 md:mr-2" />
+                    <span className="hidden sm:inline">{t.save}</span>
+                    <span className="sm:hidden">{language === 'el' ? 'Αποθήκευση' : 'Save'}</span>
                   </>}
                 </Button>
               </div>
