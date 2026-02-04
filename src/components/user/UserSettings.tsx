@@ -380,25 +380,27 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </div>
             </div>
 
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
-              <NumberInput
-                value={profile.age || 18}
-                onChange={(value) => setProfile({ ...profile, age: value })}
-                min={13}
-                max={120}
-                className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
-              />
-            </div>
+            <div className="grid grid-cols-[auto_1fr] gap-3 sm:gap-4 items-end">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
+                <NumberInput
+                  value={profile.age || 18}
+                  onChange={(value) => setProfile({ ...profile, age: value })}
+                  min={13}
+                  max={120}
+                  className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
+                />
+              </div>
 
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="email" className="text-xs sm:text-sm">{t.email}</Label>
-              <Input
-                id="email"
-                value={profile.email || ''}
-                disabled
-                className="rounded-xl bg-muted text-xs sm:text-sm h-8 sm:h-10"
-              />
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="email" className="text-xs sm:text-sm">{t.email}</Label>
+                <Input
+                  id="email"
+                  value={profile.email || ''}
+                  disabled
+                  className="rounded-xl bg-muted text-xs sm:text-sm h-8 sm:h-10"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5 sm:space-y-2">
