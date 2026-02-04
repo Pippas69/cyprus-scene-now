@@ -558,7 +558,7 @@ export const DirectReservationDialog = ({
               min={1}
               max={slotMaxPartySize}
               disabled={availableCapacity === 0}
-              className="text-xs sm:text-sm h-9 sm:h-10"
+              className="w-20 sm:w-24 text-xs sm:text-sm h-9 sm:h-10"
             />
             <p className="text-[10px] sm:text-xs text-muted-foreground">
               {language === 'el'

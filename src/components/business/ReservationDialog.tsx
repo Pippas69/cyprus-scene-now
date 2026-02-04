@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -246,15 +247,12 @@ export const ReservationDialog = ({
           <Users className="w-4 h-4" />
           {t.partySize}
         </Label>
-        <Input
-          id="party_size"
-          type="number"
-          min="1"
-          max={availableCapacity !== null ? availableCapacity : undefined}
+        <NumberInput
           value={formData.party_size}
-          onChange={(e) => setFormData({ ...formData, party_size: parseInt(e.target.value) || 1 })}
-          required
-          disabled={availableCapacity === 0}
+          onChange={value => setFormData({ ...formData, party_size: value })}
+          min={1}
+          max={availableCapacity !== null ? availableCapacity : 50}
+          className="w-24"
         />
         {availableCapacity !== null && availableCapacity < formData.party_size && (
           <p className="text-sm text-destructive">

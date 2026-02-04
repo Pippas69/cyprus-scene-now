@@ -158,15 +158,15 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
                 <Percent className="h-3 w-3 sm:h-4 sm:w-4" />
                 {t.percent}
               </Label>
-              <div className="relative">
+              <div className="flex items-center gap-1">
                 <NumberInput
                   value={percent}
                   onChange={(value) => setPercent(Math.min(100, Math.max(1, value)))}
                   min={1}
                   max={100}
-                  className="pr-8 text-xs sm:text-sm"
+                  className="w-16 sm:w-20 text-xs sm:text-sm"
                 />
-                <span className="absolute right-8 top-1/2 -translate-y-1/2 text-muted-foreground text-xs sm:text-sm">%</span>
+                <span className="text-muted-foreground text-xs sm:text-sm">%</span>
               </div>
             </div>
 
