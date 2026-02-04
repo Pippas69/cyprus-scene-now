@@ -88,7 +88,7 @@ export const ReservationSlotManager = ({
       success: 'Οι ρυθμίσεις αποθηκεύτηκαν',
       error: 'Σφάλμα αποθήκευσης',
       noSlotsWarning: 'Προσθέστε τουλάχιστον ένα χρονικό slot για να δέχεστε κρατήσεις',
-      noSlotsToEnableWarning: 'Πρέπει να υπάρχει τουλάχιστον ένα χρονικό slot για να ενεργοποιήσετε τις κρατήσεις',
+      noSlotsToEnableWarning: 'Πρέπει να υπάρχει τουλάχιστον ένα χρονικό slot για ενεργοποίηση κρατήσεων',
       noDaysWarning: 'Επιλέξτε ημέρες για αυτό το slot',
       instantConfirmation: 'Άμεση Επιβεβαίωση',
       instantConfirmationDescription: 'Αυτόματη επιβεβαίωση αν υπάρχει διαθεσιμότητα',
