@@ -91,7 +91,7 @@ export function StudentDiscountStats({ businessId, language }: StudentDiscountSt
               <span className="whitespace-nowrap">{redemptionCount || 0} {t.redemptions}</span>
             </div>
 
-            <div className="flex items-center gap-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground flex-shrink-0 md:-ml-2.5 lg:ml-0">
+            <div className="flex items-center gap-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground flex-shrink-0 md:ml-1.5 lg:ml-0">
               <Repeat className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
               <span className="whitespace-nowrap">{business.student_discount_mode === 'unlimited' ? t.unlimited : t.once}</span>
             </div>
