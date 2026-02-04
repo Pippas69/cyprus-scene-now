@@ -14,7 +14,8 @@ import { ImageUploadField } from "./ImageUploadField";
 import { Loader2 } from "lucide-react";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
 import { useLanguage } from "@/hooks/useLanguage";
-import { businessTranslations, businessCategories, cities } from "./translations";
+import { businessTranslations, businessCategories } from "./translations";
+import { getCityOptions } from "@/lib/cityTranslations";
 import { validationTranslations } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 
