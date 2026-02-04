@@ -413,7 +413,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 </Select>
               </div>
 
-              <div className="space-y-1.5 sm:space-y-2">
+              <div className="flex-1 space-y-1.5 sm:space-y-2">
                 <Label htmlFor="gender" className="text-xs sm:text-sm">{t.gender}</Label>
                 <Select
                   value={profile.gender || ''}
