@@ -104,37 +104,26 @@ export const useCustomerMetrics = (businessId: string, dateRange?: DateRange) =>
       }
 
       // D) Student discount check-ins (student QR)
-      // NOTE: scanned_by is the staff user who scans (NOT the student), so we always resolve via student_verifications.
-      const { data: studentDiscountData } = await supabase
-        .from('student_discount_redemptions')
-        .select('student_verification_id, created_at')
-        .eq('business_id', businessId)
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString());
+      // NOTE: scanned_by is the staff user who scans (NOT the student), so we resolve server-side via a secure RPC.
+      // This avoids any RLS/PII issues on student_verifications and guarantees student check-ins count as customers.
+      const { data: studentDiscountCheckins, error: studentDiscountError } = await supabase.rpc(
+        'get_student_discount_checkins',
+        {
+          p_business_id: businessId,
+          p_start_date: startDate.toISOString(),
+          p_end_date: endDate.toISOString(),
+        }
+      );
 
-      const verificationIds: string[] = (studentDiscountData || [])
-        .map((s: any) => s?.student_verification_id)
-        .filter(Boolean);
-
-      if (verificationIds.length > 0) {
-        const uniqueVerificationIds = Array.from(new Set(verificationIds));
-        const { data: verifications } = await supabase
-          .from('student_verifications')
-          .select('id, user_id')
-          .in('id', uniqueVerificationIds);
-
-        const mapByVerificationId = new Map<string, string>();
-        (verifications || []).forEach((v: any) => {
-          if (v?.id && v?.user_id) mapByVerificationId.set(v.id, v.user_id);
-        });
-
-        // Preserve multiplicity: one event per redemption
-        (studentDiscountData || []).forEach((s: any) => {
-          if (!s?.created_at) return;
-          const userId = mapByVerificationId.get(s?.student_verification_id);
-          if (userId) checkinEvents.push({ user_id: userId, created_at: s.created_at });
-        });
+      if (studentDiscountError) {
+        console.error('Error fetching student discount check-ins:', studentDiscountError);
       }
+
+      (studentDiscountCheckins || []).forEach((s: any) => {
+        if (s?.user_id && s?.created_at) {
+          checkinEvents.push({ user_id: s.user_id, created_at: s.created_at });
+        }
+      });
 
       // Calculate unique customers from verified check-ins
       const uniqueCustomers = new Set(checkinEvents.map(e => e.user_id));

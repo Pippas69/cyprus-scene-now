@@ -4919,6 +4919,17 @@ export type Database = {
           time_to: string
         }[]
       }
+      get_student_discount_checkins: {
+        Args: {
+          p_business_id: string
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: {
+          created_at: string
+          user_id: string
+        }[]
+      }
       get_unread_message_count: { Args: never; Returns: number }
       gettransactionid: { Args: never; Returns: unknown }
       has_role: {
@@ -4928,6 +4939,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_business_owner: { Args: { p_business_id: string }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mask_phone: { Args: { phone_number: string }; Returns: string }
       populate_geometry_columns:
