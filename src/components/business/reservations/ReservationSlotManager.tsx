@@ -398,11 +398,10 @@ export const ReservationSlotManager = ({
                 {t.enableDescription} {t.enableDescriptionSub}
               </p>
               {/* Show warning if trying to enable without slots */}
-              {!canEnableReservations && !settings.accepts_direct_reservations && (
-                <p className="text-[6px] sm:text-[9px] md:text-[10px] text-orange-600 mt-1.5 flex items-center gap-1 whitespace-nowrap -ml-5 sm:ml-0">
+              {!canEnableReservations && !settings.accepts_direct_reservations && <p className="text-[8px] sm:text-[9px] md:text-[10px] text-orange-600 mt-1.5 flex items-center gap-1 whitespace-nowrap">
+                  
                   <span className="whitespace-nowrap">{t.noSlotsToEnableWarning}</span>
-                </p>
-              )}
+                </p>}
             </div>
             <Switch id="enable-reservations" className="flex-shrink-0 scale-75 md:scale-90 lg:scale-100" checked={settings.accepts_direct_reservations} disabled={!canEnableReservations && !settings.accepts_direct_reservations} onCheckedChange={async checked => {
             // Prevent enabling if no slots exist
