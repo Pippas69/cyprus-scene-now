@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CreditCard, CheckCircle2, ExternalLink, AlertCircle, Banknote, ArrowRight } from 'lucide-react';
+import { Loader2, CreditCard, CheckCircle2, ExternalLink, AlertCircle, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface StripeConnectOnboardingProps {
@@ -26,7 +26,8 @@ const translations = {
     viewDashboard: 'Προβολή Πίνακα Πληρωμών',
     connectDescription: 'Για να λαμβάνετε πληρωμές, πρέπει να συνδέσετε τον τραπεζικό σας λογαριασμό. Η διαδικασία διαρκεί λίγα λεπτά.',
     pendingDescription: 'Η ρύθμιση του λογαριασμού σας δεν έχει ολοκληρωθεί. Κάντε κλικ παρακάτω για να συνεχίσετε.',
-    connectedDescription: 'Ο λογαριασμός σας είναι έτοιμος να λάβει πληρωμές. Τα έσοδα θα κατατίθενται αυτόματα.',
+    connectedDescriptionLine1: 'Ο λογαριασμός σας είναι έτοιμος να λάβει πληρωμές.',
+    connectedDescriptionLine2: 'Τα έσοδα κατατίθενται αυτόματα.',
     loading: 'Φόρτωση...',
     error: 'Σφάλμα κατά τη φόρτωση της κατάστασης πληρωμών',
     redirecting: 'Μεταφορά στη ρύθμιση πληρωμών...',
@@ -49,7 +50,8 @@ const translations = {
     viewDashboard: 'View Payment Dashboard',
     connectDescription: 'To receive payments, you need to connect your bank account. This process takes just a few minutes.',
     pendingDescription: 'Your account setup is not complete. Click below to continue.',
-    connectedDescription: 'Your account is ready to receive payments. Revenue will be deposited automatically.',
+    connectedDescriptionLine1: 'Your account is ready to receive payments.',
+    connectedDescriptionLine2: 'Revenue will be deposited automatically.',
     loading: 'Loading...',
     error: 'Error loading payment status',
     redirecting: 'Redirecting to payment setup...',
@@ -376,34 +378,20 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
   return (
     <Card>
       <CardHeader className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 hidden sm:block">
-              <Banknote className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-sm sm:text-lg whitespace-nowrap">{t.title}</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">{t.description}</CardDescription>
-            </div>
-          </div>
-          {/* Icons on mobile below the text */}
-          <div className="flex sm:hidden items-center gap-2 mt-1">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <CreditCard className="h-3 w-3 text-primary" />
-            </div>
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <CheckCircle2 className="h-3 w-3 text-primary" />
-            </div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <CardTitle className="text-sm sm:text-lg whitespace-nowrap">{t.title}</CardTitle>
           </div>
           <Badge 
             variant={status === 'connected' ? 'default' : status === 'pending' ? 'secondary' : 'outline'}
-            className={`text-[10px] sm:text-xs ${status === 'connected' && payoutsEnabled ? 'bg-green-500 hover:bg-green-600' : ''}`}
+            className={`text-[8px] sm:text-[10px] whitespace-nowrap px-1.5 py-0.5 sm:px-2 sm:py-0.5 ${status === 'connected' && payoutsEnabled ? 'bg-green-500 hover:bg-green-600' : ''}`}
           >
             {status === 'not_connected' && t.notConnected}
             {status === 'pending' && t.pendingOnboarding}
             {status === 'connected' && (payoutsEnabled ? t.payoutsEnabled : t.connected)}
           </Badge>
         </div>
+        <CardDescription className="text-xs sm:text-sm mt-1 sm:whitespace-nowrap">{t.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
         {status === 'not_connected' && (
@@ -468,12 +456,16 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
 
         {status === 'connected' && (
           <>
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              <span className="text-muted-foreground">{t.connectedDescription}</span>
+            <div className="flex items-start gap-1.5 sm:gap-2">
+              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 shrink-0 mt-0.5" />
+              <div className="text-[11px] sm:text-xs text-muted-foreground">
+                <span>{t.connectedDescriptionLine1}</span>
+                <br />
+                <span>{t.connectedDescriptionLine2}</span>
+              </div>
             </div>
             
-            <p className="text-xs text-muted-foreground italic">
+            <p className="text-[10px] sm:text-xs text-muted-foreground italic">
               {t.commissionNote}
             </p>
             
@@ -481,12 +473,13 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
               variant="outline"
               onClick={handleViewDashboard} 
               disabled={actionLoading}
-              className="w-full"
+              className="w-full text-[10px] sm:text-xs h-8 sm:h-9"
+              size="sm"
             >
               {actionLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5 animate-spin" />
               ) : (
-                <ExternalLink className="h-4 w-4 mr-2" />
+                <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5" />
               )}
               {t.viewDashboard}
             </Button>
