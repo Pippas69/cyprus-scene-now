@@ -210,9 +210,20 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   // Filter out null discounts (deleted offers) BEFORE any categorization
   const validPurchases = purchases?.filter(p => p.discounts !== null) || [];
 
+  // Helper: check if a purchase is expired (considers reservation time for reservation-linked offers)
+  const isPurchaseExpired = (p: OfferPurchase) => {
+    const now = new Date();
+    // For reservation-linked purchases, check if the reservation time has passed
+    if (p.claim_type === 'with_reservation' && p.reservations?.preferred_time) {
+      return new Date(p.reservations.preferred_time) < now;
+    }
+    // For walk-in or other types, use expires_at
+    return new Date(p.expires_at) <= now;
+  };
+
   // Separate purchases by status
   const activePurchases = validPurchases.filter(p => {
-    const isExpired = new Date(p.expires_at) <= new Date();
+    const isExpired = isPurchaseExpired(p);
     const isCredit = p.discounts?.offer_type === 'credit';
     if (isCredit) {
       return p.status === 'paid' && !isExpired && (p.balance_remaining_cents ?? 0) > 0;
@@ -229,7 +240,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   });
   
   const expiredPurchases = validPurchases.filter(p => {
-    const isExpired = new Date(p.expires_at) <= new Date();
+    const isExpired = isPurchaseExpired(p);
     return p.status === 'expired' || (p.status === 'paid' && isExpired);
   });
 
@@ -277,9 +288,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     const isCredit = purchase.discounts.offer_type === 'credit';
     const balanceRemaining = purchase.balance_remaining_cents ?? 0;
     const isDepleted = isCredit && balanceRemaining === 0;
-    const isExpired = new Date(purchase.expires_at) <= new Date();
-    const isRedeemed = purchase.status === 'redeemed';
     const isReservation = purchase.claim_type === 'with_reservation';
+    const isExpired = isPurchaseExpired(purchase);
+    const isRedeemed = purchase.status === 'redeemed';
 
     // Format expiry date - Greek style "Λήγει στις 4 Φεβρουαρίου"
     const formatExpiryDate = (dateString: string) => {
