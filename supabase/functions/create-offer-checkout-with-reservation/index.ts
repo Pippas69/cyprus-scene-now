@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { localToUtcISOString } from "../_shared/timezone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -186,7 +187,12 @@ Deno.serve(async (req) => {
     logStep("Pricing calculated", { originalPriceCents, discountPercent, finalPriceCents });
 
     // Create pending reservation first
-    const preferredDateTime = new Date(`${reservationData.preferred_date}T${reservationData.preferred_time}:00`);
+    // IMPORTANT: Treat incoming date+time as Cyprus local time and persist as UTC instant.
+    const preferredTimeUtcIso = localToUtcISOString(
+      reservationData.preferred_date,
+      reservationData.preferred_time,
+      'Europe/Nicosia'
+    );
     const reservationStatus = discount.businesses.reservation_requires_approval ? 'pending' : 'accepted';
 
     const { data: reservation, error: reservationError } = await supabaseAdmin
@@ -196,7 +202,7 @@ Deno.serve(async (req) => {
         user_id: user.id,
         reservation_name: reservationData.reservation_name,
         party_size: reservationData.party_size,
-        preferred_time: preferredDateTime.toISOString(),
+        preferred_time: preferredTimeUtcIso,
         phone_number: reservationData.phone_number,
         seating_preference: reservationData.seating_preference && reservationData.seating_preference !== 'none' 
           ? reservationData.seating_preference : null,

@@ -421,19 +421,24 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
     return <div className="text-center py-8">Loading...</div>;
   }
 
-  // Format date without year: "31 Ιανουαρίου, 19:00"
+  // Format date without year in Cyprus time: "31 Ιανουαρίου, 19:00"
   const formatDateTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    const day = date.getDate();
-    const month = date.toLocaleDateString(language === 'el' ? 'el-GR' : 'en-GB', { month: 'long' });
-    const time = date.toLocaleTimeString(language === 'el' ? 'el-GR' : 'en-GB', {
+
+    const locale = language === 'el' ? 'el-GR' : 'en-GB';
+    const timeZone = 'Europe/Nicosia';
+
+    const day = new Intl.DateTimeFormat(locale, { timeZone, day: 'numeric' }).format(date);
+    const month = new Intl.DateTimeFormat(locale, { timeZone, month: 'long' }).format(date);
+    const time = new Intl.DateTimeFormat(locale, {
+      timeZone,
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
-    });
+    }).format(date);
+
     return language === 'el' ? `${day} ${month}, ${time}` : `${month} ${day}, ${time}`;
   };
-
   // ============= DIRECT RESERVATION CARD =============
   const renderDirectReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
     const businessInfo = reservation.businesses;

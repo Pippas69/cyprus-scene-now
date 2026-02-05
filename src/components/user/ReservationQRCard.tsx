@@ -77,15 +77,28 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
     link.click();
   };
 
-  // Parse date and time
+  // Parse date and time (always show Cyprus time)
   const reservationDateObj = reservation?.reservationDate ? new Date(reservation.reservationDate) : null;
-  const formattedDate = reservationDateObj 
-    ? format(reservationDateObj, "EEE, d MMM", { locale: dateLocale })
-    : "";
-  const formattedTime = reservationDateObj 
-    ? format(reservationDateObj, "HH:mm", { locale: dateLocale })
-    : reservation?.reservationTime || "";
+  const locale = language === 'el' ? 'el-GR' : 'en-GB';
+  const timeZone = 'Europe/Nicosia';
 
+  const formattedDate = reservationDateObj
+    ? new Intl.DateTimeFormat(locale, {
+        timeZone,
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      }).format(reservationDateObj)
+    : '';
+
+  const formattedTime = reservationDateObj
+    ? new Intl.DateTimeFormat(locale, {
+        timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(reservationDateObj)
+    : reservation?.reservationTime || "";
   // Format price for event reservations
   const formatPrice = (cents: number) => {
     if (cents === 0) return language === "el" ? "Δωρεάν" : "Free";

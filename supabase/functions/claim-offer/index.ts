@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { localToUtcISOString } from "../_shared/timezone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -148,11 +149,12 @@ Deno.serve(async (req) => {
       if (capacity?.remaining_capacity !== undefined && capacity.remaining_capacity < partySize) {
         throw new Error("Not enough reservation slots available");
       }
-      logStep("Capacity available", { remainingCapacity: capacity?.remaining_capacity });
-
-      // Create reservation - combine date and time into preferred_time
-      // Store with Europe/Nicosia timezone to preserve the user's intended local time
-      const preferredDateTime = `${reservationData.preferred_date}T${reservationData.preferred_time}:00+02:00`;
+      // Create reservation - convert Cyprus local date+time to a UTC instant (DST-safe)
+      const preferredDateTime = localToUtcISOString(
+        reservationData.preferred_date,
+        reservationData.preferred_time,
+        'Europe/Nicosia'
+      );
 
       const reservationName =
         (user.user_metadata?.first_name && user.user_metadata?.last_name
