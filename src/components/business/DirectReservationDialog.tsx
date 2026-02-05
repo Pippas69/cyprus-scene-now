@@ -621,40 +621,28 @@ export const DirectReservationDialog = ({
               <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.preferredTime}
             </Label>
-            {timeSlots.length === 0 ? (
+            {availabilityLoading ? (
+              <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+                {language === 'el' ? 'Έλεγχος διαθεσιμότητας...' : 'Checking availability...'}
+              </div>
+            ) : timeSlots.length === 0 ? (
               <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                 {t.noSlotsForDay}
               </div>
             ) : (
               <Select
-                value={closedSlots.has(formData.preferred_time) ? '' : formData.preferred_time}
+                value={formData.preferred_time}
                 onValueChange={(value) => setFormData({ ...formData, preferred_time: value })}
               >
                 <SelectTrigger className="text-xs sm:text-sm font-normal h-9 sm:h-10">
                   <SelectValue placeholder={t.selectTime} />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map((time) => {
-                    const isClosed = closedSlots.has(time);
-                    return (
-                      <SelectItem 
-                        key={time} 
-                        value={time} 
-                        disabled={isClosed}
-                        className={isClosed ? 'opacity-50 cursor-not-allowed' : ''}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className={isClosed ? 'line-through' : ''}>{time}</span>
-                          {isClosed && (
-                            <span className="flex items-center gap-1 text-destructive text-[10px] sm:text-xs">
-                              <Ban className="h-3 w-3" />
-                              {t.closedSlot}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
+                  {timeSlots.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
