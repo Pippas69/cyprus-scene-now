@@ -421,6 +421,34 @@ const OffersList = ({ businessId }: OffersListProps) => {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingOffer} onOpenChange={(open) => !open && setDeletingOffer(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.deleteConfirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.deleteConfirmDescription} <strong>"{deletingOffer?.title}"</strong>; 
+              <br /><br />
+              {t.deleteConfirmWarning}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletingOffer) {
+                  handleDelete(deletingOffer.id);
+                  setDeletingOffer(null);
+                }
+              }}
+            >
+              {t.confirmDelete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
