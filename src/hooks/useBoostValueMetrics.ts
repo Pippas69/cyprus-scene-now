@@ -547,6 +547,9 @@ export const useBoostValueMetrics = (
       };
     },
     enabled: !!businessId,
-    staleTime: 5 * 60 * 1000,
+    // Analytics should reflect plan changes quickly; also helps avoid seeing cached numbers.
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
   });
 };
