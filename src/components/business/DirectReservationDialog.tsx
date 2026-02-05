@@ -319,7 +319,7 @@ export const DirectReservationDialog = ({
     unavailable: { opacity: 0.35 },
   };
 
-  const getAvailableTimeSlots = (): string[] => {
+  const getRawTimeSlots = (): string[] => {
     if (!settings) return [];
 
     const selectedDayName = format(formData.preferred_date, 'EEEE').toLowerCase();
@@ -353,6 +353,20 @@ export const DirectReservationDialog = ({
     }
 
     return slots;
+  };
+
+  const rawTimeSlots = getRawTimeSlots();
+  
+  // Fetch availability for all raw slots to know which are fully booked
+  const { fullyBookedSlots, loading: availabilityLoading } = useSlotAvailability(
+    businessId,
+    formData.preferred_date,
+    rawTimeSlots
+  );
+
+  // Filter out fully booked and closed slots from the display
+  const getAvailableTimeSlots = (): string[] => {
+    return rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
