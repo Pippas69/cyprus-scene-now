@@ -65,8 +65,8 @@ const translations = {
     profileInteractionsDetails: 'Χρήστες που ακολούθησαν ή έκαναν κλικ στο προφίλ σου. Συγκρίνονται οι αλληλεπιδράσεις όταν ήταν επιλεγμένο vs μη επιλεγμένο.',
     profileInteractionsSource: 'Ακολουθήσεις, κλικ',
     profileVisitsExplanation: 'Επαληθευμένες επισκέψεις',
-    profileVisitsDetails: 'QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου. Συγκρίνονται οι επισκέψεις όταν ήταν επιλεγμένο vs μη επιλεγμένο.',
-    profileVisitsSource: 'QR σαρώσεις κρατήσεων προφίλ',
+    profileVisitsDetails: 'QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου. Περιλαμβάνει επισκέψεις από φοιτητική έκπτωση (εάν είναι ενεργοποιημένη στις ρυθμίσεις). Συγκρίνονται οι επισκέψεις όταν ήταν επιλεγμένο vs μη επιλεγμένο.',
+    profileVisitsSource: 'QR σαρώσεις κρατήσεων + φοιτητικές εκπτώσεις',
     // Offers explanations (same as Performance + comparison note)
     offersViewsExplanation: 'Πόσες φορές είδαν οι χρήστες',
     offersViewsDetails: 'Πόσες φορές είδαν οι χρήστες τις σελίδες των προσφορών σου από οπουδήποτε. Συγκρίνονται οι προβολές με και χωρίς προβολή.',
@@ -121,8 +121,8 @@ const translations = {
     profileInteractionsDetails: 'Users who followed or clicked on your profile. Comparing interactions when featured vs non-featured.',
     profileInteractionsSource: 'Follows, clicks',
     profileVisitsExplanation: 'Verified visits',
-    profileVisitsDetails: 'QR check-ins from reservations made directly on your profile. Comparing visits when featured vs non-featured.',
-    profileVisitsSource: 'Reservation QR scans',
+    profileVisitsDetails: 'QR check-ins from reservations made directly on your profile. Includes visits from student discount (if enabled in settings). Comparing visits when featured vs non-featured.',
+    profileVisitsSource: 'Reservation QR scans + student discounts',
     // Offers explanations (same as Performance + comparison note)
     offersViewsExplanation: 'How many times users saw',
     offersViewsDetails: 'How many times users viewed your offer pages. Comparing views with and without boost.',

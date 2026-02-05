@@ -66,7 +66,7 @@ const translations = {
     offersInteractionsTooltipText: 'Κλικ στο κουμπί "Εξαργύρωσε" – δείχνει πρόθεση χρήσης της προσφοράς. Δείχνει τις καλύτερες μέρες και ώρες.',
     eventsInteractionsTooltipText: 'RSVPs χρηστών: "Ενδιαφέρομαι" ή "Θα πάω". Δείχνει τις καλύτερες μέρες και ώρες.',
     visitsTooltipTitle: 'Επισκέψεις',
-    profileVisitsTooltipText: 'QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου. Δείχνει τις καλύτερες μέρες και ώρες.',
+    profileVisitsTooltipText: 'QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου. Περιλαμβάνει επισκέψεις από φοιτητική έκπτωση (εάν είναι ενεργοποιημένη στις ρυθμίσεις). Δείχνει τις καλύτερες μέρες και ώρες.',
     offersVisitsTooltipText: 'Σαρώσεις QR για εξαργύρωση προσφοράς στον χώρο σου, είτε με κράτηση είτε χωρίς (walk-in). Δείχνει τις καλύτερες μέρες και ώρες.',
     eventsVisitsTooltipText: 'Check-ins εισιτηρίων και κρατήσεων εκδηλώσεων (minimum charge). Δείχνει τις καλύτερες μέρες και ώρες.',
     // Tips
@@ -109,7 +109,7 @@ const translations = {
     // Metrics sections
     newCustomersFromProfile: 'Επισκέψεις από Επιλεγμένο Προφίλ',
     newCustomersDescription: 'Οι παρακάτω πελάτες ήρθαν επειδή το προφίλ σας εμφανίζεται επιλεγμένο στο ΦΟΜΟ.',
-    newCustomersTooltip: 'QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου.',
+    newCustomersTooltip: 'QR check-ins από κρατήσεις που έγιναν απευθείας μέσω του προφίλ σου. Περιλαμβάνει επισκέψεις από φοιτητική έκπτωση (εάν είναι ενεργοποιημένη στις ρυθμίσεις).',
     boostSpent: 'Χρήματα Boost',
     boostSpentTooltip: 'Πόσα χρήματα δαπάνησε σε boost.',
     visitsFromBoost: 'Επισκέψεις από Boost',
@@ -147,7 +147,7 @@ const translations = {
     offersInteractionsTooltipText: 'Clicks on "Redeem" button – shows intent to use the offer. Shows best days and hours.',
     eventsInteractionsTooltipText: 'User RSVPs: "Interested" or "Going". Shows best days and hours.',
     visitsTooltipTitle: 'Visits',
-    profileVisitsTooltipText: 'QR check-ins from reservations made directly through your profile. Shows best days and hours.',
+    profileVisitsTooltipText: 'QR check-ins from reservations made directly through your profile. Includes visits from student discount (if enabled in settings). Shows best days and hours.',
     offersVisitsTooltipText: 'QR scans for offer redemption at your venue, with or without reservation (walk-in). Shows best days and hours.',
     eventsVisitsTooltipText: 'Ticket and event reservation (minimum charge) check-ins. Shows best days and hours.',
     // Tips
@@ -190,7 +190,7 @@ const translations = {
     // Metrics sections
     newCustomersFromProfile: 'Visits from Featured Profile',
     newCustomersDescription: 'These customers came because your profile appears featured on ΦΟΜΟ.',
-    newCustomersTooltip: 'QR check-ins from reservations made directly through your profile.',
+    newCustomersTooltip: 'QR check-ins from reservations made directly through your profile. Includes visits from student discount (if enabled in settings).',
     boostSpent: 'Boost Money',
     boostSpentTooltip: 'How much money was spent on boost.',
     visitsFromBoost: 'Visits from Boost',
