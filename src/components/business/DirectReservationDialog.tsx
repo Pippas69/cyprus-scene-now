@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Users, Phone, MapPin, User, Clock, Ban } from 'lucide-react';
-import { format, isBefore, startOfDay, parse } from 'date-fns';
+import { format, isBefore, startOfDay, parse, isToday } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { expandSlotsForDay, normalizeTime } from '@/lib/timeSlots';
