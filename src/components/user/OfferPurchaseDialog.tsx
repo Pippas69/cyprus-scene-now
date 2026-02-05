@@ -92,7 +92,7 @@ interface ClaimSuccessData {
   reservationTime?: string;
 }
 
-export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferClaimDialogProps) {
+export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, language }: OfferClaimDialogProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +100,10 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const [partySize, setPartySize] = useState(1);
   const [claimSuccess, setClaimSuccess] = useState<ClaimSuccessData | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  
+  // Fresh offer data - fetched when dialog opens to ensure latest valid_start_time/valid_end_time
+  const [freshOffer, setFreshOffer] = useState<Offer | null>(null);
+  const offer = freshOffer || initialOffer;
   
   // Reservation state - BEFORE claim
   const [wantsReservation, setWantsReservation] = useState(false);
@@ -119,6 +123,31 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   // NOTE: View tracking is handled by OfferCard when the card becomes visible
   // DO NOT track views here - "Εξαργύρωσε" click is ONLY an interaction, not a view
 
+  // Fetch fresh offer data when dialog opens to ensure we have the latest valid times
+  useEffect(() => {
+    if (isOpen && initialOffer?.id) {
+      const fetchFreshOffer = async () => {
+        const { data, error } = await supabase
+          .from('discounts')
+          .select(`
+            id, title, description, percent_off, original_price_cents,
+            start_at, end_at, business_id, terms, max_per_user,
+            valid_days, valid_start_time, valid_end_time, category, discount_type, special_deal_text,
+            total_people, people_remaining, max_people_per_redemption, one_per_user, show_reservation_cta, requires_reservation,
+            offer_type, bonus_percent, credit_amount_cents, pricing_type, bundle_price_cents,
+            businesses!inner (id, name, logo_url, cover_url, city, accepts_direct_reservations, reservation_time_slots, reservation_days)
+          `)
+          .eq('id', initialOffer.id)
+          .single();
+        
+        if (!error && data) {
+          setFreshOffer(data as unknown as Offer);
+        }
+      };
+      fetchFreshOffer();
+    }
+  }, [isOpen, initialOffer?.id]);
+
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
@@ -132,6 +161,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       setReservationTime("");
       setAvailableCapacity(null);
       setCapacityError(null);
+      setFreshOffer(null);
     }
   }, [isOpen]);
 
