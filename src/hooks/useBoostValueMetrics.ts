@@ -139,7 +139,15 @@ export const useBoostValueMetrics = (
           .gte("checked_in_at", rangeStart)
           .lte("checked_in_at", rangeEnd);
 
-        return count || 0;
+        // Also count student discount redemptions
+        const { count: studentCount } = await supabase
+          .from("student_discount_redemptions")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .gte("created_at", rangeStart)
+          .lte("created_at", rangeEnd);
+
+        return (count || 0) + (studentCount || 0);
       };
 
       // Determine how the featuredStart splits the selected date range
@@ -204,10 +212,18 @@ export const useBoostValueMetrics = (
           .gte("checked_in_at", startDate)
           .lt("checked_in_at", featuredStartIso);
 
+        // Student discount redemptions without featured
+        const { count: withoutStudentCount } = await supabase
+          .from("student_discount_redemptions")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .gte("created_at", startDate)
+          .lt("created_at", featuredStartIso);
+
         profileWithout = {
           views: withoutViewsCount || 0,
           interactions: (withoutInteractionsEventsCount || 0) + (withoutFollowerCount || 0),
-          visits: withoutResCheckins || 0,
+          visits: (withoutResCheckins || 0) + (withoutStudentCount || 0),
         };
 
         // With (featured)
