@@ -150,7 +150,6 @@ Deno.serve(async (req) => {
         throw new Error("Not enough reservation slots available");
       }
       // Create reservation - convert Cyprus local date+time to a UTC instant (DST-safe)
-      const { localToUtcISOString } = await import("../_shared/timezone.ts");
       const preferredDateTime = localToUtcISOString(
         reservationData.preferred_date,
         reservationData.preferred_time,
