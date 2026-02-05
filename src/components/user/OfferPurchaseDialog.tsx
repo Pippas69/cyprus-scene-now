@@ -338,6 +338,13 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   // Filter out fully booked and closed slots from the display
   const timeSlots = rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
 
+  // Clear reservationTime if selected slot is no longer available (closed or fully booked)
+  useEffect(() => {
+    if (reservationTime && (closedSlots.has(reservationTime) || fullyBookedSlots.has(reservationTime))) {
+      setReservationTime("");
+    }
+  }, [closedSlots, fullyBookedSlots, reservationTime]);
+
   // Check if a date is valid for this offer (within valid_days and date range)
   // AND has business reservation slots available for that day
   // AND is not fully closed by the business
