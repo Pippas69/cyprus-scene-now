@@ -269,6 +269,9 @@ export const useGuidanceMetrics = (businessId: string) => {
       };
     },
     enabled: !!businessId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    // Guidance should update quickly after subscription changes.
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
   });
 };
