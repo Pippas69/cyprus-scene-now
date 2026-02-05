@@ -61,6 +61,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   const [showExpired, setShowExpired] = useState(false);
+  const [deletingOffer, setDeletingOffer] = useState<{ id: string; title: string } | null>(null);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
