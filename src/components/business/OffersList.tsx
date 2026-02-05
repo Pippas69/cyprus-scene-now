@@ -92,6 +92,11 @@ const OffersList = ({ businessId }: OffersListProps) => {
       edit: "Επεξεργασία",
       delete: "Διαγραφή",
       expired: "Ληγμένες",
+      deleteConfirmTitle: "Διαγραφή Προσφοράς",
+      deleteConfirmDescription: "Είστε σίγουροι ότι θέλετε να διαγράψετε την προσφορά",
+      deleteConfirmWarning: "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί. Όλα τα δεδομένα εξαργύρωσης θα χαθούν.",
+      cancel: "Ακύρωση",
+      confirmDelete: "Ναι, Διαγραφή",
     },
     en: {
       title: "Offers",
@@ -111,6 +116,11 @@ const OffersList = ({ businessId }: OffersListProps) => {
       edit: "Edit",
       delete: "Delete",
       expired: "Expired",
+      deleteConfirmTitle: "Delete Offer",
+      deleteConfirmDescription: "Are you sure you want to delete the offer",
+      deleteConfirmWarning: "This action cannot be undone. All redemption data will be lost.",
+      cancel: "Cancel",
+      confirmDelete: "Yes, Delete",
     },
   };
 
