@@ -19,6 +19,7 @@ import { expandSlotsForDay, normalizeTime } from '@/lib/timeSlots';
 import { ReservationSuccessDialog } from '@/components/user/ReservationSuccessDialog';
 import { useClosedSlots } from '@/hooks/useClosedSlots';
 import { useClosedDates } from '@/hooks/useClosedDates';
+import { useSlotAvailability } from '@/hooks/useSlotAvailability';
 
 interface DirectReservationDialogProps {
   open: boolean;
@@ -95,6 +96,9 @@ export const DirectReservationDialog = ({
   
   // Fetch all fully closed dates for the calendar
   const { closedDates } = useClosedDates(businessId);
+
+  // We'll fetch slot availability after we know the available time slots
+  // This is initialized here but will be used after getAvailableTimeSlots is called
 
   const text = {
     el: {
@@ -315,7 +319,7 @@ export const DirectReservationDialog = ({
     unavailable: { opacity: 0.35 },
   };
 
-  const getAvailableTimeSlots = (): string[] => {
+  const getRawTimeSlots = (): string[] => {
     if (!settings) return [];
 
     const selectedDayName = format(formData.preferred_date, 'EEEE').toLowerCase();
@@ -349,6 +353,20 @@ export const DirectReservationDialog = ({
     }
 
     return slots;
+  };
+
+  const rawTimeSlots = getRawTimeSlots();
+  
+  // Fetch availability for all raw slots to know which are fully booked
+  const { fullyBookedSlots, loading: availabilityLoading } = useSlotAvailability(
+    businessId,
+    formData.preferred_date,
+    rawTimeSlots
+  );
+
+  // Filter out fully booked and closed slots from the display
+  const getAvailableTimeSlots = (): string[] => {
+    return rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -460,21 +478,20 @@ export const DirectReservationDialog = ({
   const timeSlots = getAvailableTimeSlots();
 
   // Set default time when date changes and slots are available
-  // Skip closed slots when auto-selecting
+  // Skip closed and fully booked slots when auto-selecting
   useEffect(() => {
     if (timeSlots.length > 0) {
-      const currentSlotClosed = closedSlots.has(formData.preferred_time);
-      const currentSlotMissing = !timeSlots.includes(formData.preferred_time);
+      const currentSlotUnavailable = !timeSlots.includes(formData.preferred_time);
       
-      if (currentSlotClosed || currentSlotMissing) {
-        // Find the first open slot
-        const firstOpenSlot = timeSlots.find(slot => !closedSlots.has(slot));
-        if (firstOpenSlot) {
-          setFormData((prev) => ({ ...prev, preferred_time: firstOpenSlot }));
+      if (currentSlotUnavailable) {
+        // Find the first available slot
+        const firstAvailableSlot = timeSlots[0];
+        if (firstAvailableSlot) {
+          setFormData((prev) => ({ ...prev, preferred_time: firstAvailableSlot }));
         }
       }
     }
-  }, [formData.preferred_date, timeSlots.length, closedSlots]);
+  }, [formData.preferred_date, timeSlots.length, fullyBookedSlots, closedSlots]);
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -604,40 +621,28 @@ export const DirectReservationDialog = ({
               <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.preferredTime}
             </Label>
-            {timeSlots.length === 0 ? (
+            {availabilityLoading ? (
+              <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+                {language === 'el' ? 'Έλεγχος διαθεσιμότητας...' : 'Checking availability...'}
+              </div>
+            ) : timeSlots.length === 0 ? (
               <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                 {t.noSlotsForDay}
               </div>
             ) : (
               <Select
-                value={closedSlots.has(formData.preferred_time) ? '' : formData.preferred_time}
+                value={formData.preferred_time}
                 onValueChange={(value) => setFormData({ ...formData, preferred_time: value })}
               >
                 <SelectTrigger className="text-xs sm:text-sm font-normal h-9 sm:h-10">
                   <SelectValue placeholder={t.selectTime} />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map((time) => {
-                    const isClosed = closedSlots.has(time);
-                    return (
-                      <SelectItem 
-                        key={time} 
-                        value={time} 
-                        disabled={isClosed}
-                        className={isClosed ? 'opacity-50 cursor-not-allowed' : ''}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className={isClosed ? 'line-through' : ''}>{time}</span>
-                          {isClosed && (
-                            <span className="flex items-center gap-1 text-destructive text-[10px] sm:text-xs">
-                              <Ban className="h-3 w-3" />
-                              {t.closedSlot}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
+                  {timeSlots.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}

@@ -21,6 +21,7 @@ import { trackDiscountView } from "@/lib/analyticsTracking";
 import { expandSlotsForDay, timeToMinutes } from "@/lib/timeSlots";
 import { useClosedSlots } from "@/hooks/useClosedSlots";
 import { useClosedDates } from "@/hooks/useClosedDates";
+import { useSlotAvailability } from "@/hooks/useSlotAvailability";
 
 interface TimeSlot {
   id?: string;
@@ -156,13 +157,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     }
   }, [wantsReservation, reservationDate, reservationTime, offer?.business_id]);
 
-  // Clear or update reservationTime if selected slot is closed
-  useEffect(() => {
-    if (reservationTime && closedSlots.has(reservationTime)) {
-      // Clear the selection when the slot is closed
-      setReservationTime("");
-    }
-  }, [closedSlots, reservationTime]);
+  // Note: Slot availability clearing is handled below after fullyBookedSlots is defined
 
   const checkCapacity = async () => {
     if (!reservationDate || !reservationTime || !offer?.business_id) return;
@@ -286,8 +281,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     return `${start.substring(0, 5)} - ${end.substring(0, 5)}`;
   };
 
-  // Generate available time slots - intersect offer hours with business reservation slots
-  const getAvailableTimeSlots = (): string[] => {
+  // Generate raw time slots - intersect offer hours with business reservation slots
+  const getRawTimeSlots = (): string[] => {
     if (!offer?.valid_start_time || !offer?.valid_end_time || !reservationDate) return [];
 
     const offerStartMins = timeToMinutes(offer.valid_start_time);
@@ -330,6 +325,25 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
     return valid;
   };
+
+  const rawTimeSlots = getRawTimeSlots();
+  
+  // Fetch availability for all raw slots to know which are fully booked
+  const { fullyBookedSlots, loading: availabilityLoading } = useSlotAvailability(
+    businessId,
+    reservationDate,
+    rawTimeSlots
+  );
+
+  // Filter out fully booked and closed slots from the display
+  const timeSlots = rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
+
+  // Clear reservationTime if selected slot is no longer available (closed or fully booked)
+  useEffect(() => {
+    if (reservationTime && (closedSlots.has(reservationTime) || fullyBookedSlots.has(reservationTime))) {
+      setReservationTime("");
+    }
+  }, [closedSlots, fullyBookedSlots, reservationTime]);
 
   // Check if a date is valid for this offer (within valid_days and date range)
   // AND has business reservation slots available for that day
@@ -498,7 +512,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const ReservationSection = () => {
     if (!showReservationOption) return null;
 
-    const timeSlots = getAvailableTimeSlots();
+    // timeSlots is now computed above at component level
     const canProceedWithReservation = wantsReservation && reservationDate && reservationTime && 
       availableCapacity !== null && availableCapacity >= partySize && !capacityError;
 
@@ -592,40 +606,28 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                   <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t("selectTime")}
                 </Label>
-                {timeSlots.length === 0 ? (
+                {availabilityLoading ? (
+                  <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+                    {language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}
+                  </div>
+                ) : timeSlots.length === 0 ? (
                   <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                     {t("noSlotsForDay")}
                   </div>
                 ) : (
                   <Select 
-                    value={closedSlots.has(reservationTime) ? '' : reservationTime} 
+                    value={reservationTime} 
                     onValueChange={setReservationTime}
                   >
                     <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
                       <SelectValue placeholder={t("selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {timeSlots.map((slot) => {
-                        const isClosed = closedSlots.has(slot);
-                        return (
-                          <SelectItem 
-                            key={slot} 
-                            value={slot} 
-                            disabled={isClosed}
-                            className={isClosed ? 'opacity-50 cursor-not-allowed' : ''}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className={isClosed ? 'line-through' : ''}>{slot}</span>
-                              {isClosed && (
-                                <span className="flex items-center gap-1 text-destructive text-[10px] sm:text-xs">
-                                  <Ban className="h-3 w-3" />
-                                  {t("closedSlot")}
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
+                      {timeSlots.map((slot) => (
+                        <SelectItem key={slot} value={slot}>
+                          {slot}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
