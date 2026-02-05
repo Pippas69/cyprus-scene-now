@@ -97,6 +97,9 @@ export const DirectReservationDialog = ({
   // Fetch all fully closed dates for the calendar
   const { closedDates } = useClosedDates(businessId);
 
+  // We'll fetch slot availability after we know the available time slots
+  // This is initialized here but will be used after getAvailableTimeSlots is called
+
   const text = {
     el: {
       title: 'Κράτηση Τραπεζιού',
