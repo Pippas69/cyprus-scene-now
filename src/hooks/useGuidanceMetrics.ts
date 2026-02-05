@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileMetrics {
   newCustomers: number;
-  paidPlanStartDate: string | null;
+  paidStartedAt: string | null;
 }
 
 interface OfferBoostMetrics {
@@ -34,58 +34,37 @@ export const useGuidanceMetrics = (businessId: string) => {
       // 1. PROFILE METRICS - New customers since FIRST paid plan start
       // ========================================
 
-      // Fetch all subscription rows for this business and find the earliest start
-      // for any paid plan (basic/pro/elite). This matches the requirement:
-      // "από την ημέρα που η επιχείρηση μπήκε σε paid plan".
-      const { data: subscriptions } = await supabase
+      // Fetch the subscription with paid_started_at to determine when business
+      // entered paid plan. This is used for attributing visits correctly.
+      const { data: subscription } = await supabase
         .from("business_subscriptions")
-        .select("current_period_start, plan_id, status")
-        .eq("business_id", businessId);
+        .select("paid_started_at, plan_id, status")
+        .eq("business_id", businessId)
+        .maybeSingle();
 
-      const planIds = Array.from(
-        new Set((subscriptions || []).map((s) => s.plan_id).filter(Boolean))
-      ) as string[];
-
-      const { data: plans } = planIds.length
-        ? await supabase
-            .from("subscription_plans")
-            .select("id, slug")
-            .in("id", planIds)
-        : { data: [] as { id: string; slug: string | null }[] };
-
-      const slugByPlanId = new Map((plans || []).map((p) => [p.id, p.slug]));
-
-      const paidStartDates = (subscriptions || [])
-        .filter((s) => {
-          const slug = s.plan_id ? slugByPlanId.get(s.plan_id) : null;
-          return !!slug && slug !== "free" && !!s.current_period_start;
-        })
-        .map((s) => new Date(s.current_period_start).getTime());
-
-      const paidPlanStartDate =
-        paidStartDates.length > 0
-          ? new Date(Math.min(...paidStartDates)).toISOString()
-          : null;
+      // paid_started_at is set when business upgrades to paid plan (basic/pro/elite)
+      // and reset to NULL when downgrading to free. This is managed by a DB trigger.
+      const paidStartedAt = subscription?.paid_started_at || null;
 
       let newCustomers = 0;
 
-      if (paidPlanStartDate) {
-        // Count QR check-ins from direct profile reservations since the paid plan started
-        // Use same logic as useBoostValueMetrics: reservations.checked_in_at
+      if (paidStartedAt) {
+        // Count QR check-ins from direct profile reservations that happened
+        // AFTER the business entered paid plan (based on paid_started_at)
         const { count } = await supabase
           .from("reservations")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .is("event_id", null)
           .not("checked_in_at", "is", null)
-          .gte("checked_in_at", paidPlanStartDate);
+          .gte("checked_in_at", paidStartedAt);
 
-        // Also count student discount redemptions since the paid plan started
+        // Also count student discount redemptions that happened AFTER paid_started_at
         const { count: studentCount } = await supabase
           .from("student_discount_redemptions")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
-          .gte("created_at", paidPlanStartDate);
+          .gte("created_at", paidStartedAt);
 
         newCustomers = (count || 0) + (studentCount || 0);
       }
@@ -244,7 +223,7 @@ export const useGuidanceMetrics = (businessId: string) => {
       return {
         profile: {
           newCustomers,
-          paidPlanStartDate,
+          paidStartedAt,
         },
         offers: {
           boostSpentCents,

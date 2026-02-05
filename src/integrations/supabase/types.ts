@@ -567,6 +567,7 @@ export type Database = {
           current_period_start: string
           id: string
           monthly_budget_remaining_cents: number | null
+          paid_started_at: string | null
           plan_id: string | null
           status: Database["public"]["Enums"]["subscription_status"] | null
           stripe_customer_id: string | null
@@ -585,6 +586,7 @@ export type Database = {
           current_period_start: string
           id?: string
           monthly_budget_remaining_cents?: number | null
+          paid_started_at?: string | null
           plan_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"] | null
           stripe_customer_id?: string | null
@@ -603,6 +605,7 @@ export type Database = {
           current_period_start?: string
           id?: string
           monthly_budget_remaining_cents?: number | null
+          paid_started_at?: string | null
           plan_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"] | null
           stripe_customer_id?: string | null

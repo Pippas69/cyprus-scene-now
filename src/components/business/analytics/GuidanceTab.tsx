@@ -951,7 +951,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
           metrics && (
             <ProfileMetricsSection
               newCustomers={metrics.profile.newCustomers}
-              hasPaidPlan={!!metrics.profile.paidPlanStartDate}
+              hasPaidPlan={!!metrics.profile.paidStartedAt}
               language={language}
             />
           )
