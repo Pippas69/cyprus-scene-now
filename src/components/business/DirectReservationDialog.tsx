@@ -491,14 +491,14 @@ export const DirectReservationDialog = ({
   const timeSlots = getAvailableTimeSlots();
 
   // Set default time when date changes and slots are available
-  // Skip closed and fully booked slots when auto-selecting
+  // Skip closed, fully booked, and passed slots when auto-selecting
   useEffect(() => {
     if (timeSlots.length > 0) {
-      const currentSlotUnavailable = !timeSlots.includes(formData.preferred_time);
+      const currentSlotUnavailable = !timeSlots.includes(formData.preferred_time) || isSlotPassed(formData.preferred_time);
       
       if (currentSlotUnavailable) {
-        // Find the first available slot
-        const firstAvailableSlot = timeSlots[0];
+        // Find the first available slot that hasn't passed
+        const firstAvailableSlot = timeSlots.find(slot => !isSlotPassed(slot));
         if (firstAvailableSlot) {
           setFormData((prev) => ({ ...prev, preferred_time: firstAvailableSlot }));
         }
