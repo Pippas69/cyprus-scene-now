@@ -511,7 +511,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
   const ReservationSection = () => {
     if (!showReservationOption) return null;
 
-    const timeSlots = getAvailableTimeSlots();
+    // timeSlots is now computed above at component level
     const canProceedWithReservation = wantsReservation && reservationDate && reservationTime && 
       availableCapacity !== null && availableCapacity >= partySize && !capacityError;
 
