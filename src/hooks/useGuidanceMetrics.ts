@@ -34,8 +34,7 @@ export const useGuidanceMetrics = (businessId: string) => {
       // 1. PROFILE METRICS - New customers since FIRST paid plan start
       // ========================================
 
-      // Fetch the subscription with paid_started_at to determine when business
-      // entered paid plan. This is used for attributing visits correctly.
+      // Current paid_started_at (kept for UI state like “has paid plan”)
       const { data: subscription } = await supabase
         .from("business_subscriptions")
         .select("paid_started_at, plan_id, status")
@@ -48,25 +47,42 @@ export const useGuidanceMetrics = (businessId: string) => {
 
       let newCustomers = 0;
 
-      if (paidStartedAt) {
-        // Count QR check-ins from direct profile reservations that happened
-        // AFTER the business entered paid plan (based on paid_started_at)
+      // Accurate attribution: count ONLY visits that happened while the plan
+      // was paid at that exact moment (supports multiple paid/free periods).
+      const paidSlugs = new Set(["basic", "pro", "elite"]);
+
+      const { data: planHistory } = await supabase
+        .from("business_subscription_plan_history")
+        .select("plan_slug, valid_from, valid_to")
+        .eq("business_id", businessId)
+        .order("valid_from", { ascending: true });
+
+      const paidIntervals = (planHistory || [])
+        .filter((h) => paidSlugs.has(h.plan_slug))
+        .map((h) => ({
+          from: new Date(h.valid_from).toISOString(),
+          to: new Date(h.valid_to || new Date().toISOString()).toISOString(),
+        }))
+        .filter((i) => new Date(i.from) <= new Date(i.to));
+
+      for (const interval of paidIntervals) {
         const { count } = await supabase
           .from("reservations")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .is("event_id", null)
           .not("checked_in_at", "is", null)
-          .gte("checked_in_at", paidStartedAt);
+          .gte("checked_in_at", interval.from)
+          .lte("checked_in_at", interval.to);
 
-        // Also count student discount redemptions that happened AFTER paid_started_at
         const { count: studentCount } = await supabase
           .from("student_discount_redemptions")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
-          .gte("created_at", paidStartedAt);
+          .gte("created_at", interval.from)
+          .lte("created_at", interval.to);
 
-        newCustomers = (count || 0) + (studentCount || 0);
+        newCustomers += (count || 0) + (studentCount || 0);
       }
 
 

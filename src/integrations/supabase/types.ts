@@ -554,6 +554,36 @@ export type Database = {
           },
         ]
       }
+      business_subscription_plan_history: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          plan_slug: string
+          source: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          plan_slug: string
+          source?: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          plan_slug?: string
+          source?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       business_subscriptions: {
         Row: {
           beta_discount_percent: number | null

@@ -76,18 +76,39 @@ export const useBoostValueMetrics = (
       // ========================================
       // PROFILE - Featured vs Non-Featured (based on subscription)
       // ========================================
-      
-      // Check if business has/had paid subscription using paid_started_at
-      // This field is managed by a DB trigger and tracks when business entered paid plan
-      const { data: subscription } = await supabase
-        .from("business_subscriptions")
-        .select("paid_started_at, current_period_end, status")
-        .eq("business_id", businessId)
-        .maybeSingle();
+      const paidSlugs = new Set(["basic", "pro", "elite"]);
 
-      // paid_started_at is set when upgrading to paid (basic/pro/elite)
-      // and reset to NULL when downgrading to free
-      const featuredStart = subscription?.paid_started_at;
+      // Pull plan history so attribution is based on the plan at the exact moment
+      // (supports multiple upgrades/downgrades within the selected date range)
+      const { data: planHistory } = await supabase
+        .from("business_subscription_plan_history")
+        .select("plan_slug, valid_from, valid_to")
+        .eq("business_id", businessId)
+        .lte("valid_from", endDate)
+        .or(`valid_to.is.null,valid_to.gte.${startDate}`)
+        .order("valid_from", { ascending: true });
+
+      const paidIntervals = (planHistory || [])
+        .filter((h) => paidSlugs.has(h.plan_slug))
+        .map((h) => ({
+          from: new Date(h.valid_from).toISOString(),
+          to: new Date(h.valid_to || endDate).toISOString(),
+        }))
+        .map((i) => ({
+          from: i.from < startDate ? startDate : i.from,
+          to: i.to > endDate ? endDate : i.to,
+        }))
+        .filter((i) => new Date(i.from) <= new Date(i.to));
+
+      const sumCountsOverIntervals = async (
+        countFn: (from: string, to: string) => Promise<number>
+      ) => {
+        let sum = 0;
+        for (const interval of paidIntervals) {
+          sum += await countFn(interval.from, interval.to);
+        }
+        return sum;
+      };
 
       // Get business events for visit calculations
       const { data: businessEventsForVisits } = await supabase
@@ -153,89 +174,28 @@ export const useBoostValueMetrics = (
         return (count || 0) + (studentCount || 0);
       };
 
-      // Determine how the featuredStart splits the selected date range
-      const hasFeaturedStart = !!featuredStart;
-      const featuredStartIso = featuredStart ? new Date(featuredStart).toISOString() : null;
+      // We compute totals for the whole range, then compute "featured" by summing counts
+      // only within paid intervals; non-featured = total - featured.
+      const totalViews = await countProfileViews(startDate, endDate);
+      const featuredViews = await sumCountsOverIntervals(countProfileViews);
 
-      if (!hasFeaturedStart || !featuredStartIso) {
-        // No featured period at all
-        profileWithout = {
-          views: await countProfileViews(startDate, endDate),
-          interactions: await countProfileInteractions(startDate, endDate),
-          visits: await countProfileVisits(startDate, endDate),
-        };
-      } else if (featuredStartIso <= startDate) {
-        // Entire range is within featured period
-        profileWith = {
-          views: await countProfileViews(startDate, endDate),
-          interactions: await countProfileInteractions(startDate, endDate),
-          visits: await countProfileVisits(startDate, endDate),
-        };
-      } else if (featuredStartIso >= endDate) {
-        // Entire range is before featured period
-        profileWithout = {
-          views: await countProfileViews(startDate, endDate),
-          interactions: await countProfileInteractions(startDate, endDate),
-          visits: await countProfileVisits(startDate, endDate),
-        };
-      } else {
-        // Split range: [startDate, featuredStart) and [featuredStart, endDate]
-        // Without (non-featured)
-        const { count: withoutViewsCount } = await supabase
-          .from("engagement_events")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .eq("event_type", "profile_view")
-          .gte("created_at", startDate)
-          .lt("created_at", featuredStartIso);
+      const totalInteractions = await countProfileInteractions(startDate, endDate);
+      const featuredInteractions = await sumCountsOverIntervals(countProfileInteractions);
 
-        const { count: withoutInteractionsEventsCount } = await supabase
-          .from("engagement_events")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          // IMPORTANT: Must match Performance profile interactions exactly (NO shares)
-          .in("event_type", ["follow", "favorite", "profile_click", "profile_interaction"])
-          .gte("created_at", startDate)
-          .lt("created_at", featuredStartIso);
+      const totalVisits = await countProfileVisits(startDate, endDate);
+      const featuredVisits = await sumCountsOverIntervals(countProfileVisits);
 
-        const { count: withoutFollowerCount } = await supabase
-          .from("business_followers")
-          .select("*", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .is("unfollowed_at", null)
-          .gte("created_at", startDate)
-          .lt("created_at", featuredStartIso);
+      profileWith = {
+        views: featuredViews,
+        interactions: featuredInteractions,
+        visits: featuredVisits,
+      };
 
-        const { count: withoutResCheckins } = await supabase
-          .from("reservations")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .is("event_id", null)
-          .not("checked_in_at", "is", null)
-          .gte("checked_in_at", startDate)
-          .lt("checked_in_at", featuredStartIso);
-
-        // Student discount redemptions without featured
-        const { count: withoutStudentCount } = await supabase
-          .from("student_discount_redemptions")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .gte("created_at", startDate)
-          .lt("created_at", featuredStartIso);
-
-        profileWithout = {
-          views: withoutViewsCount || 0,
-          interactions: (withoutInteractionsEventsCount || 0) + (withoutFollowerCount || 0),
-          visits: (withoutResCheckins || 0) + (withoutStudentCount || 0),
-        };
-
-        // With (featured)
-        profileWith = {
-          views: await countProfileViews(featuredStartIso, endDate),
-          interactions: await countProfileInteractions(featuredStartIso, endDate),
-          visits: await countProfileVisits(featuredStartIso, endDate),
-        };
-      }
+      profileWithout = {
+        views: Math.max(0, totalViews - featuredViews),
+        interactions: Math.max(0, totalInteractions - featuredInteractions),
+        visits: Math.max(0, totalVisits - featuredVisits),
+      };
 
       // ========================================
       // OFFERS - Get ALL boost periods (not just active ones)
