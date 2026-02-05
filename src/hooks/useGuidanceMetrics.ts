@@ -80,7 +80,14 @@ export const useGuidanceMetrics = (businessId: string) => {
           .not("checked_in_at", "is", null)
           .gte("checked_in_at", paidPlanStartDate);
 
-        newCustomers = count || 0;
+        // Also count student discount redemptions since the paid plan started
+        const { count: studentCount } = await supabase
+          .from("student_discount_redemptions")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .gte("created_at", paidPlanStartDate);
+
+        newCustomers = (count || 0) + (studentCount || 0);
       }
 
 

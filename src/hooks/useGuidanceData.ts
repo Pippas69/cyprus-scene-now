@@ -182,7 +182,23 @@ export function useGuidanceDataWithRange(businessId: string, dateRange?: DateRan
       const profileVisitTimestamps = (profileVisitCheckins || [])
         .filter((r) => r.checked_in_at)
         .map((r) => r.checked_in_at as string);
-      const profileVisits = analyzeTimestamps(profileVisitTimestamps);
+
+      // Student discount redemptions (QR check-ins from student discounts)
+      const studentDiscountCheckins = await fetchAll<{ created_at: string }>(async (from, to) => {
+        const { data } = await supabase
+          .from('student_discount_redemptions')
+          .select('created_at')
+          .eq('business_id', businessId)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate)
+          .range(from, to);
+        return (data || []) as any;
+      });
+
+      const studentDiscountTimestamps = (studentDiscountCheckins || []).map((r) => r.created_at);
+      const allProfileVisitTimestamps = [...profileVisitTimestamps, ...studentDiscountTimestamps];
+
+      const profileVisits = analyzeTimestamps(allProfileVisitTimestamps);
 
       // ========================================
       // OFFERS - Same algorithm as Performance
@@ -384,7 +400,7 @@ export function useGuidanceDataWithRange(businessId: string, dateRange?: DateRan
         profileTotals: {
           views: profileViewEvents?.length || 0,
           interactions: allProfileInteractionTimestamps.length,
-          visits: profileVisitTimestamps.length,
+          visits: allProfileVisitTimestamps.length,
         },
         offerTotals: {
           views: offerViewTimestamps.length,

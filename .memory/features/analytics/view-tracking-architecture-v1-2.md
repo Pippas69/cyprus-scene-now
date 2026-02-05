@@ -58,9 +58,15 @@ Updated: 2026-01-27
 ### Profile Visits (Επισκέψεις Προφίλ)
 **Definition**: User physically visits the business (verified)
 
-**Tracked via**: QR code scan from a reservation made through the business profile
+**Tracked via**: 
+1. **Reservation QR check-in**: QR code scan from a reservation made through the business profile (`reservations.checked_in_at` where `event_id IS NULL`)
+2. **Student discount redemption**: QR code scan for student discount at the business (`student_discount_redemptions.created_at`)
 
-**Database**: `reservations.checked_in_at` where `event_id IS NULL`
+**Database**: 
+- `reservations.checked_in_at` where `event_id IS NULL`
+- `student_discount_redemptions.created_at`
+
+**Note**: Student discount visits are only counted if the business has `student_discount_enabled = true` in settings. These visits are attributed to the profile since the student scans the QR from within the business profile page.
 
 ---
 

@@ -64,6 +64,7 @@ export const usePerformanceMetrics = (
       const totalProfileInteractions = (profileInteractionsCount || 0) + (followerCount || 0);
 
       // Profile visits = verified reservation check-ins for DIRECT business reservations only (reservation.event_id IS NULL)
+      // + student discount redemptions (QR check-ins from student discounts)
       const { count: profileVisitsCount } = await supabase
         .from("reservations")
         .select("id", { count: "exact", head: true })
@@ -72,6 +73,16 @@ export const usePerformanceMetrics = (
         .not("checked_in_at", "is", null)
         .gte("checked_in_at", startDate)
         .lte("checked_in_at", endDate);
+
+      // Student discount redemptions (QR check-ins from student discounts)
+      const { count: studentDiscountVisitsCount } = await supabase
+        .from("student_discount_redemptions")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", businessId)
+        .gte("created_at", startDate)
+        .lte("created_at", endDate);
+
+      const totalProfileVisits = (profileVisitsCount || 0) + (studentDiscountVisitsCount || 0);
 
       // Offer views from discount_views
       const { data: businessOffers } = await supabase
@@ -180,7 +191,7 @@ export const usePerformanceMetrics = (
         profile: {
           views: profileViewsCount || 0,
           interactions: totalProfileInteractions,
-          visits: profileVisitsCount || 0,
+          visits: totalProfileVisits,
         },
         offers: {
           views: offerViewsCount,
