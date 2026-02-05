@@ -4667,7 +4667,6 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: number
       }
-      cancel_expired_reservations: { Args: never; Returns: number }
       create_business_with_geo: {
         Args: {
           p_address: string
@@ -5018,6 +5017,7 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      process_no_show_reservations: { Args: never; Returns: number }
       search_content:
         | {
             Args: { search_query: string }

@@ -305,7 +305,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
       let end = offerEndMins;
       if (isOvernight) end += 1440;
 
-      for (let t = start; t < end; t += 30) {
+      for (let t = start; t <= end; t += 30) {
         out.push(((t % 1440) + 1440) % 1440);
       }
 
@@ -320,7 +320,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     const valid = candidates.filter((time) => {
       const slotMins = timeToMinutes(time);
       if (isOvernight) return slotMins >= offerStartMins || slotMins < offerEndMins;
-      return slotMins >= offerStartMins && slotMins < offerEndMins;
+      return slotMins >= offerStartMins && slotMins <= offerEndMins;
     });
 
     return valid;
