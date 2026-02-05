@@ -18,7 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, isAfter, isBefore, isToday } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { trackDiscountView } from "@/lib/analyticsTracking";
-import { expandTimeRange, timeToMinutes } from "@/lib/timeSlots";
+import { expandSlotsForDay, timeToMinutes } from "@/lib/timeSlots";
 import { useClosedSlots } from "@/hooks/useClosedSlots";
 import { useClosedDates } from "@/hooks/useClosedDates";
 import { useSlotAvailability } from "@/hooks/useSlotAvailability";
@@ -311,11 +311,49 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     return `${start.substring(0, 5)} - ${end.substring(0, 5)}`;
   };
 
-  // Generate raw time slots - based ONLY on offer hours (every 30min)
+  // Generate raw time slots - intersect offer hours with business reservation slots
   const getRawTimeSlots = (): string[] => {
     if (!offer?.valid_start_time || !offer?.valid_end_time || !reservationDate) return [];
 
-    return expandTimeRange(offer.valid_start_time, offer.valid_end_time, 30);
+    const offerStartMins = timeToMinutes(offer.valid_start_time);
+    const offerEndMins = timeToMinutes(offer.valid_end_time);
+    const isOvernight = offerEndMins < offerStartMins;
+
+    // Build all possible arrival times from the business' configured ranges
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+    const selectedDay = dayNames[reservationDate.getDay()];
+
+    const businessSlots = offer.businesses?.reservation_time_slots;
+    const candidates = businessSlots && Array.isArray(businessSlots)
+      ? expandSlotsForDay(businessSlots, selectedDay, 30)
+      : [];
+
+    if (candidates.length === 0) {
+      // Fallback: generate from offer hours only (every 30min)
+      const out: number[] = [];
+      const start = offerStartMins;
+      let end = offerEndMins;
+      if (isOvernight) end += 1440;
+
+      for (let t = start; t <= end; t += 30) {
+        out.push(((t % 1440) + 1440) % 1440);
+      }
+
+      return out.map((m) => {
+        const hh = Math.floor(m / 60);
+        const mm = m % 60;
+        return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
+      });
+    }
+
+    // Filter candidates by offer hours
+    const valid = candidates.filter((time) => {
+      const slotMins = timeToMinutes(time);
+      if (isOvernight) return slotMins >= offerStartMins || slotMins < offerEndMins;
+      return slotMins >= offerStartMins && slotMins <= offerEndMins;
+    });
+
+    return valid;
   };
 
   const rawTimeSlots = getRawTimeSlots();
