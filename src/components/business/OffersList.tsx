@@ -384,7 +384,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(offer.id)}
+                    onClick={() => setDeletingOffer({ id: offer.id, title: offer.title })}
                     className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive"
                     title={t.delete}
                   >
