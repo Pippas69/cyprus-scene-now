@@ -605,40 +605,28 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                   <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t("selectTime")}
                 </Label>
-                {timeSlots.length === 0 ? (
+                {availabilityLoading ? (
+                  <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+                    {language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}
+                  </div>
+                ) : timeSlots.length === 0 ? (
                   <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                     {t("noSlotsForDay")}
                   </div>
                 ) : (
                   <Select 
-                    value={closedSlots.has(reservationTime) ? '' : reservationTime} 
+                    value={reservationTime} 
                     onValueChange={setReservationTime}
                   >
                     <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
                       <SelectValue placeholder={t("selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {timeSlots.map((slot) => {
-                        const isClosed = closedSlots.has(slot);
-                        return (
-                          <SelectItem 
-                            key={slot} 
-                            value={slot} 
-                            disabled={isClosed}
-                            className={isClosed ? 'opacity-50 cursor-not-allowed' : ''}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className={isClosed ? 'line-through' : ''}>{slot}</span>
-                              {isClosed && (
-                                <span className="flex items-center gap-1 text-destructive text-[10px] sm:text-xs">
-                                  <Ban className="h-3 w-3" />
-                                  {t("closedSlot")}
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
+                      {timeSlots.map((slot) => (
+                        <SelectItem key={slot} value={slot}>
+                          {slot}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
