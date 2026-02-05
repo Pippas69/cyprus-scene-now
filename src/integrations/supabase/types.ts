@@ -595,6 +595,7 @@ export type Database = {
           created_at: string | null
           current_period_end: string
           current_period_start: string
+          downgraded_to_free_at: string | null
           id: string
           monthly_budget_remaining_cents: number | null
           paid_started_at: string | null
@@ -614,6 +615,7 @@ export type Database = {
           created_at?: string | null
           current_period_end: string
           current_period_start: string
+          downgraded_to_free_at?: string | null
           id?: string
           monthly_budget_remaining_cents?: number | null
           paid_started_at?: string | null
@@ -633,6 +635,7 @@ export type Database = {
           created_at?: string | null
           current_period_end?: string
           current_period_start?: string
+          downgraded_to_free_at?: string | null
           id?: string
           monthly_budget_remaining_cents?: number | null
           paid_started_at?: string | null
