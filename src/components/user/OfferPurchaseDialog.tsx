@@ -21,6 +21,7 @@ import { trackDiscountView } from "@/lib/analyticsTracking";
 import { expandSlotsForDay, timeToMinutes } from "@/lib/timeSlots";
 import { useClosedSlots } from "@/hooks/useClosedSlots";
 import { useClosedDates } from "@/hooks/useClosedDates";
+import { useSlotAvailability } from "@/hooks/useSlotAvailability";
 
 interface TimeSlot {
   id?: string;
