@@ -77,14 +77,17 @@ export const useBoostValueMetrics = (
       // PROFILE - Featured vs Non-Featured (based on subscription)
       // ========================================
       
-      // Check if business has/had active subscription (featured profile)
+      // Check if business has/had paid subscription using paid_started_at
+      // This field is managed by a DB trigger and tracks when business entered paid plan
       const { data: subscription } = await supabase
         .from("business_subscriptions")
-        .select("current_period_start, current_period_end, status")
+        .select("paid_started_at, current_period_end, status")
         .eq("business_id", businessId)
         .maybeSingle();
 
-      const featuredStart = subscription?.current_period_start;
+      // paid_started_at is set when upgrading to paid (basic/pro/elite)
+      // and reset to NULL when downgrading to free
+      const featuredStart = subscription?.paid_started_at;
 
       // Get business events for visit calculations
       const { data: businessEventsForVisits } = await supabase
