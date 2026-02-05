@@ -320,7 +320,7 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     const valid = candidates.filter((time) => {
       const slotMins = timeToMinutes(time);
       if (isOvernight) return slotMins >= offerStartMins || slotMins < offerEndMins;
-      return slotMins >= offerStartMins && slotMins < offerEndMins;
+      return slotMins >= offerStartMins && slotMins <= offerEndMins;
     });
 
     return valid;
