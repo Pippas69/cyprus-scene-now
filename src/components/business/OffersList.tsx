@@ -10,7 +10,16 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { StudentDiscountStats } from "./StudentDiscountStats";
 import OfferBoostDialog from "./OfferBoostDialog";
 import OfferEditDialog from "./OfferEditDialog";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 // Helper component to show active boost badge for offers (gold/premium color - non-clickable)
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
   const { data: activeBoost } = useQuery({
