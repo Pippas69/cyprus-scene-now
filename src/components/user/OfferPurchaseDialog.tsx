@@ -287,8 +287,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     return `${start.substring(0, 5)} - ${end.substring(0, 5)}`;
   };
 
-  // Generate available time slots - intersect offer hours with business reservation slots
-  const getAvailableTimeSlots = (): string[] => {
+  // Generate raw time slots - intersect offer hours with business reservation slots
+  const getRawTimeSlots = (): string[] => {
     if (!offer?.valid_start_time || !offer?.valid_end_time || !reservationDate) return [];
 
     const offerStartMins = timeToMinutes(offer.valid_start_time);
@@ -331,6 +331,18 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
 
     return valid;
   };
+
+  const rawTimeSlots = getRawTimeSlots();
+  
+  // Fetch availability for all raw slots to know which are fully booked
+  const { fullyBookedSlots, loading: availabilityLoading } = useSlotAvailability(
+    businessId,
+    reservationDate,
+    rawTimeSlots
+  );
+
+  // Filter out fully booked and closed slots from the display
+  const timeSlots = rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
 
   // Check if a date is valid for this offer (within valid_days and date range)
   // AND has business reservation slots available for that day
