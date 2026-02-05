@@ -151,7 +151,8 @@ Deno.serve(async (req) => {
       logStep("Capacity available", { remainingCapacity: capacity?.remaining_capacity });
 
       // Create reservation - combine date and time into preferred_time
-      const preferredDateTime = `${reservationData.preferred_date}T${reservationData.preferred_time}:00`;
+      // Store with Europe/Nicosia timezone to preserve the user's intended local time
+      const preferredDateTime = `${reservationData.preferred_date}T${reservationData.preferred_time}:00+02:00`;
 
       const reservationName =
         (user.user_metadata?.first_name && user.user_metadata?.last_name
