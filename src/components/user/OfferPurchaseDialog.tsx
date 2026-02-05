@@ -18,7 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, isAfter, isBefore, isToday } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { trackDiscountView } from "@/lib/analyticsTracking";
-import { expandSlotsForDay, timeToMinutes } from "@/lib/timeSlots";
+import { expandTimeRange, timeToMinutes } from "@/lib/timeSlots";
 import { useClosedSlots } from "@/hooks/useClosedSlots";
 import { useClosedDates } from "@/hooks/useClosedDates";
 import { useSlotAvailability } from "@/hooks/useSlotAvailability";
