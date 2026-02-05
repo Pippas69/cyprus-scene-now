@@ -605,7 +605,7 @@ async function handleReservationQR(
 
   if (reservation.checked_in_at) {
     return new Response(JSON.stringify({
-      success: true,
+      success: false,
       message: m.reservationAlreadyCheckedIn,
       qrType: "reservation",
       alreadyCheckedIn: true,
