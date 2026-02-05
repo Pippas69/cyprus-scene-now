@@ -288,9 +288,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     const isCredit = purchase.discounts.offer_type === 'credit';
     const balanceRemaining = purchase.balance_remaining_cents ?? 0;
     const isDepleted = isCredit && balanceRemaining === 0;
-    const isExpired = new Date(purchase.expires_at) <= new Date();
-    const isRedeemed = purchase.status === 'redeemed';
     const isReservation = purchase.claim_type === 'with_reservation';
+    const isExpired = isPurchaseExpired(purchase);
+    const isRedeemed = purchase.status === 'redeemed';
 
     // Format expiry date - Greek style "Λήγει στις 4 Φεβρουαρίου"
     const formatExpiryDate = (dateString: string) => {
