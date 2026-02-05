@@ -218,7 +218,10 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         last_name: profile.last_name,
         name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
         age: profile.age,
+        // Keep city & town in sync. Audience analytics uses city first (then town),
+        // so if we only update town, analytics can appear “stuck” on the old city.
         town: profile.town,
+        city: profile.town,
         gender: profile.gender,
         preferences: profile.preferences || [],
       })
