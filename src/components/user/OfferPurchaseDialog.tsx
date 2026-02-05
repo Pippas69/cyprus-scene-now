@@ -157,13 +157,13 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     }
   }, [wantsReservation, reservationDate, reservationTime, offer?.business_id]);
 
-  // Clear or update reservationTime if selected slot is closed
+  // Clear or update reservationTime if selected slot is no longer available
   useEffect(() => {
-    if (reservationTime && closedSlots.has(reservationTime)) {
-      // Clear the selection when the slot is closed
+    if (reservationTime && (closedSlots.has(reservationTime) || fullyBookedSlots.has(reservationTime))) {
+      // Clear the selection when the slot is closed or fully booked
       setReservationTime("");
     }
-  }, [closedSlots, reservationTime]);
+  }, [closedSlots, fullyBookedSlots, reservationTime]);
 
   const checkCapacity = async () => {
     if (!reservationDate || !reservationTime || !offer?.business_id) return;
