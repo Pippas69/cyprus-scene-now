@@ -19,6 +19,7 @@ import { expandSlotsForDay, normalizeTime } from '@/lib/timeSlots';
 import { ReservationSuccessDialog } from '@/components/user/ReservationSuccessDialog';
 import { useClosedSlots } from '@/hooks/useClosedSlots';
 import { useClosedDates } from '@/hooks/useClosedDates';
+import { useSlotAvailability } from '@/hooks/useSlotAvailability';
 
 interface DirectReservationDialogProps {
   open: boolean;
