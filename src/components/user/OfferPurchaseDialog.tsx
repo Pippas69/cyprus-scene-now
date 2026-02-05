@@ -281,7 +281,8 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     return `${start.substring(0, 5)} - ${end.substring(0, 5)}`;
   };
 
-  // Generate raw time slots - intersect offer hours with business reservation slots
+  // Generate raw time slots - use offer hours directly (not business slots)
+  // This ensures the dropdown always reflects the offer's valid_start_time and valid_end_time
   const getRawTimeSlots = (): string[] => {
     if (!offer?.valid_start_time || !offer?.valid_end_time || !reservationDate) return [];
 
@@ -289,41 +290,21 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     const offerEndMins = timeToMinutes(offer.valid_end_time);
     const isOvernight = offerEndMins < offerStartMins;
 
-    // Build all possible arrival times from the business' configured ranges
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
-    const selectedDay = dayNames[reservationDate.getDay()];
+    // Generate slots from offer hours directly (every 30min)
+    const out: number[] = [];
+    const start = offerStartMins;
+    let end = offerEndMins;
+    if (isOvernight) end += 1440;
 
-    const businessSlots = offer.businesses?.reservation_time_slots;
-    const candidates = businessSlots && Array.isArray(businessSlots)
-      ? expandSlotsForDay(businessSlots, selectedDay, 30)
-      : [];
-
-    if (candidates.length === 0) {
-      // Fallback: generate from offer hours only (every 30min)
-      const out: number[] = [];
-      const start = offerStartMins;
-      let end = offerEndMins;
-      if (isOvernight) end += 1440;
-
-      for (let t = start; t <= end; t += 30) {
-        out.push(((t % 1440) + 1440) % 1440);
-      }
-
-      return out.map((m) => {
-        const hh = Math.floor(m / 60);
-        const mm = m % 60;
-        return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
-      });
+    for (let t = start; t <= end; t += 30) {
+      out.push(((t % 1440) + 1440) % 1440);
     }
 
-    // Filter candidates by offer hours
-    const valid = candidates.filter((time) => {
-      const slotMins = timeToMinutes(time);
-      if (isOvernight) return slotMins >= offerStartMins || slotMins < offerEndMins;
-      return slotMins >= offerStartMins && slotMins <= offerEndMins;
+    return out.map((m) => {
+      const hh = Math.floor(m / 60);
+      const mm = m % 60;
+      return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
     });
-
-    return valid;
   };
 
   const rawTimeSlots = getRawTimeSlots();
