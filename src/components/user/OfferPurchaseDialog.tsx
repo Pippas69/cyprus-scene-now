@@ -335,7 +335,20 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     rawTimeSlots
   );
 
+  // Check if a time slot has passed (only relevant for today)
+  const isSlotPassed = (slotTime: string): boolean => {
+    if (!reservationDate || !isToday(reservationDate)) return false;
+    
+    const now = new Date();
+    const [hours, minutes] = slotTime.split(':').map(Number);
+    const slotDate = new Date();
+    slotDate.setHours(hours, minutes, 0, 0);
+    
+    return slotDate <= now;
+  };
+
   // Filter out fully booked and closed slots from the display
+  // Keep passed slots visible but they'll be shown as disabled
   const timeSlots = rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
 
   // Clear reservationTime if selected slot is no longer available (closed or fully booked)

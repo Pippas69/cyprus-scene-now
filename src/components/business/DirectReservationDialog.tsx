@@ -364,7 +364,20 @@ export const DirectReservationDialog = ({
     rawTimeSlots
   );
 
+  // Check if a time slot has passed (only relevant for today)
+  const isSlotPassed = (slotTime: string): boolean => {
+    if (!isToday(formData.preferred_date)) return false;
+    
+    const now = new Date();
+    const [hours, minutes] = slotTime.split(':').map(Number);
+    const slotDate = new Date();
+    slotDate.setHours(hours, minutes, 0, 0);
+    
+    return slotDate <= now;
+  };
+
   // Filter out fully booked and closed slots from the display
+  // Keep passed slots visible but they'll be shown as disabled
   const getAvailableTimeSlots = (): string[] => {
     return rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
   };
