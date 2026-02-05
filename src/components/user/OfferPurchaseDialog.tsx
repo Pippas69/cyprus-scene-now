@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import QRCodeLib from "qrcode";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, addDays, isAfter, isBefore } from "date-fns";
+import { format, addDays, isAfter, isBefore, isToday } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { trackDiscountView } from "@/lib/analyticsTracking";
 import { expandSlotsForDay, timeToMinutes } from "@/lib/timeSlots";
@@ -335,15 +335,30 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
     rawTimeSlots
   );
 
+  // Check if a time slot has passed (only relevant for today)
+  const isSlotPassed = (slotTime: string): boolean => {
+    if (!reservationDate || !isToday(reservationDate)) return false;
+    
+    const now = new Date();
+    const [hours, minutes] = slotTime.split(':').map(Number);
+    const slotDate = new Date();
+    slotDate.setHours(hours, minutes, 0, 0);
+    
+    return slotDate <= now;
+  };
+
   // Filter out fully booked and closed slots from the display
+  // Keep passed slots visible but they'll be shown as disabled
   const timeSlots = rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
 
-  // Clear reservationTime if selected slot is no longer available (closed or fully booked)
+  // Clear reservationTime if selected slot is no longer available (closed, fully booked, or passed)
   useEffect(() => {
-    if (reservationTime && (closedSlots.has(reservationTime) || fullyBookedSlots.has(reservationTime))) {
-      setReservationTime("");
+    if (reservationTime && (closedSlots.has(reservationTime) || fullyBookedSlots.has(reservationTime) || isSlotPassed(reservationTime))) {
+      // Find the first available slot that hasn't passed
+      const firstAvailableSlot = timeSlots.find(slot => !isSlotPassed(slot));
+      setReservationTime(firstAvailableSlot || "");
     }
-  }, [closedSlots, fullyBookedSlots, reservationTime]);
+  }, [closedSlots, fullyBookedSlots, reservationTime, reservationDate]);
 
   // Check if a date is valid for this offer (within valid_days and date range)
   // AND has business reservation slots available for that day
@@ -623,11 +638,24 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                       <SelectValue placeholder={t("selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {timeSlots.map((slot) => (
-                        <SelectItem key={slot} value={slot}>
-                          {slot}
-                        </SelectItem>
-                      ))}
+                      {timeSlots.map((slot) => {
+                        const passed = isSlotPassed(slot);
+                        return (
+                          <SelectItem 
+                            key={slot} 
+                            value={slot}
+                            disabled={passed}
+                            className={passed ? 'opacity-50 text-muted-foreground' : ''}
+                          >
+                            {slot}
+                            {passed && (
+                              <span className="ml-2 text-[10px] text-muted-foreground">
+                                ({language === "el" ? "Πέρασε" : "Passed"})
+                              </span>
+                            )}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 )}

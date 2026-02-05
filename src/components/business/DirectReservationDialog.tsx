@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Users, Phone, MapPin, User, Clock, Ban } from 'lucide-react';
-import { format, isBefore, startOfDay, parse } from 'date-fns';
+import { format, isBefore, startOfDay, parse, isToday } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { expandSlotsForDay, normalizeTime } from '@/lib/timeSlots';
@@ -364,7 +364,20 @@ export const DirectReservationDialog = ({
     rawTimeSlots
   );
 
+  // Check if a time slot has passed (only relevant for today)
+  const isSlotPassed = (slotTime: string): boolean => {
+    if (!isToday(formData.preferred_date)) return false;
+    
+    const now = new Date();
+    const [hours, minutes] = slotTime.split(':').map(Number);
+    const slotDate = new Date();
+    slotDate.setHours(hours, minutes, 0, 0);
+    
+    return slotDate <= now;
+  };
+
   // Filter out fully booked and closed slots from the display
+  // Keep passed slots visible but they'll be shown as disabled
   const getAvailableTimeSlots = (): string[] => {
     return rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
   };
@@ -478,14 +491,14 @@ export const DirectReservationDialog = ({
   const timeSlots = getAvailableTimeSlots();
 
   // Set default time when date changes and slots are available
-  // Skip closed and fully booked slots when auto-selecting
+  // Skip closed, fully booked, and passed slots when auto-selecting
   useEffect(() => {
     if (timeSlots.length > 0) {
-      const currentSlotUnavailable = !timeSlots.includes(formData.preferred_time);
+      const currentSlotUnavailable = !timeSlots.includes(formData.preferred_time) || isSlotPassed(formData.preferred_time);
       
       if (currentSlotUnavailable) {
-        // Find the first available slot
-        const firstAvailableSlot = timeSlots[0];
+        // Find the first available slot that hasn't passed
+        const firstAvailableSlot = timeSlots.find(slot => !isSlotPassed(slot));
         if (firstAvailableSlot) {
           setFormData((prev) => ({ ...prev, preferred_time: firstAvailableSlot }));
         }
@@ -638,11 +651,24 @@ export const DirectReservationDialog = ({
                   <SelectValue placeholder={t.selectTime} />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
+                  {timeSlots.map((time) => {
+                    const passed = isSlotPassed(time);
+                    return (
+                      <SelectItem 
+                        key={time} 
+                        value={time}
+                        disabled={passed}
+                        className={passed ? 'opacity-50 text-muted-foreground' : ''}
+                      >
+                        {time}
+                        {passed && (
+                          <span className="ml-2 text-[10px] text-muted-foreground">
+                            ({language === 'el' ? 'Πέρασε' : 'Passed'})
+                          </span>
+                        )}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}
