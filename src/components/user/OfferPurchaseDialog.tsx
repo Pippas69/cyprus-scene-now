@@ -636,11 +636,24 @@ export function OfferPurchaseDialog({ offer, isOpen, onClose, language }: OfferC
                       <SelectValue placeholder={t("selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {timeSlots.map((slot) => (
-                        <SelectItem key={slot} value={slot}>
-                          {slot}
-                        </SelectItem>
-                      ))}
+                      {timeSlots.map((slot) => {
+                        const passed = isSlotPassed(slot);
+                        return (
+                          <SelectItem 
+                            key={slot} 
+                            value={slot}
+                            disabled={passed}
+                            className={passed ? 'opacity-50 text-muted-foreground' : ''}
+                          >
+                            {slot}
+                            {passed && (
+                              <span className="ml-2 text-[10px] text-muted-foreground">
+                                ({language === "el" ? "Πέρασε" : "Passed"})
+                              </span>
+                            )}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 )}

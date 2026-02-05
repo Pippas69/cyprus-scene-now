@@ -651,11 +651,24 @@ export const DirectReservationDialog = ({
                   <SelectValue placeholder={t.selectTime} />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
+                  {timeSlots.map((time) => {
+                    const passed = isSlotPassed(time);
+                    return (
+                      <SelectItem 
+                        key={time} 
+                        value={time}
+                        disabled={passed}
+                        className={passed ? 'opacity-50 text-muted-foreground' : ''}
+                      >
+                        {time}
+                        {passed && (
+                          <span className="ml-2 text-[10px] text-muted-foreground">
+                            ({language === 'el' ? 'Πέρασε' : 'Passed'})
+                          </span>
+                        )}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}
