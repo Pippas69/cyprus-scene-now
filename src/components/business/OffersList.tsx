@@ -10,7 +10,16 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { StudentDiscountStats } from "./StudentDiscountStats";
 import OfferBoostDialog from "./OfferBoostDialog";
 import OfferEditDialog from "./OfferEditDialog";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 // Helper component to show active boost badge for offers (gold/premium color - non-clickable)
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
   const { data: activeBoost } = useQuery({
@@ -52,6 +61,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   const [showExpired, setShowExpired] = useState(false);
+  const [deletingOffer, setDeletingOffer] = useState<{ id: string; title: string } | null>(null);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -82,6 +92,11 @@ const OffersList = ({ businessId }: OffersListProps) => {
       edit: "Επεξεργασία",
       delete: "Διαγραφή",
       expired: "Ληγμένες",
+      deleteConfirmTitle: "Διαγραφή Προσφοράς",
+      deleteConfirmDescription: "Είστε σίγουροι ότι θέλετε να διαγράψετε την προσφορά",
+      deleteConfirmWarning: "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί. Όλα τα δεδομένα εξαργύρωσης θα χαθούν.",
+      cancel: "Ακύρωση",
+      confirmDelete: "Ναι, Διαγραφή",
     },
     en: {
       title: "Offers",
@@ -101,6 +116,11 @@ const OffersList = ({ businessId }: OffersListProps) => {
       edit: "Edit",
       delete: "Delete",
       expired: "Expired",
+      deleteConfirmTitle: "Delete Offer",
+      deleteConfirmDescription: "Are you sure you want to delete the offer",
+      deleteConfirmWarning: "This action cannot be undone. All redemption data will be lost.",
+      cancel: "Cancel",
+      confirmDelete: "Yes, Delete",
     },
   };
 
@@ -364,7 +384,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(offer.id)}
+                    onClick={() => setDeletingOffer({ id: offer.id, title: offer.title })}
                     className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive"
                     title={t.delete}
                   >
@@ -401,6 +421,34 @@ const OffersList = ({ businessId }: OffersListProps) => {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingOffer} onOpenChange={(open) => !open && setDeletingOffer(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.deleteConfirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.deleteConfirmDescription} <strong>"{deletingOffer?.title}"</strong>; 
+              <br /><br />
+              {t.deleteConfirmWarning}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletingOffer) {
+                  handleDelete(deletingOffer.id);
+                  setDeletingOffer(null);
+                }
+              }}
+            >
+              {t.confirmDelete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
