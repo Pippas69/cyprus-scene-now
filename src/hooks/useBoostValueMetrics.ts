@@ -78,6 +78,12 @@ export const useBoostValueMetrics = (
       // ========================================
       const paidSlugs = new Set(["basic", "pro", "elite"]);
 
+      // IMPORTANT: Plan history intervals are stored as [valid_from, valid_to] where
+      // our trigger may set valid_to and the next valid_from to the exact same timestamp.
+      // To avoid double-counting events at the boundary, we treat CLOSED intervals as
+      // half-open: [from, to) (i.e. use < to). Open-ended intervals remain inclusive.
+      type HalfOpenInterval = { from: string; to: string; endInclusive: boolean };
+
       // Pull plan history so attribution is based on the plan at the exact moment
       // (supports multiple upgrades/downgrades within the selected date range)
       const { data: planHistory } = await supabase
@@ -90,22 +96,26 @@ export const useBoostValueMetrics = (
 
       const paidIntervals = (planHistory || [])
         .filter((h) => paidSlugs.has(h.plan_slug))
-        .map((h) => ({
-          from: new Date(h.valid_from).toISOString(),
-          to: new Date(h.valid_to || endDate).toISOString(),
-        }))
-        .map((i) => ({
-          from: i.from < startDate ? startDate : i.from,
-          to: i.to > endDate ? endDate : i.to,
-        }))
+        .map((h): HalfOpenInterval => {
+          const rawFrom = new Date(h.valid_from).toISOString();
+          const rawTo = new Date(h.valid_to || endDate).toISOString();
+
+          const from = rawFrom < startDate ? startDate : rawFrom;
+          const to = rawTo > endDate ? endDate : rawTo;
+
+          // If valid_to is NULL, the interval is open-ended and should be inclusive.
+          // Otherwise, treat it as half-open to prevent boundary double-counts.
+          const endInclusive = h.valid_to == null;
+          return { from, to, endInclusive };
+        })
         .filter((i) => new Date(i.from) <= new Date(i.to));
 
       const sumCountsOverIntervals = async (
-        countFn: (from: string, to: string) => Promise<number>
+        countFn: (from: string, to: string, endInclusive: boolean) => Promise<number>
       ) => {
         let sum = 0;
         for (const interval of paidIntervals) {
-          sum += await countFn(interval.from, interval.to);
+          sum += await countFn(interval.from, interval.to, interval.endInclusive);
         }
         return sum;
       };
@@ -122,67 +132,101 @@ export const useBoostValueMetrics = (
       let profileWithout = { views: 0, interactions: 0, visits: 0 };
       let profileWith = { views: 0, interactions: 0, visits: 0 };
 
-      const countProfileViews = async (rangeStart: string, rangeEnd: string) => {
-        const { count } = await supabase
+      const countProfileViews = async (
+        rangeStart: string,
+        rangeEnd: string,
+        endInclusive: boolean
+      ) => {
+        let q = supabase
           .from("engagement_events")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .eq("event_type", "profile_view")
-          .gte("created_at", rangeStart)
-          .lte("created_at", rangeEnd);
+          .gte("created_at", rangeStart);
+
+        q = endInclusive ? q.lte("created_at", rangeEnd) : q.lt("created_at", rangeEnd);
+        const { count } = await q;
         return count || 0;
       };
 
-      const countProfileInteractions = async (rangeStart: string, rangeEnd: string) => {
-        const { count: eventsCount } = await supabase
+      const countProfileInteractions = async (
+        rangeStart: string,
+        rangeEnd: string,
+        endInclusive: boolean
+      ) => {
+        let eventsQ = supabase
           .from("engagement_events")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .in("event_type", ["follow", "favorite", "profile_click", "profile_interaction"])
-          .gte("created_at", rangeStart)
-          .lte("created_at", rangeEnd);
+          .gte("created_at", rangeStart);
 
-        const { count: followerCount } = await supabase
+        eventsQ = endInclusive
+          ? eventsQ.lte("created_at", rangeEnd)
+          : eventsQ.lt("created_at", rangeEnd);
+
+        const { count: eventsCount } = await eventsQ;
+
+        let followersQ = supabase
           .from("business_followers")
           .select("*", { count: "exact", head: true })
           .eq("business_id", businessId)
           .is("unfollowed_at", null)
-          .gte("created_at", rangeStart)
-          .lte("created_at", rangeEnd);
+          .gte("created_at", rangeStart);
+
+        followersQ = endInclusive
+          ? followersQ.lte("created_at", rangeEnd)
+          : followersQ.lt("created_at", rangeEnd);
+
+        const { count: followerCount } = await followersQ;
 
         return (eventsCount || 0) + (followerCount || 0);
       };
 
-      const countProfileVisits = async (rangeStart: string, rangeEnd: string) => {
-        const { count } = await supabase
+      const countProfileVisits = async (
+        rangeStart: string,
+        rangeEnd: string,
+        endInclusive: boolean
+      ) => {
+        let reservationsQ = supabase
           .from("reservations")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .is("event_id", null)
           .not("checked_in_at", "is", null)
-          .gte("checked_in_at", rangeStart)
-          .lte("checked_in_at", rangeEnd);
+          .gte("checked_in_at", rangeStart);
+
+        reservationsQ = endInclusive
+          ? reservationsQ.lte("checked_in_at", rangeEnd)
+          : reservationsQ.lt("checked_in_at", rangeEnd);
+
+        const { count } = await reservationsQ;
 
         // Also count student discount redemptions
-        const { count: studentCount } = await supabase
+        let studentQ = supabase
           .from("student_discount_redemptions")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
-          .gte("created_at", rangeStart)
-          .lte("created_at", rangeEnd);
+          .gte("created_at", rangeStart);
+
+        studentQ = endInclusive
+          ? studentQ.lte("created_at", rangeEnd)
+          : studentQ.lt("created_at", rangeEnd);
+
+        const { count: studentCount } = await studentQ;
 
         return (count || 0) + (studentCount || 0);
       };
 
       // We compute totals for the whole range, then compute "featured" by summing counts
       // only within paid intervals; non-featured = total - featured.
-      const totalViews = await countProfileViews(startDate, endDate);
+      const totalViews = await countProfileViews(startDate, endDate, true);
       const featuredViews = await sumCountsOverIntervals(countProfileViews);
 
-      const totalInteractions = await countProfileInteractions(startDate, endDate);
+      const totalInteractions = await countProfileInteractions(startDate, endDate, true);
       const featuredInteractions = await sumCountsOverIntervals(countProfileInteractions);
 
-      const totalVisits = await countProfileVisits(startDate, endDate);
+      const totalVisits = await countProfileVisits(startDate, endDate, true);
       const featuredVisits = await sumCountsOverIntervals(countProfileVisits);
 
       profileWith = {

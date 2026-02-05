@@ -60,27 +60,40 @@ export const useGuidanceMetrics = (businessId: string) => {
       const paidIntervals = (planHistory || [])
         .filter((h) => paidSlugs.has(h.plan_slug))
         .map((h) => ({
+          // IMPORTANT: avoid boundary double-counting when intervals touch.
+          // For closed intervals we treat as half-open [from, to) by using < to.
           from: new Date(h.valid_from).toISOString(),
           to: new Date(h.valid_to || new Date().toISOString()).toISOString(),
+          endInclusive: h.valid_to == null,
         }))
         .filter((i) => new Date(i.from) <= new Date(i.to));
 
       for (const interval of paidIntervals) {
-        const { count } = await supabase
+        let reservationsQ = supabase
           .from("reservations")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
           .is("event_id", null)
           .not("checked_in_at", "is", null)
-          .gte("checked_in_at", interval.from)
-          .lte("checked_in_at", interval.to);
+          .gte("checked_in_at", interval.from);
 
-        const { count: studentCount } = await supabase
+        reservationsQ = interval.endInclusive
+          ? reservationsQ.lte("checked_in_at", interval.to)
+          : reservationsQ.lt("checked_in_at", interval.to);
+
+        const { count } = await reservationsQ;
+
+        let studentQ = supabase
           .from("student_discount_redemptions")
           .select("id", { count: "exact", head: true })
           .eq("business_id", businessId)
-          .gte("created_at", interval.from)
-          .lte("created_at", interval.to);
+          .gte("created_at", interval.from);
+
+        studentQ = interval.endInclusive
+          ? studentQ.lte("created_at", interval.to)
+          : studentQ.lt("created_at", interval.to);
+
+        const { count: studentCount } = await studentQ;
 
         newCustomers += (count || 0) + (studentCount || 0);
       }
