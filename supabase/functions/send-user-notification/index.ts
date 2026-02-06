@@ -15,6 +15,33 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-USER-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
 };
 
+// Transactional confirmations must ALWAYS send (bypass preference toggles).
+// Note: actual push delivery still depends on having a valid subscription.
+const ESSENTIAL_EVENT_TYPES = new Set<string>([
+  // Reservations
+  'reservation_confirmed',
+  'reservation_pending',
+  'reservation_declined',
+  'reservation_cancelled',
+
+  // Tickets
+  'ticket_purchased',
+  'ticket_sale',
+  'ticket_checked_in',
+
+  // Offers
+  'offer_claimed',
+  'offer_purchased',
+  'offer_redeemed',
+
+  // Student
+  'student_discount_redeemed',
+]);
+
+function isEssentialEventType(eventType: string): boolean {
+  return ESSENTIAL_EVENT_TYPES.has(eventType);
+}
+
 interface NotificationRequest {
   userId: string;
   title: string;
@@ -50,6 +77,8 @@ Deno.serve(async (req) => {
       throw new Error("Missing required fields: userId, title, message, eventType");
     }
 
+    const essential = isEssentialEventType(data.eventType);
+
     // Get user preferences
     const { data: prefs } = await supabase
       .from('user_preferences')
@@ -84,8 +113,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2. Send push notification if enabled (using encrypted Web Push for iOS/Safari)
-    if (!data.skipPush && prefs?.notification_push_enabled !== false) {
+    // 2. Send push notification
+    // For essential confirmations, bypass the user preference flag.
+    if (!data.skipPush && (essential || prefs?.notification_push_enabled !== false)) {
       const payload: PushPayload = {
         title: data.title,
         body: data.message,
@@ -104,8 +134,9 @@ Deno.serve(async (req) => {
       logStep('Push notifications sent', results.push);
     }
 
-    // 3. Send email if provided and enabled
-    if (!data.skipEmail && data.emailSubject && data.emailHtml && prefs?.email_notifications_enabled !== false) {
+    // 3. Send email
+    // For essential confirmations, bypass the user preference flag.
+    if (!data.skipEmail && data.emailSubject && data.emailHtml && (essential || prefs?.email_notifications_enabled !== false)) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('email')

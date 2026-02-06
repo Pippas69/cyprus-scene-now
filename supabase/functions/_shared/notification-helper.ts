@@ -31,6 +31,33 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[NOTIFICATION-HELPER] ${step}`, details ? JSON.stringify(details) : '');
 };
 
+// Transactional confirmations must ALWAYS send (bypass preference toggles).
+// Note: actual push delivery still depends on having a valid subscription.
+const ESSENTIAL_EVENT_TYPES = new Set<string>([
+  // Reservations
+  'reservation_confirmed',
+  'reservation_pending',
+  'reservation_declined',
+  'reservation_cancelled',
+
+  // Tickets
+  'ticket_purchased',
+  'ticket_sale',
+  'ticket_checked_in',
+
+  // Offers
+  'offer_claimed',
+  'offer_purchased',
+  'offer_redeemed',
+
+  // Student
+  'student_discount_redeemed',
+]);
+
+function isEssentialEventType(eventType: string): boolean {
+  return ESSENTIAL_EVENT_TYPES.has(eventType);
+}
+
 // Create Supabase client with service role
 function getSupabaseClient(): SupabaseClient {
   return createClient(
@@ -144,21 +171,24 @@ export async function sendUnifiedNotification(data: NotificationData): Promise<S
   try {
     // Get user preferences
     const prefs = await getUserPreferences(supabase, data.userId);
-    
+    const essential = isEssentialEventType(data.eventType);
+
     // 1. Always create in-app notification (source of truth)
     if (!data.skipInApp) {
       result.inApp = await createInAppNotification(supabase, data);
       logStep('In-app notification created', { success: result.inApp });
     }
 
-    // 2. Send push notification if enabled
-    if (!data.skipPush && prefs?.notification_push_enabled !== false) {
+    // 2. Send push notification
+    // For essential confirmations, we bypass the user preference flag.
+    if (!data.skipPush && (essential || prefs?.notification_push_enabled !== false)) {
       result.push = await sendPushNotification(supabase, data);
       logStep('Push notifications sent', result.push);
     }
 
-    // 3. Send email if provided and enabled
-    if (!data.skipEmail && data.emailSubject && data.emailHtml && prefs?.email_notifications_enabled !== false) {
+    // 3. Send email
+    // For essential confirmations, we bypass the user preference flag.
+    if (!data.skipEmail && data.emailSubject && data.emailHtml && (essential || prefs?.email_notifications_enabled !== false)) {
       const userEmail = await getUserEmail(supabase, data.userId);
       if (userEmail) {
         result.email = await sendEmailNotification(userEmail, data.emailSubject, data.emailHtml);
@@ -196,7 +226,6 @@ export async function sendQuickNotification(
   });
 }
 
-// Branded email template parts
 export const emailHeader = `
   <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 48px 24px 36px 24px; text-align: center; border-radius: 12px 12px 0 0;">
     <h1 style="color: #ffffff; margin: 0; font-size: 42px; font-weight: bold; letter-spacing: 4px; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</h1>

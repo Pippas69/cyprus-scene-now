@@ -298,7 +298,18 @@ export async function sendBusinessNotification(
     }
 
     // 2. Send push notification if enabled
-    if (!data.skipPush && prefs?.notification_push_enabled !== false) {
+    // Essential business confirmations must ALWAYS send (bypass preference toggles).
+    const essentialBusinessTypes: BusinessNotificationType[] = [
+      'NEW_RESERVATION',
+      'NEW_RESERVATION_EVENT',
+      'NEW_RESERVATION_OFFER',
+      'NEW_RESERVATION_PROFILE',
+      'TICKET_SALE',
+      'OFFER_REDEEMED',
+      'RESERVATION_CHECK_IN',
+    ];
+
+    if (!data.skipPush && (essentialBusinessTypes.includes(data.type) || prefs?.notification_push_enabled !== false)) {
       result.push = await sendPushNotification(supabase, data);
       logStep('Push notifications sent', result.push);
     }
