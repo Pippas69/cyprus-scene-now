@@ -163,6 +163,19 @@ serve(async (req) => {
       throw new Error("Failed to create reservation");
     }
 
+    // Send reservation notifications (user confirmation + business alert)
+    // Best-effort: do not fail checkout/session creation if notifications fail.
+    try {
+      await supabaseService.functions.invoke('send-reservation-notification', {
+        body: {
+          reservationId: reservation.id,
+          type: 'new',
+        },
+      });
+    } catch (e) {
+      console.error("[create-reservation-event-checkout] send-reservation-notification failed", e);
+    }
+
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",

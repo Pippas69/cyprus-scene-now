@@ -243,17 +243,18 @@ Deno.serve(async (req) => {
       reservationId: reservation.id 
     });
 
-    // Send notification to business about new reservation request
+    // Send reservation notifications (user confirmation + business alert)
+    // Best-effort: do not fail the reservation flow if notifications fail.
     try {
       await supabaseAdmin.functions.invoke('send-reservation-notification', {
         body: {
           reservationId: reservation.id,
-          type: 'new_reservation'
-        }
+          type: 'new',
+        },
       });
-      logStep("Business notification sent");
+      logStep("Reservation notifications sent", { reservationId: reservation.id });
     } catch (notifyError) {
-      console.error("Error sending business notification:", notifyError);
+      console.error("Error sending reservation notifications:", notifyError);
     }
 
     return new Response(JSON.stringify({ 
