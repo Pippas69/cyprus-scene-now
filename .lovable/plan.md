@@ -1,152 +1,84 @@
 
-# Σχέδιο: Επανασχεδιασμός Email Επαλήθευσης Φοιτητή με ΦΟΜΟ Aesthetic
 
-## Επισκόπηση
+## Summary
 
-Το τρέχον email επαλήθευσης φοιτητικής ιδιότητας έχει ασυνεπές design σε σχέση με τα υπόλοιπα ΦΟΜΟ emails (π.χ. business notifications). Θα το αναβαθμίσουμε στο **Aegean Night Glow** theme για ενιαία brand ταυτότητα.
+Fix the post-checkout redirect flow so users land on the correct dashboard section after successful payment:
 
----
-
-## Τρέχουσα vs Νέα Προσέγγιση
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ΤΡΕΧΟΝ EMAIL                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│  • Απλό gradient header χωρίς frosted glass effect                  │
-│  • Ασυνεπές footer (χωρίς navy background)                          │
-│  • Βασικό button design                                             │
-│  • Διαφορετική δομή από τα business emails                          │
-└─────────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ΝΕΟ ΦΟΜΟ EMAIL                                   │
-├─────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  GRADIENT HEADER (Navy → Seafoam)                           │    │
-│  │  ┌─────────┐                                                │    │
-│  │  │  ΦΟΜΟ   │  ← Cinzel font, 42px, letter-spacing           │    │
-│  │  └─────────┘                                                │    │
-│  │  "Cyprus Events & Nightlife"                                │    │
-│  │  🎓 Επαλήθευση Φοιτητικής Ιδιότητας (badge)                 │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  WHITE CONTENT CARD                                         │    │
-│  │  • Χαιρετισμός με όνομα χρήστη                              │    │
-│  │  • Πανεπιστήμιο highlight                                   │    │
-│  │  • Premium CTA button (seafoam gradient + glow)             │    │
-│  │  • Info box με seafoam border (24h expiry)                  │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  NAVY FOOTER                                                │    │
-│  │  ΦΟΜΟ logo + copyright + tagline                            │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────┘
-```
+1. **Tickets**: Redirect to "My Events" → "Tickets" subtab and auto-select it
+2. **Reservations**: Redirect to "My Reservations" tab directly
 
 ---
 
-## Βασικές Αλλαγές Design
+## Changes Required
 
-### 1. Reusable Email Template Components
-Θα χρησιμοποιήσουμε την ίδια δομή με το `send-business-notification`:
-- **emailHeader**: Gradient navy→seafoam, ΦΟΜΟ με Cinzel font
-- **emailFooter**: Solid navy background, seafoam logo
-- **wrapEmailContent**: Unified wrapper function
+### 1. Fix Ticket Success Page Redirect
 
-### 2. Visual Upgrades
+**File**: `src/pages/TicketSuccess.tsx`
 
-| Στοιχείο | Τρέχον | Νέο |
-|----------|--------|-----|
-| Header | Rounded bottom corners | Flat bottom (12px top corners only) |
-| Footer | Light gray, centered text | Navy (#102b4a) με seafoam accent |
-| Button | Basic gradient | Seafoam gradient + box-shadow glow |
-| Info Box | Blue theme | Seafoam teal (#4ecdc4) border |
-| Font | System fonts only | Cinzel για "ΦΟΜΟ" |
+- Change the `onViewDashboard` callback (line 179) from:
+  ```
+  /dashboard-user?tab=events&subtab=tickets
+  ```
+  to:
+  ```
+  /dashboard-user?tab=events&subtab=tickets
+  ```
+  *(This is already correct in URL - the issue is MyEvents.tsx doesn't read the subtab)*
 
-### 3. Αλλαγές Περιεχομένου
-- Αφαίρεση του inline emoji badge στο header (🎓) - πιο clean
-- Πιο compact layout
-- Unified color palette: Navy (#0d3b66), Seafoam (#4ecdc4), Aegean Deep (#102b4a)
+- Also update the fallback Link (line 193) to match
+
+### 2. Make MyEvents Read subtab from URL
+
+**File**: `src/components/user/MyEvents.tsx`
+
+- Import `useSearchParams` from react-router-dom
+- Read the `subtab` parameter from URL on mount
+- Use it to set the initial tab value instead of hardcoded `defaultValue="going"`
+- This way when `subtab=tickets` is in URL, the Tickets tab will be auto-selected
+
+### 3. Fix Reservation Checkout Redirect URL
+
+**File**: `supabase/functions/create-reservation-event-checkout/index.ts`
+
+- Change the `success_url` (line 251) from:
+  ```
+  /dashboard-user/reservations?success=true&reservation_id=...
+  ```
+  to:
+  ```
+  /dashboard-user?tab=reservations&success=true&reservation_id=...
+  ```
+  *(The `/dashboard-user/reservations` path doesn't exist - it uses query params)*
 
 ---
 
-## Τεχνικές Λεπτομέρειες
+## Technical Details
 
-### Αρχείο προς τροποποίηση
-```
-supabase/functions/send-student-verification-email/index.ts
-```
+### MyEvents.tsx Changes
 
-### Νέα δομή email:
 ```typescript
-// Shared template components (ίδια με business-notification)
-const emailHeader = `
-  <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); 
-              padding: 48px 24px 36px 24px; 
-              text-align: center; 
-              border-radius: 12px 12px 0 0;">
-    <h1 style="color: #ffffff; 
-               font-size: 42px; 
-               font-weight: bold; 
-               letter-spacing: 4px; 
-               font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</h1>
-    <p style="color: rgba(255,255,255,0.85); 
-              font-size: 11px; 
-              letter-spacing: 3px;">CYPRUS EVENTS & NIGHTLIFE</p>
-  </div>
-`;
+// Add import
+import { useSearchParams } from 'react-router-dom';
 
-const emailFooter = `
-  <div style="background: #102b4a; 
-              padding: 28px; 
-              text-align: center; 
-              border-radius: 0 0 12px 12px;">
-    <p style="color: #3ec3b7; 
-              font-size: 18px; 
-              font-weight: bold; 
-              letter-spacing: 2px; 
-              font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</p>
-    <p style="color: #94a3b8; 
-              font-size: 12px;">© 2025 ΦΟΜΟ. Discover events in Cyprus.</p>
-  </div>
-`;
+// Inside component
+const [searchParams] = useSearchParams();
+const initialSubtab = searchParams.get('subtab') || 'going';
+
+// Update Tabs component
+<Tabs defaultValue={initialSubtab} className="w-full">
 ```
 
-### Button με Glow Effect:
-```html
-<td style="border-radius: 12px; 
-           background: linear-gradient(135deg, #4ecdc4 0%, #3ec3b7 100%); 
-           box-shadow: 0 4px 20px rgba(78, 205, 196, 0.5);">
-  <a href="${verificationUrl}" style="display: inline-block; 
-                                       color: #ffffff; 
-                                       padding: 16px 40px; 
-                                       font-weight: 600;">
-    ✓ Επαλήθευση Φοιτητικής Ιδιότητας
-  </a>
-</td>
-```
+### Edge Function Fix
+
+The URL structure difference:
+- **Wrong**: `/dashboard-user/reservations` (path-based, doesn't exist)
+- **Correct**: `/dashboard-user?tab=reservations` (query-based, how routing works)
 
 ---
 
-## Checklist Υλοποίησης
+## Result
 
-1. Προσθήκη Cinzel Google Font στο `<head>`
-2. Αντικατάσταση header με unified template
-3. Αντικατάσταση footer με navy background
-4. Upgrade button με seafoam gradient + glow
-5. Αλλαγή info box border σε seafoam (#4ecdc4)
-6. Ενοποίηση color palette σε όλο το email
-7. Deploy και test
+After these changes:
+- **Ticket purchase** → User sees QR success screen → Clicks "My Tickets" → Lands on My Events with Tickets tab auto-selected
+- **Reservation purchase** → User is redirected → Lands directly on My Reservations tab
 
----
-
-## Αναμενόμενο Αποτέλεσμα
-
-Το νέο email θα έχει:
-- **Ενιαία ΦΟΜΟ ταυτότητα** με όλα τα transactional emails
-- **Premium Aegean Night Glow** aesthetic
-- **Καλύτερη αναγνωσιμότητα** με proper contrast
-- **Επαγγελματικό look** που ταιριάζει με τη Mediterranean brand identity
