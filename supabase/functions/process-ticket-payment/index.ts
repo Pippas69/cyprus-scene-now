@@ -142,13 +142,13 @@ Deno.serve(async (req) => {
     const ticketCount = ticketsToCreate.length;
 
     // ==================== USER NOTIFICATIONS ====================
-
+    
     // 1. User In-App Notification
     try {
       await supabaseClient.from('notifications').insert({
         user_id: order.user_id,
-        title: '🎟️ Τα εισιτήριά σου είναι έτοιμα!',
-        message: `${ticketCount} εισιτήρι${ticketCount === 1 ? 'ο' : 'α'} για "${eventTitle}"`,
+        title: '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
+        message: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
         type: 'ticket',
         event_type: 'ticket_purchased',
         entity_type: 'ticket_order',
@@ -173,8 +173,8 @@ Deno.serve(async (req) => {
 
       if (!(await wasAlreadySent(supabaseClient, order.user_id, userPushKey))) {
         const userPushPayload: PushPayload = {
-          title: '🎟️ Τα εισιτήριά σου είναι έτοιμα!',
-          body: `${ticketCount} εισιτήρι${ticketCount === 1 ? 'ο' : 'α'} για "${eventTitle}"`,
+          title: '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
+          body: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
           icon: '/fomo-logo-new.png',
           badge: '/fomo-logo-new.png',
           tag: `n:ticket_purchased:${orderId}`,

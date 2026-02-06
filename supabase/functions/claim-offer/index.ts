@@ -374,7 +374,6 @@ Deno.serve(async (req) => {
             Authorization: `Bearer ${supabaseServiceKey}`,
           },
           body: JSON.stringify({
-            purchaseId: purchase.id,
             businessEmail: businessOwner.email,
             businessName: discount.businesses.name,
             businessUserId: discount.businesses.user_id,
