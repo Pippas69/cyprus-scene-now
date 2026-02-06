@@ -83,7 +83,8 @@ serve(async (req) => {
             businesses (
               id,
               name,
-              phone
+              phone,
+              user_id
             )
           )
         `)
