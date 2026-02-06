@@ -756,7 +756,8 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
 
     } catch (err) {
       console.error('Error updating event:', err);
-      toast.error(t.eventUpdateFailed);
+      const message = (err as any)?.message || (err as any)?.error_description || t.eventUpdateFailed;
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

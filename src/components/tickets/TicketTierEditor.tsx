@@ -52,9 +52,8 @@ const t = {
     selectDressCode: "Επιλέξτε dress code",
     casual: "Casual",
     smartCasual: "Smart Casual",
-    semiFormal: "Semi-Formal",
-    formal: "Formal",
-    themed: "Θεματικό / Costume",
+    elegant: "Elegant",
+    noSportswear: "Όχι αθλητικά",
   },
   en: {
     addTier: "Add Ticket Tier",
@@ -78,10 +77,22 @@ const t = {
     selectDressCode: "Select dress code",
     casual: "Casual",
     smartCasual: "Smart Casual",
-    semiFormal: "Semi-Formal",
-    formal: "Formal",
-    themed: "Themed / Costume",
+    elegant: "Elegant",
+    noSportswear: "No sportswear",
   },
+};
+
+const ALLOWED_DRESS_CODES = new Set(["casual", "smart_casual", "elegant", "no_sportswear"]);
+
+const normalizeDressCode = (value?: string) => {
+  if (!value) return undefined;
+  const v = value.toLowerCase();
+
+  // Backward compatibility for old UI values
+  if (v === "formal" || v === "semi_formal") return "elegant";
+  if (v === "themed" || v === "costume") return "no_sportswear";
+
+  return ALLOWED_DRESS_CODES.has(v) ? v : undefined;
 };
 
 // Validation helper
@@ -351,12 +362,12 @@ export const TicketTierEditor = ({
                       {text.dressCode}
                     </Label>
                     <Select
-                      value={tier.dress_code || "none"}
+                      value={normalizeDressCode(tier.dress_code) || "none"}
                       onValueChange={(value) => {
-                        const newDressCode = value === "none" ? undefined : value;
+                        const normalized = value === "none" ? undefined : normalizeDressCode(value);
                         // Only update if actually changed
-                        if (tier.dress_code !== newDressCode) {
-                          updateTier(index, { dress_code: newDressCode });
+                        if (normalizeDressCode(tier.dress_code) !== normalized) {
+                          updateTier(index, { dress_code: normalized });
                         }
                       }}
                     >
@@ -367,9 +378,8 @@ export const TicketTierEditor = ({
                         <SelectItem value="none">{language === 'el' ? 'Χωρίς' : 'None'}</SelectItem>
                         <SelectItem value="casual">{text.casual}</SelectItem>
                         <SelectItem value="smart_casual">{text.smartCasual}</SelectItem>
-                        <SelectItem value="semi_formal">{text.semiFormal}</SelectItem>
-                        <SelectItem value="formal">{text.formal}</SelectItem>
-                        <SelectItem value="themed">{text.themed}</SelectItem>
+                        <SelectItem value="elegant">{text.elegant}</SelectItem>
+                        <SelectItem value="no_sportswear">{text.noSportswear}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
