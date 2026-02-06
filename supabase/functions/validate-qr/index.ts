@@ -1,5 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -156,7 +159,7 @@ Deno.serve(async (req) => {
     // Verify the caller owns this business
     const { data: business, error: businessError } = await supabaseAdmin
       .from("businesses")
-      .select("id, user_id, student_discount_enabled, student_discount_percent, student_discount_mode")
+      .select("id, name, user_id, student_discount_enabled, student_discount_percent, student_discount_mode")
       .eq("id", body.businessId)
       .single();
 
@@ -896,7 +899,7 @@ async function handleStudentQR(
   // Fetch student profile
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("name, avatar_url")
+    .select("name, avatar_url, email")
     .eq("id", verification.user_id)
     .single();
 
@@ -984,6 +987,100 @@ async function handleStudentQR(
     } catch (pushError) {
       logStep("Student discount push failed (non-fatal)", { error: pushError instanceof Error ? pushError.message : String(pushError) });
     }
+   }
+
+  // Send confirmation emails (ALWAYS) to both business + student
+  try {
+    // Business owner email
+    const { data: bizProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('email, name')
+      .eq('id', business.user_id)
+      .single();
+
+    const businessEmail = bizProfile?.email;
+    const studentEmail = (profile as any)?.email;
+
+    const businessNameSafe = (business as any)?.name || businessName || 'Η επιχείρησή σου';
+    const studentNameSafe = (profile as any)?.name || 'Φοιτητής';
+
+    const subjectUser = `🎓 Φοιτητική έκπτωση εφαρμόστηκε στο ${businessNameSafe}`;
+    const subjectBusiness = `🎓 Φοιτητική έκπτωση χρησιμοποιήθηκε`;
+
+    const userHtml = `
+      <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+      <body style="margin:0;padding:20px;background:#f4f4f5;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+        <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+          <div style="background:linear-gradient(180deg,#0d3b66 0%,#4ecdc4 100%);padding:48px 24px 36px;text-align:center;">
+            <h1 style="color:#fff;margin:0;font-size:42px;font-weight:bold;letter-spacing:4px;">ΦΟΜΟ</h1>
+            <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Student Discount</p>
+          </div>
+          <div style="padding:32px 24px;">
+            <h2 style="color:#0d3b66;margin:0 0 16px 0;font-size:22px;">Η φοιτητική έκπτωση εφαρμόστηκε ✅</h2>
+            <p style="color:#475569;margin:0 0 20px 0;line-height:1.6;">
+              Γεια σου <strong>${studentNameSafe}</strong>,<br><br>
+              Η επιχείρηση <strong>${businessNameSafe}</strong> εφάρμοσε την φοιτητική σου έκπτωση <strong>${business.student_discount_percent || 0}%</strong>.
+            </p>
+            <div style="background:#f0fdfa;border-left:4px solid #4ecdc4;padding:16px;border-radius:8px;margin:16px 0;">
+              <p style="margin:0;color:#0d3b66;font-weight:600;">Κωδικός καταγραφής:</p>
+              <p style="margin:6px 0 0 0;color:#102b4a;letter-spacing:1px;"><strong>${redemptionRow.id.slice(0, 8).toUpperCase()}</strong></p>
+            </div>
+          </div>
+          <div style="background:#102b4a;padding:28px;text-align:center;">
+            <p style="color:#3ec3b7;font-size:18px;font-weight:bold;letter-spacing:2px;margin:0 0 8px;">ΦΟΜΟ</p>
+            <p style="color:#94a3b8;font-size:12px;margin:0;">© 2025 ΦΟΜΟ.</p>
+          </div>
+        </div>
+      </body></html>
+    `;
+
+    const businessHtml = `
+      <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+      <body style="margin:0;padding:20px;background:#f4f4f5;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+        <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+          <div style="background:linear-gradient(180deg,#0d3b66 0%,#4ecdc4 100%);padding:48px 24px 36px;text-align:center;">
+            <h1 style="color:#fff;margin:0;font-size:42px;font-weight:bold;letter-spacing:4px;">ΦΟΜΟ</h1>
+            <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Business Dashboard</p>
+          </div>
+          <div style="padding:32px 24px;">
+            <h2 style="color:#0d3b66;margin:0 0 16px 0;font-size:22px;">Φοιτητική έκπτωση χρησιμοποιήθηκε ✅</h2>
+            <p style="color:#475569;margin:0 0 20px 0;line-height:1.6;">
+              Ο/Η <strong>${studentNameSafe}</strong> χρησιμοποίησε φοιτητική έκπτωση <strong>${business.student_discount_percent || 0}%</strong>.
+            </p>
+            <div style="background:#f8fafc;border-left:4px solid #4ecdc4;padding:16px;border-radius:8px;margin:16px 0;">
+              <p style="margin:0;color:#0d3b66;font-weight:600;">Redemption ID:</p>
+              <p style="margin:6px 0 0 0;color:#102b4a;letter-spacing:1px;"><strong>${redemptionRow.id}</strong></p>
+            </div>
+          </div>
+          <div style="background:#102b4a;padding:28px;text-align:center;">
+            <p style="color:#3ec3b7;font-size:18px;font-weight:bold;letter-spacing:2px;margin:0 0 8px;">ΦΟΜΟ</p>
+            <p style="color:#94a3b8;font-size:12px;margin:0;">© 2025 ΦΟΜΟ.</p>
+          </div>
+        </div>
+      </body></html>
+    `;
+
+    if (studentEmail) {
+      await resend.emails.send({
+        from: "ΦΟΜΟ <notifications@fomo.com.cy>",
+        to: [studentEmail],
+        subject: subjectUser,
+        html: userHtml,
+      });
+    }
+
+    if (businessEmail) {
+      await resend.emails.send({
+        from: "ΦΟΜΟ <notifications@fomo.com.cy>",
+        to: [businessEmail],
+        subject: subjectBusiness,
+        html: businessHtml,
+      });
+    }
+
+    logStep('Student discount emails sent', { student: !!studentEmail, business: !!businessEmail });
+  } catch (emailErr) {
+    logStep('Student discount email error (non-fatal)', { error: emailErr instanceof Error ? emailErr.message : String(emailErr) });
   }
 
   // Return success - scan is recorded immediately
