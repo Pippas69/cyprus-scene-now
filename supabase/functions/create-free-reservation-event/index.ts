@@ -122,7 +122,43 @@ serve(async (req) => {
       return json({ error: "Failed to create reservation" }, 400);
     }
 
-    // Send reservation notifications (user confirmation + business alert)
+    // Create in-app notification directly for user
+    try {
+      await supabaseService.from('notifications').insert({
+        user_id: user.id,
+        title: '✅ Κράτηση επιβεβαιώθηκε!',
+        message: `Κράτηση για ${event.title} - ${safePartySize} ${safePartySize === 1 ? 'άτομο' : 'άτομα'}`,
+        type: 'reservation',
+        event_type: 'reservation_confirmed',
+        entity_type: 'reservation',
+        entity_id: reservation.id,
+        deep_link: `/dashboard-user/reservations`,
+        delivered_at: new Date().toISOString(),
+      });
+      console.log("[create-free-reservation-event] User in-app notification created");
+    } catch (e) {
+      console.error("[create-free-reservation-event] User in-app notification failed", e);
+    }
+
+    // Send push notification to user
+    try {
+      const pushResult = await sendPushIfEnabled(user.id, {
+        title: '✅ Κράτηση επιβεβαιώθηκε!',
+        body: `${event.title} - ${safePartySize} ${safePartySize === 1 ? 'άτομο' : 'άτομα'}`,
+        tag: `reservation-${reservation.id}`,
+        data: {
+          url: `/dashboard-user/reservations`,
+          type: 'reservation_confirmed',
+          entityType: 'reservation',
+          entityId: reservation.id,
+        },
+      }, supabaseService);
+      console.log("[create-free-reservation-event] User push sent", pushResult);
+    } catch (e) {
+      console.error("[create-free-reservation-event] User push failed", e);
+    }
+
+    // Send reservation notifications (user confirmation + business alert) via dedicated function
     // Best-effort: do not fail the booking if notifications fail.
     try {
       await supabaseService.functions.invoke('send-reservation-notification', {
