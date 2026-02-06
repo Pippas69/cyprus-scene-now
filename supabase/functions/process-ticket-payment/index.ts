@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
           body: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
           icon: '/fomo-logo-new.png',
           badge: '/fomo-logo-new.png',
-          tag: `ticket-order-${orderId}`,
+          tag: `n:ticket_purchased:${orderId}`,
           data: {
             url: '/dashboard-user/tickets',
             type: 'ticket_purchased',
@@ -297,7 +297,7 @@ Deno.serve(async (req) => {
             body: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
             icon: '/fomo-logo-new.png',
             badge: '/fomo-logo-new.png',
-            tag: `ticket-sale-${orderId}`,
+            tag: `n:ticket_sale:${orderId}`,
             data: {
               url: '/dashboard-business/ticket-sales',
               type: 'ticket_sale',

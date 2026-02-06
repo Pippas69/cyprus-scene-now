@@ -585,7 +585,7 @@ async function handleOfferQR(
         {
           title: '✅ Προσφορά εξαργυρώθηκε!',
           body: language === "el" ? `"${discount.title}" εξαργυρώθηκε επιτυχώς` : `"${discount.title}" redeemed successfully`,
-          tag: `offer-redeemed-${purchase.id}`,
+          tag: `n:offer_redeemed:${purchase.id}`,
           data: {
             url: '/dashboard-user/offers',
             type: 'offer_redeemed',
@@ -612,7 +612,7 @@ async function handleOfferQR(
         {
           title: '✅ Εξαργύρωση προσφοράς!',
           body: `${customerName} εξαργύρωσε "${discount.title}"`,
-          tag: `biz-offer-redeemed-${purchase.id}`,
+          tag: `n:offer_redeemed:${purchase.id}`,
           data: {
             url: '/dashboard-business/discounts',
             type: 'offer_redeemed',
