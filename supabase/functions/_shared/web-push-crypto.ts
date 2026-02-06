@@ -463,13 +463,53 @@ export async function sendEncryptedPush(
 
   const uniqueSubscriptions = Array.from(byEndpoint.values());
 
+  // If a user has multiple *distinct* endpoints, many browsers/devices will show 2 pushes.
+  // For transactional pushes (payload.tag is present), we prefer "exactly one push".
+  // Heuristic: keep only the most recently updated/created subscription and cleanup the rest.
+  // (Prevents the common iOS/Safari issue where old endpoints linger after re-subscribe.)
+  let subscriptionsToSend = uniqueSubscriptions;
+  if (payload.tag && uniqueSubscriptions.length > 1) {
+    const sorted = [...uniqueSubscriptions].sort((a: any, b: any) => {
+      const aTs = new Date(a.updated_at ?? a.created_at ?? 0).getTime();
+      const bTs = new Date(b.updated_at ?? b.created_at ?? 0).getTime();
+      return bTs - aTs;
+    });
+
+    const keep = sorted[0];
+    const remove = sorted.slice(1);
+    subscriptionsToSend = [keep];
+
+    try {
+      await client
+        .from("push_subscriptions")
+        .delete()
+        .in(
+          "id",
+          remove
+            .map((s: any) => s.id)
+            .filter((id: any) => typeof id === "string" && id.length > 0)
+        );
+      logStep("Pruned old subscriptions for transactional push", {
+        userId,
+        kept: keep?.id,
+        removed: remove.length,
+        tag: payload.tag,
+      });
+    } catch (e) {
+      logStep("Failed to prune old subscriptions (non-fatal)", {
+        userId,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
   // Get and clean VAPID keys
   const vapidPublicKey = (Deno.env.get("VAPID_PUBLIC_KEY") ?? "").trim().replace(/^['"]|['"]$/g, '');
   const vapidPrivateKey = (Deno.env.get("VAPID_PRIVATE_KEY") ?? "").trim().replace(/^['"]|['"]$/g, '');
 
   if (!vapidPublicKey || !vapidPrivateKey) {
     logStep("VAPID keys not configured");
-    return { sent: 0, failed: uniqueSubscriptions.length };
+    return { sent: 0, failed: subscriptionsToSend.length };
   }
 
   // Build notification payload
@@ -482,9 +522,9 @@ export async function sendEncryptedPush(
     data: payload.data || {},
   });
 
-  // Send to all subscriptions in parallel
+  // Send to subscriptions in parallel
   const results = await Promise.allSettled(
-    uniqueSubscriptions.map((sub: PushSubscription) =>
+    subscriptionsToSend.map((sub: PushSubscription) =>
       sendToSubscription(sub, notificationPayload, vapidPublicKey, vapidPrivateKey, client)
     )
   );
