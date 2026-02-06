@@ -838,12 +838,34 @@ async function handleStudentQR(
 
   logStep("Student verified", { verificationId: verification.id });
 
-  // Return student info for staff to enter price and complete redemption
+  // Record the redemption immediately (price entry is optional)
+  const { error: redemptionError } = await supabaseAdmin
+    .from('student_discount_redemptions')
+    .insert({
+      student_verification_id: verification.id,
+      business_id: businessId,
+      scanned_by: staffUserId,
+      original_price_cents: 0,
+      discounted_price_cents: 0,
+      discount_amount_cents: 0,
+      item_description: null,
+    });
+
+  if (redemptionError) {
+    logStep("Student redemption insert failed", { redemptionError });
+    return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "student" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  logStep("Student redemption recorded", { verificationId: verification.id });
+
+  // Return success - scan is recorded immediately
   return new Response(JSON.stringify({
     success: true,
-    message: m.success,
+    message: language === "el" ? "Φοιτητική έκπτωση καταγράφηκε!" : "Student discount recorded!",
     qrType: "student",
-    requiresPriceEntry: true,
     details: {
       verificationId: verification.id,
       studentName: profile?.name || "Unknown",
