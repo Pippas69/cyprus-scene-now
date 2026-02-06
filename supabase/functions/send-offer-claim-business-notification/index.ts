@@ -33,8 +33,8 @@ interface OfferClaimBusinessNotificationRequest {
   remainingPeople: number;
   totalPeople: number | null;
   hasReservation?: boolean;
-  reservationDate?: string;
-  reservationTime?: string;
+  reservationDate?: string; // YYYY-MM-DD
+  reservationTime?: string; // HH:mm
 }
 
 const formatPartySizeText = (partySize: number) => {
@@ -51,18 +51,50 @@ Deno.serve(async (req) => {
     logStep("Function started");
 
     const data: OfferClaimBusinessNotificationRequest = await req.json();
-    logStep("Request data", { businessEmail: data.businessEmail, offerTitle: data.offerTitle });
+    logStep("Request data", { 
+      businessEmail: data.businessEmail, 
+      offerTitle: data.offerTitle,
+      hasReservation: data.hasReservation,
+      reservationDate: data.reservationDate,
+      reservationTime: data.reservationTime
+    });
 
-    // Format claimed time
+    // Format claimed time - ALWAYS use Cyprus timezone
     const claimedDate = new Date(data.claimedAt);
-    const formattedDate = claimedDate.toLocaleDateString('el-GR', {
+    const formattedClaimDate = claimedDate.toLocaleDateString('el-GR', {
       day: 'numeric',
       month: 'short',
+      timeZone: 'Europe/Nicosia',
     });
-    const formattedTime = claimedDate.toLocaleTimeString('el-GR', {
+    const formattedClaimTime = claimedDate.toLocaleTimeString('el-GR', {
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Europe/Nicosia',
     });
+
+    // Format reservation date/time if present
+    let reservationSection = '';
+    if (data.hasReservation && data.reservationDate) {
+      // Parse local date and time
+      const [year, month, day] = data.reservationDate.split('-').map(Number);
+      const resDate = new Date(year, month - 1, day);
+      
+      const formattedResDate = resDate.toLocaleDateString('el-GR', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'Europe/Nicosia',
+      });
+      
+      reservationSection = `
+        ${successBadge('Κράτηση Επιβεβαιώθηκε')}
+        ${infoCard('Κράτηση', 
+          detailRow('Ημερομηνία', formattedResDate) +
+          detailRow('Ώρα', data.reservationTime || '--:--') +
+          detailRow('Άτομα', `${data.partySize}`)
+        )}
+      `;
+    }
 
     // Availability status
     const isLowAvailability = data.remainingPeople < 5;
@@ -76,36 +108,48 @@ Deno.serve(async (req) => {
       availabilityNote = noteBox(`Χαμηλή διαθεσιμότητα: ${data.remainingPeople} θέσεις`, 'warning');
     }
 
+    // Email subject depends on reservation
+    const emailSubject = data.hasReservation
+      ? `📋 Νέα κράτηση με προσφορά: ${data.customerName}`
+      : `🎁 Νέα διεκδίκηση: ${formatPartySizeText(data.partySize)} για "${data.offerTitle}"`;
+
+    const subheader = data.hasReservation ? '📋 Κράτηση & Προσφορά' : '🎁 Νέα Διεκδίκηση';
+
     const content = `
-      ${successBadge('Νέα Διεκδίκηση')}
+      ${!data.hasReservation ? successBadge('Νέα Διεκδίκηση') : ''}
       
       <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
-        Κάποιος διεκδίκησε την προσφορά σας.
+        ${data.hasReservation 
+          ? 'Νέα κράτηση με διεκδίκηση προσφοράς.'
+          : 'Κάποιος διεκδίκησε την προσφορά σας.'}
       </p>
 
-      ${infoCard('Λεπτομέρειες', 
+      ${reservationSection}
+
+      ${infoCard('Προσφορά', 
         detailRow('Προσφορά', data.offerTitle) +
         detailRow('Πελάτης', data.customerName) +
-        detailRow('Άτομα', formatPartySizeText(data.partySize)) +
-        detailRow('Ώρα', `${formattedDate}, ${formattedTime}`) +
+        (!data.hasReservation ? detailRow('Άτομα', formatPartySizeText(data.partySize)) : '') +
+        detailRow('Ώρα διεκδίκησης', `${formattedClaimDate}, ${formattedClaimTime}`) +
         (data.totalPeople ? detailRow('Υπόλοιπο', `${data.remainingPeople}/${data.totalPeople}`, true) : '')
       )}
 
       ${availabilityNote}
 
-      ${ctaButton('Δες τις προσφορές', 'https://fomo.com.cy/dashboard-business/offers')}
+      ${ctaButton(data.hasReservation ? 'Διαχείριση Κρατήσεων' : 'Δες τις προσφορές', 
+        data.hasReservation ? 'https://fomo.com.cy/dashboard-business/reservations' : 'https://fomo.com.cy/dashboard-business/offers')}
 
       <p style="color: #94a3b8; font-size: 11px; text-align: center; margin-top: 20px;">
         Διαχείριση ειδοποιήσεων: Ρυθμίσεις → Ειδοποιήσεις
       </p>
     `;
 
-    const html = wrapBusinessEmail(content, '🎁 Νέα Διεκδίκηση');
+    const html = wrapBusinessEmail(content, subheader);
 
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <noreply@fomo.com.cy>",
       to: [data.businessEmail],
-      subject: `🎁 Νέα διεκδίκηση: ${formatPartySizeText(data.partySize)} για "${data.offerTitle}"`,
+      subject: emailSubject,
       html,
     });
 
@@ -119,7 +163,7 @@ Deno.serve(async (req) => {
         { auth: { persistSession: false } }
       );
 
-      const pushTitle = 'Νέα διεκδίκηση ✓';
+      const pushTitle = data.hasReservation ? 'Νέα κράτηση με προσφορά ✓' : 'Νέα διεκδίκηση ✓';
       const pushBody = `${data.customerName} · ${data.offerTitle} · ${formatPartySizeText(data.partySize)}`;
       const stableTag = data.purchaseId ? `n:offer_claimed:${data.purchaseId}` : `n:offer_claimed:${data.offerTitle}`.slice(0, 120);
 
@@ -130,7 +174,7 @@ Deno.serve(async (req) => {
           body: pushBody,
           tag: stableTag,
           data: {
-            url: '/dashboard-business/offers',
+            url: data.hasReservation ? '/dashboard-business/reservations' : '/dashboard-business/offers',
             type: 'offer_claimed',
             entityType: 'offer',
           },

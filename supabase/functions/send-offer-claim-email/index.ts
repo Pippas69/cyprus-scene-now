@@ -10,6 +10,7 @@ import {
   ctaButton,
   noteBox,
   discountBadge,
+  successBadge,
 } from "../_shared/email-templates.ts";
 
 const corsHeaders = {
@@ -43,6 +44,10 @@ interface OfferClaimEmailRequest {
   validEndTime: string | null;
   showReservationCta: boolean | null;
   businessId: string;
+  // Reservation fields (when claim includes reservation)
+  hasReservation?: boolean;
+  reservationDate?: string; // YYYY-MM-DD
+  reservationTime?: string; // HH:mm
 }
 
 const formatDays = (days: string[] | null): string => {
@@ -97,7 +102,13 @@ Deno.serve(async (req) => {
     );
 
     const data: OfferClaimEmailRequest = await req.json();
-    logStep("Request data", { purchaseId: data.purchaseId, userEmail: data.userEmail });
+    logStep("Request data", { 
+      purchaseId: data.purchaseId, 
+      userEmail: data.userEmail, 
+      hasReservation: data.hasReservation,
+      reservationDate: data.reservationDate,
+      reservationTime: data.reservationTime 
+    });
 
     // Generate QR code URL
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qrCodeToken)}&bgcolor=ffffff&color=0d3b66`;
@@ -118,14 +129,47 @@ Deno.serve(async (req) => {
       ? `${formatTime(data.validStartTime)} - ${formatTime(data.validEndTime)}`
       : 'Όλη μέρα';
 
-    // Format expiry date
+    // Format expiry date - ALWAYS use Cyprus timezone
     const expiryDate = new Date(data.expiresAt).toLocaleDateString('el-GR', {
       day: 'numeric',
       month: 'short',
+      timeZone: 'Europe/Nicosia',
     });
 
-    // Build info rows
-    let infoRows = detailRow('Άτομα', `${data.partySize}`);
+    // Format reservation date/time if present - ALWAYS use Cyprus timezone
+    let reservationInfo = '';
+    if (data.hasReservation && data.reservationDate) {
+      // Parse date and time from the request
+      const [year, month, day] = data.reservationDate.split('-').map(Number);
+      const [hour, minute] = (data.reservationTime || '00:00').split(':').map(Number);
+      
+      // Create date object for formatting
+      const resDate = new Date(year, month - 1, day, hour, minute);
+      
+      const formattedResDate = resDate.toLocaleDateString('el-GR', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'Europe/Nicosia',
+      });
+      
+      const formattedResTime = data.reservationTime || '';
+      
+      reservationInfo = `
+        ${successBadge('Κράτηση Επιβεβαιώθηκε')}
+        ${infoCard('Η Κράτησή σου', 
+          detailRow('Ημερομηνία', formattedResDate) +
+          detailRow('Ώρα', formattedResTime) +
+          detailRow('Άτομα', `${data.partySize}`)
+        )}
+      `;
+    }
+
+    // Build info rows for offer details
+    let infoRows = '';
+    if (!data.hasReservation) {
+      infoRows += detailRow('Άτομα', `${data.partySize}`);
+    }
     infoRows += detailRow('Ισχύει', validDaysText);
     infoRows += detailRow('Ώρες', validTimeText);
     infoRows += detailRow('Λήξη', expiryDate, true);
@@ -133,11 +177,24 @@ Deno.serve(async (req) => {
       infoRows += detailRow('Κατηγορία', getCategoryLabel(data.category));
     }
 
+    // Determine email subject and badge based on whether there's a reservation
+    const subheader = data.hasReservation ? '✓ Κράτηση & Προσφορά' : '✓ Προσφορά Έτοιμη';
+    const emailSubject = data.hasReservation 
+      ? `✓ Κράτηση επιβεβαιώθηκε - ${data.offerTitle} - ${data.businessName}`
+      : `✓ ${data.offerTitle} - ${data.businessName}`;
+
+    // Note text based on reservation status
+    const noteText = data.hasReservation 
+      ? 'Έχεις επιβεβαιωμένη κράτηση! Δείξε το QR code για εξαργύρωση της προσφοράς.'
+      : 'Αυτή η προσφορά ισχύει για walk-in. Δεν εγγυάται διαθεσιμότητα θέσης.';
+
     const content = `
       ${emailGreeting(data.userName)}
       
       <p style="color: #334155; font-size: 14px; margin: 0 0 20px 0; line-height: 1.6;">
-        Η προσφορά σου είναι έτοιμη! Δείξε τον κωδικό QR στο κατάστημα για εξαργύρωση.
+        ${data.hasReservation 
+          ? 'Η κράτησή σου με προσφορά είναι επιβεβαιωμένη! Δείξε τον κωδικό QR στο κατάστημα.'
+          : 'Η προσφορά σου είναι έτοιμη! Δείξε τον κωδικό QR στο κατάστημα για εξαργύρωση.'}
       </p>
 
       ${eventHeader(data.offerTitle, data.businessName, data.businessLogo || undefined)}
@@ -150,23 +207,25 @@ Deno.serve(async (req) => {
         </p>
       ` : ''}
 
+      ${reservationInfo}
+
       ${qrCodeSection(qrCodeUrl, undefined, 'Δείξε στο κατάστημα')}
 
-      ${infoCard('Λεπτομέρειες', infoRows)}
+      ${infoCard('Λεπτομέρειες Προσφοράς', infoRows)}
 
-      ${noteBox('Αυτή η προσφορά ισχύει για walk-in. Δεν εγγυάται διαθεσιμότητα θέσης.', 'warning')}
+      ${noteBox(noteText, data.hasReservation ? 'info' : 'warning')}
 
-      ${data.showReservationCta ? ctaButton('Κάνε Κράτηση', `https://fomo.com.cy/business/${data.businessId}`) : ''}
+      ${(!data.hasReservation && data.showReservationCta) ? ctaButton('Κάνε Κράτηση', `https://fomo.com.cy/business/${data.businessId}`) : ''}
 
       ${ctaButton('Δες τις προσφορές σου', 'https://fomo.com.cy/dashboard-user?tab=offers')}
     `;
 
-    const html = wrapPremiumEmail(content, '✓ Προσφορά Έτοιμη');
+    const html = wrapPremiumEmail(content, subheader);
 
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <offers@fomo.com.cy>",
       to: [data.userEmail],
-      subject: `✓ ${data.offerTitle} - ${data.businessName}`,
+      subject: emailSubject,
       html,
     });
 

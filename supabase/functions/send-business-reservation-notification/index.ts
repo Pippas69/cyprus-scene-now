@@ -58,11 +58,12 @@ Deno.serve(async (req) => {
     let emailSubject = "";
     let skipEmail = false;
     
-    // Format date
+    // Format date - ALWAYS use Cyprus timezone
     const formattedDate = new Date(data.reservationDate).toLocaleDateString('el-GR', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
+      timeZone: 'Europe/Nicosia',
     });
 
     switch (data.type) {

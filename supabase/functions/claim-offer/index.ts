@@ -188,24 +188,9 @@ Deno.serve(async (req) => {
       reservationId = reservation.id;
       logStep("Reservation created", { reservationId });
 
-      // Trigger reservation notifications (user + business)
-      try {
-        await fetch(`${supabaseUrl}/functions/v1/send-reservation-notification`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": supabaseServiceKey,
-            Authorization: `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
-            reservationId,
-            type: "new",
-          }),
-        });
-        logStep("Reservation notification sent");
-      } catch (notifError) {
-        logStep("Reservation notification error", notifError);
-      }
+      // NOTE: We do NOT call send-reservation-notification here!
+      // The offer claim email (send-offer-claim-email) already includes reservation details
+      // to avoid sending duplicate emails to the user and business.
     }
 
     // Generate unique QR token

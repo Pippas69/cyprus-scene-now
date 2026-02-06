@@ -120,18 +120,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     const businessName = businessData.name;
 
-    // Format the date/time for display
+    // Format the date/time for display - ALWAYS use Cyprus timezone
     const formattedDate = reservationDateTime ? new Date(reservationDateTime).toLocaleDateString('el-GR', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
-      timeZone: 'Europe/Athens'
+      timeZone: 'Europe/Nicosia'
     }) : '';
     
     const formattedTime = reservationDateTime ? new Date(reservationDateTime).toLocaleTimeString('el-GR', {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Europe/Athens'
+      timeZone: 'Europe/Nicosia'
     }) : '';
 
     // Generate QR code URL
