@@ -3,6 +3,18 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
+import {
+  wrapPremiumEmail,
+  wrapBusinessEmail,
+  emailGreeting,
+  infoCard,
+  detailRow,
+  qrCodeSection,
+  successBadge,
+  ctaButton,
+  eventHeader,
+  noteBox,
+} from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -153,9 +165,12 @@ serve(async (req) => {
       const businessUserId = reservation.events?.businesses?.user_id;
       const businessName = reservation.events?.businesses?.name || '';
 
-      // Format date for notifications
+      // Format date for notifications - ALWAYS use Cyprus timezone
       const formattedDate = new Date(reservation.events?.start_at).toLocaleDateString('el-GR', {
-        weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens'
+        weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Nicosia'
+      });
+      const formattedTime = new Date(reservation.events?.start_at).toLocaleTimeString('el-GR', {
+        hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Nicosia'
       });
 
       // ========== USER NOTIFICATIONS (in-app + push + email) ==========
@@ -166,7 +181,7 @@ serve(async (req) => {
         await supabaseClient.from('notifications').insert({
           user_id: reservation.user_id,
           title: '✅ Κράτηση επιβεβαιώθηκε!',
-          message: `${reservation.events?.title || 'Εκδήλωση'} • ${formattedDate}`,
+          message: `${reservation.events?.title || 'Εκδήλωση'} • ${formattedDate} ${formattedTime}`,
           type: 'reservation',
           event_type: 'reservation_confirmed',
           entity_type: 'reservation',
@@ -183,7 +198,7 @@ serve(async (req) => {
       try {
         const userPushPayload: PushPayload = {
           title: '✅ Κράτηση επιβεβαιώθηκε!',
-          body: `${reservation.events?.title || 'Εκδήλωση'} • ${formattedDate}`,
+          body: `${reservation.events?.title || 'Εκδήλωση'} • ${formattedDate} ${formattedTime}`,
           icon: '/fomo-logo-new.png',
           badge: '/fomo-logo-new.png',
           tag: `reservation-confirmed-${reservationId}`,
@@ -200,64 +215,50 @@ serve(async (req) => {
         logStep("ERROR: User push notification", { error: String(pushError) });
       }
 
-      // 3. User email
+      // 3. User email - PREMIUM DESIGN
       if (profile?.email) {
         try {
           const qrCodeUrl = reservation.qr_code_token 
-            ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(reservation.qr_code_token)}&color=102b4a`
+            ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(reservation.qr_code_token)}&bgcolor=ffffff&color=0d3b66`
             : null;
 
-          const userEmailHtml = `
-            <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-            <body style="margin:0;padding:20px;background:#f4f4f5;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-              <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-                <div style="background:linear-gradient(180deg,#0d3b66 0%,#4ecdc4 100%);padding:48px 24px 36px;text-align:center;border-radius:12px 12px 0 0;">
-                  <h1 style="color:#fff;margin:0;font-size:42px;font-weight:bold;letter-spacing:4px;">ΦΟΜΟ</h1>
-                  <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Cyprus Events</p>
-                </div>
-                <div style="padding:32px 24px;">
-                  <h2 style="color:#0d3b66;margin:0 0 16px;font-size:24px;">Η Κράτησή σου Επιβεβαιώθηκε! ✅</h2>
-                  <p style="color:#475569;margin:0 0 24px;line-height:1.6;">
-                    Γεια σου <strong>${profile?.name || reservation.reservation_name}</strong>,<br><br>
-                    Η πληρωμή σου ολοκληρώθηκε και η κράτησή σου επιβεβαιώθηκε!
-                  </p>
-                  <div style="background:linear-gradient(135deg,#f0fdfa 0%,#ecfdf5 100%);border-left:4px solid #4ecdc4;padding:20px;border-radius:8px;margin:24px 0;">
-                    <p style="color:#0d3b66;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">ΚΡΑΤΗΣΗ ΕΚΔΗΛΩΣΗΣ</p>
-                    <h3 style="color:#0d3b66;margin:0 0 16px;font-size:18px;">${reservation.events?.title || 'Εκδήλωση'}</h3>
-                    <p style="color:#475569;margin:4px 0;">🏢 ${businessName}</p>
-                    <p style="color:#475569;margin:4px 0;">📅 ${formattedDate}</p>
-                    <p style="color:#475569;margin:4px 0;">📍 ${reservation.events?.location || reservation.events?.venue_name || ''}</p>
-                    <p style="color:#475569;margin:12px 0 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
-                    <p style="color:#475569;margin:4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
-                    ${seatingTypeName ? `<p style="color:#475569;margin:4px 0;"><strong>Τύπος Θέσης:</strong> ${seatingTypeName}</p>` : ''}
-                    ${dressCode ? `<p style="color:#475569;margin:4px 0;"><strong>Dress Code:</strong> ${dressCode}</p>` : ''}
-                    <p style="color:#475569;margin:12px 0 0;"><strong>Πληρωμένο ποσό:</strong> €${((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2)}</p>
-                  </div>
-                  ${qrCodeUrl ? `
-                  <div style="text-align:center;margin:28px 0;">
-                    <h3 style="color:#102b4a;margin:0 0 8px;font-size:18px;font-weight:bold;">Ο Κωδικός σου</h3>
-                    <p style="color:#64748b;margin:0 0 20px;font-size:14px;">Παρουσίασε αυτόν τον κωδικό QR κατά την άφιξή σου</p>
-                    <div style="background:#fff;border:3px solid #3ec3b7;border-radius:16px;padding:20px;display:inline-block;">
-                      <img src="${qrCodeUrl}" alt="QR Code" style="width:180px;height:180px;display:block;"/>
-                    </div>
-                    <p style="color:#102b4a;font-size:24px;font-weight:bold;margin:16px 0 4px;letter-spacing:2px;">${reservation.confirmation_code}</p>
-                    <p style="color:#94a3b8;font-size:12px;margin:0;">Κωδικός Επιβεβαίωσης</p>
-                  </div>
-                  ` : ''}
-                  <p style="color:#059669;font-weight:600;text-align:center;font-size:16px;">🎉 Ανυπομονούμε να σας δούμε!</p>
-                </div>
-                <div style="background:#102b4a;padding:28px;text-align:center;border-radius:0 0 12px 12px;">
-                  <p style="color:#3ec3b7;font-size:18px;font-weight:bold;letter-spacing:2px;margin:0 0 8px;">ΦΟΜΟ</p>
-                  <p style="color:#94a3b8;font-size:12px;margin:0;">© 2025 ΦΟΜΟ. Discover events in Cyprus.</p>
-                </div>
-              </div>
-            </body></html>
+          const userName = profile?.name || reservation.reservation_name || 'φίλε';
+          const eventTitle = reservation.events?.title || 'Εκδήλωση';
+          const eventLocation = reservation.events?.location || reservation.events?.venue_name || '';
+          const paidAmount = ((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2);
+
+          const userContent = `
+            ${successBadge('Κράτηση Επιβεβαιώθηκε')}
+            ${emailGreeting(userName)}
+            
+            <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
+              Η πληρωμή ολοκληρώθηκε και η κράτησή σου επιβεβαιώθηκε!
+            </p>
+
+            ${eventHeader(eventTitle, businessName)}
+
+            ${infoCard('Κράτηση Εκδήλωσης', 
+              detailRow('Ημερομηνία', formattedDate) +
+              detailRow('Ώρα', formattedTime) +
+              (eventLocation ? detailRow('Τοποθεσία', eventLocation) : '') +
+              detailRow('Όνομα', reservation.reservation_name) +
+              detailRow('Άτομα', `${reservation.party_size}`) +
+              (seatingTypeName ? detailRow('Θέση', seatingTypeName) : '') +
+              (dressCode ? detailRow('Dress Code', dressCode) : '') +
+              detailRow('Πληρωμένο', `€${paidAmount}`, true)
+            )}
+
+            ${qrCodeUrl ? qrCodeSection(qrCodeUrl, reservation.confirmation_code, 'Δείξε στην είσοδο') : ''}
+
+            ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations')}
           `;
+
+          const userEmailHtml = wrapPremiumEmail(userContent, '✓ Κράτηση Εκδήλωσης');
 
           await resend.emails.send({
             from: "ΦΟΜΟ <notifications@fomo.com.cy>",
             to: [profile.email],
-            subject: `Επιβεβαίωση Κράτησης - ${reservation.events?.title || 'Εκδήλωση'}`,
+            subject: `✓ Κράτηση επιβεβαιώθηκε - ${eventTitle}`,
             html: userEmailHtml,
           });
           logStep("User email sent", { email: profile.email });
@@ -309,7 +310,7 @@ serve(async (req) => {
           logStep("ERROR: Business push notification", { error: String(bizPushError) });
         }
 
-        // 3. Business email
+        // 3. Business email - PREMIUM DESIGN
         try {
           const { data: bizProfile } = await supabaseClient
             .from("profiles")
@@ -318,42 +319,39 @@ serve(async (req) => {
             .single();
 
           if (bizProfile?.email) {
-            const bizEmailHtml = `
-              <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-              <body style="margin:0;padding:20px;background:#f4f4f5;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-                <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-                  <div style="background:linear-gradient(180deg,#0d3b66 0%,#4ecdc4 100%);padding:48px 24px 36px;text-align:center;">
-                    <h1 style="color:#fff;margin:0;font-size:42px;font-weight:bold;letter-spacing:4px;">ΦΟΜΟ</h1>
-                    <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Business Dashboard</p>
-                  </div>
-                  <div style="padding:32px 24px;">
-                    <h2 style="color:#0d3b66;margin:0 0 16px;font-size:24px;">🎉 Νέα Πληρωμένη Κράτηση!</h2>
-                    <p style="color:#475569;margin:0 0 24px;line-height:1.6;">
-                      Έχεις νέα κράτηση για <strong>${reservation.events?.title || 'Εκδήλωση'}</strong>:
-                    </p>
-                    <div style="background:#f8fafc;border-left:4px solid #4ecdc4;padding:20px;border-radius:8px;margin:24px 0;">
-                      <p style="color:#475569;margin:4px 0;"><strong>Πελάτης:</strong> ${reservation.reservation_name}</p>
-                      <p style="color:#475569;margin:4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
-                      <p style="color:#475569;margin:4px 0;"><strong>Ημερομηνία:</strong> ${formattedDate}</p>
-                      ${seatingTypeName ? `<p style="color:#475569;margin:4px 0;"><strong>Θέση:</strong> ${seatingTypeName}</p>` : ''}
-                      ${reservation.phone_number ? `<p style="color:#475569;margin:4px 0;"><strong>Τηλέφωνο:</strong> ${reservation.phone_number}</p>` : ''}
-                      ${reservation.special_requests ? `<p style="color:#475569;margin:4px 0;"><strong>Σημειώσεις:</strong> ${reservation.special_requests}</p>` : ''}
-                      <p style="color:#059669;margin:12px 0 0;font-weight:600;">💳 Πληρωμένο: €${((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2)}</p>
-                    </div>
-                    <p style="color:#64748b;font-size:14px;text-align:center;">Κωδικός: <strong>${reservation.confirmation_code}</strong></p>
-                  </div>
-                  <div style="background:#102b4a;padding:28px;text-align:center;">
-                    <p style="color:#3ec3b7;font-size:18px;font-weight:bold;letter-spacing:2px;margin:0 0 8px;">ΦΟΜΟ</p>
-                    <p style="color:#94a3b8;font-size:12px;margin:0;">© 2025 ΦΟΜΟ. Business Partner Portal.</p>
-                  </div>
-                </div>
-              </body></html>
+            const eventTitle = reservation.events?.title || 'Εκδήλωση';
+            const paidAmount = ((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2);
+
+            const bizContent = `
+              ${successBadge('Νέα Κράτηση Εκδήλωσης')}
+              
+              <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
+                Νέα πληρωμένη κράτηση για την εκδήλωση <strong>${eventTitle}</strong>.
+              </p>
+
+              ${infoCard('Λεπτομέρειες Κράτησης', 
+                detailRow('Πελάτης', reservation.reservation_name) +
+                detailRow('Ημερομηνία', formattedDate) +
+                detailRow('Ώρα', formattedTime) +
+                detailRow('Άτομα', `${reservation.party_size}`) +
+                (seatingTypeName ? detailRow('Θέση', seatingTypeName) : '') +
+                (reservation.phone_number ? detailRow('Τηλέφωνο', reservation.phone_number) : '') +
+                (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '') +
+                detailRow('Πληρωμένο', `€${paidAmount}`, true) +
+                detailRow('Κωδικός', reservation.confirmation_code, true)
+              )}
+
+              ${noteBox(`Κράτηση από εκδήλωση: ${eventTitle}`, 'info')}
+
+              ${ctaButton('Διαχείριση Κρατήσεων', 'https://fomo.com.cy/dashboard-business/reservations')}
             `;
+
+            const bizEmailHtml = wrapBusinessEmail(bizContent, '🎟️ Κράτηση Εκδήλωσης');
 
             await resend.emails.send({
               from: "ΦΟΜΟ <notifications@fomo.com.cy>",
               to: [bizProfile.email],
-              subject: `Νέα Κράτηση: ${reservation.reservation_name} - ${reservation.party_size} άτομα`,
+              subject: `🎟️ Νέα Κράτηση Εκδήλωσης: ${reservation.reservation_name}`,
               html: bizEmailHtml,
             });
             logStep("Business email sent", { email: bizProfile.email });
