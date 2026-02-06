@@ -307,9 +307,11 @@ async function handleTicketQR(
   // Get business owner user_id for in-app notification
   const { data: eventData } = await supabaseAdmin
     .from("events")
-    .select("business_id, businesses(user_id)")
+    .select("business_id, businesses(user_id, name)")
     .eq("id", ticket.events?.id)
     .single();
+
+  const businessName = (eventData?.businesses as any)?.name || '';
 
   // Create in-app notification for business owner
   if (eventData?.businesses?.user_id) {
@@ -331,8 +333,28 @@ async function handleTicketQR(
     }
   }
 
-  // Send push notification to user when their ticket is checked in
+  // Create in-app notification for user (ticket holder)
   const ticketUserId = ticket.ticket_orders?.user_id;
+  if (ticketUserId) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: ticketUserId,
+        title: '✅ Check-in επιτυχές!',
+        message: `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}`,
+        type: 'ticket',
+        event_type: 'ticket_checked_in',
+        entity_type: 'ticket',
+        entity_id: ticket.id,
+        deep_link: `/event/${ticket.events?.id}`,
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created for ticket check-in");
+    } catch (notifError) {
+      logStep("Failed to create user in-app notification", notifError);
+    }
+  }
+
+  // Send push notification to user when their ticket is checked in
   if (ticketUserId) {
     try {
       await sendPushIfEnabled(ticketUserId, {
@@ -492,17 +514,18 @@ async function handleOfferQR(
 
   logStep("Offer redeemed", { purchaseId: purchase.id });
 
-  // Get business owner user_id for in-app notification
+  // Get business owner user_id and name for notifications
   const { data: businessData } = await supabaseAdmin
     .from("businesses")
-    .select("user_id")
+    .select("user_id, name")
     .eq("id", businessId)
     .single();
+
+  const customerName = profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() : 'Πελάτης';
 
   // Create in-app notification for business owner
   if (businessData?.user_id) {
     try {
-      const customerName = profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() : 'Πελάτης';
       await supabaseAdmin.from('notifications').insert({
         user_id: businessData.user_id,
         title: '✅ Εξαργύρωση προσφοράς!',
@@ -517,6 +540,26 @@ async function handleOfferQR(
       logStep("Business in-app notification created for offer redemption");
     } catch (notifError) {
       logStep("Failed to create business in-app notification", notifError);
+    }
+  }
+
+  // Create in-app notification for user (offer holder)
+  if (purchase.user_id) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: purchase.user_id,
+        title: '✅ Προσφορά εξαργυρώθηκε!',
+        message: `"${discount.title}"${businessData?.name ? ` - ${businessData.name}` : ''} εξαργυρώθηκε επιτυχώς`,
+        type: 'offer',
+        event_type: 'offer_redeemed',
+        entity_type: 'offer',
+        entity_id: purchase.id,
+        deep_link: '/dashboard-user/offers',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created for offer redemption");
+    } catch (notifError) {
+      logStep("Failed to create user in-app notification", notifError);
     }
   }
 
@@ -662,6 +705,11 @@ async function handleReservationQR(
     .eq("id", businessId)
     .single();
 
+  // Get location name for notifications
+  const locationName = isDirectReservation 
+    ? reservation.businesses?.name 
+    : reservation.events?.title;
+
   // Create in-app notification for business owner
   if (businessOwnerData?.user_id) {
     try {
@@ -682,13 +730,29 @@ async function handleReservationQR(
     }
   }
 
+  // Create in-app notification for user (reservation holder)
+  if (reservation.user_id) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: reservation.user_id,
+        title: '✅ Check-in επιτυχές!',
+        message: `Κράτηση για ${reservation.reservation_name}${locationName ? ` - ${locationName}` : ''} - Καλωσήρθατε!`,
+        type: 'reservation',
+        event_type: 'reservation_checked_in',
+        entity_type: 'reservation',
+        entity_id: reservation.id,
+        deep_link: '/dashboard-user/reservations',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created for reservation check-in");
+    } catch (notifError) {
+      logStep("Failed to create user in-app notification", notifError);
+    }
+  }
+
   // Send push notification to user when their reservation is checked in
   if (reservation.user_id) {
     try {
-      const locationName = isDirectReservation 
-        ? reservation.businesses?.name 
-        : reservation.events?.title;
-      
       await sendPushIfEnabled(reservation.user_id, {
         title: '✅ Check-in επιτυχές!',
         body: language === "el" 
@@ -862,6 +926,65 @@ async function handleStudentQR(
   }
 
   logStep("Student redemption recorded", { verificationId: verification.id, redemptionId: redemptionRow.id });
+
+  // Get business name for notifications
+  const businessName = (business as any)?.name || '';
+
+  // Create in-app notification for business owner
+  try {
+    await supabaseAdmin.from('notifications').insert({
+      user_id: business.user_id,
+      title: '🎓 Φοιτητική έκπτωση!',
+      message: `${profile?.name || 'Φοιτητής'} χρησιμοποίησε φοιτητική έκπτωση${businessName ? ` - ${business.student_discount_percent}%` : ''}`,
+      type: 'business',
+      event_type: 'student_discount_redeemed',
+      entity_type: 'student_redemption',
+      entity_id: redemptionRow.id,
+      deep_link: '/dashboard-business/student-discounts',
+      delivered_at: new Date().toISOString(),
+    });
+    logStep("Business in-app notification created for student discount");
+  } catch (notifError) {
+    logStep("Failed to create business in-app notification", notifError);
+  }
+
+  // Create in-app notification for student
+  if (verification.user_id) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: verification.user_id,
+        title: '🎓 Φοιτητική έκπτωση εφαρμόστηκε!',
+        message: `${business.student_discount_percent}% έκπτωση${businessName ? ` στο ${businessName}` : ''}`,
+        type: 'student',
+        event_type: 'student_discount_redeemed',
+        entity_type: 'student_redemption',
+        entity_id: redemptionRow.id,
+        deep_link: '/dashboard-user/student',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created for student discount");
+    } catch (notifError) {
+      logStep("Failed to create user in-app notification", notifError);
+    }
+
+    // Send push notification to student
+    try {
+      await sendPushIfEnabled(verification.user_id, {
+        title: '🎓 Φοιτητική έκπτωση εφαρμόστηκε!',
+        body: `${business.student_discount_percent}% έκπτωση${businessName ? ` στο ${businessName}` : ''}`,
+        tag: `student-discount-${redemptionRow.id}`,
+        data: {
+          url: '/dashboard-user/student',
+          type: 'student_discount_redeemed',
+          entityType: 'student_redemption',
+          entityId: redemptionRow.id,
+        },
+      }, supabaseAdmin);
+      logStep("Student discount push sent", { userId: verification.user_id });
+    } catch (pushError) {
+      logStep("Student discount push failed (non-fatal)", { error: pushError instanceof Error ? pushError.message : String(pushError) });
+    }
+  }
 
   // Return success - scan is recorded immediately
   return new Response(JSON.stringify({
