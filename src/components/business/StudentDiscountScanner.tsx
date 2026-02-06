@@ -216,10 +216,11 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
   };
   
   const handleApplyDiscount = async () => {
-    if (!scannedStudent || !originalPrice) return;
+    if (!scannedStudent) return;
     
-    const originalCents = Math.round(parseFloat(originalPrice) * 100);
-    const discountedCents = Math.round(parseFloat(discountedPrice) * 100);
+    // Price is now optional - use 0 if not provided
+    const originalCents = originalPrice ? Math.round(parseFloat(originalPrice) * 100) : 0;
+    const discountedCents = discountedPrice ? Math.round(parseFloat(discountedPrice) * 100) : 0;
     
     await createRedemption.mutateAsync({
       studentVerificationId: scannedStudent.verificationId,
@@ -374,7 +375,7 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
               <Button
                 onClick={handleApplyDiscount}
                 className="w-full"
-                disabled={!originalPrice || createRedemption.isPending}
+                disabled={createRedemption.isPending}
               >
                 {createRedemption.isPending ? (
                   <>
