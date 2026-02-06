@@ -340,39 +340,5 @@ export async function sendBusinessNotification(
   }
 }
 
-// Branded email template parts for business notifications
-export const businessEmailHeader = `
-  <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 48px 24px 36px 24px; text-align: center; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #ffffff; margin: 0; font-size: 42px; font-weight: bold; letter-spacing: 4px; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</h1>
-    <p style="color: rgba(255,255,255,0.85); margin: 10px 0 0 0; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">Business Dashboard</p>
-  </div>
-`;
-
-export const businessEmailFooter = `
-  <div style="background: #102b4a; padding: 28px; text-align: center; border-radius: 0 0 12px 12px;">
-    <p style="color: #3ec3b7; font-size: 18px; font-weight: bold; letter-spacing: 2px; margin: 0 0 8px 0; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</p>
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2025 ΦΟΜΟ. Empowering Cyprus businesses.</p>
-  </div>
-`;
-
-export function wrapBusinessEmailContent(content: string): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
-    </head>
-    <body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        ${businessEmailHeader}
-        <div style="padding: 32px 24px;">
-          ${content}
-        </div>
-        ${businessEmailFooter}
-      </div>
-    </body>
-    </html>
-  `;
-}
+// Re-export premium templates for business notifications
+export { wrapBusinessEmail as wrapBusinessEmailContent, infoCard, detailRow, ctaButton, successBadge, noteBox } from "./email-templates.ts";

@@ -8,6 +8,7 @@ import {
   wrapBusinessEmailContent,
   type BusinessNotificationType 
 } from "../_shared/business-notification-helper.ts";
+import { infoCard, detailRow, ctaButton, successBadge } from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,10 +56,9 @@ Deno.serve(async (req) => {
     let message = "";
     let deepLink = "/dashboard-business/reservations";
     let emailSubject = "";
-    let emoji = "";
     let skipEmail = false;
     
-    // Format date and time
+    // Format date
     const formattedDate = new Date(data.reservationDate).toLocaleDateString('el-GR', {
       weekday: 'short',
       day: 'numeric',
@@ -70,41 +70,36 @@ Deno.serve(async (req) => {
       case 'NEW_RESERVATION_EVENT':
       case 'NEW_RESERVATION_OFFER':
       case 'NEW_RESERVATION_PROFILE':
-        emoji = "✅";
-        title = `Νέα κράτηση ${emoji}`;
-        message = `${data.customerName} • ${formattedDate} ${data.reservationTime} • ${data.partySize} άτομα`;
-        emailSubject = `${emoji} Νέα κράτηση: ${data.customerName} - ${formattedDate}`;
+        title = `Νέα κράτηση ✓`;
+        message = `${data.customerName} · ${formattedDate} ${data.reservationTime} · ${data.partySize} άτομα`;
+        emailSubject = `✓ Νέα κράτηση: ${data.customerName}`;
         
-        // Add context for where the reservation came from
         if (data.eventTitle) {
-          message = `${data.customerName} • ${data.eventTitle} • ${data.partySize} άτομα`;
+          message = `${data.customerName} · ${data.eventTitle} · ${data.partySize} άτομα`;
         } else if (data.offerTitle) {
-          message = `${data.customerName} • ${data.offerTitle} • ${data.partySize} άτομα`;
+          message = `${data.customerName} · ${data.offerTitle} · ${data.partySize} άτομα`;
         }
         break;
 
       case 'RESERVATION_CANCELLED':
-        emoji = "❌";
         title = "Ακύρωση κράτησης";
-        message = `${data.customerName} • ${formattedDate} ${data.reservationTime}`;
-        emailSubject = `Ακύρωση: ${data.customerName} - ${formattedDate}`;
-        skipEmail = true; // Optional notification - no email
+        message = `${data.customerName} · ${formattedDate} ${data.reservationTime}`;
+        emailSubject = `Ακύρωση: ${data.customerName}`;
+        skipEmail = true;
         break;
 
       case 'RESERVATION_NO_SHOW':
-        emoji = "⚠️";
         title = "Δεν εμφανίστηκε";
-        message = `${data.customerName} • ${data.reservationTime}`;
+        message = `${data.customerName} · ${data.reservationTime}`;
         emailSubject = `No-show: ${data.customerName}`;
-        skipEmail = true; // Optional notification - no email
+        skipEmail = true;
         break;
 
       case 'RESERVATION_CHECK_IN':
-        emoji = "✅";
-        title = "Check-in έγινε";
-        message = `${data.customerName} • τώρα`;
+        title = "Check-in ✓";
+        message = `${data.customerName} · τώρα`;
         emailSubject = `Check-in: ${data.customerName}`;
-        skipEmail = true; // Optional notification - no email
+        skipEmail = true;
         break;
 
       default:
@@ -117,70 +112,24 @@ Deno.serve(async (req) => {
 
     // Build email content for new reservations
     const emailHtml = skipEmail ? undefined : wrapBusinessEmailContent(`
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
-                    color: white; padding: 12px 24px; border-radius: 50px; font-size: 18px; font-weight: bold;">
-          ${emoji} Νέα Κράτηση!
-        </div>
-      </div>
+      ${successBadge('Νέα Κράτηση')}
+      
+      <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
+        Νέα κράτηση για το <strong>${data.businessName}</strong>.
+      </p>
 
-      <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 22px; text-align: center;">
-        ${data.businessName}
-      </h2>
+      ${infoCard('Λεπτομέρειες', 
+        detailRow('Πελάτης', data.customerName) +
+        detailRow('Ημερομηνία', formattedDate) +
+        detailRow('Ώρα', data.reservationTime) +
+        detailRow('Άτομα', `${data.partySize}`) +
+        (data.eventTitle ? detailRow('Εκδήλωση', data.eventTitle) : '') +
+        (data.offerTitle ? detailRow('Προσφορά', data.offerTitle) : '') +
+        (data.notes ? detailRow('Σημειώσεις', data.notes) : '')
+      )}
 
-      <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); 
-                  border-radius: 12px; padding: 24px; margin: 24px 0;">
-        <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px; border-bottom: 2px solid #10b981; padding-bottom: 8px;">
-          📋 Λεπτομέρειες Κράτησης
-        </h3>
-        
-        <table style="width: 100%; color: #475569; font-size: 14px;">
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Πελάτης:</td>
-            <td style="padding: 8px 0; text-align: right;">${data.customerName}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Ημερομηνία:</td>
-            <td style="padding: 8px 0; text-align: right;">${formattedDate}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Ώρα:</td>
-            <td style="padding: 8px 0; text-align: right;">${data.reservationTime}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Αριθμός ατόμων:</td>
-            <td style="padding: 8px 0; text-align: right;">${data.partySize} ${data.partySize === 1 ? 'άτομο' : 'άτομα'}</td>
-          </tr>
-          ${data.eventTitle ? `
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Εκδήλωση:</td>
-            <td style="padding: 8px 0; text-align: right;">${data.eventTitle}</td>
-          </tr>
-          ` : ''}
-          ${data.offerTitle ? `
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Προσφορά:</td>
-            <td style="padding: 8px 0; text-align: right;">${data.offerTitle}</td>
-          </tr>
-          ` : ''}
-          ${data.notes ? `
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Σημειώσεις:</td>
-            <td style="padding: 8px 0; text-align: right;">${data.notes}</td>
-          </tr>
-          ` : ''}
-        </table>
-      </div>
-
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="https://fomo.com.cy/dashboard-business/reservations" 
-           style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); 
-                  color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; 
-                  font-weight: 600; font-size: 16px;">
-          Διαχείριση Κρατήσεων
-        </a>
-      </div>
-    `);
+      ${ctaButton('Διαχείριση', 'https://fomo.com.cy/dashboard-business/reservations')}
+    `, '📋 Νέα Κράτηση');
 
     // Send the notification
     const result = await sendBusinessNotification({
