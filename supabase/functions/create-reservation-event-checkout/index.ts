@@ -97,28 +97,35 @@ serve(async (req) => {
     const business = event.businesses;
 
     // Allow destination charges if business has completed Stripe Connect onboarding.
-    // In preview/dev environments (lovable.app, localhost, 127.0.0.1), allow platform
-    // checkout so the team can test the full Stripe redirect flow.
+    // In preview/dev environments, allow platform checkout for testing.
     const origin = req.headers.get("origin") ?? "";
-    const isPreviewOrigin = origin.includes("lovable.app") || 
-                            origin.includes("localhost") || 
-                            origin.includes("127.0.0.1") ||
-                            origin.includes("preview--");
+    const referer = req.headers.get("referer") ?? "";
+    
+    // Check multiple headers for preview detection
+    const isPreviewOrigin = 
+      origin.includes("lovable.app") || 
+      origin.includes("localhost") || 
+      origin.includes("127.0.0.1") ||
+      origin.includes("preview--") ||
+      referer.includes("lovable.app") ||
+      referer.includes("localhost") ||
+      referer.includes("preview--");
 
     const hasConnectSetup = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
 
-    // ALWAYS allow checkout in preview environments - business setup is optional for testing
-    if (!hasConnectSetup && !isPreviewOrigin) {
-      throw new Error("Business has not completed payment setup");
-    }
-    
     console.log("[CHECKOUT] Environment check:", { 
       origin, 
+      referer,
       isPreviewOrigin, 
       hasConnectSetup,
       businessId: business?.id,
       stripeAccountId: business?.stripe_account_id ? "present" : "missing"
     });
+
+    // ALWAYS allow checkout in preview environments - business setup is optional for testing
+    if (!hasConnectSetup && !isPreviewOrigin) {
+      throw new Error("Business has not completed payment setup");
+    }
 
     // Get seating type and validate availability
     const { data: seatingType, error: seatingError } = await supabaseClient
