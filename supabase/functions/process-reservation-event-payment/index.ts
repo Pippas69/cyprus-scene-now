@@ -134,30 +134,107 @@ serve(async (req) => {
         .eq("id", reservation.user_id)
         .single();
 
-      // Send confirmation notification
+      // Send confirmation notifications to BOTH user and business
+      const businessId = reservation.events?.businesses?.id;
+      const businessUserId = reservation.events?.businesses?.user_id;
+
+      // 1. Send user notification (in-app + push + email)
       try {
-        await supabaseClient.functions.invoke("send-reservation-notification", {
+        const formattedDate = new Date(reservation.events?.start_at).toLocaleDateString('el-GR', {
+          weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens'
+        });
+        
+        const qrCodeUrl = reservation.qr_code_token 
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(reservation.qr_code_token)}&color=102b4a`
+          : null;
+
+        const userEmailHtml = `
+          <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+          <body style="margin:0;padding:20px;background:#f4f4f5;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+            <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+              <div style="background:linear-gradient(180deg,#0d3b66 0%,#4ecdc4 100%);padding:48px 24px 36px;text-align:center;border-radius:12px 12px 0 0;">
+                <h1 style="color:#fff;margin:0;font-size:42px;font-weight:bold;letter-spacing:4px;">ΦΟΜΟ</h1>
+                <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Cyprus Events</p>
+              </div>
+              <div style="padding:32px 24px;">
+                <h2 style="color:#0d3b66;margin:0 0 16px;font-size:24px;">Η Κράτησή σου Επιβεβαιώθηκε! ✅</h2>
+                <p style="color:#475569;margin:0 0 24px;line-height:1.6;">
+                  Γεια σου <strong>${profile?.name || reservation.reservation_name}</strong>,<br><br>
+                  Η πληρωμή σου ολοκληρώθηκε και η κράτησή σου επιβεβαιώθηκε!
+                </p>
+                <div style="background:linear-gradient(135deg,#f0fdfa 0%,#ecfdf5 100%);border-left:4px solid #4ecdc4;padding:20px;border-radius:8px;margin:24px 0;">
+                  <p style="color:#0d3b66;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">ΚΡΑΤΗΣΗ ΕΚΔΗΛΩΣΗΣ</p>
+                  <h3 style="color:#0d3b66;margin:0 0 16px;font-size:18px;">${reservation.events?.title || 'Εκδήλωση'}</h3>
+                  <p style="color:#475569;margin:4px 0;">🏢 ${reservation.events?.businesses?.name || ''}</p>
+                  <p style="color:#475569;margin:4px 0;">📅 ${formattedDate}</p>
+                  <p style="color:#475569;margin:4px 0;">📍 ${reservation.events?.location || reservation.events?.venue_name || ''}</p>
+                  <p style="color:#475569;margin:12px 0 0;"><strong>Όνομα:</strong> ${reservation.reservation_name}</p>
+                  <p style="color:#475569;margin:4px 0;"><strong>Άτομα:</strong> ${reservation.party_size}</p>
+                  ${seatingTypeName ? `<p style="color:#475569;margin:4px 0;"><strong>Τύπος Θέσης:</strong> ${seatingTypeName}</p>` : ''}
+                  ${dressCode ? `<p style="color:#475569;margin:4px 0;"><strong>Dress Code:</strong> ${dressCode}</p>` : ''}
+                  <p style="color:#475569;margin:12px 0 0;"><strong>Πληρωμένο ποσό:</strong> €${((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2)}</p>
+                </div>
+                ${qrCodeUrl ? `
+                <div style="text-align:center;margin:28px 0;">
+                  <h3 style="color:#102b4a;margin:0 0 8px;font-size:18px;font-weight:bold;">Ο Κωδικός σου</h3>
+                  <p style="color:#64748b;margin:0 0 20px;font-size:14px;">Παρουσίασε αυτόν τον κωδικό QR κατά την άφιξή σου</p>
+                  <div style="background:#fff;border:3px solid #3ec3b7;border-radius:16px;padding:20px;display:inline-block;">
+                    <img src="${qrCodeUrl}" alt="QR Code" style="width:180px;height:180px;display:block;"/>
+                  </div>
+                  <p style="color:#102b4a;font-size:24px;font-weight:bold;margin:16px 0 4px;letter-spacing:2px;">${reservation.confirmation_code}</p>
+                  <p style="color:#94a3b8;font-size:12px;margin:0;">Κωδικός Επιβεβαίωσης</p>
+                </div>
+                ` : ''}
+                <p style="color:#059669;font-weight:600;text-align:center;font-size:16px;">🎉 Ανυπομονούμε να σας δούμε!</p>
+              </div>
+              <div style="background:#102b4a;padding:28px;text-align:center;border-radius:0 0 12px 12px;">
+                <p style="color:#3ec3b7;font-size:18px;font-weight:bold;letter-spacing:2px;margin:0 0 8px;">ΦΟΜΟ</p>
+                <p style="color:#94a3b8;font-size:12px;margin:0;">© 2025 ΦΟΜΟ. Discover events in Cyprus.</p>
+              </div>
+            </div>
+          </body></html>
+        `;
+
+        await supabaseClient.functions.invoke("send-user-notification", {
           body: {
-            reservation_id: reservationId,
-            notification_type: "payment_confirmed",
-            email: profile?.email,
-            reservation_name: reservation.reservation_name,
-            party_size: reservation.party_size,
-            event_title: reservation.events?.title,
-            event_date: reservation.events?.start_at,
-            event_location: reservation.events?.location || reservation.events?.venue_name,
-            seating_type: seatingTypeName,
-            prepaid_amount_cents: reservation.prepaid_min_charge_cents,
-            confirmation_code: reservation.confirmation_code,
-            qr_code_token: reservation.qr_code_token,
-            dress_code: dressCode,
-            business_name: reservation.events?.businesses?.name,
-            business_phone: reservation.events?.businesses?.phone,
+            userId: reservation.user_id,
+            title: "✅ Κράτηση επιβεβαιώθηκε!",
+            message: `${reservation.events?.title || 'Εκδήλωση'} • ${formattedDate}`,
+            eventType: "reservation_confirmed",
+            entityType: "reservation",
+            entityId: reservationId,
+            deepLink: "/dashboard-user/reservations",
+            emailSubject: `Επιβεβαίωση Κράτησης - ${reservation.events?.title || 'Εκδήλωση'}`,
+            emailHtml: userEmailHtml,
           },
         });
-      } catch (notificationError) {
-        console.error("Error sending notification:", notificationError);
-        // Don't fail the webhook for notification errors
+        console.log("User notification sent successfully");
+      } catch (userNotifError) {
+        console.error("Error sending user notification:", userNotifError);
+      }
+
+      // 2. Send business notification (in-app + push + email)
+      if (businessId && businessUserId) {
+        try {
+          await supabaseClient.functions.invoke("send-business-reservation-notification", {
+            body: {
+              businessId: businessId,
+              businessUserId: businessUserId,
+              businessName: reservation.events?.businesses?.name || '',
+              type: 'NEW_RESERVATION_EVENT',
+              reservationId: reservationId,
+              customerName: reservation.reservation_name,
+              partySize: reservation.party_size,
+              reservationDate: reservation.events?.start_at,
+              reservationTime: new Date(reservation.events?.start_at).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' }),
+              eventTitle: reservation.events?.title,
+              notes: reservation.special_requests,
+            },
+          });
+          console.log("Business notification sent successfully");
+        } catch (bizNotifError) {
+          console.error("Error sending business notification:", bizNotifError);
+        }
       }
 
       console.log(`Reservation ${reservationId} marked as paid and confirmed`);
