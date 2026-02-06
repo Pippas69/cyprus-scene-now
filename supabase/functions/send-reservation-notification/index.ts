@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
+import { getEmailForUserId } from "../_shared/user-email.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -468,32 +470,61 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send emails
-    const emailPromises = [];
+    // Send emails - with idempotency and auth-email fallback
+    const userEmailAddr = await getEmailForUserId(supabase, reservation.user_id);
+    const bizEmailAddr = businessData?.user_id ? await getEmailForUserId(supabase, businessData.user_id) : null;
 
-    // Send to user
-    const userEmailPromise = resend.emails.send({
-      from: "ΦΟΜΟ <noreply@fomo.com.cy>",
-      to: [userProfile.email],
-      subject: userSubject,
-      html: userHtml,
+    const userEmailKey = buildNotificationKey({
+      channel: "email",
+      eventType: type === 'new' ? 'reservation_new' : type === 'status_change' ? 'reservation_status' : 'reservation_cancelled',
+      recipientUserId: reservation.user_id,
+      entityType: "reservation",
+      entityId: reservationId,
     });
-    emailPromises.push(userEmailPromise);
 
-    // Send to business if applicable
-    if (businessEmail && businessSubject) {
-      const businessEmailPromise = resend.emails.send({
-        from: "ΦΟΜΟ <noreply@fomo.com.cy>",
-        to: [businessEmail],
-        subject: businessSubject,
-        html: businessHtml,
-      });
-      emailPromises.push(businessEmailPromise);
+    const bizEmailKey = businessData?.user_id
+      ? buildNotificationKey({
+          channel: "email",
+          eventType: type === 'new' ? 'reservation_new' : type === 'status_change' ? 'reservation_status' : 'reservation_cancelled',
+          recipientUserId: businessData.user_id,
+          entityType: "reservation",
+          entityId: reservationId,
+        })
+      : null;
+
+    // Send to user (only if not duplicate)
+    if (userEmailAddr && !(await wasAlreadySent(supabase, reservation.user_id, userEmailKey))) {
+      try {
+        await resend.emails.send({
+          from: "ΦΟΜΟ <noreply@fomo.com.cy>",
+          to: [userEmailAddr],
+          subject: userSubject,
+          html: userHtml,
+        });
+        await markAsSent(supabase, reservation.user_id, userEmailKey, "reservation", reservationId);
+        console.log('User email sent to:', userEmailAddr);
+      } catch (emailErr) {
+        console.log('User email send error (non-fatal)', emailErr);
+      }
+    } else if (!userEmailAddr) {
+      console.log('No email found for user:', reservation.user_id);
     }
 
-    const results = await Promise.all(emailPromises);
-    console.log('Email API responses:', JSON.stringify(results, null, 2));
-    console.log('Emails sent successfully to:', userProfile.email, businessEmail || 'no business email');
+    // Send to business if applicable
+    if (businessData?.user_id && bizEmailAddr && bizEmailKey && !(await wasAlreadySent(supabase, businessData.user_id, bizEmailKey))) {
+      try {
+        await resend.emails.send({
+          from: "ΦΟΜΟ <noreply@fomo.com.cy>",
+          to: [bizEmailAddr],
+          subject: businessSubject,
+          html: businessHtml,
+        });
+        await markAsSent(supabase, businessData.user_id, bizEmailKey, "reservation", reservationId);
+        console.log('Business email sent to:', bizEmailAddr);
+      } catch (emailErr) {
+        console.log('Business email send error (non-fatal)', emailErr);
+      }
+    }
 
     // Send push notification AND create in-app notification for business owner for new reservations and cancellations
     if (businessData?.user_id && (type === 'new' || type === 'cancellation')) {
