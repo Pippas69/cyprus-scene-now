@@ -327,6 +327,73 @@ Deno.serve(async (req) => {
       .eq("id", purchase.user_id)
       .single();
 
+    // Get business info for notifications
+    const { data: businessData } = await supabaseAdmin
+      .from("businesses")
+      .select("user_id, name")
+      .eq("id", body.businessId)
+      .single();
+
+    const customerName = profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() : 'Πελάτης';
+
+    // Create in-app notification for business owner
+    if (businessData?.user_id) {
+      try {
+        await supabaseAdmin.from('notifications').insert({
+          user_id: businessData.user_id,
+          title: '✅ Εξαργύρωση προσφοράς!',
+          message: `${customerName} εξαργύρωσε "${discount.title}"`,
+          type: 'business',
+          event_type: 'offer_redeemed',
+          entity_type: 'offer',
+          entity_id: purchase.id,
+          deep_link: '/dashboard-business/discounts',
+          delivered_at: nowIso,
+        });
+        logStep("Business in-app notification created");
+      } catch (notifError) {
+        logStep("Failed to create business notification", notifError);
+      }
+    }
+
+    // Create in-app notification for user (offer holder)
+    if (purchase.user_id) {
+      try {
+        await supabaseAdmin.from('notifications').insert({
+          user_id: purchase.user_id,
+          title: '✅ Προσφορά εξαργυρώθηκε!',
+          message: `"${discount.title}"${businessData?.name ? ` - ${businessData.name}` : ''} εξαργυρώθηκε επιτυχώς`,
+          type: 'offer',
+          event_type: 'offer_redeemed',
+          entity_type: 'offer',
+          entity_id: purchase.id,
+          deep_link: '/dashboard-user/offers',
+          delivered_at: nowIso,
+        });
+        logStep("User in-app notification created");
+      } catch (notifError) {
+        logStep("Failed to create user notification", notifError);
+      }
+
+      // Send push notification to user
+      try {
+        await sendPushIfEnabled(purchase.user_id, {
+          title: '✅ Προσφορά εξαργυρώθηκε!',
+          body: `"${discount.title}" εξαργυρώθηκε επιτυχώς`,
+          tag: `offer-redeemed-${purchase.id}`,
+          data: {
+            url: '/dashboard-user/offers',
+            type: 'offer_redeemed',
+            entityType: 'offer',
+            entityId: purchase.id,
+          },
+        }, supabaseAdmin);
+        logStep("User push notification sent");
+      } catch (pushError) {
+        logStep("User push failed", pushError);
+      }
+    }
+
     logStep("Success", { purchaseId: purchase.id, duration: Date.now() - startedAt });
 
     return new Response(
