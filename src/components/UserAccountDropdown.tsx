@@ -42,15 +42,20 @@ export const UserAccountDropdown = ({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
+
   const translations = {
     el: {
       myAccount: 'Ο λογαριασμός μου',
+      myBusiness: 'Η επιχείρησή μου',
+      myUserAccount: 'Ο προσωπικός μου λογαριασμός',
       notifications: 'Ειδοποιήσεις',
       signOut: 'Αποσύνδεση',
-      // (Dropdown no longer contains notifications; keep label for the bell icon)
     },
     en: {
       myAccount: 'My Account',
+      myBusiness: 'My Business',
+      myUserAccount: 'My User Account',
       notifications: 'Notifications',
       signOut: 'Sign Out',
     },
