@@ -417,7 +417,7 @@ Deno.serve(async (req) => {
           {
             title: '✅ Προσφορά εξαργυρώθηκε!',
             body: `"${discount.title}" εξαργυρώθηκε επιτυχώς`,
-            tag: `offer-redeemed-${purchase.id}`,
+            tag: `n:offer_redeemed:${purchase.id}`,
             data: {
               url: '/dashboard-user/offers',
               type: 'offer_redeemed',
@@ -448,7 +448,7 @@ Deno.serve(async (req) => {
           {
             title: '✅ Εξαργύρωση προσφοράς!',
             body: `${customerName} εξαργύρωσε "${discount.title}"`,
-            tag: `biz-offer-redeemed-${purchase.id}`,
+            tag: `n:offer_redeemed:${purchase.id}`,
             data: {
               url: '/dashboard-business/discounts',
               type: 'offer_redeemed',
