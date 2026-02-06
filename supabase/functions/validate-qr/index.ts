@@ -905,6 +905,65 @@ async function handleStudentQR(
 
   logStep("Student redemption recorded", { verificationId: verification.id, redemptionId: redemptionRow.id });
 
+  // Get business name for notifications
+  const businessName = (business as any)?.name || '';
+
+  // Create in-app notification for business owner
+  try {
+    await supabaseAdmin.from('notifications').insert({
+      user_id: business.user_id,
+      title: '🎓 Φοιτητική έκπτωση!',
+      message: `${profile?.name || 'Φοιτητής'} χρησιμοποίησε φοιτητική έκπτωση${businessName ? ` - ${business.student_discount_percent}%` : ''}`,
+      type: 'business',
+      event_type: 'student_discount_redeemed',
+      entity_type: 'student_redemption',
+      entity_id: redemptionRow.id,
+      deep_link: '/dashboard-business/student-discounts',
+      delivered_at: new Date().toISOString(),
+    });
+    logStep("Business in-app notification created for student discount");
+  } catch (notifError) {
+    logStep("Failed to create business in-app notification", notifError);
+  }
+
+  // Create in-app notification for student
+  if (verification.user_id) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: verification.user_id,
+        title: '🎓 Φοιτητική έκπτωση εφαρμόστηκε!',
+        message: `${business.student_discount_percent}% έκπτωση${businessName ? ` στο ${businessName}` : ''}`,
+        type: 'student',
+        event_type: 'student_discount_redeemed',
+        entity_type: 'student_redemption',
+        entity_id: redemptionRow.id,
+        deep_link: '/dashboard-user/student',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created for student discount");
+    } catch (notifError) {
+      logStep("Failed to create user in-app notification", notifError);
+    }
+
+    // Send push notification to student
+    try {
+      await sendPushIfEnabled(verification.user_id, {
+        title: '🎓 Φοιτητική έκπτωση εφαρμόστηκε!',
+        body: `${business.student_discount_percent}% έκπτωση${businessName ? ` στο ${businessName}` : ''}`,
+        tag: `student-discount-${redemptionRow.id}`,
+        data: {
+          url: '/dashboard-user/student',
+          type: 'student_discount_redeemed',
+          entityType: 'student_redemption',
+          entityId: redemptionRow.id,
+        },
+      }, supabaseAdmin);
+      logStep("Student discount push sent", { userId: verification.user_id });
+    } catch (pushError) {
+      logStep("Student discount push failed (non-fatal)", { error: pushError instanceof Error ? pushError.message : String(pushError) });
+    }
+  }
+
   // Return success - scan is recorded immediately
   return new Response(JSON.stringify({
     success: true,
