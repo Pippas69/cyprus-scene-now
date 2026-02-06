@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       throw new Error("Missing required fields: orderId, userEmail, or tickets");
     }
 
-    // Format event date if provided
+    // Format event date if provided - ALWAYS use Cyprus timezone
     let formattedDate = "";
     let formattedTime = "";
     if (eventDate) {
@@ -60,10 +60,12 @@ Deno.serve(async (req) => {
           weekday: "long",
           day: "numeric",
           month: "long",
+          timeZone: "Europe/Nicosia",
         });
         formattedTime = date.toLocaleTimeString("el-GR", {
           hour: "2-digit",
           minute: "2-digit",
+          timeZone: "Europe/Nicosia",
         });
       } catch {
         formattedDate = eventDate;
