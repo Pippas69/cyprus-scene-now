@@ -1,84 +1,91 @@
 
+## Account Role Switcher
 
-## Summary
+Add a context-aware menu option in the user dropdown that allows users to switch between their User and Business accounts.
 
-Fix the post-checkout redirect flow so users land on the correct dashboard section after successful payment:
+---
 
-1. **Tickets**: Redirect to "My Events" → "Tickets" subtab and auto-select it
-2. **Reservations**: Redirect to "My Reservations" tab directly
+## How It Will Work
+
+- **When on User pages (Feed, Events, etc.)**: If the user owns a business, show "My Business" option → navigates to `/dashboard-business`
+- **When on Business Dashboard**: Show "My User Account" option → navigates to `/feed`
 
 ---
 
 ## Changes Required
 
-### 1. Fix Ticket Success Page Redirect
+### File: `src/components/UserAccountDropdown.tsx`
 
-**File**: `src/pages/TicketSuccess.tsx`
+1. **Import the hook**
+   - Add `useBusinessOwner` import
 
-- Change the `onViewDashboard` callback (line 179) from:
-  ```
-  /dashboard-user?tab=events&subtab=tickets
-  ```
-  to:
-  ```
-  /dashboard-user?tab=events&subtab=tickets
-  ```
-  *(This is already correct in URL - the issue is MyEvents.tsx doesn't read the subtab)*
+2. **Add translations**
+   - Greek: "Η επιχείρησή μου" (My Business) and "Ο προσωπικός μου λογαριασμός" (My User Account)  
+   - English: "My Business" and "My User Account"
 
-- Also update the fallback Link (line 193) to match
+3. **Add conditional menu item**
+   - If on business dashboard → Show "My User Account" button with User icon
+   - If on user pages AND user has business → Show "My Business" button with Building/Briefcase icon
 
-### 2. Make MyEvents Read subtab from URL
-
-**File**: `src/components/user/MyEvents.tsx`
-
-- Import `useSearchParams` from react-router-dom
-- Read the `subtab` parameter from URL on mount
-- Use it to set the initial tab value instead of hardcoded `defaultValue="going"`
-- This way when `subtab=tickets` is in URL, the Tickets tab will be auto-selected
-
-### 3. Fix Reservation Checkout Redirect URL
-
-**File**: `supabase/functions/create-reservation-event-checkout/index.ts`
-
-- Change the `success_url` (line 251) from:
-  ```
-  /dashboard-user/reservations?success=true&reservation_id=...
-  ```
-  to:
-  ```
-  /dashboard-user?tab=reservations&success=true&reservation_id=...
-  ```
-  *(The `/dashboard-user/reservations` path doesn't exist - it uses query params)*
+4. **Add click handlers**
+   - "My Business" → `navigate('/dashboard-business')`
+   - "My User Account" → `navigate('/feed')`
 
 ---
 
 ## Technical Details
 
-### MyEvents.tsx Changes
-
-```typescript
-// Add import
-import { useSearchParams } from 'react-router-dom';
-
-// Inside component
-const [searchParams] = useSearchParams();
-const initialSubtab = searchParams.get('subtab') || 'going';
-
-// Update Tabs component
-<Tabs defaultValue={initialSubtab} className="w-full">
+```text
+┌─────────────────────────────┐
+│  [Avatar]                   │
+├─────────────────────────────┤
+│  👤 My Account              │  ← Always visible
+├─────────────────────────────┤
+│  🏢 My Business             │  ← Only if isBusinessOwner AND not on business dashboard
+│  ──── OR ────               │
+│  👤 My User Account         │  ← Only if on business dashboard
+├─────────────────────────────┤
+│  🚪 Sign Out                │  ← Always visible
+└─────────────────────────────┘
 ```
 
-### Edge Function Fix
+### Code Structure
 
-The URL structure difference:
-- **Wrong**: `/dashboard-user/reservations` (path-based, doesn't exist)
-- **Correct**: `/dashboard-user?tab=reservations` (query-based, how routing works)
+```typescript
+// Import
+import { useBusinessOwner } from '@/hooks/useBusinessOwner';
+import { Building2 } from 'lucide-react';
+
+// Inside component
+const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
+
+// Translations
+myBusiness: 'Η επιχείρησή μου',      // Greek
+myUserAccount: 'Ο προσωπικός μου λογαριασμός',
+myBusiness: 'My Business',            // English
+myUserAccount: 'My User Account',
+
+// Conditional menu item (between My Account and Sign Out)
+{isBusinessDashboard ? (
+  <DropdownMenuItem onClick={() => navigate('/feed')}>
+    <User className="mr-2 h-4 w-4" />
+    {t.myUserAccount}
+  </DropdownMenuItem>
+) : (
+  !isBusinessLoading && isBusinessOwner && (
+    <DropdownMenuItem onClick={() => navigate('/dashboard-business')}>
+      <Building2 className="mr-2 h-4 w-4" />
+      {t.myBusiness}
+    </DropdownMenuItem>
+  )
+)}
+```
 
 ---
 
 ## Result
 
-After these changes:
-- **Ticket purchase** → User sees QR success screen → Clicks "My Tickets" → Lands on My Events with Tickets tab auto-selected
-- **Reservation purchase** → User is redirected → Lands directly on My Reservations tab
-
+- Business owners can seamlessly switch between personal and business views
+- Clear visual distinction with appropriate icons (Building for business, User for personal)
+- No UI clutter for users without businesses
+- Works on both desktop and mobile
