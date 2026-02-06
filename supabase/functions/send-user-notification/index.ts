@@ -139,12 +139,14 @@ Deno.serve(async (req) => {
     // 2. Send push notification
     // For essential confirmations, bypass the user preference flag.
     if (!data.skipPush && (essential || prefs?.notification_push_enabled !== false)) {
+      const stableTag = `n:${unifiedKey}`.slice(0, 120);
       const payload: PushPayload = {
         title: data.title,
         body: data.message,
         icon: '/fomo-logo-new.png',
         badge: '/fomo-logo-new.png',
-        tag: `${data.eventType}-${data.entityId || Date.now()}`,
+        // Critical: must be deterministic for idempotency across retries/callers
+        tag: stableTag,
         data: {
           url: data.deepLink || '/',
           type: data.eventType,

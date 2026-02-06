@@ -214,12 +214,14 @@ async function sendPushNotification(
   data: BusinessNotificationData
 ): Promise<{ sent: number; failed: number }> {
   // Build push payload
+  const extra = !data.objectId ? `${data.title}::${data.message}`.slice(0, 64) : null;
   const payload: PushPayload = {
     title: data.title,
     body: data.message,
     icon: "/fomo-logo-new.png",
     badge: "/fomo-logo-new.png",
-    tag: `business-${data.type}-${data.objectId || Date.now()}`,
+    // Deterministic tag so retries/callers don't create duplicates
+    tag: `biz:${data.type}:${data.objectType || 'none'}:${data.objectId || extra || 'none'}`.slice(0, 120),
     data: {
       url: data.deepLink || "/dashboard-business",
       type: data.type,

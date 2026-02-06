@@ -47,11 +47,22 @@ export async function markAsSent(
   referenceType?: string | null,
   referenceId?: string | null
 ): Promise<void> {
-  await supabase.from("notification_log").insert({
+  const { error } = await supabase.from("notification_log").insert({
     user_id: recipientUserId,
     notification_type: notificationKey,
     reference_type: referenceType ?? null,
     reference_id: referenceId ?? null,
+    // Use null to allow “reservation rows” or later updates if needed.
     sent_at: new Date().toISOString(),
   });
+
+  // With the unique index on (user_id, notification_type), duplicates are expected in races.
+  // Treat them as success (idempotent).
+  if (error && (error.code === "23505" || /duplicate key/i.test(error.message))) {
+    return;
+  }
+
+  if (error) {
+    throw error;
+  }
 }
