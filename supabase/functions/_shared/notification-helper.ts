@@ -2,10 +2,8 @@
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendEncryptedPush, isUserPushEnabled, PushPayload } from "./web-push-crypto.ts";
+import { getEmailForUserId } from "./user-email.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-interface NotificationData {
   userId: string;
   title: string;
   message: string;
@@ -67,15 +65,11 @@ function getSupabaseClient(): SupabaseClient {
   );
 }
 
-// Get user's email from profile
+// Get user's email (profiles.email first; fallback to auth user email)
 async function getUserEmail(supabase: SupabaseClient, userId: string): Promise<string | null> {
-  const { data } = await supabase
-    .from('profiles')
-    .select('email')
-    .eq('id', userId)
-    .single();
-  return data?.email || null;
+  return getEmailForUserId(supabase, userId);
 }
+
 
 // Check user's notification preferences
 async function getUserPreferences(supabase: SupabaseClient, userId: string) {

@@ -1,6 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
+import { getEmailForUserId } from "../_shared/user-email.ts";
+
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -380,67 +383,104 @@ Deno.serve(async (req) => {
         logStep("Failed to create user notification", notifError);
       }
 
+      // Push notifications with idempotency (1 per recipient per purchase)
+      const userPushKey = purchase.user_id
+        ? buildNotificationKey({
+            channel: "push",
+            eventType: "offer_redeemed",
+            recipientUserId: purchase.user_id,
+            entityType: "offer",
+            entityId: purchase.id,
+          })
+        : null;
+
+      const bizPushKey = businessData?.user_id
+        ? buildNotificationKey({
+            channel: "push",
+            eventType: "offer_redeemed",
+            recipientUserId: businessData.user_id,
+            entityType: "offer",
+            entityId: purchase.id,
+          })
+        : null;
+
       // Send push notification to user
-      try {
-        await sendPushIfEnabled(
-          purchase.user_id,
-          {
-            title: '✅ Προσφορά εξαργυρώθηκε!',
-            body: `"${discount.title}" εξαργυρώθηκε επιτυχώς`,
-            tag: `offer-redeemed-${purchase.id}`,
-            data: {
-              url: '/dashboard-user/offers',
-              type: 'offer_redeemed',
-              entityType: 'offer',
-              entityId: purchase.id,
+      if (
+        purchase.user_id &&
+        userPushKey &&
+        !(await wasAlreadySent(supabaseAdmin, purchase.user_id, userPushKey))
+      ) {
+        try {
+          await sendPushIfEnabled(
+            purchase.user_id,
+            {
+              title: '✅ Προσφορά εξαργυρώθηκε!',
+              body: `"${discount.title}" εξαργυρώθηκε επιτυχώς`,
+              tag: `offer-redeemed-${purchase.id}`,
+              data: {
+                url: '/dashboard-user/offers',
+                type: 'offer_redeemed',
+                entityType: 'offer',
+                entityId: purchase.id,
+              },
             },
-          },
-          supabaseAdmin
-        );
-        logStep("User push notification sent");
-      } catch (pushError) {
-        logStep("User push failed", pushError);
+            supabaseAdmin
+          );
+          await markAsSent(supabaseAdmin, purchase.user_id, userPushKey, "offer", purchase.id);
+          logStep("User push notification sent");
+        } catch (pushError) {
+          logStep("User push failed", pushError);
+        }
+      } else if (purchase.user_id && userPushKey) {
+        logStep("Skipping duplicate user push", { userPushKey });
       }
-    }
 
-    // Send push notification to business (ALWAYS for essential)
-    if (businessData?.user_id) {
-      try {
-        await sendPushIfEnabled(
-          businessData.user_id,
-          {
-            title: '✅ Εξαργύρωση προσφοράς!',
-            body: `${customerName} εξαργύρωσε "${discount.title}"`,
-            tag: `biz-offer-redeemed-${purchase.id}`,
-            data: {
-              url: '/dashboard-business/discounts',
-              type: 'offer_redeemed',
-              entityType: 'offer',
-              entityId: purchase.id,
+      // Send push notification to business
+      if (
+        businessData?.user_id &&
+        bizPushKey &&
+        !(await wasAlreadySent(supabaseAdmin, businessData.user_id, bizPushKey))
+      ) {
+        try {
+          await sendPushIfEnabled(
+            businessData.user_id,
+            {
+              title: '✅ Εξαργύρωση προσφοράς!',
+              body: `${customerName} εξαργύρωσε "${discount.title}"`,
+              tag: `biz-offer-redeemed-${purchase.id}`,
+              data: {
+                url: '/dashboard-business/discounts',
+                type: 'offer_redeemed',
+                entityType: 'offer',
+                entityId: purchase.id,
+              },
             },
-          },
-          supabaseAdmin
-        );
-        logStep("Business push notification sent");
-      } catch (pushError) {
-        logStep("Business push failed", pushError);
+            supabaseAdmin
+          );
+          await markAsSent(supabaseAdmin, businessData.user_id, bizPushKey, "offer", purchase.id);
+          logStep("Business push notification sent");
+        } catch (pushError) {
+          logStep("Business push failed", pushError);
+        }
+      } else if (businessData?.user_id && bizPushKey) {
+        logStep("Skipping duplicate business push", { bizPushKey });
       }
-    }
 
-    // Send emails (ALWAYS) to both user + business
+    // Send emails (ALWAYS) to both user + business, with idempotency and auth-email fallback
     try {
-      const [{ data: userEmailRow }, { data: bizEmailRow }] = await Promise.all([
-        supabaseAdmin.from('profiles').select('email').eq('id', purchase.user_id).single(),
-        businessData?.user_id
-          ? supabaseAdmin.from('profiles').select('email').eq('id', businessData.user_id).single()
-          : Promise.resolve({ data: null } as any),
-      ]);
-
-      const userEmail = (userEmailRow as any)?.email as string | undefined;
-      const businessEmail = (bizEmailRow as any)?.email as string | undefined;
+      const userEmail = purchase.user_id ? await getEmailForUserId(supabaseAdmin, purchase.user_id) : null;
+      const businessEmail = businessData?.user_id ? await getEmailForUserId(supabaseAdmin, businessData.user_id) : null;
 
       const subjectUser = `✅ Η προσφορά εξαργυρώθηκε: ${discount.title}`;
       const subjectBiz = `✅ Νέα εξαργύρωση προσφοράς: ${discount.title}`;
+
+      const userEmailKey = purchase.user_id
+        ? buildNotificationKey({ channel: "email", eventType: "offer_redeemed", recipientUserId: purchase.user_id, entityType: "offer", entityId: purchase.id })
+        : null;
+
+      const bizEmailKey = businessData?.user_id
+        ? buildNotificationKey({ channel: "email", eventType: "offer_redeemed", recipientUserId: businessData.user_id, entityType: "offer", entityId: purchase.id })
+        : null;
 
       const baseWrap = (content: string) => `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0;padding:20px;background:#f4f4f5;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);"><div style="background:linear-gradient(180deg,#0d3b66 0%,#4ecdc4 100%);padding:48px 24px 36px;text-align:center;"><h1 style="color:#fff;margin:0;font-size:42px;font-weight:bold;letter-spacing:4px;font-family:'Cinzel',Georgia,serif;">ΦΟΜΟ</h1><p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Offer Redemption</p></div><div style="padding:32px 24px;">${content}</div><div style="background:#102b4a;padding:28px;text-align:center;"><p style="color:#3ec3b7;font-size:18px;font-weight:bold;letter-spacing:2px;margin:0 0 8px;font-family:'Cinzel',Georgia,serif;">ΦΟΜΟ</p><p style="color:#94a3b8;font-size:12px;margin:0;">© 2025 ΦΟΜΟ.</p></div></div></body></html>`;
 
@@ -454,25 +494,27 @@ Deno.serve(async (req) => {
         <p style="color:#475569;margin:0;line-height:1.6;"><strong>${customerName || 'Πελάτης'}</strong> εξαργύρωσε την προσφορά <strong>${discount.title}</strong>.</p>
       `);
 
-      if (userEmail) {
+      if (purchase.user_id && userEmail && userEmailKey && !(await wasAlreadySent(supabaseAdmin, purchase.user_id, userEmailKey))) {
         await resend.emails.send({
           from: "ΦΟΜΟ <notifications@fomo.com.cy>",
           to: [userEmail],
           subject: subjectUser,
           html: userHtml,
         });
+        await markAsSent(supabaseAdmin, purchase.user_id, userEmailKey, "offer", purchase.id);
       }
 
-      if (businessEmail) {
+      if (businessData?.user_id && businessEmail && bizEmailKey && !(await wasAlreadySent(supabaseAdmin, businessData.user_id, bizEmailKey))) {
         await resend.emails.send({
           from: "ΦΟΜΟ <notifications@fomo.com.cy>",
           to: [businessEmail],
           subject: subjectBiz,
           html: bizHtml,
         });
+        await markAsSent(supabaseAdmin, businessData.user_id, bizEmailKey, "offer", purchase.id);
       }
 
-      logStep('Offer redemption emails sent', { user: !!userEmail, business: !!businessEmail });
+      logStep('Offer redemption emails handled', { user: !!userEmail, business: !!businessEmail });
     } catch (emailErr) {
       logStep('Offer redemption email error (non-fatal)', {
         error: emailErr instanceof Error ? emailErr.message : String(emailErr),

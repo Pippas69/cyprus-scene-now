@@ -374,6 +374,32 @@ export async function sendEncryptedPush(
     { auth: { persistSession: false } }
   );
 
+  // Global dedupe by payload.tag across ALL callers/functions.
+  // This prevents double push notifications when multiple flows inadvertently fire.
+  if (payload.tag) {
+    try {
+      const pushTagKey = `push_tag:${userId}:${payload.tag}`;
+      const { data: existing } = await client
+        .from("notification_log")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("notification_type", pushTagKey)
+        .maybeSingle();
+
+      if (existing) {
+        logStep("Skipping duplicate push by tag", { userId, tag: payload.tag });
+        return { sent: 0, failed: 0 };
+      }
+    } catch (e) {
+      // Non-fatal: if the log table is unavailable, we still attempt delivery.
+      logStep("Push tag dedupe check failed (non-fatal)", {
+        userId,
+        tag: payload.tag,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
   // Get user's push subscriptions
   const { data: subscriptions, error: subError } = await client
     .from("push_subscriptions")
@@ -467,6 +493,26 @@ export async function sendEncryptedPush(
           error: result.value.error 
         });
       }
+    }
+  }
+
+  // Mark tag as sent (best effort) so we can dedupe across callers.
+  if (payload.tag && sent > 0) {
+    try {
+      const pushTagKey = `push_tag:${userId}:${payload.tag}`;
+      await client.from("notification_log").insert({
+        user_id: userId,
+        notification_type: pushTagKey,
+        reference_type: "push_tag",
+        reference_id: payload.tag,
+        sent_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      logStep("Failed to mark push tag idempotency (non-fatal)", {
+        userId,
+        tag: payload.tag,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 
