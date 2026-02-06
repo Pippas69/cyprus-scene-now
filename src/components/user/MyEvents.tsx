@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUserRSVPs } from '@/hooks/useUserRSVPs';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,6 +22,8 @@ interface MyEventsProps {
 
 export const MyEvents = ({ userId, language }: MyEventsProps) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialSubtab = searchParams.get('subtab') || 'going';
   const { interested, going, pastInterested, pastGoing, loading: rsvpLoading } = useUserRSVPs(userId);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -292,7 +294,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="going" className="w-full">
+      <Tabs defaultValue={initialSubtab} className="w-full">
         <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
           <TabsTrigger 
             value="going" 
