@@ -1,6 +1,4 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
-import { createClient } from "npm:@supabase/supabase-js@2";
-import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -155,27 +153,10 @@ Deno.serve(async (req) => {
 
     logStep("Email sent successfully", emailResponse);
 
-    // Send push notification if businessUserId is provided
-    if (businessUserId) {
-      const supabaseClient = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-        { auth: { persistSession: false } }
-      );
 
-      const pushResult = await sendPushIfEnabled(businessUserId, {
-        title: '🎟️ Νέα Πώληση Εισιτηρίων!',
-        body: `${customerName || 'Κάποιος'} αγόρασε ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} για ${eventTitle}`,
-        tag: `ticket-sale-${orderId}`,
-        data: {
-          url: '/dashboard-business/ticket-sales',
-          type: 'ticket_sale',
-          orderId,
-          eventId,
-        },
-      }, supabaseClient);
-      logStep("Push notification result", pushResult);
-    }
+    // NOTE: Push for ticket sales is sent by the payment completion flow.
+    // This function is email-only to avoid duplicate push notifications.
+
 
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
