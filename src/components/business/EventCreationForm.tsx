@@ -661,7 +661,8 @@ const EventCreationForm = ({
       setBoostDialogOpen(true);
     } catch (err) {
       console.error('Error creating event:', err);
-      toast.error(t.eventCreateFailed);
+      const message = (err as any)?.message || (err as any)?.error_description || t.eventCreateFailed;
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
