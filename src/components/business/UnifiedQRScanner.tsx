@@ -56,6 +56,7 @@ interface ScanResult {
     checkedInAt?: string;
     // Student
     verificationId?: string;
+    redemptionId?: string;
     studentName?: string;
     universityName?: string;
     avatarUrl?: string;
@@ -330,6 +331,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
         originalPriceCents: originalCents,
         discountedPriceCents: discountedCents,
         itemDescription: itemDescription || undefined,
+        redemptionId: scanResult.details.redemptionId,
       });
 
       setDiscountRecorded(true);

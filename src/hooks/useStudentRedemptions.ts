@@ -95,6 +95,7 @@ export function useCreateStudentRedemption() {
       originalPriceCents,
       discountedPriceCents,
       itemDescription,
+      redemptionId,
     }: {
       studentVerificationId: string;
       businessId: string;
@@ -102,21 +103,39 @@ export function useCreateStudentRedemption() {
       originalPriceCents: number;
       discountedPriceCents: number;
       itemDescription?: string;
+      redemptionId?: string;
     }) => {
+      const payload = {
+        scanned_by: scannedBy || null,
+        original_price_cents: originalPriceCents,
+        discounted_price_cents: discountedPriceCents,
+        discount_amount_cents: originalPriceCents - discountedPriceCents,
+        item_description: itemDescription || null,
+      };
+
+      // If a redemption already exists (created at scan-time), update it instead of inserting a new visit.
+      if (redemptionId) {
+        const { data, error } = await supabase
+          .from('student_discount_redemptions')
+          .update(payload)
+          .eq('id', redemptionId)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
+
       const { data, error } = await supabase
         .from('student_discount_redemptions')
         .insert({
           student_verification_id: studentVerificationId,
           business_id: businessId,
-          scanned_by: scannedBy || null,
-          original_price_cents: originalPriceCents,
-          discounted_price_cents: discountedPriceCents,
-          discount_amount_cents: originalPriceCents - discountedPriceCents,
-          item_description: itemDescription || null,
+          ...payload,
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
