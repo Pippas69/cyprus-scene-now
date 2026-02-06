@@ -343,6 +343,24 @@ Deno.serve(async (req) => {
       logStep("User in-app notification error", String(notifError));
     }
 
+    // Send push notification to user
+    try {
+      const pushResult = await sendPushIfEnabled(user.id, {
+        title: '🎁 Προσφορά διεκδικήθηκε!',
+        body: `"${discount.title}" από ${discount.businesses.name}`,
+        tag: `offer-claim-${purchase.id}`,
+        data: {
+          url: `/dashboard-user/offers`,
+          type: 'offer_claimed',
+          entityType: 'offer',
+          entityId: purchase.id,
+        },
+      }, supabaseAdmin);
+      logStep("User push notification sent", pushResult);
+    } catch (pushError) {
+      logStep("User push notification error", String(pushError));
+    }
+
     // Send notification to business
     if (businessOwner?.email) {
       try {
