@@ -295,7 +295,7 @@ Deno.serve(async (req) => {
           .single();
 
         if (profile?.email) {
-          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-sale-notification`, {
+          const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-sale-notification`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -314,7 +314,13 @@ Deno.serve(async (req) => {
               businessUserId,
             }),
           });
-          logStep("Business email notification sent");
+
+          if (!emailResponse.ok) {
+            const errorData = await emailResponse.text();
+            logStep("Business email send failed", { status: emailResponse.status, error: errorData });
+          } else {
+            logStep("Business email notification sent successfully");
+          }
         }
       } catch (err) {
         logStep("Business email error", { error: err instanceof Error ? err.message : String(err) });
