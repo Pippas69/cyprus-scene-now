@@ -492,17 +492,18 @@ async function handleOfferQR(
 
   logStep("Offer redeemed", { purchaseId: purchase.id });
 
-  // Get business owner user_id for in-app notification
+  // Get business owner user_id and name for notifications
   const { data: businessData } = await supabaseAdmin
     .from("businesses")
-    .select("user_id")
+    .select("user_id, name")
     .eq("id", businessId)
     .single();
+
+  const customerName = profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() : 'Πελάτης';
 
   // Create in-app notification for business owner
   if (businessData?.user_id) {
     try {
-      const customerName = profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() : 'Πελάτης';
       await supabaseAdmin.from('notifications').insert({
         user_id: businessData.user_id,
         title: '✅ Εξαργύρωση προσφοράς!',
@@ -517,6 +518,26 @@ async function handleOfferQR(
       logStep("Business in-app notification created for offer redemption");
     } catch (notifError) {
       logStep("Failed to create business in-app notification", notifError);
+    }
+  }
+
+  // Create in-app notification for user (offer holder)
+  if (purchase.user_id) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: purchase.user_id,
+        title: '✅ Προσφορά εξαργυρώθηκε!',
+        message: `"${discount.title}"${businessData?.name ? ` - ${businessData.name}` : ''} εξαργυρώθηκε επιτυχώς`,
+        type: 'offer',
+        event_type: 'offer_redeemed',
+        entity_type: 'offer',
+        entity_id: purchase.id,
+        deep_link: '/dashboard-user/offers',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created for offer redemption");
+    } catch (notifError) {
+      logStep("Failed to create user in-app notification", notifError);
     }
   }
 
