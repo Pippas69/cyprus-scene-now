@@ -200,11 +200,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const isMobile = useIsMobile();
   const t = translations[language];
 
-  // Preview-only: allow a free (0€) reservation to avoid Stripe for testing.
-  const isPreviewOrigin =
-    typeof window !== 'undefined' &&
-    (window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
-  const allowFreePreviewBooking = isPreviewOrigin && import.meta.env.MODE !== 'production';
+  // REMOVED: Preview-only free booking logic - always use Stripe checkout
 
   // State
   const [step, setStep] = useState(1);
@@ -295,8 +291,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   };
 
   const price = getPrice();
-  // Customer pays the prepaid amount only - commission is deducted from this on the backend
-  const total = allowFreePreviewBooking ? 0 : (price || 0);
+  // Customer pays the prepaid amount - always use real price
+  const total = price || 0;
 
   // Handle checkout
   const handleCheckout = async () => {
@@ -331,43 +327,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     }
   };
 
-  const handleFreeReservation = async () => {
-    if (!allowFreePreviewBooking) return;
-    if (!selectedSeating) return;
-
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-free-reservation-event', {
-        body: {
-          event_id: eventId,
-          seating_type_id: selectedSeating.id,
-          party_size: partySize,
-          reservation_name: reservationName,
-          phone_number: phoneNumber,
-          special_requests: specialRequests || null,
-        },
-      });
-
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-
-      // Show success screen
-      setSuccessData({
-        qrToken: (data as any)?.qr_code_token || '',
-        confirmationCode: (data as any)?.confirmation_code || '',
-        prepaidAmount: total,
-      });
-    } catch (err) {
-      console.error('Error creating free reservation:', err);
-      toast.error(language === 'el' ? 'Σφάλμα δημιουργίας κράτησης' : 'Error creating reservation');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // REMOVED: handleFreeReservation - all reservations now go through Stripe
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const canProceedToStep3 = allowFreePreviewBooking ? true : price !== null;
+  const canProceedToStep3 = price !== null;
   const canProceedToStep4 = reservationName.trim().length >= 2;
 
   // Format price
@@ -634,11 +598,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t.prepaidAmount}</span>
                 <span>
-                  {allowFreePreviewBooking
-                    ? formatPrice(0)
-                    : price
-                      ? formatPrice(price)
-                      : '-'}
+                  {price ? formatPrice(price) : '-'}
                 </span>
               </div>
               <div className="flex justify-between font-bold text-lg">
@@ -680,12 +640,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         </Button>
       ) : (
         <Button
-          onClick={allowFreePreviewBooking ? handleFreeReservation : handleCheckout}
-          disabled={
-            submitting ||
-            !selectedSeating ||
-            (!allowFreePreviewBooking && !price)
-          }
+          onClick={handleCheckout}
+          disabled={submitting || !selectedSeating || !price}
           className="gap-2"
         >
           {submitting ? (
@@ -696,10 +652,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           ) : (
             <>
               <CreditCard className="h-4 w-4" />
-              {allowFreePreviewBooking
-                ? (language === 'el' ? 'Δωρεάν Κράτηση' : 'Free Reservation')
-                : t.pay}{' '}
-              {formatPrice(total)}
+              {t.pay} {formatPrice(total)}
             </>
           )}
         </Button>
