@@ -176,18 +176,10 @@ serve(async (req) => {
       throw new Error("Failed to create reservation");
     }
 
-    // Send reservation notifications (user confirmation + business alert)
-    // Best-effort: do not fail checkout/session creation if notifications fail.
-    try {
-      await supabaseService.functions.invoke('send-reservation-notification', {
-        body: {
-          reservationId: reservation.id,
-          type: 'new',
-        },
-      });
-    } catch (e) {
-      console.error("[create-reservation-event-checkout] send-reservation-notification failed", e);
-    }
+    // NOTE: Notifications are NOT sent here. They are sent by the
+    // process-reservation-event-payment webhook AFTER the user completes payment.
+    // This ensures users and businesses only receive "confirmed" notifications
+    // once payment has actually succeeded.
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
