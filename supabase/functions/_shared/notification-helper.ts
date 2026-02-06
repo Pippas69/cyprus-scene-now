@@ -119,12 +119,14 @@ async function sendPushNotification(
   }
 
   // Build push payload
+  const extra = !data.entityId ? `${data.title}::${data.message}`.slice(0, 64) : null;
   const payload: PushPayload = {
     title: data.title,
     body: data.message,
     icon: "/fomo-logo-new.png",
     badge: "/fomo-logo-new.png",
-    tag: `${data.eventType}-${data.entityId || Date.now()}`,
+    // Deterministic tag so retries/callers don't create duplicates
+    tag: `n:${data.eventType}:${data.entityType || 'none'}:${data.entityId || extra || 'none'}`.slice(0, 120),
     data: {
       url: data.deepLink || "/",
       type: data.eventType,

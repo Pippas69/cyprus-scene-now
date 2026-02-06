@@ -375,28 +375,33 @@ export async function sendEncryptedPush(
   );
 
   // Global dedupe by payload.tag across ALL callers/functions.
-  // This prevents double push notifications when multiple flows inadvertently fire.
+  // Race-safe: we "reserve" the tag in notification_log using the unique index.
+  // If another invocation already reserved it, we skip.
+  let reservedPushTagKey: string | null = null;
   if (payload.tag) {
-    try {
-      const pushTagKey = `push_tag:${userId}:${payload.tag}`;
-      const { data: existing } = await client
-        .from("notification_log")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("notification_type", pushTagKey)
-        .maybeSingle();
+    reservedPushTagKey = `push_tag:${userId}:${payload.tag}`;
+    const { error } = await client.from("notification_log").insert({
+      user_id: userId,
+      notification_type: reservedPushTagKey,
+      reference_type: "push_tag",
+      reference_id: payload.tag,
+      // Reserve first; set after successful delivery.
+      sent_at: null,
+    });
 
-      if (existing) {
-        logStep("Skipping duplicate push by tag", { userId, tag: payload.tag });
+    if (error) {
+      if (error.code === "23505" || /duplicate key/i.test(error.message)) {
+        logStep("Skipping duplicate push by tag (reserved)", { userId, tag: payload.tag });
         return { sent: 0, failed: 0 };
       }
-    } catch (e) {
+
       // Non-fatal: if the log table is unavailable, we still attempt delivery.
-      logStep("Push tag dedupe check failed (non-fatal)", {
+      logStep("Push tag reserve failed (non-fatal)", {
         userId,
         tag: payload.tag,
-        error: e instanceof Error ? e.message : String(e),
+        error: error.message,
       });
+      reservedPushTagKey = null;
     }
   }
 
@@ -496,19 +501,26 @@ export async function sendEncryptedPush(
     }
   }
 
-  // Mark tag as sent (best effort) so we can dedupe across callers.
-  if (payload.tag && sent > 0) {
+  // Finalize reservation row for tag-dedupe.
+  if (reservedPushTagKey) {
     try {
-      const pushTagKey = `push_tag:${userId}:${payload.tag}`;
-      await client.from("notification_log").insert({
-        user_id: userId,
-        notification_type: pushTagKey,
-        reference_type: "push_tag",
-        reference_id: payload.tag,
-        sent_at: new Date().toISOString(),
-      });
+      if (sent > 0) {
+        await client
+          .from("notification_log")
+          .update({ sent_at: new Date().toISOString() })
+          .eq("user_id", userId)
+          .eq("notification_type", reservedPushTagKey);
+      } else {
+        // If we didn't deliver to any endpoint, remove the reservation so a retry can happen.
+        await client
+          .from("notification_log")
+          .delete()
+          .eq("user_id", userId)
+          .eq("notification_type", reservedPushTagKey)
+          .is("sent_at", null);
+      }
     } catch (e) {
-      logStep("Failed to mark push tag idempotency (non-fatal)", {
+      logStep("Failed to finalize push tag reservation (non-fatal)", {
         userId,
         tag: payload.tag,
         error: e instanceof Error ? e.message : String(e),
