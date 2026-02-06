@@ -390,13 +390,50 @@ export async function sendEncryptedPush(
     return { sent: 0, failed: 0 };
   }
 
+  // Dedupe subscriptions by endpoint to prevent double notifications when the same
+  // device/browser is subscribed multiple times.
+  const byEndpoint = new Map<string, PushSubscription>();
+  const duplicates: PushSubscription[] = [];
+
+  for (const sub of subscriptions as PushSubscription[]) {
+    if (!sub?.endpoint) continue;
+    if (byEndpoint.has(sub.endpoint)) {
+      duplicates.push(sub);
+      continue;
+    }
+    byEndpoint.set(sub.endpoint, sub);
+  }
+
+  // Best-effort cleanup of true duplicates (do NOT block sending)
+  if (duplicates.length > 0) {
+    try {
+      await client
+        .from("push_subscriptions")
+        .delete()
+        .in(
+          "id",
+          duplicates
+            .map((d) => d.id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0)
+        );
+      logStep("Removed duplicate subscriptions", { userId, removed: duplicates.length });
+    } catch (e) {
+      logStep("Failed to remove duplicate subscriptions (non-fatal)", {
+        userId,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
+  const uniqueSubscriptions = Array.from(byEndpoint.values());
+
   // Get and clean VAPID keys
-  const vapidPublicKey = (Deno.env.get("VAPID_PUBLIC_KEY") ?? "").trim().replace(/^["']|["']$/g, '');
-  const vapidPrivateKey = (Deno.env.get("VAPID_PRIVATE_KEY") ?? "").trim().replace(/^["']|["']$/g, '');
+  const vapidPublicKey = (Deno.env.get("VAPID_PUBLIC_KEY") ?? "").trim().replace(/^['"]|['"]$/g, '');
+  const vapidPrivateKey = (Deno.env.get("VAPID_PRIVATE_KEY") ?? "").trim().replace(/^['"]|['"]$/g, '');
 
   if (!vapidPublicKey || !vapidPrivateKey) {
     logStep("VAPID keys not configured");
-    return { sent: 0, failed: subscriptions.length };
+    return { sent: 0, failed: uniqueSubscriptions.length };
   }
 
   // Build notification payload
@@ -411,7 +448,7 @@ export async function sendEncryptedPush(
 
   // Send to all subscriptions in parallel
   const results = await Promise.allSettled(
-    subscriptions.map((sub: PushSubscription) =>
+    uniqueSubscriptions.map((sub: PushSubscription) =>
       sendToSubscription(sub, notificationPayload, vapidPublicKey, vapidPrivateKey, client)
     )
   );
