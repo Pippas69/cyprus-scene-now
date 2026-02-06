@@ -248,9 +248,9 @@ serve(async (req) => {
       mode: "payment",
       success_url:
         success_url ||
-        `${req.headers.get("origin")}/reservations?success=true&reservation_id=${reservation.id}`,
+        `${req.headers.get("origin")}/dashboard-user/reservations?success=true&reservation_id=${reservation.id}`,
       cancel_url:
-        cancel_url || `${req.headers.get("origin")}/event/${event_id}?cancelled=true`,
+        cancel_url || `${req.headers.get("origin")}/ekdiloseis/${event_id}?cancelled=true`,
       metadata: {
         type: "reservation_event",
         event_id,
