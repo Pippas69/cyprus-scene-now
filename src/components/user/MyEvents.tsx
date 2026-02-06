@@ -22,6 +22,8 @@ interface MyEventsProps {
 
 export const MyEvents = ({ userId, language }: MyEventsProps) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialSubtab = searchParams.get('subtab') || 'going';
   const { interested, going, pastInterested, pastGoing, loading: rsvpLoading } = useUserRSVPs(userId);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
