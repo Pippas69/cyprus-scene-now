@@ -284,9 +284,9 @@ Deno.serve(async (req) => {
       .eq("id", discount.businesses.user_id)
       .single();
 
-    // Send email to user
+    // Send email + in-app + push to user
     try {
-      await fetch(`${supabaseUrl}/functions/v1/send-offer-claim-email`, {
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-offer-claim-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -311,16 +311,35 @@ Deno.serve(async (req) => {
           validDays: discount.valid_days,
           validStartTime: discount.valid_start_time,
           validEndTime: discount.valid_end_time,
-          showReservationCta: false, // No longer show CTA after claim
+          showReservationCta: false,
           businessId: discount.business_id,
           hasReservation: !!reservationId,
           reservationDate: reservationData?.preferred_date,
           reservationTime: reservationData?.preferred_time,
         }),
       });
-      logStep("User email sent");
+      const emailResult = await emailResponse.text();
+      logStep("User email sent", { status: emailResponse.status, result: emailResult.substring(0, 100) });
     } catch (emailError) {
-      logStep("User email error", emailError);
+      logStep("User email error", String(emailError));
+    }
+
+    // Also create in-app notification directly (backup) 
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: user.id,
+        title: '🎁 Προσφορά διεκδικήθηκε!',
+        message: `"${discount.title}" από ${discount.businesses.name} - έτοιμη για εξαργύρωση`,
+        type: 'offer',
+        event_type: 'offer_claimed',
+        entity_type: 'offer',
+        entity_id: purchase.id,
+        deep_link: `/dashboard-user/offers`,
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created directly");
+    } catch (notifError) {
+      logStep("User in-app notification error", String(notifError));
     }
 
     // Send notification to business
