@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,16 +126,66 @@ Deno.serve(async (req) => {
     // Fetch user email, event details, business name, and cover image for email notification
     const { data: orderDetails } = await supabaseClient
       .from("ticket_orders")
-      .select("customer_email, customer_name, events(title, start_at, location, cover_image_url, businesses(name))")
+      .select("customer_email, customer_name, events(title, start_at, location, cover_image_url, business_id, businesses(user_id, name, logo_url))")
       .eq("id", orderId)
       .single();
 
-    // Send email with tickets - now with proper await and error handling
+    const event = orderDetails?.events as any;
+    const eventTitle = event?.title || "Event";
+    const eventDate = event?.start_at || "";
+    const eventLocation = event?.location || "";
+    const eventCoverImage = event?.cover_image_url || "";
+    const businessName = event?.businesses?.name || "";
+    const businessUserId = event?.businesses?.user_id;
+    const customerName = orderDetails?.customer_name || "";
+    const ticketCount = ticketsToCreate.length;
+
+    // ==================== USER NOTIFICATIONS ====================
+    
+    // 1. User In-App Notification
+    try {
+      await supabaseClient.from('notifications').insert({
+        user_id: order.user_id,
+        title: '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
+        message: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
+        type: 'ticket',
+        event_type: 'ticket_purchased',
+        entity_type: 'ticket_order',
+        entity_id: orderId,
+        deep_link: '/dashboard-user/tickets',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created");
+    } catch (err) {
+      logStep("User in-app notification error", { error: err instanceof Error ? err.message : String(err) });
+    }
+
+    // 2. User Push Notification
+    try {
+      const userPushPayload: PushPayload = {
+        title: '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
+        body: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
+        icon: '/fomo-logo-new.png',
+        badge: '/fomo-logo-new.png',
+        tag: `ticket-order-${orderId}`,
+        data: {
+          url: '/dashboard-user/tickets',
+          type: 'ticket_purchased',
+          entityType: 'ticket_order',
+          entityId: orderId,
+        },
+      };
+      const pushResult = await sendEncryptedPush(order.user_id, userPushPayload, supabaseClient);
+      logStep("User push notification sent", pushResult);
+    } catch (err) {
+      logStep("User push notification error", { error: err instanceof Error ? err.message : String(err) });
+    }
+
+    // 3. User Email
     if (orderDetails?.customer_email && createdTickets && createdTickets.length > 0) {
       const tickets = createdTickets.map((t: any) => {
         const priceCents = (t.ticket_tiers as any)?.price_cents || 0;
-        const currency = (t.ticket_tiers as any)?.currency || 'eur';
-        const pricePaid = priceCents === 0 ? 'Free' : `€${(priceCents / 100).toFixed(2)}`;
+        const pricePaid = priceCents === 0 ? 'Δωρεάν' : `€${(priceCents / 100).toFixed(2)}`;
         
         return {
           id: t.id,
@@ -144,15 +195,6 @@ Deno.serve(async (req) => {
         };
       });
 
-      const event = orderDetails.events as any;
-      const eventTitle = event?.title || "Event";
-      const eventDate = event?.start_at || "";
-      const eventLocation = event?.location || "";
-      const eventCoverImage = event?.cover_image_url || "";
-      const businessName = event?.businesses?.name || "";
-      const customerName = orderDetails.customer_name || "";
-
-      // Call send-ticket-email function with proper error handling
       try {
         const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-email`, {
           method: "POST",
@@ -177,107 +219,110 @@ Deno.serve(async (req) => {
 
         if (!emailResponse.ok) {
           const errorData = await emailResponse.text();
-          logStep("Email send failed", { status: emailResponse.status, error: errorData });
+          logStep("User email send failed", { status: emailResponse.status, error: errorData });
         } else {
-          logStep("Email notification sent successfully");
+          logStep("User email notification sent successfully");
         }
       } catch (emailError) {
-        logStep("Email send error", { error: emailError instanceof Error ? emailError.message : String(emailError) });
+        logStep("User email send error", { error: emailError instanceof Error ? emailError.message : String(emailError) });
       }
     }
 
-    // Send ticket sale notification to business owner
-    try {
-      const event = orderDetails?.events as any;
-      const businessId = event?.business_id || order.event_id ? undefined : null;
+    // ==================== BUSINESS NOTIFICATIONS ====================
+    
+    if (businessUserId) {
+      const totalAmountFormatted = order.total_cents > 0 
+        ? `€${(order.total_cents / 100).toFixed(2)}` 
+        : 'Δωρεάν';
       
-      // Get the business owner's user_id and check notification preferences
-      const { data: eventData } = await supabaseClient
-        .from("events")
-        .select("business_id, title, businesses(user_id, name)")
-        .eq("id", order.event_id)
-        .single();
+      // Get primary tier name
+      const primaryTier = ticketBreakdown[0];
+      let tierName = "General";
+      if (primaryTier?.tierId) {
+        const { data: tierData } = await supabaseClient
+          .from("ticket_tiers")
+          .select("name")
+          .eq("id", primaryTier.tierId)
+          .single();
+        tierName = tierData?.name || "General";
+      }
 
-      if (eventData?.businesses) {
-        const businessUserId = (eventData.businesses as any).user_id;
-        const businessName = (eventData.businesses as any).name;
-        
-        // Check user preferences for ticket sale notifications
-        const { data: prefs } = await supabaseClient
-          .from("user_preferences")
-          .select("notification_ticket_sales, email_notifications_enabled, notification_push_enabled")
-          .eq("user_id", businessUserId)
+      // 1. Business In-App Notification
+      try {
+        await supabaseClient.from('notifications').insert({
+          user_id: businessUserId,
+          title: '🎟️ Νέα Πώληση Εισιτηρίων!',
+          message: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
+          type: 'business',
+          event_type: 'ticket_sale',
+          entity_type: 'ticket_order',
+          entity_id: orderId,
+          deep_link: '/dashboard-business/ticket-sales',
+          delivered_at: new Date().toISOString(),
+        });
+        logStep("Business in-app notification created");
+      } catch (err) {
+        logStep("Business in-app notification error", { error: err instanceof Error ? err.message : String(err) });
+      }
+
+      // 2. Business Push Notification
+      try {
+        const businessPushPayload: PushPayload = {
+          title: '🎟️ Νέα Πώληση Εισιτηρίων!',
+          body: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
+          icon: '/fomo-logo-new.png',
+          badge: '/fomo-logo-new.png',
+          tag: `ticket-sale-${orderId}`,
+          data: {
+            url: '/dashboard-business/ticket-sales',
+            type: 'ticket_sale',
+            entityType: 'ticket_order',
+            entityId: orderId,
+          },
+        };
+        const pushResult = await sendEncryptedPush(businessUserId, businessPushPayload, supabaseClient);
+        logStep("Business push notification sent", pushResult);
+      } catch (err) {
+        logStep("Business push notification error", { error: err instanceof Error ? err.message : String(err) });
+      }
+
+      // 3. Business Email
+      try {
+        const { data: profile } = await supabaseClient
+          .from("profiles")
+          .select("email")
+          .eq("id", businessUserId)
           .single();
 
-        // Only send if notifications are enabled (default to true if not set)
-        const shouldNotify = (prefs?.email_notifications_enabled !== false) && 
-                            (prefs?.notification_ticket_sales !== false);
-
-        if (shouldNotify) {
-          // Get business owner's email
-          const { data: profile } = await supabaseClient
-            .from("profiles")
-            .select("email")
-            .eq("id", businessUserId)
-            .single();
-
-          if (profile?.email) {
-            // Get primary ticket tier name
-            const primaryTier = ticketBreakdown[0];
-            const { data: tierData } = await supabaseClient
-              .from("ticket_tiers")
-              .select("name")
-              .eq("id", primaryTier?.tierId)
-              .single();
-
-            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-sale-notification`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-              },
-              body: JSON.stringify({
-                orderId,
-                eventId: order.event_id,
-                eventTitle: eventData.title,
-                customerName: orderDetails?.customer_name || "",
-                ticketCount: ticketsToCreate.length,
-                totalAmount: order.total_cents || 0,
-                tierName: tierData?.name || "General",
-                businessEmail: profile.email,
-                businessName,
-                businessUserId,
-              }),
-            });
-            logStep("Ticket sale notification sent to business owner");
-
-            // Create in-app notification for business owner
-            await supabaseClient.from('notifications').insert({
-              user_id: businessUserId,
-              title: '🎟️ Νέα Πώληση Εισιτηρίων!',
-              message: `${orderDetails?.customer_name || 'Πελάτης'} αγόρασε ${ticketsToCreate.length} εισιτήρια για "${eventData.title}"`,
-              type: 'business',
-              event_type: 'ticket_sale',
-              entity_type: 'ticket_order',
-              entity_id: orderId,
-              deep_link: '/dashboard-business/tickets',
-              delivered_at: new Date().toISOString(),
-            });
-            logStep("Business in-app notification created for ticket sale");
-          }
-        } else {
-          logStep("Ticket sale notifications disabled for business owner");
+        if (profile?.email) {
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-sale-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({
+              orderId,
+              eventId: order.event_id,
+              eventTitle,
+              customerName: customerName || "",
+              ticketCount,
+              totalAmount: order.total_cents || 0,
+              tierName,
+              businessEmail: profile.email,
+              businessName,
+              businessUserId,
+            }),
+          });
+          logStep("Business email notification sent");
         }
+      } catch (err) {
+        logStep("Business email error", { error: err instanceof Error ? err.message : String(err) });
       }
-    } catch (notifError) {
-      logStep("Error sending ticket sale notification", { error: notifError instanceof Error ? notifError.message : String(notifError) });
     }
 
     // Record commission in commission_ledger if applicable
     if (order.commission_cents > 0) {
-      // We would insert into commission_ledger here
-      // But we need a discount_id which isn't applicable for tickets
-      // For now, the commission is tracked in the order itself
       logStep("Commission recorded", { amount: order.commission_cents });
     }
 
