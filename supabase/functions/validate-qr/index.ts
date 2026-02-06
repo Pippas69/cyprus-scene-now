@@ -307,9 +307,11 @@ async function handleTicketQR(
   // Get business owner user_id for in-app notification
   const { data: eventData } = await supabaseAdmin
     .from("events")
-    .select("business_id, businesses(user_id)")
+    .select("business_id, businesses(user_id, name)")
     .eq("id", ticket.events?.id)
     .single();
+
+  const businessName = (eventData?.businesses as any)?.name || '';
 
   // Create in-app notification for business owner
   if (eventData?.businesses?.user_id) {
@@ -331,8 +333,28 @@ async function handleTicketQR(
     }
   }
 
-  // Send push notification to user when their ticket is checked in
+  // Create in-app notification for user (ticket holder)
   const ticketUserId = ticket.ticket_orders?.user_id;
+  if (ticketUserId) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: ticketUserId,
+        title: '✅ Check-in επιτυχές!',
+        message: `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}`,
+        type: 'ticket',
+        event_type: 'ticket_checked_in',
+        entity_type: 'ticket',
+        entity_id: ticket.id,
+        deep_link: `/event/${ticket.events?.id}`,
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created for ticket check-in");
+    } catch (notifError) {
+      logStep("Failed to create user in-app notification", notifError);
+    }
+  }
+
+  // Send push notification to user when their ticket is checked in
   if (ticketUserId) {
     try {
       await sendPushIfEnabled(ticketUserId, {
