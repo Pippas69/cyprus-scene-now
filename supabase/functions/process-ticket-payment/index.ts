@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
+import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -160,23 +161,37 @@ Deno.serve(async (req) => {
       logStep("User in-app notification error", { error: err instanceof Error ? err.message : String(err) });
     }
 
-    // 2. User Push Notification
+    // 2. User Push Notification (idempotent)
     try {
-      const userPushPayload: PushPayload = {
-        title: '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
-        body: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
-        icon: '/fomo-logo-new.png',
-        badge: '/fomo-logo-new.png',
-        tag: `ticket-order-${orderId}`,
-        data: {
-          url: '/dashboard-user/tickets',
-          type: 'ticket_purchased',
-          entityType: 'ticket_order',
-          entityId: orderId,
-        },
-      };
-      const pushResult = await sendEncryptedPush(order.user_id, userPushPayload, supabaseClient);
-      logStep("User push notification sent", pushResult);
+      const userPushKey = buildNotificationKey({
+        channel: "push",
+        eventType: "ticket_purchased",
+        recipientUserId: order.user_id,
+        entityType: "ticket_order",
+        entityId: orderId,
+      });
+
+      if (!(await wasAlreadySent(supabaseClient, order.user_id, userPushKey))) {
+        const userPushPayload: PushPayload = {
+          title: '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
+          body: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
+          icon: '/fomo-logo-new.png',
+          badge: '/fomo-logo-new.png',
+          tag: `ticket-order-${orderId}`,
+          data: {
+            url: '/dashboard-user/tickets',
+            type: 'ticket_purchased',
+            entityType: 'ticket_order',
+            entityId: orderId,
+          },
+        };
+
+        const pushResult = await sendEncryptedPush(order.user_id, userPushPayload, supabaseClient);
+        logStep("User push notification sent", pushResult);
+        await markAsSent(supabaseClient, order.user_id, userPushKey, "ticket_order", orderId);
+      } else {
+        logStep("Skipping duplicate user push", { userId: order.user_id, orderId });
+      }
     } catch (err) {
       logStep("User push notification error", { error: err instanceof Error ? err.message : String(err) });
     }
@@ -266,23 +281,36 @@ Deno.serve(async (req) => {
         logStep("Business in-app notification error", { error: err instanceof Error ? err.message : String(err) });
       }
 
-      // 2. Business Push Notification
+      // 2. Business Push Notification (idempotent)
       try {
-        const businessPushPayload: PushPayload = {
-          title: '🎟️ Νέα Πώληση Εισιτηρίων!',
-          body: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
-          icon: '/fomo-logo-new.png',
-          badge: '/fomo-logo-new.png',
-          tag: `ticket-sale-${orderId}`,
-          data: {
-            url: '/dashboard-business/ticket-sales',
-            type: 'ticket_sale',
-            entityType: 'ticket_order',
-            entityId: orderId,
-          },
-        };
-        const pushResult = await sendEncryptedPush(businessUserId, businessPushPayload, supabaseClient);
-        logStep("Business push notification sent", pushResult);
+        const bizPushKey = buildNotificationKey({
+          channel: "push",
+          eventType: "ticket_sale",
+          recipientUserId: businessUserId,
+          entityType: "ticket_order",
+          entityId: orderId,
+        });
+
+        if (!(await wasAlreadySent(supabaseClient, businessUserId, bizPushKey))) {
+          const businessPushPayload: PushPayload = {
+            title: '🎟️ Νέα Πώληση Εισιτηρίων!',
+            body: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
+            icon: '/fomo-logo-new.png',
+            badge: '/fomo-logo-new.png',
+            tag: `ticket-sale-${orderId}`,
+            data: {
+              url: '/dashboard-business/ticket-sales',
+              type: 'ticket_sale',
+              entityType: 'ticket_order',
+              entityId: orderId,
+            },
+          };
+          const pushResult = await sendEncryptedPush(businessUserId, businessPushPayload, supabaseClient);
+          logStep("Business push notification sent", pushResult);
+          await markAsSent(supabaseClient, businessUserId, bizPushKey, "ticket_order", orderId);
+        } else {
+          logStep("Skipping duplicate business push", { businessUserId, orderId });
+        }
       } catch (err) {
         logStep("Business push notification error", { error: err instanceof Error ? err.message : String(err) });
       }
