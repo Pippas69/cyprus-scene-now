@@ -331,6 +331,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
         originalPriceCents: originalCents,
         discountedPriceCents: discountedCents,
         itemDescription: itemDescription || undefined,
+        redemptionId: scanResult.details.redemptionId,
       });
 
       setDiscountRecorded(true);
