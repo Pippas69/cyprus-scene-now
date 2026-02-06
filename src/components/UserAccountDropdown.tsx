@@ -144,6 +144,33 @@ export const UserAccountDropdown = ({
             {t.myAccount}
           </DropdownMenuItem>
 
+          {/* 2. Account Switcher - Business/User toggle */}
+          {isBusinessDashboard ? (
+            <DropdownMenuItem 
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate('/feed');
+              }} 
+              className="text-sm cursor-pointer"
+            >
+              <User className="mr-2 h-4 w-4" />
+              {t.myUserAccount}
+            </DropdownMenuItem>
+          ) : (
+            !isBusinessLoading && isBusinessOwner && (
+              <DropdownMenuItem 
+                onClick={() => {
+                  setDropdownOpen(false);
+                  navigate('/dashboard-business');
+                }} 
+                className="text-sm cursor-pointer"
+              >
+                <Building2 className="mr-2 h-4 w-4" />
+                {t.myBusiness}
+              </DropdownMenuItem>
+            )
+          )}
+
           {/* Sign Out */}
           <DropdownMenuItem
             onClick={() => {
