@@ -839,7 +839,7 @@ async function handleStudentQR(
   logStep("Student verified", { verificationId: verification.id });
 
   // Record the redemption immediately (price entry is optional)
-  const { error: redemptionError } = await supabaseAdmin
+  const { data: redemptionRow, error: redemptionError } = await supabaseAdmin
     .from('student_discount_redemptions')
     .insert({
       student_verification_id: verification.id,
@@ -849,9 +849,11 @@ async function handleStudentQR(
       discounted_price_cents: 0,
       discount_amount_cents: 0,
       item_description: null,
-    });
+    })
+    .select('id')
+    .single();
 
-  if (redemptionError) {
+  if (redemptionError || !redemptionRow?.id) {
     logStep("Student redemption insert failed", { redemptionError });
     return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "student" }), {
       status: 200,
@@ -859,14 +861,18 @@ async function handleStudentQR(
     });
   }
 
-  logStep("Student redemption recorded", { verificationId: verification.id });
+  logStep("Student redemption recorded", { verificationId: verification.id, redemptionId: redemptionRow.id });
 
   // Return success - scan is recorded immediately
   return new Response(JSON.stringify({
     success: true,
     message: language === "el" ? "Φοιτητική έκπτωση καταγράφηκε!" : "Student discount recorded!",
     qrType: "student",
+    // IMPORTANT: Student scans should go straight to the price-entry UI (optional)
+    // to avoid duplicated success blocks in the unified scanner.
+    requiresPriceEntry: true,
     details: {
+      redemptionId: redemptionRow.id,
       verificationId: verification.id,
       studentName: profile?.name || "Unknown",
       universityName: verification.university_name,
@@ -874,6 +880,9 @@ async function handleStudentQR(
       discountPercent: business.student_discount_percent || 0,
     }
   }), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });

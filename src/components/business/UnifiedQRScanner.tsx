@@ -56,6 +56,7 @@ interface ScanResult {
     checkedInAt?: string;
     // Student
     verificationId?: string;
+    redemptionId?: string;
     studentName?: string;
     universityName?: string;
     avatarUrl?: string;
