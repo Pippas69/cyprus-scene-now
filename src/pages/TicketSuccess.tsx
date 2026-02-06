@@ -49,7 +49,7 @@ export const TicketSuccess = () => {
     const processPayment = async () => {
       const sessionId = searchParams.get("session_id");
       const orderId = searchParams.get("order_id");
-      const isFree = searchParams.get("free") === "true";
+      const freeParam = searchParams.get("free") === "true";
 
       if (!orderId) {
         setStatus("error");
@@ -58,11 +58,25 @@ export const TicketSuccess = () => {
       }
 
       try {
-        // For free tickets, call process-free-ticket
-        if (isFree) {
-          await supabase.functions.invoke("process-free-ticket", {
+        // Determine if this is a free order (URL param OR backend order total)
+        let isFreeOrder = freeParam;
+        if (!isFreeOrder && !sessionId) {
+          const { data: order, error: orderFetchError } = await supabase
+            .from("ticket_orders")
+            .select("total_cents")
+            .eq("id", orderId)
+            .single();
+
+          if (orderFetchError) throw orderFetchError;
+          isFreeOrder = (order?.total_cents ?? 0) === 0;
+        }
+
+        // For free tickets, call process-free-ticket (this triggers the ticket email)
+        if (isFreeOrder) {
+          const { error } = await supabase.functions.invoke("process-free-ticket", {
             body: { orderId },
           });
+          if (error) throw error;
         } else if (sessionId) {
           // For paid tickets
           const { data, error } = await supabase.functions.invoke("process-ticket-payment", {
