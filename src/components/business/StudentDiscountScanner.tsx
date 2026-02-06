@@ -375,7 +375,7 @@ export function StudentDiscountScanner({ businessId, userId, language }: Student
               <Button
                 onClick={handleApplyDiscount}
                 className="w-full"
-                disabled={!originalPrice || createRedemption.isPending}
+                disabled={createRedemption.isPending}
               >
                 {createRedemption.isPending ? (
                   <>
