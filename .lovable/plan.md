@@ -1,91 +1,81 @@
 
-## Account Role Switcher
+## Fix Business Email Notification - Missing Await
 
-Add a context-aware menu option in the user dropdown that allows users to switch between their User and Business accounts.
+### Problem
+In `supabase/functions/process-ticket-payment/index.ts` (line 298), the business email notification fetch call is missing `await` and doesn't check the response. This causes a fire-and-forget scenario where:
+1. The function doesn't wait for the response
+2. Errors are silently ignored
+3. The business never receives the email
 
----
-
-## How It Will Work
-
-- **When on User pages (Feed, Events, etc.)**: If the user owns a business, show "My Business" option → navigates to `/dashboard-business`
-- **When on Business Dashboard**: Show "My User Account" option → navigates to `/feed`
-
----
-
-## Changes Required
-
-### File: `src/components/UserAccountDropdown.tsx`
-
-1. **Import the hook**
-   - Add `useBusinessOwner` import
-
-2. **Add translations**
-   - Greek: "Η επιχείρησή μου" (My Business) and "Ο προσωπικός μου λογαριασμός" (My User Account)  
-   - English: "My Business" and "My User Account"
-
-3. **Add conditional menu item**
-   - If on business dashboard → Show "My User Account" button with User icon
-   - If on user pages AND user has business → Show "My Business" button with Building/Briefcase icon
-
-4. **Add click handlers**
-   - "My Business" → `navigate('/dashboard-business')`
-   - "My User Account" → `navigate('/feed')`
-
----
-
-## Technical Details
-
-```text
-┌─────────────────────────────┐
-│  [Avatar]                   │
-├─────────────────────────────┤
-│  👤 My Account              │  ← Always visible
-├─────────────────────────────┤
-│  🏢 My Business             │  ← Only if isBusinessOwner AND not on business dashboard
-│  ──── OR ────               │
-│  👤 My User Account         │  ← Only if on business dashboard
-├─────────────────────────────┤
-│  🚪 Sign Out                │  ← Always visible
-└─────────────────────────────┘
-```
-
-### Code Structure
+### Root Cause
+**Line 298** calls `fetch()` without `await` and without checking `emailResponse.ok`:
 
 ```typescript
-// Import
-import { useBusinessOwner } from '@/hooks/useBusinessOwner';
-import { Building2 } from 'lucide-react';
-
-// Inside component
-const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
-
-// Translations
-myBusiness: 'Η επιχείρησή μου',      // Greek
-myUserAccount: 'Ο προσωπικός μου λογαριασμός',
-myBusiness: 'My Business',            // English
-myUserAccount: 'My User Account',
-
-// Conditional menu item (between My Account and Sign Out)
-{isBusinessDashboard ? (
-  <DropdownMenuItem onClick={() => navigate('/feed')}>
-    <User className="mr-2 h-4 w-4" />
-    {t.myUserAccount}
-  </DropdownMenuItem>
-) : (
-  !isBusinessLoading && isBusinessOwner && (
-    <DropdownMenuItem onClick={() => navigate('/dashboard-business')}>
-      <Building2 className="mr-2 h-4 w-4" />
-      {t.myBusiness}
-    </DropdownMenuItem>
-  )
-)}
+await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-sale-notification`, {
+  // ... request body
+});  // ❌ Missing: proper await and response validation
 ```
 
----
+Compare to **line 199** (user email), which correctly handles this:
+```typescript
+const emailResponse = await fetch(...);  // ✅ Awaited
+if (!emailResponse.ok) {                 // ✅ Response checked
+  const errorData = await emailResponse.text();
+  logStep("User email send failed", { status: emailResponse.status, error: errorData });
+}
+```
 
-## Result
+### Solution
+Update the business email notification call (lines 290-321) to:
+1. **Add `await`** to wait for the fetch to complete
+2. **Store the response** in a variable
+3. **Check the response status** with `.ok`
+4. **Log errors** if the request fails
+5. **Match the pattern** used for user emails
 
-- Business owners can seamlessly switch between personal and business views
-- Clear visual distinction with appropriate icons (Building for business, User for personal)
-- No UI clutter for users without businesses
-- Works on both desktop and mobile
+### Code Change
+**File**: `supabase/functions/process-ticket-payment/index.ts`
+
+Replace lines 298-316:
+```typescript
+await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-sale-notification`, {
+  // ... request
+});
+logStep("Business email notification sent");
+```
+
+With:
+```typescript
+const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-sale-notification`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+  },
+  body: JSON.stringify({
+    orderId,
+    eventId: order.event_id,
+    eventTitle,
+    customerName: customerName || "",
+    ticketCount,
+    totalAmount: order.total_cents || 0,
+    tierName,
+    businessEmail: profile.email,
+    businessName,
+    businessUserId,
+  }),
+});
+
+if (!emailResponse.ok) {
+  const errorData = await emailResponse.text();
+  logStep("Business email send failed", { status: emailResponse.status, error: errorData });
+} else {
+  logStep("Business email notification sent successfully");
+}
+```
+
+### Result
+- Business owners will now receive ticket sale confirmation emails
+- Errors will be properly logged for debugging if the notification fails
+- The flow matches the user email pattern (already working correctly)
+- No other functionality is affected
