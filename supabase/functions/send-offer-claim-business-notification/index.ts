@@ -227,19 +227,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
-  } catch (error: any) {
-    logStep("ERROR", { message: error.message });
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
-  }
-});
