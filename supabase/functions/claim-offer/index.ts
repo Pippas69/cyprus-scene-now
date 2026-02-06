@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { localToUtcISOString } from "../_shared/timezone.ts";
+import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -284,9 +285,9 @@ Deno.serve(async (req) => {
       .eq("id", discount.businesses.user_id)
       .single();
 
-    // Send email to user
+    // Send email + in-app + push to user
     try {
-      await fetch(`${supabaseUrl}/functions/v1/send-offer-claim-email`, {
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-offer-claim-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -311,22 +312,59 @@ Deno.serve(async (req) => {
           validDays: discount.valid_days,
           validStartTime: discount.valid_start_time,
           validEndTime: discount.valid_end_time,
-          showReservationCta: false, // No longer show CTA after claim
+          showReservationCta: false,
           businessId: discount.business_id,
           hasReservation: !!reservationId,
           reservationDate: reservationData?.preferred_date,
           reservationTime: reservationData?.preferred_time,
         }),
       });
-      logStep("User email sent");
+      const emailResult = await emailResponse.text();
+      logStep("User email sent", { status: emailResponse.status, result: emailResult.substring(0, 100) });
     } catch (emailError) {
-      logStep("User email error", emailError);
+      logStep("User email error", String(emailError));
+    }
+
+    // Also create in-app notification directly (backup) 
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: user.id,
+        title: '🎁 Προσφορά διεκδικήθηκε!',
+        message: `"${discount.title}" από ${discount.businesses.name} - έτοιμη για εξαργύρωση`,
+        type: 'offer',
+        event_type: 'offer_claimed',
+        entity_type: 'offer',
+        entity_id: purchase.id,
+        deep_link: `/dashboard-user/offers`,
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created directly");
+    } catch (notifError) {
+      logStep("User in-app notification error", String(notifError));
+    }
+
+    // Send push notification to user
+    try {
+      const pushResult = await sendPushIfEnabled(user.id, {
+        title: '🎁 Προσφορά διεκδικήθηκε!',
+        body: `"${discount.title}" από ${discount.businesses.name}`,
+        tag: `offer-claim-${purchase.id}`,
+        data: {
+          url: `/dashboard-user/offers`,
+          type: 'offer_claimed',
+          entityType: 'offer',
+          entityId: purchase.id,
+        },
+      }, supabaseAdmin);
+      logStep("User push notification sent", pushResult);
+    } catch (pushError) {
+      logStep("User push notification error", String(pushError));
     }
 
     // Send notification to business
     if (businessOwner?.email) {
       try {
-        await fetch(`${supabaseUrl}/functions/v1/send-offer-claim-business-notification`, {
+        const businessNotifResponse = await fetch(`${supabaseUrl}/functions/v1/send-offer-claim-business-notification`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -347,10 +385,29 @@ Deno.serve(async (req) => {
             reservationTime: reservationData?.preferred_time,
           }),
         });
-        logStep("Business notification sent");
+        const businessNotifResult = await businessNotifResponse.text();
+        logStep("Business notification sent", { status: businessNotifResponse.status, result: businessNotifResult.substring(0, 100) });
       } catch (notifError) {
-        logStep("Business notification error", notifError);
+        logStep("Business notification error", String(notifError));
       }
+    }
+
+    // Also create in-app notification for business directly (backup)
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: discount.businesses.user_id,
+        title: '🎁 Νέα διεκδίκηση προσφοράς!',
+        message: `${userName} διεκδίκησε "${discount.title}" για ${partySize} ${partySize === 1 ? 'άτομο' : 'άτομα'}`,
+        type: 'business',
+        event_type: 'offer_claimed',
+        entity_type: 'offer',
+        entity_id: purchase.id,
+        deep_link: '/dashboard-business/offers',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("Business in-app notification created directly");
+    } catch (notifError) {
+      logStep("Business in-app notification error", String(notifError));
     }
 
     return new Response(
