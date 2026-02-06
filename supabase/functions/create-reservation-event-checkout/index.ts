@@ -20,6 +20,13 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
+    // Service client for privileged calls (notifications)
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
     // Get user from auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -154,6 +161,19 @@ serve(async (req) => {
     if (reservationError || !reservation) {
       console.error("Reservation creation error:", reservationError);
       throw new Error("Failed to create reservation");
+    }
+
+    // Send reservation notifications (user confirmation + business alert)
+    // Best-effort: do not fail checkout/session creation if notifications fail.
+    try {
+      await supabaseService.functions.invoke('send-reservation-notification', {
+        body: {
+          reservationId: reservation.id,
+          type: 'new',
+        },
+      });
+    } catch (e) {
+      console.error("[create-reservation-event-checkout] send-reservation-notification failed", e);
     }
 
     // Initialize Stripe

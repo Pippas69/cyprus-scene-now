@@ -121,6 +121,19 @@ serve(async (req) => {
       return json({ error: "Failed to create reservation" }, 400);
     }
 
+    // Send reservation notifications (user confirmation + business alert)
+    // Best-effort: do not fail the booking if notifications fail.
+    try {
+      await supabaseService.functions.invoke('send-reservation-notification', {
+        body: {
+          reservationId: reservation.id,
+          type: 'new',
+        },
+      });
+    } catch (e) {
+      console.error("[create-free-reservation-event] send-reservation-notification failed", e);
+    }
+
     // Decrement seating slots best-effort (avoid failing the whole response)
     try {
       await supabaseService.rpc("decrement_seating_slots", { p_seating_type_id: seatingTypeId });
