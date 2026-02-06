@@ -380,11 +380,16 @@ export async function sendEncryptedPush(
   let reservedPushTagKey: string | null = null;
   if (payload.tag) {
     reservedPushTagKey = `push_tag:${userId}:${payload.tag}`;
+
+    // IMPORTANT:
+    // - notification_log.reference_id is a UUID column in our schema.
+    // - payload.tag is an arbitrary string (e.g. "n:offer_redeemed:...") and must NOT be written there.
+    // We store the tag only inside notification_type (the unique key) and keep reference_id null.
     const { error } = await client.from("notification_log").insert({
       user_id: userId,
       notification_type: reservedPushTagKey,
       reference_type: "push_tag",
-      reference_id: payload.tag,
+      reference_id: null,
       // Reserve first; set after successful delivery.
       sent_at: null,
     });
