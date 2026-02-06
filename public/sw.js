@@ -1,6 +1,9 @@
-// Service Worker for Push Notifications
+// Service Worker for Push Notifications - v2.0.0
+// Force update: 2026-02-06T18:00
+const SW_VERSION = '2.0.0';
+
 self.addEventListener('push', (event) => {
-  console.log('[SW] Push received');
+  console.log('[SW v' + SW_VERSION + '] Push received');
 
   let data = {
     title: 'New Notification',

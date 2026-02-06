@@ -174,13 +174,16 @@ export function usePushNotifications(userId: string | null) {
         return false;
       }
 
-      // Register service worker
+      // Register service worker (always re-register to force update)
       console.log('[Push] Registering service worker...');
-      let registration = await navigator.serviceWorker.getRegistration('/sw.js');
-      if (!registration) {
-        registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        console.log('[Push] Service worker registered');
+      // Unregister old SW first to ensure fresh version
+      const existingReg = await navigator.serviceWorker.getRegistration('/sw.js');
+      if (existingReg) {
+        await existingReg.update();
+        console.log('[Push] Service worker updated');
       }
+      let registration = existingReg || await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      console.log('[Push] Service worker registered');
       
       // Wait for service worker to be ready
       await navigator.serviceWorker.ready;
