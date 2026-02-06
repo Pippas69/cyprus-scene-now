@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, LogOut, User } from 'lucide-react';
+import { Bell, Building2, LogOut, User } from 'lucide-react';
+import { useBusinessOwner } from '@/hooks/useBusinessOwner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -41,15 +42,20 @@ export const UserAccountDropdown = ({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
+
   const translations = {
     el: {
       myAccount: 'Ο λογαριασμός μου',
+      myBusiness: 'Η επιχείρησή μου',
+      myUserAccount: 'Ο προσωπικός μου λογαριασμός',
       notifications: 'Ειδοποιήσεις',
       signOut: 'Αποσύνδεση',
-      // (Dropdown no longer contains notifications; keep label for the bell icon)
     },
     en: {
       myAccount: 'My Account',
+      myBusiness: 'My Business',
+      myUserAccount: 'My User Account',
       notifications: 'Notifications',
       signOut: 'Sign Out',
     },
@@ -137,6 +143,33 @@ export const UserAccountDropdown = ({
             <User className="mr-2 h-4 w-4" />
             {t.myAccount}
           </DropdownMenuItem>
+
+          {/* 2. Account Switcher - Business/User toggle */}
+          {isBusinessDashboard ? (
+            <DropdownMenuItem 
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate('/feed');
+              }} 
+              className="text-sm cursor-pointer"
+            >
+              <User className="mr-2 h-4 w-4" />
+              {t.myUserAccount}
+            </DropdownMenuItem>
+          ) : (
+            !isBusinessLoading && isBusinessOwner && (
+              <DropdownMenuItem 
+                onClick={() => {
+                  setDropdownOpen(false);
+                  navigate('/dashboard-business');
+                }} 
+                className="text-sm cursor-pointer"
+              >
+                <Building2 className="mr-2 h-4 w-4" />
+                {t.myBusiness}
+              </DropdownMenuItem>
+            )
+          )}
 
           {/* Sign Out */}
           <DropdownMenuItem
