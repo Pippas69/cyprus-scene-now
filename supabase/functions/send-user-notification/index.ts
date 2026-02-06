@@ -3,6 +3,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
+import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
+import { getEmailForUserId } from "../_shared/user-email.ts";
+
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -79,6 +82,26 @@ Deno.serve(async (req) => {
 
     const essential = isEssentialEventType(data.eventType);
 
+    // Idempotency: avoid duplicate push/email/in-app for the same logical event.
+    // If entityId is missing, we include a stable "extra" derived from title+message.
+    const extra = !data.entityId ? `${data.title}::${data.message}`.slice(0, 160) : null;
+    const unifiedKey = buildNotificationKey({
+      channel: "inapp",
+      eventType: data.eventType,
+      recipientUserId: data.userId,
+      entityType: data.entityType ?? null,
+      entityId: data.entityId ?? null,
+      extra,
+    });
+
+    const already = await wasAlreadySent(supabase, data.userId, unifiedKey);
+    if (already) {
+      logStep("Skipping duplicate unified notification", { unifiedKey });
+      return new Response(JSON.stringify({ success: true, skippedDuplicate: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Get user preferences
     const { data: prefs } = await supabase
       .from('user_preferences')
@@ -137,17 +160,13 @@ Deno.serve(async (req) => {
     // 3. Send email
     // For essential confirmations, bypass the user preference flag.
     if (!data.skipEmail && data.emailSubject && data.emailHtml && (essential || prefs?.email_notifications_enabled !== false)) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', data.userId)
-        .single();
+      const userEmail = await getEmailForUserId(supabase, data.userId);
 
-      if (profile?.email) {
+      if (userEmail) {
         try {
           await resend.emails.send({
             from: "ΦΟΜΟ <notifications@fomo.com.cy>",
-            to: [profile.email],
+            to: [userEmail],
             subject: data.emailSubject,
             html: data.emailHtml,
           });
@@ -155,7 +174,18 @@ Deno.serve(async (req) => {
         } catch (err) {
           logStep('Email send error', String(err));
         }
+      } else {
+        logStep('Email skipped (no email found for user)', { userId: data.userId });
       }
+    }
+
+    // Mark idempotency AFTER attempting to send (best effort)
+    try {
+      await markAsSent(supabase, data.userId, unifiedKey, data.entityType ?? null, data.entityId ?? null);
+    } catch (e) {
+      logStep('Failed to mark notification idempotency (non-fatal)', {
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
 
     logStep("Notification sent", results);
