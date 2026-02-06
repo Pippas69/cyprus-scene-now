@@ -49,16 +49,25 @@ const wrapEmailContent = (content: string) => `
 `;
 
 interface OfferClaimBusinessNotificationRequest {
+  purchaseId?: string;
   businessEmail: string;
   businessName: string;
-  businessUserId?: string; // Added for push notifications
+  businessUserId?: string;
   offerTitle: string;
   customerName: string;
   partySize: number;
   claimedAt: string;
   remainingPeople: number;
   totalPeople: number | null;
+  hasReservation?: boolean;
+  reservationDate?: string;
+  reservationTime?: string;
 }
+
+const formatPartySizeText = (partySize: number) => {
+  if (partySize === 1) return 'ένα άτομο';
+  return `${partySize} άτομα`;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -84,10 +93,10 @@ Deno.serve(async (req) => {
     });
 
     // Availability status
-    const availabilityPercentage = data.totalPeople 
+    const availabilityPercentage = data.totalPeople
       ? Math.round((data.remainingPeople / data.totalPeople) * 100)
       : null;
-    
+
     const isLowAvailability = data.remainingPeople < 5;
     const isFullyClaimed = data.remainingPeople === 0;
 
@@ -101,7 +110,7 @@ Deno.serve(async (req) => {
       <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 22px; text-align: center;">
         Καλά νέα, ${data.businessName}!
       </h2>
-      
+
       <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6; text-align: center;">
         Κάποιος μόλις διεκδίκησε την προσφορά σας.
       </p>
@@ -110,7 +119,7 @@ Deno.serve(async (req) => {
         <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px; border-bottom: 2px solid #8b5cf6; padding-bottom: 8px;">
           📋 Λεπτομέρειες Διεκδίκησης
         </h3>
-        
+
         <table style="width: 100%; color: #475569; font-size: 14px;">
           <tr>
             <td style="padding: 8px 0; font-weight: 600;">Προσφορά:</td>
@@ -122,7 +131,7 @@ Deno.serve(async (req) => {
           </tr>
           <tr>
             <td style="padding: 8px 0; font-weight: 600;">Αριθμός ατόμων:</td>
-            <td style="padding: 8px 0; text-align: right;">${data.partySize} ${data.partySize === 1 ? 'άτομο' : 'άτομα'}</td>
+            <td style="padding: 8px 0; text-align: right;">${formatPartySizeText(data.partySize)}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; font-weight: 600;">Ώρα διεκδίκησης:</td>
@@ -136,14 +145,14 @@ Deno.serve(async (req) => {
         <h4 style="color: ${isFullyClaimed ? '#dc2626' : isLowAvailability ? '#d97706' : '#16a34a'}; margin: 0 0 12px 0; font-size: 16px;">
           ${isFullyClaimed ? '🔴 Η προσφορά εξαντλήθηκε!' : isLowAvailability ? '🟡 Χαμηλή διαθεσιμότητα' : '🟢 Κατάσταση Διαθεσιμότητας'}
         </h4>
-        
+
         <p style="color: #475569; margin: 0; font-size: 14px;">
-          ${isFullyClaimed 
+          ${isFullyClaimed
             ? 'Όλες οι διαθέσιμες θέσεις έχουν διεκδικηθεί. Η προσφορά έκλεισε αυτόματα.'
             : `Υπολειπόμενες θέσεις: <strong>${data.remainingPeople}</strong>${data.totalPeople ? ` / ${data.totalPeople}` : ''}`
           }
         </p>
-        
+
         ${availabilityPercentage !== null && !isFullyClaimed ? `
           <div style="margin-top: 12px; background: #e5e7eb; border-radius: 8px; height: 8px; overflow: hidden;">
             <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); height: 100%; width: ${100 - availabilityPercentage}%; border-radius: 8px;"></div>
@@ -168,7 +177,7 @@ Deno.serve(async (req) => {
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <noreply@fomo.com.cy>",
       to: [data.businessEmail],
-      subject: `🎁 Νέα διεκδίκηση: ${data.partySize} ${data.partySize === 1 ? 'άτομο' : 'άτομα'} για "${data.offerTitle}"`,
+      subject: `🎁 Νέα διεκδίκηση: ${formatPartySizeText(data.partySize)} για "${data.offerTitle}"`,
       html,
     });
 
@@ -181,19 +190,43 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
         { auth: { persistSession: false } }
       );
-      
-      const pushResult = await sendPushIfEnabled(data.businessUserId, {
-        title: '🎁 Νέα διεκδίκηση προσφοράς!',
-        body: `${data.partySize} ${data.partySize === 1 ? 'άτομο' : 'άτομα'} για "${data.offerTitle}"`,
-        tag: `offer-claim-${Date.now()}`,
-        data: {
-          url: '/dashboard-business/offers',
-          type: 'offer_claim',
-          entityType: 'offer',
+
+      const pushTitle = 'Νέα διεκδίκηση προσφοράς.';
+      const pushBody = `${data.customerName} διεκδίκησε ${data.offerTitle} για ${formatPartySizeText(data.partySize)}.`;
+      const stableTag = data.purchaseId ? `n:offer_claimed:${data.purchaseId}` : `n:offer_claimed:${data.offerTitle}`.slice(0, 120);
+
+      const pushResult = await sendPushIfEnabled(
+        data.businessUserId,
+        {
+          title: pushTitle,
+          body: pushBody,
+          tag: stableTag,
+          data: {
+            url: '/dashboard-business/offers',
+            type: 'offer_claimed',
+            entityType: 'offer',
+          },
         },
-      }, supabaseClient);
+        supabaseClient
+      );
       logStep("Push notification sent", pushResult);
     }
+
+    return new Response(JSON.stringify({ success: true, emailResponse }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  } catch (error: any) {
+    logStep("ERROR", { message: error.message });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+});
 
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
