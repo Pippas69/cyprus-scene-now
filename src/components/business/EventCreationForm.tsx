@@ -613,7 +613,9 @@ const EventCreationForm = ({
           sort_order: index,
           dress_code: tier.dress_code || null
         }));
-        await supabase.from('ticket_tiers').insert(tiersToInsert);
+
+        const { error: tiersError } = await supabase.from('ticket_tiers').insert(tiersToInsert);
+        if (tiersError) throw tiersError;
       }
 
       // Save seating types and tiers for reservation events

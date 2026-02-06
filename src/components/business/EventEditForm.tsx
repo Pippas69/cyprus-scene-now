@@ -646,8 +646,9 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       // Update ticket tiers if ticket event
       if (formData.eventType === 'ticket') {
         // Delete existing tiers
-        await supabase.from('ticket_tiers').delete().eq('event_id', event.id);
-        
+        const { error: deleteError } = await supabase.from('ticket_tiers').delete().eq('event_id', event.id);
+        if (deleteError) throw deleteError;
+
         // Insert new tiers
         const tiersToInsert = formData.ticketTiers.map((tier, index) => ({
           event_id: event.id,
@@ -660,9 +661,10 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           sort_order: index,
           dress_code: tier.dress_code || null,
         }));
-        
+
         if (tiersToInsert.length > 0) {
-          await supabase.from('ticket_tiers').insert(tiersToInsert);
+          const { error: insertError } = await supabase.from('ticket_tiers').insert(tiersToInsert);
+          if (insertError) throw insertError;
         }
       }
 
