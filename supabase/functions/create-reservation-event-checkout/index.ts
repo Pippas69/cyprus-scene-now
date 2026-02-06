@@ -122,10 +122,10 @@ serve(async (req) => {
       stripeAccountId: business?.stripe_account_id ? "present" : "missing"
     });
 
-    // ALWAYS allow checkout in preview environments - business setup is optional for testing
-    if (!hasConnectSetup && !isPreviewOrigin) {
-      throw new Error("Business has not completed payment setup");
-    }
+    // NOTE: We allow checkout even if the business hasn't completed payment setup.
+    // In that case we run a platform checkout (no destination transfer / application fee).
+    // This matches the ticket checkout behavior and avoids blocking users mid-flow.
+
 
     // Get seating type and validate availability
     const { data: seatingType, error: seatingError } = await supabaseClient
