@@ -683,6 +683,11 @@ async function handleReservationQR(
     .eq("id", businessId)
     .single();
 
+  // Get location name for notifications
+  const locationName = isDirectReservation 
+    ? reservation.businesses?.name 
+    : reservation.events?.title;
+
   // Create in-app notification for business owner
   if (businessOwnerData?.user_id) {
     try {
@@ -703,13 +708,29 @@ async function handleReservationQR(
     }
   }
 
+  // Create in-app notification for user (reservation holder)
+  if (reservation.user_id) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: reservation.user_id,
+        title: '✅ Check-in επιτυχές!',
+        message: `Κράτηση για ${reservation.reservation_name}${locationName ? ` - ${locationName}` : ''} - Καλωσήρθατε!`,
+        type: 'reservation',
+        event_type: 'reservation_checked_in',
+        entity_type: 'reservation',
+        entity_id: reservation.id,
+        deep_link: '/dashboard-user/reservations',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("User in-app notification created for reservation check-in");
+    } catch (notifError) {
+      logStep("Failed to create user in-app notification", notifError);
+    }
+  }
+
   // Send push notification to user when their reservation is checked in
   if (reservation.user_id) {
     try {
-      const locationName = isDirectReservation 
-        ? reservation.businesses?.name 
-        : reservation.events?.title;
-      
       await sendPushIfEnabled(reservation.user_id, {
         title: '✅ Check-in επιτυχές!',
         body: language === "el" 
