@@ -168,8 +168,8 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
           ? "Εισιτήρια επιβεβαιώθηκαν!" 
           : "Tickets confirmed!"
         );
-        // Redirect to success page for free tickets
-        window.location.href = `/ticket-success?order_id=${data.orderId}&free=true`;
+        // Redirect to My Tickets for free tickets
+        window.location.href = `/dashboard-user/tickets?success=true&order_id=${data.orderId}`;
       } else {
         // Store URL and attempt redirect - use fallback pattern for iOS/Safari
         setCheckoutUrl(data.url);
