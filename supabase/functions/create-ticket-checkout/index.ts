@@ -230,6 +230,60 @@ Deno.serve(async (req) => {
 
       logStep("Free order completed", { orderId: order.id });
 
+      // Create in-app notification for user
+      try {
+        await supabaseClient.from('notifications').insert({
+          user_id: user.id,
+          title: '🎟️ Εισιτήρια ληφθήκαν!',
+          message: `${event.title} - ${ticketsToCreate.length} ${ticketsToCreate.length === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
+          type: 'ticket',
+          event_type: 'ticket_purchased',
+          entity_type: 'ticket_order',
+          entity_id: order.id,
+          deep_link: `/dashboard-user/tickets`,
+          delivered_at: new Date().toISOString(),
+        });
+        logStep("User in-app notification created");
+      } catch (notifError) {
+        logStep("User in-app notification error", String(notifError));
+      }
+
+      // Send push notification to user
+      try {
+        const pushResult = await sendPushIfEnabled(user.id, {
+          title: '🎟️ Εισιτήρια ληφθήκαν!',
+          body: `${event.title} - ${ticketsToCreate.length} ${ticketsToCreate.length === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
+          tag: `ticket-order-${order.id}`,
+          data: {
+            url: `/dashboard-user/tickets`,
+            type: 'ticket_purchased',
+            entityType: 'ticket_order',
+            entityId: order.id,
+          },
+        }, supabaseClient);
+        logStep("User push notification sent", pushResult);
+      } catch (pushError) {
+        logStep("User push notification error", String(pushError));
+      }
+
+      // Notify business about free ticket claim
+      try {
+        await supabaseClient.from('notifications').insert({
+          user_id: business.user_id,
+          title: '🎟️ Νέα λήψη εισιτηρίων!',
+          message: `${customerName || user.email} πήρε ${ticketsToCreate.length} ${ticketsToCreate.length === 1 ? 'εισιτήριο' : 'εισιτήρια'} για "${event.title}"`,
+          type: 'business',
+          event_type: 'ticket_purchased',
+          entity_type: 'ticket_order',
+          entity_id: order.id,
+          deep_link: `/dashboard-business/ticket-sales`,
+          delivered_at: new Date().toISOString(),
+        });
+        logStep("Business in-app notification created");
+      } catch (notifError) {
+        logStep("Business in-app notification error", String(notifError));
+      }
+
       return new Response(JSON.stringify({ 
         success: true, 
         orderId: order.id,
