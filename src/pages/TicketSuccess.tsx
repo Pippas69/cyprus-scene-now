@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -40,12 +40,20 @@ export const TicketSuccess = () => {
   const text = t[language];
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Prevent duplicate processing in Preview/Dev (React 18 StrictMode mounts effects twice).
+  // We persist the guard in sessionStorage so even a remount won't re-trigger pushes.
+  const ranOnceRef = useRef(false);
+
   useEffect(() => {
+    // If this component remounts in StrictMode, this ref resets; sessionStorage is the real guard.
+    if (ranOnceRef.current) return;
+    ranOnceRef.current = true;
+
     const processPayment = async () => {
       const sessionId = searchParams.get("session_id");
       const orderId = searchParams.get("order_id");
@@ -56,6 +64,9 @@ export const TicketSuccess = () => {
         setErrorMessage("Missing order information");
         return;
       }
+
+      // A stable key for this success page run.
+      const processKey = `ticket_success_processed:${orderId}:${sessionId ?? (freeParam ? "free" : "no_session")}`;
 
       try {
         // Determine if this is a free order (URL param OR backend order total)
@@ -71,20 +82,28 @@ export const TicketSuccess = () => {
           isFreeOrder = (order?.total_cents ?? 0) === 0;
         }
 
-        // For free tickets, call process-free-ticket (this triggers the ticket email)
-        if (isFreeOrder) {
-          const { error } = await supabase.functions.invoke("process-free-ticket", {
-            body: { orderId },
-          });
-          if (error) throw error;
-        } else if (sessionId) {
-          // For paid tickets
-          const { data, error } = await supabase.functions.invoke("process-ticket-payment", {
-            body: { sessionId, orderId },
-          });
+        const alreadyProcessed = sessionStorage.getItem(processKey) === "1";
 
-          if (error) throw error;
-          if (!data?.success) throw new Error(data?.error || "Failed to process payment");
+        // Only trigger backend processing ONCE per order (per tab session).
+        // If we already processed, we just fetch the ticket data below.
+        if (!alreadyProcessed) {
+          sessionStorage.setItem(processKey, "1");
+
+          // For free tickets, call process-free-ticket (this triggers the ticket email)
+          if (isFreeOrder) {
+            const { error } = await supabase.functions.invoke("process-free-ticket", {
+              body: { orderId },
+            });
+            if (error) throw error;
+          } else if (sessionId) {
+            // For paid tickets
+            const { data, error } = await supabase.functions.invoke("process-ticket-payment", {
+              body: { sessionId, orderId },
+            });
+
+            if (error) throw error;
+            if (!data?.success) throw new Error(data?.error || "Failed to process payment");
+          }
         }
 
         // Fetch ticket details
@@ -119,17 +138,26 @@ export const TicketSuccess = () => {
           business_name: business?.name || "",
           business_logo: business?.logo_url || null,
         });
-        
+
         setStatus("success");
       } catch (err) {
         console.error("Payment processing error:", err);
+
+        // Allow retry if something failed.
+        try {
+          sessionStorage.removeItem(processKey);
+        } catch {
+          // ignore
+        }
+
         setStatus("error");
         setErrorMessage(err instanceof Error ? err.message : "Unknown error");
       }
     };
 
     processPayment();
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   if (status === "loading") {
     return (
@@ -181,8 +209,8 @@ export const TicketSuccess = () => {
         />
       ) : (
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-            <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
