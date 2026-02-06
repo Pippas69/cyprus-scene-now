@@ -883,7 +883,4 @@ async function handleStudentQR(
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
 }
