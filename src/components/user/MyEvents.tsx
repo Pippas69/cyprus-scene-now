@@ -294,7 +294,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="going" className="w-full">
+      <Tabs defaultValue={initialSubtab} className="w-full">
         <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
           <TabsTrigger 
             value="going" 
