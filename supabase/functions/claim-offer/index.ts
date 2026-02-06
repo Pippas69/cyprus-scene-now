@@ -345,7 +345,7 @@ Deno.serve(async (req) => {
     // Send notification to business
     if (businessOwner?.email) {
       try {
-        await fetch(`${supabaseUrl}/functions/v1/send-offer-claim-business-notification`, {
+        const businessNotifResponse = await fetch(`${supabaseUrl}/functions/v1/send-offer-claim-business-notification`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -366,10 +366,29 @@ Deno.serve(async (req) => {
             reservationTime: reservationData?.preferred_time,
           }),
         });
-        logStep("Business notification sent");
+        const businessNotifResult = await businessNotifResponse.text();
+        logStep("Business notification sent", { status: businessNotifResponse.status, result: businessNotifResult.substring(0, 100) });
       } catch (notifError) {
-        logStep("Business notification error", notifError);
+        logStep("Business notification error", String(notifError));
       }
+    }
+
+    // Also create in-app notification for business directly (backup)
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: discount.businesses.user_id,
+        title: '🎁 Νέα διεκδίκηση προσφοράς!',
+        message: `${userName} διεκδίκησε "${discount.title}" για ${partySize} ${partySize === 1 ? 'άτομο' : 'άτομα'}`,
+        type: 'business',
+        event_type: 'offer_claimed',
+        entity_type: 'offer',
+        entity_id: purchase.id,
+        deep_link: '/dashboard-business/offers',
+        delivered_at: new Date().toISOString(),
+      });
+      logStep("Business in-app notification created directly");
+    } catch (notifError) {
+      logStep("Business in-app notification error", String(notifError));
     }
 
     return new Response(
