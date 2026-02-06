@@ -7,6 +7,7 @@ import {
   wrapBusinessEmailContent,
   type BusinessNotificationType 
 } from "../_shared/business-notification-helper.ts";
+import { infoCard, detailRow, ctaButton } from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,26 +105,17 @@ Deno.serve(async (req) => {
         skipEmail = false;
         emailSubject = `📋 Αλλαγή πλάνου - ${data.businessName}`;
         emailContent = wrapBusinessEmailContent(`
-          <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 22px; text-align: center;">
-            Αλλαγή Πλάνου Συνδρομής
-          </h2>
-          
-          <div style="background: #f0fdfa; border-left: 4px solid #4ecdc4; border-radius: 8px; padding: 20px; margin: 24px 0;">
-            <p style="color: #475569; margin: 0; font-size: 14px;">
-              ${data.oldPlan ? `Προηγούμενο πλάνο: <strong>${data.oldPlan}</strong><br>` : ''}
-              ${data.newPlan ? `Νέο πλάνο: <strong>${data.newPlan}</strong>` : 'Το πλάνο σας ενημερώθηκε.'}
-            </p>
-          </div>
+          <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
+            Το πλάνο συνδρομής σας ενημερώθηκε.
+          </p>
 
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="https://fomo.com.cy/dashboard-business/settings" 
-               style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); 
-                      color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; 
-                      font-weight: 600; font-size: 16px;">
-              Δείτε τις Ρυθμίσεις
-            </a>
-          </div>
-        `);
+          ${infoCard('Λεπτομέρειες', 
+            (data.oldPlan ? detailRow('Προηγούμενο', data.oldPlan) : '') +
+            (data.newPlan ? detailRow('Νέο πλάνο', data.newPlan, true) : '')
+          )}
+
+          ${ctaButton('Ρυθμίσεις', 'https://fomo.com.cy/dashboard-business/settings')}
+        `, '📋 Αλλαγή Πλάνου');
         break;
 
       case 'NEW_FOLLOWER':

@@ -1,4 +1,10 @@
-import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import {
+  wrapBusinessEmail,
+  infoCard,
+  detailRow,
+  ctaButton,
+  successBadge,
+} from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,40 +15,7 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[TICKET-SALE-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
 };
 
-// Branded email template parts
-const emailHeader = `
-  <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 48px 24px 36px 24px; text-align: center; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #ffffff; margin: 0; font-size: 42px; font-weight: bold; letter-spacing: 4px; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</h1>
-    <p style="color: rgba(255,255,255,0.85); margin: 10px 0 0 0; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">Cyprus Events</p>
-  </div>
-`;
-
-const emailFooter = `
-  <div style="background: #102b4a; padding: 28px; text-align: center; border-radius: 0 0 12px 12px;">
-    <p style="color: #3ec3b7; font-size: 18px; font-weight: bold; letter-spacing: 2px; margin: 0 0 8px 0; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</p>
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2025 ΦΟΜΟ. Discover events in Cyprus.</p>
-  </div>
-`;
-
-const wrapEmailContent = (content: string) => `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
-  </head>
-  <body style="margin: 0; padding: 20px; background-color: #f4f4f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-      ${emailHeader}
-      <div style="padding: 32px 24px;">
-        ${content}
-      </div>
-      ${emailFooter}
-    </div>
-  </body>
-  </html>
-`;
+import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 
 interface TicketSaleNotificationRequest {
   orderId: string;
@@ -87,62 +60,31 @@ Deno.serve(async (req) => {
 
     logStep("Request data", { orderId, eventTitle, ticketCount, businessEmail });
 
-    const formattedAmount = totalAmount === 0 ? 'Free' : `€${(totalAmount / 100).toFixed(2)}`;
+    const formattedAmount = totalAmount === 0 ? 'Δωρεάν' : `€${(totalAmount / 100).toFixed(2)}`;
 
-    const html = wrapEmailContent(`
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 24px; border-radius: 50px; font-size: 18px; font-weight: bold;">
-          🎟️ Νέα Πώληση Εισιτηρίων!
-        </div>
-      </div>
-
-      <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 22px; text-align: center;">
-        Καλά νέα, ${businessName}!
-      </h2>
+    const content = `
+      ${successBadge('Νέα Πώληση Εισιτηρίων')}
       
-      <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6; text-align: center;">
-        Μόλις πωλήθηκαν εισιτήρια για την εκδήλωσή σας.
+      <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
+        Πωλήθηκαν εισιτήρια για την εκδήλωσή σας.
       </p>
 
-      <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-radius: 12px; padding: 24px; margin: 24px 0;">
-        <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px; border-bottom: 2px solid #4ecdc4; padding-bottom: 8px;">
-          📋 Λεπτομέρειες Πώλησης
-        </h3>
-        
-        <table style="width: 100%; color: #475569; font-size: 14px;">
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Εκδήλωση:</td>
-            <td style="padding: 8px 0; text-align: right;">${eventTitle}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Πελάτης:</td>
-            <td style="padding: 8px 0; text-align: right;">${customerName || 'Anonymous'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Τύπος εισιτηρίου:</td>
-            <td style="padding: 8px 0; text-align: right;">${tierName}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Αριθμός εισιτηρίων:</td>
-            <td style="padding: 8px 0; text-align: right;">${ticketCount}</td>
-          </tr>
-          <tr style="border-top: 2px solid #4ecdc4;">
-            <td style="padding: 12px 0 8px 0; font-weight: 700; font-size: 16px; color: #0d3b66;">Συνολικό ποσό:</td>
-            <td style="padding: 12px 0 8px 0; text-align: right; font-weight: 700; font-size: 16px; color: #10b981;">${formattedAmount}</td>
-          </tr>
-        </table>
-      </div>
+      ${infoCard('Λεπτομέρειες', 
+        detailRow('Εκδήλωση', eventTitle) +
+        detailRow('Πελάτης', customerName || 'Anonymous') +
+        detailRow('Τύπος', tierName) +
+        detailRow('Εισιτήρια', `${ticketCount}`) +
+        detailRow('Ποσό', formattedAmount, true)
+      )}
 
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="https://fomo.com.cy/dashboard-business/ticket-sales" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-          Δείτε τις Πωλήσεις
-        </a>
-      </div>
+      ${ctaButton('Δες τις πωλήσεις', 'https://fomo.com.cy/dashboard-business/ticket-sales')}
 
-      <p style="color: #64748b; font-size: 12px; text-align: center; margin-top: 24px;">
-        Για να απενεργοποιήσετε αυτές τις ειδοποιήσεις, μεταβείτε στις Ρυθμίσεις Λογαριασμού.
+      <p style="color: #94a3b8; font-size: 11px; text-align: center; margin-top: 20px;">
+        Διαχείριση ειδοποιήσεων: Ρυθμίσεις → Ειδοποιήσεις
       </p>
-    `);
+    `;
+
+    const html = wrapBusinessEmail(content, '🎟️ Νέα Πώληση');
 
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <noreply@fomo.com.cy>",
@@ -153,10 +95,8 @@ Deno.serve(async (req) => {
 
     logStep("Email sent successfully", emailResponse);
 
-
     // NOTE: Push for ticket sales is sent by the payment completion flow.
     // This function is email-only to avoid duplicate push notifications.
-
 
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
