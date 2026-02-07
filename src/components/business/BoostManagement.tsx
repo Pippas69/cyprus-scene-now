@@ -441,11 +441,11 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     events: language === "el" ? "Εκδηλώσεις" : "Events",
     offers: language === "el" ? "Προσφορές" : "Offers",
     noEventBoosts: language === "el" 
-      ? "Δεν υπάρχουν προωθήσεις εκδηλώσεων. Μπορείτε να προωθήσετε εκδηλώσεις από τη λίστα Εκδηλώσεων." 
-      : "No event boosts. You can boost events from the Events list.",
+      ? "Μπορείτε να προωθήσετε εκδηλώσεις από τη λίστα Εκδηλώσεων" 
+      : "You can boost events from the Events list",
     noOfferBoosts: language === "el" 
-      ? "Δεν υπάρχουν προωθήσεις προσφορών. Μπορείτε να προωθήσετε προσφορές από τη λίστα Προσφορών." 
-      : "No offer boosts. You can boost offers from the Offers list.",
+      ? "Μπορείτε να προωθήσετε προσφορές από τη λίστα Προσφορών" 
+      : "You can boost offers from the Offers list",
     impressions: language === "el" ? "Εμφανίσεις" : "Impressions",
     impressionsEventTooltip: language === "el" 
       ? "Πόσες φορές είδαν οι χρήστες τις σελίδες των boosted εκδηλώσεών σου από οπουδήποτε" 
@@ -553,19 +553,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
         {/* EVENT BOOSTS TAB */}
         <TabsContent value="events" className="space-y-4 mt-4">
-          {activeEventBoosts.length === 0 && expiredEventBoosts.length === 0 ? (
+          {activeEventBoosts.length === 0 && (
             <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
+              <CardContent className="p-4 sm:p-6 text-center text-muted-foreground text-xs sm:text-sm whitespace-nowrap">
                 {t.noEventBoosts}
               </CardContent>
             </Card>
-          ) : activeEventBoosts.length === 0 && !showExpiredEvents ? (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                {t.noEventBoosts}
-              </CardContent>
-            </Card>
-          ) : (
+          )}
+          {(activeEventBoosts.length > 0 || expiredEventBoosts.length > 0) && (
             <>
             {/* Active boosts */}
             {activeEventBoosts.map((boost) => {
@@ -761,19 +756,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
         {/* OFFER BOOSTS TAB */}
         <TabsContent value="offers" className="space-y-4 mt-4">
-          {activeOfferBoosts.length === 0 && expiredOfferBoosts.length === 0 ? (
+          {activeOfferBoosts.length === 0 && (
             <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
+              <CardContent className="p-4 sm:p-6 text-center text-muted-foreground text-xs sm:text-sm whitespace-nowrap">
                 {t.noOfferBoosts}
               </CardContent>
             </Card>
-          ) : activeOfferBoosts.length === 0 && !showExpiredOffers ? (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                {t.noOfferBoosts}
-              </CardContent>
-            </Card>
-          ) : (
+          )}
+          {(activeOfferBoosts.length > 0 || expiredOfferBoosts.length > 0) && (
             <>
             {/* Active boosts */}
             {activeOfferBoosts.map((boost) => (
