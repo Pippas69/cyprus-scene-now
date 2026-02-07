@@ -12,6 +12,7 @@ import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import { FilterChips } from "@/components/feed/FilterChips";
 import { Button } from "@/components/ui/button";
+import { isBoostCurrentlyActive, type OfferBoostRecord } from "@/lib/boostUtils";
 
 const Offers = () => {
   const navigate = useNavigate();
@@ -291,17 +292,22 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
     return { start: start.toISOString(), end: end.toISOString() };
   };
 
-  // Fetch active offer boosts
+  // Fetch active offer boosts (with hourly window support)
   const { data: activeBoosts } = useQuery({
     queryKey: ["active-offer-boosts-offers"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("offer_boosts")
-        .select("discount_id, targeting_quality, business_id")
-        .eq("active", true);
+        .select("discount_id, targeting_quality, business_id, start_date, end_date, created_at, duration_mode, duration_hours")
+        .eq("status", "active");
 
       if (error) throw error;
-      return data || [];
+      
+      // Filter to only currently active boosts (respecting hourly windows)
+      const now = new Date().toISOString();
+      return (data || []).filter((b) =>
+        isBoostCurrentlyActive(b as OfferBoostRecord, now)
+      );
     },
   });
 

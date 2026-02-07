@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchCurrentlyBoostedEventIds } from '@/lib/boostUtils';
 
 interface RSVPWithEvent {
   id: string;
@@ -110,17 +111,8 @@ export const useUserRSVPs = (userId: string | null) => {
       }
     }
 
-    // Check for active boosts for these events
-    const currentTime = new Date().toISOString();
-    const { data: boostsData } = await supabase
-      .from('event_boosts')
-      .select('event_id')
-      .in('event_id', eventIds)
-      .eq('status', 'active')
-      .lte('start_date', currentTime)
-      .gte('end_date', currentTime);
-
-    const boostedEventIds = new Set((boostsData || []).map((b: any) => b.event_id));
+    // Check for active boosts for these events (using proper window calculation)
+    const boostedEventIds = await fetchCurrentlyBoostedEventIds(eventIds);
     validRsvps.forEach((r: any) => {
       r.event.isBoosted = boostedEventIds.has(r.event.id);
     });

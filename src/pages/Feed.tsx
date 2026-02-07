@@ -33,6 +33,7 @@ import { useActiveProfileBoosts } from "@/hooks/useActiveProfileBoosts";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
 import { isEventPaused } from "@/lib/eventVisibility";
+import { isBoostCurrentlyActive, type EventBoostRecord, type OfferBoostRecord } from "@/lib/boostUtils";
 interface FeedProps {
   showNavbar?: boolean;
 }
@@ -97,23 +98,25 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     enabled: !!user,
   });
 
-  // Fetch active event boosts
+  // Fetch active event boosts (with hourly window support)
   const { data: activeBoosts } = useQuery({
     queryKey: ["active-boosts"],
     queryFn: async () => {
-      const now = new Date().toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("event_boosts")
-        .select("event_id, targeting_quality, boost_tier, business_id")
-        .eq("status", "active")
-        .lte("start_date", now)
-        .gte("end_date", now);
+        .select("event_id, targeting_quality, boost_tier, business_id, start_date, end_date, created_at, duration_mode, duration_hours")
+        .eq("status", "active");
 
       if (error) {
         console.error("Error fetching active boosts:", error);
         return [];
       }
-      return data as (ActiveBoost & { business_id: string })[];
+      
+      // Filter to only currently active boosts (respecting hourly windows)
+      const now = new Date().toISOString();
+      return (data || []).filter((b) => 
+        isBoostCurrentlyActive(b as EventBoostRecord, now)
+      ) as (ActiveBoost & { business_id: string })[];
     },
     staleTime: 60000,
   });
@@ -148,23 +151,25 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000,
   });
 
-  // Boosted offers (paid priority) - check status AND date range like events
+  // Boosted offers (paid priority) - check status AND window (supports hourly)
   const { data: offerBoosts } = useQuery({
     queryKey: ["active-offer-boosts"],
     queryFn: async () => {
-      const now = new Date().toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("offer_boosts")
-        .select("discount_id, targeting_quality, commission_percent, business_id")
-        .eq("status", "active")
-        .lte("start_date", now)
-        .gte("end_date", now);
+        .select("discount_id, targeting_quality, commission_percent, business_id, start_date, end_date, created_at, duration_mode, duration_hours")
+        .eq("status", "active");
 
       if (error) {
         console.error("Error fetching offer boosts:", error);
         return [];
       }
-      return data || [];
+      
+      // Filter to only currently active boosts (respecting hourly windows)
+      const now = new Date().toISOString();
+      return (data || []).filter((b) =>
+        isBoostCurrentlyActive(b as OfferBoostRecord, now)
+      );
     },
     staleTime: 60000,
   });
