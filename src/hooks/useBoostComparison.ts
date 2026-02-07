@@ -22,24 +22,24 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
       const startDate = dateRange?.from || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       const endDate = dateRange?.to || new Date();
 
-      // Get boost periods
+      // Get boost periods - include both active and completed boosts
       const { data: profileBoosts } = await supabase
         .from("profile_boosts")
         .select("start_date, end_date")
         .eq("business_id", businessId)
-        .eq("status", "active");
+        .in("status", ["active", "completed"]);
 
       const { data: eventBoosts } = await supabase
         .from("event_boosts")
         .select("event_id, start_date, end_date")
         .eq("business_id", businessId)
-        .eq("status", "active");
+        .in("status", ["active", "completed"]);
 
       const { data: offerBoosts } = await supabase
         .from("offer_boosts")
         .select("discount_id, start_date, end_date")
         .eq("business_id", businessId)
-        .eq("status", "active");
+        .in("status", ["active", "completed"]);
 
       // Get events and offers for this business
       const { data: events } = await supabase
@@ -167,12 +167,24 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
+      // Get tickets with check-in - use checked_in_at for attribution
       const { data: tickets } = await supabase
         .from("tickets")
         .select("event_id, checked_in_at, created_at")
         .in("event_id", eventIds)
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .not("checked_in_at", "is", null)
+        .gte("checked_in_at", startDate.toISOString())
+        .lte("checked_in_at", endDate.toISOString());
+
+      // Get reservations with check-in for event visits
+      const { data: eventReservations } = await supabase
+        .from("reservations")
+        .select("event_id, checked_in_at")
+        .in("event_id", eventIds)
+        .not("event_id", "is", null)
+        .not("checked_in_at", "is", null)
+        .gte("checked_in_at", startDate.toISOString())
+        .lte("checked_in_at", endDate.toISOString());
 
       const eventsWithBoost = { views: 0, interested: 0, toGo: 0, visits: 0, ticketsAndCheckIn: 0 };
       const eventsWithoutBoost = { views: 0, interested: 0, toGo: 0, visits: 0, ticketsAndCheckIn: 0 };
@@ -193,11 +205,21 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
         else if (r.status === "interested") target.interested++;
       });
 
+      // Ticket check-ins - use checked_in_at for boost attribution
       tickets?.forEach(t => {
-        const isBoosted = isWithinBoostPeriod(t.created_at, getEventBoostPeriods(t.event_id));
+        if (!t.checked_in_at || !t.event_id) return;
+        const isBoosted = isWithinBoostPeriod(t.checked_in_at, getEventBoostPeriods(t.event_id));
         const target = isBoosted ? eventsWithBoost : eventsWithoutBoost;
         target.ticketsAndCheckIn++;
-        if (t.checked_in_at) target.visits++;
+        target.visits++;
+      });
+
+      // Reservation check-ins for events - use checked_in_at for boost attribution
+      eventReservations?.forEach(r => {
+        if (!r.checked_in_at || !r.event_id) return;
+        const isBoosted = isWithinBoostPeriod(r.checked_in_at, getEventBoostPeriods(r.event_id));
+        const target = isBoosted ? eventsWithBoost : eventsWithoutBoost;
+        target.visits++;
       });
 
       return {
