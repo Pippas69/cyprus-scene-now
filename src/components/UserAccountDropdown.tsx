@@ -138,25 +138,18 @@ export const UserAccountDropdown = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-background border-border z-50">
-          {/* 1. My Account - Opens Feed */}
-          <DropdownMenuItem onClick={handleMyAccount} className="text-sm cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
-            {t.myAccount}
-          </DropdownMenuItem>
-
-          {/* 2. Account Switcher - Business/User toggle */}
+          {/* Context-aware Account Switcher */}
           {isBusinessDashboard ? (
+            // On Business Dashboard: Show "My Account" to go to user feed
             <DropdownMenuItem 
-              onClick={() => {
-                setDropdownOpen(false);
-                navigate('/feed');
-              }} 
+              onClick={handleMyAccount} 
               className="text-sm cursor-pointer"
             >
               <User className="mr-2 h-4 w-4" />
-              {t.myUserAccount}
+              {t.myAccount}
             </DropdownMenuItem>
           ) : (
+            // On User Dashboard: Show "My Business" if business owner
             !isBusinessLoading && isBusinessOwner && (
               <DropdownMenuItem 
                 onClick={() => {
