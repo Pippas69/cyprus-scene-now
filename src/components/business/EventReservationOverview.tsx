@@ -33,6 +33,7 @@ interface ReservationData {
   party_size: number;
   checked_in_at: string | null;
   seating_preference: string | null;
+  seating_type_id: string | null;
   prepaid_min_charge_cents?: number;
 }
 
@@ -99,7 +100,7 @@ export const EventReservationOverview = ({ eventId }: EventReservationOverviewPr
       // Fetch only confirmed (accepted) reservations for this event
       const { data: reservationsRaw, error: reservationsError } = await supabase
         .from("reservations")
-        .select("id, party_size, checked_in_at, seating_preference, prepaid_min_charge_cents")
+        .select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents")
         .eq("event_id", eventId)
         .eq("status", "accepted"); // Only confirmed reservations
 
@@ -119,17 +120,19 @@ export const EventReservationOverview = ({ eventId }: EventReservationOverviewPr
       const checkedIn = reservations.filter(r => r.checked_in_at).length;
 
       // Group by seating type - use actual confirmed reservation count for "booked"
-      const seatingStats = seatingTypes.map(st => {
-        const stReservations = reservations.filter(r => r.seating_preference === st.seating_type);
+      // NOTE: reservations store the seating choice in `seating_type_id` (uuid).
+      const seatingStats = seatingTypes.map((st) => {
+        const stReservations = reservations.filter(
+          (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type,
+        );
         const bookedCount = stReservations.length;
-        const minPrice = st.tiers.length > 0 
-          ? Math.min(...st.tiers.map(t => t.prepaid_min_charge_cents))
-          : 0;
-        
+        const minPrice =
+          st.tiers.length > 0 ? Math.min(...st.tiers.map((t) => t.prepaid_min_charge_cents)) : 0;
+
         // Use actual booked count, available = total slots - booked
         const totalSlots = st.available_slots;
         const availableSlots = totalSlots - bookedCount;
-        
+
         return {
           ...st,
           booked: bookedCount,
@@ -178,43 +181,43 @@ export const EventReservationOverview = ({ eventId }: EventReservationOverviewPr
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
               <Euro className="h-4 w-4" />
               {text.totalRevenue}
             </div>
-            <p className="text-2xl font-bold mt-1">{formatPrice(overview.totalRevenue)}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{formatPrice(overview.totalRevenue)}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
               <Users className="h-4 w-4" />
               {text.reservations}
             </div>
-            <p className="text-2xl font-bold mt-1">{overview.totalReservations}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{overview.totalReservations}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
               <CheckCircle2 className="h-4 w-4" />
               {text.checkedIn}
             </div>
-            <p className="text-2xl font-bold mt-1">{overview.checkedIn}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{overview.checkedIn}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
               <TrendingUp className="h-4 w-4" />
               {text.netRevenue}
             </div>
-            <p className="text-2xl font-bold mt-1 text-green-600">{formatPrice(overview.netRevenue)}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 text-green-600 whitespace-nowrap">{formatPrice(overview.netRevenue)}</p>
             {overview.totalCommission > 0 && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] md:text-xs text-muted-foreground whitespace-nowrap">
                 {text.commission}: {formatPrice(overview.totalCommission)}
               </p>
             )}
@@ -237,14 +240,17 @@ export const EventReservationOverview = ({ eventId }: EventReservationOverviewPr
                 <div key={seating.id} className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-medium text-[11px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
+                      <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
                       {seating.minPrice > 0 && (
-                        <Badge variant="outline" className="text-[9px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0"
+                        >
                           {formatPrice(seating.minPrice)}
                         </Badge>
                       )}
                     </div>
-                    <span className="text-[9px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
+                    <span className="text-[10px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
                       {seating.booked} {text.booked} / {seating.available} {text.available}
                     </span>
                   </div>

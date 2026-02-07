@@ -119,43 +119,43 @@ export const TicketSalesOverview = ({ eventId }: TicketSalesOverviewProps) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
               <Euro className="h-4 w-4" />
               {text.totalRevenue}
             </div>
-            <p className="text-2xl font-bold mt-1">{formatPrice(overview.totalRevenue)}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{formatPrice(overview.totalRevenue)}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
               <Ticket className="h-4 w-4" />
               {text.ticketsSold}
             </div>
-            <p className="text-2xl font-bold mt-1">{overview.ticketsSold}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{overview.ticketsSold}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
               <CheckCircle2 className="h-4 w-4" />
               {text.checkedIn}
             </div>
-            <p className="text-2xl font-bold mt-1">{overview.checkedIn}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{overview.checkedIn}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
               <TrendingUp className="h-4 w-4" />
               {text.netRevenue}
             </div>
-            <p className="text-2xl font-bold mt-1 text-green-600">{formatPrice(overview.netRevenue)}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 text-green-600 whitespace-nowrap">{formatPrice(overview.netRevenue)}</p>
             {overview.totalCommission > 0 && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] md:text-xs text-muted-foreground whitespace-nowrap">
                 {text.commission}: {formatPrice(overview.totalCommission)}
               </p>
             )}
@@ -177,17 +177,20 @@ export const TicketSalesOverview = ({ eventId }: TicketSalesOverviewProps) => {
 
             return (
               <div key={tier.id} className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-medium text-[11px] md:text-sm whitespace-nowrap">{tier.name}</span>
-                    <Badge variant="outline" className="text-[9px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0">
-                      {tier.price_cents === 0 ? text.free : formatPrice(tier.price_cents)}
-                    </Badge>
-                  </div>
-                  <span className="text-[9px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
-                    {tier.quantity_sold} {text.sold} / {available} {text.available}
-                  </span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{tier.name}</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0"
+                  >
+                    {tier.price_cents === 0 ? text.free : formatPrice(tier.price_cents)}
+                  </Badge>
                 </div>
+                <span className="text-[11px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
+                  {tier.quantity_sold} {text.sold} / {available} {text.available}
+                </span>
+              </div>
                 <Progress value={soldPercent} className="h-2" />
               </div>
             );

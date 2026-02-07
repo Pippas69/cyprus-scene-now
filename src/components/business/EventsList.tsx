@@ -300,16 +300,26 @@ const EventsList = ({ businessId }: EventsListProps) => {
   };
 
   // Toggle event pause status
+  // NOTE: DB constraint allows only appearance_mode: 'date_range' | 'hourly'.
+  // We implement pause by moving the appearance window to a past “sentinel” range,
+  // without changing appearance_mode.
+  const PAUSED_APPEARANCE_START = "1970-01-01T00:00:00.000Z";
+  const PAUSED_APPEARANCE_END = "1970-01-02T00:00:00.000Z";
+
   const handleTogglePause = async (eventId: string, currentlyPaused: boolean) => {
     try {
-      // Use appearance_mode to control visibility: 'hidden' = paused, 'always' = active
-      const newMode = currentlyPaused ? 'always' : 'hidden';
-      
+      const updatePayload = currentlyPaused
+        ? { appearance_start_at: null, appearance_end_at: null }
+        : {
+            appearance_start_at: PAUSED_APPEARANCE_START,
+            appearance_end_at: PAUSED_APPEARANCE_END,
+          };
+
       const { error } = await supabase
-        .from('events')
-        .update({ appearance_mode: newMode })
-        .eq('id', eventId)
-        .eq('business_id', businessId);
+        .from("events")
+        .update(updatePayload)
+        .eq("id", eventId)
+        .eq("business_id", businessId);
 
       if (error) throw error;
 
@@ -318,7 +328,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
         description: currentlyPaused ? t.eventActivated : t.eventPaused,
       });
 
-      queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+      queryClient.invalidateQueries({ queryKey: ["business-events", businessId] });
     } catch (error: any) {
       toast({
         title: t.error,
@@ -540,14 +550,17 @@ const EventsList = ({ businessId }: EventsListProps) => {
                     <div className="flex items-center justify-end gap-1">
                       {/* Pause/Active toggle badge */}
                       {(() => {
-                        const isPaused = event.appearance_mode === 'hidden';
+                        const isPaused =
+                          event.appearance_start_at === PAUSED_APPEARANCE_START &&
+                          event.appearance_end_at === PAUSED_APPEARANCE_END;
+
                         return (
                           <Badge
                             variant={isPaused ? "secondary" : "outline"}
                             className={`cursor-pointer text-[9px] md:text-[10px] lg:text-xs h-5 md:h-6 px-1.5 md:px-2 flex items-center gap-0.5 ${
-                              isPaused 
-                                ? 'bg-muted text-muted-foreground hover:bg-muted/80' 
-                                : 'border-amber-500 text-amber-600 hover:bg-amber-50'
+                              isPaused
+                                ? "bg-muted text-muted-foreground hover:bg-muted/80"
+                                : "border-amber-500 text-amber-600 hover:bg-amber-50"
                             }`}
                             onClick={() => handleTogglePause(event.id, isPaused)}
                           >
