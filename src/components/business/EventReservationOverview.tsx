@@ -6,9 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Users, Euro, TrendingUp, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 interface EventReservationOverviewProps {
   eventId: string;
+  businessId?: string;
 }
 
 interface SeatingTier {
@@ -62,9 +64,13 @@ const t = {
   },
 };
 
-export const EventReservationOverview = ({ eventId }: EventReservationOverviewProps) => {
+export const EventReservationOverview = ({ eventId, businessId }: EventReservationOverviewProps) => {
   const { language } = useLanguage();
   const text = t[language];
+
+  // Get the business's commission rate (dynamic per plan)
+  const { data: commissionData } = useCommissionRate(businessId || null);
+  const commissionPercent = commissionData?.commissionPercent ?? 12;
 
   const { data: overview, isLoading } = useQuery({
     queryKey: ["event-reservation-overview", eventId],
@@ -113,8 +119,8 @@ export const EventReservationOverview = ({ eventId }: EventReservationOverviewPr
         return sum + (r.prepaid_min_charge_cents || 0);
       }, 0);
 
-      // Estimate commission at 12% (standard rate)
-      const totalCommission = Math.round(totalRevenue * 0.12);
+      // Calculate commission based on the business's plan (dynamic)
+      const totalCommission = Math.round(totalRevenue * (commissionPercent / 100));
 
       const totalReservations = reservations.length;
       const checkedIn = reservations.filter(r => r.checked_in_at).length;
