@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Zap, Ticket, Calendar, Eye, MousePointer, Users, Euro, TicketCheck, UserCheck, Pause, Play } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
+
 import { toast } from "sonner";
 import {
   Dialog,
@@ -72,10 +73,25 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const fetchBoosts = async () => {
     setLoading(true);
     try {
-      const normalizeRange = (start: string, end: string) => {
-        const startIso = start?.length === 10 ? `${start}T00:00:00.000Z` : start;
-        const endIso = end?.length === 10 ? `${end}T23:59:59.999Z` : end;
-        return { startIso, endIso };
+      const getBoostWindow = (boost: {
+        start_date: string;
+        end_date: string;
+        duration_mode?: string | null;
+        duration_hours?: number | null;
+        created_at?: string | null;
+      }) => {
+        // Daily boosts: measure full days (00:00 -> 23:59:59.999)
+        if (boost.duration_mode !== "hourly") {
+          const startIso = boost.start_date?.length === 10 ? `${boost.start_date}T00:00:00.000Z` : boost.start_date;
+          const endIso = boost.end_date?.length === 10 ? `${boost.end_date}T23:59:59.999Z` : boost.end_date;
+          return { startIso, endIso };
+        }
+
+        // Hourly boosts: measure from the actual creation time (so metrics start from 0)
+        const start = boost.created_at ? new Date(boost.created_at) : new Date();
+        const hours = boost.duration_hours ?? 1;
+        const end = new Date(start.getTime() + hours * 60 * 60 * 1000);
+        return { startIso: start.toISOString(), endIso: end.toISOString() };
       };
 
       // Fetch event boosts with all metrics
@@ -89,6 +105,9 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           end_date,
           total_cost_cents,
           status,
+          created_at,
+          duration_mode,
+          duration_hours,
           events (
             id,
             title,
@@ -102,14 +121,11 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       // Fetch metrics for each event boost - ONLY during boost period
       const eventBoostsWithMetrics: EventBoostWithMetrics[] = await Promise.all(
-        (eventData || []).map(async (boost) => {
-          const eventId = boost.event_id;
-          const { startIso: boostStart, endIso: boostEnd } = normalizeRange(
-            boost.start_date,
-            boost.end_date
-          );
-          
-          // Fetch impressions (event views) during boost period
+         (eventData || []).map(async (boost) => {
+           const eventId = boost.event_id;
+           const { startIso: boostStart, endIso: boostEnd } = getBoostWindow(boost);
+           
+           // Fetch impressions (event views) during boost period
           const { count: impressions } = await supabase
             .from("event_views")
             .select("*", { count: "exact", head: true })
@@ -219,6 +235,9 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           end_date,
           total_cost_cents,
           active,
+          created_at,
+          duration_mode,
+          duration_hours,
           discounts (
             id,
             title
@@ -231,14 +250,11 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       // Fetch metrics for each offer boost - ONLY during boost period
       const offerBoostsWithMetrics: OfferBoostWithMetrics[] = await Promise.all(
-        (offerData || []).map(async (boost) => {
-          const discountId = boost.discount_id;
-          const { startIso: boostStart, endIso: boostEnd } = normalizeRange(
-            boost.start_date,
-            boost.end_date
-          );
-          
-          // Fetch impressions (discount views) during boost period
+         (offerData || []).map(async (boost) => {
+           const discountId = boost.discount_id;
+           const { startIso: boostStart, endIso: boostEnd } = getBoostWindow(boost);
+           
+           // Fetch impressions (discount views) during boost period
           const { count: impressions } = await supabase
             .from("discount_views")
             .select("*", { count: "exact", head: true })
