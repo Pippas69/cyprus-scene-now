@@ -253,12 +253,12 @@ export const useBoostValueMetrics = (
 
       const businessOfferIds = businessOffers?.map(o => o.id) || [];
 
-      // Get ALL offer boosts (any status) with their date ranges
-      const { data: allOfferBoosts } = await supabase
-        .from("offer_boosts")
-        .select("discount_id, start_date, end_date")
-        .eq("business_id", businessId)
-        .in("status", ["active", "completed", "paused"]);
+       // Get ALL offer boosts that actually ran (active/completed)
+       const { data: allOfferBoosts } = await supabase
+         .from("offer_boosts")
+         .select("discount_id, start_date, end_date")
+         .eq("business_id", businessId)
+         .in("status", ["active", "completed"]);
 
       const offerBoostPeriods: BoostPeriod[] = (allOfferBoosts || []).map(b => ({
         entityId: b.discount_id,
@@ -353,12 +353,12 @@ export const useBoostValueMetrics = (
 
       const businessEventIds = businessEvents?.map(e => e.id) || [];
 
-      // Get ALL event boosts (any status) with their date ranges
-      const { data: allEventBoosts } = await supabase
-        .from("event_boosts")
-        .select("event_id, start_date, end_date")
-        .eq("business_id", businessId)
-        .in("status", ["active", "completed", "canceled", "pending", "scheduled"]);
+       // Get ALL event boosts that actually ran (active/completed)
+       const { data: allEventBoosts } = await supabase
+         .from("event_boosts")
+         .select("event_id, start_date, end_date")
+         .eq("business_id", businessId)
+         .in("status", ["active", "completed"]);
 
       const eventBoostPeriods: BoostPeriod[] = (allEventBoosts || []).map(b => ({
         entityId: b.event_id,
