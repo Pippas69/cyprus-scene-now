@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift } from "lucide-react";
+import { Trash2, Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift, Pause, Play } from "lucide-react";
 import EventEditForm from "./EventEditForm";
 import EventBoostDialog from "./EventBoostDialog";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
@@ -108,6 +108,10 @@ const EventsList = ({ businessId }: EventsListProps) => {
       badgeReservation: "Κράτηση Τραπεζιού",
       badgeFreeEntry: "Δωρεάν Είσοδος",
       expired: "Ληγμένες",
+      pause: "Παύση",
+      active: "Ενεργή",
+      eventPaused: "Η εκδήλωση είναι σε παύση",
+      eventActivated: "Η εκδήλωση ενεργοποιήθηκε",
     },
     en: {
       title: "Events",
@@ -140,6 +144,10 @@ const EventsList = ({ businessId }: EventsListProps) => {
       badgeReservation: "Table Reservation",
       badgeFreeEntry: "Free Entry",
       expired: "Expired",
+      pause: "Pause",
+      active: "Active",
+      eventPaused: "Event paused",
+      eventActivated: "Event activated",
     },
   };
 
@@ -282,6 +290,35 @@ const EventsList = ({ businessId }: EventsListProps) => {
       });
 
       queryClient.invalidateQueries({ queryKey: ["business-events", businessId] });
+    } catch (error: any) {
+      toast({
+        title: t.error,
+        description: error?.message ?? String(error),
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Toggle event pause status
+  const handleTogglePause = async (eventId: string, currentlyPaused: boolean) => {
+    try {
+      // Use appearance_mode to control visibility: 'hidden' = paused, 'always' = active
+      const newMode = currentlyPaused ? 'always' : 'hidden';
+      
+      const { error } = await supabase
+        .from('events')
+        .update({ appearance_mode: newMode })
+        .eq('id', eventId)
+        .eq('business_id', businessId);
+
+      if (error) throw error;
+
+      toast({
+        title: t.success,
+        description: currentlyPaused ? t.eventActivated : t.eventPaused,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
     } catch (error: any) {
       toast({
         title: t.error,
@@ -491,25 +528,52 @@ const EventsList = ({ businessId }: EventsListProps) => {
                       </Button>
                     </div>
 
-                    {/* Row 2 - Left: RSVP counts (last line) */}
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {event.rsvp_counts?.interested_count || 0} {t.interested}, {" "}
-                        {event.rsvp_counts?.going_count || 0} {t.going}
+                    {/* Row 2 - Left: RSVP counts (last line) - smaller on mobile/tablet */}
+                    <div className="flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground">
+                      <Users className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">
+                        {event.rsvp_counts?.interested_count || 0} {t.interested}, {event.rsvp_counts?.going_count || 0} {t.going}
                       </span>
                     </div>
 
-                    {/* Row 2 - Right: Delete icon aligned with RSVP line */}
-                    <div className="flex items-center justify-end">
+                    {/* Row 2 - Right: Pause/Active + Delete icons */}
+                    <div className="flex items-center justify-end gap-1">
+                      {/* Pause/Active toggle badge */}
+                      {(() => {
+                        const isPaused = event.appearance_mode === 'hidden';
+                        return (
+                          <Badge
+                            variant={isPaused ? "secondary" : "outline"}
+                            className={`cursor-pointer text-[9px] md:text-[10px] lg:text-xs h-5 md:h-6 px-1.5 md:px-2 flex items-center gap-0.5 ${
+                              isPaused 
+                                ? 'bg-muted text-muted-foreground hover:bg-muted/80' 
+                                : 'border-amber-500 text-amber-600 hover:bg-amber-50'
+                            }`}
+                            onClick={() => handleTogglePause(event.id, isPaused)}
+                          >
+                            {isPaused ? (
+                              <>
+                                <Play className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                {t.active}
+                              </>
+                            ) : (
+                              <>
+                                <Pause className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                {t.pause}
+                              </>
+                            )}
+                          </Badge>
+                        );
+                      })()}
+                      
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeletingEvent({ id: event.id, title: event.title })}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive"
                         title={t.delete}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       </Button>
                     </div>
                   </div>

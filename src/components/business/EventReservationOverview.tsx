@@ -96,12 +96,12 @@ export const EventReservationOverview = ({ eventId }: EventReservationOverviewPr
         });
       }
 
-      // Fetch reservations for this event
+      // Fetch only confirmed (accepted) reservations for this event
       const { data: reservationsRaw, error: reservationsError } = await supabase
         .from("reservations")
         .select("id, party_size, checked_in_at, seating_preference, prepaid_min_charge_cents")
         .eq("event_id", eventId)
-        .neq("status", "cancelled");
+        .eq("status", "accepted"); // Only confirmed reservations
 
       if (reservationsError) throw reservationsError;
 
@@ -118,17 +118,22 @@ export const EventReservationOverview = ({ eventId }: EventReservationOverviewPr
       const totalReservations = reservations.length;
       const checkedIn = reservations.filter(r => r.checked_in_at).length;
 
-      // Group by seating type
+      // Group by seating type - use actual confirmed reservation count for "booked"
       const seatingStats = seatingTypes.map(st => {
         const stReservations = reservations.filter(r => r.seating_preference === st.seating_type);
-        const booked = stReservations.length;
+        const bookedCount = stReservations.length;
         const minPrice = st.tiers.length > 0 
           ? Math.min(...st.tiers.map(t => t.prepaid_min_charge_cents))
           : 0;
+        
+        // Use actual booked count, available = total slots - booked
+        const totalSlots = st.available_slots;
+        const availableSlots = totalSlots - bookedCount;
+        
         return {
           ...st,
-          booked,
-          available: st.available_slots - st.slots_booked,
+          booked: bookedCount,
+          available: availableSlots > 0 ? availableSlots : 0,
           minPrice,
         };
       });
@@ -230,16 +235,16 @@ export const EventReservationOverview = ({ eventId }: EventReservationOverviewPr
 
               return (
                 <div key={seating.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{seating.seating_type}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-medium text-[11px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
                       {seating.minPrice > 0 && (
-                        <Badge variant="outline">
-                          {language === 'el' ? 'από' : 'from'} {formatPrice(seating.minPrice)}
+                        <Badge variant="outline" className="text-[9px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0">
+                          {formatPrice(seating.minPrice)}
                         </Badge>
                       )}
                     </div>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-[9px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
                       {seating.booked} {text.booked} / {seating.available} {text.available}
                     </span>
                   </div>
