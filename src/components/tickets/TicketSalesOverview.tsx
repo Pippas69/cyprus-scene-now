@@ -177,14 +177,14 @@ export const TicketSalesOverview = ({ eventId }: TicketSalesOverviewProps) => {
 
             return (
               <div key={tier.id} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{tier.name}</span>
-                    <Badge variant="outline">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-medium text-[11px] md:text-sm whitespace-nowrap">{tier.name}</span>
+                    <Badge variant="outline" className="text-[9px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0">
                       {tier.price_cents === 0 ? text.free : formatPrice(tier.price_cents)}
                     </Badge>
                   </div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[9px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
                     {tier.quantity_sold} {text.sold} / {available} {text.available}
                   </span>
                 </div>
