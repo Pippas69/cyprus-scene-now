@@ -78,7 +78,12 @@ const OfferBoostSection = ({
     ? selectedTier.hourlyRateCents * durationHours 
     : selectedTier.dailyRateCents * days;
 
+  // Full budget covers entire cost
   const canUseSubscriptionBudget = hasActiveSubscription && remainingBudgetCents >= totalCostCents;
+
+  // Partial budget: some credits exist but not enough
+  const hasPartialBudget = hasActiveSubscription && remainingBudgetCents > 0 && remainingBudgetCents < totalCostCents;
+  const stripeChargeCents = hasPartialBudget ? totalCostCents - remainingBudgetCents : totalCostCents;
 
   const notifyChange = (
     enabled: boolean,
@@ -323,19 +328,23 @@ const OfferBoostSection = ({
             <div className="flex justify-between text-sm">
               <span>{language === "el" ? "Διάρκεια" : "Duration"}:</span>
               <span className="font-semibold">
-                {durationMode === "hourly" 
+                {durationMode === "hourly"
                   ? `${durationHours} ${language === "el" ? "ώρες" : "hours"}`
-                  : `${days} ${language === "el" ? "ημέρες" : "days"}`
-                }
+                  : `${days} ${language === "el" ? "ημέρες" : "days"}`}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>{durationMode === "hourly" 
-                ? (language === "el" ? "Ωριαία Τιμή" : "Hourly Rate") 
-                : (language === "el" ? "Ημερήσια Τιμή" : "Daily Rate")}:</span>
-              <span className="font-semibold">
-                €{durationMode === "hourly" ? selectedTier.hourlyRate : selectedTier.dailyRate}
+              <span>
+                {durationMode === "hourly"
+                  ? language === "el"
+                    ? "Ωριαία Τιμή"
+                    : "Hourly Rate"
+                  : language === "el"
+                    ? "Ημερήσια Τιμή"
+                    : "Daily Rate"}
+                :
               </span>
+              <span className="font-semibold">€{durationMode === "hourly" ? selectedTier.hourlyRate : selectedTier.dailyRate}</span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t">
               <span>{language === "el" ? "Συνολικό Κόστος" : "Total Cost"}:</span>
@@ -343,15 +352,34 @@ const OfferBoostSection = ({
             </div>
 
             {hasActiveSubscription && (
-              <p className="text-xs text-muted-foreground pt-2">
-                {canUseSubscriptionBudget
-                  ? language === "el"
-                    ? "✓ Θα χρησιμοποιηθεί το υπόλοιπο budget της συνδρομής σας"
-                    : "✓ Will be deducted from your subscription budget"
-                  : language === "el"
-                    ? "⚠ Ανεπαρκές budget συνδρομής - θα χρεωθείτε μέσω Stripe"
-                    : "⚠ Insufficient subscription budget - will be charged via Stripe"}
-              </p>
+              <div className="pt-2 space-y-1">
+                {canUseSubscriptionBudget ? (
+                  <p className="text-xs text-muted-foreground">
+                    {language === "el"
+                      ? "✓ Θα χρησιμοποιηθεί το υπόλοιπο budget της συνδρομής σας"
+                      : "✓ Will be deducted from your subscription budget"}
+                  </p>
+                ) : hasPartialBudget ? (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      {language === "el"
+                        ? `Δ Μερικό budget: €${(remainingBudgetCents / 100).toFixed(2)}`
+                        : `Δ Partial budget: €${(remainingBudgetCents / 100).toFixed(2)}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {language === "el"
+                        ? `Χρέωση Stripe: €${(stripeChargeCents / 100).toFixed(2)}`
+                        : `Stripe charge: €${(stripeChargeCents / 100).toFixed(2)}`}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {language === "el"
+                      ? "⚠ Δεν υπάρχουν διαθέσιμα Boost Credits - θα χρεωθείτε μέσω Stripe"
+                      : "⚠ No Boost Credits available - will be charged via Stripe"}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>
