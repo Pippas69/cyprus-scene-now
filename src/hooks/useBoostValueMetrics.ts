@@ -366,12 +366,12 @@ export const useBoostValueMetrics = (
 
       const businessEventIds = businessEvents?.map(e => e.id) || [];
 
-       // Get ALL event boosts that actually ran (active/completed)
+       // Get ALL event boosts that actually ran (active/completed) + canceled (boost was purchased and ran until cancel)
        const { data: allEventBoosts } = await supabase
          .from("event_boosts")
          .select("event_id, start_date, end_date, created_at, duration_mode, duration_hours")
          .eq("business_id", businessId)
-         .in("status", ["active", "completed"]);
+         .in("status", ["active", "completed", "canceled"]);
 
       const eventBoostPeriods: BoostPeriod[] = (allEventBoosts || [])
         .map((b) => {
