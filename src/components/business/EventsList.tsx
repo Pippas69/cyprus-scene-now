@@ -35,16 +35,16 @@ interface EventsListProps {
   businessId: string;
 }
 
-// Helper component to show active boost badge (gold/premium color)
+// Helper component to show active boost badge - positioned half in/half out above icons
 const ActiveBoostBadge = ({ eventId, label }: { eventId: string; label: string }) => {
   const { activeBoost } = useEventActiveBoost(eventId);
   if (!activeBoost) return null;
   return (
     <Badge 
       variant="default" 
-      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center gap-1 shadow-sm"
+      className="absolute -top-2.5 right-0 bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center gap-0.5 shadow-md cursor-default text-[9px] md:text-[10px] lg:text-xs h-5 md:h-6 px-1.5 md:px-2"
     >
-      <Sparkles className="h-3 w-3" />
+      <Sparkles className="h-2.5 w-2.5 md:h-3 md:w-3" />
       {label}
     </Badge>
   );
@@ -421,16 +421,16 @@ const EventsList = ({ businessId }: EventsListProps) => {
             const expired = isEventExpired(event);
             
             return (
-              <Card key={event.id} className={`hover:shadow-md transition-shadow ${expired ? 'opacity-60' : ''}`}>
+              <Card key={event.id} className={`hover:shadow-md transition-shadow relative ${expired ? 'opacity-60' : ''}`}>
+                {/* Boost badge - positioned half in/half out above icons */}
+                <ActiveBoostBadge eventId={event.id} label={t.boosted} />
+                
                 <CardContent className="p-4">
                   {/* 2-row grid so delete icon aligns with RSVP counts line (tablet+mobile) */}
                   <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2">
-                    {/* Row 1 - Left: Title + boost badge + meta */}
+                    {/* Row 1 - Left: Title + meta */}
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-lg font-semibold truncate">{event.title}</h3>
-                        <ActiveBoostBadge eventId={event.id} label={t.boosted} />
-                      </div>
+                      <h3 className="text-lg font-semibold truncate">{event.title}</h3>
 
                       <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
