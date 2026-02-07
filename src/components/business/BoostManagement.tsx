@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Zap, Ticket, Calendar, Eye, MousePointer, Users, Euro, TicketCheck, UserCheck, Pause, Play } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
-
+import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -41,6 +41,10 @@ interface EventBoostWithMetrics {
   reservation_guests: number;
   reservation_revenue_cents: number;
   has_paid_content: boolean;
+  // For proper window calculation
+  created_at?: string | null;
+  duration_mode?: string | null;
+  duration_hours?: number | null;
 }
 
 interface OfferBoostWithMetrics {
@@ -55,6 +59,10 @@ interface OfferBoostWithMetrics {
   impressions: number;
   interactions: number; // redemption clicks
   visits: number; // QR scans
+  // For proper window calculation
+  created_at?: string | null;
+  duration_mode?: string | null;
+  duration_hours?: number | null;
 }
 
 const BoostManagement = ({ businessId }: BoostManagementProps) => {
@@ -218,6 +226,10 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             reservation_guests: reservationGuests,
             reservation_revenue_cents: reservationRevenue,
             has_paid_content: hasPaidContent,
+            // For proper window calculation
+            created_at: boost.created_at,
+            duration_mode: boost.duration_mode,
+            duration_hours: boost.duration_hours,
           };
         })
       );
@@ -293,6 +305,10 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             impressions: impressions || 0,
             interactions: redemptionClicks || 0,
             visits: visits || 0,
+            // For proper window calculation
+            created_at: boost.created_at,
+            duration_mode: boost.duration_mode,
+            duration_hours: boost.duration_hours,
           };
         })
       );
@@ -372,6 +388,43 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     }
   };
 
+  // Helper to check if a boost is currently within its time window
+  const isBoostWithinWindow = (boost: {
+    start_date: string;
+    end_date: string;
+    created_at?: string | null;
+    duration_mode?: string | null;
+    duration_hours?: number | null;
+  }) => {
+    const window = computeBoostWindow({
+      start_date: boost.start_date,
+      end_date: boost.end_date,
+      created_at: boost.created_at,
+      duration_mode: boost.duration_mode,
+      duration_hours: boost.duration_hours,
+    });
+    if (!window) return false;
+    return isTimestampWithinWindow(new Date().toISOString(), window);
+  };
+
+  // Separate active and expired boosts using proper time window logic (MUST be before any early returns)
+  const activeEventBoosts = useMemo(() => 
+    eventBoosts.filter(b => b.status === 'active' && isBoostWithinWindow(b)),
+    [eventBoosts]
+  );
+  const expiredEventBoosts = useMemo(() => 
+    eventBoosts.filter(b => b.status !== 'active' || !isBoostWithinWindow(b)),
+    [eventBoosts]
+  );
+  const activeOfferBoosts = useMemo(() => 
+    offerBoosts.filter(b => b.active && isBoostWithinWindow(b)),
+    [offerBoosts]
+  );
+  const expiredOfferBoosts = useMemo(() => 
+    offerBoosts.filter(b => !b.active || !isBoostWithinWindow(b)),
+    [offerBoosts]
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -435,12 +488,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     expiredSection: language === "el" ? "Ληγμένες Προωθήσεις" : "Expired Boosts",
   };
 
-  // Separate active and expired boosts
-  const now = new Date().toISOString().split('T')[0];
-  const activeEventBoosts = eventBoosts.filter(b => b.end_date >= now && b.status === 'active');
-  const expiredEventBoosts = eventBoosts.filter(b => b.end_date < now || b.status !== 'active');
-  const activeOfferBoosts = offerBoosts.filter(b => b.end_date >= now && b.active);
-  const expiredOfferBoosts = offerBoosts.filter(b => b.end_date < now || !b.active);
 
   // Click-to-open metric dialog (same interaction style as Analytics)
   const MetricWithDialog = ({
