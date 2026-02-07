@@ -46,6 +46,11 @@ const translations = {
     of: "από",
     yourPlan: "Το Πλάνο σας",
     mostPopular: "Δημοφιλέστερη",
+    yourCurrentPlan: "Το Τρέχον Πλάνο σας",
+    freePlanActive: "Free Plan",
+    noBoostCredits: "Χωρίς Boost Credits",
+    upgradeForCredits: "Αναβαθμίστε για να ξεκλειδώσετε boost credits",
+    boostCreditsInfo: "Τα boost credits χρησιμοποιούνται για την προώθηση εκδηλώσεων και προσφορών",
     // Free plan
     freeTitle: "FREE",
     freeBusinessProfile: "Προφίλ επιχείρησης",
@@ -121,6 +126,11 @@ const translations = {
     of: "of",
     yourPlan: "Your Plan",
     mostPopular: "Most Popular",
+    yourCurrentPlan: "Your Current Plan",
+    freePlanActive: "Free Plan",
+    noBoostCredits: "No Boost Credits",
+    upgradeForCredits: "Upgrade to unlock boost credits",
+    boostCreditsInfo: "Boost credits are used to promote events and offers",
     // Free plan
     freeTitle: "FREE",
     freeBusinessProfile: "Business profile",
@@ -461,14 +471,15 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
         )}
       </AnimatePresence>
 
-      {/* Active Subscription Card - Shows when user has subscription */}
-      {currentSubscription?.subscribed && (
-        <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-6' : 'pt-8 pb-6'}`}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+      {/* Current Plan Status Card - Always visible */}
+      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-6' : 'pt-8 pb-6'}`}>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {currentSubscription?.subscribed ? (
+            // Paid subscription card
             <Card className="relative overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
               <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${currentPlanGradient}`} />
               
@@ -483,7 +494,7 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
                       <div>
                         <div className="flex items-center gap-2">
                           <h2 className="text-2xl font-bold">{currentSubscription.plan_name}</h2>
-                          <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                          <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                             {t.subscriptionActive}
                           </Badge>
                         </div>
@@ -539,9 +550,51 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          ) : (
+            // Free plan card
+            <Card className="relative overflow-hidden border border-border/50 bg-muted/20">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-muted-foreground/30 to-muted-foreground/10" />
+              
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  {/* Plan Info */}
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="p-2.5 rounded-xl bg-muted border border-border/50">
+                      <Building2 className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold">{t.freePlanActive}</h2>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Commission: {t.freeCommission}
+                      </p>
+                    </div>
+                  </div>
 
-          {/* Section divider for viewing other plans */}
+                  {/* Boost Credits - Empty state */}
+                  <div className="flex-1 sm:max-w-xs">
+                    <div className="p-3 rounded-xl bg-muted/50 border border-border/30">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1 rounded-lg bg-muted-foreground/10">
+                          <Rocket className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                        <span className="font-medium text-sm text-muted-foreground">{t.boostBudget}</span>
+                      </div>
+                      <p className="text-lg font-bold text-muted-foreground/70">{t.freeBoostCredits}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {t.upgradeForCredits}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
+
+        {/* Section divider for viewing other plans - only for paid subscribers */}
+        {currentSubscription?.subscribed && (
           <div className="flex items-center gap-4 mt-8 mb-6">
             <div className="flex-1 h-px bg-border" />
             <span className="text-sm text-muted-foreground flex items-center gap-2">
@@ -550,11 +603,12 @@ export default function SubscriptionPlans({ embedded = false }: SubscriptionPlan
             </span>
             <div className="flex-1 h-px bg-border" />
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
 
       {/* Header Section with Free Plan */}
-      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${currentSubscription?.subscribed ? 'pb-4' : embedded ? 'pt-6 pb-4' : 'pt-12 pb-4'}`}>
+      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-4`}>
         {/* Free Plan - Compact Horizontal Section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
