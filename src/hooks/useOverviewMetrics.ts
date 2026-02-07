@@ -297,14 +297,36 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       }
 
       // C. Reservation visits (verified reservation check-ins)
-      const { count: directReservationVisits } = await supabase
+      // IMPORTANT: Offer-linked reservations also have event_id = NULL, so we must exclude them from direct profile visits.
+      const { data: directResCheckins } = await supabase
         .from("reservations")
-        .select("id", { count: "exact", head: true })
+        .select("id")
         .eq("business_id", businessId)
         .is("event_id", null)
         .not("checked_in_at", "is", null)
         .gte("checked_in_at", startDate.toISOString())
         .lte("checked_in_at", endDate.toISOString());
+
+      const directResIds = (directResCheckins || []).map((r) => r.id);
+
+      let offerLinkedReservationIds = new Set<string>();
+      if (directResIds.length > 0) {
+        const { data: offerLinks } = await supabase
+          .from("offer_purchases")
+          .select("reservation_id")
+          .in("reservation_id", directResIds)
+          .not("reservation_id", "is", null);
+
+        offerLinkedReservationIds = new Set(
+          (offerLinks || [])
+            .map((o) => (o as { reservation_id: string | null }).reservation_id)
+            .filter(Boolean) as string[]
+        );
+      }
+
+      const directReservationVisits = directResIds.filter(
+        (id) => !offerLinkedReservationIds.has(id)
+      ).length;
 
       let eventReservationVisits = 0;
       if (eventIds.length > 0) {
@@ -329,7 +351,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       const visitsViaQR =
         offerVisits +
         ticketVisits +
-        (directReservationVisits || 0) +
+        directReservationVisits +
         eventReservationVisits +
         (studentDiscountVisits || 0);
 
