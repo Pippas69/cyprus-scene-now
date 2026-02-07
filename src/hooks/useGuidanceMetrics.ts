@@ -186,36 +186,46 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       // ========================================
       // 3. EVENT BOOST METRICS (only paid events with check-ins during boost period)
       // ========================================
-      
-       // Get event boosts that actually ran (active/completed)
-       const { data: eventBoosts } = await supabase
-         .from("event_boosts")
-         .select("total_cost_cents, event_id, start_date, end_date, status")
-         .eq("business_id", businessId)
-         .in("status", ["active", "completed"]);
 
-      const eventBoostSpentCents = (eventBoosts || []).reduce(
+      // We track:
+      // - boostSpentCents: ALL money the business has spent for event boosts (even if paused)
+      // - revenue/netRevenue: ONLY from check-ins that happened during boosts that actually ran
+      //   (active/completed), and only when the check-in happened inside that boost window.
+
+      // 3a) Money spent on event boosts (include paused)
+      const { data: eventBoostsForSpend } = await supabase
+        .from("event_boosts")
+        .select("total_cost_cents")
+        .eq("business_id", businessId)
+        .in("status", ["active", "completed", "canceled"]);
+
+      const eventBoostSpentCents = (eventBoostsForSpend || []).reduce(
         (sum, b) => sum + (b.total_cost_cents || 0),
         0
       );
 
-      // Build event boost periods for accurate attribution
+      // 3b) Boost windows for attribution (only boosts that actually ran)
+      const { data: eventBoostsForAttribution } = await supabase
+        .from("event_boosts")
+        .select("event_id, start_date, end_date")
+        .eq("business_id", businessId)
+        .in("status", ["active", "completed"]);
+
       interface EventBoostPeriod {
         eventId: string;
         startDate: string;
         endDate: string;
       }
-      
-      const eventBoostPeriods: EventBoostPeriod[] = (eventBoosts || []).map((b) => ({
-        eventId: b.event_id,
-        startDate: b.start_date,
-        endDate: b.end_date,
-      }));
 
-      const isWithinEventBoostPeriod = (
-        timestamp: string,
-        eventId: string
-      ): boolean => {
+      const eventBoostPeriods: EventBoostPeriod[] = (eventBoostsForAttribution || []).map(
+        (b) => ({
+          eventId: b.event_id,
+          startDate: b.start_date,
+          endDate: b.end_date,
+        })
+      );
+
+      const isWithinEventBoostPeriod = (timestamp: string, eventId: string): boolean => {
         const date = new Date(timestamp);
         return eventBoostPeriods.some(
           (period) =>
@@ -225,14 +235,16 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
         );
       };
 
-      const boostedEventIds = [...new Set((eventBoosts || []).map((b) => b.event_id))];
+      const boostedEventIds = [
+        ...new Set((eventBoostsForAttribution || []).map((b) => b.event_id)),
+      ];
 
       let eventRevenueWithCommission = 0;
       let eventNetRevenue = 0;
       let avgCommissionPercent = 12; // Default commission
 
       if (boostedEventIds.length > 0) {
-        // Get business commission rate first
+        // Get business commission rate first (fallback to 12%)
         const { data: subscriptionData } = await supabase
           .from("business_subscriptions")
           .select("plan_id")
@@ -259,44 +271,69 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
             commissionRates[planData?.slug || "free"] || 12;
         }
 
-        // Get tickets with check-ins during boost periods (filtered by date range)
+        // ------------------------
+        // TICKET REVENUE (per checked-in ticket)
+        // ------------------------
+        // IMPORTANT: We must compute revenue only for the tickets that were checked-in
+        // during the boost window. Summing whole orders would overcount when an order has
+        // multiple tickets but only some check-ins were in boosted window.
+
         const { data: tickets } = await supabase
           .from("tickets")
-          .select("id, event_id, order_id, checked_in_at")
+          .select("id, event_id, order_id, tier_id, checked_in_at")
           .in("event_id", boostedEventIds)
           .not("checked_in_at", "is", null)
           .gte("checked_in_at", startDate)
           .lte("checked_in_at", endDate);
 
-        // Filter tickets to only those checked in during boost period
         const boostedTickets = (tickets || []).filter(
           (t) => t.checked_in_at && isWithinEventBoostPeriod(t.checked_in_at, t.event_id)
         );
 
-        // Get unique ticket order IDs from boosted check-ins
-        const boostedOrderIds = [...new Set(boostedTickets.map((t) => t.order_id).filter(Boolean))];
+        const boostedTierIds = [
+          ...new Set(boostedTickets.map((t) => t.tier_id).filter(Boolean)),
+        ] as string[];
+
+        const { data: tiers } = boostedTierIds.length
+          ? await supabase
+              .from("ticket_tiers")
+              .select("id, price_cents")
+              .in("id", boostedTierIds)
+          : { data: [] as { id: string; price_cents: number | null }[] };
+
+        const tierPriceById = new Map(
+          (tiers || []).map((t) => [t.id, t.price_cents || 0])
+        );
+
+        const boostedOrderIds = [
+          ...new Set(boostedTickets.map((t) => t.order_id).filter(Boolean)),
+        ] as string[];
+
+        const { data: ticketOrders } = boostedOrderIds.length
+          ? await supabase
+              .from("ticket_orders")
+              .select("id, commission_percent")
+              .in("id", boostedOrderIds)
+              .eq("status", "completed")
+          : { data: [] as { id: string; commission_percent: number | null }[] };
+
+        const orderCommissionPercentById = new Map(
+          (ticketOrders || []).map((o) => [o.id, o.commission_percent ?? 12])
+        );
 
         let ticketRevenue = 0;
         let ticketCommission = 0;
 
-        if (boostedOrderIds.length > 0) {
-          const { data: ticketOrders } = await supabase
-            .from("ticket_orders")
-            .select("id, total_cents, commission_cents")
-            .in("id", boostedOrderIds)
-            .eq("status", "completed");
-
-          ticketRevenue = (ticketOrders || []).reduce(
-            (sum, o) => sum + (o.total_cents || 0),
-            0
-          );
-          ticketCommission = (ticketOrders || []).reduce(
-            (sum, o) => sum + (o.commission_cents || 0),
-            0
-          );
+        for (const t of boostedTickets) {
+          const priceCents = tierPriceById.get(t.tier_id) ?? 0;
+          const commissionPercent = orderCommissionPercentById.get(t.order_id) ?? 12;
+          ticketRevenue += priceCents;
+          ticketCommission += Math.round(priceCents * (commissionPercent / 100));
         }
 
-        // Get paid reservations with check-ins during boost periods (filtered by date range)
+        // ------------------------
+        // RESERVATION REVENUE (prepaid minimum charge)
+        // ------------------------
         const { data: paidReservations } = await supabase
           .from("reservations")
           .select("prepaid_min_charge_cents, event_id, checked_in_at")
@@ -307,12 +344,13 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
           .gte("checked_in_at", startDate)
           .lte("checked_in_at", endDate);
 
-        // Filter reservations to only those checked in during boost period
         const boostedReservations = (paidReservations || []).filter(
-          (r) => r.event_id && r.checked_in_at && isWithinEventBoostPeriod(r.checked_in_at, r.event_id)
+          (r) =>
+            r.event_id &&
+            r.checked_in_at &&
+            isWithinEventBoostPeriod(r.checked_in_at, r.event_id)
         );
 
-        // Calculate reservation revenue from boosted check-ins only
         const reservationRevenue = boostedReservations.reduce(
           (sum, r) => sum + (r.prepaid_min_charge_cents || 0),
           0
@@ -324,10 +362,9 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
         // Total revenue WITH commission (what user paid)
         eventRevenueWithCommission = ticketRevenue + reservationRevenue;
 
-        // Net revenue (after FOMO commission)
+        // Net revenue (after platform commission)
         eventNetRevenue =
-          ticketRevenue -
-          ticketCommission +
+          (ticketRevenue - ticketCommission) +
           (reservationRevenue - reservationCommission);
 
         // Average commission percent
