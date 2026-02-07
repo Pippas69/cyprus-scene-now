@@ -78,9 +78,10 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
         .filter((i) => new Date(i.from) <= new Date(i.to));
 
       for (const interval of paidIntervals) {
+        // Get all checked-in reservations with event_id IS NULL in this interval
         let reservationsQ = supabase
           .from("reservations")
-          .select("id", { count: "exact", head: true })
+          .select("id")
           .eq("business_id", businessId)
           .is("event_id", null)
           .not("checked_in_at", "is", null)
@@ -90,7 +91,29 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
           ? reservationsQ.lte("checked_in_at", interval.to)
           : reservationsQ.lt("checked_in_at", interval.to);
 
-        const { count } = await reservationsQ;
+        const { data: checkedInReservations } = await reservationsQ;
+        const reservationIds = (checkedInReservations || []).map((r) => r.id);
+
+        // IMPORTANT: Exclude reservations that were created via offer purchases
+        // to prevent double-counting (they are counted under "offer visits" instead).
+        let offerLinkedReservationIds = new Set<string>();
+        if (reservationIds.length > 0) {
+          const { data: offerLinks } = await supabase
+            .from("offer_purchases")
+            .select("reservation_id")
+            .in("reservation_id", reservationIds)
+            .not("reservation_id", "is", null);
+
+          offerLinkedReservationIds = new Set(
+            (offerLinks || [])
+              .map((o) => (o as { reservation_id: string | null }).reservation_id)
+              .filter(Boolean) as string[]
+          );
+        }
+
+        const directProfileReservationVisits = reservationIds.filter(
+          (id) => !offerLinkedReservationIds.has(id)
+        ).length;
 
         let studentQ = supabase
           .from("student_discount_redemptions")
@@ -104,7 +127,7 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
 
         const { count: studentCount } = await studentQ;
 
-        newCustomers += (count || 0) + (studentCount || 0);
+        newCustomers += directProfileReservationVisits + (studentCount || 0);
       }
 
 
