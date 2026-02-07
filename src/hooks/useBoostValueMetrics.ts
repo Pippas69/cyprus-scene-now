@@ -440,28 +440,31 @@ export const useBoostValueMetrics = (
         });
       }
 
-      // Event visits = ticket PURCHASES + event reservation CREATIONS
-      // Per business rule: boosted attribution is based on when the action happened (created_at),
-      // not on check-in time.
+      // Event visits = ticket CHECK-INS + event reservation CHECK-INS
+      // IMPORTANT: Visits must match Performance tab logic (based on checked_in_at, not created_at)
+      // Boosted attribution is based on when the ticket was PURCHASED or reservation was CREATED,
+      // but we only count it as a visit if check-in actually happened.
       let boostedEventVisits = 0;
       let nonBoostedEventVisits = 0;
 
       if (businessEventIds.length > 0) {
-        // Ticket purchases (tickets created)
-        const ticketPurchases = await fetchAll<{ event_id: string; created_at: string }>(
+        // Ticket check-ins (only count tickets that were actually checked in)
+        const ticketCheckins = await fetchAll<{ event_id: string; created_at: string; checked_in_at: string | null }>(
           async (from, to) => {
             const { data } = await supabase
               .from("tickets")
-              .select("event_id, created_at")
+              .select("event_id, created_at, checked_in_at")
               .in("event_id", businessEventIds)
-              .gte("created_at", startDate)
-              .lte("created_at", endDate)
+              .not("checked_in_at", "is", null)
+              .gte("checked_in_at", startDate)
+              .lte("checked_in_at", endDate)
               .range(from, to);
             return (data || []) as any;
           }
         );
 
-        (ticketPurchases || []).forEach((ticket) => {
+        (ticketCheckins || []).forEach((ticket) => {
+          // Attribution based on PURCHASE time (created_at), but only if checked in
           if (ticket.created_at && isWithinBoostPeriod(ticket.created_at, ticket.event_id, eventBoostPeriods)) {
             boostedEventVisits++;
           } else {
@@ -469,21 +472,23 @@ export const useBoostValueMetrics = (
           }
         });
 
-        // Event reservations created
-        const eventReservations = await fetchAll<{ event_id: string | null; created_at: string }>(
+        // Event reservation check-ins (only count reservations that were actually checked in)
+        const eventReservationCheckins = await fetchAll<{ event_id: string | null; created_at: string; checked_in_at: string | null }>(
           async (from, to) => {
             const { data } = await supabase
               .from("reservations")
-              .select("event_id, created_at")
+              .select("event_id, created_at, checked_in_at")
               .in("event_id", businessEventIds)
-              .gte("created_at", startDate)
-              .lte("created_at", endDate)
+              .not("checked_in_at", "is", null)
+              .gte("checked_in_at", startDate)
+              .lte("checked_in_at", endDate)
               .range(from, to);
             return (data || []) as any;
           }
         );
 
-        (eventReservations || []).forEach((r) => {
+        (eventReservationCheckins || []).forEach((r) => {
+          // Attribution based on RESERVATION time (created_at), but only if checked in
           if (r.event_id && r.created_at && isWithinBoostPeriod(r.created_at, r.event_id, eventBoostPeriods)) {
             boostedEventVisits++;
           } else {
