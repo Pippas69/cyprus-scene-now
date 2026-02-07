@@ -87,10 +87,40 @@ Deno.serve(async (req) => {
     }
     logStep('Business found', { businessId: business.id });
 
+    // First check database for existing subscription
+    const { data: existingDbSub, error: dbSubError } = await supabaseClient
+      .from('business_subscriptions')
+      .select('*, subscription_plans(*)')
+      .eq('business_id', business.id)
+      .eq('status', 'active')
+      .single();
+
     const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
+    // If no Stripe customer but has DB subscription, use that
     if (customers.data.length === 0) {
+      if (existingDbSub && existingDbSub.subscription_plans) {
+        logStep('No Stripe customer, but found DB subscription', { planSlug: existingDbSub.subscription_plans.slug });
+        const plan = existingDbSub.subscription_plans;
+        return new Response(JSON.stringify({
+          subscribed: true,
+          plan_slug: plan.slug,
+          plan_name: plan.name,
+          billing_cycle: existingDbSub.billing_cycle || 'monthly',
+          status: 'active',
+          subscription_end: existingDbSub.current_period_end,
+          monthly_budget_remaining_cents: existingDbSub.monthly_budget_remaining_cents || plan.event_boost_budget_cents,
+          commission_free_offers_remaining: existingDbSub.commission_free_offers_remaining || 0,
+          event_boost_budget_cents: plan.event_boost_budget_cents,
+          commission_free_offers_count: plan.commission_free_offers_count || 0,
+          commission_percent: plan.commission_percent || 12,
+          analytics_level: plan.analytics_level || 'overview',
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
       logStep('No Stripe customer found');
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -110,7 +140,29 @@ Deno.serve(async (req) => {
 
     const hasActiveSub = subscriptions.data.length > 0;
 
+    // If no Stripe subscription, but has DB subscription, use that
     if (!hasActiveSub) {
+      if (existingDbSub && existingDbSub.subscription_plans) {
+        logStep('No active Stripe subscription, but found DB subscription', { planSlug: existingDbSub.subscription_plans.slug });
+        const plan = existingDbSub.subscription_plans;
+        return new Response(JSON.stringify({
+          subscribed: true,
+          plan_slug: plan.slug,
+          plan_name: plan.name,
+          billing_cycle: existingDbSub.billing_cycle || 'monthly',
+          status: 'active',
+          subscription_end: existingDbSub.current_period_end,
+          monthly_budget_remaining_cents: existingDbSub.monthly_budget_remaining_cents || plan.event_boost_budget_cents,
+          commission_free_offers_remaining: existingDbSub.commission_free_offers_remaining || 0,
+          event_boost_budget_cents: plan.event_boost_budget_cents,
+          commission_free_offers_count: plan.commission_free_offers_count || 0,
+          commission_percent: plan.commission_percent || 12,
+          analytics_level: plan.analytics_level || 'overview',
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
       logStep('No active subscription found');
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
