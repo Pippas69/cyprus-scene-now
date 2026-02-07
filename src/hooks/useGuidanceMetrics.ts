@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
 
 interface ProfileMetrics {
   newCustomers: number;
@@ -111,12 +112,14 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       // 2. OFFER BOOST METRICS
       // ========================================
       
-      // Get total boost spending for offers
+      // Get total boost spending for offers (include expired + canceled)
       const { data: offerBoosts } = await supabase
         .from("offer_boosts")
-        .select("total_cost_cents, discount_id, start_date, end_date, status, created_at")
+        .select(
+          "total_cost_cents, discount_id, start_date, end_date, status, created_at, duration_mode, duration_hours"
+        )
         .eq("business_id", businessId)
-        .in("status", ["active", "completed", "paused"]);
+        .in("status", ["active", "completed", "canceled", "paused"]);
 
       const boostSpentCents = (offerBoosts || []).reduce(
         (sum, b) => sum + (b.total_cost_cents || 0),
@@ -126,27 +129,36 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       // Build boost periods for accurate attribution
       interface BoostPeriod {
         discountId: string;
-        startDate: string;
-        endDate: string;
+        windowStart: string;
+        windowEnd: string;
       }
-      
-      const offerBoostPeriods: BoostPeriod[] = (offerBoosts || []).map((b) => ({
-        discountId: b.discount_id,
-        startDate: b.start_date,
-        endDate: b.end_date,
-      }));
 
-      const isWithinOfferBoostPeriod = (
-        timestamp: string,
-        discountId: string
-      ): boolean => {
-        const date = new Date(timestamp);
-        return offerBoostPeriods.some(
-          (period) =>
-            period.discountId === discountId &&
-            date >= new Date(period.startDate) &&
-            date <= new Date(period.endDate + "T23:59:59.999Z")
-        );
+      const offerBoostPeriods: BoostPeriod[] = (offerBoosts || [])
+        .map((b) => {
+          const window = computeBoostWindow({
+            start_date: b.start_date,
+            end_date: b.end_date,
+            created_at: b.created_at,
+            duration_mode: b.duration_mode,
+            duration_hours: b.duration_hours,
+          });
+          if (!window) return null;
+          return {
+            discountId: b.discount_id,
+            windowStart: window.start,
+            windowEnd: window.end,
+          };
+        })
+        .filter(Boolean) as BoostPeriod[];
+
+      const isWithinOfferBoostPeriod = (timestamp: string, discountId: string): boolean => {
+        return offerBoostPeriods.some((period) => {
+          if (period.discountId !== discountId) return false;
+          return isTimestampWithinWindow(timestamp, {
+            start: period.windowStart,
+            end: period.windowEnd,
+          });
+        });
       };
 
       // Get all boosted offer IDs
@@ -192,7 +204,7 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       // - revenue/netRevenue: ONLY from check-ins that happened during boosts that actually ran
       //   (active/completed), and only when the check-in happened inside that boost window.
 
-      // 3a) Money spent on event boosts (include paused)
+      // 3a) Money spent on event boosts (include expired + canceled)
       const { data: eventBoostsForSpend } = await supabase
         .from("event_boosts")
         .select("total_cost_cents")
@@ -207,32 +219,42 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       // 3b) Boost windows for attribution (only boosts that actually ran)
       const { data: eventBoostsForAttribution } = await supabase
         .from("event_boosts")
-        .select("event_id, start_date, end_date")
+        .select("event_id, start_date, end_date, created_at, duration_mode, duration_hours")
         .eq("business_id", businessId)
         .in("status", ["active", "completed"]);
 
       interface EventBoostPeriod {
         eventId: string;
-        startDate: string;
-        endDate: string;
+        windowStart: string;
+        windowEnd: string;
       }
 
-      const eventBoostPeriods: EventBoostPeriod[] = (eventBoostsForAttribution || []).map(
-        (b) => ({
-          eventId: b.event_id,
-          startDate: b.start_date,
-          endDate: b.end_date,
+      const eventBoostPeriods: EventBoostPeriod[] = (eventBoostsForAttribution || [])
+        .map((b) => {
+          const window = computeBoostWindow({
+            start_date: b.start_date,
+            end_date: b.end_date,
+            created_at: b.created_at,
+            duration_mode: b.duration_mode,
+            duration_hours: b.duration_hours,
+          });
+          if (!window) return null;
+          return {
+            eventId: b.event_id,
+            windowStart: window.start,
+            windowEnd: window.end,
+          };
         })
-      );
+        .filter(Boolean) as EventBoostPeriod[];
 
       const isWithinEventBoostPeriod = (timestamp: string, eventId: string): boolean => {
-        const date = new Date(timestamp);
-        return eventBoostPeriods.some(
-          (period) =>
-            period.eventId === eventId &&
-            date >= new Date(period.startDate) &&
-            date <= new Date(period.endDate + "T23:59:59.999Z")
-        );
+        return eventBoostPeriods.some((period) => {
+          if (period.eventId !== eventId) return false;
+          return isTimestampWithinWindow(timestamp, {
+            start: period.windowStart,
+            end: period.windowEnd,
+          });
+        });
       };
 
       const boostedEventIds = [
@@ -244,31 +266,38 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       let avgCommissionPercent = 12; // Default commission
 
       if (boostedEventIds.length > 0) {
-        // Get business commission rate first (fallback to 12%)
-        const { data: subscriptionData } = await supabase
-          .from("business_subscriptions")
-          .select("plan_id")
-          .eq("business_id", businessId)
-          .eq("status", "active")
-          .maybeSingle();
-
+        // Get business commission rate (backend source of truth)
         let reservationCommissionPercent = 12;
-        if (subscriptionData?.plan_id) {
-          const { data: planData } = await supabase
-            .from("subscription_plans")
-            .select("slug")
-            .eq("id", subscriptionData.plan_id)
+        try {
+          const { data, error } = await supabase.functions.invoke("check-subscription");
+          if (!error && data && (data as any).commission_percent != null) {
+            reservationCommissionPercent = (data as any).commission_percent;
+          }
+        } catch {
+          // Fallback to DB lookup
+          const { data: subscriptionData } = await supabase
+            .from("business_subscriptions")
+            .select("plan_id")
+            .eq("business_id", businessId)
+            .eq("status", "active")
             .maybeSingle();
 
-          // Commission rates by plan
-          const commissionRates: Record<string, number> = {
-            free: 12,
-            basic: 10,
-            pro: 8,
-            elite: 6,
-          };
-          reservationCommissionPercent =
-            commissionRates[planData?.slug || "free"] || 12;
+          if (subscriptionData?.plan_id) {
+            const { data: planData } = await supabase
+              .from("subscription_plans")
+              .select("slug")
+              .eq("id", subscriptionData.plan_id)
+              .maybeSingle();
+
+            const commissionRates: Record<string, number> = {
+              free: 12,
+              basic: 10,
+              pro: 8,
+              elite: 6,
+            };
+            reservationCommissionPercent =
+              commissionRates[planData?.slug || "free"] || 12;
+          }
         }
 
         // ------------------------

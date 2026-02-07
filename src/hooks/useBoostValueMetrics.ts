@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
 
 interface ComparisonMetrics {
   views: { without: number; with: number; change: number };
@@ -25,8 +26,8 @@ interface DateRange {
 
 interface BoostPeriod {
   entityId: string;
-  startDate: string;
-  endDate: string;
+  windowStart: string;
+  windowEnd: string;
 }
 
 const calculateChange = (without: number, withBoost: number): number => {
@@ -40,13 +41,13 @@ const isWithinBoostPeriod = (
   entityId: string,
   boostPeriods: BoostPeriod[]
 ): boolean => {
-  const date = new Date(timestamp);
-  return boostPeriods.some(
-    (period) =>
-      period.entityId === entityId &&
-      date >= new Date(period.startDate) &&
-      date <= new Date(period.endDate + "T23:59:59.999Z")
-  );
+  return boostPeriods.some((period) => {
+    if (period.entityId !== entityId) return false;
+    return isTimestampWithinWindow(timestamp, {
+      start: period.windowStart,
+      end: period.windowEnd,
+    });
+  });
 };
 
 export const useBoostValueMetrics = (
@@ -256,15 +257,27 @@ export const useBoostValueMetrics = (
        // Get ALL offer boosts that actually ran (active/completed)
        const { data: allOfferBoosts } = await supabase
          .from("offer_boosts")
-         .select("discount_id, start_date, end_date")
+         .select("discount_id, start_date, end_date, created_at, duration_mode, duration_hours")
          .eq("business_id", businessId)
          .in("status", ["active", "completed"]);
 
-      const offerBoostPeriods: BoostPeriod[] = (allOfferBoosts || []).map(b => ({
-        entityId: b.discount_id,
-        startDate: b.start_date,
-        endDate: b.end_date,
-      }));
+      const offerBoostPeriods: BoostPeriod[] = (allOfferBoosts || [])
+        .map((b) => {
+          const window = computeBoostWindow({
+            start_date: b.start_date,
+            end_date: b.end_date,
+            created_at: b.created_at,
+            duration_mode: b.duration_mode,
+            duration_hours: b.duration_hours,
+          });
+          if (!window) return null;
+          return {
+            entityId: b.discount_id,
+            windowStart: window.start,
+            windowEnd: window.end,
+          };
+        })
+        .filter(Boolean) as BoostPeriod[];
 
       // Get ALL offer views with timestamps
       let boostedOfferViews = 0;
@@ -356,15 +369,27 @@ export const useBoostValueMetrics = (
        // Get ALL event boosts that actually ran (active/completed)
        const { data: allEventBoosts } = await supabase
          .from("event_boosts")
-         .select("event_id, start_date, end_date")
+         .select("event_id, start_date, end_date, created_at, duration_mode, duration_hours")
          .eq("business_id", businessId)
          .in("status", ["active", "completed"]);
 
-      const eventBoostPeriods: BoostPeriod[] = (allEventBoosts || []).map(b => ({
-        entityId: b.event_id,
-        startDate: b.start_date,
-        endDate: b.end_date,
-      }));
+      const eventBoostPeriods: BoostPeriod[] = (allEventBoosts || [])
+        .map((b) => {
+          const window = computeBoostWindow({
+            start_date: b.start_date,
+            end_date: b.end_date,
+            created_at: b.created_at,
+            duration_mode: b.duration_mode,
+            duration_hours: b.duration_hours,
+          });
+          if (!window) return null;
+          return {
+            entityId: b.event_id,
+            windowStart: window.start,
+            windowEnd: window.end,
+          };
+        })
+        .filter(Boolean) as BoostPeriod[];
 
       // Event views
       let boostedEventViews = 0;

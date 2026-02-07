@@ -14,7 +14,20 @@ export const useCommissionRate = (businessId: string | null) => {
         return { commissionPercent: 12, planSlug: null };
       }
 
-      // Get business subscription
+      // Prefer backend truth (supports manual overrides / fallback logic)
+      try {
+        const { data, error } = await supabase.functions.invoke("check-subscription");
+        if (!error && data) {
+          return {
+            commissionPercent: (data as any).commission_percent ?? 12,
+            planSlug: (data as any).plan_slug ?? null,
+          };
+        }
+      } catch {
+        // fall through
+      }
+
+      // Fallback: DB subscription -> commission table
       const { data: subscription } = await supabase
         .from("business_subscriptions")
         .select("plan_id, subscription_plans(slug)")
@@ -24,7 +37,6 @@ export const useCommissionRate = (businessId: string | null) => {
 
       const planSlug = (subscription?.subscription_plans as any)?.slug || "free";
 
-      // Get commission rate for plan
       const { data: commissionRate } = await supabase
         .from("ticket_commission_rates")
         .select("commission_percent")
