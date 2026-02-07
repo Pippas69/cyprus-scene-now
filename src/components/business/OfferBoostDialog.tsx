@@ -83,8 +83,14 @@ const OfferBoostDialog = ({
     : selectedTier.dailyRate * days;
   const totalCostCents = totalCost * 100;
 
+  // Full budget covers entire cost
   const canUseSubscriptionBudget =
     hasActiveSubscription && remainingBudgetCents >= totalCostCents;
+  
+  // Partial budget: there's budget, but not enough - calculate how much Stripe will charge
+  const hasPartialBudget = hasActiveSubscription && remainingBudgetCents > 0 && remainingBudgetCents < totalCostCents;
+  const stripeChargeCents = hasPartialBudget ? totalCostCents - remainingBudgetCents : totalCostCents;
+  const stripeCharge = stripeChargeCents / 100;
 
   const handleBoost = async () => {
     setIsSubmitting(true);
@@ -123,37 +129,51 @@ const OfferBoostDialog = ({
           onOpenChange(false);
         }
       } else {
-        // For now, create the boost without payment (can integrate Stripe later)
-        const { data, error } = await supabase.functions.invoke("create-offer-boost", {
-          body: {
-            discountId: offerId,
-            tier,
-            durationMode,
-            startDate: formattedStartDate,
-            endDate: formattedEndDate,
-            durationHours: durationMode === "hourly" ? durationHours : undefined,
-            useSubscriptionBudget: false,
-          },
+        // Trigger Stripe checkout with partial budget deduction if applicable
+        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+          "create-offer-boost-checkout",
+          {
+            body: {
+              discountId: offerId,
+              tier,
+              durationMode,
+              startDate: formattedStartDate,
+              endDate: formattedEndDate,
+              durationHours: durationMode === "hourly" ? durationHours : undefined,
+              // Pass partial budget to be deducted if applicable
+              partialBudgetCents: hasPartialBudget ? remainingBudgetCents : 0,
+            },
+          }
+        );
+
+        if (checkoutError) throw checkoutError;
+
+        if (!checkoutData?.url) {
+          throw new Error(language === "el" ? "Δεν λήφθηκε σύνδεσμος πληρωμής" : "No checkout URL received");
+        }
+
+        const url = checkoutData.url as string;
+        setCheckoutUrl(url);
+        setRedirectAttempted(false);
+
+        try {
+          (document.activeElement as HTMLElement | null)?.blur?.();
+          window.location.assign(url);
+        } catch {
+          // ignore and fall back to manual continuation
+        }
+
+        toast.success(language === "el" ? "Ανακατεύθυνση στην πληρωμή" : "Redirecting to payment", {
+          description:
+            language === "el"
+              ? "Ολοκληρώστε την πληρωμή για να ενεργοποιήσετε την προώθηση"
+              : "Complete payment to activate your boost",
         });
 
-        if (error) throw error;
-
-        if (data.needsPayment) {
-          toast.info(
-            language === "el" ? "Απαιτείται πληρωμή" : "Payment required",
-            {
-              description:
-                language === "el"
-                  ? `Κόστος: €${data.totalCostCents / 100}`
-                  : `Cost: €${data.totalCostCents / 100}`,
-            }
-          );
-        } else if (data.success) {
-          toast.success(
-            language === "el" ? "Προώθηση ενεργοποιήθηκε!" : "Boost activated!"
-          );
-          onOpenChange(false);
-        }
+        window.setTimeout(() => {
+          setRedirectAttempted(true);
+          setIsSubmitting(false);
+        }, 900);
       }
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
@@ -393,15 +413,20 @@ const OfferBoostDialog = ({
                 </div>
 
                 {hasActiveSubscription && (
-                  <p className="text-[10px] md:text-xs text-muted-foreground pt-2">
-                    {canUseSubscriptionBudget
-                      ? language === "el"
-                        ? "✓ Θα χρησιμοποιηθεί το budget συνδρομής"
-                        : "✓ Will use subscription budget"
-                      : language === "el"
-                        ? "⚠ Ανεπαρκές budget - χρέωση Stripe"
-                        : "⚠ Insufficient budget - Stripe charge"}
-                  </p>
+                  <div className="text-[10px] md:text-xs text-muted-foreground pt-2 space-y-1">
+                    {canUseSubscriptionBudget ? (
+                      <p>✓ {language === "el" ? "Θα χρησιμοποιηθεί το budget συνδρομής" : "Will use subscription budget"}</p>
+                    ) : hasPartialBudget ? (
+                      <>
+                        <p>⚠ {language === "el" ? "Μερικό budget" : "Partial budget"}: €{(remainingBudgetCents / 100).toFixed(2)}</p>
+                        <p className="font-semibold">
+                          {language === "el" ? "Χρέωση Stripe" : "Stripe charge"}: €{stripeCharge.toFixed(2)}
+                        </p>
+                      </>
+                    ) : (
+                      <p>⚠ {language === "el" ? "Ανεπαρκές budget - χρέωση Stripe" : "Insufficient budget - Stripe charge"}: €{totalCost.toFixed(2)}</p>
+                    )}
+                  </div>
                 )}
               </div>
 

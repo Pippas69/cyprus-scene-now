@@ -36,8 +36,8 @@ Deno.serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours } = await req.json();
-    logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours });
+    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours, partialBudgetCents = 0 } = await req.json();
+    logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours, partialBudgetCents });
 
     // Get business ID for this event
     const { data: eventData, error: eventError } = await supabaseClient
@@ -95,6 +95,14 @@ Deno.serve(async (req) => {
       logStep("Daily cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
     }
 
+    // Calculate amount to charge via Stripe (after partial budget deduction)
+    const stripeChargeCents = Math.max(0, totalCostCents - partialBudgetCents);
+    logStep("Stripe charge calculated", { totalCostCents, partialBudgetCents, stripeChargeCents });
+
+    if (stripeChargeCents <= 0) {
+      throw new Error("No payment needed - use subscription budget instead");
+    }
+
     // Create boost record FIRST with pending status
     const { data: boostData, error: boostError } = await supabaseClient
       .from("event_boosts")
@@ -132,6 +140,12 @@ Deno.serve(async (req) => {
     let customerId = customers.data.length > 0 ? customers.data[0].id : undefined;
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
+    
+    // Create checkout description showing partial budget usage if applicable
+    const description = partialBudgetCents > 0 
+      ? `${tier.toUpperCase()} tier boost for ${durationDescription} (€${partialBudgetCents/100} from budget)`
+      : `${tier.toUpperCase()} tier boost for ${durationDescription}`;
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -140,10 +154,10 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: "eur",
-            unit_amount: totalCostCents,
+            unit_amount: stripeChargeCents,
             product_data: {
               name: `Event Boost: ${eventData.title}`,
-              description: `${tier.toUpperCase()} tier boost for ${durationDescription}`,
+              description,
             },
           },
           quantity: 1,
@@ -154,7 +168,7 @@ Deno.serve(async (req) => {
       cancel_url: `${origin}/dashboard-business?boost=canceled`,
       metadata: {
         type: "event_boost",
-        boost_id: boostId, // Critical: This is used by webhook to find the boost
+        boost_id: boostId,
         event_id: eventId,
         business_id: businessId,
         tier,
@@ -164,6 +178,9 @@ Deno.serve(async (req) => {
         end_date: endDate,
         daily_rate_cents: tierData.dailyRateCents.toString(),
         days: days.toString(),
+        total_cost_cents: totalCostCents.toString(),
+        partial_budget_cents: partialBudgetCents.toString(),
+        stripe_charge_cents: stripeChargeCents.toString(),
       },
     });
 
