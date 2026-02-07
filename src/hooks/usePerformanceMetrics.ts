@@ -63,18 +63,55 @@ export const usePerformanceMetrics = (
 
       const totalProfileInteractions = (profileInteractionsCount || 0) + (followerCount || 0);
 
-      // Profile visits = verified reservation check-ins for DIRECT business reservations only (reservation.event_id IS NULL)
+      // Profile visits = verified reservation check-ins for DIRECT profile reservations only
+      // IMPORTANT: Offer-linked reservations also have event_id = NULL, so we must exclude them.
       // + student discount redemptions (QR check-ins from student discounts)
-      const { count: profileVisitsCount } = await supabase
-        .from("reservations")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", businessId)
-        .is("event_id", null)
-        .not("checked_in_at", "is", null)
-        .gte("checked_in_at", startDate)
-        .lte("checked_in_at", endDate);
 
-      // Student discount redemptions (QR check-ins from student discounts)
+      // 1) Fetch reservation IDs that checked in (event_id IS NULL) in range
+      const checkedInReservations = await (async () => {
+        const pageSize = 1000;
+        const out: { id: string }[] = [];
+        for (let from = 0; ; from += pageSize) {
+          const { data } = await supabase
+            .from("reservations")
+            .select("id")
+            .eq("business_id", businessId)
+            .is("event_id", null)
+            .not("checked_in_at", "is", null)
+            .gte("checked_in_at", startDate)
+            .lte("checked_in_at", endDate)
+            .range(from, from + pageSize - 1);
+
+          const page = (data || []) as { id: string }[];
+          out.push(...page);
+          if (page.length < pageSize) break;
+        }
+        return out;
+      })();
+
+      const reservationIds = checkedInReservations.map((r) => r.id);
+
+      // 2) Find which of those reservations were created via an offer purchase
+      let offerLinkedReservationIds = new Set<string>();
+      if (reservationIds.length > 0) {
+        const { data: offerLinks } = await supabase
+          .from("offer_purchases")
+          .select("reservation_id")
+          .in("reservation_id", reservationIds)
+          .not("reservation_id", "is", null);
+
+        offerLinkedReservationIds = new Set(
+          (offerLinks || [])
+            .map((o) => (o as { reservation_id: string | null }).reservation_id)
+            .filter(Boolean) as string[]
+        );
+      }
+
+      const directProfileReservationVisits = reservationIds.filter(
+        (id) => !offerLinkedReservationIds.has(id)
+      ).length;
+
+      // 3) Student discount redemptions (QR check-ins from student discounts)
       const { count: studentDiscountVisitsCount } = await supabase
         .from("student_discount_redemptions")
         .select("id", { count: "exact", head: true })
@@ -82,7 +119,7 @@ export const usePerformanceMetrics = (
         .gte("created_at", startDate)
         .lte("created_at", endDate);
 
-      const totalProfileVisits = (profileVisitsCount || 0) + (studentDiscountVisitsCount || 0);
+      const totalProfileVisits = directProfileReservationVisits + (studentDiscountVisitsCount || 0);
 
       // Offer views from discount_views
       const { data: businessOffers } = await supabase

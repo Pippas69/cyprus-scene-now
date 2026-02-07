@@ -184,40 +184,74 @@ export const useBoostValueMetrics = (
         return (eventsCount || 0) + (followerCount || 0);
       };
 
-      const countProfileVisits = async (
-        rangeStart: string,
-        rangeEnd: string,
-        endInclusive: boolean
-      ) => {
-        let reservationsQ = supabase
-          .from("reservations")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .is("event_id", null)
-          .not("checked_in_at", "is", null)
-          .gte("checked_in_at", rangeStart);
+       const countProfileVisits = async (
+         rangeStart: string,
+         rangeEnd: string,
+         endInclusive: boolean
+       ) => {
+         // Profile visits = direct profile reservation check-ins (event_id IS NULL)
+         // EXCLUDING reservations created via offers (offer_purchases.reservation_id).
 
-        reservationsQ = endInclusive
-          ? reservationsQ.lte("checked_in_at", rangeEnd)
-          : reservationsQ.lt("checked_in_at", rangeEnd);
+         const fetchAllIds = async () => {
+           const pageSize = 1000;
+           const out: { id: string }[] = [];
+           for (let from = 0; ; from += pageSize) {
+             let q = supabase
+               .from("reservations")
+               .select("id")
+               .eq("business_id", businessId)
+               .is("event_id", null)
+               .not("checked_in_at", "is", null)
+               .gte("checked_in_at", rangeStart)
+               .range(from, from + pageSize - 1);
 
-        const { count } = await reservationsQ;
+             q = endInclusive ? q.lte("checked_in_at", rangeEnd) : q.lt("checked_in_at", rangeEnd);
+             const { data } = await q;
 
-        // Also count student discount redemptions
-        let studentQ = supabase
-          .from("student_discount_redemptions")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .gte("created_at", rangeStart);
+             const page = (data || []) as { id: string }[];
+             out.push(...page);
+             if (page.length < pageSize) break;
+           }
+           return out;
+         };
 
-        studentQ = endInclusive
-          ? studentQ.lte("created_at", rangeEnd)
-          : studentQ.lt("created_at", rangeEnd);
+         const checkedInReservations = await fetchAllIds();
+         const reservationIds = checkedInReservations.map((r) => r.id);
 
-        const { count: studentCount } = await studentQ;
+         let offerLinkedReservationIds = new Set<string>();
+         if (reservationIds.length > 0) {
+           const { data: offerLinks } = await supabase
+             .from("offer_purchases")
+             .select("reservation_id")
+             .in("reservation_id", reservationIds)
+             .not("reservation_id", "is", null);
 
-        return (count || 0) + (studentCount || 0);
-      };
+           offerLinkedReservationIds = new Set(
+             (offerLinks || [])
+               .map((o) => (o as { reservation_id: string | null }).reservation_id)
+               .filter(Boolean) as string[]
+           );
+         }
+
+         const directProfileReservationVisits = reservationIds.filter(
+           (id) => !offerLinkedReservationIds.has(id)
+         ).length;
+
+         // Also count student discount redemptions
+         let studentQ = supabase
+           .from("student_discount_redemptions")
+           .select("id", { count: "exact", head: true })
+           .eq("business_id", businessId)
+           .gte("created_at", rangeStart);
+
+         studentQ = endInclusive
+           ? studentQ.lte("created_at", rangeEnd)
+           : studentQ.lt("created_at", rangeEnd);
+
+         const { count: studentCount } = await studentQ;
+
+         return directProfileReservationVisits + (studentCount || 0);
+       };
 
       // We compute totals for the whole range, then compute "featured" by summing counts
       // only within paid intervals; non-featured = total - featured.
