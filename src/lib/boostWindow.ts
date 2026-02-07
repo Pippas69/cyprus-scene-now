@@ -78,6 +78,7 @@ export const computeBoostWindow = (input: BoostWindowInput): BoostWindow | null 
 };
 
 export const isTimestampWithinWindow = (timestamp: string, window: BoostWindow) => {
-  const t = new Date(timestamp);
+  const normalized = normalizeToUtcIfNoTz(timestamp);
+  const t = new Date(normalized);
   return t >= new Date(window.start) && t <= new Date(window.end);
 };
