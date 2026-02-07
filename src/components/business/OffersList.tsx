@@ -341,9 +341,9 @@ const OffersList = ({ businessId }: OffersListProps) => {
                       <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                       <span className="whitespace-nowrap">{formatOfferDates(offer.start_at, offer.end_at)}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-primary font-medium">
-                      <Hash className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
-                      <span>{getRedemptionCount(offer)} {language === "el" ? "Εξαργυρώσεις" : "Redemptions"}</span>
+                    <div className="flex items-center gap-0.5 text-primary font-medium whitespace-nowrap">
+                      <Hash className="h-2.5 w-2.5 md:h-3 md:w-3 flex-shrink-0" />
+                      <span className="text-[9px] md:text-[10px] lg:text-xs">{getRedemptionCount(offer)} {language === "el" ? "Εξαργυρώσεις" : "Redemptions"}</span>
                     </div>
                   </div>
                 </div>
