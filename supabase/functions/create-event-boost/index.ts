@@ -156,8 +156,21 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, source: "subscription", durationMode }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+  } catch (error: any) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    } else if (typeof error === "string") {
+      errorMessage = error;
+    } else {
+      try {
+        errorMessage = JSON.stringify(error);
+      } catch {
+        errorMessage = "Unserializable error";
+      }
+    }
     logStep("ERROR", { message: errorMessage });
     return new Response(
       JSON.stringify({ error: errorMessage }),
