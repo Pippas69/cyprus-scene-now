@@ -692,7 +692,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
           
           {reservationEvent && (
             <div className="mt-4">
-              <EventReservationOverview eventId={reservationEvent.id} />
+              <EventReservationOverview eventId={reservationEvent.id} businessId={businessId} />
             </div>
           )}
         </DialogContent>
