@@ -1164,6 +1164,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                   </span>
                 </div>
               </div>
+              {offer.one_per_user && (
+                <Badge variant="secondary" className="text-xs">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user"}
+                </Badge>
+              )}
             </div>
 
             {/* Validity Info */}

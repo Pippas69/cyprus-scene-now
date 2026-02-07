@@ -4,12 +4,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Ticket, Calendar, Sparkles, Rocket, Pencil } from "lucide-react";
+import { Trash2, Ticket, Calendar, Sparkles, Rocket, Pencil, Hash } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { StudentDiscountStats } from "./StudentDiscountStats";
 import OfferBoostDialog from "./OfferBoostDialog";
 import OfferEditDialog from "./OfferEditDialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
 // Helper component to show active boost badge for offers (gold/premium color - non-clickable)
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
   const { data: activeBoost } = useQuery({
@@ -131,7 +137,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('discounts')
-        .select('*')
+        .select('*, redemptions(id)')
         .eq('business_id', businessId)
         .order('end_at', { ascending: true });
 
@@ -139,6 +145,12 @@ const OffersList = ({ businessId }: OffersListProps) => {
       return data;
     },
   });
+
+  // Calculate redemption counts per offer
+  const getRedemptionCount = (offer: any): number => {
+    if (!offer.redemptions) return 0;
+    return Array.isArray(offer.redemptions) ? offer.redemptions.length : 0;
+  };
 
   // Real-time subscription
   useEffect(() => {
@@ -323,10 +335,16 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
                   </div>
 
-                  {/* Date row */}
-                  <div className="mt-1 flex items-center gap-1 text-[10px] md:text-xs lg:text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                    <span className="whitespace-nowrap">{formatOfferDates(offer.start_at, offer.end_at)}</span>
+                  {/* Date row + Redemption count */}
+                  <div className="mt-1 flex items-center gap-2 text-[10px] md:text-xs lg:text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{formatOfferDates(offer.start_at, offer.end_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-primary font-medium">
+                      <Hash className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
+                      <span>{getRedemptionCount(offer)} {language === "el" ? "Εξαργυρώσεις" : "Redemptions"}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -368,6 +386,23 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     >
                       {offer.percent_off}% OFF
                     </Badge>
+                  )}
+
+                  {/* Special Deal "Offer" badge - clickable with popover */}
+                  {offer.discount_type === "special_deal" && offer.special_deal_text && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className="h-7 px-3 text-xs md:h-8 md:text-sm cursor-pointer hover:bg-muted transition-colors"
+                        >
+                          Offer
+                        </Badge>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2" side="top" align="start">
+                        <p className="text-xs font-medium">{offer.special_deal_text}</p>
+                      </PopoverContent>
+                    </Popover>
                   )}
                 </div>
 
