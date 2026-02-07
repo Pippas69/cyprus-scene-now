@@ -555,7 +555,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         <TabsContent value="events" className="space-y-4 mt-4">
           {activeEventBoosts.length === 0 && (
             <Card>
-              <CardContent className="p-4 sm:p-6 text-center text-muted-foreground text-xs sm:text-sm whitespace-nowrap">
+              <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
                 {t.noEventBoosts}
               </CardContent>
             </Card>
@@ -758,7 +758,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         <TabsContent value="offers" className="space-y-4 mt-4">
           {activeOfferBoosts.length === 0 && (
             <Card>
-              <CardContent className="p-4 sm:p-6 text-center text-muted-foreground text-xs sm:text-sm whitespace-nowrap">
+              <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
                 {t.noOfferBoosts}
               </CardContent>
             </Card>
