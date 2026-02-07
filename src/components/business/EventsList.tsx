@@ -550,9 +550,11 @@ const EventsList = ({ businessId }: EventsListProps) => {
                     <div className="flex items-center justify-end gap-1">
                       {/* Pause/Active toggle badge */}
                       {(() => {
+                        // Check if paused by detecting 1970 sentinel year (more robust than string comparison)
                         const isPaused =
-                          event.appearance_start_at === PAUSED_APPEARANCE_START &&
-                          event.appearance_end_at === PAUSED_APPEARANCE_END;
+                          event.appearance_start_at &&
+                          event.appearance_end_at &&
+                          new Date(event.appearance_start_at).getFullYear() === 1970;
 
                         return (
                           <Badge
@@ -562,7 +564,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                                 ? "bg-muted text-muted-foreground hover:bg-muted/80"
                                 : "border-amber-500 text-amber-600 hover:bg-amber-50"
                             }`}
-                            onClick={() => handleTogglePause(event.id, isPaused)}
+                            onClick={() => handleTogglePause(event.id, !!isPaused)}
                           >
                             {isPaused ? (
                               <>
