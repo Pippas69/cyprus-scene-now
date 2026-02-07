@@ -2379,21 +2379,21 @@ export type Database = {
           {
             foreignKeyName: "offer_boosts_discount_id_fkey"
             columns: ["discount_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "discount_scan_stats"
             referencedColumns: ["discount_id"]
           },
           {
             foreignKeyName: "offer_boosts_discount_id_fkey"
             columns: ["discount_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "discounts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "offer_boosts_discount_id_fkey"
             columns: ["discount_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "public_discounts"
             referencedColumns: ["id"]
           },
