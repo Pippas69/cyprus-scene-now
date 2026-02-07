@@ -52,24 +52,44 @@ interface CommissionBannerProps {
   platformFeeLabel: string;
   commissionPercent: number;
   upgradeHint: string;
+  isElitePlan?: boolean;
 }
 const CommissionBanner: React.FC<CommissionBannerProps> = ({
   platformFeeLabel,
   commissionPercent,
-  upgradeHint
-}) => <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-2 sm:p-4">
+  upgradeHint,
+  isElitePlan = false
+}) => (
+  <div className={cn(
+    "rounded-lg p-2 sm:p-4 border",
+    isElitePlan 
+      ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800"
+      : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+  )}>
     <div className="flex items-start gap-2 sm:gap-3">
-      <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+      {isElitePlan ? (
+        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+      ) : (
+        <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+      )}
       <div>
-        <p className="font-medium text-[11px] sm:text-base text-amber-900 dark:text-amber-100">
+        <p className={cn(
+          "font-medium text-[11px] sm:text-base",
+          isElitePlan 
+            ? "text-emerald-900 dark:text-emerald-100"
+            : "text-amber-900 dark:text-amber-100"
+        )}>
           {platformFeeLabel} {commissionPercent}%
         </p>
-        <p className="text-[10px] sm:text-sm text-amber-700 dark:text-amber-300">
-          {upgradeHint}
-        </p>
+        {!isElitePlan && (
+          <p className="text-[10px] sm:text-sm text-amber-700 dark:text-amber-300">
+            {upgradeHint}
+          </p>
+        )}
       </div>
     </div>
-  </div>;
+  </div>
+);
 
 // ============================================
 // TYPES
@@ -335,6 +355,7 @@ const EventCreationForm = ({
     data: commissionData
   } = useCommissionRate(businessId);
   const commissionPercent = commissionData?.commissionPercent ?? 12;
+  const isElitePlan = commissionData?.planSlug === 'elite';
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -795,7 +816,7 @@ const EventCreationForm = ({
                 {t.ticketConfig}
               </h4>
               
-              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} />
+              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
               
               <TicketTierEditor tiers={formData.ticketTiers} onTiersChange={tiers => updateField('ticketTiers', tiers)} commissionPercent={commissionPercent} validationErrors={ticketValidationErrors} autoEnabled={true} />
             </div>}
@@ -807,7 +828,7 @@ const EventCreationForm = ({
                 {t.reservationConfig}
               </h4>
               
-              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} />
+              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
               
               {/* Reservation Hours */}
               <div className="space-y-2">
