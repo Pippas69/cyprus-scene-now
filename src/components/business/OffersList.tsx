@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Helper component to show active boost badge for offers (gold/premium color - non-clickable)
+// Helper component to show active boost badge for offers - positioned half in/half out above icons
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
   const { data: activeBoost } = useQuery({
     queryKey: ["offer-active-boost", offerId],
@@ -48,9 +48,9 @@ const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: str
   return (
     <Badge 
       variant="default" 
-      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center gap-1 shadow-sm cursor-default"
+      className="absolute -top-2.5 right-0 bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center gap-0.5 shadow-md cursor-default text-[9px] md:text-[10px] lg:text-xs h-5 md:h-6 px-1.5 md:px-2"
     >
-      <Sparkles className="h-3 w-3" />
+      <Sparkles className="h-2.5 w-2.5 md:h-3 md:w-3" />
       {label}
     </Badge>
   );
@@ -137,7 +137,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('discounts')
-        .select('*, redemptions(id)')
+        .select('*')
         .eq('business_id', businessId)
         .order('end_at', { ascending: true });
 
@@ -146,15 +146,38 @@ const OffersList = ({ businessId }: OffersListProps) => {
     },
   });
 
-  // Calculate redemption counts per offer
-  const getRedemptionCount = (offer: any): number => {
-    if (!offer.redemptions) return 0;
-    return Array.isArray(offer.redemptions) ? offer.redemptions.length : 0;
+  // Fetch redemption counts for all offers (status = 'redeemed')
+  const { data: redemptionCounts } = useQuery({
+    queryKey: ['offer-redemption-counts', businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('offer_purchases')
+        .select('discount_id')
+        .eq('business_id', businessId)
+        .eq('status', 'redeemed');
+
+      if (error) throw error;
+      
+      // Count redemptions per discount_id
+      const counts: Record<string, number> = {};
+      (data || []).forEach(purchase => {
+        if (purchase.discount_id) {
+          counts[purchase.discount_id] = (counts[purchase.discount_id] || 0) + 1;
+        }
+      });
+      return counts;
+    },
+    enabled: !!businessId,
+  });
+
+  // Get redemption count for a specific offer
+  const getRedemptionCount = (offerId: string): number => {
+    return redemptionCounts?.[offerId] || 0;
   };
 
-  // Real-time subscription
+  // Real-time subscription for offers and redemptions
   useEffect(() => {
-    const channel = supabase
+    const offersChannel = supabase
       .channel('business-offers')
       .on(
         'postgres_changes',
@@ -170,8 +193,26 @@ const OffersList = ({ businessId }: OffersListProps) => {
       )
       .subscribe();
 
+    // Subscribe to offer_purchases changes for real-time redemption counts
+    const purchasesChannel = supabase
+      .channel('business-offer-purchases')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'offer_purchases',
+          filter: `business_id=eq.${businessId}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['offer-redemption-counts', businessId] });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(offersChannel);
+      supabase.removeChannel(purchasesChannel);
     };
   }, [businessId, queryClient]);
 
@@ -324,16 +365,16 @@ const OffersList = ({ businessId }: OffersListProps) => {
         {displayedOffers.map((offer) => {
           const expired = isOfferExpired(offer);
           return (
-          <Card key={offer.id} className={`bg-card/50 border-border/50 ${expired ? 'opacity-60' : ''}`}>
+          <Card key={offer.id} className={`bg-card/50 border-border/50 relative ${expired ? 'opacity-60' : ''}`}>
+            {/* Boost badge - positioned half in/half out above icons */}
+            <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
+            
             <CardContent className="p-3 md:p-4">
               {/* 2-row grid to match mockup: (title+date) / (badges+actions) */}
               <div className="grid grid-cols-[1fr_auto] gap-x-2 md:gap-x-4 gap-y-2">
-                {/* Row 1 - Left: Title + boost badge */}
+                {/* Row 1 - Left: Title */}
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
-                    <h3 className="text-sm md:text-base lg:text-lg font-semibold truncate">{offer.title}</h3>
-                    <ActiveOfferBoostBadge offerId={offer.id} label={t.boosted} />
-                  </div>
+                  <h3 className="text-sm md:text-base lg:text-lg font-semibold truncate">{offer.title}</h3>
 
                   {/* Date row + Redemption count */}
                   <div className="mt-1 flex items-center gap-2 text-[10px] md:text-xs lg:text-sm text-muted-foreground">
@@ -343,7 +384,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     </div>
                     <div className="flex items-center gap-0.5 text-primary font-medium whitespace-nowrap">
                       <Hash className="h-2.5 w-2.5 md:h-3 md:w-3 flex-shrink-0" />
-                      <span className="text-[9px] md:text-[10px] lg:text-xs">{getRedemptionCount(offer)} {language === "el" ? "Εξαργυρώσεις" : "Redemptions"}</span>
+                      <span className="text-[9px] md:text-[10px] lg:text-xs">{getRedemptionCount(offer.id)} {language === "el" ? "Εξαργυρώσεις" : "Redemptions"}</span>
                     </div>
                   </div>
                 </div>
@@ -370,11 +411,11 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   </Button>
                 </div>
 
-                {/* Row 2 - Left: Status + %OFF (always side-by-side) */}
-                <div className="flex items-center gap-2">
+                {/* Row 2 - Left: Status + %OFF (always side-by-side) - smaller badges for mobile/tablet */}
+                <div className="flex items-center gap-1 md:gap-2">
                   <Badge
                     variant={offer.active ? "default" : "secondary"}
-                    className={`h-7 px-3 text-xs md:h-8 md:text-sm ${offer.active ? "bg-primary text-primary-foreground" : ""}`}
+                    className={`h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm ${offer.active ? "bg-primary text-primary-foreground" : ""}`}
                   >
                     {offer.active ? t.active : t.inactive}
                   </Badge>
@@ -382,7 +423,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   {offer.percent_off && (
                     <Badge
                       variant="outline"
-                      className="h-7 px-3 text-xs md:h-8 md:text-sm text-primary border-primary/30 bg-primary/5 font-semibold"
+                      className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm text-primary border-primary/30 bg-primary/5 font-semibold"
                     >
                       {offer.percent_off}% OFF
                     </Badge>
@@ -394,7 +435,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                       <PopoverTrigger asChild>
                         <Badge
                           variant="outline"
-                          className="h-7 px-3 text-xs md:h-8 md:text-sm cursor-pointer hover:bg-muted transition-colors"
+                          className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm cursor-pointer hover:bg-muted transition-colors"
                         >
                           Offer
                         </Badge>
@@ -406,13 +447,13 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   )}
                 </div>
 
-                {/* Row 2 - Right: Deactivate + Delete aligned on same baseline */}
+                {/* Row 2 - Right: Deactivate + Delete - smaller for mobile/tablet */}
                 <div className="flex items-center justify-end gap-1">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => toggleActive(offer.id, offer.active || false)}
-                    className="h-7 px-3 text-xs md:h-8 md:text-sm"
+                    className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
                   >
                     {offer.active ? t.deactivate : t.activate}
                   </Button>
@@ -420,10 +461,10 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     variant="ghost"
                     size="icon"
                     onClick={() => setDeletingOffer({ id: offer.id, title: offer.title })}
-                    className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive"
+                    className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7 text-destructive hover:text-destructive"
                     title={t.delete}
                   >
-                    <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                    <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
                   </Button>
                 </div>
               </div>
