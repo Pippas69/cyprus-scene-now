@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const logStep = (step: string, details?: any) => {
@@ -61,9 +61,10 @@ Deno.serve(async (req) => {
     logStep("Business ownership verified", { businessId });
 
     // 2-tier boost system with hourly and daily rates (in cents)
+    // targeting_quality is stored on a 1-5 scale in the database
     const boostTiers = {
-      standard: { dailyRateCents: 4000, hourlyRateCents: 550, quality: 3.5 },  // €40/day, €5.50/hour
-      premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 5 },     // €60/day, €8.50/hour
+      standard: { dailyRateCents: 4000, hourlyRateCents: 550, quality: 4 },  // €40/day, €5.50/hour
+      premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 5 },   // €60/day, €8.50/hour
     };
 
     const tierData = boostTiers[tier as keyof typeof boostTiers];
@@ -107,27 +108,59 @@ Deno.serve(async (req) => {
     // Check subscription and budget
     const { data: subscription, error: subError } = await supabaseClient
       .from("business_subscriptions")
-      .select("monthly_budget_remaining_cents, status")
+      .select("id, monthly_budget_remaining_cents, status")
       .eq("business_id", businessId)
       .single();
 
-    if (subError || !subscription || subscription.status !== "active") {
-      throw new Error("No active subscription found");
+    const remainingBudget = subscription?.monthly_budget_remaining_cents || 0;
+    const hasActiveSubscription = !subError && !!subscription && subscription.status === "active";
+
+    // If user wants to use budget but there's no active subscription/budget, instruct frontend to fallback to Stripe
+    if (!hasActiveSubscription) {
+      logStep("No active subscription - returning needsPayment flag");
+      return new Response(
+        JSON.stringify({
+          needsPayment: true,
+          totalCostCents,
+          durationMode,
+          durationHours: calculatedDurationHours,
+          tier,
+          reason: "no_active_subscription",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
     }
 
-    if ((subscription.monthly_budget_remaining_cents || 0) < totalCostCents) {
-      throw new Error("Insufficient budget. Please add more or choose a shorter duration.");
+    if (remainingBudget < totalCostCents) {
+      logStep("Insufficient subscription budget - returning needsPayment flag", { remainingBudget, totalCostCents });
+      return new Response(
+        JSON.stringify({
+          needsPayment: true,
+          totalCostCents,
+          durationMode,
+          durationHours: calculatedDurationHours,
+          tier,
+          reason: "insufficient_budget",
+          remainingBudgetCents: remainingBudget,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
     }
 
     // Deduct from budget
     const { error: updateError } = await supabaseClient
       .from("business_subscriptions")
       .update({
-        monthly_budget_remaining_cents: (subscription.monthly_budget_remaining_cents || 0) - totalCostCents,
+        monthly_budget_remaining_cents: remainingBudget - totalCostCents,
       })
-      .eq("business_id", businessId);
+      .eq("id", subscription.id);
 
     if (updateError) throw updateError;
+
+    // Determine initial status based on start date
+    const now = new Date();
+    const start = new Date(startDate);
+    const status = start <= now ? "active" : "scheduled";
 
     // Create boost record
     const { error: boostError } = await supabaseClient
@@ -143,8 +176,8 @@ Deno.serve(async (req) => {
         duration_mode: durationMode,
         duration_hours: calculatedDurationHours,
         total_cost_cents: totalCostCents,
-        source: "subscription_budget",
-        status: "scheduled",
+        source: "subscription",
+        status,
         targeting_quality: tierData.quality,
       });
 

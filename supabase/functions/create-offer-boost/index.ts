@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const logStep = (step: string, details?: any) => {
@@ -115,12 +115,35 @@ Deno.serve(async (req) => {
       .single();
 
     if (subError || !subscription) {
-      throw new Error("No active subscription found");
+      // No active subscription/budget -> fallback to Stripe
+      return new Response(
+        JSON.stringify({
+          needsPayment: true,
+          totalCostCents,
+          tier,
+          durationMode,
+          durationHours: calculatedDurationHours,
+          reason: "no_active_subscription",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
     }
 
     const remainingBudget = subscription.monthly_budget_remaining_cents || 0;
     if (remainingBudget < totalCostCents) {
-      throw new Error("Insufficient subscription budget");
+      // Insufficient budget -> fallback to Stripe
+      return new Response(
+        JSON.stringify({
+          needsPayment: true,
+          totalCostCents,
+          tier,
+          durationMode,
+          durationHours: calculatedDurationHours,
+          remainingBudgetCents: remainingBudget,
+          reason: "insufficient_budget",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
     }
 
     // Deduct from subscription budget
