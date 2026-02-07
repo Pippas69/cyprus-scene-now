@@ -187,12 +187,12 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       // 3. EVENT BOOST METRICS (only paid events with check-ins during boost period)
       // ========================================
       
-      // Get all event boosts
-      const { data: eventBoosts } = await supabase
-        .from("event_boosts")
-        .select("total_cost_cents, event_id, start_date, end_date, status")
-        .eq("business_id", businessId)
-        .in("status", ["active", "completed", "canceled", "pending", "scheduled"]);
+       // Get event boosts that actually ran (active/completed)
+       const { data: eventBoosts } = await supabase
+         .from("event_boosts")
+         .select("total_cost_cents, event_id, start_date, end_date, status")
+         .eq("business_id", businessId)
+         .in("status", ["active", "completed"]);
 
       const eventBoostSpentCents = (eventBoosts || []).reduce(
         (sum, b) => sum + (b.total_cost_cents || 0),
