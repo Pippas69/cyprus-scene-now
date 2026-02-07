@@ -147,23 +147,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Deduct from budget
-    const { error: updateError } = await supabaseClient
-      .from("business_subscriptions")
-      .update({
-        monthly_budget_remaining_cents: remainingBudget - totalCostCents,
-      })
-      .eq("id", subscription.id);
-
-    if (updateError) throw updateError;
-
     // Determine initial status based on start date
     const now = new Date();
     const start = new Date(startDate);
     const status = start <= now ? "active" : "scheduled";
 
-    // Create boost record
-    const { error: boostError } = await supabaseClient
+    // Create boost record FIRST (so we never deduct budget on a failed boost)
+    const { data: createdBoost, error: boostError } = await supabaseClient
       .from("event_boosts")
       .insert({
         event_id: eventId,
@@ -179,11 +169,26 @@ Deno.serve(async (req) => {
         source: "subscription",
         status,
         targeting_quality: tierData.quality,
-      });
+      })
+      .select("id")
+      .single();
 
     if (boostError) throw boostError;
 
-    logStep("Boost created from subscription budget", { durationMode, totalCostCents });
+    // Deduct from budget AFTER successful boost creation
+    const newBudget = remainingBudget - totalCostCents;
+    const { error: updateError } = await supabaseClient
+      .from("business_subscriptions")
+      .update({ monthly_budget_remaining_cents: newBudget })
+      .eq("id", subscription.id);
+
+    if (updateError) {
+      // Best-effort rollback to avoid a created boost without budget deduction
+      await supabaseClient.from("event_boosts").delete().eq("id", createdBoost.id);
+      throw updateError;
+    }
+
+    logStep("Boost created from subscription budget", { durationMode, totalCostCents, newBudget });
 
     return new Response(
       JSON.stringify({ success: true, source: "subscription", durationMode }),
