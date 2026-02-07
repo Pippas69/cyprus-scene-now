@@ -612,39 +612,68 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       if (insertError) throw insertError;
 
-      // If boost was enabled in the form, create the boost
+      // If boost was enabled in the form, call the edge function to create boost properly
+      let boostCreatedSuccessfully = false;
       if (boostData?.enabled && offerData) {
-        const { error: boostError } = await supabase.from("offer_boosts").insert({
-          discount_id: offerData.id,
-          business_id: businessId,
-          boost_tier: boostData.tier,
-          duration_mode: boostData.durationMode,
-          start_date: boostData.startDate.toISOString(),
-          end_date: boostData.endDate.toISOString(),
-          duration_hours: boostData.durationHours || null,
-          daily_rate_cents: boostData.dailyRateCents,
-          hourly_rate_cents: boostData.hourlyRateCents || null,
-          total_cost_cents: boostData.totalCostCents,
-          targeting_quality: boostData.targetingQuality,
-          source: "budget",
-          status: "active",
-          commission_percent: 0,
-        });
+        try {
+          // Determine if we can use subscription budget
+          const canUseSubscriptionBudget = subscriptionData?.subscribed && 
+            (subscriptionData.monthly_budget_remaining_cents || 0) >= boostData.totalCostCents;
 
-        if (boostError) {
-          console.error("Boost creation error:", boostError);
-          // Don't fail the whole offer creation, just log the error
+          const boostPayload = {
+            discountId: offerData.id,
+            tier: boostData.tier,
+            durationMode: boostData.durationMode,
+            startDate: boostData.startDate.toISOString(),
+            endDate: boostData.endDate.toISOString(),
+            durationHours: boostData.durationHours || null,
+            useSubscriptionBudget: canUseSubscriptionBudget,
+          };
+
+          const { data: boostResult, error: boostFnError } = await supabase.functions.invoke(
+            "create-offer-boost",
+            { body: boostPayload }
+          );
+
+          if (boostFnError) {
+            console.error("Boost function error:", boostFnError);
+            toast.error(language === "el" ? "Σφάλμα προώθησης" : "Boost error");
+          } else if (boostResult?.needsPayment) {
+            // Need to redirect to Stripe checkout for boost payment
+            toast.info(language === "el" 
+              ? "Η προώθηση απαιτεί πληρωμή μέσω Stripe" 
+              : "Boost requires Stripe payment");
+            // Show boost dialog for Stripe payment
+            setCreatedOfferId(offerData.id);
+            setCreatedOfferTitle(formData.title);
+            setShowBoostDialog(true);
+            toast.success(t.offerCreated);
+            return; // Exit early - user will complete boost in dialog
+          } else if (boostResult?.success) {
+            boostCreatedSuccessfully = true;
+            toast.success(language === "el" 
+              ? "Η προσφορά δημιουργήθηκε και η προώθηση ενεργοποιήθηκε!" 
+              : "Offer created and boost activated!");
+          }
+        } catch (boostErr) {
+          console.error("Boost creation exception:", boostErr);
+          toast.error(language === "el" ? "Σφάλμα προώθησης" : "Boost error");
         }
       }
 
-      toast.success(t.offerCreated);
+      // Show success toast if boost wasn't already shown
+      if (!boostCreatedSuccessfully) {
+        toast.success(t.offerCreated);
+      }
       
-      // Store created offer info and show boost dialog as reminder
-      if (offerData) {
+      // Only show boost dialog if boost was NOT already enabled/created during form submission
+      if (offerData && !boostData?.enabled) {
+        // User didn't enable boost in form, show optional boost dialog
         setCreatedOfferId(offerData.id);
         setCreatedOfferTitle(formData.title);
         setShowBoostDialog(true);
       } else {
+        // Boost was already handled (or created), navigate directly to offers
         navigate('/dashboard-business/offers');
       }
 
