@@ -240,50 +240,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Enforce days/hours at redemption time (Cyprus timezone)
-    if (discount?.valid_days && Array.isArray(discount.valid_days) && discount.valid_days.length > 0) {
-      const cyprusWeekday = new Date()
-        .toLocaleDateString("en-US", { timeZone: "Europe/Nicosia", weekday: "long" })
-        .toLowerCase();
+    // NOTE: We intentionally do NOT enforce valid_days / valid_start_time / valid_end_time at scan time.
+    // The only hard rules for offer redemption are:
+    // - correct business
+    // - paid
+    // - not expired
+    // - single-use (not already redeemed)
+    // This prevents false negatives like “Η προσφορά δεν ισχύει αυτή την ώρα” for legitimate redemptions.
 
-      if (!discount.valid_days.map((d: string) => String(d).toLowerCase()).includes(cyprusWeekday)) {
-        logStep("Not valid today", { cyprusWeekday, validDays: discount.valid_days });
-        await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { 
-          reason: "not_valid_today", 
-          cyprusWeekday, 
-          valid_days: discount.valid_days 
-        });
-
-        return new Response(JSON.stringify({ success: false, message: m.notValidToday }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
-
-    if (discount?.valid_start_time && discount?.valid_end_time) {
-      const cyprusTime = new Date().toLocaleTimeString("en-GB", {
-        timeZone: "Europe/Nicosia",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-
-      if (!withinOfferHoursCyprus(discount.valid_start_time, discount.valid_end_time, cyprusTime)) {
-        logStep("Not valid hours", { cyprusTime, start: discount.valid_start_time, end: discount.valid_end_time });
-        await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { 
-          reason: "not_valid_hours", 
-          cyprusTime, 
-          start: discount.valid_start_time, 
-          end: discount.valid_end_time 
-        });
-
-        return new Response(JSON.stringify({ success: false, message: m.notValidHours }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
 
     // Redeem (atomic-ish)
     const nowIso = new Date().toISOString();
