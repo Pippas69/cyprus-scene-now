@@ -499,74 +499,80 @@ const EventsList = ({ businessId }: EventsListProps) => {
                         </span>
                       </div>
 
-                      {/* Event type badge + Pause/Delete - same row on mobile/tablet/desktop */}
-                      <div className="flex items-center gap-1.5 md:gap-2 pt-1 md:pt-1.5">
-                        {eventType === 'ticket' && (
-                          <Badge
-                            className="bg-teal-600 hover:bg-teal-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
-                            onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}
-                          >
-                            <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
-                            {t.badgeTicket}
-                          </Badge>
-                        )}
-                        {eventType === 'reservation' && (
-                          <Badge
-                            className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
-                            onClick={() => setReservationEvent({ id: event.id, title: event.title })}
-                          >
-                            <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
-                            {t.badgeReservation}
-                          </Badge>
-                        )}
-                        {eventType === 'free_entry' && (
-                          <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2">
-                            <Gift className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
-                            {t.badgeFreeEntry}
-                          </Badge>
-                        )}
-
-                        {/* Pause/Active toggle badge */}
-                        {(() => {
-                          const isPaused =
-                            event.appearance_start_at &&
-                            event.appearance_end_at &&
-                            new Date(event.appearance_start_at).getFullYear() === 1970;
-
-                          return (
+                      {/* Event type badge (left) + Pause/Delete (right) - same row */}
+                      <div className="flex items-center justify-between pt-1 md:pt-1.5">
+                        {/* Left: Event type badge */}
+                        <div className="flex items-center">
+                          {eventType === 'ticket' && (
                             <Badge
-                              variant={isPaused ? "secondary" : "outline"}
-                              className={`cursor-pointer text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 flex items-center gap-0.5 ${
-                                isPaused
-                                  ? "bg-muted text-muted-foreground hover:bg-muted/80"
-                                  : "border-amber-500 text-amber-600 hover:bg-amber-50"
-                              }`}
-                              onClick={() => handleTogglePause(event.id, !!isPaused)}
+                              className="bg-teal-600 hover:bg-teal-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
+                              onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}
                             >
-                              {isPaused ? (
-                                <>
-                                  <Play className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
-                                  {t.active}
-                                </>
-                              ) : (
-                                <>
-                                  <Pause className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
-                                  {t.pause}
-                                </>
-                              )}
+                              <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                              {t.badgeTicket}
                             </Badge>
-                          );
-                        })()}
-                        
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeletingEvent({ id: event.id, title: event.title })}
-                          className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7 text-destructive hover:text-destructive"
-                          title={t.delete}
-                        >
-                          <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
-                        </Button>
+                          )}
+                          {eventType === 'reservation' && (
+                            <Badge
+                              className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
+                              onClick={() => setReservationEvent({ id: event.id, title: event.title })}
+                            >
+                              <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                              {t.badgeReservation}
+                            </Badge>
+                          )}
+                          {eventType === 'free_entry' && (
+                            <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2">
+                              <Gift className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                              {t.badgeFreeEntry}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Right: Pause + Delete */}
+                        <div className="flex items-center gap-1 md:gap-1.5">
+                          {/* Pause/Active toggle badge */}
+                          {(() => {
+                            const isPaused =
+                              event.appearance_start_at &&
+                              event.appearance_end_at &&
+                              new Date(event.appearance_start_at).getFullYear() === 1970;
+
+                            return (
+                              <Badge
+                                variant={isPaused ? "secondary" : "outline"}
+                                className={`cursor-pointer text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 flex items-center gap-0.5 ${
+                                  isPaused
+                                    ? "bg-muted text-muted-foreground hover:bg-muted/80"
+                                    : "border-amber-500 text-amber-600 hover:bg-amber-50"
+                                }`}
+                                onClick={() => handleTogglePause(event.id, !!isPaused)}
+                              >
+                                {isPaused ? (
+                                  <>
+                                    <Play className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                                    {t.active}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Pause className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                                    {t.pause}
+                                  </>
+                                )}
+                              </Badge>
+                            );
+                          })()}
+                          
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeletingEvent({ id: event.id, title: event.title })}
+                            className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7 text-destructive hover:text-destructive"
+                            title={t.delete}
+                          >
+                            <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
