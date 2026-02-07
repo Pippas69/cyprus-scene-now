@@ -21,6 +21,7 @@ import { StudentDiscountButton } from "@/components/user/StudentDiscountButton";
 import { ShareProfileDialog } from "@/components/sharing/ShareProfileDialog";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
+import { isEventPaused } from "@/lib/eventVisibility";
 
 interface Business {
   id: string;
@@ -251,15 +252,19 @@ const BusinessProfile = () => {
       // Fetch events
       const { data: eventsData, error: eventsError } = await supabase
         .from("events")
-        .select(`
+        .select(
+          `
           *,
           businesses!inner(name, logo_url, city)
-        `)
+        `,
+        )
         .eq("business_id", businessId)
         .gte("end_at", new Date().toISOString())
         .order("start_at", { ascending: true });
 
       if (eventsError) throw eventsError;
+
+      const visibleEventsData = (eventsData || []).filter((e: any) => !isEventPaused(e));
 
       // Fetch offers - include full business details for OfferPurchaseDialog
       const { data: offersData, error: offersError } = await supabase
@@ -277,8 +282,8 @@ const BusinessProfile = () => {
 
       // Check for active boosts on events
       const today = new Date().toISOString().split('T')[0];
-      const eventIds = (eventsData || []).map(e => e.id);
-      const offerIds = (offersData || []).map(o => o.id);
+      const eventIds = (visibleEventsData || []).map((e: any) => e.id);
+      const offerIds = (offersData || []).map((o: any) => o.id);
 
       let boostedEventIds: Set<string> = new Set();
       let boostedOfferIds: Set<string> = new Set();
@@ -308,7 +313,7 @@ const BusinessProfile = () => {
       }
 
       // Mark events and offers as boosted
-      const eventsWithBoostFlag = (eventsData || []).map(e => ({
+      const eventsWithBoostFlag = (visibleEventsData || []).map((e: any) => ({
         ...e,
         isBoosted: boostedEventIds.has(e.id)
       }));

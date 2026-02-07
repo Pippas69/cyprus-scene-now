@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { trackEventView, trackEngagement } from '@/lib/analyticsTracking';
+import { isEventPaused } from '@/lib/eventVisibility';
 import { ReservationDialog } from '@/components/business/ReservationDialog';
 import { ReservationEventCheckout } from '@/components/user/ReservationEventCheckout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -203,6 +204,42 @@ export default function EventDetail() {
         return;
       }
 
+      // If event is paused, it must disappear everywhere EXCEPT for users who already purchased/reserved.
+      if (isEventPaused(eventData)) {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!currentUser) {
+          setError(language === "el" ? "Η εκδήλωση δεν βρέθηκε" : "Event not found");
+          setLoading(false);
+          return;
+        }
+
+        const [ticketOrderRes, reservationRes] = await Promise.all([
+          supabase
+            .from('ticket_orders')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('user_id', currentUser.id)
+            .eq('status', 'completed')
+            .limit(1),
+          supabase
+            .from('reservations')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('user_id', currentUser.id)
+            .eq('status', 'accepted')
+            .limit(1),
+        ]);
+
+        const hasAccess =
+          (ticketOrderRes.data?.length || 0) > 0 || (reservationRes.data?.length || 0) > 0;
+
+        if (!hasAccess) {
+          setError(language === "el" ? "Η εκδήλωση δεν βρέθηκε" : "Event not found");
+          setLoading(false);
+          return;
+        }
+      }
+
       setEvent(eventData);
 
       // Fetch RSVP counts (global)
@@ -244,7 +281,20 @@ export default function EventDetail() {
             city: item.business_city,
           }
         }));
-        setSimilarEvents(transformedSimilar);
+
+        // Enforce pause visibility: remove paused similar events
+        const ids = transformedSimilar.map((e: any) => e.id);
+        if (ids.length > 0) {
+          const { data: vis } = await supabase
+            .from('events')
+            .select('id, appearance_start_at')
+            .in('id', ids);
+
+          const pausedIds = new Set((vis || []).filter((e: any) => isEventPaused(e)).map((e: any) => e.id));
+          setSimilarEvents(transformedSimilar.filter((e: any) => !pausedIds.has(e.id)));
+        } else {
+          setSimilarEvents([]);
+        }
       }
     } catch (err: any) {
       console.error("Event details error:", err);

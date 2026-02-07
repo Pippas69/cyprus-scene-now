@@ -13,6 +13,7 @@ import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter"
 import { FilterChips } from "@/components/feed/FilterChips";
 import { Button } from "@/components/ui/button";
 import { PremiumBadge } from "@/components/ui/premium-badge";
+import { isEventPaused } from "@/lib/eventVisibility";
 
 const Ekdiloseis = () => {
   const navigate = useNavigate();
@@ -183,8 +184,9 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick, selectedCity
         if (error) throw error;
 
         if (eventsData) {
+          const visibleEvents = eventsData.filter((e: any) => !isEventPaused(e));
           const eventsWithStats = await Promise.all(
-            eventsData.map(async (event) => {
+            visibleEvents.map(async (event) => {
               const { data: rsvps } = await supabase
                 .from('rsvps')
                 .select('status')
@@ -387,12 +389,14 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
           .lte('start_at', timeBoundaries.end);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      
-      // Fetch RSVP counts
-      const eventsWithStats = await Promise.all(
-        (data || []).map(async (event) => {
+       const { data, error } = await query;
+       if (error) throw error;
+       
+       const visible = (data || []).filter((e: any) => !isEventPaused(e));
+
+       // Fetch RSVP counts
+       const eventsWithStats = await Promise.all(
+         visible.map(async (event) => {
           const { data: rsvps } = await supabase
             .from('rsvps')
             .select('status, user_id')
@@ -452,9 +456,11 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
 
       if (error) throw error;
 
+      const visible = (data || []).filter((e: any) => !isEventPaused(e));
+
       // Fetch RSVP counts
       const eventsWithStats = await Promise.all(
-        (data || []).map(async (event) => {
+        visible.map(async (event) => {
           const { data: rsvps } = await supabase
             .from('rsvps')
             .select('status, user_id')

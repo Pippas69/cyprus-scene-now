@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { isEventPaused } from '@/lib/eventVisibility';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,10 +36,13 @@ export const SavedEvents = ({ userId, language }: SavedEventsProps) => {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      const eventsData = data.map(f => ({
-        ...f.event,
-        favorited_at: f.created_at
-      }));
+      const eventsData = data
+        .map((f: any) => ({
+          ...f.event,
+          favorited_at: f.created_at,
+        }))
+        .filter((e: any) => !isEventPaused(e));
+
       setEvents(eventsData);
     }
     setLoading(false);
