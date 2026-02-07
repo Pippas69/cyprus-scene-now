@@ -76,6 +76,7 @@ const translations = {
     cameraPermissionDenied: 'Δεν επιτράπηκε η πρόσβαση στην κάμερα',
     cameraNotFound: 'Δεν βρέθηκε κάμερα',
     scanError: 'Σφάλμα σάρωσης',
+    sessionExpired: 'Η συνεδρία σας έληξε. Παρακαλώ ξανασυνδεθείτε.',
     // Type labels
     ticket: 'Εισιτήριο',
     offer: 'Προσφορά',
@@ -116,6 +117,7 @@ const translations = {
     cameraPermissionDenied: 'Camera access denied',
     cameraNotFound: 'No camera found',
     scanError: 'Scan error',
+    sessionExpired: 'Your session has expired. Please log in again.',
     // Type labels
     ticket: 'Ticket',
     offer: 'Offer',
@@ -294,7 +296,10 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
 
       if (error) {
         console.error('validate-qr invoke error:', error);
-        setScanResult({ success: false, message: t.scanError, qrType: 'unknown' });
+        // Check if it's an authentication error (401)
+        const isAuthError = error.message?.includes('401') || error.message?.includes('Unauthorized');
+        const errorMessage = isAuthError ? t.sessionExpired : t.scanError;
+        setScanResult({ success: false, message: errorMessage, qrType: 'unknown' });
         return;
       }
 

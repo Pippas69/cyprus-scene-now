@@ -3,7 +3,9 @@ import QRCode from "qrcode";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, Calendar, Clock, Tag, Wallet, Store } from "lucide-react";
@@ -88,7 +90,9 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
   return (
     <Dialog open={!!offer} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
-        {/* Offer Card Container - Start from top on mobile */}
+        <VisuallyHidden>
+          <DialogTitle>{offer?.title || "Offer QR Code"}</DialogTitle>
+        </VisuallyHidden>
         <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
           {/* Header with ΦΟΜΟ branding - Compact */}
           <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
