@@ -694,9 +694,9 @@ export default function SubscriptionPlans({
                     </>}
 
                   {/* Current Plan Badge */}
-                  {isCurrent && <div className="absolute -top-3 right-4">
-                      <Badge variant="secondary" className="shadow-md px-3 py-1">
-                        <Check className="w-3 h-3 mr-1" />
+                  {isCurrent && <div className="absolute top-3.5 right-4">
+                      <Badge className={`shadow-md px-2 py-0.5 text-[10px] bg-gradient-to-r ${config.gradient} text-white border-0`}>
+                        <Check className="w-2.5 h-2.5 mr-0.5" />
                         {t.yourPlan}
                       </Badge>
                     </div>}
