@@ -10,10 +10,11 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-OFFER-BOOST] ${step}${detailsStr}`);
 };
 
-// 2-tier boost system with hourly and daily rates
+// 2-tier boost system with hourly and daily rates (in cents)
+// targeting_quality is stored on a 1-5 scale in the database
 const BOOST_TIERS = {
-  standard: { dailyRateCents: 4000, hourlyRateCents: 550, quality: 70 },  // €40/day, €5.50/hour
-  premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 100 },  // €60/day, €8.50/hour
+  standard: { dailyRateCents: 4000, hourlyRateCents: 550, quality: 4 }, // €40/day, €5.50/hour
+  premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 5 },  // €60/day, €8.50/hour
 };
 
 Deno.serve(async (req) => {
@@ -146,29 +147,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Deduct from subscription budget
-    const { error: updateError } = await supabaseClient
-      .from("business_subscriptions")
-      .update({
-        monthly_budget_remaining_cents: remainingBudget - totalCostCents,
-      })
-      .eq("id", subscription.id);
-
-    if (updateError) throw updateError;
-
-    logStep("Budget deducted", { 
-      previousBudget: remainingBudget, 
-      deducted: totalCostCents, 
-      newBudget: remainingBudget - totalCostCents 
-    });
-
     // Determine initial status based on start date
     const now = new Date();
     const start = new Date(startDate);
     const status = start <= now ? "active" : "scheduled";
 
-    // Create offer boost record
-    const { error: boostError } = await supabaseClient
+    // Create offer boost record FIRST (so we never deduct budget on a failed boost)
+    const { data: createdBoost, error: boostError } = await supabaseClient
       .from("offer_boosts")
       .insert({
         discount_id: discountId,
@@ -184,11 +169,32 @@ Deno.serve(async (req) => {
         end_date: endDate,
         status,
         source: "subscription",
-        commission_percent: 0, // Not used anymore, kept for backward compatibility
+        commission_percent: 0,
         active: status === "active",
-      });
+      })
+      .select("id")
+      .single();
 
     if (boostError) throw boostError;
+
+    // Deduct from subscription budget AFTER successful boost creation
+    const newBudget = remainingBudget - totalCostCents;
+    const { error: updateError } = await supabaseClient
+      .from("business_subscriptions")
+      .update({ monthly_budget_remaining_cents: newBudget })
+      .eq("id", subscription.id);
+
+    if (updateError) {
+      // Best-effort rollback to avoid a created boost without budget deduction
+      await supabaseClient.from("offer_boosts").delete().eq("id", createdBoost.id);
+      throw updateError;
+    }
+
+    logStep("Budget deducted", {
+      previousBudget: remainingBudget,
+      deducted: totalCostCents,
+      newBudget,
+    });
 
     logStep("Offer boost created", { tier, targetingQuality: tierData.quality, status, durationMode });
 
@@ -204,9 +210,22 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+  } catch (error: any) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    } else if (typeof error === "string") {
+      errorMessage = error;
+    } else {
+      try {
+        errorMessage = JSON.stringify(error);
+      } catch {
+        errorMessage = "Unserializable error";
+      }
+    }
+    logStep("ERROR", { message: errorMessage, raw: error });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
