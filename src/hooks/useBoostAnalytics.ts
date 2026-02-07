@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { computeBoostWindow, isTimestampWithinWindow } from '@/lib/boostWindow';
 
 interface BoostAnalyticsData {
   id: string;
@@ -183,7 +184,7 @@ export function useBoostsQuickStats(boostIds: string[]) {
   return { stats, loading };
 }
 
-// Hook to check if an event has an active boost
+// Hook to check if an event has an active boost (respects hourly windows)
 export function useEventActiveBoost(eventId: string | null) {
   const [activeBoost, setActiveBoost] = useState<BoostWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -201,20 +202,30 @@ export function useEventActiveBoost(eventId: string | null) {
     if (!eventId) return;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
-      
+      // Fetch all active boosts for this event
       const { data, error } = await supabase
         .from('event_boosts')
         .select('*')
         .eq('event_id', eventId)
-        .eq('status', 'active')
-        .lte('start_date', today)
-        .gte('end_date', today)
-        .limit(1)
-        .maybeSingle();
+        .eq('status', 'active');
 
       if (error) throw error;
-      setActiveBoost(data);
+
+      // Check each boost to see if the current timestamp is within its window
+      const now = new Date().toISOString();
+      const activeBoostRecord = (data || []).find((boost) => {
+        const window = computeBoostWindow({
+          start_date: boost.start_date,
+          end_date: boost.end_date,
+          created_at: boost.created_at,
+          duration_mode: boost.duration_mode,
+          duration_hours: boost.duration_hours,
+        });
+        if (!window) return false;
+        return isTimestampWithinWindow(now, window);
+      });
+
+      setActiveBoost(activeBoostRecord || null);
     } catch (err) {
       console.error('Error checking active boost:', err);
     } finally {

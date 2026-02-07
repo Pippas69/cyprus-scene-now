@@ -14,6 +14,7 @@ import { FilterChips } from "@/components/feed/FilterChips";
 import { Button } from "@/components/ui/button";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import { isEventPaused } from "@/lib/eventVisibility";
+import { isBoostCurrentlyActive, type EventBoostRecord } from "@/lib/boostUtils";
 
 const Ekdiloseis = () => {
   const navigate = useNavigate();
@@ -333,20 +334,22 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
     return { start: start.toISOString(), end: end.toISOString() };
   };
 
-  // Fetch active event boosts
+  // Fetch active event boosts (with hourly window support)
   const { data: activeBoosts } = useQuery({
     queryKey: ["active-event-boosts-ekdiloseis"],
     queryFn: async () => {
-      const now = new Date().toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("event_boosts")
-        .select("event_id, targeting_quality, boost_tier, business_id")
-        .eq("status", "active")
-        .lte("start_date", now)
-        .gte("end_date", now);
+        .select("event_id, targeting_quality, boost_tier, business_id, start_date, end_date, created_at, duration_mode, duration_hours")
+        .eq("status", "active");
 
       if (error) throw error;
-      return data || [];
+      
+      // Filter to only currently active boosts (respecting hourly windows)
+      const now = new Date().toISOString();
+      return (data || []).filter((b) =>
+        isBoostCurrentlyActive(b as EventBoostRecord, now)
+      );
     },
   });
 

@@ -10,6 +10,7 @@ import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { fetchCurrentlyBoostedEventIds, fetchCurrentlyBoostedOfferIds } from "@/lib/boostUtils";
 
 import { RippleButton } from "@/components/ui/ripple-button";
 import { CheckCircle, MapPin, Phone, Globe, ArrowLeft, CalendarCheck, GraduationCap, Share2 } from "lucide-react";
@@ -280,37 +281,12 @@ const BusinessProfile = () => {
 
       if (offersError) throw offersError;
 
-      // Check for active boosts on events
-      const today = new Date().toISOString().split('T')[0];
+      // Check for active boosts on events (using proper window calculation for hourly boosts)
       const eventIds = (visibleEventsData || []).map((e: any) => e.id);
       const offerIds = (offersData || []).map((o: any) => o.id);
 
-      let boostedEventIds: Set<string> = new Set();
-      let boostedOfferIds: Set<string> = new Set();
-
-      if (eventIds.length > 0) {
-        const { data: eventBoosts } = await supabase
-          .from("event_boosts")
-          .select("event_id")
-          .in("event_id", eventIds)
-          .eq("status", "active")
-          .lte("start_date", today)
-          .gte("end_date", today);
-        
-        boostedEventIds = new Set((eventBoosts || []).map(b => b.event_id));
-      }
-
-      if (offerIds.length > 0) {
-        const { data: offerBoosts } = await supabase
-          .from("offer_boosts")
-          .select("discount_id")
-          .in("discount_id", offerIds)
-          .eq("status", "active")
-          .lte("start_date", today)
-          .gte("end_date", today);
-        
-        boostedOfferIds = new Set((offerBoosts || []).map(b => b.discount_id));
-      }
+      const boostedEventIds = await fetchCurrentlyBoostedEventIds(eventIds);
+      const boostedOfferIds = await fetchCurrentlyBoostedOfferIds(offerIds);
 
       // Mark events and offers as boosted
       const eventsWithBoostFlag = (visibleEventsData || []).map((e: any) => ({

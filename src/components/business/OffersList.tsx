@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Trash2, Ticket, Calendar, Sparkles, Rocket, Pencil, Hash } from "lucide-react";
+import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { StudentDiscountStats } from "./StudentDiscountStats";
@@ -31,16 +32,28 @@ const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: str
   const { data: activeBoost } = useQuery({
     queryKey: ["offer-active-boost", offerId],
     queryFn: async () => {
-      const now = new Date().toISOString();
+      // Fetch all active boosts for this offer
       const { data } = await supabase
         .from("offer_boosts")
-        .select("id")
+        .select("id, start_date, end_date, created_at, duration_mode, duration_hours")
         .eq("discount_id", offerId)
-        .eq("status", "active")
-        .lte("start_date", now)
-        .gte("end_date", now)
-        .maybeSingle();
-      return data;
+        .eq("status", "active");
+      
+      // Check each boost to see if current timestamp is within window
+      const now = new Date().toISOString();
+      const activeBoostRecord = (data || []).find((boost) => {
+        const window = computeBoostWindow({
+          start_date: boost.start_date,
+          end_date: boost.end_date,
+          created_at: boost.created_at,
+          duration_mode: boost.duration_mode,
+          duration_hours: boost.duration_hours,
+        });
+        if (!window) return false;
+        return isTimestampWithinWindow(now, window);
+      });
+
+      return activeBoostRecord || null;
     },
   });
   
