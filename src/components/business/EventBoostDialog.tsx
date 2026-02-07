@@ -83,8 +83,14 @@ const EventBoostDialog = ({
     : selectedTier.dailyRate * days;
   const totalCostCents = totalCost * 100;
 
+  // Full budget covers entire cost
   const canUseSubscriptionBudget =
     hasActiveSubscription && remainingBudgetCents >= totalCostCents;
+  
+  // Partial budget: there's budget, but not enough - calculate how much Stripe will charge
+  const hasPartialBudget = hasActiveSubscription && remainingBudgetCents > 0 && remainingBudgetCents < totalCostCents;
+  const stripeChargeCents = hasPartialBudget ? totalCostCents - remainingBudgetCents : totalCostCents;
+  const stripeCharge = stripeChargeCents / 100;
 
   const handleBoost = async () => {
     setIsSubmitting(true);
@@ -133,6 +139,8 @@ const EventBoostDialog = ({
               startDate: formattedStartDate,
               endDate: formattedEndDate,
               durationHours: durationMode === "hourly" ? durationHours : undefined,
+              // Pass partial budget to be deducted if applicable
+              partialBudgetCents: hasPartialBudget ? remainingBudgetCents : 0,
             },
           }
         );
@@ -410,15 +418,20 @@ const EventBoostDialog = ({
                 </div>
 
                 {hasActiveSubscription && (
-                  <p className="text-[10px] md:text-xs text-muted-foreground pt-2">
-                    {canUseSubscriptionBudget
-                      ? language === "el"
-                        ? "✓ Θα χρησιμοποιηθεί το budget συνδρομής"
-                        : "✓ Will use subscription budget"
-                      : language === "el"
-                        ? "⚠ Ανεπαρκές budget - χρέωση Stripe"
-                        : "⚠ Insufficient budget - Stripe charge"}
-                  </p>
+                  <div className="text-[10px] md:text-xs text-muted-foreground pt-2 space-y-1">
+                    {canUseSubscriptionBudget ? (
+                      <p>✓ {language === "el" ? "Θα χρησιμοποιηθεί το budget συνδρομής" : "Will use subscription budget"}</p>
+                    ) : hasPartialBudget ? (
+                      <>
+                        <p>⚠ {language === "el" ? "Μερικό budget" : "Partial budget"}: €{(remainingBudgetCents / 100).toFixed(2)}</p>
+                        <p className="font-semibold">
+                          {language === "el" ? "Χρέωση Stripe" : "Stripe charge"}: €{stripeCharge.toFixed(2)}
+                        </p>
+                      </>
+                    ) : (
+                      <p>⚠ {language === "el" ? "Ανεπαρκές budget - χρέωση Stripe" : "Insufficient budget - Stripe charge"}: €{totalCost.toFixed(2)}</p>
+                    )}
+                  </div>
                 )}
               </div>
 

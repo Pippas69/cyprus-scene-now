@@ -20,6 +20,8 @@ interface ProfileBoostDialogProps {
   onOpenChange: (open: boolean) => void;
   businessId: string;
   businessName: string;
+  hasActiveSubscription?: boolean;
+  remainingBudgetCents?: number;
 }
 
 const translations = {
@@ -91,6 +93,8 @@ export const ProfileBoostDialog = ({
   onOpenChange,
   businessId,
   businessName,
+  hasActiveSubscription = false,
+  remainingBudgetCents = 0,
 }: ProfileBoostDialogProps) => {
   const { language } = useLanguage();
   const t = translations[language];
@@ -106,34 +110,77 @@ export const ProfileBoostDialog = ({
   // Calculate total cost
   const tierData = tiers[tier];
   let totalCost: number;
+  let totalCostCents: number;
   
   if (durationMode === "hourly") {
-    totalCost = (tierData.hourlyRateCents * durationHours) / 100;
+    totalCostCents = tierData.hourlyRateCents * durationHours;
+    totalCost = totalCostCents / 100;
   } else {
     const diffMs = endDate.getTime() - startDate.getTime();
     const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1);
-    totalCost = (tierData.dailyRateCents * days) / 100;
+    totalCostCents = tierData.dailyRateCents * days;
+    totalCost = totalCostCents / 100;
   }
+
+  // Full budget covers entire cost
+  const canUseSubscriptionBudget = hasActiveSubscription && remainingBudgetCents >= totalCostCents;
+  
+  // Partial budget: there's budget, but not enough - calculate how much Stripe will charge
+  const hasPartialBudget = hasActiveSubscription && remainingBudgetCents > 0 && remainingBudgetCents < totalCostCents;
+  const stripeChargeCents = hasPartialBudget ? totalCostCents - remainingBudgetCents : totalCostCents;
+  const stripeCharge = stripeChargeCents / 100;
 
   const handleBoost = async () => {
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-profile-boost-checkout", {
-        body: {
-          businessId,
-          tier,
-          durationMode,
-          startDate: startDate.toISOString().split("T")[0],
-          endDate: endDate.toISOString().split("T")[0],
-          durationHours: durationMode === "hourly" ? durationHours : undefined,
-        },
-      });
+      if (canUseSubscriptionBudget) {
+        // Use subscription budget fully
+        const { data, error } = await supabase.functions.invoke("create-profile-boost-checkout", {
+          body: {
+            businessId,
+            tier,
+            durationMode,
+            startDate: startDate.toISOString().split("T")[0],
+            endDate: endDate.toISOString().split("T")[0],
+            durationHours: durationMode === "hourly" ? durationHours : undefined,
+            useSubscriptionBudget: true,
+          },
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data?.url) {
-        setCheckoutUrl(data.url);
-        window.location.href = data.url;
+        if (data?.success) {
+          toast.success(
+            language === "el" ? "Προώθηση ενεργοποιήθηκε!" : "Boost activated!",
+            {
+              description:
+                language === "el"
+                  ? "Το υπόλοιπο budget σας ενημερώθηκε."
+                  : "Your budget balance has been updated.",
+            }
+          );
+          onOpenChange(false);
+        }
+      } else {
+        // Go to Stripe checkout, with partial budget if applicable
+        const { data, error } = await supabase.functions.invoke("create-profile-boost-checkout", {
+          body: {
+            businessId,
+            tier,
+            durationMode,
+            startDate: startDate.toISOString().split("T")[0],
+            endDate: endDate.toISOString().split("T")[0],
+            durationHours: durationMode === "hourly" ? durationHours : undefined,
+            partialBudgetCents: hasPartialBudget ? remainingBudgetCents : 0,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          setCheckoutUrl(data.url);
+          window.location.href = data.url;
+        }
       }
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
@@ -299,6 +346,24 @@ export const ProfileBoostDialog = ({
                 €{totalCost.toFixed(2)}
               </Badge>
             </div>
+
+            {/* Budget Status */}
+            {hasActiveSubscription && (
+              <div className="text-[10px] md:text-xs text-muted-foreground space-y-1">
+                {canUseSubscriptionBudget ? (
+                  <p>✓ {language === "el" ? "Θα χρησιμοποιηθεί το budget συνδρομής" : "Will use subscription budget"}</p>
+                ) : hasPartialBudget ? (
+                  <>
+                    <p>⚠ {language === "el" ? "Μερικό budget" : "Partial budget"}: €{(remainingBudgetCents / 100).toFixed(2)}</p>
+                    <p className="font-semibold">
+                      {language === "el" ? "Χρέωση Stripe" : "Stripe charge"}: €{stripeCharge.toFixed(2)}
+                    </p>
+                  </>
+                ) : (
+                  <p>⚠ {language === "el" ? "Ανεπαρκές budget - χρέωση Stripe" : "Insufficient budget - Stripe charge"}: €{totalCost.toFixed(2)}</p>
+                )}
+              </div>
+            )}
 
             {/* Submit Button */}
             <Button onClick={handleBoost} disabled={isSubmitting} className="w-full" size="lg">

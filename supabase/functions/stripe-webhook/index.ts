@@ -164,7 +164,28 @@ Deno.serve(async (req) => {
         
         if (metadata?.type === "event_boost" && metadata?.boost_id) {
           const boostId = metadata.boost_id;
-          logStep("Updating event boost after payment", { boostId });
+          const partialBudgetCents = parseInt(metadata?.partial_budget_cents || "0", 10);
+          const businessId = metadata?.business_id;
+          logStep("Updating event boost after payment", { boostId, partialBudgetCents, businessId });
+          
+          // Deduct partial budget if applicable
+          if (partialBudgetCents > 0 && businessId) {
+            const { data: sub } = await supabaseClient
+              .from('business_subscriptions')
+              .select('id, monthly_budget_remaining_cents')
+              .eq('business_id', businessId)
+              .eq('status', 'active')
+              .single();
+            
+            if (sub) {
+              const newBudget = Math.max(0, (sub.monthly_budget_remaining_cents || 0) - partialBudgetCents);
+              await supabaseClient
+                .from('business_subscriptions')
+                .update({ monthly_budget_remaining_cents: newBudget })
+                .eq('id', sub.id);
+              logStep("Partial budget deducted", { partialBudgetCents, newBudget });
+            }
+          }
           
           // Get the boost to check start_date
           const { data: boostData, error: fetchError } = await supabaseClient
@@ -202,6 +223,62 @@ Deno.serve(async (req) => {
             throw boostError;
           }
           logStep(`Event boost status updated to ${newStatus} successfully`);
+        } else if (metadata?.type === "offer_boost" && metadata?.boost_id) {
+          const boostId = metadata.boost_id;
+          const partialBudgetCents = parseInt(metadata?.partial_budget_cents || "0", 10);
+          const businessId = metadata?.business_id;
+          logStep("Updating offer boost after payment", { boostId, partialBudgetCents, businessId });
+          
+          // Deduct partial budget if applicable
+          if (partialBudgetCents > 0 && businessId) {
+            const { data: sub } = await supabaseClient
+              .from('business_subscriptions')
+              .select('id, monthly_budget_remaining_cents')
+              .eq('business_id', businessId)
+              .eq('status', 'active')
+              .single();
+            
+            if (sub) {
+              const newBudget = Math.max(0, (sub.monthly_budget_remaining_cents || 0) - partialBudgetCents);
+              await supabaseClient
+                .from('business_subscriptions')
+                .update({ monthly_budget_remaining_cents: newBudget })
+                .eq('id', sub.id);
+              logStep("Partial budget deducted for offer boost", { partialBudgetCents, newBudget });
+            }
+          }
+          
+          // Get the boost to check start_date
+          const { data: boostData, error: fetchError } = await supabaseClient
+            .from('offer_boosts')
+            .select('start_date')
+            .eq('id', boostId)
+            .single();
+          
+          if (fetchError) {
+            logStep("Error fetching offer boost", { error: fetchError.message });
+            throw fetchError;
+          }
+          
+          const startDate = new Date(boostData.start_date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          startDate.setHours(0, 0, 0, 0);
+          
+          const newStatus = startDate <= today ? 'active' : 'scheduled';
+          
+          const { error: boostError } = await supabaseClient
+            .from('offer_boosts')
+            .update({
+              status: newStatus,
+              active: newStatus === 'active',
+              stripe_payment_intent_id: session.payment_intent as string
+            })
+            .eq('id', boostId)
+            .eq('status', 'pending');
+
+          if (boostError) throw boostError;
+          logStep(`Offer boost status updated to ${newStatus} successfully`);
         } else if (metadata?.type === "profile_boost" && metadata?.boost_id) {
           const boostId = metadata.boost_id;
           logStep("Updating profile boost after payment", { boostId });
