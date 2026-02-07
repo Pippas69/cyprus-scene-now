@@ -440,51 +440,51 @@ export const useBoostValueMetrics = (
         });
       }
 
-      // Event visits = ticket check-ins + event reservation check-ins
+      // Event visits = ticket PURCHASES + event reservation CREATIONS
+      // Per business rule: boosted attribution is based on when the action happened (created_at),
+      // not on check-in time.
       let boostedEventVisits = 0;
       let nonBoostedEventVisits = 0;
 
       if (businessEventIds.length > 0) {
-        // Ticket check-ins
-        const ticketCheckins = await fetchAll<{ event_id: string; checked_in_at: string | null }>(
+        // Ticket purchases (tickets created)
+        const ticketPurchases = await fetchAll<{ event_id: string; created_at: string }>(
           async (from, to) => {
             const { data } = await supabase
               .from("tickets")
-              .select("event_id, checked_in_at")
+              .select("event_id, created_at")
               .in("event_id", businessEventIds)
-              .not("checked_in_at", "is", null)
-              .gte("checked_in_at", startDate)
-              .lte("checked_in_at", endDate)
+              .gte("created_at", startDate)
+              .lte("created_at", endDate)
               .range(from, to);
             return (data || []) as any;
           }
         );
 
-        (ticketCheckins || []).forEach(ticket => {
-          if (ticket.checked_in_at && isWithinBoostPeriod(ticket.checked_in_at, ticket.event_id, eventBoostPeriods)) {
+        (ticketPurchases || []).forEach((ticket) => {
+          if (ticket.created_at && isWithinBoostPeriod(ticket.created_at, ticket.event_id, eventBoostPeriods)) {
             boostedEventVisits++;
           } else {
             nonBoostedEventVisits++;
           }
         });
 
-        // Event reservation check-ins
-        const eventResCheckins = await fetchAll<{ event_id: string | null; checked_in_at: string | null }>(
+        // Event reservations created
+        const eventReservations = await fetchAll<{ event_id: string | null; created_at: string }>(
           async (from, to) => {
             const { data } = await supabase
               .from("reservations")
-              .select("event_id, checked_in_at")
+              .select("event_id, created_at")
               .in("event_id", businessEventIds)
-              .not("checked_in_at", "is", null)
-              .gte("checked_in_at", startDate)
-              .lte("checked_in_at", endDate)
+              .gte("created_at", startDate)
+              .lte("created_at", endDate)
               .range(from, to);
             return (data || []) as any;
           }
         );
 
-        (eventResCheckins || []).forEach(res => {
-          if (res.event_id && res.checked_in_at && isWithinBoostPeriod(res.checked_in_at, res.event_id, eventBoostPeriods)) {
+        (eventReservations || []).forEach((r) => {
+          if (r.event_id && r.created_at && isWithinBoostPeriod(r.created_at, r.event_id, eventBoostPeriods)) {
             boostedEventVisits++;
           } else {
             nonBoostedEventVisits++;
