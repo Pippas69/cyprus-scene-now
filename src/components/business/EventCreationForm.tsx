@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -356,6 +357,29 @@ const EventCreationForm = ({
   } = useCommissionRate(businessId);
   const commissionPercent = commissionData?.commissionPercent ?? 12;
   const isElitePlan = commissionData?.planSlug === 'elite';
+
+  // Subscription boost budget (for the post-publish boost dialog)
+  const { data: activeSubscription } = useQuery({
+    queryKey: ["business-subscription-active", businessId],
+    queryFn: async () => {
+      if (!businessId) return null;
+
+      const { data, error } = await supabase
+        .from("business_subscriptions")
+        .select("monthly_budget_remaining_cents, status")
+        .eq("business_id", businessId)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!businessId,
+    staleTime: 30 * 1000,
+  });
+
+  const hasActiveSubscription = !!activeSubscription;
+  const remainingBudgetCents = activeSubscription?.monthly_budget_remaining_cents ?? 0;
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -988,7 +1012,7 @@ const EventCreationForm = ({
       <ImageCropDialog open={cropDialogOpen} onClose={() => setCropDialogOpen(false)} imageSrc={tempImageSrc} onCropComplete={handleCropComplete} />
 
       {/* Boost Dialog */}
-      {createdEventId && <EventBoostDialog eventId={createdEventId} eventTitle={formData.title} hasActiveSubscription={false} remainingBudgetCents={0} open={boostDialogOpen} onOpenChange={open => {
+      {createdEventId && <EventBoostDialog eventId={createdEventId} eventTitle={formData.title} hasActiveSubscription={hasActiveSubscription} remainingBudgetCents={remainingBudgetCents} open={boostDialogOpen} onOpenChange={open => {
       setBoostDialogOpen(open);
       if (!open) {
         navigate('/dashboard-business/events');
