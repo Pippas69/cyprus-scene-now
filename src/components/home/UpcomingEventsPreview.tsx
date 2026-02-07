@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { isEventPaused } from "@/lib/eventVisibility";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import UnifiedEventCard from "@/components/feed/UnifiedEventCard";
@@ -35,7 +36,8 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
     const fetchEvents = async () => {
       const { data, error } = await supabase
         .from("events")
-        .select(`
+        .select(
+          `
           id,
           title,
           location,
@@ -44,14 +46,18 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
           cover_image_url,
           category,
           business_id,
+          appearance_start_at,
+          appearance_end_at,
           businesses!inner(id, name, logo_url)
-        `)
+        `,
+        )
         .gte("start_at", new Date().toISOString())
         .order("start_at", { ascending: true })
         .limit(6);
 
       if (!error && data) {
-        setEvents(data as unknown as Event[]);
+        const visible = (data as unknown as Event[]).filter((e: any) => !isEventPaused(e));
+        setEvents(visible);
       }
       setLoading(false);
     };

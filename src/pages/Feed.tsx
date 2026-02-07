@@ -32,6 +32,7 @@ import {
 import { useActiveProfileBoosts } from "@/hooks/useActiveProfileBoosts";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
+import { isEventPaused } from "@/lib/eventVisibility";
 interface FeedProps {
   showNavbar?: boolean;
 }
@@ -141,7 +142,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data || [];
+      return (data || []).filter((e: any) => !isEventPaused(e));
     },
     enabled: !!activeBoosts,
     staleTime: 60000,

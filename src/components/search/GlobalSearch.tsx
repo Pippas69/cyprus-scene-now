@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { SearchResults } from './SearchResults';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { isEventPaused } from '@/lib/eventVisibility';
 import { 
   trackSearchResultView, 
   trackSearchResultClick,
@@ -119,9 +120,22 @@ export function GlobalSearch({ language, fullscreen = false, resultTypes }: Glob
 
       if (!error && data) {
         const typed = data as SearchResult[];
-        const filtered = resultTypes?.length
+        let filtered = resultTypes?.length
           ? typed.filter((r) => resultTypes.includes(r.result_type))
           : typed;
+
+        // Enforce pause visibility for events in search results
+        const eventIds = filtered.filter((r) => r.result_type === 'event').map((r) => r.id);
+        if (eventIds.length > 0) {
+          const { data: vis } = await supabase
+            .from('events')
+            .select('id, appearance_start_at')
+            .in('id', eventIds);
+
+          const pausedIds = new Set((vis || []).filter((e: any) => isEventPaused(e)).map((e: any) => e.id));
+          filtered = filtered.filter((r) => r.result_type !== 'event' || !pausedIds.has(r.id));
+        }
+
         setResults(filtered);
         
         // Track profile views ONLY for businesses appearing in search results
