@@ -370,6 +370,16 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
         offerImageUrl = publicUrl;
       }
 
+      // Calculate how many people have been claimed
+      // people_remaining = total_people - claimed
+      // claimed = old_total_people - old_people_remaining
+      const oldTotalPeople = offer.total_people || 0;
+      const oldPeopleRemaining = offer.people_remaining ?? oldTotalPeople;
+      const claimedPeople = oldTotalPeople - oldPeopleRemaining;
+      
+      // New people_remaining based on new total_people minus already claimed
+      const newPeopleRemaining = Math.max(0, formData.totalPeople - claimedPeople);
+
       const updateData: Record<string, unknown> = {
         title: formData.title,
         description: formData.description || null,
@@ -384,6 +394,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
         start_at: formData.appearanceStartDate!.toISOString(),
         end_at: formData.appearanceEndDate!.toISOString(),
         total_people: formData.totalPeople,
+        people_remaining: newPeopleRemaining,
         max_people_per_redemption: formData.maxPeoplePerRedemption,
         one_per_user: formData.onePerUser,
         show_reservation_cta: formData.showReservationCta,
