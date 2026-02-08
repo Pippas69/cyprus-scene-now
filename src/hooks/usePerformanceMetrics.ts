@@ -70,11 +70,11 @@ export const usePerformanceMetrics = (
       // 1) Fetch reservation IDs that checked in (event_id IS NULL) in range
       const checkedInReservations = await (async () => {
         const pageSize = 1000;
-        const out: { id: string }[] = [];
+        const out: { id: string; special_requests: string | null }[] = [];
         for (let from = 0; ; from += pageSize) {
           const { data } = await supabase
             .from("reservations")
-            .select("id")
+            .select("id,special_requests")
             .eq("business_id", businessId)
             .is("event_id", null)
             .not("checked_in_at", "is", null)
@@ -82,12 +82,22 @@ export const usePerformanceMetrics = (
             .lte("checked_in_at", endDate)
             .range(from, from + pageSize - 1);
 
-          const page = (data || []) as { id: string }[];
+          const page = (data || []) as { id: string; special_requests: string | null }[];
           out.push(...page);
           if (page.length < pageSize) break;
         }
         return out;
       })();
+
+      // Offer-linked reservations can have event_id = NULL.
+      // Normally we exclude them by joining to offer_purchases.reservation_id.
+      // However, some offer-reservations are only marked in reservations.special_requests
+      // (e.g. "Offer claim: ..."), so we exclude those too.
+      const offerMarkedReservationIds = new Set(
+        checkedInReservations
+          .filter((r) => (r.special_requests || "").toLowerCase().includes("offer claim:"))
+          .map((r) => r.id)
+      );
 
       const reservationIds = checkedInReservations.map((r) => r.id);
 
@@ -108,7 +118,7 @@ export const usePerformanceMetrics = (
       }
 
       const directProfileReservationVisits = reservationIds.filter(
-        (id) => !offerLinkedReservationIds.has(id)
+        (id) => !offerLinkedReservationIds.has(id) && !offerMarkedReservationIds.has(id)
       ).length;
 
       // 3) Student discount redemptions (QR check-ins from student discounts)
