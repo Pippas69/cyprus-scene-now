@@ -159,19 +159,21 @@ const OffersList = ({ businessId }: OffersListProps) => {
     },
   });
 
-  // Fetch redemption counts for all offers (status = 'redeemed')
-  const { data: redemptionCounts } = useQuery({
-    queryKey: ['offer-redemption-counts', businessId],
+  // Fetch CLAIM counts for all offers (both 'claimed' and 'redeemed' statuses)
+  // IMPORTANT: "Διεκδικήσεις" = when user clicks "Εξαργύρωσε" to claim the offer
+  // This is different from "Επισκέψεις" which is when the business scans the QR
+  const { data: claimCounts } = useQuery({
+    queryKey: ['offer-claim-counts', businessId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('offer_purchases')
         .select('discount_id')
         .eq('business_id', businessId)
-        .eq('status', 'redeemed');
+        .in('status', ['claimed', 'redeemed']); // Count ALL claims, not just redeemed
 
       if (error) throw error;
       
-      // Count redemptions per discount_id
+      // Count claims per discount_id
       const counts: Record<string, number> = {};
       (data || []).forEach(purchase => {
         if (purchase.discount_id) {
@@ -183,9 +185,9 @@ const OffersList = ({ businessId }: OffersListProps) => {
     enabled: !!businessId,
   });
 
-  // Get redemption count for a specific offer
-  const getRedemptionCount = (offerId: string): number => {
-    return redemptionCounts?.[offerId] || 0;
+  // Get claim count for a specific offer
+  const getClaimCount = (offerId: string): number => {
+    return claimCounts?.[offerId] || 0;
   };
 
   // Real-time subscription for offers and redemptions
@@ -218,7 +220,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
           filter: `business_id=eq.${businessId}`
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['offer-redemption-counts', businessId] });
+          queryClient.invalidateQueries({ queryKey: ['offer-claim-counts', businessId] });
         }
       )
       .subscribe();
@@ -397,7 +399,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     </div>
                     <div className="flex items-center gap-0.5 text-primary font-medium whitespace-nowrap">
                       <Hash className="h-2.5 w-2.5 md:h-3 md:w-3 flex-shrink-0" />
-                      <span className="text-[9px] md:text-[10px] lg:text-xs">{getRedemptionCount(offer.id)} {language === "el" ? "Εξαργυρώσεις" : "Redemptions"}</span>
+                      <span className="text-[9px] md:text-[10px] lg:text-xs">{getClaimCount(offer.id)} {language === "el" ? "Διεκδικήσεις" : "Claims"}</span>
                     </div>
                   </div>
                 </div>
