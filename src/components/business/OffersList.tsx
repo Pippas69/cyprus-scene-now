@@ -169,7 +169,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
         .from('offer_purchases')
         .select('discount_id')
         .eq('business_id', businessId)
-        .in('status', ['claimed', 'redeemed']); // Count ALL claims, not just redeemed
+        .in('status', ['paid', 'redeemed']); // Count ALL claims: 'paid' = claimed, 'redeemed' = checked-in
 
       if (error) throw error;
       
