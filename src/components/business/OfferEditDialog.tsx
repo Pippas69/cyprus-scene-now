@@ -370,13 +370,18 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
         offerImageUrl = publicUrl;
       }
 
-      // Calculate how many people have been claimed
-      // people_remaining = total_people - claimed
-      // claimed = old_total_people - old_people_remaining
-      const oldTotalPeople = offer.total_people || 0;
-      const oldPeopleRemaining = offer.people_remaining ?? oldTotalPeople;
-      const claimedPeople = oldTotalPeople - oldPeopleRemaining;
-      
+      // Calculate how many people have already claimed this offer based on purchases.
+      // This must NOT rely on existing total_people/people_remaining because those can be out of sync.
+      const { data: purchases, error: purchasesError } = await supabase
+        .from("offer_purchases")
+        .select("party_size")
+        .eq("discount_id", offer.id)
+        .in("status", ["paid", "redeemed"]);
+
+      if (purchasesError) throw purchasesError;
+
+      const claimedPeople = (purchases || []).reduce((sum, p: any) => sum + (p.party_size ?? 1), 0);
+
       // New people_remaining based on new total_people minus already claimed
       const newPeopleRemaining = Math.max(0, formData.totalPeople - claimedPeople);
 
