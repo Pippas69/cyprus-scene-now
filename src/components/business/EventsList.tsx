@@ -4,23 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift, Pause, Play } from "lucide-react";
+import { Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift, Pause, Play } from "lucide-react";
 import EventEditForm from "./EventEditForm";
 import EventBoostDialog from "./EventBoostDialog";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
 import { useEventActiveBoost } from "@/hooks/useBoostAnalytics";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -58,7 +48,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const { language } = useLanguage();
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [boostingEvent, setBoostingEvent] = useState<any>(null);
-  const [deletingEvent, setDeletingEvent] = useState<{ id: string; title: string } | null>(null);
+  
   const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
   const [ticketSalesEvent, setTicketSalesEvent] = useState<{ id: string; title: string } | null>(null);
@@ -209,95 +199,6 @@ const EventsList = ({ businessId }: EventsListProps) => {
       supabase.removeChannel(channel);
     };
   }, [businessId, queryClient]);
-
-  const handleDelete = async (eventId: string) => {
-    try {
-      const { data: eventData, error: eventFetchError } = await supabase
-        .from("events")
-        .select("end_at")
-        .eq("id", eventId)
-        .single();
-
-      if (eventFetchError) throw eventFetchError;
-
-      const eventHasEnded = eventData && new Date(eventData.end_at) < new Date();
-
-      const { data: completedOrders, error: checkError } = await supabase
-        .from("ticket_orders")
-        .select("id")
-        .eq("event_id", eventId)
-        .eq("status", "completed")
-        .limit(1);
-
-      if (checkError) throw checkError;
-
-      if (completedOrders && completedOrders.length > 0 && !eventHasEnded) {
-        toast({
-          title: t.error,
-          description: t.cannotDeleteWithTickets,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const safeDeleteByEventId = async (table: string) => {
-        const { count: existingCount, error: countError } = await (supabase as any)
-          .from(table)
-          .select("*", { count: "exact", head: true })
-          .eq("event_id", eventId);
-        if (countError) throw countError;
-
-        const { error: delError, count: deletedCount } = await (supabase as any)
-          .from(table)
-          .delete({ count: "exact" })
-          .eq("event_id", eventId);
-        if (delError) throw delError;
-
-        if ((existingCount || 0) > 0 && (deletedCount || 0) === 0) {
-          throw new Error(
-            language === "el"
-              ? "Δεν έχετε δικαίωμα να διαγράψετε όλα τα συνδεδεμένα δεδομένα (ασφάλεια/RLS)."
-              : "You don't have permission to delete all dependent data (security/RLS)."
-          );
-        }
-      };
-
-      await safeDeleteByEventId("ticket_orders");
-      await safeDeleteByEventId("tickets");
-      await safeDeleteByEventId("rsvps");
-      await safeDeleteByEventId("event_views");
-      await safeDeleteByEventId("event_boosts");
-      await safeDeleteByEventId("reservations");
-
-      const { error, count } = await supabase
-        .from("events")
-        .delete({ count: "exact" })
-        .eq("id", eventId)
-        .eq("business_id", businessId);
-
-      if (error) throw error;
-      if (!count) {
-        throw new Error(
-          language === "el"
-            ? "Δεν έχετε δικαίωμα διαγραφής ή η εκδήλωση δεν υπάρχει πλέον"
-            : "You don't have permission to delete this event, or it no longer exists"
-        );
-      }
-
-      toast({
-        title: t.success,
-        description: t.eventDeleted,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["business-events", businessId] });
-    } catch (error: any) {
-      toast({
-        title: t.error,
-        description: error?.message ?? String(error),
-        variant: "destructive",
-      });
-    }
-  };
 
   // Toggle event pause status
   // NOTE: DB constraint allows only appearance_mode: 'date_range' | 'hourly'.
@@ -586,15 +487,6 @@ const EventsList = ({ businessId }: EventsListProps) => {
                           );
                         })()}
                         
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeletingEvent({ id: event.id, title: event.title })}
-                          className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7 text-destructive hover:text-destructive"
-                          title={t.delete}
-                        >
-                          <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -629,31 +521,6 @@ const EventsList = ({ businessId }: EventsListProps) => {
         />
       )}
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingEvent} onOpenChange={(open) => !open && setDeletingEvent(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t.deleteConfirmTitle}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t.deleteConfirmDescription} <strong>"{deletingEvent?.title}"</strong>? {t.deleteConfirmWarning}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deletingEvent) {
-                  handleDelete(deletingEvent.id);
-                  setDeletingEvent(null);
-                }
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t.confirmDelete}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Boost Performance Dialog */}
       <BoostPerformanceDialog
