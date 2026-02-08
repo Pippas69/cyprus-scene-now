@@ -664,26 +664,71 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
 
       // Update ticket tiers if ticket event
       if (formData.eventType === 'ticket') {
-        // Delete existing tiers
-        const { error: deleteError } = await supabase.from('ticket_tiers').delete().eq('event_id', event.id);
-        if (deleteError) throw deleteError;
+        // Get existing tiers
+        const { data: existingTiers } = await supabase
+          .from('ticket_tiers')
+          .select('id, name')
+          .eq('event_id', event.id);
 
-        // Insert new tiers
-        const tiersToInsert = formData.ticketTiers.map((tier, index) => ({
-          event_id: event.id,
-          name: tier.name,
-          description: tier.description || null,
-          price_cents: tier.price_cents,
-          currency: tier.currency || 'EUR',
-          quantity_total: tier.quantity_total,
-          max_per_order: tier.max_per_order,
-          sort_order: index,
-          dress_code: tier.dress_code || null,
-        }));
+        const existingTierIds = new Set(existingTiers?.map(t => t.id) || []);
+        const newTierIds = new Set(formData.ticketTiers.filter(t => t.id).map(t => t.id));
 
-        if (tiersToInsert.length > 0) {
-          const { error: insertError } = await supabase.from('ticket_tiers').insert(tiersToInsert);
-          if (insertError) throw insertError;
+        // Mark tiers for deletion as inactive (don't delete to preserve foreign key references)
+        // Only deactivate tiers that have tickets sold - check each tier
+        for (const existingTier of existingTiers || []) {
+          if (!newTierIds.has(existingTier.id)) {
+            // Check if this tier has tickets sold
+            const { count } = await supabase
+              .from('tickets')
+              .select('id', { count: 'exact', head: true })
+              .eq('tier_id', existingTier.id);
+
+            if (count && count > 0) {
+              // Tier has tickets - deactivate instead of delete
+              await supabase
+                .from('ticket_tiers')
+                .update({ active: false })
+                .eq('id', existingTier.id);
+            } else {
+              // Safe to delete - no tickets reference this tier
+              await supabase
+                .from('ticket_tiers')
+                .delete()
+                .eq('id', existingTier.id);
+            }
+          }
+        }
+
+        // Update or insert tiers
+        for (let index = 0; index < formData.ticketTiers.length; index++) {
+          const tier = formData.ticketTiers[index];
+          const tierData = {
+            event_id: event.id,
+            name: tier.name,
+            description: tier.description || null,
+            price_cents: tier.price_cents,
+            currency: tier.currency || 'EUR',
+            quantity_total: tier.quantity_total,
+            max_per_order: tier.max_per_order,
+            sort_order: index,
+            dress_code: tier.dress_code || null,
+            active: true,
+          };
+
+          if (tier.id && existingTierIds.has(tier.id)) {
+            // Update existing tier
+            const { error: updateTierError } = await supabase
+              .from('ticket_tiers')
+              .update(tierData)
+              .eq('id', tier.id);
+            if (updateTierError) throw updateTierError;
+          } else {
+            // Insert new tier
+            const { error: insertError } = await supabase
+              .from('ticket_tiers')
+              .insert(tierData);
+            if (insertError) throw insertError;
+          }
         }
       }
 
