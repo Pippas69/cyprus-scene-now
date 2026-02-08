@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Ticket, Calendar, Sparkles, Rocket, Pencil, Hash } from "lucide-react";
+import { Ticket, Calendar, Sparkles, Rocket, Pencil, Hash } from "lucide-react";
 import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -16,16 +16,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 // Helper component to show active boost badge for offers - positioned half in/half out above icons
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
@@ -80,7 +70,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   const [showExpired, setShowExpired] = useState(false);
-  const [deletingOffer, setDeletingOffer] = useState<{ id: string; title: string } | null>(null);
+  
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -230,56 +220,6 @@ const OffersList = ({ businessId }: OffersListProps) => {
       supabase.removeChannel(purchasesChannel);
     };
   }, [businessId, queryClient]);
-
-  const handleDelete = async (offerId: string) => {
-    try {
-      const deleteByDiscountId = async (table: any) => {
-        const { error } = await (supabase as any)
-          .from(table)
-          .delete()
-          .eq("discount_id", offerId);
-        if (error) throw error;
-      };
-
-      await deleteByDiscountId("commission_ledger");
-      await deleteByDiscountId("offer_purchases");
-      await deleteByDiscountId("redemptions");
-      await deleteByDiscountId("discount_views");
-      await deleteByDiscountId("discount_scans");
-      await deleteByDiscountId("favorite_discounts");
-      await deleteByDiscountId("discount_items");
-      await deleteByDiscountId("offer_boosts");
-
-      const { error, count } = await supabase
-        .from("discounts")
-        .delete({ count: "exact" })
-        .eq("id", offerId)
-        .eq("business_id", businessId);
-
-      if (error) throw error;
-      if (!count) {
-        throw new Error(
-          language === "el"
-            ? "Δεν έχετε δικαίωμα διαγραφής ή η προσφορά δεν υπάρχει πλέον"
-            : "You don't have permission to delete this offer, or it no longer exists"
-        );
-      }
-
-      toast({
-        title: t.success,
-        description: t.offerDeleted,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["business-offers", businessId] });
-    } catch (error: any) {
-      console.error("Delete offer error:", error);
-      toast({
-        title: t.error,
-        description: error?.message ?? String(error),
-        variant: "destructive",
-      });
-    }
-  };
 
   const toggleActive = async (offerId: string, currentStatus: boolean) => {
     try {
@@ -462,8 +402,8 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   )}
                 </div>
 
-                {/* Row 2 - Right: Deactivate + Delete - smaller for mobile/tablet */}
-                <div className="flex items-center justify-end gap-1">
+                {/* Row 2 - Right: Deactivate only - no delete to preserve data */}
+                <div className="flex items-center justify-end">
                   <Button
                     variant="outline"
                     size="sm"
@@ -471,15 +411,6 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
                   >
                     {offer.active ? t.deactivate : t.activate}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeletingOffer({ id: offer.id, title: offer.title })}
-                    className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7 text-destructive hover:text-destructive"
-                    title={t.delete}
-                  >
-                    <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
                   </Button>
                 </div>
               </div>
@@ -513,33 +444,6 @@ const OffersList = ({ businessId }: OffersListProps) => {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deletingOffer} onOpenChange={(open) => !open && setDeletingOffer(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t.deleteConfirmTitle}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t.deleteConfirmDescription} <strong>"{deletingOffer?.title}"</strong>; 
-              <br /><br />
-              {t.deleteConfirmWarning}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (deletingOffer) {
-                  handleDelete(deletingOffer.id);
-                  setDeletingOffer(null);
-                }
-              }}
-            >
-              {t.confirmDelete}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
