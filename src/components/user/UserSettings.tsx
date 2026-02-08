@@ -114,7 +114,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       // Reminders section
       reminders: 'Υπενθυμίσεις',
       eventReminders: 'Υπενθυμίσεις Εκδηλώσεων',
-      eventRemindersDesc: '1 μέρα & 2 ώρες πριν (κρατήσεις, εισιτήρια, RSVP)',
+      eventRemindersDesc: '2 ώρες πριν (κρατήσεις, εισιτήρια, RSVP)',
       reservationReminders: 'Υπενθυμίσεις Κρατήσεων',
       reservationRemindersDesc: '2 ώρες πριν την ώρα της κράτησής σου',
       expiringOffers: 'Υπενθυμίσεις Προσφορών',
@@ -176,7 +176,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       // Reminders section
       reminders: 'Reminders',
       eventReminders: 'Event Reminders',
-      eventRemindersDesc: '1 day & 2 hours before (reservations, tickets, RSVP)',
+      eventRemindersDesc: '2 hours before (reservations, tickets, RSVP)',
       reservationReminders: 'Reservation Reminders',
       reservationRemindersDesc: '2 hours before your reservation time',
       expiringOffers: 'Offer Reminders',
