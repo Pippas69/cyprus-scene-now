@@ -81,7 +81,7 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
         // Get all checked-in reservations with event_id IS NULL in this interval
         let reservationsQ = supabase
           .from("reservations")
-          .select("id")
+          .select("id, special_requests")
           .eq("business_id", businessId)
           .is("event_id", null)
           .not("checked_in_at", "is", null)
@@ -92,6 +92,16 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
           : reservationsQ.lt("checked_in_at", interval.to);
 
         const { data: checkedInReservations } = await reservationsQ;
+        
+        // Offer-linked reservations can have event_id = NULL.
+        // Some offer-reservations are only marked in reservations.special_requests
+        // (e.g. "Offer claim: ..."), so we exclude those too.
+        const offerMarkedReservationIds = new Set(
+          (checkedInReservations || [])
+            .filter((r) => ((r as any).special_requests || "").toLowerCase().includes("offer claim:"))
+            .map((r) => r.id)
+        );
+        
         const reservationIds = (checkedInReservations || []).map((r) => r.id);
 
         // IMPORTANT: Exclude reservations that were created via offer purchases
@@ -112,7 +122,7 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
         }
 
         const directProfileReservationVisits = reservationIds.filter(
-          (id) => !offerLinkedReservationIds.has(id)
+          (id) => !offerLinkedReservationIds.has(id) && !offerMarkedReservationIds.has(id)
         ).length;
 
         let studentQ = supabase

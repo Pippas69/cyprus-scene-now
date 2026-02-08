@@ -300,12 +300,21 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       // IMPORTANT: Offer-linked reservations also have event_id = NULL, so we must exclude them from direct profile visits.
       const { data: directResCheckins } = await supabase
         .from("reservations")
-        .select("id")
+        .select("id, special_requests")
         .eq("business_id", businessId)
         .is("event_id", null)
         .not("checked_in_at", "is", null)
         .gte("checked_in_at", startDate.toISOString())
         .lte("checked_in_at", endDate.toISOString());
+
+      // Offer-linked reservations can have event_id = NULL.
+      // Some offer-reservations are only marked in reservations.special_requests
+      // (e.g. "Offer claim: ..."), so we exclude those too.
+      const offerMarkedReservationIds = new Set(
+        (directResCheckins || [])
+          .filter((r) => ((r as any).special_requests || "").toLowerCase().includes("offer claim:"))
+          .map((r) => r.id)
+      );
 
       const directResIds = (directResCheckins || []).map((r) => r.id);
 
@@ -325,7 +334,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       }
 
       const directReservationVisits = directResIds.filter(
-        (id) => !offerLinkedReservationIds.has(id)
+        (id) => !offerLinkedReservationIds.has(id) && !offerMarkedReservationIds.has(id)
       ).length;
 
       let eventReservationVisits = 0;
