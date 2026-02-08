@@ -396,10 +396,19 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const isDateValidForOffer = (date: Date): boolean => {
     if (!offer) return false;
     
-    // Check if within offer date range
-    const endAt = new Date(offer.end_at);
-    const startAt = offer.start_at ? new Date(offer.start_at) : new Date();
-    if (isBefore(date, startAt) || isAfter(date, endAt)) return false;
+    // Normalize dates to start of day for comparison (ignore time component)
+    // This ensures that if an offer is created at 11:00 today, the same day
+    // is still valid for reservations as long as there are available slots
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    const endAtFull = new Date(offer.end_at);
+    const endAt = new Date(endAtFull.getFullYear(), endAtFull.getMonth(), endAtFull.getDate());
+    
+    const startAtFull = offer.start_at ? new Date(offer.start_at) : new Date();
+    const startAt = new Date(startAtFull.getFullYear(), startAtFull.getMonth(), startAtFull.getDate());
+    
+    // Check if within offer date range (day-level comparison)
+    if (dateOnly < startAt || dateOnly > endAt) return false;
     
     // Check if day is in offer's valid_days
     const dayIndex = date.getDay();
