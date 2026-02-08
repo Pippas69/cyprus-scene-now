@@ -1585,6 +1585,8 @@ export type Database = {
           duration_mode: string | null
           end_date: string
           event_id: string
+          frozen_days: number | null
+          frozen_hours: number | null
           hourly_rate_cents: number | null
           id: string
           source: Database["public"]["Enums"]["boost_source"]
@@ -1604,6 +1606,8 @@ export type Database = {
           duration_mode?: string | null
           end_date: string
           event_id: string
+          frozen_days?: number | null
+          frozen_hours?: number | null
           hourly_rate_cents?: number | null
           id?: string
           source: Database["public"]["Enums"]["boost_source"]
@@ -1623,6 +1627,8 @@ export type Database = {
           duration_mode?: string | null
           end_date?: string
           event_id?: string
+          frozen_days?: number | null
+          frozen_hours?: number | null
           hourly_rate_cents?: number | null
           id?: string
           source?: Database["public"]["Enums"]["boost_source"]
@@ -2312,6 +2318,8 @@ export type Database = {
           duration_hours: number | null
           duration_mode: string | null
           end_date: string | null
+          frozen_days: number | null
+          frozen_hours: number | null
           hourly_rate_cents: number | null
           id: string
           source: string | null
@@ -2332,6 +2340,8 @@ export type Database = {
           duration_hours?: number | null
           duration_mode?: string | null
           end_date?: string | null
+          frozen_days?: number | null
+          frozen_hours?: number | null
           hourly_rate_cents?: number | null
           id?: string
           source?: string | null
@@ -2352,6 +2362,8 @@ export type Database = {
           duration_hours?: number | null
           duration_mode?: string | null
           end_date?: string | null
+          frozen_days?: number | null
+          frozen_hours?: number | null
           hourly_rate_cents?: number | null
           id?: string
           source?: string | null
