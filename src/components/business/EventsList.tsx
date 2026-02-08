@@ -100,6 +100,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       expired: "Ληγμένες",
       pause: "Παύση",
       active: "Ενεργή",
+      soldOut: "Εξαντλήθηκε",
       eventPaused: "Η εκδήλωση είναι σε παύση",
       eventActivated: "Η εκδήλωση ενεργοποιήθηκε",
     },
@@ -136,6 +137,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       expired: "Expired",
       pause: "Pause",
       active: "Active",
+      soldOut: "Sold Out",
       eventPaused: "Event paused",
       eventActivated: "Event activated",
     },
@@ -156,6 +158,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       if (!eventsData || eventsData.length === 0) return [];
 
       const eventIds = eventsData.map(e => e.id);
+      
+      // Fetch RSVP counts
       const { data: countsData } = await supabase.rpc('get_event_rsvp_counts_bulk', {
         p_event_ids: eventIds
       });
@@ -170,9 +174,36 @@ const EventsList = ({ businessId }: EventsListProps) => {
         });
       }
 
+      // Fetch ticket tiers to determine sold-out status
+      const { data: ticketTiers } = await supabase
+        .from('ticket_tiers')
+        .select('event_id, quantity_total, quantity_sold')
+        .in('event_id', eventIds);
+
+      // Build a map of sold-out status per event (for ticket events)
+      const soldOutMap = new Map<string, boolean>();
+      if (ticketTiers) {
+        // Group by event
+        const tiersPerEvent = new Map<string, typeof ticketTiers>();
+        ticketTiers.forEach(tier => {
+          const existing = tiersPerEvent.get(tier.event_id) || [];
+          existing.push(tier);
+          tiersPerEvent.set(tier.event_id, existing);
+        });
+        
+        // Check if all tiers are sold out for each event
+        tiersPerEvent.forEach((tiers, eventId) => {
+          const allSoldOut = tiers.length > 0 && tiers.every(tier => 
+            (tier.quantity_sold || 0) >= tier.quantity_total
+          );
+          soldOutMap.set(eventId, allSoldOut);
+        });
+      }
+
       return eventsData.map(event => ({
         ...event,
-        rsvp_counts: countsMap.get(event.id) || { interested_count: 0, going_count: 0 }
+        rsvp_counts: countsMap.get(event.id) || { interested_count: 0, going_count: 0 },
+        is_sold_out: soldOutMap.get(event.id) || false
       }));
     },
   });
@@ -453,10 +484,26 @@ const EventsList = ({ businessId }: EventsListProps) => {
                         </Button>
                       </div>
 
-                      {/* Bottom: Pause + Delete */}
+                      {/* Bottom: Pause/SoldOut badge */}
                       <div className="flex items-center gap-1 md:gap-1.5">
-                        {/* Pause/Active toggle badge */}
+                        {/* Check if sold out (for ticket events only) */}
                         {(() => {
+                          const eventType = getEventType(event);
+                          const isSoldOut = eventType === 'ticket' && event.is_sold_out;
+                          
+                          // If sold out (tickets), show sold out badge (no interaction)
+                          if (isSoldOut) {
+                            return (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 flex items-center gap-0.5 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                              >
+                                {t.soldOut}
+                              </Badge>
+                            );
+                          }
+                          
+                          // Otherwise show pause/active toggle
                           const isPaused =
                             event.appearance_start_at &&
                             event.appearance_end_at &&
