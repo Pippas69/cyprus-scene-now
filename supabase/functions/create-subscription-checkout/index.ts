@@ -12,31 +12,33 @@ const logStep = (step: string, details?: any) => {
 };
 
 // Price mapping for subscription plans (Basic/Pro/Elite)
+// Monthly prices: Basic €59.99, Pro €119.99, Elite €239.99
+// Annual prices: Monthly price × 12 (2 months free included in the per-month display)
 const PRICE_MAPPING: Record<string, Record<string, string>> = {
   basic: {
-    monthly: 'price_1SyY4wHwXCvHV7ZwDPJe3GI9',
-    annual: 'price_1SyY4xHwXCvHV7ZwGGkz1zum',
+    monthly: 'price_1SyYDBHwXCvHV7ZwWIPuJHzf',  // €59.99/month
+    annual: 'price_1SyYDCHwXCvHV7ZwAw3fngIN',   // €599.88/year (€49.99/month)
   },
   pro: {
-    monthly: 'price_1SyY4zHwXCvHV7Zwx3tYcVnk',
-    annual: 'price_1SyY50HwXCvHV7Zw7i1ZOinH',
+    monthly: 'price_1SyYDEHwXCvHV7ZwBy72motr',  // €119.99/month
+    annual: 'price_1SyYDFHwXCvHV7ZwE1uQ0H1c',   // €1,199.88/year (€99.99/month)
   },
   elite: {
-    monthly: 'price_1SyY51HwXCvHV7ZwqbLSYmtq',
-    annual: 'price_1SyY52HwXCvHV7ZwkrYXbOB5',
+    monthly: 'price_1SyYDGHwXCvHV7Zwg9IDT9jt',  // €239.99/month
+    annual: 'price_1SyYDHHwXCvHV7ZwDVK9HHIU',   // €2,399.88/year (€199.99/month)
   },
   // Legacy mappings for backwards compatibility
   starter: {
-    monthly: 'price_1SyY4wHwXCvHV7ZwDPJe3GI9',
-    annual: 'price_1SyY4xHwXCvHV7ZwGGkz1zum',
+    monthly: 'price_1SyYDBHwXCvHV7ZwWIPuJHzf',
+    annual: 'price_1SyYDCHwXCvHV7ZwAw3fngIN',
   },
   growth: {
-    monthly: 'price_1SyY4zHwXCvHV7Zwx3tYcVnk',
-    annual: 'price_1SyY50HwXCvHV7Zw7i1ZOinH',
+    monthly: 'price_1SyYDEHwXCvHV7ZwBy72motr',
+    annual: 'price_1SyYDFHwXCvHV7ZwE1uQ0H1c',
   },
   professional: {
-    monthly: 'price_1SyY51HwXCvHV7ZwqbLSYmtq',
-    annual: 'price_1SyY52HwXCvHV7ZwkrYXbOB5',
+    monthly: 'price_1SyYDGHwXCvHV7Zwg9IDT9jt',
+    annual: 'price_1SyYDHHwXCvHV7ZwDVK9HHIU',
   },
 };
 
