@@ -646,15 +646,15 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                         </div>
                       </div>
 
-                      {/* Revenue Section - Only if has paid content */}
-                      {boost.has_paid_content && (
+                      {/* Revenue Section - Show if there are tickets or paid reservations during boost */}
+                      {(boost.tickets_sold > 0 || boost.reservation_revenue_cents > 0) && (
                         <div className="mt-4 pt-4 border-t">
                           <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
                             <Euro className="h-4 w-4" />
                             {t.revenue}
                           </h4>
                           <div className="grid grid-cols-2 gap-4">
-                            {boost.ticket_revenue_cents > 0 && (
+                            {boost.tickets_sold > 0 && (
                               <div className="bg-muted/50 rounded-lg p-3">
                                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                                   <TicketCheck className="h-4 w-4" />
@@ -746,6 +746,42 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                           </div>
                         </div>
                       </div>
+
+                      {/* Revenue Section - Show if there are tickets or paid reservations during boost */}
+                      {(boost.tickets_sold > 0 || boost.reservation_revenue_cents > 0) && (
+                        <div className="mt-4 pt-4 border-t">
+                          <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                            <Euro className="h-4 w-4" />
+                            {t.revenue}
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            {boost.tickets_sold > 0 && (
+                              <div className="bg-muted/50 rounded-lg p-3">
+                                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                  <TicketCheck className="h-4 w-4" />
+                                  <span className="text-xs">{t.ticketsSold}</span>
+                                </div>
+                                <p className="font-bold">{boost.tickets_sold}</p>
+                                <p className="text-sm text-green-600 font-semibold">
+                                  €{(boost.ticket_revenue_cents / 100).toFixed(2)}
+                                </p>
+                              </div>
+                            )}
+                            {boost.reservation_revenue_cents > 0 && (
+                              <div className="bg-muted/50 rounded-lg p-3">
+                                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                  <UserCheck className="h-4 w-4" />
+                                  <span className="text-xs">{t.reservations}</span>
+                                </div>
+                                <p className="font-bold">{boost.reservations_count} ({boost.reservation_guests} {t.guests})</p>
+                                <p className="text-sm text-green-600 font-semibold">
+                                  €{(boost.reservation_revenue_cents / 100).toFixed(2)}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
