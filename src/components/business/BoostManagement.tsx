@@ -171,15 +171,15 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
           const ticketRevenue = ticketOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
 
-          // CRITICAL FIX: Fetch ticket check-ins (visits) that occurred during boost period
-          // This counts check-ins by checked_in_at date, NOT by purchase date
+          // CORRECT LOGIC: Fetch ticket check-ins (visits) where the ticket was PURCHASED during boost period
+          // Attribution is based on PURCHASE time (created_at), but only counts if checked_in_at is not null
           const { count: ticketCheckIns } = await supabase
             .from("tickets")
             .select("id", { count: "exact", head: true })
             .eq("event_id", eventId)
             .not("checked_in_at", "is", null)
-            .gte("checked_in_at", boostStart)
-            .lte("checked_in_at", boostEnd);
+            .gte("created_at", boostStart)
+            .lte("created_at", boostEnd);
 
           // Fetch reservations created during boost period (for reservation count)
           const { data: reservationsData } = await supabase
@@ -194,15 +194,15 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           const reservationGuests = reservationsData?.reduce((sum, r) => sum + (r.party_size || 0), 0) || 0;
           const reservationRevenue = reservationsData?.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0) || 0;
 
-          // CRITICAL FIX: Fetch reservation check-ins that occurred during boost period
-          // This counts check-ins by checked_in_at date, NOT by reservation creation date
+          // CORRECT LOGIC: Fetch reservation check-ins where the reservation was CREATED during boost period
+          // Attribution is based on CREATION time (created_at), but only counts if checked_in_at is not null
           const { count: reservationCheckIns } = await supabase
             .from("reservations")
             .select("id", { count: "exact", head: true })
             .eq("event_id", eventId)
             .not("checked_in_at", "is", null)
-            .gte("checked_in_at", boostStart)
-            .lte("checked_in_at", boostEnd);
+            .gte("created_at", boostStart)
+            .lte("created_at", boostEnd);
 
           const totalVisits = (ticketCheckIns || 0) + (reservationCheckIns || 0);
           const hasPaidContent = ticketRevenue > 0 || reservationRevenue > 0;
@@ -284,14 +284,15 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
-          // Fetch visits (redeemed_at = actual visit) during boost period
+          // CORRECT LOGIC: Fetch visits where the CLAIM (purchase) was made during boost period
+          // Attribution is based on CLAIM time (created_at), but only counts if redeemed_at is not null
           const { count: visits } = await supabase
             .from("offer_purchases")
             .select("*", { count: "exact", head: true })
             .eq("discount_id", discountId)
             .not("redeemed_at", "is", null)
-            .gte("redeemed_at", boostStart)
-            .lte("redeemed_at", boostEnd);
+            .gte("created_at", boostStart)
+            .lte("created_at", boostEnd);
 
           return {
             id: boost.id,
