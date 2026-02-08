@@ -150,11 +150,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .lte("created_at", boostEnd);
 
           // Fetch tickets sold during boost period (by purchase date)
+          // Include both 'valid' (not yet checked in) and 'used' (checked in) tickets
           const { data: ticketsSoldData } = await supabase
             .from("tickets")
             .select("id")
             .eq("event_id", eventId)
-            .eq("status", "valid")
+            .in("status", ["valid", "used"])
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
@@ -182,11 +183,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .lte("created_at", boostEnd);
 
           // Fetch reservations created during boost period (for reservation count)
+          // Include 'accepted' reservations which are the confirmed ones
           const { data: reservationsData } = await supabase
             .from("reservations")
             .select("party_size, prepaid_min_charge_cents")
             .eq("event_id", eventId)
-            .eq("status", "confirmed")
+            .eq("status", "accepted")
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
