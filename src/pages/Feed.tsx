@@ -145,7 +145,41 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).filter((e: any) => !isEventPaused(e));
+      const events = (data || []).filter((e: any) => !isEventPaused(e));
+      
+      // Filter out sold-out ticket events
+      const ticketEventIds = events
+        .filter((e: any) => e.event_type === 'ticket')
+        .map((e: any) => e.id);
+      
+      if (ticketEventIds.length === 0) return events;
+      
+      // Fetch ticket tiers for ticket events
+      const { data: ticketTiers } = await supabase
+        .from('ticket_tiers')
+        .select('event_id, quantity_total, quantity_sold')
+        .in('event_id', ticketEventIds);
+      
+      // Build sold-out map
+      const soldOutSet = new Set<string>();
+      if (ticketTiers) {
+        const tiersPerEvent = new Map<string, typeof ticketTiers>();
+        ticketTiers.forEach(tier => {
+          const existing = tiersPerEvent.get(tier.event_id) || [];
+          existing.push(tier);
+          tiersPerEvent.set(tier.event_id, existing);
+        });
+        
+        tiersPerEvent.forEach((tiers, eventId) => {
+          const allSoldOut = tiers.length > 0 && tiers.every(tier => 
+            (tier.quantity_sold || 0) >= tier.quantity_total
+          );
+          if (allSoldOut) soldOutSet.add(eventId);
+        });
+      }
+      
+      // Filter out sold-out ticket events
+      return events.filter((e: any) => !soldOutSet.has(e.id));
     },
     enabled: !!activeBoosts,
     staleTime: 60000,
@@ -210,7 +244,13 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data || [];
+      // Filter out sold-out offers (people_remaining = 0)
+      return (data || []).filter((offer: any) => {
+        if (offer.total_people !== null && offer.total_people > 0 && offer.people_remaining !== null && offer.people_remaining <= 0) {
+          return false;
+        }
+        return true;
+      });
     },
     enabled: !!offerBoosts,
     staleTime: 60000,

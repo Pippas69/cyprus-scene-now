@@ -94,6 +94,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       error: "Σφάλμα",
       active: "Ενεργή",
       inactive: "Ανενεργή",
+      soldOut: "Εξαντλήθηκε",
       activate: "Ενεργοποίηση",
       deactivate: "Απενεργοποίηση",
       boosted: "Προωθείται",
@@ -118,6 +119,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       error: "Error",
       active: "Active",
       inactive: "Inactive",
+      soldOut: "Sold Out",
       activate: "Activate",
       deactivate: "Deactivate",
       boosted: "Boosted",
@@ -368,12 +370,31 @@ const OffersList = ({ businessId }: OffersListProps) => {
 
                 {/* Row 2 - Left: Status + %OFF (always side-by-side) - smaller badges for mobile/tablet */}
                 <div className="flex items-center gap-1 md:gap-2">
-                  <Badge
-                    variant={offer.active ? "default" : "secondary"}
-                    className={`h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm ${offer.active ? "bg-primary text-primary-foreground" : ""}`}
-                  >
-                    {offer.active ? t.active : t.inactive}
-                  </Badge>
+                  {/* Check if offer is sold out */}
+                  {(() => {
+                    const isSoldOut = offer.total_people !== null && offer.total_people > 0 && 
+                                      offer.people_remaining !== null && offer.people_remaining <= 0;
+                    
+                    if (isSoldOut) {
+                      return (
+                        <Badge
+                          variant="secondary"
+                          className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                        >
+                          {t.soldOut}
+                        </Badge>
+                      );
+                    }
+                    
+                    return (
+                      <Badge
+                        variant={offer.active ? "default" : "secondary"}
+                        className={`h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm ${offer.active ? "bg-primary text-primary-foreground" : ""}`}
+                      >
+                        {offer.active ? t.active : t.inactive}
+                      </Badge>
+                    );
+                  })()}
 
                   {offer.percent_off && (
                     <Badge
@@ -402,16 +423,26 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   )}
                 </div>
 
-                {/* Row 2 - Right: Deactivate only - no delete to preserve data */}
+                {/* Row 2 - Right: Deactivate only - no delete to preserve data (hide if sold out) */}
                 <div className="flex items-center justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleActive(offer.id, offer.active || false)}
-                    className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
-                  >
-                    {offer.active ? t.deactivate : t.activate}
-                  </Button>
+                  {(() => {
+                    const isSoldOut = offer.total_people !== null && offer.total_people > 0 && 
+                                      offer.people_remaining !== null && offer.people_remaining <= 0;
+                    
+                    // Don't show activate/deactivate button if sold out
+                    if (isSoldOut) return null;
+                    
+                    return (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleActive(offer.id, offer.active || false)}
+                        className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm"
+                      >
+                        {offer.active ? t.deactivate : t.activate}
+                      </Button>
+                    );
+                  })()}
                 </div>
               </div>
             </CardContent>

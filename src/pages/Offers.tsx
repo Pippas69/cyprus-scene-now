@@ -171,7 +171,14 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
         .limit(12);
 
       if (error) throw error;
-      return data || [];
+      
+      // Filter out sold-out offers (people_remaining = 0)
+      return (data || []).filter((offer: any) => {
+        if (offer.total_people !== null && offer.total_people > 0 && offer.people_remaining !== null && offer.people_remaining <= 0) {
+          return false;
+        }
+        return true;
+      });
     },
   });
 
@@ -357,7 +364,14 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      
+      // Filter out sold-out offers (people_remaining = 0)
+      return (data || []).filter((offer: any) => {
+        if (offer.total_people !== null && offer.total_people > 0 && offer.people_remaining !== null && offer.people_remaining <= 0) {
+          return false;
+        }
+        return true;
+      });
     },
     enabled: boostedOfferIds.size > 0,
   });
@@ -407,7 +421,14 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      
+      // Filter out sold-out offers (people_remaining = 0)
+      return (data || []).filter((offer: any) => {
+        if (offer.total_people !== null && offer.total_people > 0 && offer.people_remaining !== null && offer.people_remaining <= 0) {
+          return false;
+        }
+        return true;
+      });
     },
   });
 
