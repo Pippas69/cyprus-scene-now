@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Ticket, Calendar, Eye, MousePointer, Users, Euro, TicketCheck, UserCheck, Pause, Play } from "lucide-react";
+import { Loader2, Zap, Ticket, Calendar, Eye, MousePointer, Users, Euro, TicketCheck, UserCheck, Pause, Play, X } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
 import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
@@ -337,15 +337,19 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     setTogglingId(boostId);
     
     try {
-      const { error } = await supabase
-        .from("event_boosts")
-        .update({ status: "canceled" })
-        .eq("id", boostId);
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
 
-      if (error) throw error;
+      const res = await supabase.functions.invoke("pause-event-boost", {
+        body: { boostId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw res.error;
 
       setEventBoosts(prev => 
-        prev.map(b => b.id === boostId ? { ...b, status: "canceled" } : b)
+        prev.map(b => b.id === boostId ? { ...b, status: "paused" } : b)
       );
 
       toast.success(
@@ -362,16 +366,51 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     }
   };
 
+  const deactivateEventBoost = async (boostId: string) => {
+    setTogglingId(boostId);
+    
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await supabase.functions.invoke("deactivate-event-boost", {
+        body: { boostId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw res.error;
+
+      setEventBoosts(prev => prev.filter(b => b.id !== boostId));
+
+      toast.success(
+        language === "el" 
+          ? "Η προώθηση απενεργοποιήθηκε"
+          : "Boost deactivated"
+      );
+    } catch (error: any) {
+      toast.error(language === "el" ? "Σφάλμα" : "Error", {
+        description: error.message,
+      });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const pauseOfferBoost = async (boostId: string) => {
     setTogglingId(boostId);
     
     try {
-      const { error } = await supabase
-        .from("offer_boosts")
-        .update({ active: false })
-        .eq("id", boostId);
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
 
-      if (error) throw error;
+      const res = await supabase.functions.invoke("pause-offer-boost", {
+        body: { boostId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw res.error;
 
       setOfferBoosts(prev => 
         prev.map(b => b.id === boostId ? { ...b, active: false } : b)
@@ -381,6 +420,37 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         language === "el" 
           ? "Η προώθηση τέθηκε σε παύση"
           : "Boost paused"
+      );
+    } catch (error: any) {
+      toast.error(language === "el" ? "Σφάλμα" : "Error", {
+        description: error.message,
+      });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const deactivateOfferBoost = async (boostId: string) => {
+    setTogglingId(boostId);
+    
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await supabase.functions.invoke("deactivate-offer-boost", {
+        body: { boostId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw res.error;
+
+      setOfferBoosts(prev => prev.filter(b => b.id !== boostId));
+
+      toast.success(
+        language === "el" 
+          ? "Η προώθηση απενεργοποιήθηκε"
+          : "Boost deactivated"
       );
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
@@ -477,6 +547,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     active: language === "el" ? "Ενεργή" : "Active",
     paused: language === "el" ? "Σε Παύση" : "Paused",
     pauseBoost: language === "el" ? "Παύση" : "Pause",
+    deactivateBoost: language === "el" ? "Απενεργοποίηση" : "Deactivate",
     recreateEventBoost: language === "el" 
       ? "Για να ενεργοποιήσετε ξανά, δημιουργήστε νέα προώθηση από τις Εκδηλώσεις" 
       : "To reactivate, create a new boost from Events",
@@ -623,29 +694,45 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                           </div>
                         </div>
 
-                        {/* Right side - Cost & Pause Button */}
-                        <div className="space-y-2 text-sm text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <span className="text-muted-foreground">{t.totalCost}</span>
-                            <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
-                          </div>
-                          {isActive && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => pauseEventBoost(boost.id)}
-                              disabled={togglingId === boost.id}
-                              className="gap-1.5"
-                            >
-                              {togglingId === boost.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Pause className="h-3.5 w-3.5" />
-                              )}
-                              {t.pauseBoost}
-                            </Button>
-                          )}
-                        </div>
+                        {/* Right side - Cost & Pause/Deactivate Buttons */}
+                         <div className="space-y-2 text-sm text-right">
+                           <div className="flex items-center justify-end gap-2">
+                             <span className="text-muted-foreground">{t.totalCost}</span>
+                             <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
+                           </div>
+                           {isActive && (
+                             <div className="flex gap-2 justify-end">
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => pauseEventBoost(boost.id)}
+                                 disabled={togglingId === boost.id}
+                                 className="gap-1.5"
+                               >
+                                 {togglingId === boost.id ? (
+                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                 ) : (
+                                   <Pause className="h-3.5 w-3.5" />
+                                 )}
+                                 {t.pauseBoost}
+                               </Button>
+                               <Button
+                                 variant="destructive"
+                                 size="sm"
+                                 onClick={() => deactivateEventBoost(boost.id)}
+                                 disabled={togglingId === boost.id}
+                                 className="gap-1.5"
+                               >
+                                 {togglingId === boost.id ? (
+                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                 ) : (
+                                   <X className="h-3.5 w-3.5" />
+                                 )}
+                                 {t.deactivateBoost}
+                               </Button>
+                             </div>
+                           )}
+                         </div>
                       </div>
 
                       {/* Revenue Section - Show if there are tickets or paid reservations during boost */}
@@ -859,29 +946,45 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                         </div>
                       </div>
 
-                      {/* Right side - Cost & Pause Button */}
-                      <div className="space-y-2 text-sm text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <span className="text-muted-foreground">{t.totalCost}</span>
-                          <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
-                        </div>
-                        {boost.active && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => pauseOfferBoost(boost.id)}
-                            disabled={togglingId === boost.id}
-                            className="gap-1.5"
-                          >
-                            {togglingId === boost.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Pause className="h-3.5 w-3.5" />
-                            )}
-                            {t.pauseBoost}
-                          </Button>
-                        )}
-                      </div>
+                       {/* Right side - Cost & Pause/Deactivate Buttons */}
+                       <div className="space-y-2 text-sm text-right">
+                         <div className="flex items-center justify-end gap-2">
+                           <span className="text-muted-foreground">{t.totalCost}</span>
+                           <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
+                         </div>
+                         {boost.active && (
+                           <div className="flex gap-2 justify-end">
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => pauseOfferBoost(boost.id)}
+                               disabled={togglingId === boost.id}
+                               className="gap-1.5"
+                             >
+                               {togglingId === boost.id ? (
+                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                               ) : (
+                                 <Pause className="h-3.5 w-3.5" />
+                               )}
+                               {t.pauseBoost}
+                             </Button>
+                             <Button
+                               variant="destructive"
+                               size="sm"
+                               onClick={() => deactivateOfferBoost(boost.id)}
+                               disabled={togglingId === boost.id}
+                               className="gap-1.5"
+                             >
+                               {togglingId === boost.id ? (
+                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                               ) : (
+                                 <X className="h-3.5 w-3.5" />
+                               )}
+                               {t.deactivateBoost}
+                             </Button>
+                           </div>
+                         )}
+                       </div>
                     </div>
                   </div>
                 </CardContent>
