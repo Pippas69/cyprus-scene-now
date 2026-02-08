@@ -166,10 +166,10 @@ export function useGuidanceDataWithRange(businessId: string, dateRange?: DateRan
       ];
       const profileInteractions = analyzeTimestamps(allProfileInteractionTimestamps);
 
-      const profileVisitCheckins = await fetchAll<{ id: string; checked_in_at: string | null }>(async (from, to) => {
+      const profileVisitCheckins = await fetchAll<{ id: string; checked_in_at: string | null; special_requests: string | null }>(async (from, to) => {
         const { data } = await supabase
           .from('reservations')
-          .select('id, checked_in_at')
+          .select('id, checked_in_at, special_requests')
           .eq('business_id', businessId)
           .is('event_id', null)
           .not('checked_in_at', 'is', null)
@@ -180,6 +180,13 @@ export function useGuidanceDataWithRange(businessId: string, dateRange?: DateRan
       });
 
       const reservationIds = (profileVisitCheckins || []).map((r) => r.id).filter(Boolean) as string[];
+
+      // Offer-marked reservations (marked with "Offer claim:" in special_requests)
+      const offerMarkedReservationIds = new Set(
+        (profileVisitCheckins || [])
+          .filter((r) => ((r as any).special_requests || "").toLowerCase().includes("offer claim:"))
+          .map((r) => r.id)
+      );
 
       // Offer-linked reservations also have event_id = NULL; exclude them from *profile* visits.
       let offerLinkedReservationIds = new Set<string>();
@@ -198,7 +205,7 @@ export function useGuidanceDataWithRange(businessId: string, dateRange?: DateRan
       }
 
       const profileVisitTimestamps = (profileVisitCheckins || [])
-        .filter((r) => r.checked_in_at && !offerLinkedReservationIds.has(r.id))
+        .filter((r) => r.checked_in_at && !offerLinkedReservationIds.has(r.id) && !offerMarkedReservationIds.has(r.id))
         .map((r) => r.checked_in_at as string);
 
       // Student discount redemptions (QR check-ins from student discounts)
