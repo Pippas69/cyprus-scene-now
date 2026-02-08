@@ -194,11 +194,11 @@ export const useBoostValueMetrics = (
 
          const fetchAllIds = async () => {
            const pageSize = 1000;
-           const out: { id: string }[] = [];
+           const out: { id: string; special_requests: string | null }[] = [];
            for (let from = 0; ; from += pageSize) {
              let q = supabase
                .from("reservations")
-               .select("id")
+               .select("id, special_requests")
                .eq("business_id", businessId)
                .is("event_id", null)
                .not("checked_in_at", "is", null)
@@ -208,7 +208,7 @@ export const useBoostValueMetrics = (
              q = endInclusive ? q.lte("checked_in_at", rangeEnd) : q.lt("checked_in_at", rangeEnd);
              const { data } = await q;
 
-             const page = (data || []) as { id: string }[];
+             const page = (data || []) as { id: string; special_requests: string | null }[];
              out.push(...page);
              if (page.length < pageSize) break;
            }
@@ -216,6 +216,16 @@ export const useBoostValueMetrics = (
          };
 
          const checkedInReservations = await fetchAllIds();
+         
+         // Offer-linked reservations can have event_id = NULL.
+         // Some offer-reservations are only marked in reservations.special_requests
+         // (e.g. "Offer claim: ..."), so we exclude those too.
+         const offerMarkedReservationIds = new Set(
+           checkedInReservations
+             .filter((r) => (r.special_requests || "").toLowerCase().includes("offer claim:"))
+             .map((r) => r.id)
+         );
+         
          const reservationIds = checkedInReservations.map((r) => r.id);
 
          let offerLinkedReservationIds = new Set<string>();
@@ -234,7 +244,7 @@ export const useBoostValueMetrics = (
          }
 
          const directProfileReservationVisits = reservationIds.filter(
-           (id) => !offerLinkedReservationIds.has(id)
+           (id) => !offerLinkedReservationIds.has(id) && !offerMarkedReservationIds.has(id)
          ).length;
 
          // Also count student discount redemptions
