@@ -17,6 +17,41 @@ const BOOST_TIERS = {
   premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 5 },  // €60/day, €8.50/hour
 };
 
+// Consume frozen time from paused boosts (FIFO - oldest first)
+async function consumeFrozenTime(client: any, businessId: string, hoursToConsume: number, daysToConsume: number) {
+  const tables = ["event_boosts", "offer_boosts"] as const;
+  let remainingHours = hoursToConsume;
+  let remainingDays = daysToConsume;
+
+  for (const table of tables) {
+    if (remainingHours <= 0 && remainingDays <= 0) break;
+    const { data: pausedBoosts } = await client
+      .from(table)
+      .select("id, frozen_hours, frozen_days")
+      .eq("business_id", businessId)
+      .eq("status", "paused")
+      .order("created_at", { ascending: true });
+
+    for (const boost of (pausedBoosts || [])) {
+      if (remainingHours <= 0 && remainingDays <= 0) break;
+      const updates: any = {};
+      if (remainingHours > 0 && (boost.frozen_hours || 0) > 0) {
+        const consume = Math.min(remainingHours, boost.frozen_hours);
+        updates.frozen_hours = boost.frozen_hours - consume;
+        remainingHours -= consume;
+      }
+      if (remainingDays > 0 && (boost.frozen_days || 0) > 0) {
+        const consume = Math.min(remainingDays, boost.frozen_days);
+        updates.frozen_days = boost.frozen_days - consume;
+        remainingDays -= consume;
+      }
+      if (Object.keys(updates).length > 0) {
+        await client.from(table).update(updates).eq("id", boost.id);
+      }
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -42,8 +77,8 @@ Deno.serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { discountId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget } = await req.json();
-    logStep("Request data", { discountId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget });
+    const { discountId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget, useFrozenTime = false, frozenHoursUsed = 0, frozenDaysUsed = 0 } = await req.json();
+    logStep("Request data", { discountId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget, useFrozenTime, frozenHoursUsed, frozenDaysUsed });
 
     // Validate tier
     if (!tier || !BOOST_TIERS[tier as keyof typeof BOOST_TIERS]) {
@@ -83,14 +118,14 @@ Deno.serve(async (req) => {
         throw new Error("Duration hours is required for hourly mode");
       }
       calculatedDurationHours = durationHours;
-      totalCostCents = tierData.hourlyRateCents * durationHours;
-      logStep("Hourly cost calculated", { durationHours, hourlyRateCents: tierData.hourlyRateCents, totalCostCents });
+      totalCostCents = tierData.hourlyRateCents * (useFrozenTime ? Math.max(0, durationHours - frozenHoursUsed) : durationHours);
+      logStep("Hourly cost calculated", { durationHours, frozenHoursUsed, totalCostCents });
     } else {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-      totalCostCents = tierData.dailyRateCents * days;
-      logStep("Daily cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
+      totalCostCents = tierData.dailyRateCents * (useFrozenTime ? Math.max(0, days - frozenDaysUsed) : days);
+      logStep("Daily cost calculated", { days, frozenDaysUsed, totalCostCents });
     }
 
     // If not using subscription budget, return that payment is needed
@@ -240,6 +275,12 @@ Deno.serve(async (req) => {
     }
 
     logStep("Offer boost created", { tier, targetingQuality: tierData.quality, status, durationMode });
+
+    // Consume frozen time from paused boosts if opted in
+    if (useFrozenTime && (frozenHoursUsed > 0 || frozenDaysUsed > 0)) {
+      await consumeFrozenTime(supabaseClient, businessId, frozenHoursUsed, frozenDaysUsed);
+      logStep("Frozen time consumed", { frozenHoursUsed, frozenDaysUsed });
+    }
 
     return new Response(
       JSON.stringify({
