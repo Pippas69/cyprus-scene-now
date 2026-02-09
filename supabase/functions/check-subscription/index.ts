@@ -116,6 +116,8 @@ Deno.serve(async (req) => {
           commission_free_offers_count: plan.commission_free_offers_count || 0,
           commission_percent: plan.commission_percent || 12,
           analytics_level: plan.analytics_level || 'overview',
+          downgrade_pending: !!existingDbSub.downgraded_to_free_at,
+          downgrade_effective_date: existingDbSub.downgraded_to_free_at ? existingDbSub.current_period_end : null,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
@@ -158,6 +160,8 @@ Deno.serve(async (req) => {
           commission_free_offers_count: plan.commission_free_offers_count || 0,
           commission_percent: plan.commission_percent || 12,
           analytics_level: plan.analytics_level || 'overview',
+          downgrade_pending: !!existingDbSub.downgraded_to_free_at,
+          downgrade_effective_date: existingDbSub.downgraded_to_free_at ? existingDbSub.current_period_end : null,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
