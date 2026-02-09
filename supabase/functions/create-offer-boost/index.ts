@@ -77,8 +77,8 @@ Deno.serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { discountId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget } = await req.json();
-    logStep("Request data", { discountId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget });
+    const { discountId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget, useFrozenTime = false, frozenHoursUsed = 0, frozenDaysUsed = 0 } = await req.json();
+    logStep("Request data", { discountId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget, useFrozenTime, frozenHoursUsed, frozenDaysUsed });
 
     // Validate tier
     if (!tier || !BOOST_TIERS[tier as keyof typeof BOOST_TIERS]) {
