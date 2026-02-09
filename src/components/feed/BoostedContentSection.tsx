@@ -1,5 +1,4 @@
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Calendar, MapPin, Share2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PremiumBadge } from "@/components/ui/premium-badge";
@@ -155,13 +154,11 @@ export const BoostedContentSection = ({
   return (
     <div className="w-full">
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-3 pt-2 pr-2 pb-1">
-          {allContent.map((item, index) => (
-            <motion.div
+        <div className="flex gap-3 pt-2 pr-2 pb-1" style={{ willChange: 'transform' }}>
+          {allContent.map((item) => (
+            <div
               key={`${item.type}-${item.data.id}`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.03 }}
+              className="flex-shrink-0"
             >
               {item.type === 'event' ? (
                 <UnifiedEventCard
@@ -177,7 +174,7 @@ export const BoostedContentSection = ({
                   language={language}
                 />
               )}
-            </motion.div>
+            </div>
           ))}
         </div>
         <ScrollBar orientation="horizontal" />

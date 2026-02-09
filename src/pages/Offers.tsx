@@ -466,12 +466,9 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
       {hasBoostedOffers && (
         <section>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {boostedOffers.map((offer: any, index: number) => (
-              <motion.div
+            {boostedOffers.map((offer: any) => (
+              <div
                 key={offer.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05, duration: 0.4 }}
                 className="relative"
               >
                 <div className="absolute -top-2 -right-2 z-10">
@@ -482,7 +479,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
                   language={language}
                   user={user}
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>

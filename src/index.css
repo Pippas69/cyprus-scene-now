@@ -918,6 +918,15 @@ All colors MUST be HSL.
   }
 }
 
+/* GPU-accelerated scroll containers for smooth performance */
+[data-scroll-container],
+[data-radix-scroll-area-viewport] {
+  -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
 /* Hide scrollbar for horizontal scroll on mobile */
 .scrollbar-hide {
   -ms-overflow-style: none;
