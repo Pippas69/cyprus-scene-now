@@ -199,7 +199,7 @@ export const UnifiedEventCard = ({
         onClick={handleCardClick}
         className={cn(
           "flex flex-col rounded-xl bg-card border border-border",
-          "hover:border-primary/50 hover:shadow-lg transition-colors duration-200",
+          "[@media(hover:hover)]:hover:border-primary/50 [@media(hover:hover)]:hover:shadow-lg transition-colors duration-200",
           "overflow-visible group",
           sizeClasses[size],
           className
