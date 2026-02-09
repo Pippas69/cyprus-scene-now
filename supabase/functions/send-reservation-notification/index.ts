@@ -137,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate QR code URL
     const qrCodeToken = reservation.qr_code_token || reservation.confirmation_code;
     const qrCodeUrl = qrCodeToken 
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCodeToken)}&bgcolor=ffffff&color=0d3b66`
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(qrCodeToken)}&bgcolor=ffffff&color=000000`
       : null;
 
     let userSubject = '';

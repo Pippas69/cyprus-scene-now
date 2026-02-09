@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
       const logKey = `${reminder.userId}-${reminder.purchaseId}`;
       if (loggedSet.has(logKey)) continue;
 
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(reminder.qrCodeToken)}&color=102b4a`;
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(reminder.qrCodeToken)}&bgcolor=ffffff&color=000000`;
 
       const emailHtml = wrapEmailContent(`
         <h2 style="color: #f59e0b; margin: 0 0 16px 0; font-size: 24px;">⚠️ Η προσφορά σου λήγει σε 2 ώρες!</h2>

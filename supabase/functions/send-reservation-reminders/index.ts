@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
       if (loggedSet.has(logKey)) continue;
 
       const qrCodeUrl = reminder.qrCodeToken
-        ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(reminder.qrCodeToken)}&color=102b4a`
+        ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(reminder.qrCodeToken)}&bgcolor=ffffff&color=000000`
         : null;
 
       const formattedTime = new Date(reminder.reservationTime).toLocaleString('el-GR', {
