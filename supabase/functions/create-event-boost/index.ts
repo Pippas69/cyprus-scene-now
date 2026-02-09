@@ -191,6 +191,12 @@ Deno.serve(async (req) => {
 
     logStep("Boost created from subscription budget", { durationMode, totalCostCents, newBudget });
 
+    // Consume frozen time from paused boosts if opted in
+    if (useFrozenTime && (frozenHoursUsed > 0 || frozenDaysUsed > 0)) {
+      await consumeFrozenTime(supabaseClient, businessId, frozenHoursUsed, frozenDaysUsed);
+      logStep("Frozen time consumed", { frozenHoursUsed, frozenDaysUsed });
+    }
+
     return new Response(
       JSON.stringify({ success: true, source: "subscription", durationMode }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
