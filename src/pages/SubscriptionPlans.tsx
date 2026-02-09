@@ -238,6 +238,7 @@ export default function SubscriptionPlans({
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [showSuccessState, setShowSuccessState] = useState(false);
+  const [loadingDowngrade, setLoadingDowngrade] = useState(false);
   const {
     isActive: confettiActive,
     trigger: triggerConfetti,
