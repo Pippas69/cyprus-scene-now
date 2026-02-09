@@ -378,7 +378,7 @@ export default function SubscriptionPlans({
     }
   };
 
-  const handleDowngradeToFree = async () => {
+  const handleDowngrade = async (targetPlan: string = 'free') => {
     setLoadingDowngrade(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -387,13 +387,25 @@ export default function SubscriptionPlans({
         return;
       }
       const { data, error } = await supabase.functions.invoke('downgrade-to-free', {
+        body: { target_plan: targetPlan },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (error) throw error;
+      if (error) {
+        // Try to parse the error message from the response
+        let errorMsg = error.message || String(error);
+        try {
+          if (error.context && typeof error.context === 'object') {
+            const body = await error.context.json?.();
+            if (body?.error) errorMsg = body.error;
+          }
+        } catch {}
+        throw new Error(errorMsg);
+      }
+      const targetName = (targetPlan.charAt(0).toUpperCase() + targetPlan.slice(1));
       toast.success(
         language === 'el'
-          ? `Η υποβάθμιση προγραμματίστηκε. Ισχύει από ${formatDate(data.effective_date)}`
-          : `Downgrade scheduled. Effective from ${formatDate(data.effective_date)}`
+          ? `Η υποβάθμιση σε ${targetName} προγραμματίστηκε. Ισχύει από ${formatDate(data.effective_date)}`
+          : `Downgrade to ${targetName} scheduled. Effective from ${formatDate(data.effective_date)}`
       );
       refetchSubscription();
     } catch (error) {
