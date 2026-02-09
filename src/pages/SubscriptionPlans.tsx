@@ -676,8 +676,14 @@ export default function SubscriptionPlans({
                 
                 {/* Pending downgrade indicator */}
                 {currentSubscription?.downgrade_pending && (
-                  <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-600 border-amber-500/20">
-                    {t.downgradeScheduled} • {t.downgradeEffective} {formatDate(currentSubscription.downgrade_effective_date)}
+                  <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20">
+                    <span className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1 py-0.5">
+                      <span>{t.downgradeScheduled}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span>{t.downgradeRequested} {formatDate(currentSubscription.downgrade_requested_at)}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span>{t.downgradeEffective} {formatDate(currentSubscription.downgrade_effective_date)}</span>
+                    </span>
                   </Badge>
                 )}
               </div>
