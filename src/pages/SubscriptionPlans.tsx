@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Check, Sparkles, Loader2, Zap, Crown, Star, ExternalLink, Calendar, Rocket, TrendingUp, Building2, MapPin, BarChart3, Target, Lightbulb, FileText, Percent, Mail, Gift } from 'lucide-react';
+import { Check, Sparkles, Loader2, Zap, Crown, Star, ExternalLink, Calendar, Rocket, TrendingUp, Building2, MapPin, BarChart3, Target, Lightbulb, FileText, Percent, Mail, Gift, ArrowDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +12,17 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Confetti, useConfetti } from '@/components/ui/confetti';
 import { SuccessCheckmark } from '@/components/ui/success-animation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 type BillingCycle = 'monthly' | 'annual';
 const translations = {
   el: {
@@ -41,6 +52,14 @@ const translations = {
     yourPlan: "Το Πλάνο σας",
     mostPopular: "Δημοφιλέστερη",
     yourCurrentPlan: "Το Τρέχον Πλάνο σας",
+    downgradeToFree: "Επιστροφή σε Free",
+    downgradeConfirmTitle: "Υποβάθμιση σε Free Plan",
+    downgradeConfirmDesc: "Θα διατηρήσετε τα προνόμια του τρέχοντος πλάνου μέχρι το τέλος της περιόδου χρέωσης. Μετά, θα μεταβείτε αυτόματα στο Free plan.",
+    downgradeConfirm: "Ναι, υποβάθμιση",
+    downgradeCancel: "Ακύρωση",
+    downgradeScheduled: "Υποβάθμιση προγραμματισμένη",
+    downgradeEffective: "Ισχύει από",
+    upgradedSuccessfully: "Η αναβάθμιση ολοκληρώθηκε!",
     freePlanActive: "Free Plan",
     noBoostCredits: "Χωρίς Boost Credits",
     upgradeForCredits: "Αναβαθμίστε για να ξεκλειδώσετε boost credits",
@@ -121,6 +140,14 @@ const translations = {
     yourPlan: "Your Plan",
     mostPopular: "Most Popular",
     yourCurrentPlan: "Your Current Plan",
+    downgradeToFree: "Switch to Free",
+    downgradeConfirmTitle: "Downgrade to Free Plan",
+    downgradeConfirmDesc: "You will keep your current plan benefits until the end of the billing period. After that, you will automatically switch to the Free plan.",
+    downgradeConfirm: "Yes, downgrade",
+    downgradeCancel: "Cancel",
+    downgradeScheduled: "Downgrade scheduled",
+    downgradeEffective: "Effective from",
+    upgradedSuccessfully: "Upgrade completed!",
     freePlanActive: "Free Plan",
     noBoostCredits: "No Boost Credits",
     upgradeForCredits: "Upgrade to unlock boost credits",
@@ -211,6 +238,7 @@ export default function SubscriptionPlans({
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [showSuccessState, setShowSuccessState] = useState(false);
+  const [loadingDowngrade, setLoadingDowngrade] = useState(false);
   const {
     isActive: confettiActive,
     trigger: triggerConfetti,
@@ -294,7 +322,14 @@ export default function SubscriptionPlans({
         }
       });
       if (error) throw error;
-      if (data?.url) {
+      if (data?.upgraded) {
+        // Immediate upgrade - no redirect needed
+        setShowSuccessState(true);
+        triggerConfetti();
+        toast.success(t.upgradedSuccessfully);
+        refetchSubscription();
+        setTimeout(() => setShowSuccessState(false), 4000);
+      } else if (data?.url) {
         const popup = window.open(data.url, '_blank');
         if (!popup || popup.closed || typeof popup.closed === 'undefined') {
           window.location.href = data.url;
@@ -347,6 +382,34 @@ export default function SubscriptionPlans({
       toast.error(language === 'el' ? 'Αποτυχία ανοίγματος διαχείρισης συνδρομής' : 'Failed to open subscription management');
     }
   };
+
+  const handleDowngradeToFree = async () => {
+    setLoadingDowngrade(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error(language === 'el' ? 'Παρακαλώ συνδεθείτε' : 'Please log in');
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke('downgrade-to-free', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      toast.success(
+        language === 'el'
+          ? `Η υποβάθμιση προγραμματίστηκε. Ισχύει από ${formatDate(data.effective_date)}`
+          : `Downgrade scheduled. Effective from ${formatDate(data.effective_date)}`
+      );
+      refetchSubscription();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error downgrading:', error);
+      toast.error(language === 'el' ? `Αποτυχία υποβάθμισης: ${message}` : `Failed to downgrade: ${message}`);
+    } finally {
+      setLoadingDowngrade(false);
+    }
+  };
+
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
   const formatCurrency = (cents: number) => `€${(cents / 100).toFixed(2)}`;
   const formatDate = (dateString: string) => {
@@ -359,6 +422,12 @@ export default function SubscriptionPlans({
   const isCurrentPlan = (planSlug: string) => {
     return currentSubscription?.subscribed && currentSubscription?.plan_slug === planSlug;
   };
+
+  // Plan hierarchy for upgrade/downgrade detection
+  const planHierarchy: Record<string, number> = { free: 0, basic: 1, pro: 2, elite: 3 };
+  const currentPlanLevel = currentSubscription?.subscribed ? (planHierarchy[currentSubscription.plan_slug] ?? 0) : 0;
+  const isUpgrade = (planSlug: string) => (planHierarchy[planSlug] ?? 0) > currentPlanLevel;
+  const isDowngrade = (planSlug: string) => currentSubscription?.subscribed && (planHierarchy[planSlug] ?? 0) < currentPlanLevel;
 
   // Get features for each plan
   const getBasicFeatures = () => [{
@@ -584,6 +653,38 @@ export default function SubscriptionPlans({
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium text-sm text-foreground">{t.freeTitle}</span>
+                
+                {/* Downgrade to Free badge - only visible when on paid plan */}
+                {currentSubscription?.subscribed && !currentSubscription?.downgrade_pending && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground border border-border/50 transition-colors cursor-pointer">
+                        <ArrowDown className="w-2.5 h-2.5" />
+                        {t.downgradeToFree}
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t.downgradeConfirmTitle}</AlertDialogTitle>
+                        <AlertDialogDescription>{t.downgradeConfirmDesc}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t.downgradeCancel}</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDowngradeToFree} disabled={loadingDowngrade}>
+                          {loadingDowngrade ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                          {t.downgradeConfirm}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                
+                {/* Pending downgrade indicator */}
+                {currentSubscription?.downgrade_pending && (
+                  <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                    {t.downgradeScheduled} • {t.downgradeEffective} {formatDate(currentSubscription.downgrade_effective_date)}
+                  </Badge>
+                )}
               </div>
               
               {/* Separator */}
@@ -728,12 +829,18 @@ export default function SubscriptionPlans({
                   </CardContent>
 
                   <CardFooter className="pt-4 border-t">
-                    <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
-                      {loadingPlan === planSlug ? <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {t.loading}
-                        </> : isCurrent ? t.currentPlan : t.choosePlan}
-                    </Button>
+                    {isDowngrade(planSlug) ? (
+                      <Button className="w-full" variant="outline" size="lg" onClick={handleManageSubscription} disabled={loadingPlan !== null}>
+                        {language === 'el' ? 'Διαχείριση' : 'Manage'}
+                      </Button>
+                    ) : (
+                      <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
+                        {loadingPlan === planSlug ? <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {t.loading}
+                          </> : isCurrent ? t.currentPlan : t.choosePlan}
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               </motion.div>;

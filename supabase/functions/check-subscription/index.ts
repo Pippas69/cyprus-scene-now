@@ -264,6 +264,8 @@ Deno.serve(async (req) => {
       commission_free_offers_count: plan.commission_free_offers_count || 0,
       commission_percent: plan.commission_percent || 12,
       analytics_level: plan.analytics_level || 'overview',
+      downgrade_pending: !!existingSub?.downgraded_to_free_at,
+      downgrade_effective_date: existingSub?.downgraded_to_free_at ? subscriptionEnd : null,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
