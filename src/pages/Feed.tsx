@@ -286,16 +286,36 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (window.scrollY === 0) startYRef.current = e.touches[0].pageY;
-    else startYRef.current = null;
+    isHorizontalSwipeRef.current = false;
+    if (window.scrollY === 0) {
+      startYRef.current = e.touches[0].pageY;
+      startXRef.current = e.touches[0].pageX;
+    } else {
+      startYRef.current = null;
+      startXRef.current = null;
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (startYRef.current === null) return;
-    const diff = e.touches[0].pageY - startYRef.current;
-    if (diff > 0 && window.scrollY === 0) {
-      setPullDistance(Math.min(diff, 100));
-      if (diff > 80 && !isPulling) {
+    if (startYRef.current === null || startXRef.current === null) return;
+    // Once determined as horizontal, skip all pull logic for this gesture
+    if (isHorizontalSwipeRef.current) return;
+    
+    const diffY = e.touches[0].pageY - startYRef.current;
+    const diffX = Math.abs(e.touches[0].pageX - startXRef.current);
+    
+    // If horizontal movement > vertical movement, it's a horizontal swipe — ignore entirely
+    if (diffX > Math.abs(diffY) && diffX > 10) {
+      isHorizontalSwipeRef.current = true;
+      // Reset any pull state that might have started
+      if (pullDistance > 0) setPullDistance(0);
+      if (isPulling) setIsPulling(false);
+      return;
+    }
+    
+    if (diffY > 0 && window.scrollY === 0) {
+      setPullDistance(Math.min(diffY, 100));
+      if (diffY > 80 && !isPulling) {
         setIsPulling(true);
         hapticFeedback.light();
       }
@@ -303,7 +323,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   };
 
   const handleTouchEnd = () => {
-    if (isPulling) {
+    if (!isHorizontalSwipeRef.current && isPulling) {
       hapticFeedback.medium();
       queryClient.invalidateQueries({ queryKey: ["boosted-events"] });
       queryClient.invalidateQueries({ queryKey: ["boosted-offers"] });
@@ -314,6 +334,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       setPullDistance(0);
     }
     startYRef.current = null;
+    startXRef.current = null;
+    isHorizontalSwipeRef.current = false;
   };
 
   const handleClearFilters = () => {
