@@ -861,7 +861,7 @@ export default function SubscriptionPlans({
                         </AlertDialogContent>
                       </AlertDialog>
                     ) : (
-                      <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent || !!currentSubscription?.downgrade_pending}>
+                      <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
                         {loadingPlan === planSlug ? <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             {t.loading}
