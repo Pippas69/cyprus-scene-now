@@ -118,6 +118,7 @@ export const BoostedContentSection = memo(({
   language,
   userCity,
 }: BoostedContentSectionProps) => {
+  console.log('[DEBUG] BoostedContentSection render', { eventCount: events.length, offerCount: offers.length });
   const t = translations[language];
 
   // Memoize combined & sorted content to prevent unnecessary re-renders
