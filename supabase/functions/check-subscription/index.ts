@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
           analytics_level: plan.analytics_level || 'overview',
           downgrade_pending: !!existingDbSub.downgraded_to_free_at,
           downgrade_effective_date: existingDbSub.downgraded_to_free_at ? existingDbSub.current_period_end : null,
+          downgrade_requested_at: existingDbSub.downgraded_to_free_at || null,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
@@ -162,6 +163,7 @@ Deno.serve(async (req) => {
           analytics_level: plan.analytics_level || 'overview',
           downgrade_pending: !!existingDbSub.downgraded_to_free_at,
           downgrade_effective_date: existingDbSub.downgraded_to_free_at ? existingDbSub.current_period_end : null,
+          downgrade_requested_at: existingDbSub.downgraded_to_free_at || null,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
@@ -270,6 +272,7 @@ Deno.serve(async (req) => {
       analytics_level: plan.analytics_level || 'overview',
       downgrade_pending: !!existingSub?.downgraded_to_free_at,
       downgrade_effective_date: existingSub?.downgraded_to_free_at ? subscriptionEnd : null,
+      downgrade_requested_at: existingSub?.downgraded_to_free_at || null,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
