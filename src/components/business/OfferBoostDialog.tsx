@@ -497,14 +497,14 @@ const OfferBoostDialog = ({
                 </div>
 
                 {/* Frozen time discount line */}
-                {useFrozenTime && (durationMode === "hourly" ? frozenHoursUsed > 0 : frozenDaysUsed > 0) && (
+                {useFrozenTime && frozenUnitsUsed > 0 && (
                   <div className="flex justify-between text-xs md:text-sm text-blue-600">
                     <span className="flex items-center gap-1">
                       <Snowflake className="h-3 w-3" />
                       {language === "el" ? "Παγωμένος χρόνος" : "Frozen time"}:
                     </span>
                     <span className="font-semibold">
-                      -{durationMode === "hourly" ? frozenHoursUsed : frozenDaysUsed} {durationMode === "hourly" 
+                      -{frozenUnitsUsed} {durationMode === "hourly" 
                         ? (language === "el" ? "ώρ." : "hrs") 
                         : (language === "el" ? "ημ." : "days")}
                     </span>
