@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Check, Sparkles, Loader2, Zap, Crown, Star, ExternalLink, Calendar, Rocket, TrendingUp, Building2, MapPin, BarChart3, Target, Lightbulb, FileText, Percent, Mail, Gift } from 'lucide-react';
+import { Check, Sparkles, Loader2, Zap, Crown, Star, ExternalLink, Calendar, Rocket, TrendingUp, Building2, MapPin, BarChart3, Target, Lightbulb, FileText, Percent, Mail, Gift, ArrowDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +12,17 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Confetti, useConfetti } from '@/components/ui/confetti';
 import { SuccessCheckmark } from '@/components/ui/success-animation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 type BillingCycle = 'monthly' | 'annual';
 const translations = {
   el: {
