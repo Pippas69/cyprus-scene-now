@@ -679,6 +679,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     cancel: language === "el" ? "Ακύρωση" : "Cancel",
     frozen: language === "el" ? "Παγωμένος" : "Frozen",
     deactivated: language === "el" ? "Απενεργ." : "Deactivated",
+    resumeBoost: language === "el" ? "Συνέχιση" : "Resume",
+    resumeConfirmTitle: language === "el" ? "Συνέχιση Προώθησης" : "Resume Boost",
+    resumeConfirmDesc: language === "el" 
+      ? "Η προώθηση θα συνεχιστεί. Ο παγωμένος χρόνος θα χρησιμοποιηθεί."
+      : "The boost will resume. Frozen time will be consumed.",
+    totalFrozenTime: language === "el" ? "Παγωμένος χρόνος" : "Frozen time",
+    frozenHours: language === "el" ? "ώρ." : "hrs",
+    frozenDays: language === "el" ? "ημ." : "days",
   };
 
 
