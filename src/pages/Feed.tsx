@@ -123,7 +123,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000,
   });
 
-  const eventBoostBusinessIds = new Set(activeBoosts?.map((b) => b.business_id) || []);
+  const eventBoostBusinessIds = useMemo(() => new Set(activeBoosts?.map((b) => b.business_id) || []), [activeBoosts]);
 
   // Boosted events ONLY (paid priority) - sorted chronologically by start_at
   const { data: boostedEvents } = useQuery({
