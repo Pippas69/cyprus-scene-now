@@ -493,6 +493,58 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     }
   };
 
+  const resumeEventBoost = async (boostId: string) => {
+    setTogglingId(boostId);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await supabase.functions.invoke("resume-event-boost", {
+        body: { boostId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw res.error;
+
+      setEventBoosts(prev =>
+        prev.map(b => b.id === boostId ? { ...b, status: "active", frozen_hours: 0, frozen_days: 0 } : b)
+      );
+
+      toast.success(language === "el" ? "Η προώθηση συνεχίστηκε" : "Boost resumed");
+    } catch (error: any) {
+      toast.error(language === "el" ? "Σφάλμα" : "Error", { description: error.message });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const resumeOfferBoost = async (boostId: string) => {
+    setTogglingId(boostId);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await supabase.functions.invoke("resume-offer-boost", {
+        body: { boostId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw res.error;
+
+      setOfferBoosts(prev =>
+        prev.map(b => b.id === boostId ? { ...b, active: true, status: "active", frozen_hours: 0, frozen_days: 0 } : b)
+      );
+
+      toast.success(language === "el" ? "Η προώθηση συνεχίστηκε" : "Boost resumed");
+    } catch (error: any) {
+      toast.error(language === "el" ? "Σφάλμα" : "Error", { description: error.message });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   // Helper to check if a boost is currently within its time window
   const isBoostWithinWindow = (boost: {
     start_date: string;
