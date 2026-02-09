@@ -10,6 +10,45 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-EVENT-BOOST] ${step}${detailsStr}`);
 };
 
+
+// Consume frozen time from paused boosts (FIFO - oldest first)
+async function consumeFrozenTime(client: any, businessId: string, hoursToConsume: number, daysToConsume: number) {
+  // Fetch all paused boosts with frozen time (from both tables)
+  const tables = ["event_boosts", "offer_boosts"] as const;
+  let remainingHours = hoursToConsume;
+  let remainingDays = daysToConsume;
+
+  for (const table of tables) {
+    if (remainingHours <= 0 && remainingDays <= 0) break;
+
+    const { data: pausedBoosts } = await client
+      .from(table)
+      .select("id, frozen_hours, frozen_days")
+      .eq("business_id", businessId)
+      .eq("status", "paused")
+      .order("created_at", { ascending: true });
+
+    for (const boost of (pausedBoosts || [])) {
+      if (remainingHours <= 0 && remainingDays <= 0) break;
+
+      const updates: any = {};
+      if (remainingHours > 0 && (boost.frozen_hours || 0) > 0) {
+        const consume = Math.min(remainingHours, boost.frozen_hours);
+        updates.frozen_hours = boost.frozen_hours - consume;
+        remainingHours -= consume;
+      }
+      if (remainingDays > 0 && (boost.frozen_days || 0) > 0) {
+        const consume = Math.min(remainingDays, boost.frozen_days);
+        updates.frozen_days = boost.frozen_days - consume;
+        remainingDays -= consume;
+      }
+      if (Object.keys(updates).length > 0) {
+        await client.from(table).update(updates).eq("id", boost.id);
+      }
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
