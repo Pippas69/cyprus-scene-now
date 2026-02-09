@@ -210,7 +210,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000,
   });
 
-  const offerBoostBusinessIds = new Set(offerBoosts?.map((b: any) => b.business_id) || []);
+  const offerBoostBusinessIds = useMemo(() => new Set(offerBoosts?.map((b: any) => b.business_id) || []), [offerBoosts]);
 
   // Boosted offers (paid priority) - sorted chronologically by end_at (soonest expiry first)
   const { data: boostedOffers } = useQuery({
