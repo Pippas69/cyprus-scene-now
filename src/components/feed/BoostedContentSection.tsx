@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Calendar, MapPin, Share2 } from "lucide-react";
 import { Calendar, MapPin, Share2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PremiumBadge } from "@/components/ui/premium-badge";
