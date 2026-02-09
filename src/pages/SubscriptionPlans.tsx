@@ -382,6 +382,34 @@ export default function SubscriptionPlans({
       toast.error(language === 'el' ? 'Αποτυχία ανοίγματος διαχείρισης συνδρομής' : 'Failed to open subscription management');
     }
   };
+
+  const handleDowngradeToFree = async () => {
+    setLoadingDowngrade(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error(language === 'el' ? 'Παρακαλώ συνδεθείτε' : 'Please log in');
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke('downgrade-to-free', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      toast.success(
+        language === 'el'
+          ? `Η υποβάθμιση προγραμματίστηκε. Ισχύει από ${formatDate(data.effective_date)}`
+          : `Downgrade scheduled. Effective from ${formatDate(data.effective_date)}`
+      );
+      refetchSubscription();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error downgrading:', error);
+      toast.error(language === 'el' ? `Αποτυχία υποβάθμισης: ${message}` : `Failed to downgrade: ${message}`);
+    } finally {
+      setLoadingDowngrade(false);
+    }
+  };
+
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
   const formatCurrency = (cents: number) => `€${(cents / 100).toFixed(2)}`;
   const formatDate = (dateString: string) => {
@@ -394,6 +422,12 @@ export default function SubscriptionPlans({
   const isCurrentPlan = (planSlug: string) => {
     return currentSubscription?.subscribed && currentSubscription?.plan_slug === planSlug;
   };
+
+  // Plan hierarchy for upgrade/downgrade detection
+  const planHierarchy: Record<string, number> = { free: 0, basic: 1, pro: 2, elite: 3 };
+  const currentPlanLevel = currentSubscription?.subscribed ? (planHierarchy[currentSubscription.plan_slug] ?? 0) : 0;
+  const isUpgrade = (planSlug: string) => (planHierarchy[planSlug] ?? 0) > currentPlanLevel;
+  const isDowngrade = (planSlug: string) => currentSubscription?.subscribed && (planHierarchy[planSlug] ?? 0) < currentPlanLevel;
 
   // Get features for each plan
   const getBasicFeatures = () => [{
