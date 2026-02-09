@@ -55,6 +55,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const [pullDistance, setPullDistance] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const startYRef = useRef<number | null>(null);
+  const startXRef = useRef<number | null>(null);
+  const isHorizontalSwipeRef = useRef(false);
 
   const queryClient = useQueryClient();
   const { language } = useLanguage();
