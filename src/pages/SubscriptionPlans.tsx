@@ -842,8 +842,7 @@ export default function SubscriptionPlans({
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button className="w-full" variant="outline" size="lg" disabled={loadingDowngrade}>
-                            <ArrowDown className="w-4 h-4 mr-2" />
-                            {language === 'el' ? `Υποβάθμιση σε ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)}` : `Downgrade to ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)}`}
+                            {language === 'el' ? 'Επιλογή' : 'Select'}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
