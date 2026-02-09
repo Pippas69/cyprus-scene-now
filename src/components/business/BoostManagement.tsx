@@ -777,7 +777,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
             <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.event_title}</h3>
             <div className="flex items-center gap-1.5 shrink-0">
-              {isPaused && <FrozenTimeBadge boost={boost} />}
+              
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
               ) : isPaused ? (
