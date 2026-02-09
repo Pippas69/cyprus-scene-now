@@ -188,7 +188,7 @@ interface OfferCardProps {
   language: "el" | "en";
 }
 
-const OfferCard = ({ offer, t, language }: OfferCardProps) => {
+const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
   const navigate = useNavigate();
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
