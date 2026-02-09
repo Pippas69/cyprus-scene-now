@@ -416,6 +416,6 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
       />
     </>
   );
-};
+});
 
 export default BoostedContentSection;
