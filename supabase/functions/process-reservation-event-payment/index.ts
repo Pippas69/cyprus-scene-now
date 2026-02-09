@@ -85,12 +85,17 @@ serve(async (req) => {
     logStep("Processing reservation payment", { reservationId, seatingTypeId });
 
     try {
-      // Update reservation to paid and accepted
+      // Get the actual paid amount from Stripe session
+      const paidAmountCents = session.amount_total || 0;
+      logStep("Payment amount from Stripe", { paidAmountCents });
+
+      // Update reservation to paid and accepted WITH the paid amount
       const { data: reservation, error: updateError } = await supabaseClient
         .from("reservations")
         .update({
           prepaid_charge_status: "paid",
           status: "accepted",
+          prepaid_min_charge_cents: paidAmountCents,
           stripe_payment_intent_id: session.payment_intent as string,
         })
         .eq("id", reservationId)
