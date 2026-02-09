@@ -325,6 +325,27 @@ const OfferBoostDialog = ({
                 </div>
               </div>
 
+              {/* Frozen Time Opt-in */}
+              {(frozenHoursAvailable > 0 || frozenDaysAvailable > 0) && (
+                <div className="flex items-center justify-between p-3 rounded-lg border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+                  <div className="flex items-center gap-2">
+                    <Snowflake className="h-4 w-4 text-blue-500" />
+                    <div>
+                      <p className="text-sm font-medium">
+                        {language === "el" ? "Χρήση παγωμένου χρόνου;" : "Use frozen time?"}
+                      </p>
+                      <p className="text-[10px] md:text-xs text-muted-foreground">
+                        {language === "el" ? "Διαθέσιμος" : "Available"}:{" "}
+                        {frozenHoursAvailable > 0 && `${frozenHoursAvailable} ${language === "el" ? "ώρ." : "hrs"}`}
+                        {frozenHoursAvailable > 0 && frozenDaysAvailable > 0 && " · "}
+                        {frozenDaysAvailable > 0 && `${frozenDaysAvailable} ${language === "el" ? "ημ." : "days"}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch checked={useFrozenTime} onCheckedChange={setUseFrozenTime} />
+                </div>
+              )}
+
               {/* Boost Tiers */}
               <div className="space-y-3">
                 <Label className="text-xs md:text-sm">{language === "el" ? "Επιλέξτε Tier" : "Select Tier"}</Label>
