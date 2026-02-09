@@ -53,13 +53,13 @@ const translations = {
     mostPopular: "Δημοφιλέστερη",
     yourCurrentPlan: "Το Τρέχον Πλάνο σας",
     downgradeToFree: "Επιστροφή σε Free",
-    downgradeConfirmTitle: "Υποβάθμιση σε Free Plan",
-    downgradeConfirmDesc: "Θα διατηρήσετε τα προνόμια του τρέχοντος πλάνου μέχρι το τέλος της περιόδου χρέωσης. Μετά, θα μεταβείτε αυτόματα στο Free plan.",
+    downgradeConfirmTitle: "Υποβάθμιση Πλάνου",
+    downgradeConfirmDesc: "Θα διατηρήσετε τα προνόμια του τρέχοντος πλάνου μέχρι το τέλος της περιόδου χρέωσης. Μετά, θα μεταβείτε αυτόματα στο νέο πλάνο.",
     downgradeConfirm: "Ναι, υποβάθμιση",
     downgradeCancel: "Ακύρωση",
     downgradeScheduled: "Υποβάθμιση προγραμματισμένη",
-    downgradeRequested: "Ζητήθηκε στις",
-    downgradeEffective: "Εφαρμόζεται στις",
+    downgradeWillSwitch: "Θα υποβιβαστεί σε",
+    downgradeOnDate: "στις",
     upgradedSuccessfully: "Η αναβάθμιση ολοκληρώθηκε!",
     freePlanActive: "Free Plan",
     noBoostCredits: "Χωρίς Boost Credits",
@@ -142,13 +142,13 @@ const translations = {
     mostPopular: "Most Popular",
     yourCurrentPlan: "Your Current Plan",
     downgradeToFree: "Switch to Free",
-    downgradeConfirmTitle: "Downgrade to Free Plan",
-    downgradeConfirmDesc: "You will keep your current plan benefits until the end of the billing period. After that, you will automatically switch to the Free plan.",
+    downgradeConfirmTitle: "Downgrade Plan",
+    downgradeConfirmDesc: "You will keep your current plan benefits until the end of the billing period. After that, you will automatically switch to the new plan.",
     downgradeConfirm: "Yes, downgrade",
     downgradeCancel: "Cancel",
     downgradeScheduled: "Downgrade scheduled",
-    downgradeRequested: "Requested on",
-    downgradeEffective: "Effective from",
+    downgradeWillSwitch: "Will switch to",
+    downgradeOnDate: "on",
     upgradedSuccessfully: "Upgrade completed!",
     freePlanActive: "Free Plan",
     noBoostCredits: "No Boost Credits",
@@ -378,7 +378,7 @@ export default function SubscriptionPlans({
     }
   };
 
-  const handleDowngradeToFree = async () => {
+  const handleDowngrade = async (targetPlan: string = 'free') => {
     setLoadingDowngrade(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -387,13 +387,25 @@ export default function SubscriptionPlans({
         return;
       }
       const { data, error } = await supabase.functions.invoke('downgrade-to-free', {
+        body: { target_plan: targetPlan },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (error) throw error;
+      if (error) {
+        // Try to parse the error message from the response
+        let errorMsg = error.message || String(error);
+        try {
+          if (error.context && typeof error.context === 'object') {
+            const body = await error.context.json?.();
+            if (body?.error) errorMsg = body.error;
+          }
+        } catch {}
+        throw new Error(errorMsg);
+      }
+      const targetName = (targetPlan.charAt(0).toUpperCase() + targetPlan.slice(1));
       toast.success(
         language === 'el'
-          ? `Η υποβάθμιση προγραμματίστηκε. Ισχύει από ${formatDate(data.effective_date)}`
-          : `Downgrade scheduled. Effective from ${formatDate(data.effective_date)}`
+          ? `Η υποβάθμιση σε ${targetName} προγραμματίστηκε. Ισχύει από ${formatDate(data.effective_date)}`
+          : `Downgrade to ${targetName} scheduled. Effective from ${formatDate(data.effective_date)}`
       );
       refetchSubscription();
     } catch (error) {
@@ -665,7 +677,7 @@ export default function SubscriptionPlans({
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>{t.downgradeCancel}</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDowngradeToFree} disabled={loadingDowngrade}>
+                        <AlertDialogAction onClick={() => handleDowngrade('free')} disabled={loadingDowngrade}>
                           {loadingDowngrade ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                           {t.downgradeConfirm}
                         </AlertDialogAction>
@@ -677,12 +689,8 @@ export default function SubscriptionPlans({
                 {/* Pending downgrade indicator */}
                 {currentSubscription?.downgrade_pending && (
                   <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20">
-                    <span className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1 py-0.5">
-                      <span>{t.downgradeScheduled}</span>
-                      <span className="hidden sm:inline">•</span>
-                      <span>{t.downgradeRequested} {formatDate(currentSubscription.downgrade_requested_at)}</span>
-                      <span className="hidden sm:inline">•</span>
-                      <span>{t.downgradeEffective} {formatDate(currentSubscription.downgrade_effective_date)}</span>
+                    <span className="py-0.5">
+                      {t.downgradeWillSwitch} {(currentSubscription.downgrade_target_plan || 'Free').charAt(0).toUpperCase() + (currentSubscription.downgrade_target_plan || 'free').slice(1)} {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
                     </span>
                   </Badge>
                 )}
@@ -830,12 +838,36 @@ export default function SubscriptionPlans({
                   </CardContent>
 
                   <CardFooter className="pt-4 border-t">
-                    <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
-                      {loadingPlan === planSlug ? <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {t.loading}
-                        </> : isCurrent ? t.currentPlan : t.choosePlan}
-                    </Button>
+                    {isDowngrade(planSlug) && !currentSubscription?.downgrade_pending ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button className="w-full" variant="outline" size="lg" disabled={loadingDowngrade}>
+                            <ArrowDown className="w-4 h-4 mr-2" />
+                            {language === 'el' ? `Υποβάθμιση σε ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)}` : `Downgrade to ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)}`}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t.downgradeConfirmTitle}</AlertDialogTitle>
+                            <AlertDialogDescription>{t.downgradeConfirmDesc}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t.downgradeCancel}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDowngrade(planSlug)} disabled={loadingDowngrade}>
+                              {loadingDowngrade ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                              {t.downgradeConfirm}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent || !!currentSubscription?.downgrade_pending}>
+                        {loadingPlan === planSlug ? <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {t.loading}
+                          </> : isCurrent ? t.currentPlan : t.choosePlan}
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               </motion.div>;
