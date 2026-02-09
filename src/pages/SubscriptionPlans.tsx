@@ -147,6 +147,7 @@ const translations = {
     downgradeConfirm: "Yes, downgrade",
     downgradeCancel: "Cancel",
     downgradeScheduled: "Downgrade scheduled",
+    downgradeRequested: "Requested on",
     downgradeEffective: "Effective from",
     upgradedSuccessfully: "Upgrade completed!",
     freePlanActive: "Free Plan",
