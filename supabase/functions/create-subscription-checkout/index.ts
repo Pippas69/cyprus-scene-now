@@ -175,20 +175,34 @@ Deno.serve(async (req) => {
 
         // Update our database immediately
         const billingCycleVal = cycle === 'annual' ? 'annual' : 'monthly';
+        
+        // Safely convert Stripe timestamps (they may be missing in some responses)
+        const safeTimestamp = (ts: number | null | undefined): string => {
+          if (ts === null || ts === undefined || isNaN(ts)) return new Date().toISOString();
+          try { return new Date(ts * 1000).toISOString(); } catch { return new Date().toISOString(); }
+        };
+
+        // Re-fetch subscription to ensure we have full data
+        const freshSub = await stripe.subscriptions.retrieve(updatedSub.id);
+        const periodStart = safeTimestamp(freshSub.current_period_start);
+        const periodEnd = safeTimestamp(freshSub.current_period_end);
+        logStep('Period dates resolved', { periodStart, periodEnd });
+
         const { error: upsertError } = await supabaseClient
           .from('business_subscriptions')
           .upsert({
             business_id: business.id,
             plan_id: plan.id,
             stripe_customer_id: customerId,
-            stripe_subscription_id: updatedSub.id,
+            stripe_subscription_id: freshSub.id,
             status: 'active',
             billing_cycle: billingCycleVal,
-            current_period_start: new Date(updatedSub.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(updatedSub.current_period_end * 1000).toISOString(),
+            current_period_start: periodStart,
+            current_period_end: periodEnd,
             monthly_budget_remaining_cents: plan.event_boost_budget_cents,
             commission_free_offers_remaining: plan.commission_free_offers_count || 0,
             downgraded_to_free_at: null, // Clear any pending downgrade
+            canceled_at: null, // Clear any cancellation
           }, { onConflict: 'business_id' });
 
         if (upsertError) {
