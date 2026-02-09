@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Sparkles, Crown } from "lucide-react";
 
 interface PremiumBadgeProps {
