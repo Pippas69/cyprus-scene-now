@@ -829,18 +829,12 @@ export default function SubscriptionPlans({
                   </CardContent>
 
                   <CardFooter className="pt-4 border-t">
-                    {isDowngrade(planSlug) ? (
-                      <Button className="w-full" variant="outline" size="lg" onClick={handleManageSubscription} disabled={loadingPlan !== null}>
-                        {language === 'el' ? 'Διαχείριση' : 'Manage'}
-                      </Button>
-                    ) : (
-                      <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
-                        {loadingPlan === planSlug ? <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            {t.loading}
-                          </> : isCurrent ? t.currentPlan : t.choosePlan}
-                      </Button>
-                    )}
+                    <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
+                      {loadingPlan === planSlug ? <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {t.loading}
+                        </> : isCurrent ? t.currentPlan : t.choosePlan}
+                    </Button>
                   </CardFooter>
                 </Card>
               </motion.div>;
