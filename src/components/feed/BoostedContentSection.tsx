@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import { differenceInDays } from "date-fns";
-import { useCallback, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState, useMemo } from "react";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 import { ShareOfferDialog } from "@/components/sharing/ShareOfferDialog";
 import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
@@ -112,7 +112,7 @@ type ContentItem =
   | { type: 'event'; data: BoostedEvent; sortTime: Date; distance: number }
   | { type: 'offer'; data: BoostedOffer; sortTime: Date; distance: number };
 
-export const BoostedContentSection = ({ 
+export const BoostedContentSection = memo(({ 
   events, 
   offers, 
   language,
@@ -120,31 +120,30 @@ export const BoostedContentSection = ({
 }: BoostedContentSectionProps) => {
   const t = translations[language];
 
-  // Combine all boosted content with distance scoring
-  const allContent: ContentItem[] = [
-    ...events.map(e => ({ 
-      type: 'event' as const, 
-      data: e, 
-      sortTime: new Date(e.start_at),
-      distance: getCityDistance(userCity, e.businesses?.city),
-    })),
-    ...offers.map(o => ({ 
-      type: 'offer' as const, 
-      data: o, 
-      sortTime: new Date(o.end_at), // Use end_at for offers (soonest expiry first)
-      distance: getCityDistance(userCity, o.businesses?.city),
-    }))
-  ];
+  // Memoize combined & sorted content to prevent unnecessary re-renders
+  const allContent = useMemo<ContentItem[]>(() => {
+    const items: ContentItem[] = [
+      ...events.map(e => ({ 
+        type: 'event' as const, 
+        data: e, 
+        sortTime: new Date(e.start_at),
+        distance: getCityDistance(userCity, e.businesses?.city),
+      })),
+      ...offers.map(o => ({ 
+        type: 'offer' as const, 
+        data: o, 
+        sortTime: new Date(o.end_at),
+        distance: getCityDistance(userCity, o.businesses?.city),
+      }))
+    ];
 
-  // Sort: First by distance (closest first), then by time (earliest first)
-  allContent.sort((a, b) => {
-    // Primary: Geographic proximity
-    if (a.distance !== b.distance) {
-      return a.distance - b.distance;
-    }
-    // Secondary: Chronological (earliest first)
-    return a.sortTime.getTime() - b.sortTime.getTime();
-  });
+    items.sort((a, b) => {
+      if (a.distance !== b.distance) return a.distance - b.distance;
+      return a.sortTime.getTime() - b.sortTime.getTime();
+    });
+
+    return items;
+  }, [events, offers, userCity]);
 
   // Always render the container even if empty - prevents mobile layout issues
   if (allContent.length === 0) {
@@ -154,7 +153,7 @@ export const BoostedContentSection = ({
   return (
     <div className="w-full">
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-3 pt-2 pr-2 pb-1" style={{ willChange: 'transform' }}>
+        <div className="flex gap-3 pt-2 pr-2 pb-1">
           {allContent.map((item) => (
             <div
               key={`${item.type}-${item.data.id}`}
@@ -181,7 +180,7 @@ export const BoostedContentSection = ({
       </ScrollArea>
     </div>
   );
-};
+});
 
 interface OfferCardProps {
   offer: BoostedOffer;
@@ -189,7 +188,7 @@ interface OfferCardProps {
   language: "el" | "en";
 }
 
-const OfferCard = ({ offer, t, language }: OfferCardProps) => {
+const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
   const navigate = useNavigate();
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -246,7 +245,7 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
       {/* Matching UnifiedEventCard boosted size - responsive, slightly larger than business cards on mobile */}
       <div
         ref={cardRef as any}
-        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group min-w-[220px] max-w-[220px] sm:min-w-[240px] sm:max-w-[240px] overflow-visible"
+        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-colors duration-200 group min-w-[220px] max-w-[220px] sm:min-w-[240px] sm:max-w-[240px] overflow-visible"
       >
         {/* TOP - Image section - responsive height, larger on mobile */}
         <div className="relative h-36 sm:h-40 overflow-visible">
@@ -417,6 +416,6 @@ const OfferCard = ({ offer, t, language }: OfferCardProps) => {
       />
     </>
   );
-};
+});
 
 export default BoostedContentSection;

@@ -360,7 +360,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         </div>
 
         {/* PRIORITY 1: Paid content at the very top */}
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-hidden">
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-x-clip overflow-y-visible">
           <BoostedContentSection 
             events={boostedEvents || []} 
             offers={boostedOffers || []} 

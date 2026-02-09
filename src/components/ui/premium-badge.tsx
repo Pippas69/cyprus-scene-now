@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Sparkles, Crown } from "lucide-react";
 
 interface PremiumBadgeProps {
@@ -10,7 +11,7 @@ interface PremiumBadgeProps {
  * - Events: Golden/Amber gradient with crown icon
  * - Offers: Emerald/Teal gradient with sparkles icon
  */
-export const PremiumBadge = ({ type, className = "" }: PremiumBadgeProps) => {
+export const PremiumBadge = memo(({ type, className = "" }: PremiumBadgeProps) => {
   if (type === "event") {
     return (
       <div 
@@ -43,6 +44,7 @@ export const PremiumBadge = ({ type, className = "" }: PremiumBadgeProps) => {
       <Sparkles className="h-3 w-3 text-white drop-shadow-sm" />
     </div>
   );
-};
+});
+PremiumBadge.displayName = "PremiumBadge";
 
 export default PremiumBadge;
