@@ -602,6 +602,25 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     [offerBoosts]
   );
 
+  // Global frozen time: aggregate across ALL boosts (events + offers)
+  const totalFrozenHours = useMemo(() => {
+    let hours = 0;
+    [...eventBoosts, ...offerBoosts].forEach(b => {
+      if (b.frozen_hours && b.frozen_hours > 0) hours += b.frozen_hours;
+    });
+    return hours;
+  }, [eventBoosts, offerBoosts]);
+
+  const totalFrozenDays = useMemo(() => {
+    let days = 0;
+    [...eventBoosts, ...offerBoosts].forEach(b => {
+      if (b.frozen_days && b.frozen_days > 0) days += b.frozen_days;
+    });
+    return days;
+  }, [eventBoosts, offerBoosts]);
+
+  const hasFrozenTime = totalFrozenHours > 0 || totalFrozenDays > 0;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
