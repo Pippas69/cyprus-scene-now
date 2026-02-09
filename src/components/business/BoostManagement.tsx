@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Ticket, Calendar, Eye, MousePointer, Users, Euro, TicketCheck, UserCheck, Pause, Play, X } from "lucide-react";
+import { Loader2, Zap, Ticket, Calendar, Eye, MousePointer, Users, Euro, TicketCheck, UserCheck, Pause, Play, X, Snowflake } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
 import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
@@ -17,6 +17,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface BoostManagementProps {
   businessId: string;
@@ -33,18 +44,19 @@ interface EventBoostWithMetrics {
   event_title: string;
   event_price: number | null;
   impressions: number;
-  interactions: number; // RSVPs (interested + going)
-  visits: number; // ticket check-ins + reservation check-ins
+  interactions: number;
+  visits: number;
   tickets_sold: number;
   ticket_revenue_cents: number;
   reservations_count: number;
   reservation_guests: number;
   reservation_revenue_cents: number;
   has_paid_content: boolean;
-  // For proper window calculation
   created_at?: string | null;
   duration_mode?: string | null;
   duration_hours?: number | null;
+  frozen_hours?: number | null;
+  frozen_days?: number | null;
 }
 
 interface OfferBoostWithMetrics {
@@ -55,14 +67,16 @@ interface OfferBoostWithMetrics {
   end_date: string;
   total_cost_cents: number;
   active: boolean;
+  status: string;
   offer_title: string;
   impressions: number;
-  interactions: number; // redemption clicks
-  visits: number; // QR scans
-  // For proper window calculation
+  interactions: number;
+  visits: number;
   created_at?: string | null;
   duration_mode?: string | null;
   duration_hours?: number | null;
+  frozen_hours?: number | null;
+  frozen_days?: number | null;
 }
 
 const BoostManagement = ({ businessId }: BoostManagementProps) => {
@@ -88,21 +102,18 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         duration_hours?: number | null;
         created_at?: string | null;
       }) => {
-        // Daily boosts: measure full days (00:00 -> 23:59:59.999)
         if (boost.duration_mode !== "hourly") {
           const startIso = boost.start_date?.length === 10 ? `${boost.start_date}T00:00:00.000Z` : boost.start_date;
           const endIso = boost.end_date?.length === 10 ? `${boost.end_date}T23:59:59.999Z` : boost.end_date;
           return { startIso, endIso };
         }
-
-        // Hourly boosts: measure from the actual creation time (so metrics start from 0)
         const start = boost.created_at ? new Date(boost.created_at) : new Date();
         const hours = boost.duration_hours ?? 1;
         const end = new Date(start.getTime() + hours * 60 * 60 * 1000);
         return { startIso: start.toISOString(), endIso: end.toISOString() };
       };
 
-      // Fetch event boosts with all metrics
+      // Fetch event boosts
       const { data: eventData, error: eventError } = await supabase
         .from("event_boosts")
         .select(`
@@ -116,6 +127,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           created_at,
           duration_mode,
           duration_hours,
+          frozen_hours,
+          frozen_days,
           events (
             id,
             title,
@@ -127,13 +140,11 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (eventError) throw eventError;
 
-      // Fetch metrics for each event boost - ONLY during boost period
       const eventBoostsWithMetrics: EventBoostWithMetrics[] = await Promise.all(
          (eventData || []).map(async (boost) => {
            const eventId = boost.event_id;
            const { startIso: boostStart, endIso: boostEnd } = getBoostWindow(boost);
            
-           // Fetch impressions (event views) during boost period
           const { count: impressions } = await supabase
             .from("event_views")
             .select("*", { count: "exact", head: true })
@@ -141,7 +152,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .gte("viewed_at", boostStart)
             .lte("viewed_at", boostEnd);
 
-          // Fetch RSVPs (interactions) during boost period
           const { count: rsvps } = await supabase
             .from("rsvps")
             .select("*", { count: "exact", head: true })
@@ -149,8 +159,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
-          // Fetch tickets sold during boost period (by purchase date)
-          // Include both 'valid' (not yet checked in) and 'used' (checked in) tickets
           const { data: ticketsSoldData } = await supabase
             .from("tickets")
             .select("id")
@@ -161,7 +169,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
           const ticketsSold = ticketsSoldData?.length || 0;
 
-          // Fetch ticket revenue from ticket_orders during boost period
           const { data: ticketOrders } = await supabase
             .from("ticket_orders")
             .select("subtotal_cents")
@@ -172,8 +179,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
           const ticketRevenue = ticketOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
 
-          // CORRECT LOGIC: Fetch ticket check-ins (visits) where the ticket was PURCHASED during boost period
-          // Attribution is based on PURCHASE time (created_at), but only counts if checked_in_at is not null
           const { count: ticketCheckIns } = await supabase
             .from("tickets")
             .select("id", { count: "exact", head: true })
@@ -182,8 +187,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
-          // Fetch reservations created during boost period (for reservation count)
-          // Include 'accepted' reservations which are the confirmed ones
           const { data: reservationsData } = await supabase
             .from("reservations")
             .select("party_size, prepaid_min_charge_cents")
@@ -196,8 +199,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           const reservationGuests = reservationsData?.reduce((sum, r) => sum + (r.party_size || 0), 0) || 0;
           const reservationRevenue = reservationsData?.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0) || 0;
 
-          // CORRECT LOGIC: Fetch reservation check-ins where the reservation was CREATED during boost period
-          // Attribution is based on CREATION time (created_at), but only counts if checked_in_at is not null
           const { count: reservationCheckIns } = await supabase
             .from("reservations")
             .select("id", { count: "exact", head: true })
@@ -228,17 +229,18 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             reservation_guests: reservationGuests,
             reservation_revenue_cents: reservationRevenue,
             has_paid_content: hasPaidContent,
-            // For proper window calculation
             created_at: boost.created_at,
             duration_mode: boost.duration_mode,
             duration_hours: boost.duration_hours,
+            frozen_hours: boost.frozen_hours,
+            frozen_days: boost.frozen_days,
           };
         })
       );
 
       setEventBoosts(eventBoostsWithMetrics);
 
-      // Fetch offer boosts with metrics
+      // Fetch offer boosts
       const { data: offerData, error: offerError } = await supabase
         .from("offer_boosts")
         .select(`
@@ -249,9 +251,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           end_date,
           total_cost_cents,
           active,
+          status,
           created_at,
           duration_mode,
           duration_hours,
+          frozen_hours,
+          frozen_days,
           discounts (
             id,
             title
@@ -262,13 +267,11 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (offerError) throw offerError;
 
-      // Fetch metrics for each offer boost - ONLY during boost period
       const offerBoostsWithMetrics: OfferBoostWithMetrics[] = await Promise.all(
          (offerData || []).map(async (boost) => {
            const discountId = boost.discount_id;
            const { startIso: boostStart, endIso: boostEnd } = getBoostWindow(boost);
            
-           // Fetch impressions (discount views) during boost period
           const { count: impressions } = await supabase
             .from("discount_views")
             .select("*", { count: "exact", head: true })
@@ -276,8 +279,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .gte("viewed_at", boostStart)
             .lte("viewed_at", boostEnd);
 
-          // Fetch interactions = clicks on "Εξαργύρωσε" during boost period
-          // Tracked as engagement_events.offer_redeem_click
           const { count: redemptionClicks } = await supabase
             .from("engagement_events")
             .select("id", { count: "exact", head: true })
@@ -286,8 +287,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             .gte("created_at", boostStart)
             .lte("created_at", boostEnd);
 
-          // CORRECT LOGIC: Fetch visits where the CLAIM (purchase) was made during boost period
-          // Attribution is based on CLAIM time (created_at), but only counts if redeemed_at is not null
           const { count: visits } = await supabase
             .from("offer_purchases")
             .select("*", { count: "exact", head: true })
@@ -304,14 +303,16 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             end_date: boost.end_date,
             total_cost_cents: boost.total_cost_cents,
             active: boost.active,
+            status: boost.status || (boost.active ? "active" : "paused"),
             offer_title: boost.discounts?.title || "Offer",
             impressions: impressions || 0,
             interactions: redemptionClicks || 0,
             visits: visits || 0,
-            // For proper window calculation
             created_at: boost.created_at,
             duration_mode: boost.duration_mode,
             duration_hours: boost.duration_hours,
+            frozen_hours: boost.frozen_hours,
+            frozen_days: boost.frozen_days,
           };
         })
       );
@@ -348,8 +349,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (res.error) throw res.error;
 
+      const responseData = res.data;
       setEventBoosts(prev => 
-        prev.map(b => b.id === boostId ? { ...b, status: "paused" } : b)
+        prev.map(b => b.id === boostId ? { 
+          ...b, 
+          status: "paused",
+          frozen_hours: responseData?.frozenHours ?? b.frozen_hours,
+          frozen_days: responseData?.frozenDays ?? b.frozen_days,
+        } : b)
       );
 
       toast.success(
@@ -381,12 +388,21 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (res.error) throw res.error;
 
-      setEventBoosts(prev => prev.filter(b => b.id !== boostId));
+      const responseData = res.data;
+      setEventBoosts(prev => 
+        prev.map(b => b.id === boostId ? { ...b, status: "deactivated" } : b)
+      );
+
+      const refundMsg = responseData?.refunded && responseData?.remainingCents > 0
+        ? (language === "el" 
+            ? ` — €${(responseData.remainingCents / 100).toFixed(2)} επιστράφηκαν ως credits`
+            : ` — €${(responseData.remainingCents / 100).toFixed(2)} returned as credits`)
+        : "";
 
       toast.success(
         language === "el" 
-          ? "Η προώθηση απενεργοποιήθηκε"
-          : "Boost deactivated"
+          ? `Η προώθηση απενεργοποιήθηκε${refundMsg}`
+          : `Boost deactivated${refundMsg}`
       );
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
@@ -412,8 +428,15 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (res.error) throw res.error;
 
+      const responseData = res.data;
       setOfferBoosts(prev => 
-        prev.map(b => b.id === boostId ? { ...b, active: false } : b)
+        prev.map(b => b.id === boostId ? { 
+          ...b, 
+          active: false, 
+          status: "paused",
+          frozen_hours: responseData?.frozenHours ?? b.frozen_hours,
+          frozen_days: responseData?.frozenDays ?? b.frozen_days,
+        } : b)
       );
 
       toast.success(
@@ -445,12 +468,21 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (res.error) throw res.error;
 
-      setOfferBoosts(prev => prev.filter(b => b.id !== boostId));
+      const responseData = res.data;
+      setOfferBoosts(prev => 
+        prev.map(b => b.id === boostId ? { ...b, active: false, status: "deactivated" } : b)
+      );
+
+      const refundMsg = responseData?.refunded && responseData?.remainingCents > 0
+        ? (language === "el" 
+            ? ` — €${(responseData.remainingCents / 100).toFixed(2)} επιστράφηκαν ως credits`
+            : ` — €${(responseData.remainingCents / 100).toFixed(2)} returned as credits`)
+        : "";
 
       toast.success(
         language === "el" 
-          ? "Η προώθηση απενεργοποιήθηκε"
-          : "Boost deactivated"
+          ? `Η προώθηση απενεργοποιήθηκε${refundMsg}`
+          : `Boost deactivated${refundMsg}`
       );
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
@@ -480,21 +512,41 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     return isTimestampWithinWindow(new Date().toISOString(), window);
   };
 
-  // Separate active and expired boosts using proper time window logic (MUST be before any early returns)
+  // Helper to get frozen time display text
+  const getFrozenTimeText = (boost: { frozen_hours?: number | null; frozen_days?: number | null; duration_mode?: string | null }) => {
+    if (boost.duration_mode === "hourly" && boost.frozen_hours && boost.frozen_hours > 0) {
+      return `${boost.frozen_hours} ${language === "el" ? "ώρ." : "hrs"}`;
+    }
+    if (boost.frozen_days && boost.frozen_days > 0) {
+      return `${boost.frozen_days} ${language === "el" ? "ημ." : "days"}`;
+    }
+    return null;
+  };
+
+  // Filtering: Active = status "active" AND within window, OR status "paused" (shown in active section)
+  // Expired/Deactivated = everything else
   const activeEventBoosts = useMemo(() => 
-    eventBoosts.filter(b => b.status === 'active' && isBoostWithinWindow(b)),
+    eventBoosts.filter(b => 
+      b.status === "paused" || (b.status === "active" && isBoostWithinWindow(b))
+    ),
     [eventBoosts]
   );
   const expiredEventBoosts = useMemo(() => 
-    eventBoosts.filter(b => b.status !== 'active' || !isBoostWithinWindow(b)),
+    eventBoosts.filter(b => 
+      b.status !== "paused" && (b.status !== "active" || !isBoostWithinWindow(b))
+    ),
     [eventBoosts]
   );
   const activeOfferBoosts = useMemo(() => 
-    offerBoosts.filter(b => b.active && isBoostWithinWindow(b)),
+    offerBoosts.filter(b => 
+      b.status === "paused" || (b.status === "active" && isBoostWithinWindow(b))
+    ),
     [offerBoosts]
   );
   const expiredOfferBoosts = useMemo(() => 
-    offerBoosts.filter(b => !b.active || !isBoostWithinWindow(b)),
+    offerBoosts.filter(b => 
+      b.status !== "paused" && (b.status !== "active" || !isBoostWithinWindow(b))
+    ),
     [offerBoosts]
   );
 
@@ -560,10 +612,25 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     guests: language === "el" ? "άτομα" : "guests",
     expired: language === "el" ? "Ληγμένες" : "Expired",
     expiredSection: language === "el" ? "Ληγμένες Προωθήσεις" : "Expired Boosts",
+    pauseConfirmTitle: language === "el" ? "Παύση Προώθησης" : "Pause Boost",
+    pauseConfirmDesc: language === "el" 
+      ? "Ο εναπομείνας χρόνος θα παγώσει και μπορείτε να τον χρησιμοποιήσετε αργότερα σε νέα προώθηση." 
+      : "Remaining time will be frozen and you can use it later in a new boost.",
+    deactivateConfirmTitle: language === "el" ? "Απενεργοποίηση Προώθησης" : "Deactivate Boost",
+    deactivateConfirmDescFree: language === "el" 
+      ? "Η εναπομείνασα αξία θα χαθεί οριστικά. Αυτή η ενέργεια δεν μπορεί να αναιρεθεί." 
+      : "The remaining value will be permanently forfeited. This action cannot be undone.",
+    deactivateConfirmDescPaid: language === "el" 
+      ? "Η εναπομείνασα αξία θα επιστραφεί ως credits στον μηνιαίο προϋπολογισμό σας." 
+      : "The remaining value will be returned as credits to your monthly budget.",
+    confirm: language === "el" ? "Επιβεβαίωση" : "Confirm",
+    cancel: language === "el" ? "Ακύρωση" : "Cancel",
+    frozen: language === "el" ? "Παγωμένος" : "Frozen",
+    deactivated: language === "el" ? "Απενεργ." : "Deactivated",
   };
 
 
-  // Click-to-open metric dialog (same interaction style as Analytics)
+  // Click-to-open metric dialog
   const MetricWithDialog = ({
     icon: Icon,
     label,
@@ -606,6 +673,320 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     </Dialog>
   );
 
+  // Frozen time badge component
+  const FrozenTimeBadge = ({ boost }: { boost: { frozen_hours?: number | null; frozen_days?: number | null; duration_mode?: string | null } }) => {
+    const frozenText = getFrozenTimeText(boost);
+    if (!frozenText) return null;
+    return (
+      <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap gap-1 border-blue-300 text-blue-600">
+        <Snowflake className="h-3 w-3" />
+        {t.frozen}: {frozenText}
+      </Badge>
+    );
+  };
+
+  // Render boost card for events
+  const renderEventBoostCard = (boost: EventBoostWithMetrics, isExpiredSection: boolean) => {
+    const isActive = boost.status === "active";
+    const isPaused = boost.status === "paused";
+    const isDeactivated = boost.status === "deactivated";
+    
+    return (
+      <Card key={boost.id} className={`overflow-hidden ${isExpiredSection ? "opacity-60" : ""}`}>
+        <CardContent className="p-0">
+          {/* Header with title and status badge */}
+          <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
+            <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.event_title}</h3>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isPaused && <FrozenTimeBadge boost={boost} />}
+              {isActive ? (
+                <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
+              ) : isPaused ? (
+                <Badge variant="destructive" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.paused}
+                </Badge>
+              ) : isDeactivated ? (
+                <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.deactivated}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.expired}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-3 divide-x border-b">
+            <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsEventTooltip} />
+            <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsEventTooltip} />
+            <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsEventTooltip} />
+          </div>
+
+          {/* Boost Info */}
+          <div className="p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{t.tier}</span>
+                  <Badge variant={boost.boost_tier === "premium" ? "default" : "secondary"} className="ml-1">
+                    {getTierLabel(boost.boost_tier)}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{t.period}</span>
+                  <span className="font-medium flex items-center gap-1 ml-1">
+                    <Calendar className="h-3 w-3" />
+                    {format(new Date(boost.start_date), "dd/MM")} - {format(new Date(boost.end_date), "dd/MM")}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-muted-foreground">{t.totalCost}</span>
+                  <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
+                </div>
+                {isActive && (
+                  <div className="flex gap-2 justify-end">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={togglingId === boost.id}
+                          className="gap-1.5"
+                        >
+                          {togglingId === boost.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Pause className="h-3.5 w-3.5" />
+                          )}
+                          {t.pauseBoost}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.pauseConfirmTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>{t.pauseConfirmDesc}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => pauseEventBoost(boost.id)}>
+                            {t.confirm}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={togglingId === boost.id}
+                          className="gap-1.5"
+                        >
+                          {togglingId === boost.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <X className="h-3.5 w-3.5" />
+                          )}
+                          {t.deactivateBoost}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.deactivateConfirmTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>{t.deactivateConfirmDescPaid}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deactivateEventBoost(boost.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            {t.deactivateBoost}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Revenue Section */}
+            {(boost.tickets_sold > 0 || boost.reservation_revenue_cents > 0) && (
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                  <Euro className="h-4 w-4" />
+                  {t.revenue}
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {boost.tickets_sold > 0 && (
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <TicketCheck className="h-4 w-4" />
+                        <span className="text-xs">{t.ticketsSold}</span>
+                      </div>
+                      <p className="font-bold">{boost.tickets_sold}</p>
+                      <p className="text-sm text-green-600 font-semibold">
+                        €{(boost.ticket_revenue_cents / 100).toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                  {boost.reservation_revenue_cents > 0 && (
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <UserCheck className="h-4 w-4" />
+                        <span className="text-xs">{t.reservations}</span>
+                      </div>
+                      <p className="font-bold">{boost.reservations_count} ({boost.reservation_guests} {t.guests})</p>
+                      <p className="text-sm text-green-600 font-semibold">
+                        €{(boost.reservation_revenue_cents / 100).toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Render boost card for offers
+  const renderOfferBoostCard = (boost: OfferBoostWithMetrics, isExpiredSection: boolean) => {
+    const isActive = boost.status === "active";
+    const isPaused = boost.status === "paused";
+    const isDeactivated = boost.status === "deactivated";
+
+    return (
+      <Card key={boost.id} className={`overflow-hidden ${isExpiredSection ? "opacity-60" : ""}`}>
+        <CardContent className="p-0">
+          {/* Header with title and status badge */}
+          <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
+            <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.offer_title}</h3>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isPaused && <FrozenTimeBadge boost={boost} />}
+              {isActive ? (
+                <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
+              ) : isPaused ? (
+                <Badge variant="destructive" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.paused}
+                </Badge>
+              ) : isDeactivated ? (
+                <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.deactivated}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.expired}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-3 divide-x border-b">
+            <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsOfferTooltip} />
+            <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsOfferTooltip} />
+            <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsOfferTooltip} />
+          </div>
+
+          {/* Boost Info */}
+          <div className="p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{t.tier}</span>
+                  <Badge variant={boost.boost_tier === "premium" ? "default" : "secondary"} className="ml-1">
+                    {getTierLabel(boost.boost_tier)}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{t.period}</span>
+                  <span className="font-medium flex items-center gap-1 ml-1">
+                    <Calendar className="h-3 w-3" />
+                    {format(new Date(boost.start_date), "dd/MM")} - {format(new Date(boost.end_date), "dd/MM")}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-muted-foreground">{t.totalCost}</span>
+                  <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
+                </div>
+                {isActive && (
+                  <div className="flex gap-2 justify-end">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={togglingId === boost.id}
+                          className="gap-1.5"
+                        >
+                          {togglingId === boost.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Pause className="h-3.5 w-3.5" />
+                          )}
+                          {t.pauseBoost}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.pauseConfirmTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>{t.pauseConfirmDesc}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => pauseOfferBoost(boost.id)}>
+                            {t.confirm}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={togglingId === boost.id}
+                          className="gap-1.5"
+                        >
+                          {togglingId === boost.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <X className="h-3.5 w-3.5" />
+                          )}
+                          {t.deactivateBoost}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.deactivateConfirmTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>{t.deactivateConfirmDescPaid}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deactivateOfferBoost(boost.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            {t.deactivateBoost}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
@@ -627,7 +1008,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
         {/* EVENT BOOSTS TAB */}
         <TabsContent value="events" className="space-y-4 mt-4">
-          {activeEventBoosts.length === 0 && (
+          {activeEventBoosts.length === 0 && expiredEventBoosts.length === 0 && (
             <Card>
               <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
                 {t.noEventBoosts}
@@ -636,253 +1017,27 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           )}
           {(activeEventBoosts.length > 0 || expiredEventBoosts.length > 0) && (
             <>
-            {/* Active boosts */}
-            {activeEventBoosts.map((boost) => {
-              const isActive = boost.status === "active";
-              
-              return (
-                <Card key={boost.id} className="overflow-hidden">
-                  <CardContent className="p-0">
-                    {/* Header with title and status badge */}
-                    <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
-                      <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.event_title}</h3>
-                      {isActive ? (
-                        <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap shrink-0">{t.active}</Badge>
-                      ) : (
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <button type="button" className="inline-flex shrink-0">
-                              <Badge variant="destructive" className="cursor-pointer text-[9px] sm:text-xs whitespace-nowrap">
-                                {t.paused}
-                              </Badge>
-                            </button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                              <DialogTitle>{t.paused}</DialogTitle>
-                              <DialogDescription>{t.recreateEventBoost}</DialogDescription>
-                            </DialogHeader>
-                          </DialogContent>
-                        </Dialog>
-                      )}
-                    </div>
+              {activeEventBoosts.map((boost) => renderEventBoostCard(boost, false))}
 
-                    {/* Metrics Grid (click to open tooltip dialog) */}
-                    <div className="grid grid-cols-3 divide-x border-b">
-                      <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsEventTooltip} />
-                      <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsEventTooltip} />
-                      <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsEventTooltip} />
-                    </div>
+              {expiredEventBoosts.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowExpiredEvents(!showExpiredEvents)}
+                  className="w-full text-muted-foreground hover:text-foreground"
+                >
+                  {showExpiredEvents ? "▲" : "▼"} {t.expired} ({expiredEventBoosts.length})
+                </Button>
+              )}
 
-                    {/* Boost Info - Left aligned Tier/Period, Right aligned Cost/Status */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        {/* Left side - Tier & Period */}
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">{t.tier}</span>
-                            <Badge variant={boost.boost_tier === "premium" ? "default" : "secondary"} className="ml-1">
-                              {getTierLabel(boost.boost_tier)}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">{t.period}</span>
-                            <span className="font-medium flex items-center gap-1 ml-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(boost.start_date), "dd/MM")} - {format(new Date(boost.end_date), "dd/MM")}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Right side - Cost & Pause/Deactivate Buttons */}
-                         <div className="space-y-2 text-sm text-right">
-                           <div className="flex items-center justify-end gap-2">
-                             <span className="text-muted-foreground">{t.totalCost}</span>
-                             <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
-                           </div>
-                           {isActive && (
-                             <div className="flex gap-2 justify-end">
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 onClick={() => pauseEventBoost(boost.id)}
-                                 disabled={togglingId === boost.id}
-                                 className="gap-1.5"
-                               >
-                                 {togglingId === boost.id ? (
-                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                 ) : (
-                                   <Pause className="h-3.5 w-3.5" />
-                                 )}
-                                 {t.pauseBoost}
-                               </Button>
-                               <Button
-                                 variant="destructive"
-                                 size="sm"
-                                 onClick={() => deactivateEventBoost(boost.id)}
-                                 disabled={togglingId === boost.id}
-                                 className="gap-1.5"
-                               >
-                                 {togglingId === boost.id ? (
-                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                 ) : (
-                                   <X className="h-3.5 w-3.5" />
-                                 )}
-                                 {t.deactivateBoost}
-                               </Button>
-                             </div>
-                           )}
-                         </div>
-                      </div>
-
-                      {/* Revenue Section - Show if there are tickets or paid reservations during boost */}
-                      {(boost.tickets_sold > 0 || boost.reservation_revenue_cents > 0) && (
-                        <div className="mt-4 pt-4 border-t">
-                          <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-                            <Euro className="h-4 w-4" />
-                            {t.revenue}
-                          </h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            {boost.tickets_sold > 0 && (
-                              <div className="bg-muted/50 rounded-lg p-3">
-                                <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                  <TicketCheck className="h-4 w-4" />
-                                  <span className="text-xs">{t.ticketsSold}</span>
-                                </div>
-                                <p className="font-bold">{boost.tickets_sold}</p>
-                                <p className="text-sm text-green-600 font-semibold">
-                                  €{(boost.ticket_revenue_cents / 100).toFixed(2)}
-                                </p>
-                              </div>
-                            )}
-                            {boost.reservation_revenue_cents > 0 && (
-                              <div className="bg-muted/50 rounded-lg p-3">
-                                <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                  <UserCheck className="h-4 w-4" />
-                                  <span className="text-xs">{t.reservations}</span>
-                                </div>
-                                <p className="font-bold">{boost.reservations_count} ({boost.reservation_guests} {t.guests})</p>
-                                <p className="text-sm text-green-600 font-semibold">
-                                  €{(boost.reservation_revenue_cents / 100).toFixed(2)}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-
-            {/* Expired toggle */}
-            {expiredEventBoosts.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowExpiredEvents(!showExpiredEvents)}
-                className="w-full text-muted-foreground hover:text-foreground"
-              >
-                {showExpiredEvents ? "▲" : "▼"} {t.expired} ({expiredEventBoosts.length})
-              </Button>
-            )}
-
-            {/* Expired boosts */}
-            {showExpiredEvents && expiredEventBoosts.map((boost) => {
-              const isActive = boost.status === "active";
-              
-              return (
-                <Card key={boost.id} className="overflow-hidden opacity-60">
-                  <CardContent className="p-0">
-                    {/* Header with title and status badge */}
-                    <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
-                      <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.event_title}</h3>
-                      <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap shrink-0">
-                        {t.expired}
-                      </Badge>
-                    </div>
-
-                    {/* Metrics Grid */}
-                    <div className="grid grid-cols-3 divide-x border-b">
-                      <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsEventTooltip} />
-                      <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsEventTooltip} />
-                      <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsEventTooltip} />
-                    </div>
-
-                    {/* Boost Info */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">{t.tier}</span>
-                            <Badge variant={boost.boost_tier === "premium" ? "default" : "secondary"} className="ml-1">
-                              {getTierLabel(boost.boost_tier)}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">{t.period}</span>
-                            <span className="font-medium flex items-center gap-1 ml-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(boost.start_date), "dd/MM")} - {format(new Date(boost.end_date), "dd/MM")}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="space-y-2 text-sm text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <span className="text-muted-foreground">{t.totalCost}</span>
-                            <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Revenue Section - Show if there are tickets or paid reservations during boost */}
-                      {(boost.tickets_sold > 0 || boost.reservation_revenue_cents > 0) && (
-                        <div className="mt-4 pt-4 border-t">
-                          <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-                            <Euro className="h-4 w-4" />
-                            {t.revenue}
-                          </h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            {boost.tickets_sold > 0 && (
-                              <div className="bg-muted/50 rounded-lg p-3">
-                                <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                  <TicketCheck className="h-4 w-4" />
-                                  <span className="text-xs">{t.ticketsSold}</span>
-                                </div>
-                                <p className="font-bold">{boost.tickets_sold}</p>
-                                <p className="text-sm text-green-600 font-semibold">
-                                  €{(boost.ticket_revenue_cents / 100).toFixed(2)}
-                                </p>
-                              </div>
-                            )}
-                            {boost.reservation_revenue_cents > 0 && (
-                              <div className="bg-muted/50 rounded-lg p-3">
-                                <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                  <UserCheck className="h-4 w-4" />
-                                  <span className="text-xs">{t.reservations}</span>
-                                </div>
-                                <p className="font-bold">{boost.reservations_count} ({boost.reservation_guests} {t.guests})</p>
-                                <p className="text-sm text-green-600 font-semibold">
-                                  €{(boost.reservation_revenue_cents / 100).toFixed(2)}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+              {showExpiredEvents && expiredEventBoosts.map((boost) => renderEventBoostCard(boost, true))}
             </>
           )}
         </TabsContent>
 
         {/* OFFER BOOSTS TAB */}
         <TabsContent value="offers" className="space-y-4 mt-4">
-          {activeOfferBoosts.length === 0 && (
+          {activeOfferBoosts.length === 0 && expiredOfferBoosts.length === 0 && (
             <Card>
               <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
                 {t.noOfferBoosts}
@@ -891,166 +1046,20 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           )}
           {(activeOfferBoosts.length > 0 || expiredOfferBoosts.length > 0) && (
             <>
-            {/* Active boosts */}
-            {activeOfferBoosts.map((boost) => (
-              <Card key={boost.id} className="overflow-hidden">
-                <CardContent className="p-0">
-                  {/* Header with title and status badge */}
-                  <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
-                    <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.offer_title}</h3>
-                    {boost.active ? (
-                      <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap shrink-0">{t.active}</Badge>
-                    ) : (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <button type="button" className="inline-flex shrink-0">
-                            <Badge variant="destructive" className="cursor-pointer text-[9px] sm:text-xs whitespace-nowrap">
-                              {t.paused}
-                            </Badge>
-                          </button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>{t.paused}</DialogTitle>
-                            <DialogDescription>{t.recreateOfferBoost}</DialogDescription>
-                          </DialogHeader>
-                        </DialogContent>
-                      </Dialog>
-                    )}
-                  </div>
+              {activeOfferBoosts.map((boost) => renderOfferBoostCard(boost, false))}
 
-                  {/* Metrics Grid (click to open tooltip dialog) */}
-                  <div className="grid grid-cols-3 divide-x border-b">
-                    <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsOfferTooltip} />
-                    <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsOfferTooltip} />
-                    <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsOfferTooltip} />
-                  </div>
+              {expiredOfferBoosts.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowExpiredOffers(!showExpiredOffers)}
+                  className="w-full text-muted-foreground hover:text-foreground"
+                >
+                  {showExpiredOffers ? "▲" : "▼"} {t.expired} ({expiredOfferBoosts.length})
+                </Button>
+              )}
 
-                  {/* Boost Info - Left aligned Tier/Period, Right aligned Cost/Status */}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      {/* Left side - Tier & Period */}
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">{t.tier}</span>
-                          <Badge variant={boost.boost_tier === "premium" ? "default" : "secondary"} className="ml-1">
-                            {getTierLabel(boost.boost_tier)}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">{t.period}</span>
-                          <span className="font-medium flex items-center gap-1 ml-1">
-                            <Calendar className="h-3 w-3" />
-                            {format(new Date(boost.start_date), "dd/MM")} - {format(new Date(boost.end_date), "dd/MM")}
-                          </span>
-                        </div>
-                      </div>
-
-                       {/* Right side - Cost & Pause/Deactivate Buttons */}
-                       <div className="space-y-2 text-sm text-right">
-                         <div className="flex items-center justify-end gap-2">
-                           <span className="text-muted-foreground">{t.totalCost}</span>
-                           <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
-                         </div>
-                         {boost.active && (
-                           <div className="flex gap-2 justify-end">
-                             <Button
-                               variant="outline"
-                               size="sm"
-                               onClick={() => pauseOfferBoost(boost.id)}
-                               disabled={togglingId === boost.id}
-                               className="gap-1.5"
-                             >
-                               {togglingId === boost.id ? (
-                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                               ) : (
-                                 <Pause className="h-3.5 w-3.5" />
-                               )}
-                               {t.pauseBoost}
-                             </Button>
-                             <Button
-                               variant="destructive"
-                               size="sm"
-                               onClick={() => deactivateOfferBoost(boost.id)}
-                               disabled={togglingId === boost.id}
-                               className="gap-1.5"
-                             >
-                               {togglingId === boost.id ? (
-                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                               ) : (
-                                 <X className="h-3.5 w-3.5" />
-                               )}
-                               {t.deactivateBoost}
-                             </Button>
-                           </div>
-                         )}
-                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {/* Expired toggle */}
-            {expiredOfferBoosts.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowExpiredOffers(!showExpiredOffers)}
-                className="w-full text-muted-foreground hover:text-foreground"
-              >
-                {showExpiredOffers ? "▲" : "▼"} {t.expired} ({expiredOfferBoosts.length})
-              </Button>
-            )}
-
-            {/* Expired boosts */}
-            {showExpiredOffers && expiredOfferBoosts.map((boost) => (
-              <Card key={boost.id} className="overflow-hidden opacity-60">
-                <CardContent className="p-0">
-                  {/* Header with title and status badge */}
-                  <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
-                    <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.offer_title}</h3>
-                    <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap shrink-0">
-                      {t.expired}
-                    </Badge>
-                  </div>
-
-                  {/* Metrics Grid */}
-                  <div className="grid grid-cols-3 divide-x border-b">
-                    <MetricWithDialog icon={Eye} label={t.impressions} value={boost.impressions} tooltip={t.impressionsOfferTooltip} />
-                    <MetricWithDialog icon={MousePointer} label={t.interactions} value={boost.interactions} tooltip={t.interactionsOfferTooltip} />
-                    <MetricWithDialog icon={Users} label={t.visits} value={boost.visits} tooltip={t.visitsOfferTooltip} />
-                  </div>
-
-                  {/* Boost Info */}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">{t.tier}</span>
-                          <Badge variant={boost.boost_tier === "premium" ? "default" : "secondary"} className="ml-1">
-                            {getTierLabel(boost.boost_tier)}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">{t.period}</span>
-                          <span className="font-medium flex items-center gap-1 ml-1">
-                            <Calendar className="h-3 w-3" />
-                            {format(new Date(boost.start_date), "dd/MM")} - {format(new Date(boost.end_date), "dd/MM")}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <span className="text-muted-foreground">{t.totalCost}</span>
-                          <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+              {showExpiredOffers && expiredOfferBoosts.map((boost) => renderOfferBoostCard(boost, true))}
             </>
           )}
         </TabsContent>
