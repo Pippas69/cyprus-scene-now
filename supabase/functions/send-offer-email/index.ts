@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     const savedAmount = ((originalPriceCents - finalPriceCents) / 100).toFixed(2);
 
     // Generate QR code URL
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCodeToken)}&color=102b4a`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(qrCodeToken)}&bgcolor=ffffff&color=000000`;
 
     const emailHtml = `
       <!DOCTYPE html>
