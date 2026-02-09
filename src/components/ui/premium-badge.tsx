@@ -11,7 +11,7 @@ interface PremiumBadgeProps {
  * - Events: Golden/Amber gradient with crown icon
  * - Offers: Emerald/Teal gradient with sparkles icon
  */
-export const PremiumBadge = ({ type, className = "" }: PremiumBadgeProps) => {
+export const PremiumBadge = memo(({ type, className = "" }: PremiumBadgeProps) => {
   if (type === "event") {
     return (
       <div 
