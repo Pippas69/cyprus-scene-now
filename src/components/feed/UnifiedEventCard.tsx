@@ -212,7 +212,7 @@ export const UnifiedEventCard = ({
               <img
                 src={event.cover_image_url}
                 alt={event.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover [@media(hover:hover)]:group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">

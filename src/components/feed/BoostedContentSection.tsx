@@ -258,7 +258,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
               <img
                 src={coverImage}
                 alt={offer.businesses?.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover [@media(hover:hover)]:group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
               />
             ) : (
