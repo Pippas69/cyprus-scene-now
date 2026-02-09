@@ -70,6 +70,7 @@ serve(async (req) => {
       .from("offer_boosts")
       .update({
         active: false,
+        status: "paused",
         frozen_hours: frozenHours,
         frozen_days: frozenDays,
         updated_at: new Date().toISOString(),
