@@ -92,6 +92,11 @@ const OfferBoostDialog = ({
   }, [open]);
 
   
+  // Convert all frozen time to a unified pool per mode
+  const totalFrozenAsHours = frozenHoursAvailable + (frozenDaysAvailable * 24);
+  const totalFrozenAsDays = frozenDaysAvailable + Math.floor(frozenHoursAvailable / 24);
+  const frozenAvailableForMode = durationMode === "hourly" ? totalFrozenAsHours : totalFrozenAsDays;
+  const hasFrozenTime = frozenAvailableForMode > 0;
 
   // 2-tier boost system with hourly and daily rates
   const tiers = {
@@ -118,20 +123,19 @@ const OfferBoostDialog = ({
   const selectedTier = tiers[tier];
   const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Calculate effective duration after frozen time deduction
-  const effectiveHours = useFrozenTime 
-    ? Math.max(0, durationHours - frozenHoursAvailable) 
+  const frozenUnitsUsed = useFrozenTime 
+    ? Math.min(frozenAvailableForMode, durationMode === "hourly" ? durationHours : days)
+    : 0;
+
+  const effectiveHours = durationMode === "hourly" 
+    ? Math.max(0, durationHours - frozenUnitsUsed) 
     : durationHours;
-  const effectiveDays = useFrozenTime 
-    ? Math.max(0, days - frozenDaysAvailable) 
+  const effectiveDays = durationMode === "daily" 
+    ? Math.max(0, days - frozenUnitsUsed) 
     : days;
 
-  const frozenHoursUsed = useFrozenTime 
-    ? Math.min(frozenHoursAvailable, durationHours)
-    : 0;
-  const frozenDaysUsed = useFrozenTime 
-    ? Math.min(frozenDaysAvailable, days)
-    : 0;
+  const frozenHoursUsed = durationMode === "hourly" ? frozenUnitsUsed : 0;
+  const frozenDaysUsed = durationMode === "daily" ? frozenUnitsUsed : 0;
 
   const totalCost = durationMode === "hourly" 
     ? selectedTier.hourlyRate * effectiveHours 
