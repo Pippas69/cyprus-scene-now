@@ -341,7 +341,7 @@ const EventBoostDialog = ({
               </div>
 
               {/* Frozen Time Opt-in */}
-              {(frozenHoursAvailable > 0 || frozenDaysAvailable > 0) && (
+              {hasFrozenTime && (
                 <div className="flex items-center justify-between p-3 rounded-lg border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
                   <div className="flex items-center gap-2">
                     <Snowflake className="h-4 w-4 text-blue-500" />
@@ -351,9 +351,9 @@ const EventBoostDialog = ({
                       </p>
                       <p className="text-[10px] md:text-xs text-muted-foreground">
                         {language === "el" ? "Διαθέσιμος" : "Available"}:{" "}
-                        {frozenHoursAvailable > 0 && `${frozenHoursAvailable} ${language === "el" ? "ώρ." : "hrs"}`}
-                        {frozenHoursAvailable > 0 && frozenDaysAvailable > 0 && " · "}
-                        {frozenDaysAvailable > 0 && `${frozenDaysAvailable} ${language === "el" ? "ημ." : "days"}`}
+                        {frozenAvailableForMode} {durationMode === "hourly" 
+                          ? (language === "el" ? "ώρ." : "hrs") 
+                          : (language === "el" ? "ημ." : "days")}
                       </p>
                     </div>
                   </div>
