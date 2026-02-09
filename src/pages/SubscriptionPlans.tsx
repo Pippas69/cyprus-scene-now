@@ -322,14 +322,7 @@ export default function SubscriptionPlans({
         }
       });
       if (error) throw error;
-      if (data?.upgraded) {
-        // Immediate upgrade - no redirect needed
-        setShowSuccessState(true);
-        triggerConfetti();
-        toast.success(t.upgradedSuccessfully);
-        refetchSubscription();
-        setTimeout(() => setShowSuccessState(false), 4000);
-      } else if (data?.url) {
+      if (data?.url) {
         const popup = window.open(data.url, '_blank');
         if (!popup || popup.closed || typeof popup.closed === 'undefined') {
           window.location.href = data.url;
