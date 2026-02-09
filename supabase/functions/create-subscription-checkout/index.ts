@@ -125,12 +125,12 @@ Deno.serve(async (req) => {
     // Get plan details from database
     const { data: plan, error: planError } = await supabaseClient
       .from('subscription_plans')
-      .select('id')
-      .eq('slug', plan_slug)
+      .select('id, event_boost_budget_cents, commission_free_offers_count')
+      .eq('slug', normalizedPlan)
       .single();
 
     if (planError || !plan) {
-      throw new Error(`Plan not found: ${plan_slug}`);
+      throw new Error(`Plan not found: ${normalizedPlan}`);
     }
     logStep('Plan found in database', { planId: plan.id });
 
@@ -143,11 +143,80 @@ Deno.serve(async (req) => {
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep('Existing Stripe customer found', { customerId });
+
+      // Check if user already has an active Stripe subscription (upgrade scenario)
+      const existingSubscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 1,
+      });
+
+      if (existingSubscriptions.data.length > 0) {
+        const existingSub = existingSubscriptions.data[0];
+        logStep('Existing active subscription found - handling as upgrade', {
+          existingSubId: existingSub.id,
+          existingPriceId: existingSub.items.data[0].price.id,
+        });
+
+        // Update the existing subscription immediately (proration)
+        const updatedSub = await stripe.subscriptions.update(existingSub.id, {
+          items: [{
+            id: existingSub.items.data[0].id,
+            price: priceId,
+          }],
+          proration_behavior: 'create_prorations',
+          cancel_at_period_end: false, // Clear any pending cancellation
+        });
+
+        logStep('Subscription upgraded via proration', {
+          newSubId: updatedSub.id,
+          newPriceId: priceId,
+        });
+
+        // Update our database immediately
+        const billingCycleVal = cycle === 'annual' ? 'annual' : 'monthly';
+        const { error: upsertError } = await supabaseClient
+          .from('business_subscriptions')
+          .upsert({
+            business_id: business.id,
+            plan_id: plan.id,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: updatedSub.id,
+            status: 'active',
+            billing_cycle: billingCycleVal,
+            current_period_start: new Date(updatedSub.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(updatedSub.current_period_end * 1000).toISOString(),
+            monthly_budget_remaining_cents: plan.event_boost_budget_cents,
+            commission_free_offers_remaining: plan.commission_free_offers_count || 0,
+            downgraded_to_free_at: null, // Clear any pending downgrade
+          }, { onConflict: 'business_id' });
+
+        if (upsertError) {
+          logStep('ERROR upserting after upgrade', { error: upsertError });
+        }
+
+        // Log plan history
+        await supabaseClient.from('business_subscription_plan_history').insert({
+          business_id: business.id,
+          plan_slug: normalizedPlan,
+          source: 'stripe_upgrade',
+          valid_from: new Date().toISOString(),
+        });
+
+        // Return success without redirect URL (upgrade is immediate)
+        return new Response(JSON.stringify({
+          upgraded: true,
+          message: 'Subscription upgraded successfully',
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
     } else {
       logStep('No existing customer, will create during checkout');
     }
 
-    // Create checkout session
+    // Create checkout session (new subscription, no existing one)
     const origin = req.headers.get('origin') || 'http://localhost:3000';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

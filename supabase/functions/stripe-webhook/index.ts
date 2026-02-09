@@ -325,6 +325,134 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Handle subscription updates (plan changes via proration)
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      logStep("Processing customer.subscription.updated", { subscriptionId: subscription.id, status: subscription.status });
+
+      if (subscription.status === "active") {
+        // Find business subscription by stripe_subscription_id
+        const { data: businessSub } = await supabaseClient
+          .from('business_subscriptions')
+          .select('*')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+
+        if (businessSub) {
+          const productId = typeof subscription.items.data[0].price.product === 'string'
+            ? subscription.items.data[0].price.product
+            : subscription.items.data[0].price.product?.id || '';
+
+          const PRODUCT_TO_PLAN_NEW: Record<string, string> = {
+            'prod_TnXuZRPpopjiki': 'basic',
+            'prod_TnXujnMCC4egp8': 'basic',
+            'prod_TnXuM6SsuuyScm': 'pro',
+            'prod_TnXu1Cjr9IvzhA': 'pro',
+            'prod_TnXuOoALyrNdew': 'elite',
+            'prod_TnXuV3hkfa3wQJ': 'elite',
+            'prod_TjOhhBOl8h6KSY': 'basic',
+            'prod_TjOvLr9W7CmRrp': 'basic',
+            'prod_TjOj8tEFcsmxHJ': 'pro',
+            'prod_TjOwPgvfysk22': 'pro',
+            'prod_TjOlA1wCzel4BC': 'elite',
+            'prod_TjOwpvKhaDl3xS': 'elite',
+          };
+
+          const newPlanSlug = PRODUCT_TO_PLAN_NEW[productId];
+          if (newPlanSlug) {
+            const { data: newPlan } = await supabaseClient
+              .from('subscription_plans')
+              .select('*')
+              .eq('slug', newPlanSlug)
+              .single();
+
+            if (newPlan) {
+              const billingCycle = subscription.items.data[0].price.recurring?.interval === 'year' ? 'annual' : 'monthly';
+              
+              // For upgrades, immediately give new plan benefits
+              const { error: updateError } = await supabaseClient
+                .from('business_subscriptions')
+                .update({
+                  plan_id: newPlan.id,
+                  billing_cycle: billingCycle,
+                  current_period_start: safeTimestampToISO(subscription.current_period_start),
+                  current_period_end: safeTimestampToISO(subscription.current_period_end),
+                  monthly_budget_remaining_cents: newPlan.event_boost_budget_cents,
+                  commission_free_offers_remaining: newPlan.commission_free_offers_count || 0,
+                  downgraded_to_free_at: null, // Clear any pending downgrade
+                })
+                .eq('id', businessSub.id);
+
+              if (updateError) throw updateError;
+              logStep("Subscription plan updated via webhook", { newPlanSlug, newPlanId: newPlan.id });
+
+              // Log plan history
+              await supabaseClient.from('business_subscription_plan_history').insert({
+                business_id: businessSub.business_id,
+                plan_slug: newPlanSlug,
+                source: 'stripe_subscription_updated',
+                valid_from: safeTimestampToISO(subscription.current_period_start),
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Handle subscription deleted (cancelled at period end)
+    if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      logStep("Processing customer.subscription.deleted", { subscriptionId: subscription.id });
+
+      const { data: businessSub } = await supabaseClient
+        .from('business_subscriptions')
+        .select('*')
+        .eq('stripe_subscription_id', subscription.id)
+        .single();
+
+      if (businessSub) {
+        // Get free plan
+        const { data: freePlan } = await supabaseClient
+          .from('subscription_plans')
+          .select('*')
+          .eq('slug', 'free')
+          .single();
+
+        if (freePlan) {
+          const now = new Date().toISOString();
+          const periodEnd = new Date();
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+          const { error: updateError } = await supabaseClient
+            .from('business_subscriptions')
+            .update({
+              plan_id: freePlan.id,
+              status: 'active',
+              stripe_subscription_id: null,
+              billing_cycle: 'monthly',
+              current_period_start: now,
+              current_period_end: periodEnd.toISOString(),
+              monthly_budget_remaining_cents: 0,
+              commission_free_offers_remaining: 0,
+              downgraded_to_free_at: null,
+              canceled_at: null,
+            })
+            .eq('id', businessSub.id);
+
+          if (updateError) throw updateError;
+          logStep("Business downgraded to free plan", { businessId: businessSub.business_id });
+
+          // Log plan history
+          await supabaseClient.from('business_subscription_plan_history').insert({
+            business_id: businessSub.business_id,
+            plan_slug: 'free',
+            source: 'stripe_subscription_deleted',
+            valid_from: now,
+          });
+        }
+      }
+    }
+
     // Handle invoice.paid for subscription renewals
     if (event.type === "invoice.paid") {
       const invoice = event.data.object as Stripe.Invoice;
