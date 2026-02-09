@@ -87,13 +87,17 @@ serve(async (req) => {
       if (updateError) throw updateError;
     }
 
-    // Delete the boost (deactivate)
-    const { error: deleteError } = await supabaseClient
+    // Update boost status to "deactivated" instead of deleting
+    const { error: deactivateError } = await supabaseClient
       .from("offer_boosts")
-      .delete()
+      .update({
+        status: "deactivated",
+        active: false,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", boostId);
 
-    if (deleteError) throw deleteError;
+    if (deactivateError) throw deactivateError;
 
     return new Response(
       JSON.stringify({
