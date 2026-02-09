@@ -118,6 +118,7 @@ export const BoostedContentSection = memo(({
   language,
   userCity,
 }: BoostedContentSectionProps) => {
+  console.log('[DEBUG] BoostedContentSection render', { eventCount: events.length, offerCount: offers.length });
   const t = translations[language];
 
   // Memoize combined & sorted content to prevent unnecessary re-renders
@@ -245,7 +246,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
       {/* Matching UnifiedEventCard boosted size - responsive, slightly larger than business cards on mobile */}
       <div
         ref={cardRef as any}
-        className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-colors duration-200 group min-w-[220px] max-w-[220px] sm:min-w-[240px] sm:max-w-[240px] overflow-visible"
+        className="flex flex-col rounded-xl bg-card border border-border [@media(hover:hover)]:hover:border-primary/50 [@media(hover:hover)]:hover:shadow-lg transition-colors duration-200 group min-w-[220px] max-w-[220px] sm:min-w-[240px] sm:max-w-[240px] overflow-visible"
       >
         {/* TOP - Image section - responsive height, larger on mobile */}
         <div className="relative h-36 sm:h-40 overflow-visible">
@@ -258,7 +259,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
               <img
                 src={coverImage}
                 alt={offer.businesses?.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover [@media(hover:hover)]:group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
               />
             ) : (
