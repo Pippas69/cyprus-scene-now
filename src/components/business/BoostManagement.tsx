@@ -1153,6 +1153,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
         {/* EVENT BOOSTS TAB */}
         <TabsContent value="events" className="space-y-4 mt-4">
+          {hasFrozenTime && (
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="outline" className="gap-1.5 border-blue-300 text-blue-600 px-3 py-1">
+                <Snowflake className="h-3.5 w-3.5" />
+                {t.totalFrozenTime}: {totalFrozenHours > 0 ? `${totalFrozenHours} ${t.frozenHours}` : ""}{totalFrozenHours > 0 && totalFrozenDays > 0 ? " + " : ""}{totalFrozenDays > 0 ? `${totalFrozenDays} ${t.frozenDays}` : ""}
+              </Badge>
+            </div>
+          )}
           {activeEventBoosts.length === 0 && expiredEventBoosts.length === 0 && (
             <Card>
               <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
