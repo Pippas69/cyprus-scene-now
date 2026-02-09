@@ -493,6 +493,58 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     }
   };
 
+  const resumeEventBoost = async (boostId: string) => {
+    setTogglingId(boostId);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await supabase.functions.invoke("resume-event-boost", {
+        body: { boostId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw res.error;
+
+      setEventBoosts(prev =>
+        prev.map(b => b.id === boostId ? { ...b, status: "active", frozen_hours: 0, frozen_days: 0 } : b)
+      );
+
+      toast.success(language === "el" ? "Η προώθηση συνεχίστηκε" : "Boost resumed");
+    } catch (error: any) {
+      toast.error(language === "el" ? "Σφάλμα" : "Error", { description: error.message });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const resumeOfferBoost = async (boostId: string) => {
+    setTogglingId(boostId);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await supabase.functions.invoke("resume-offer-boost", {
+        body: { boostId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw res.error;
+
+      setOfferBoosts(prev =>
+        prev.map(b => b.id === boostId ? { ...b, active: true, status: "active", frozen_hours: 0, frozen_days: 0 } : b)
+      );
+
+      toast.success(language === "el" ? "Η προώθηση συνεχίστηκε" : "Boost resumed");
+    } catch (error: any) {
+      toast.error(language === "el" ? "Σφάλμα" : "Error", { description: error.message });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   // Helper to check if a boost is currently within its time window
   const isBoostWithinWindow = (boost: {
     start_date: string;
@@ -549,6 +601,25 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     ),
     [offerBoosts]
   );
+
+  // Global frozen time: aggregate across ALL boosts (events + offers)
+  const totalFrozenHours = useMemo(() => {
+    let hours = 0;
+    [...eventBoosts, ...offerBoosts].forEach(b => {
+      if (b.frozen_hours && b.frozen_hours > 0) hours += b.frozen_hours;
+    });
+    return hours;
+  }, [eventBoosts, offerBoosts]);
+
+  const totalFrozenDays = useMemo(() => {
+    let days = 0;
+    [...eventBoosts, ...offerBoosts].forEach(b => {
+      if (b.frozen_days && b.frozen_days > 0) days += b.frozen_days;
+    });
+    return days;
+  }, [eventBoosts, offerBoosts]);
+
+  const hasFrozenTime = totalFrozenHours > 0 || totalFrozenDays > 0;
 
   if (loading) {
     return (
@@ -627,6 +698,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     cancel: language === "el" ? "Ακύρωση" : "Cancel",
     frozen: language === "el" ? "Παγωμένος" : "Frozen",
     deactivated: language === "el" ? "Απενεργ." : "Deactivated",
+    resumeBoost: language === "el" ? "Συνέχιση" : "Resume",
+    resumeConfirmTitle: language === "el" ? "Συνέχιση Προώθησης" : "Resume Boost",
+    resumeConfirmDesc: language === "el" 
+      ? "Η προώθηση θα συνεχιστεί. Ο παγωμένος χρόνος θα χρησιμοποιηθεί."
+      : "The boost will resume. Frozen time will be consumed.",
+    totalFrozenTime: language === "el" ? "Παγωμένος χρόνος" : "Frozen time",
+    frozenHours: language === "el" ? "ώρ." : "hrs",
+    frozenDays: language === "el" ? "ημ." : "days",
   };
 
 
@@ -698,7 +777,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
             <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.event_title}</h3>
             <div className="flex items-center gap-1.5 shrink-0">
-              {isPaused && <FrozenTimeBadge boost={boost} />}
+              
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
               ) : isPaused ? (
@@ -810,6 +889,39 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                     </AlertDialog>
                   </div>
                 )}
+                {isPaused && (
+                  <div className="flex gap-2 justify-end">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          disabled={togglingId === boost.id}
+                          className="gap-1.5"
+                        >
+                          {togglingId === boost.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5" />
+                          )}
+                          {t.resumeBoost}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.resumeConfirmTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>{t.resumeConfirmDesc}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => resumeEventBoost(boost.id)}>
+                            {t.confirm}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -867,7 +979,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
             <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.offer_title}</h3>
             <div className="flex items-center gap-1.5 shrink-0">
-              {isPaused && <FrozenTimeBadge boost={boost} />}
+              
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
               ) : isPaused ? (
@@ -979,6 +1091,39 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                     </AlertDialog>
                   </div>
                 )}
+                {isPaused && (
+                  <div className="flex gap-2 justify-end">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          disabled={togglingId === boost.id}
+                          className="gap-1.5"
+                        >
+                          {togglingId === boost.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5" />
+                          )}
+                          {t.resumeBoost}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.resumeConfirmTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>{t.resumeConfirmDesc}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => resumeOfferBoost(boost.id)}>
+                            {t.confirm}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1008,6 +1153,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
         {/* EVENT BOOSTS TAB */}
         <TabsContent value="events" className="space-y-4 mt-4">
+          {hasFrozenTime && (
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="outline" className="gap-1.5 border-blue-300 text-blue-600 px-3 py-1">
+                <Snowflake className="h-3.5 w-3.5" />
+                {t.totalFrozenTime}: {totalFrozenHours > 0 ? `${totalFrozenHours} ${t.frozenHours}` : ""}{totalFrozenHours > 0 && totalFrozenDays > 0 ? " + " : ""}{totalFrozenDays > 0 ? `${totalFrozenDays} ${t.frozenDays}` : ""}
+              </Badge>
+            </div>
+          )}
           {activeEventBoosts.length === 0 && expiredEventBoosts.length === 0 && (
             <Card>
               <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
@@ -1037,6 +1190,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
         {/* OFFER BOOSTS TAB */}
         <TabsContent value="offers" className="space-y-4 mt-4">
+          {hasFrozenTime && (
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="outline" className="gap-1.5 border-blue-300 text-blue-600 px-3 py-1">
+                <Snowflake className="h-3.5 w-3.5" />
+                {t.totalFrozenTime}: {totalFrozenHours > 0 ? `${totalFrozenHours} ${t.frozenHours}` : ""}{totalFrozenHours > 0 && totalFrozenDays > 0 ? " + " : ""}{totalFrozenDays > 0 ? `${totalFrozenDays} ${t.frozenDays}` : ""}
+              </Badge>
+            </div>
+          )}
           {activeOfferBoosts.length === 0 && expiredOfferBoosts.length === 0 && (
             <Card>
               <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
