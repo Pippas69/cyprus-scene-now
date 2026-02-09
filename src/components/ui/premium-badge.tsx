@@ -44,6 +44,7 @@ export const PremiumBadge = memo(({ type, className = "" }: PremiumBadgeProps) =
       <Sparkles className="h-3 w-3 text-white drop-shadow-sm" />
     </div>
   );
-};
+});
+PremiumBadge.displayName = "PremiumBadge";
 
 export default PremiumBadge;
