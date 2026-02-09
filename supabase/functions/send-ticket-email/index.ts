@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
     // Generate ticket QR sections
     const ticketQRs = tickets.map((ticket: { id: string; tierName: string; qrToken: string; pricePaid?: string }, index: number) => {
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ticket.qrToken)}&bgcolor=ffffff&color=0d3b66`;
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(ticket.qrToken)}&bgcolor=ffffff&color=000000`;
       return `
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 16px;">
           <tr>

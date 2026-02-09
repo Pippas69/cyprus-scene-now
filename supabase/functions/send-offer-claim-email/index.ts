@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
     });
 
     // Generate QR code URL
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qrCodeToken)}&bgcolor=ffffff&color=0d3b66`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(data.qrCodeToken)}&bgcolor=ffffff&color=000000`;
 
     // Format discount display
     let discountDisplay = '';

@@ -123,7 +123,17 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
         console.error('Error fetching slots:', error);
         setSlots([]);
       } else {
-        setSlots((slotsData as SlotAvailability[]) || []);
+        // Cap booked to never exceed capacity (duplicate/overlapping slots can inflate the count)
+        const cappedSlots = ((slotsData as SlotAvailability[]) || []).map(slot => {
+          const cappedBooked = Math.min(slot.booked, slot.capacity);
+          const cappedAvailable = Math.max(slot.capacity - cappedBooked, 0);
+          return {
+            ...slot,
+            booked: cappedBooked,
+            available: cappedAvailable,
+          };
+        });
+        setSlots(cappedSlots);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
