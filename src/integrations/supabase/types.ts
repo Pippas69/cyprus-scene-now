@@ -5725,6 +5725,8 @@ export type Database = {
         | "completed"
         | "canceled"
         | "pending"
+        | "paused"
+        | "deactivated"
       boost_tier: "basic" | "standard" | "premium" | "elite"
       business_post_type:
         | "announcement"
@@ -5885,7 +5887,15 @@ export const Constants = {
       app_role: ["user", "business", "admin"],
       billing_cycle: ["monthly", "annual"],
       boost_source: ["subscription", "purchase"],
-      boost_status: ["scheduled", "active", "completed", "canceled", "pending"],
+      boost_status: [
+        "scheduled",
+        "active",
+        "completed",
+        "canceled",
+        "pending",
+        "paused",
+        "deactivated",
+      ],
       boost_tier: ["basic", "standard", "premium", "elite"],
       business_post_type: [
         "announcement",
