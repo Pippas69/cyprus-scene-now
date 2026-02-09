@@ -112,7 +112,7 @@ type ContentItem =
   | { type: 'event'; data: BoostedEvent; sortTime: Date; distance: number }
   | { type: 'offer'; data: BoostedOffer; sortTime: Date; distance: number };
 
-export const BoostedContentSection = ({ 
+export const BoostedContentSection = memo(({ 
   events, 
   offers, 
   language,
@@ -120,31 +120,30 @@ export const BoostedContentSection = ({
 }: BoostedContentSectionProps) => {
   const t = translations[language];
 
-  // Combine all boosted content with distance scoring
-  const allContent: ContentItem[] = [
-    ...events.map(e => ({ 
-      type: 'event' as const, 
-      data: e, 
-      sortTime: new Date(e.start_at),
-      distance: getCityDistance(userCity, e.businesses?.city),
-    })),
-    ...offers.map(o => ({ 
-      type: 'offer' as const, 
-      data: o, 
-      sortTime: new Date(o.end_at), // Use end_at for offers (soonest expiry first)
-      distance: getCityDistance(userCity, o.businesses?.city),
-    }))
-  ];
+  // Memoize combined & sorted content to prevent unnecessary re-renders
+  const allContent = useMemo<ContentItem[]>(() => {
+    const items: ContentItem[] = [
+      ...events.map(e => ({ 
+        type: 'event' as const, 
+        data: e, 
+        sortTime: new Date(e.start_at),
+        distance: getCityDistance(userCity, e.businesses?.city),
+      })),
+      ...offers.map(o => ({ 
+        type: 'offer' as const, 
+        data: o, 
+        sortTime: new Date(o.end_at),
+        distance: getCityDistance(userCity, o.businesses?.city),
+      }))
+    ];
 
-  // Sort: First by distance (closest first), then by time (earliest first)
-  allContent.sort((a, b) => {
-    // Primary: Geographic proximity
-    if (a.distance !== b.distance) {
-      return a.distance - b.distance;
-    }
-    // Secondary: Chronological (earliest first)
-    return a.sortTime.getTime() - b.sortTime.getTime();
-  });
+    items.sort((a, b) => {
+      if (a.distance !== b.distance) return a.distance - b.distance;
+      return a.sortTime.getTime() - b.sortTime.getTime();
+    });
+
+    return items;
+  }, [events, offers, userCity]);
 
   // Always render the container even if empty - prevents mobile layout issues
   if (allContent.length === 0) {
