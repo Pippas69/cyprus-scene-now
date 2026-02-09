@@ -92,6 +92,11 @@ const OfferBoostDialog = ({
   }, [open]);
 
   
+  // Convert all frozen time to a unified pool per mode
+  const totalFrozenAsHours = frozenHoursAvailable + (frozenDaysAvailable * 24);
+  const totalFrozenAsDays = frozenDaysAvailable + Math.floor(frozenHoursAvailable / 24);
+  const frozenAvailableForMode = durationMode === "hourly" ? totalFrozenAsHours : totalFrozenAsDays;
+  const hasFrozenTime = frozenAvailableForMode > 0;
 
   // 2-tier boost system with hourly and daily rates
   const tiers = {
@@ -118,20 +123,19 @@ const OfferBoostDialog = ({
   const selectedTier = tiers[tier];
   const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Calculate effective duration after frozen time deduction
-  const effectiveHours = useFrozenTime 
-    ? Math.max(0, durationHours - frozenHoursAvailable) 
+  const frozenUnitsUsed = useFrozenTime 
+    ? Math.min(frozenAvailableForMode, durationMode === "hourly" ? durationHours : days)
+    : 0;
+
+  const effectiveHours = durationMode === "hourly" 
+    ? Math.max(0, durationHours - frozenUnitsUsed) 
     : durationHours;
-  const effectiveDays = useFrozenTime 
-    ? Math.max(0, days - frozenDaysAvailable) 
+  const effectiveDays = durationMode === "daily" 
+    ? Math.max(0, days - frozenUnitsUsed) 
     : days;
 
-  const frozenHoursUsed = useFrozenTime 
-    ? Math.min(frozenHoursAvailable, durationHours)
-    : 0;
-  const frozenDaysUsed = useFrozenTime 
-    ? Math.min(frozenDaysAvailable, days)
-    : 0;
+  const frozenHoursUsed = durationMode === "hourly" ? frozenUnitsUsed : 0;
+  const frozenDaysUsed = durationMode === "daily" ? frozenUnitsUsed : 0;
 
   const totalCost = durationMode === "hourly" 
     ? selectedTier.hourlyRate * effectiveHours 
@@ -326,7 +330,7 @@ const OfferBoostDialog = ({
               </div>
 
               {/* Frozen Time Opt-in */}
-              {(frozenHoursAvailable > 0 || frozenDaysAvailable > 0) && (
+              {hasFrozenTime && (
                 <div className="flex items-center justify-between p-3 rounded-lg border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
                   <div className="flex items-center gap-2">
                     <Snowflake className="h-4 w-4 text-blue-500" />
@@ -336,9 +340,9 @@ const OfferBoostDialog = ({
                       </p>
                       <p className="text-[10px] md:text-xs text-muted-foreground">
                         {language === "el" ? "Διαθέσιμος" : "Available"}:{" "}
-                        {frozenHoursAvailable > 0 && `${frozenHoursAvailable} ${language === "el" ? "ώρ." : "hrs"}`}
-                        {frozenHoursAvailable > 0 && frozenDaysAvailable > 0 && " · "}
-                        {frozenDaysAvailable > 0 && `${frozenDaysAvailable} ${language === "el" ? "ημ." : "days"}`}
+                        {frozenAvailableForMode} {durationMode === "hourly" 
+                          ? (language === "el" ? "ώρ." : "hrs") 
+                          : (language === "el" ? "ημ." : "days")}
                       </p>
                     </div>
                   </div>
@@ -493,14 +497,14 @@ const OfferBoostDialog = ({
                 </div>
 
                 {/* Frozen time discount line */}
-                {useFrozenTime && (durationMode === "hourly" ? frozenHoursUsed > 0 : frozenDaysUsed > 0) && (
+                {useFrozenTime && frozenUnitsUsed > 0 && (
                   <div className="flex justify-between text-xs md:text-sm text-blue-600">
                     <span className="flex items-center gap-1">
                       <Snowflake className="h-3 w-3" />
                       {language === "el" ? "Παγωμένος χρόνος" : "Frozen time"}:
                     </span>
                     <span className="font-semibold">
-                      -{durationMode === "hourly" ? frozenHoursUsed : frozenDaysUsed} {durationMode === "hourly" 
+                      -{frozenUnitsUsed} {durationMode === "hourly" 
                         ? (language === "el" ? "ώρ." : "hrs") 
                         : (language === "el" ? "ημ." : "days")}
                     </span>
