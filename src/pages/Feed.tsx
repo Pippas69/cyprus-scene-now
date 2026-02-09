@@ -285,6 +285,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (window.scrollY === 0) startYRef.current = e.touches[0].pageY;
+    else startYRef.current = null;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -292,7 +293,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     const diff = e.touches[0].pageY - startYRef.current;
     if (diff > 0 && window.scrollY === 0) {
       setPullDistance(Math.min(diff, 100));
-      if (diff > 80) {
+      if (diff > 80 && !isPulling) {
         setIsPulling(true);
         hapticFeedback.light();
       }
@@ -305,9 +306,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       queryClient.invalidateQueries({ queryKey: ["boosted-events"] });
       queryClient.invalidateQueries({ queryKey: ["boosted-offers"] });
       queryClient.invalidateQueries({ queryKey: ["active-profile-boosts"] });
+      setIsPulling(false);
     }
-    setIsPulling(false);
-    setPullDistance(0);
+    if (pullDistance > 0) {
+      setPullDistance(0);
+    }
     startYRef.current = null;
   };
 
