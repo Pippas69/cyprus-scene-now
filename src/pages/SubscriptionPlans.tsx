@@ -653,6 +653,38 @@ export default function SubscriptionPlans({
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium text-sm text-foreground">{t.freeTitle}</span>
+                
+                {/* Downgrade to Free badge - only visible when on paid plan */}
+                {currentSubscription?.subscribed && !currentSubscription?.downgrade_pending && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground border border-border/50 transition-colors cursor-pointer">
+                        <ArrowDown className="w-2.5 h-2.5" />
+                        {t.downgradeToFree}
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t.downgradeConfirmTitle}</AlertDialogTitle>
+                        <AlertDialogDescription>{t.downgradeConfirmDesc}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t.downgradeCancel}</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDowngradeToFree} disabled={loadingDowngrade}>
+                          {loadingDowngrade ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                          {t.downgradeConfirm}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                
+                {/* Pending downgrade indicator */}
+                {currentSubscription?.downgrade_pending && (
+                  <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                    {t.downgradeScheduled} • {t.downgradeEffective} {formatDate(currentSubscription.downgrade_effective_date)}
+                  </Badge>
+                )}
               </div>
               
               {/* Separator */}
