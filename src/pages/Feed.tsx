@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUp, Filter, GraduationCap } from "lucide-react";
@@ -55,6 +55,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const [pullDistance, setPullDistance] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const startYRef = useRef<number | null>(null);
+  const startXRef = useRef<number | null>(null);
+  const isHorizontalSwipeRef = useRef(false);
 
   const queryClient = useQueryClient();
   const { language } = useLanguage();
@@ -121,7 +123,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000,
   });
 
-  const eventBoostBusinessIds = new Set(activeBoosts?.map((b) => b.business_id) || []);
+  const eventBoostBusinessIds = useMemo(() => new Set(activeBoosts?.map((b) => b.business_id) || []), [activeBoosts]);
 
   // Boosted events ONLY (paid priority) - sorted chronologically by start_at
   const { data: boostedEvents } = useQuery({
@@ -208,7 +210,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000,
   });
 
-  const offerBoostBusinessIds = new Set(offerBoosts?.map((b: any) => b.business_id) || []);
+  const offerBoostBusinessIds = useMemo(() => new Set(offerBoosts?.map((b: any) => b.business_id) || []), [offerBoosts]);
 
   // Boosted offers (paid priority) - sorted chronologically by end_at (soonest expiry first)
   const { data: boostedOffers } = useQuery({
@@ -284,16 +286,36 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (window.scrollY === 0) startYRef.current = e.touches[0].pageY;
-    else startYRef.current = null;
+    isHorizontalSwipeRef.current = false;
+    if (window.scrollY === 0) {
+      startYRef.current = e.touches[0].pageY;
+      startXRef.current = e.touches[0].pageX;
+    } else {
+      startYRef.current = null;
+      startXRef.current = null;
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (startYRef.current === null) return;
-    const diff = e.touches[0].pageY - startYRef.current;
-    if (diff > 0 && window.scrollY === 0) {
-      setPullDistance(Math.min(diff, 100));
-      if (diff > 80 && !isPulling) {
+    if (startYRef.current === null || startXRef.current === null) return;
+    // Once determined as horizontal, skip all pull logic for this gesture
+    if (isHorizontalSwipeRef.current) return;
+    
+    const diffY = e.touches[0].pageY - startYRef.current;
+    const diffX = Math.abs(e.touches[0].pageX - startXRef.current);
+    
+    // If horizontal movement > vertical movement, it's a horizontal swipe — ignore entirely
+    if (diffX > Math.abs(diffY) && diffX > 10) {
+      isHorizontalSwipeRef.current = true;
+      // Reset any pull state that might have started
+      if (pullDistance > 0) setPullDistance(0);
+      if (isPulling) setIsPulling(false);
+      return;
+    }
+    
+    if (diffY > 0 && window.scrollY === 0) {
+      setPullDistance(Math.min(diffY, 100));
+      if (diffY > 80 && !isPulling) {
         setIsPulling(true);
         hapticFeedback.light();
       }
@@ -301,7 +323,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   };
 
   const handleTouchEnd = () => {
-    if (isPulling) {
+    if (!isHorizontalSwipeRef.current && isPulling) {
       hapticFeedback.medium();
       queryClient.invalidateQueries({ queryKey: ["boosted-events"] });
       queryClient.invalidateQueries({ queryKey: ["boosted-offers"] });
@@ -312,6 +334,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       setPullDistance(0);
     }
     startYRef.current = null;
+    startXRef.current = null;
+    isHorizontalSwipeRef.current = false;
   };
 
   const handleClearFilters = () => {
