@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget } = await req.json();
-    logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget });
+    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget, useFrozenTime = false, frozenHoursUsed = 0, frozenDaysUsed = 0 } = await req.json();
+    logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget, useFrozenTime, frozenHoursUsed, frozenDaysUsed });
 
     // Get business ID for this event
     const { data: eventData, error: eventError } = await supabaseClient
@@ -61,10 +61,9 @@ Deno.serve(async (req) => {
     logStep("Business ownership verified", { businessId });
 
     // 2-tier boost system with hourly and daily rates (in cents)
-    // targeting_quality is stored on a 1-5 scale in the database
     const boostTiers = {
-      standard: { dailyRateCents: 4000, hourlyRateCents: 550, quality: 4 },  // €40/day, €5.50/hour
-      premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 5 },   // €60/day, €8.50/hour
+      standard: { dailyRateCents: 4000, hourlyRateCents: 550, quality: 4 },
+      premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 5 },
     };
 
     const tierData = boostTiers[tier as keyof typeof boostTiers];
@@ -79,14 +78,16 @@ Deno.serve(async (req) => {
         throw new Error("Duration hours is required for hourly mode");
       }
       calculatedDurationHours = durationHours;
-      totalCostCents = tierData.hourlyRateCents * durationHours;
-      logStep("Hourly cost calculated", { durationHours, hourlyRateCents: tierData.hourlyRateCents, totalCostCents });
+      const effectiveHours = useFrozenTime ? Math.max(0, durationHours - frozenHoursUsed) : durationHours;
+      totalCostCents = tierData.hourlyRateCents * effectiveHours;
+      logStep("Hourly cost calculated", { durationHours, effectiveHours, frozenHoursUsed, totalCostCents });
     } else {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      totalCostCents = tierData.dailyRateCents * days;
-      logStep("Daily cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
+      const effectiveDays = useFrozenTime ? Math.max(0, days - frozenDaysUsed) : days;
+      totalCostCents = tierData.dailyRateCents * effectiveDays;
+      logStep("Daily cost calculated", { days, effectiveDays, frozenDaysUsed, totalCostCents });
     }
 
     // ONLY handle subscription budget payments here
