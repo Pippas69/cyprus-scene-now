@@ -165,6 +165,7 @@ Deno.serve(async (req) => {
           downgrade_pending: !!existingDbSub.downgraded_to_free_at,
           downgrade_effective_date: existingDbSub.downgraded_to_free_at ? existingDbSub.current_period_end : null,
           downgrade_requested_at: existingDbSub.downgraded_to_free_at || null,
+          downgrade_target_plan: existingDbSub.downgrade_target_plan || 'free',
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
