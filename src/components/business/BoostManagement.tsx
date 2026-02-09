@@ -889,6 +889,39 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                     </AlertDialog>
                   </div>
                 )}
+                {isPaused && (
+                  <div className="flex gap-2 justify-end">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          disabled={togglingId === boost.id}
+                          className="gap-1.5"
+                        >
+                          {togglingId === boost.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5" />
+                          )}
+                          {t.resumeBoost}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.resumeConfirmTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>{t.resumeConfirmDesc}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => resumeEventBoost(boost.id)}>
+                            {t.confirm}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </div>
             </div>
 
