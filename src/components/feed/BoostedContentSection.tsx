@@ -180,7 +180,7 @@ export const BoostedContentSection = memo(({
       </ScrollArea>
     </div>
   );
-};
+});
 
 interface OfferCardProps {
   offer: BoostedOffer;
