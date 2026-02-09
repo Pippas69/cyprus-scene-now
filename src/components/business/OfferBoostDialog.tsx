@@ -91,7 +91,7 @@ const OfferBoostDialog = ({
     fetchFrozenTime();
   }, [open]);
 
-  const hasFrozenTimeForMode = durationMode === "hourly" ? frozenHoursAvailable > 0 : frozenDaysAvailable > 0;
+  
 
   // 2-tier boost system with hourly and daily rates
   const tiers = {
