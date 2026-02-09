@@ -838,12 +838,36 @@ export default function SubscriptionPlans({
                   </CardContent>
 
                   <CardFooter className="pt-4 border-t">
-                    <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
-                      {loadingPlan === planSlug ? <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {t.loading}
-                        </> : isCurrent ? t.currentPlan : t.choosePlan}
-                    </Button>
+                    {isDowngrade(planSlug) && !currentSubscription?.downgrade_pending ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button className="w-full" variant="outline" size="lg" disabled={loadingDowngrade}>
+                            <ArrowDown className="w-4 h-4 mr-2" />
+                            {language === 'el' ? `Υποβάθμιση σε ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)}` : `Downgrade to ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)}`}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t.downgradeConfirmTitle}</AlertDialogTitle>
+                            <AlertDialogDescription>{t.downgradeConfirmDesc}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t.downgradeCancel}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDowngrade(planSlug)} disabled={loadingDowngrade}>
+                              {loadingDowngrade ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                              {t.downgradeConfirm}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent || !!currentSubscription?.downgrade_pending}>
+                        {loadingPlan === planSlug ? <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {t.loading}
+                          </> : isCurrent ? t.currentPlan : t.choosePlan}
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               </motion.div>;
