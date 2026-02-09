@@ -239,7 +239,7 @@ const DashboardBusiness = () => {
         language={language}
       />
       <SidebarProvider>
-      <div className="min-h-screen w-full flex overflow-x-hidden">
+      <div className="h-screen w-full flex overflow-hidden">
         <BusinessSidebar />
         
         <div className="flex-1 flex flex-col min-h-0 min-w-0 max-w-full">
