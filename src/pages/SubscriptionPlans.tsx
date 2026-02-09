@@ -677,7 +677,7 @@ export default function SubscriptionPlans({
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>{t.downgradeCancel}</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDowngradeToFree} disabled={loadingDowngrade}>
+                        <AlertDialogAction onClick={() => handleDowngrade('free')} disabled={loadingDowngrade}>
                           {loadingDowngrade ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                           {t.downgradeConfirm}
                         </AlertDialogAction>
