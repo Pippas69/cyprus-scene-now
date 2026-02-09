@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import { differenceInDays } from "date-fns";
-import { useCallback, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState, useMemo } from "react";
 import { OfferPurchaseDialog } from "@/components/user/OfferPurchaseDialog";
 import { ShareOfferDialog } from "@/components/sharing/ShareOfferDialog";
 import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
