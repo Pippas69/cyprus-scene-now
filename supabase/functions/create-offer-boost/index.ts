@@ -118,14 +118,14 @@ Deno.serve(async (req) => {
         throw new Error("Duration hours is required for hourly mode");
       }
       calculatedDurationHours = durationHours;
-      totalCostCents = tierData.hourlyRateCents * durationHours;
-      logStep("Hourly cost calculated", { durationHours, hourlyRateCents: tierData.hourlyRateCents, totalCostCents });
+      totalCostCents = tierData.hourlyRateCents * (useFrozenTime ? Math.max(0, durationHours - frozenHoursUsed) : durationHours);
+      logStep("Hourly cost calculated", { durationHours, frozenHoursUsed, totalCostCents });
     } else {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-      totalCostCents = tierData.dailyRateCents * days;
-      logStep("Daily cost calculated", { days, dailyRateCents: tierData.dailyRateCents, totalCostCents });
+      totalCostCents = tierData.dailyRateCents * (useFrozenTime ? Math.max(0, days - frozenDaysUsed) : days);
+      logStep("Daily cost calculated", { days, frozenDaysUsed, totalCostCents });
     }
 
     // If not using subscription budget, return that payment is needed
