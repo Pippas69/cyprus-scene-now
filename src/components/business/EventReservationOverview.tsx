@@ -122,11 +122,10 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       // Calculate commission based on the business's plan (dynamic)
       const totalCommission = Math.round(totalRevenue * (commissionPercent / 100));
 
-      const totalReservations = reservations.length;
       const checkedIn = reservations.filter(r => r.checked_in_at).length;
 
       // Group by seating type - use actual confirmed reservation count for "booked"
-      // NOTE: reservations store the seating choice in `seating_type_id` (uuid).
+      // Only count reservations that match a seating type for the breakdown
       const seatingStats = seatingTypes.map((st) => {
         const stReservations = reservations.filter(
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type,
@@ -135,7 +134,6 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         const minPrice =
           st.tiers.length > 0 ? Math.min(...st.tiers.map((t) => t.prepaid_min_charge_cents)) : 0;
 
-        // Use actual booked count, available = total slots - booked
         const totalSlots = st.available_slots;
         const availableSlots = totalSlots - bookedCount;
 
@@ -146,6 +144,9 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
           minPrice,
         };
       });
+
+      // Total reservations = sum of all categorized bookings (so it matches the breakdown)
+      const totalReservations = seatingStats.reduce((sum, st) => sum + st.booked, 0);
 
       return {
         seatingTypes: seatingStats,
