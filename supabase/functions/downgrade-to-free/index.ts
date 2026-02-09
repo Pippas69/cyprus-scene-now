@@ -21,6 +21,19 @@ const PLAN_NAMES: Record<string, string> = {
   elite: 'Elite',
 };
 
+// Monthly price IDs for each paid plan (used for subscription schedule)
+const MONTHLY_PRICE_IDS: Record<string, string> = {
+  basic: 'price_1SyYDBHwXCvHV7ZwWIPuJHzf',
+  pro: 'price_1SyYDEHwXCvHV7ZwBy72motr',
+  elite: 'price_1SyYDGHwXCvHV7Zwg9IDT9jt',
+};
+
+const ANNUAL_PRICE_IDS: Record<string, string> = {
+  basic: 'price_1SyYDCHwXCvHV7ZwAw3fngIN',
+  pro: 'price_1SyYDFHwXCvHV7ZwE1uQ0H1c',
+  elite: 'price_1SyYDHHwXCvHV7ZwDVK9HHIU',
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -108,15 +121,88 @@ Deno.serve(async (req) => {
         const stripeSub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
         effectiveDate = new Date(stripeSub.current_period_end * 1000).toISOString();
 
-        // If target is free, cancel at period end
         if (targetPlan === 'free') {
+          // ===== DOWNGRADE TO FREE: Cancel at period end =====
           await stripe.subscriptions.update(subscription.stripe_subscription_id, {
             cancel_at_period_end: true,
           });
           logStep('Stripe subscription set to cancel at period end');
+        } else {
+          // ===== DOWNGRADE TO PAID PLAN: Schedule price change at period end =====
+          // Determine if current subscription is monthly or annual
+          const currentPriceId = stripeSub.items.data[0]?.price?.id;
+          const currentInterval = stripeSub.items.data[0]?.price?.recurring?.interval;
+          const isAnnual = currentInterval === 'year';
+          
+          // Pick the correct target price ID based on billing interval
+          const targetPriceId = isAnnual
+            ? ANNUAL_PRICE_IDS[targetPlan]
+            : MONTHLY_PRICE_IDS[targetPlan];
+
+          if (!targetPriceId) {
+            throw new Error(`No price ID found for target plan: ${targetPlan}`);
+          }
+
+          logStep('Scheduling plan change via Stripe', {
+            currentPriceId,
+            targetPriceId,
+            isAnnual,
+            effectiveDate,
+          });
+
+          // Release any existing schedule first
+          const existingSchedules = await stripe.subscriptionSchedules.list({
+            customer: stripeSub.customer as string,
+            limit: 5,
+          });
+          
+          for (const schedule of existingSchedules.data) {
+            if (schedule.status === 'active' || schedule.status === 'not_started') {
+              try {
+                await stripe.subscriptionSchedules.release(schedule.id);
+                logStep('Released existing schedule', { scheduleId: schedule.id });
+              } catch (e) {
+                logStep('Could not release schedule', { scheduleId: schedule.id, error: String(e) });
+              }
+            }
+          }
+
+          // Create a subscription schedule from the existing subscription
+          const schedule = await stripe.subscriptionSchedules.create({
+            from_subscription: subscription.stripe_subscription_id,
+          });
+
+          logStep('Created schedule from subscription', { scheduleId: schedule.id });
+
+          // Update the schedule: keep current phase, add new phase with target price
+          const currentPhaseStart = schedule.phases[0]?.start_date;
+          const currentPhaseEnd = stripeSub.current_period_end;
+          const currentItemId = schedule.phases[0]?.items[0]?.price;
+
+          await stripe.subscriptionSchedules.update(schedule.id, {
+            end_behavior: 'release',
+            phases: [
+              {
+                start_date: currentPhaseStart,
+                end_date: currentPhaseEnd,
+                items: [{ price: currentItemId as string }],
+                proration_behavior: 'none',
+              },
+              {
+                start_date: currentPhaseEnd,
+                items: [{ price: targetPriceId }],
+                iterations: 1,
+                proration_behavior: 'none',
+              },
+            ],
+          });
+
+          logStep('Subscription schedule updated with downgrade phase', {
+            scheduleId: schedule.id,
+            targetPriceId,
+            startsAt: new Date(currentPhaseEnd * 1000).toISOString(),
+          });
         }
-        // For downgrades to paid plans (e.g. Elite→Pro), we schedule the change
-        // The actual plan switch will happen via webhook or cron at period end
 
         // Update DB with real Stripe dates
         await supabaseClient
@@ -127,7 +213,8 @@ Deno.serve(async (req) => {
           })
           .eq('id', subscription.id);
       } catch (stripeErr) {
-        logStep('Warning: Could not retrieve Stripe subscription, using DB dates', { error: String(stripeErr) });
+        logStep('Stripe error during downgrade', { error: String(stripeErr) });
+        throw new Error(`Stripe error: ${stripeErr instanceof Error ? stripeErr.message : String(stripeErr)}`);
       }
     }
 
