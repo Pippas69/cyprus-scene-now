@@ -10,45 +10,6 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-EVENT-BOOST] ${step}${detailsStr}`);
 };
 
-
-// Consume frozen time from paused boosts (FIFO - oldest first)
-async function consumeFrozenTime(client: any, businessId: string, hoursToConsume: number, daysToConsume: number) {
-  // Fetch all paused boosts with frozen time (from both tables)
-  const tables = ["event_boosts", "offer_boosts"] as const;
-  let remainingHours = hoursToConsume;
-  let remainingDays = daysToConsume;
-
-  for (const table of tables) {
-    if (remainingHours <= 0 && remainingDays <= 0) break;
-
-    const { data: pausedBoosts } = await client
-      .from(table)
-      .select("id, frozen_hours, frozen_days")
-      .eq("business_id", businessId)
-      .eq("status", "paused")
-      .order("created_at", { ascending: true });
-
-    for (const boost of (pausedBoosts || [])) {
-      if (remainingHours <= 0 && remainingDays <= 0) break;
-
-      const updates: any = {};
-      if (remainingHours > 0 && (boost.frozen_hours || 0) > 0) {
-        const consume = Math.min(remainingHours, boost.frozen_hours);
-        updates.frozen_hours = boost.frozen_hours - consume;
-        remainingHours -= consume;
-      }
-      if (remainingDays > 0 && (boost.frozen_days || 0) > 0) {
-        const consume = Math.min(remainingDays, boost.frozen_days);
-        updates.frozen_days = boost.frozen_days - consume;
-        remainingDays -= consume;
-      }
-      if (Object.keys(updates).length > 0) {
-        await client.from(table).update(updates).eq("id", boost.id);
-      }
-    }
-  }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -74,8 +35,8 @@ Deno.serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget, useFrozenTime = false, frozenHoursUsed = 0, frozenDaysUsed = 0 } = await req.json();
-    logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget, useFrozenTime, frozenHoursUsed, frozenDaysUsed });
+    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget } = await req.json();
+    logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget });
 
     // Get business ID for this event
     const { data: eventData, error: eventError } = await supabaseClient
@@ -117,16 +78,14 @@ Deno.serve(async (req) => {
         throw new Error("Duration hours is required for hourly mode");
       }
       calculatedDurationHours = durationHours;
-      const effectiveHours = useFrozenTime ? Math.max(0, durationHours - frozenHoursUsed) : durationHours;
-      totalCostCents = tierData.hourlyRateCents * effectiveHours;
-      logStep("Hourly cost calculated", { durationHours, effectiveHours, frozenHoursUsed, totalCostCents });
+      totalCostCents = tierData.hourlyRateCents * durationHours;
+      logStep("Hourly cost calculated", { durationHours, totalCostCents });
     } else {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      const effectiveDays = useFrozenTime ? Math.max(0, days - frozenDaysUsed) : days;
-      totalCostCents = tierData.dailyRateCents * effectiveDays;
-      logStep("Daily cost calculated", { days, effectiveDays, frozenDaysUsed, totalCostCents });
+      totalCostCents = tierData.dailyRateCents * days;
+      logStep("Daily cost calculated", { days, totalCostCents });
     }
 
     // ONLY handle subscription budget payments here
@@ -155,7 +114,6 @@ Deno.serve(async (req) => {
     const remainingBudget = subscription?.monthly_budget_remaining_cents || 0;
     const hasActiveSubscription = !subError && !!subscription && subscription.status === "active";
 
-    // If user wants to use budget but there's no active subscription/budget, instruct frontend to fallback to Stripe
     if (!hasActiveSubscription) {
       logStep("No active subscription - returning needsPayment flag");
       return new Response(
@@ -229,12 +187,6 @@ Deno.serve(async (req) => {
     }
 
     logStep("Boost created from subscription budget", { durationMode, totalCostCents, newBudget });
-
-    // Consume frozen time from paused boosts if opted in
-    if (useFrozenTime && (frozenHoursUsed > 0 || frozenDaysUsed > 0)) {
-      await consumeFrozenTime(supabaseClient, businessId, frozenHoursUsed, frozenDaysUsed);
-      logStep("Frozen time consumed", { frozenHoursUsed, frozenDaysUsed });
-    }
 
     return new Response(
       JSON.stringify({ success: true, source: "subscription", durationMode }),
