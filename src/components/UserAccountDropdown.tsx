@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Building2, LogOut, User } from 'lucide-react';
+import { Bell, Building2, LogOut, Shield, User } from 'lucide-react';
 import { useBusinessOwner } from '@/hooks/useBusinessOwner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -44,12 +44,25 @@ export const UserAccountDropdown = ({
 
   const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        setIsAdmin(data?.role === 'admin');
+      });
+  }, [userId]);
   const translations = {
     el: {
       myAccount: 'Ο λογαριασμός μου',
       myBusiness: 'Η επιχείρησή μου',
       myUserAccount: 'Ο προσωπικός μου λογαριασμός',
       notifications: 'Ειδοποιήσεις',
+      admin: 'Admin',
       signOut: 'Αποσύνδεση',
     },
     en: {
@@ -57,6 +70,7 @@ export const UserAccountDropdown = ({
       myBusiness: 'My Business',
       myUserAccount: 'My User Account',
       notifications: 'Notifications',
+      admin: 'Admin',
       signOut: 'Sign Out',
     },
   };
@@ -162,6 +176,20 @@ export const UserAccountDropdown = ({
                 {t.myBusiness}
               </DropdownMenuItem>
             )
+          )}
+
+          {/* Admin Panel */}
+          {isAdmin && (
+            <DropdownMenuItem
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate('/admin/verification');
+              }}
+              className="text-sm cursor-pointer"
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              {t.admin}
+            </DropdownMenuItem>
           )}
 
           {/* Sign Out */}
