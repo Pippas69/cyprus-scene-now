@@ -98,6 +98,30 @@ export const AdminHeader = () => {
         <Separator orientation="vertical" className="h-4" />
         <LanguageToggle />
         <ThemeToggle />
+
+        {/* Admin Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                  {profile?.name?.charAt(0)?.toUpperCase() || 'A'}
+                </AvatarFallback>
+                {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.name || 'Admin'} />}
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-background border-border z-50">
+            <DropdownMenuItem onClick={() => navigate('/feed')} className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              {language === 'el' ? 'Λογαριασμός χρήστη' : 'User Account'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              {language === 'el' ? 'Αποσύνδεση' : 'Sign Out'}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
