@@ -10,17 +10,42 @@ import {
 } from '@/components/ui/breadcrumb';
 import LanguageToggle from '@/components/LanguageToggle';
 import { NotificationBell } from './NotificationBell';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { adminTranslations } from '@/translations/adminTranslations';
 import { useTheme } from 'next-themes';
-import { Moon, Sun } from 'lucide-react';
+import { LogOut, Moon, Sun, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { supabase } from '@/integrations/supabase/client';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useEffect, useState } from 'react';
 
 export const AdminHeader = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const t = adminTranslations[language];
+  const [userId, setUserId] = useState<string>();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id);
+    });
+  }, []);
+
+  const { data: profile } = useUserProfile(userId);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   // Generate breadcrumbs from path
   const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -73,6 +98,30 @@ export const AdminHeader = () => {
         <Separator orientation="vertical" className="h-4" />
         <LanguageToggle />
         <ThemeToggle />
+
+        {/* Admin Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                  {profile?.name?.charAt(0)?.toUpperCase() || 'A'}
+                </AvatarFallback>
+                {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.name || 'Admin'} />}
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-background border-border z-50">
+            <DropdownMenuItem onClick={() => navigate('/feed')} className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              {language === 'el' ? 'Λογαριασμός χρήστη' : 'User Account'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              {language === 'el' ? 'Αποσύνδεση' : 'Sign Out'}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
