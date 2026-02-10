@@ -1,93 +1,103 @@
 
 
-# Fix Pause and Deactivate Buttons for Boost Management
+# Remove Pause, Simplify Boost Lifecycle: Deactivate Only
 
-## Problems Found
+## Overview
 
-After thorough investigation, here are the bugs preventing pause/deactivate from working properly:
-
-### 1. Offer Boost Pause Inconsistency
-The `pause-offer-boost` edge function sets `active: false` but does NOT set a `status` field to `"paused"`. Meanwhile, `pause-event-boost` correctly sets `status: "paused"`. The UI for offer boosts checks `b.active` instead of `b.status`, creating confusion.
-
-### 2. Paused Boosts Disappear into "Expired" Section
-The active/expired filtering logic:
-- Event boosts: `b.status === 'active'` -- paused boosts (status "paused") fall into expired
-- Offer boosts: `b.active` -- paused boosts (active=false) fall into expired
-
-Paused boosts should remain visible in the active section with a "Paused" badge, not get buried in expired.
-
-### 3. Deactivation Deletes Records (Data Loss)
-Both `deactivate-event-boost` and `deactivate-offer-boost` edge functions DELETE the boost record entirely. This means:
-- Frozen time stored on the record is lost forever
-- Historical metrics disappear
-- The policy says deactivation should calculate refunds and store them, not destroy the record
-
-### 4. No Confirmation Dialog
-Pause and deactivate are destructive actions with financial consequences (deactivation can forfeit remaining value for free users). There is no confirmation prompt before executing.
-
-### 5. Frozen Time Not Displayed
-The policy states frozen time should be visible in the Boost Management UI. Currently:
-- `frozen_hours` / `frozen_days` columns exist in the database
-- The pause edge functions correctly calculate and store frozen time
-- But the UI never fetches or displays these values
-
-### 6. No Resume Functionality
-The policy states paused boosts can be resumed directly. Currently the UI only shows a dialog saying "create a new boost" when clicking the paused badge.
+This plan removes the entire "Pause/Resume/Frozen Time" system from boosts and simplifies the lifecycle to: **Active -> Deactivated (or Expired)**. It also adds a no-refund disclaimer for free-plan business users wherever boosts are created.
 
 ---
 
-## Implementation Plan
+## What Changes
 
-### Step 1: Fix Edge Functions
+### 1. Remove Pause/Resume/Frozen Time from Backend
 
-**`pause-offer-boost/index.ts`**: Add `status: "paused"` alongside `active: false` for consistency.
+**Delete 4 edge functions:**
+- `supabase/functions/pause-event-boost/`
+- `supabase/functions/pause-offer-boost/`
+- `supabase/functions/resume-event-boost/`
+- `supabase/functions/resume-offer-boost/`
 
-**`deactivate-event-boost/index.ts`** and **`deactivate-offer-boost/index.ts`**: Change from DELETE to UPDATE. Set `status: "deactivated"` instead of deleting the record. Keep the refund logic (returning credits to budget for paid users).
+**Update 2 edge functions (remove frozen time consumption):**
+- `supabase/functions/create-event-boost/index.ts` -- Remove `consumeFrozenTime` function and all `useFrozenTime` / `frozenHoursUsed` / `frozenDaysUsed` parameters
+- `supabase/functions/create-offer-boost/index.ts` -- Same cleanup
 
-### Step 2: Fix UI Data Fetching
+**Deactivation edge functions stay as-is** (`deactivate-event-boost`, `deactivate-offer-boost`) -- they already handle the correct refund logic:
+- Free plan: no refund (forfeit)
+- Paid plan: remaining value returned to `monthly_budget_remaining_cents`
+- Hybrid (paid plan + Stripe top-up): remaining value goes to credits (resets at month end)
 
-Update `BoostManagement.tsx` fetch queries to include `frozen_hours` and `frozen_days` in the SELECT for both event and offer boosts.
+### 2. Remove Pause/Resume/Frozen Time from Frontend
 
-Update the interfaces `EventBoostWithMetrics` and `OfferBoostWithMetrics` to include frozen time fields.
+**`src/components/business/BoostManagement.tsx`:**
+- Remove `pauseEventBoost`, `resumeEventBoost`, `pauseOfferBoost`, `resumeOfferBoost` functions
+- Remove all frozen time state/calculations (`totalFrozenHours`, `totalFrozenDays`, `hasFrozenTime`, `getFrozenTimeText`, `FrozenTimeBadge`)
+- Remove "paused" status from active boost filters (active = only `status === "active"` within window)
+- Remove Pause button, Resume button, and their confirmation dialogs from both event and offer boost cards
+- Remove the global frozen time banner
+- Keep only the Deactivate button for active boosts
+- Deactivated boosts go to expired/history section and are **not clickable** (no actions possible)
 
-### Step 3: Fix Active/Expired/Paused Filtering
+**`src/components/business/EventBoostDialog.tsx`:**
+- Remove all frozen time state (`frozenHoursAvailable`, `frozenDaysAvailable`, `useFrozenTime`)
+- Remove frozen time fetch logic
+- Remove frozen time conversion calculations
+- Remove frozen time UI section (Snowflake toggle)
+- Remove `useFrozenTime`, `frozenHoursUsed`, `frozenDaysUsed` from API call payloads
 
-Change the filtering logic:
-- **Active**: `status === "active"` AND within time window
-- **Paused**: `status === "paused"` (shown in active section with paused badge)
-- **Expired/Deactivated**: Everything else (expired time window, deactivated status)
+**`src/components/business/OfferBoostDialog.tsx`:**
+- Same cleanup as EventBoostDialog
 
-For offer boosts, use `status` field instead of `active` boolean for consistency.
+**`src/components/business/OfferBoostSection.tsx`:**
+- No frozen time here currently, so minimal changes
 
-### Step 4: Add Confirmation Dialogs
+### 3. Add Free Plan No-Refund Disclaimer
 
-Add `AlertDialog` confirmation before:
-- **Pause**: Simple confirmation ("Are you sure you want to pause this boost? Remaining time will be frozen.")
-- **Deactivate**: Warning with plan-specific messaging:
-  - Free users: "Remaining value will be forfeited"
-  - Paid users: "Remaining value will be returned as credits"
+Add a warning message for free-plan business users at **every boost creation point**:
 
-### Step 5: Display Frozen Time
+> "Attention: On the Free plan, deactivating a boost does not return any credits. The remaining value is permanently lost."
+> (Greek: "Προσοχή: Στο Δωρεάν πλάνο, η απενεργοποίηση μιας προώθησης δεν επιστρέφει credits. Η εναπομείνασα αξία χάνεται οριστικά.")
 
-For paused boosts, show the frozen time in the card:
-- "Frozen: X hours" or "Frozen: X days" displayed near the status badge
-- This matches the policy: "Frozen time is displayed in the Boost Management UI (corner of the section)"
+This disclaimer appears in:
+- `EventBoostDialog.tsx` (boost from Events list)
+- `OfferBoostDialog.tsx` (boost from Offers list)
+- `OfferBoostSection.tsx` (boost during Offer creation, Step 9)
+- `BoostManagement.tsx` deactivation confirmation dialog (already has different messages for free vs paid -- will ensure clarity)
 
-### Step 6: Update UI State After Actions
+The disclaimer only shows when `hasActiveSubscription === false`.
 
-- **Pause**: Update local state to set `status: "paused"` and store returned `frozenHours`/`frozenDays`
-- **Deactivate**: Update local state to set `status: "deactivated"` (not remove from array)
+### 4. Deactivated Boost Behavior
+
+- Deactivated boosts appear in the "Expired" / history section with a "Deactivated" badge
+- **No buttons or actions** on deactivated boosts -- they are read-only history
+- The boost loses its "Boosted" visibility in feed/events immediately upon deactivation (already handled by status check)
 
 ---
 
 ## Technical Details
 
-### Files to modify:
-1. `supabase/functions/pause-offer-boost/index.ts` -- add `status: "paused"`
-2. `supabase/functions/deactivate-event-boost/index.ts` -- UPDATE instead of DELETE
-3. `supabase/functions/deactivate-offer-boost/index.ts` -- UPDATE instead of DELETE
-4. `src/components/business/BoostManagement.tsx` -- fix filtering, add frozen time display, add confirmation dialogs, fix state updates
+### Files to Delete
+- `supabase/functions/pause-event-boost/index.ts`
+- `supabase/functions/pause-offer-boost/index.ts`
+- `supabase/functions/resume-event-boost/index.ts`
+- `supabase/functions/resume-offer-boost/index.ts`
 
-### No database changes needed
-All required columns (`frozen_hours`, `frozen_days`, `status`) already exist on both `event_boosts` and `offer_boosts` tables.
+### Files to Edit
+| File | Changes |
+|------|---------|
+| `src/components/business/BoostManagement.tsx` | Remove pause/resume/frozen logic, remove paused status handling, make deactivated cards non-interactive |
+| `src/components/business/EventBoostDialog.tsx` | Remove frozen time UI and logic, add free-plan disclaimer |
+| `src/components/business/OfferBoostDialog.tsx` | Remove frozen time UI and logic, add free-plan disclaimer |
+| `src/components/business/OfferBoostSection.tsx` | Add free-plan disclaimer |
+| `supabase/functions/create-event-boost/index.ts` | Remove `consumeFrozenTime` and frozen time params |
+| `supabase/functions/create-offer-boost/index.ts` | Remove frozen time consumption logic |
+
+### Memory Files to Update
+- `.memory/technical/boost/refund-and-pause-policy-v1-el.md` -- Remove pause policy, update to deactivation-only
+- `.memory/features/business/boost-management-pause-deactivate-v1-el.md` -- Remove pause references
+- `.memory/features/business/boost-management-pause-resume-v3-el.md` -- Remove entirely or rewrite
+- `.memory/features/business/boost-frozen-time-consumption-v3-el.md` -- Remove entirely
+
+### Database Columns
+The `frozen_hours` and `frozen_days` columns on `event_boosts` and `offer_boosts` tables will become unused. They can remain without harm (nullable, default 0) to avoid a migration, or we can drop them for cleanliness.
 
