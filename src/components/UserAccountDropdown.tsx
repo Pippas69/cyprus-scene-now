@@ -178,6 +178,20 @@ export const UserAccountDropdown = ({
             )
           )}
 
+          {/* Admin Panel */}
+          {isAdmin && (
+            <DropdownMenuItem
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate('/admin/verification');
+              }}
+              className="text-sm cursor-pointer"
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              {t.admin}
+            </DropdownMenuItem>
+          )}
+
           {/* Sign Out */}
           <DropdownMenuItem
             onClick={() => {
