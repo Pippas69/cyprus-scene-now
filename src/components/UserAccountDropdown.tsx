@@ -44,6 +44,18 @@ export const UserAccountDropdown = ({
 
   const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        setIsAdmin(data?.role === 'admin');
+      });
+  }, [userId]);
   const translations = {
     el: {
       myAccount: 'Ο λογαριασμός μου',
