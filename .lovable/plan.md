@@ -1,103 +1,60 @@
 
+# Fix: Free Plan Stripe Boosts Stuck as "Pending" (Showing as Expired)
 
-# Remove Pause, Simplify Boost Lifecycle: Deactivate Only
+## Problem
 
-## Overview
+When a free-plan business user pays for a boost via Stripe, the boost record is created with `status: "pending"` in the database. The Stripe webhook (`stripe-webhook` edge function) is supposed to update this to `"active"` after successful payment, but the webhook is either not configured correctly or not reaching the function. As a result:
 
-This plan removes the entire "Pause/Resume/Frozen Time" system from boosts and simplifies the lifecycle to: **Active -> Deactivated (or Expired)**. It also adds a no-refund disclaimer for free-plan business users wherever boosts are created.
+- The boost stays as `"pending"` forever
+- The Boost Management UI filters `status === "active"` for the active tab, so pending boosts appear under "Expired"
+- The feed/events never show the boost as "Boosted"
+- The user sees a "success" toast (from the URL redirect) but nothing actually works
 
----
+Evidence from the database: all `source: "purchase"` event boosts have `status: "pending"` and `stripe_payment_intent_id: null`.
 
-## What Changes
+## Solution
 
-### 1. Remove Pause/Resume/Frozen Time from Backend
+Two-pronged fix to make this bulletproof:
 
-**Delete 4 edge functions:**
-- `supabase/functions/pause-event-boost/`
-- `supabase/functions/pause-offer-boost/`
-- `supabase/functions/resume-event-boost/`
-- `supabase/functions/resume-offer-boost/`
+### 1. Frontend Fallback: Activate Pending Boosts on Success Redirect
 
-**Update 2 edge functions (remove frozen time consumption):**
-- `supabase/functions/create-event-boost/index.ts` -- Remove `consumeFrozenTime` function and all `useFrozenTime` / `frozenHoursUsed` / `frozenDaysUsed` parameters
-- `supabase/functions/create-offer-boost/index.ts` -- Same cleanup
+When the user returns to the dashboard with `?boost=success`, the frontend should call a new edge function that finds the user's most recent `"pending"` boost and activates it. This ensures boosts work even if the webhook is delayed or misconfigured.
 
-**Deactivation edge functions stay as-is** (`deactivate-event-boost`, `deactivate-offer-boost`) -- they already handle the correct refund logic:
-- Free plan: no refund (forfeit)
-- Paid plan: remaining value returned to `monthly_budget_remaining_cents`
-- Hybrid (paid plan + Stripe top-up): remaining value goes to credits (resets at month end)
+**New edge function: `activate-pending-boost`**
+- Accepts the user's auth token
+- Finds the most recent `"pending"` event or offer boost for the user's business
+- Updates status to `"active"` (or `"scheduled"` if future start date)
+- Sets `active: true` for offer boosts
 
-### 2. Remove Pause/Resume/Frozen Time from Frontend
+**Update `DashboardBusiness.tsx`:**
+- On `?boost=success`, call the `activate-pending-boost` function before showing the success toast
 
-**`src/components/business/BoostManagement.tsx`:**
-- Remove `pauseEventBoost`, `resumeEventBoost`, `pauseOfferBoost`, `resumeOfferBoost` functions
-- Remove all frozen time state/calculations (`totalFrozenHours`, `totalFrozenDays`, `hasFrozenTime`, `getFrozenTimeText`, `FrozenTimeBadge`)
-- Remove "paused" status from active boost filters (active = only `status === "active"` within window)
-- Remove Pause button, Resume button, and their confirmation dialogs from both event and offer boost cards
-- Remove the global frozen time banner
-- Keep only the Deactivate button for active boosts
-- Deactivated boosts go to expired/history section and are **not clickable** (no actions possible)
+### 2. Fix Stripe Webhook Reliability
 
-**`src/components/business/EventBoostDialog.tsx`:**
-- Remove all frozen time state (`frozenHoursAvailable`, `frozenDaysAvailable`, `useFrozenTime`)
-- Remove frozen time fetch logic
-- Remove frozen time conversion calculations
-- Remove frozen time UI section (Snowflake toggle)
-- Remove `useFrozenTime`, `frozenHoursUsed`, `frozenDaysUsed` from API call payloads
+The `stripe-webhook` already has the correct logic (lines 165-281) to activate boosts. The issue is likely that the webhook endpoint isn't receiving events. We should verify the webhook configuration, but as a defensive measure, the webhook handler code is correct and needs no changes.
 
-**`src/components/business/OfferBoostDialog.tsx`:**
-- Same cleanup as EventBoostDialog
+### 3. Fix BoostManagement Filtering
 
-**`src/components/business/OfferBoostSection.tsx`:**
-- No frozen time here currently, so minimal changes
-
-### 3. Add Free Plan No-Refund Disclaimer
-
-Add a warning message for free-plan business users at **every boost creation point**:
-
-> "Attention: On the Free plan, deactivating a boost does not return any credits. The remaining value is permanently lost."
-> (Greek: "Προσοχή: Στο Δωρεάν πλάνο, η απενεργοποίηση μιας προώθησης δεν επιστρέφει credits. Η εναπομείνασα αξία χάνεται οριστικά.")
-
-This disclaimer appears in:
-- `EventBoostDialog.tsx` (boost from Events list)
-- `OfferBoostDialog.tsx` (boost from Offers list)
-- `OfferBoostSection.tsx` (boost during Offer creation, Step 9)
-- `BoostManagement.tsx` deactivation confirmation dialog (already has different messages for free vs paid -- will ensure clarity)
-
-The disclaimer only shows when `hasActiveSubscription === false`.
-
-### 4. Deactivated Boost Behavior
-
-- Deactivated boosts appear in the "Expired" / history section with a "Deactivated" badge
-- **No buttons or actions** on deactivated boosts -- they are read-only history
-- The boost loses its "Boosted" visibility in feed/events immediately upon deactivation (already handled by status check)
-
----
+Currently, `"pending"` boosts are grouped with expired. Add `"pending"` as a separate visible status so users can at least see that a boost is processing, rather than it silently appearing as expired.
 
 ## Technical Details
 
-### Files to Delete
-- `supabase/functions/pause-event-boost/index.ts`
-- `supabase/functions/pause-offer-boost/index.ts`
-- `supabase/functions/resume-event-boost/index.ts`
-- `supabase/functions/resume-offer-boost/index.ts`
+### New File: `supabase/functions/activate-pending-boost/index.ts`
+- Auth: verify JWT from header
+- Find user's business
+- Query for most recent `event_boosts` or `offer_boosts` with `status = 'pending'` and `source = 'purchase'`
+- Update status to `'active'` (if `start_date <= now`) or `'scheduled'`
+- For offer boosts, also set `active = true`
 
-### Files to Edit
-| File | Changes |
-|------|---------|
-| `src/components/business/BoostManagement.tsx` | Remove pause/resume/frozen logic, remove paused status handling, make deactivated cards non-interactive |
-| `src/components/business/EventBoostDialog.tsx` | Remove frozen time UI and logic, add free-plan disclaimer |
-| `src/components/business/OfferBoostDialog.tsx` | Remove frozen time UI and logic, add free-plan disclaimer |
-| `src/components/business/OfferBoostSection.tsx` | Add free-plan disclaimer |
-| `supabase/functions/create-event-boost/index.ts` | Remove `consumeFrozenTime` and frozen time params |
-| `supabase/functions/create-offer-boost/index.ts` | Remove frozen time consumption logic |
+### Edit: `src/pages/DashboardBusiness.tsx`
+- In the `useEffect` that handles `?boost=success`:
+  - Call `supabase.functions.invoke("activate-pending-boost")` before showing toast
+  - Refresh boost data after activation
 
-### Memory Files to Update
-- `.memory/technical/boost/refund-and-pause-policy-v1-el.md` -- Remove pause policy, update to deactivation-only
-- `.memory/features/business/boost-management-pause-deactivate-v1-el.md` -- Remove pause references
-- `.memory/features/business/boost-management-pause-resume-v3-el.md` -- Remove entirely or rewrite
-- `.memory/features/business/boost-frozen-time-consumption-v3-el.md` -- Remove entirely
+### Edit: `src/components/business/BoostManagement.tsx`
+- In the active/expired filtering logic (lines 426-441):
+  - Treat `"pending"` boosts from `source: "purchase"` as "processing" (not expired)
+  - Or simply include them in the active section with a "Processing Payment" badge
 
-### Database Columns
-The `frozen_hours` and `frozen_days` columns on `event_boosts` and `offer_boosts` tables will become unused. They can remain without harm (nullable, default 0) to avoid a migration, or we can drop them for cleanliness.
-
+### Memory file update
+- Update `.memory/technical/boost-transactional-safety-logic-el.md` to document the fallback activation flow
