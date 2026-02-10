@@ -717,6 +717,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const renderOfferBoostCard = (boost: OfferBoostWithMetrics, isExpiredSection: boolean) => {
     const isActive = boost.status === "active";
     const isDeactivated = boost.status === "deactivated";
+    const isPending = boost.status === "pending";
+    const isScheduled = boost.status === "scheduled";
 
     return (
       <Card key={boost.id} className={`overflow-hidden ${isExpiredSection ? "opacity-60" : ""}`}>
@@ -727,6 +729,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             <div className="flex items-center gap-1.5 shrink-0">
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
+              ) : isPending ? (
+                <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap animate-pulse">
+                  {t.pending}
+                </Badge>
+              ) : isScheduled ? (
+                <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.scheduled}
+                </Badge>
               ) : isDeactivated ? (
                 <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
                   {t.deactivated}
