@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Target, Rocket, Clock } from "lucide-react";
+import { CalendarIcon, Target, Rocket, Clock, AlertTriangle } from "lucide-react";
 import { format, addDays, addHours } from "date-fns";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
@@ -173,6 +173,18 @@ const OfferBoostSection = ({
 
       {boostEnabled && (
         <div className="space-y-6 pt-4 border-t">
+          {/* Free Plan No-Refund Disclaimer */}
+          {!hasActiveSubscription && (
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
+              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                {language === "el"
+                  ? "Προσοχή: Στο Δωρεάν πλάνο, η απενεργοποίηση μιας προώθησης δεν επιστρέφει credits. Η εναπομείνασα αξία χάνεται οριστικά."
+                  : "Attention: On the Free plan, deactivating a boost does not return any credits. The remaining value is permanently lost."}
+              </p>
+            </div>
+          )}
+
           {/* Duration Mode Toggle */}
           <div className="space-y-3">
             <Label>{language === "el" ? "Λειτουργία Διάρκειας" : "Duration Mode"}</Label>

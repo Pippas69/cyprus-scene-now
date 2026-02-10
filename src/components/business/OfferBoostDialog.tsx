@@ -5,13 +5,12 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2, Target, Rocket, Clock, Snowflake } from "lucide-react";
+import { CalendarIcon, Loader2, Target, Rocket, Clock, AlertTriangle } from "lucide-react";
 import { format, addDays, addHours } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
-import { Switch } from "@/components/ui/switch";
 
 type BoostTier = "standard" | "premium";
 type DurationMode = "hourly" | "daily";
@@ -46,57 +45,13 @@ const OfferBoostDialog = ({
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // Frozen time state
-  const [frozenHoursAvailable, setFrozenHoursAvailable] = useState(0);
-  const [frozenDaysAvailable, setFrozenDaysAvailable] = useState(0);
-  const [useFrozenTime, setUseFrozenTime] = useState(false);
-
   useEffect(() => {
     if (!open) {
       setCheckoutUrl(null);
       setRedirectAttempted(false);
       setIsSubmitting(false);
-      setUseFrozenTime(false);
     }
   }, [open]);
-
-  // Fetch frozen time when dialog opens
-  useEffect(() => {
-    if (!open) return;
-    const fetchFrozenTime = async () => {
-      try {
-        const { data: eventBoosts } = await supabase
-          .from("event_boosts")
-          .select("frozen_hours, frozen_days")
-          .eq("status", "paused");
-
-        const { data: offerBoosts } = await supabase
-          .from("offer_boosts")
-          .select("frozen_hours, frozen_days")
-          .eq("status", "paused");
-
-        let totalHours = 0;
-        let totalDays = 0;
-        [...(eventBoosts || []), ...(offerBoosts || [])].forEach(b => {
-          if (b.frozen_hours && b.frozen_hours > 0) totalHours += b.frozen_hours;
-          if (b.frozen_days && b.frozen_days > 0) totalDays += b.frozen_days;
-        });
-
-        setFrozenHoursAvailable(totalHours);
-        setFrozenDaysAvailable(totalDays);
-      } catch (e) {
-        console.error("Failed to fetch frozen time:", e);
-      }
-    };
-    fetchFrozenTime();
-  }, [open]);
-
-  
-  // Convert all frozen time to a unified pool per mode
-  const totalFrozenAsHours = frozenHoursAvailable + (frozenDaysAvailable * 24);
-  const totalFrozenAsDays = frozenDaysAvailable + Math.floor(frozenHoursAvailable / 24);
-  const frozenAvailableForMode = durationMode === "hourly" ? totalFrozenAsHours : totalFrozenAsDays;
-  const hasFrozenTime = frozenAvailableForMode > 0;
 
   // 2-tier boost system with hourly and daily rates
   const tiers = {
@@ -122,29 +77,11 @@ const OfferBoostDialog = ({
 
   const selectedTier = tiers[tier];
   const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  
-  const frozenUnitsUsed = useFrozenTime 
-    ? Math.min(frozenAvailableForMode, durationMode === "hourly" ? durationHours : days)
-    : 0;
-
-  const effectiveHours = durationMode === "hourly" 
-    ? Math.max(0, durationHours - frozenUnitsUsed) 
-    : durationHours;
-  const effectiveDays = durationMode === "daily" 
-    ? Math.max(0, days - frozenUnitsUsed) 
-    : days;
-
-  const frozenHoursUsed = durationMode === "hourly" ? frozenUnitsUsed : 0;
-  const frozenDaysUsed = durationMode === "daily" ? frozenUnitsUsed : 0;
 
   const totalCost = durationMode === "hourly" 
-    ? selectedTier.hourlyRate * effectiveHours 
-    : selectedTier.dailyRate * effectiveDays;
-  const totalCostCents = totalCost * 100;
-
-  const originalCost = durationMode === "hourly"
-    ? selectedTier.hourlyRate * durationHours
+    ? selectedTier.hourlyRate * durationHours 
     : selectedTier.dailyRate * days;
+  const totalCostCents = totalCost * 100;
 
   // Full budget covers entire cost
   const canUseSubscriptionBudget =
@@ -174,9 +111,6 @@ const OfferBoostDialog = ({
             endDate: formattedEndDate,
             durationHours: durationMode === "hourly" ? durationHours : undefined,
             useSubscriptionBudget: true,
-            useFrozenTime,
-            frozenHoursUsed: durationMode === "hourly" ? frozenHoursUsed : 0,
-            frozenDaysUsed: durationMode === "daily" ? frozenDaysUsed : 0,
           },
         });
 
@@ -206,9 +140,6 @@ const OfferBoostDialog = ({
               endDate: formattedEndDate,
               durationHours: durationMode === "hourly" ? durationHours : undefined,
               partialBudgetCents: hasPartialBudget ? remainingBudgetCents : 0,
-              useFrozenTime,
-              frozenHoursUsed: durationMode === "hourly" ? frozenHoursUsed : 0,
-              frozenDaysUsed: durationMode === "daily" ? frozenDaysUsed : 0,
             },
           }
         );
@@ -304,6 +235,18 @@ const OfferBoostDialog = ({
             </div>
           ) : (
             <>
+              {/* Free Plan No-Refund Disclaimer */}
+              {!hasActiveSubscription && (
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  <p className="text-xs text-amber-800 dark:text-amber-300">
+                    {language === "el"
+                      ? "Προσοχή: Στο Δωρεάν πλάνο, η απενεργοποίηση μιας προώθησης δεν επιστρέφει credits. Η εναπομείνασα αξία χάνεται οριστικά."
+                      : "Attention: On the Free plan, deactivating a boost does not return any credits. The remaining value is permanently lost."}
+                  </p>
+                </div>
+              )}
+
               {/* Duration Mode Toggle */}
               <div className="space-y-3">
                 <Label>{language === "el" ? "Λειτουργία Διάρκειας" : "Duration Mode"}</Label>
@@ -328,27 +271,6 @@ const OfferBoostDialog = ({
                   </Button>
                 </div>
               </div>
-
-              {/* Frozen Time Opt-in */}
-              {hasFrozenTime && (
-                <div className="flex items-center justify-between p-3 rounded-lg border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
-                  <div className="flex items-center gap-2">
-                    <Snowflake className="h-4 w-4 text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium">
-                        {language === "el" ? "Χρήση παγωμένου χρόνου;" : "Use frozen time?"}
-                      </p>
-                      <p className="text-[10px] md:text-xs text-muted-foreground">
-                        {language === "el" ? "Διαθέσιμος" : "Available"}:{" "}
-                        {frozenAvailableForMode} {durationMode === "hourly" 
-                          ? (language === "el" ? "ώρ." : "hrs") 
-                          : (language === "el" ? "ημ." : "days")}
-                      </p>
-                    </div>
-                  </div>
-                  <Switch checked={useFrozenTime} onCheckedChange={setUseFrozenTime} />
-                </div>
-              )}
 
               {/* Boost Tiers */}
               <div className="space-y-3">
@@ -496,36 +418,14 @@ const OfferBoostDialog = ({
                   </span>
                 </div>
 
-                {/* Frozen time discount line */}
-                {useFrozenTime && frozenUnitsUsed > 0 && (
-                  <div className="flex justify-between text-xs md:text-sm text-blue-600">
-                    <span className="flex items-center gap-1">
-                      <Snowflake className="h-3 w-3" />
-                      {language === "el" ? "Παγωμένος χρόνος" : "Frozen time"}:
-                    </span>
-                    <span className="font-semibold">
-                      -{frozenUnitsUsed} {durationMode === "hourly" 
-                        ? (language === "el" ? "ώρ." : "hrs") 
-                        : (language === "el" ? "ημ." : "days")}
-                    </span>
-                  </div>
-                )}
-
                 <div className="flex justify-between text-xs md:text-sm font-bold pt-2 border-t">
                   <span>{language === "el" ? "Σύνολο" : "Total"}:</span>
-                  <span>
-                    {useFrozenTime && totalCost < originalCost && (
-                      <span className="line-through text-muted-foreground mr-2 font-normal">€{originalCost.toFixed(2)}</span>
-                    )}
-                    €{totalCost.toFixed(2)}
-                  </span>
+                  <span>€{totalCost.toFixed(2)}</span>
                 </div>
 
                 {hasActiveSubscription && (
                   <div className="text-[10px] md:text-xs text-muted-foreground pt-2 space-y-1">
-                    {totalCostCents === 0 ? (
-                      <p>✓ {language === "el" ? "Πλήρως καλυμμένο από παγωμένο χρόνο" : "Fully covered by frozen time"}</p>
-                    ) : canUseSubscriptionBudget ? (
+                    {canUseSubscriptionBudget ? (
                       <p>✓ {language === "el" ? "Θα χρησιμοποιηθεί το budget συνδρομής" : "Will use subscription budget"}</p>
                     ) : hasPartialBudget ? (
                       <>
