@@ -29,8 +29,23 @@ import { useEffect, useState } from 'react';
 
 export const AdminHeader = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const t = adminTranslations[language];
+  const [userId, setUserId] = useState<string>();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id);
+    });
+  }, []);
+
+  const { data: profile } = useUserProfile(userId);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   // Generate breadcrumbs from path
   const pathSegments = location.pathname.split('/').filter(Boolean);
