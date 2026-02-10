@@ -421,22 +421,36 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     return isTimestampWithinWindow(new Date().toISOString(), window);
   };
 
-  // Active = status "active" AND within window
+  // Active = status "active" AND within window, OR "pending" purchase boosts (processing)
   // Expired/Deactivated = everything else
+  const isActiveOrPending = (status: string) => status === "active" || status === "pending" || status === "scheduled";
+
   const activeEventBoosts = useMemo(() => 
-    eventBoosts.filter(b => b.status === "active" && isBoostWithinWindow(b)),
+    eventBoosts.filter(b => 
+      (b.status === "active" && isBoostWithinWindow(b)) || 
+      b.status === "pending" || 
+      b.status === "scheduled"
+    ),
     [eventBoosts]
   );
   const expiredEventBoosts = useMemo(() => 
-    eventBoosts.filter(b => b.status !== "active" || !isBoostWithinWindow(b)),
+    eventBoosts.filter(b => 
+      !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "pending" || b.status === "scheduled")
+    ),
     [eventBoosts]
   );
   const activeOfferBoosts = useMemo(() => 
-    offerBoosts.filter(b => b.status === "active" && isBoostWithinWindow(b)),
+    offerBoosts.filter(b => 
+      (b.status === "active" && isBoostWithinWindow(b)) || 
+      b.status === "pending" || 
+      b.status === "scheduled"
+    ),
     [offerBoosts]
   );
   const expiredOfferBoosts = useMemo(() => 
-    offerBoosts.filter(b => b.status !== "active" || !isBoostWithinWindow(b)),
+    offerBoosts.filter(b => 
+      !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "pending" || b.status === "scheduled")
+    ),
     [offerBoosts]
   );
 
@@ -508,6 +522,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     confirm: language === "el" ? "Επιβεβαίωση" : "Confirm",
     cancel: language === "el" ? "Ακύρωση" : "Cancel",
     deactivated: language === "el" ? "Απενεργ." : "Deactivated",
+    pending: language === "el" ? "Επεξεργασία" : "Processing",
+    scheduled: language === "el" ? "Προγραμματ." : "Scheduled",
   };
 
   // Click-to-open metric dialog
@@ -557,6 +573,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const renderEventBoostCard = (boost: EventBoostWithMetrics, isExpiredSection: boolean) => {
     const isActive = boost.status === "active";
     const isDeactivated = boost.status === "deactivated";
+    const isPending = boost.status === "pending";
+    const isScheduled = boost.status === "scheduled";
     
     return (
       <Card key={boost.id} className={`overflow-hidden ${isExpiredSection ? "opacity-60" : ""}`}>
@@ -567,6 +585,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             <div className="flex items-center gap-1.5 shrink-0">
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
+              ) : isPending ? (
+                <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap animate-pulse">
+                  {t.pending}
+                </Badge>
+              ) : isScheduled ? (
+                <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.scheduled}
+                </Badge>
               ) : isDeactivated ? (
                 <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
                   {t.deactivated}
@@ -691,6 +717,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const renderOfferBoostCard = (boost: OfferBoostWithMetrics, isExpiredSection: boolean) => {
     const isActive = boost.status === "active";
     const isDeactivated = boost.status === "deactivated";
+    const isPending = boost.status === "pending";
+    const isScheduled = boost.status === "scheduled";
 
     return (
       <Card key={boost.id} className={`overflow-hidden ${isExpiredSection ? "opacity-60" : ""}`}>
@@ -701,6 +729,14 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             <div className="flex items-center gap-1.5 shrink-0">
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
+              ) : isPending ? (
+                <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap animate-pulse">
+                  {t.pending}
+                </Badge>
+              ) : isScheduled ? (
+                <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap">
+                  {t.scheduled}
+                </Badge>
               ) : isDeactivated ? (
                 <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
                   {t.deactivated}
