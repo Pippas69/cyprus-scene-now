@@ -83,10 +83,23 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showExpiredEvents, setShowExpiredEvents] = useState(false);
   const [showExpiredOffers, setShowExpiredOffers] = useState(false);
+  const [isFreeUser, setIsFreeUser] = useState(true);
 
   useEffect(() => {
     fetchBoosts();
+    fetchSubscriptionStatus();
   }, [businessId]);
+
+  const fetchSubscriptionStatus = async () => {
+    const { data } = await supabase
+      .from("business_subscriptions")
+      .select("plan_id, status")
+      .eq("business_id", businessId)
+      .single();
+    
+    const free = !data || data.status === "canceled" || !data.plan_id;
+    setIsFreeUser(free);
+  };
 
   const fetchBoosts = async () => {
     setLoading(true);
@@ -230,7 +243,18 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         })
       );
 
-      setEventBoosts(eventBoostsWithMetrics);
+      // Deduplicate by event_id - keep only the most recent boost per event
+      const deduplicatedEventBoosts = Object.values(
+        eventBoostsWithMetrics.reduce((acc, boost) => {
+          const existing = acc[boost.event_id];
+          if (!existing || new Date(boost.created_at || 0) > new Date(existing.created_at || 0)) {
+            acc[boost.event_id] = boost;
+          }
+          return acc;
+        }, {} as Record<string, EventBoostWithMetrics>)
+      );
+
+      setEventBoosts(deduplicatedEventBoosts);
 
       // Fetch offer boosts
       const { data: offerData, error: offerError } = await supabase
@@ -305,7 +329,18 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         })
       );
 
-      setOfferBoosts(offerBoostsWithMetrics);
+      // Deduplicate by discount_id - keep only the most recent boost per offer
+      const deduplicatedOfferBoosts = Object.values(
+        offerBoostsWithMetrics.reduce((acc, boost) => {
+          const existing = acc[boost.discount_id];
+          if (!existing || new Date(boost.created_at || 0) > new Date(existing.created_at || 0)) {
+            acc[boost.discount_id] = boost;
+          }
+          return acc;
+        }, {} as Record<string, OfferBoostWithMetrics>)
+      );
+
+      setOfferBoosts(deduplicatedOfferBoosts);
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
         description: error.message,
@@ -657,7 +692,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>{t.deactivateConfirmTitle}</AlertDialogTitle>
-                          <AlertDialogDescription>{t.deactivateConfirmDescPaid}</AlertDialogDescription>
+                          <AlertDialogDescription>{isFreeUser ? t.deactivateConfirmDescFree : t.deactivateConfirmDescPaid}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
@@ -801,7 +836,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>{t.deactivateConfirmTitle}</AlertDialogTitle>
-                          <AlertDialogDescription>{t.deactivateConfirmDescPaid}</AlertDialogDescription>
+                          <AlertDialogDescription>{isFreeUser ? t.deactivateConfirmDescFree : t.deactivateConfirmDescPaid}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
