@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Ticket, Calendar, Eye, MousePointer, Users, Euro, TicketCheck, UserCheck, Pause, Play, X, Snowflake } from "lucide-react";
+import { Loader2, Zap, Ticket, Calendar, Eye, MousePointer, Users, Euro, TicketCheck, UserCheck, X } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { format } from "date-fns";
 import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
@@ -55,8 +55,6 @@ interface EventBoostWithMetrics {
   created_at?: string | null;
   duration_mode?: string | null;
   duration_hours?: number | null;
-  frozen_hours?: number | null;
-  frozen_days?: number | null;
 }
 
 interface OfferBoostWithMetrics {
@@ -75,8 +73,6 @@ interface OfferBoostWithMetrics {
   created_at?: string | null;
   duration_mode?: string | null;
   duration_hours?: number | null;
-  frozen_hours?: number | null;
-  frozen_days?: number | null;
 }
 
 const BoostManagement = ({ businessId }: BoostManagementProps) => {
@@ -127,8 +123,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           created_at,
           duration_mode,
           duration_hours,
-          frozen_hours,
-          frozen_days,
           events (
             id,
             title,
@@ -232,8 +226,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             created_at: boost.created_at,
             duration_mode: boost.duration_mode,
             duration_hours: boost.duration_hours,
-            frozen_hours: boost.frozen_hours,
-            frozen_days: boost.frozen_days,
           };
         })
       );
@@ -255,8 +247,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           created_at,
           duration_mode,
           duration_hours,
-          frozen_hours,
-          frozen_days,
           discounts (
             id,
             title
@@ -303,7 +293,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             end_date: boost.end_date,
             total_cost_cents: boost.total_cost_cents,
             active: boost.active,
-            status: boost.status || (boost.active ? "active" : "paused"),
+            status: boost.status || (boost.active ? "active" : "deactivated"),
             offer_title: boost.discounts?.title || "Offer",
             impressions: impressions || 0,
             interactions: redemptionClicks || 0,
@@ -311,8 +301,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             created_at: boost.created_at,
             duration_mode: boost.duration_mode,
             duration_hours: boost.duration_hours,
-            frozen_hours: boost.frozen_hours,
-            frozen_days: boost.frozen_days,
           };
         })
       );
@@ -332,45 +320,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
       return "Premium (100%)";
     }
     return "Standard (70%)";
-  };
-
-  const pauseEventBoost = async (boostId: string) => {
-    setTogglingId(boostId);
-    
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-
-      const res = await supabase.functions.invoke("pause-event-boost", {
-        body: { boostId },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.error) throw res.error;
-
-      const responseData = res.data;
-      setEventBoosts(prev => 
-        prev.map(b => b.id === boostId ? { 
-          ...b, 
-          status: "paused",
-          frozen_hours: responseData?.frozenHours ?? b.frozen_hours,
-          frozen_days: responseData?.frozenDays ?? b.frozen_days,
-        } : b)
-      );
-
-      toast.success(
-        language === "el" 
-          ? "Η προώθηση τέθηκε σε παύση"
-          : "Boost paused"
-      );
-    } catch (error: any) {
-      toast.error(language === "el" ? "Σφάλμα" : "Error", {
-        description: error.message,
-      });
-    } finally {
-      setTogglingId(null);
-    }
   };
 
   const deactivateEventBoost = async (boostId: string) => {
@@ -403,46 +352,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         language === "el" 
           ? `Η προώθηση απενεργοποιήθηκε${refundMsg}`
           : `Boost deactivated${refundMsg}`
-      );
-    } catch (error: any) {
-      toast.error(language === "el" ? "Σφάλμα" : "Error", {
-        description: error.message,
-      });
-    } finally {
-      setTogglingId(null);
-    }
-  };
-
-  const pauseOfferBoost = async (boostId: string) => {
-    setTogglingId(boostId);
-    
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-
-      const res = await supabase.functions.invoke("pause-offer-boost", {
-        body: { boostId },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.error) throw res.error;
-
-      const responseData = res.data;
-      setOfferBoosts(prev => 
-        prev.map(b => b.id === boostId ? { 
-          ...b, 
-          active: false, 
-          status: "paused",
-          frozen_hours: responseData?.frozenHours ?? b.frozen_hours,
-          frozen_days: responseData?.frozenDays ?? b.frozen_days,
-        } : b)
-      );
-
-      toast.success(
-        language === "el" 
-          ? "Η προώθηση τέθηκε σε παύση"
-          : "Boost paused"
       );
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
@@ -493,58 +402,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     }
   };
 
-  const resumeEventBoost = async (boostId: string) => {
-    setTogglingId(boostId);
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-
-      const res = await supabase.functions.invoke("resume-event-boost", {
-        body: { boostId },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.error) throw res.error;
-
-      setEventBoosts(prev =>
-        prev.map(b => b.id === boostId ? { ...b, status: "active", frozen_hours: 0, frozen_days: 0 } : b)
-      );
-
-      toast.success(language === "el" ? "Η προώθηση συνεχίστηκε" : "Boost resumed");
-    } catch (error: any) {
-      toast.error(language === "el" ? "Σφάλμα" : "Error", { description: error.message });
-    } finally {
-      setTogglingId(null);
-    }
-  };
-
-  const resumeOfferBoost = async (boostId: string) => {
-    setTogglingId(boostId);
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-
-      const res = await supabase.functions.invoke("resume-offer-boost", {
-        body: { boostId },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.error) throw res.error;
-
-      setOfferBoosts(prev =>
-        prev.map(b => b.id === boostId ? { ...b, active: true, status: "active", frozen_hours: 0, frozen_days: 0 } : b)
-      );
-
-      toast.success(language === "el" ? "Η προώθηση συνεχίστηκε" : "Boost resumed");
-    } catch (error: any) {
-      toast.error(language === "el" ? "Σφάλμα" : "Error", { description: error.message });
-    } finally {
-      setTogglingId(null);
-    }
-  };
-
   // Helper to check if a boost is currently within its time window
   const isBoostWithinWindow = (boost: {
     start_date: string;
@@ -564,62 +421,24 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     return isTimestampWithinWindow(new Date().toISOString(), window);
   };
 
-  // Helper to get frozen time display text
-  const getFrozenTimeText = (boost: { frozen_hours?: number | null; frozen_days?: number | null; duration_mode?: string | null }) => {
-    if (boost.duration_mode === "hourly" && boost.frozen_hours && boost.frozen_hours > 0) {
-      return `${boost.frozen_hours} ${language === "el" ? "ώρ." : "hrs"}`;
-    }
-    if (boost.frozen_days && boost.frozen_days > 0) {
-      return `${boost.frozen_days} ${language === "el" ? "ημ." : "days"}`;
-    }
-    return null;
-  };
-
-  // Filtering: Active = status "active" AND within window, OR status "paused" (shown in active section)
+  // Active = status "active" AND within window
   // Expired/Deactivated = everything else
   const activeEventBoosts = useMemo(() => 
-    eventBoosts.filter(b => 
-      b.status === "paused" || (b.status === "active" && isBoostWithinWindow(b))
-    ),
+    eventBoosts.filter(b => b.status === "active" && isBoostWithinWindow(b)),
     [eventBoosts]
   );
   const expiredEventBoosts = useMemo(() => 
-    eventBoosts.filter(b => 
-      b.status !== "paused" && (b.status !== "active" || !isBoostWithinWindow(b))
-    ),
+    eventBoosts.filter(b => b.status !== "active" || !isBoostWithinWindow(b)),
     [eventBoosts]
   );
   const activeOfferBoosts = useMemo(() => 
-    offerBoosts.filter(b => 
-      b.status === "paused" || (b.status === "active" && isBoostWithinWindow(b))
-    ),
+    offerBoosts.filter(b => b.status === "active" && isBoostWithinWindow(b)),
     [offerBoosts]
   );
   const expiredOfferBoosts = useMemo(() => 
-    offerBoosts.filter(b => 
-      b.status !== "paused" && (b.status !== "active" || !isBoostWithinWindow(b))
-    ),
+    offerBoosts.filter(b => b.status !== "active" || !isBoostWithinWindow(b)),
     [offerBoosts]
   );
-
-  // Global frozen time: aggregate across ALL boosts (events + offers)
-  const totalFrozenHours = useMemo(() => {
-    let hours = 0;
-    [...eventBoosts, ...offerBoosts].forEach(b => {
-      if (b.frozen_hours && b.frozen_hours > 0) hours += b.frozen_hours;
-    });
-    return hours;
-  }, [eventBoosts, offerBoosts]);
-
-  const totalFrozenDays = useMemo(() => {
-    let days = 0;
-    [...eventBoosts, ...offerBoosts].forEach(b => {
-      if (b.frozen_days && b.frozen_days > 0) days += b.frozen_days;
-    });
-    return days;
-  }, [eventBoosts, offerBoosts]);
-
-  const hasFrozenTime = totalFrozenHours > 0 || totalFrozenDays > 0;
 
   if (loading) {
     return (
@@ -666,10 +485,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     tier: language === "el" ? "Tier:" : "Tier:",
     period: language === "el" ? "Περίοδος:" : "Period:",
     totalCost: language === "el" ? "Κόστος:" : "Cost:",
-    status: language === "el" ? "Κατάσταση:" : "Status:",
     active: language === "el" ? "Ενεργή" : "Active",
-    paused: language === "el" ? "Σε Παύση" : "Paused",
-    pauseBoost: language === "el" ? "Παύση" : "Pause",
     deactivateBoost: language === "el" ? "Απενεργοποίηση" : "Deactivate",
     recreateEventBoost: language === "el" 
       ? "Για να ενεργοποιήσετε ξανά, δημιουργήστε νέα προώθηση από τις Εκδηλώσεις" 
@@ -682,11 +498,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     reservations: language === "el" ? "Κρατήσεις" : "Reservations",
     guests: language === "el" ? "άτομα" : "guests",
     expired: language === "el" ? "Ληγμένες" : "Expired",
-    expiredSection: language === "el" ? "Ληγμένες Προωθήσεις" : "Expired Boosts",
-    pauseConfirmTitle: language === "el" ? "Παύση Προώθησης" : "Pause Boost",
-    pauseConfirmDesc: language === "el" 
-      ? "Ο εναπομείνας χρόνος θα παγώσει και μπορείτε να τον χρησιμοποιήσετε αργότερα σε νέα προώθηση." 
-      : "Remaining time will be frozen and you can use it later in a new boost.",
     deactivateConfirmTitle: language === "el" ? "Απενεργοποίηση Προώθησης" : "Deactivate Boost",
     deactivateConfirmDescFree: language === "el" 
       ? "Η εναπομείνασα αξία θα χαθεί οριστικά. Αυτή η ενέργεια δεν μπορεί να αναιρεθεί." 
@@ -696,18 +507,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
       : "The remaining value will be returned as credits to your monthly budget.",
     confirm: language === "el" ? "Επιβεβαίωση" : "Confirm",
     cancel: language === "el" ? "Ακύρωση" : "Cancel",
-    frozen: language === "el" ? "Παγωμένος" : "Frozen",
     deactivated: language === "el" ? "Απενεργ." : "Deactivated",
-    resumeBoost: language === "el" ? "Συνέχιση" : "Resume",
-    resumeConfirmTitle: language === "el" ? "Συνέχιση Προώθησης" : "Resume Boost",
-    resumeConfirmDesc: language === "el" 
-      ? "Η προώθηση θα συνεχιστεί. Ο παγωμένος χρόνος θα χρησιμοποιηθεί."
-      : "The boost will resume. Frozen time will be consumed.",
-    totalFrozenTime: language === "el" ? "Παγωμένος χρόνος" : "Frozen time",
-    frozenHours: language === "el" ? "ώρ." : "hrs",
-    frozenDays: language === "el" ? "ημ." : "days",
   };
-
 
   // Click-to-open metric dialog
   const MetricWithDialog = ({
@@ -752,22 +553,9 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     </Dialog>
   );
 
-  // Frozen time badge component
-  const FrozenTimeBadge = ({ boost }: { boost: { frozen_hours?: number | null; frozen_days?: number | null; duration_mode?: string | null } }) => {
-    const frozenText = getFrozenTimeText(boost);
-    if (!frozenText) return null;
-    return (
-      <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap gap-1 border-blue-300 text-blue-600">
-        <Snowflake className="h-3 w-3" />
-        {t.frozen}: {frozenText}
-      </Badge>
-    );
-  };
-
   // Render boost card for events
   const renderEventBoostCard = (boost: EventBoostWithMetrics, isExpiredSection: boolean) => {
     const isActive = boost.status === "active";
-    const isPaused = boost.status === "paused";
     const isDeactivated = boost.status === "deactivated";
     
     return (
@@ -777,13 +565,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
             <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.event_title}</h3>
             <div className="flex items-center gap-1.5 shrink-0">
-              
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
-              ) : isPaused ? (
-                <Badge variant="destructive" className="text-[9px] sm:text-xs whitespace-nowrap">
-                  {t.paused}
-                </Badge>
               ) : isDeactivated ? (
                 <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
                   {t.deactivated}
@@ -827,37 +610,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                   <span className="text-muted-foreground">{t.totalCost}</span>
                   <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
                 </div>
-                {isActive && (
+                {isActive && !isExpiredSection && (
                   <div className="flex gap-2 justify-end">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={togglingId === boost.id}
-                          className="gap-1.5"
-                        >
-                          {togglingId === boost.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Pause className="h-3.5 w-3.5" />
-                          )}
-                          {t.pauseBoost}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t.pauseConfirmTitle}</AlertDialogTitle>
-                          <AlertDialogDescription>{t.pauseConfirmDesc}</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => pauseEventBoost(boost.id)}>
-                            {t.confirm}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -883,39 +637,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                           <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
                           <AlertDialogAction onClick={() => deactivateEventBoost(boost.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                             {t.deactivateBoost}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                )}
-                {isPaused && (
-                  <div className="flex gap-2 justify-end">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          disabled={togglingId === boost.id}
-                          className="gap-1.5"
-                        >
-                          {togglingId === boost.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Play className="h-3.5 w-3.5" />
-                          )}
-                          {t.resumeBoost}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t.resumeConfirmTitle}</AlertDialogTitle>
-                          <AlertDialogDescription>{t.resumeConfirmDesc}</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => resumeEventBoost(boost.id)}>
-                            {t.confirm}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -969,7 +690,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   // Render boost card for offers
   const renderOfferBoostCard = (boost: OfferBoostWithMetrics, isExpiredSection: boolean) => {
     const isActive = boost.status === "active";
-    const isPaused = boost.status === "paused";
     const isDeactivated = boost.status === "deactivated";
 
     return (
@@ -979,13 +699,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           <div className="p-2.5 sm:p-4 pb-2 sm:pb-3 border-b bg-muted/30 flex items-center justify-between gap-2">
             <h3 className="font-semibold text-sm sm:text-lg truncate">{boost.offer_title}</h3>
             <div className="flex items-center gap-1.5 shrink-0">
-              
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
-              ) : isPaused ? (
-                <Badge variant="destructive" className="text-[9px] sm:text-xs whitespace-nowrap">
-                  {t.paused}
-                </Badge>
               ) : isDeactivated ? (
                 <Badge variant="outline" className="text-[9px] sm:text-xs whitespace-nowrap">
                   {t.deactivated}
@@ -1029,37 +744,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                   <span className="text-muted-foreground">{t.totalCost}</span>
                   <span className="font-bold text-primary">€{(boost.total_cost_cents / 100).toFixed(2)}</span>
                 </div>
-                {isActive && (
+                {isActive && !isExpiredSection && (
                   <div className="flex gap-2 justify-end">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={togglingId === boost.id}
-                          className="gap-1.5"
-                        >
-                          {togglingId === boost.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Pause className="h-3.5 w-3.5" />
-                          )}
-                          {t.pauseBoost}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t.pauseConfirmTitle}</AlertDialogTitle>
-                          <AlertDialogDescription>{t.pauseConfirmDesc}</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => pauseOfferBoost(boost.id)}>
-                            {t.confirm}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -1085,39 +771,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
                           <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
                           <AlertDialogAction onClick={() => deactivateOfferBoost(boost.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                             {t.deactivateBoost}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                )}
-                {isPaused && (
-                  <div className="flex gap-2 justify-end">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          disabled={togglingId === boost.id}
-                          className="gap-1.5"
-                        >
-                          {togglingId === boost.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Play className="h-3.5 w-3.5" />
-                          )}
-                          {t.resumeBoost}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t.resumeConfirmTitle}</AlertDialogTitle>
-                          <AlertDialogDescription>{t.resumeConfirmDesc}</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => resumeOfferBoost(boost.id)}>
-                            {t.confirm}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -1153,14 +806,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
         {/* EVENT BOOSTS TAB */}
         <TabsContent value="events" className="space-y-4 mt-4">
-          {hasFrozenTime && (
-            <div className="flex items-center gap-2 text-sm">
-              <Badge variant="outline" className="gap-1.5 border-blue-300 text-blue-600 px-3 py-1">
-                <Snowflake className="h-3.5 w-3.5" />
-                {t.totalFrozenTime}: {totalFrozenHours > 0 ? `${totalFrozenHours} ${t.frozenHours}` : ""}{totalFrozenHours > 0 && totalFrozenDays > 0 ? " + " : ""}{totalFrozenDays > 0 ? `${totalFrozenDays} ${t.frozenDays}` : ""}
-              </Badge>
-            </div>
-          )}
           {activeEventBoosts.length === 0 && expiredEventBoosts.length === 0 && (
             <Card>
               <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
@@ -1190,14 +835,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
         {/* OFFER BOOSTS TAB */}
         <TabsContent value="offers" className="space-y-4 mt-4">
-          {hasFrozenTime && (
-            <div className="flex items-center gap-2 text-sm">
-              <Badge variant="outline" className="gap-1.5 border-blue-300 text-blue-600 px-3 py-1">
-                <Snowflake className="h-3.5 w-3.5" />
-                {t.totalFrozenTime}: {totalFrozenHours > 0 ? `${totalFrozenHours} ${t.frozenHours}` : ""}{totalFrozenHours > 0 && totalFrozenDays > 0 ? " + " : ""}{totalFrozenDays > 0 ? `${totalFrozenDays} ${t.frozenDays}` : ""}
-              </Badge>
-            </div>
-          )}
           {activeOfferBoosts.length === 0 && expiredOfferBoosts.length === 0 && (
             <Card>
               <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
