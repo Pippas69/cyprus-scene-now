@@ -421,22 +421,36 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     return isTimestampWithinWindow(new Date().toISOString(), window);
   };
 
-  // Active = status "active" AND within window
+  // Active = status "active" AND within window, OR "pending" purchase boosts (processing)
   // Expired/Deactivated = everything else
+  const isActiveOrPending = (status: string) => status === "active" || status === "pending" || status === "scheduled";
+
   const activeEventBoosts = useMemo(() => 
-    eventBoosts.filter(b => b.status === "active" && isBoostWithinWindow(b)),
+    eventBoosts.filter(b => 
+      (b.status === "active" && isBoostWithinWindow(b)) || 
+      b.status === "pending" || 
+      b.status === "scheduled"
+    ),
     [eventBoosts]
   );
   const expiredEventBoosts = useMemo(() => 
-    eventBoosts.filter(b => b.status !== "active" || !isBoostWithinWindow(b)),
+    eventBoosts.filter(b => 
+      !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "pending" || b.status === "scheduled")
+    ),
     [eventBoosts]
   );
   const activeOfferBoosts = useMemo(() => 
-    offerBoosts.filter(b => b.status === "active" && isBoostWithinWindow(b)),
+    offerBoosts.filter(b => 
+      (b.status === "active" && isBoostWithinWindow(b)) || 
+      b.status === "pending" || 
+      b.status === "scheduled"
+    ),
     [offerBoosts]
   );
   const expiredOfferBoosts = useMemo(() => 
-    offerBoosts.filter(b => b.status !== "active" || !isBoostWithinWindow(b)),
+    offerBoosts.filter(b => 
+      !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "pending" || b.status === "scheduled")
+    ),
     [offerBoosts]
   );
 

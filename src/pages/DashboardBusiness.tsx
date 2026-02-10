@@ -100,7 +100,12 @@ const DashboardBusiness = () => {
     }
     
     if (boostStatus === 'success') {
-      toast.success(language === 'el' ? 'Το boost ενεργοποιήθηκε επιτυχώς!' : 'Boost activated successfully!');
+      // Activate any pending boosts (fallback for webhook delays)
+      supabase.functions.invoke("activate-pending-boost").then(() => {
+        toast.success(language === 'el' ? 'Το boost ενεργοποιήθηκε επιτυχώς!' : 'Boost activated successfully!');
+      }).catch(() => {
+        toast.success(language === 'el' ? 'Το boost ενεργοποιήθηκε επιτυχώς!' : 'Boost activated successfully!');
+      });
       window.history.replaceState({}, '', window.location.pathname);
     } else if (boostStatus === 'canceled') {
       toast.info(language === 'el' ? 'Η πληρωμή boost ακυρώθηκε' : 'Boost payment canceled');
