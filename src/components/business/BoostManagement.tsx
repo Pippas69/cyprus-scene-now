@@ -43,6 +43,7 @@ interface EventBoostWithMetrics {
   status: string;
   event_title: string;
   event_price: number | null;
+  event_end_at: string | null;
   impressions: number;
   interactions: number;
   visits: number;
@@ -139,7 +140,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           events (
             id,
             title,
-            price
+            price,
+            end_at
           )
         `)
         .eq("business_id", businessId)
@@ -227,6 +229,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             status: boost.status,
             event_title: boost.events?.title || "Event",
             event_price: boost.events?.price || null,
+            event_end_at: boost.events?.end_at || null,
             impressions: impressions || 0,
             interactions: rsvps || 0,
             visits: totalVisits,
@@ -482,16 +485,25 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   // Expired/Deactivated = everything else
   const isActiveOrPending = (status: string) => status === "active" || status === "pending" || status === "scheduled";
 
+  // Helper: check if the event itself has ended
+  const isEventEnded = (b: EventBoostWithMetrics) => {
+    if (!b.event_end_at) return false;
+    return new Date(b.event_end_at) < new Date();
+  };
+
   const activeEventBoosts = useMemo(() => 
     eventBoosts.filter(b => 
-      (b.status === "active" && isBoostWithinWindow(b)) || 
-      b.status === "pending" || 
-      b.status === "scheduled"
+      !isEventEnded(b) && (
+        (b.status === "active" && isBoostWithinWindow(b)) || 
+        b.status === "pending" || 
+        b.status === "scheduled"
+      )
     ),
     [eventBoosts]
   );
   const expiredEventBoosts = useMemo(() => 
     eventBoosts.filter(b => 
+      isEventEnded(b) || 
       !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "pending" || b.status === "scheduled")
     ),
     [eventBoosts]
