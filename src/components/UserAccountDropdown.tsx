@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Building2, LogOut, User } from 'lucide-react';
+import { Bell, Building2, LogOut, Shield, User } from 'lucide-react';
 import { useBusinessOwner } from '@/hooks/useBusinessOwner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
