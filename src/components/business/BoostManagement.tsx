@@ -522,6 +522,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     confirm: language === "el" ? "Επιβεβαίωση" : "Confirm",
     cancel: language === "el" ? "Ακύρωση" : "Cancel",
     deactivated: language === "el" ? "Απενεργ." : "Deactivated",
+    pending: language === "el" ? "Επεξεργασία" : "Processing",
+    scheduled: language === "el" ? "Προγραμματ." : "Scheduled",
   };
 
   // Click-to-open metric dialog
