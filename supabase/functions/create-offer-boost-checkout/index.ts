@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
     if (boostError) throw boostError;
     
     const boostId = boostData.id;
-    logStep("Boost record created with pending status", { boostId, durationMode });
+    logStep("Boost record created", { boostId, status, durationMode });
 
     // Create Stripe checkout session
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
