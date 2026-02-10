@@ -62,6 +62,7 @@ export const UserAccountDropdown = ({
       myBusiness: 'Η επιχείρησή μου',
       myUserAccount: 'Ο προσωπικός μου λογαριασμός',
       notifications: 'Ειδοποιήσεις',
+      admin: 'Admin',
       signOut: 'Αποσύνδεση',
     },
     en: {
@@ -69,6 +70,7 @@ export const UserAccountDropdown = ({
       myBusiness: 'My Business',
       myUserAccount: 'My User Account',
       notifications: 'Notifications',
+      admin: 'Admin',
       signOut: 'Sign Out',
     },
   };
