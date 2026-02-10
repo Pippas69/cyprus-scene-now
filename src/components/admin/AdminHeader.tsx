@@ -10,12 +10,22 @@ import {
 } from '@/components/ui/breadcrumb';
 import LanguageToggle from '@/components/LanguageToggle';
 import { NotificationBell } from './NotificationBell';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { adminTranslations } from '@/translations/adminTranslations';
 import { useTheme } from 'next-themes';
-import { Moon, Sun } from 'lucide-react';
+import { LogOut, Moon, Sun, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { supabase } from '@/integrations/supabase/client';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useEffect, useState } from 'react';
 
 export const AdminHeader = () => {
   const location = useLocation();
