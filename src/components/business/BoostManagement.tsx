@@ -164,157 +164,110 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (eventError) throw eventError;
 
+      // Group boosts by event_id to avoid double-counting across overlapping windows
+      const eventBoostGroups = new Map<string, typeof eventData>();
+      for (const boost of (eventData || [])) {
+        if (!eventBoostGroups.has(boost.event_id)) {
+          eventBoostGroups.set(boost.event_id, []);
+        }
+        eventBoostGroups.get(boost.event_id)!.push(boost);
+      }
+
+      // Helper: check if timestamp falls within ANY boost window for this group
+      const isInAnyWindow = (timestamp: string, windows: Array<{ startIso: string; endIso: string }>) => {
+        return windows.some(w => timestamp >= w.startIso && timestamp <= w.endIso);
+      };
+
       const eventBoostsWithMetrics: EventBoostWithMetrics[] = await Promise.all(
-         (eventData || []).map(async (boost) => {
-           const eventId = boost.event_id;
-           const { startIso: boostStart, endIso: boostEnd } = getBoostWindow(boost);
-           
-          const { count: impressions } = await supabase
-            .from("event_views")
-            .select("*", { count: "exact", head: true })
-            .eq("event_id", eventId)
-            .gte("viewed_at", boostStart)
-            .lte("viewed_at", boostEnd);
+        Array.from(eventBoostGroups.entries()).map(async ([eventId, boosts]) => {
+          // Compute all windows for this event (exclude pending boosts)
+          const activeBoosts = boosts.filter(b => b.status !== 'pending');
+          const windows = activeBoosts.map(b => getBoostWindow(b));
+          
+          // Find the overall earliest start and latest end for DB queries
+          const overallStart = windows.reduce((min, w) => w.startIso < min ? w.startIso : min, windows[0]?.startIso || '');
+          const overallEnd = windows.reduce((max, w) => w.endIso > max ? w.endIso : max, windows[0]?.endIso || '');
+          
+          if (!overallStart || !overallEnd) {
+            // No active windows, skip
+            const bestBoost = boosts[0];
+            return {
+              id: bestBoost.id, event_id: eventId, boost_tier: bestBoost.boost_tier,
+              start_date: bestBoost.start_date, end_date: bestBoost.end_date,
+              total_cost_cents: boosts.reduce((s, b) => s + b.total_cost_cents, 0),
+              status: bestBoost.status, event_title: bestBoost.events?.title || "Event",
+              event_price: bestBoost.events?.price || null, event_end_at: bestBoost.events?.end_at || null,
+              impressions: 0, interactions: 0, visits: 0, tickets_sold: 0,
+              ticket_revenue_cents: 0, reservations_count: 0, reservation_guests: 0,
+              reservation_revenue_cents: 0, has_paid_content: false,
+              created_at: bestBoost.created_at, duration_mode: bestBoost.duration_mode,
+              duration_hours: bestBoost.duration_hours,
+            };
+          }
 
-          const { count: rsvps } = await supabase
-            .from("rsvps")
-            .select("*", { count: "exact", head: true })
-            .eq("event_id", eventId)
-            .gte("created_at", boostStart)
-            .lte("created_at", boostEnd);
+          // Fetch all data once per event using the overall range, then filter in JS
+          const [viewsRes, rsvpsRes, ticketsRes, ordersRes, reservationsRes] = await Promise.all([
+            supabase.from("event_views").select("viewed_at").eq("event_id", eventId)
+              .gte("viewed_at", overallStart).lte("viewed_at", overallEnd),
+            supabase.from("rsvps").select("created_at").eq("event_id", eventId)
+              .gte("created_at", overallStart).lte("created_at", overallEnd),
+            supabase.from("tickets").select("id, created_at, checked_in_at, status").eq("event_id", eventId)
+              .gte("created_at", overallStart).lte("created_at", overallEnd),
+            supabase.from("ticket_orders").select("created_at, subtotal_cents, status").eq("event_id", eventId)
+              .eq("status", "completed").gte("created_at", overallStart).lte("created_at", overallEnd),
+            supabase.from("reservations").select("created_at, checked_in_at, status, party_size, prepaid_min_charge_cents")
+              .eq("event_id", eventId).eq("status", "accepted")
+              .gte("created_at", overallStart).lte("created_at", overallEnd),
+          ]);
 
-          const { data: ticketsSoldData } = await supabase
-            .from("tickets")
-            .select("id")
-            .eq("event_id", eventId)
-            .in("status", ["valid", "used"])
-            .gte("created_at", boostStart)
-            .lte("created_at", boostEnd);
+          // Filter each record against ALL boost windows (no double-counting)
+          const impressions = (viewsRes.data || []).filter(v => isInAnyWindow(v.viewed_at, windows)).length;
+          const interactions = (rsvpsRes.data || []).filter(r => isInAnyWindow(r.created_at, windows)).length;
+          
+          const boostedTickets = (ticketsRes.data || []).filter(t => 
+            ["valid", "used"].includes(t.status) && isInAnyWindow(t.created_at, windows)
+          );
+          const ticketsSold = boostedTickets.length;
+          const ticketCheckIns = boostedTickets.filter(t => t.checked_in_at).length;
 
-          const ticketsSold = ticketsSoldData?.length || 0;
+          const boostedOrders = (ordersRes.data || []).filter(o => isInAnyWindow(o.created_at, windows));
+          const ticketRevenue = boostedOrders.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0);
 
-          const { data: ticketOrders } = await supabase
-            .from("ticket_orders")
-            .select("subtotal_cents")
-            .eq("event_id", eventId)
-            .eq("status", "completed")
-            .gte("created_at", boostStart)
-            .lte("created_at", boostEnd);
+          const boostedReservations = (reservationsRes.data || []).filter(r => isInAnyWindow(r.created_at, windows));
+          const reservationsCount = boostedReservations.length;
+          const reservationGuests = boostedReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
+          const reservationRevenue = boostedReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0);
+          const reservationCheckIns = boostedReservations.filter(r => r.checked_in_at).length;
 
-          const ticketRevenue = ticketOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
-
-          const { count: ticketCheckIns } = await supabase
-            .from("tickets")
-            .select("id", { count: "exact", head: true })
-            .eq("event_id", eventId)
-            .not("checked_in_at", "is", null)
-            .gte("created_at", boostStart)
-            .lte("created_at", boostEnd);
-
-          const { data: reservationsData } = await supabase
-            .from("reservations")
-            .select("party_size, prepaid_min_charge_cents")
-            .eq("event_id", eventId)
-            .eq("status", "accepted")
-            .gte("created_at", boostStart)
-            .lte("created_at", boostEnd);
-
-          const reservationsCount = reservationsData?.length || 0;
-          const reservationGuests = reservationsData?.reduce((sum, r) => sum + (r.party_size || 0), 0) || 0;
-          const reservationRevenue = reservationsData?.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0) || 0;
-
-          const { count: reservationCheckIns } = await supabase
-            .from("reservations")
-            .select("id", { count: "exact", head: true })
-            .eq("event_id", eventId)
-            .not("checked_in_at", "is", null)
-            .gte("created_at", boostStart)
-            .lte("created_at", boostEnd);
-
-          const totalVisits = (ticketCheckIns || 0) + (reservationCheckIns || 0);
+          const totalVisits = ticketCheckIns + reservationCheckIns;
           const hasPaidContent = ticketRevenue > 0 || reservationRevenue > 0;
 
+          // Pick best boost for metadata (active > latest end_date)
+          const sortedBoosts = [...boosts].sort((a, b) => {
+            const aActive = a.status === "active" && isBoostWithinWindow(a);
+            const bActive = b.status === "active" && isBoostWithinWindow(b);
+            if (aActive && !bActive) return -1;
+            if (!aActive && bActive) return 1;
+            return new Date(b.end_date).getTime() - new Date(a.end_date).getTime();
+          });
+          const bestBoost = sortedBoosts[0];
+
           return {
-            id: boost.id,
-            event_id: eventId,
-            boost_tier: boost.boost_tier,
-            start_date: boost.start_date,
-            end_date: boost.end_date,
-            total_cost_cents: boost.total_cost_cents,
-            status: boost.status,
-            event_title: boost.events?.title || "Event",
-            event_price: boost.events?.price || null,
-            event_end_at: boost.events?.end_at || null,
-            impressions: impressions || 0,
-            interactions: rsvps || 0,
-            visits: totalVisits,
-            tickets_sold: ticketsSold,
-            ticket_revenue_cents: ticketRevenue,
-            reservations_count: reservationsCount,
-            reservation_guests: reservationGuests,
-            reservation_revenue_cents: reservationRevenue,
-            has_paid_content: hasPaidContent,
-            created_at: boost.created_at,
-            duration_mode: boost.duration_mode,
-            duration_hours: boost.duration_hours,
+            id: bestBoost.id, event_id: eventId, boost_tier: bestBoost.boost_tier,
+            start_date: bestBoost.start_date, end_date: bestBoost.end_date,
+            total_cost_cents: boosts.reduce((s, b) => s + b.total_cost_cents, 0),
+            status: bestBoost.status, event_title: bestBoost.events?.title || "Event",
+            event_price: bestBoost.events?.price || null, event_end_at: bestBoost.events?.end_at || null,
+            impressions, interactions, visits: totalVisits, tickets_sold: ticketsSold,
+            ticket_revenue_cents: ticketRevenue, reservations_count: reservationsCount,
+            reservation_guests: reservationGuests, reservation_revenue_cents: reservationRevenue,
+            has_paid_content: hasPaidContent, created_at: bestBoost.created_at,
+            duration_mode: bestBoost.duration_mode, duration_hours: bestBoost.duration_hours,
           };
         })
       );
 
-      // Deduplicate by event_id - aggregate metrics across all boosts, keep best metadata
-      const deduplicatedEventBoosts = Object.values(
-        eventBoostsWithMetrics.reduce((acc, boost) => {
-          const existing = acc[boost.event_id];
-          if (!existing) {
-            acc[boost.event_id] = boost;
-          } else {
-            // Aggregate metrics from all boosts for the same event
-            existing.impressions += boost.impressions;
-            existing.interactions += boost.interactions;
-            existing.visits += boost.visits;
-            existing.tickets_sold += boost.tickets_sold;
-            existing.ticket_revenue_cents += boost.ticket_revenue_cents;
-            existing.reservations_count += boost.reservations_count;
-            existing.reservation_guests += boost.reservation_guests;
-            existing.reservation_revenue_cents += boost.reservation_revenue_cents;
-            existing.total_cost_cents += boost.total_cost_cents;
-            existing.has_paid_content = existing.has_paid_content || boost.has_paid_content;
-
-            // Prefer active boost's metadata, or the one with later end_date
-            const existingActive = existing.status === "active" && isBoostWithinWindow(existing);
-            const currentActive = boost.status === "active" && isBoostWithinWindow(boost);
-            if (currentActive && !existingActive) {
-              // Keep aggregated metrics but use active boost's metadata
-              const metrics = {
-                impressions: existing.impressions, interactions: existing.interactions,
-                visits: existing.visits, tickets_sold: existing.tickets_sold,
-                ticket_revenue_cents: existing.ticket_revenue_cents,
-                reservations_count: existing.reservations_count,
-                reservation_guests: existing.reservation_guests,
-                reservation_revenue_cents: existing.reservation_revenue_cents,
-                total_cost_cents: existing.total_cost_cents,
-                has_paid_content: existing.has_paid_content,
-              };
-              acc[boost.event_id] = { ...boost, ...metrics };
-            } else if (!existingActive && !currentActive && new Date(boost.end_date) > new Date(existing.end_date)) {
-              const metrics = {
-                impressions: existing.impressions, interactions: existing.interactions,
-                visits: existing.visits, tickets_sold: existing.tickets_sold,
-                ticket_revenue_cents: existing.ticket_revenue_cents,
-                reservations_count: existing.reservations_count,
-                reservation_guests: existing.reservation_guests,
-                reservation_revenue_cents: existing.reservation_revenue_cents,
-                total_cost_cents: existing.total_cost_cents,
-                has_paid_content: existing.has_paid_content,
-              };
-              acc[boost.event_id] = { ...boost, ...metrics };
-            }
-          }
-          return acc;
-        }, {} as Record<string, EventBoostWithMetrics>)
-      );
-
-      setEventBoosts(deduplicatedEventBoosts);
+      setEventBoosts(eventBoostsWithMetrics);
 
       // Fetch offer boosts
       const { data: offerData, error: offerError } = await supabase
@@ -342,88 +295,76 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
       if (offerError) throw offerError;
 
+      // Group offer boosts by discount_id to avoid double-counting
+      const offerBoostGroups = new Map<string, typeof offerData>();
+      for (const boost of (offerData || [])) {
+        if (!offerBoostGroups.has(boost.discount_id)) {
+          offerBoostGroups.set(boost.discount_id, []);
+        }
+        offerBoostGroups.get(boost.discount_id)!.push(boost);
+      }
+
       const offerBoostsWithMetrics: OfferBoostWithMetrics[] = await Promise.all(
-         (offerData || []).map(async (boost) => {
-           const discountId = boost.discount_id;
-           const { startIso: boostStart, endIso: boostEnd } = getBoostWindow(boost);
-           
-          const { count: impressions } = await supabase
-            .from("discount_views")
-            .select("*", { count: "exact", head: true })
-            .eq("discount_id", discountId)
-            .gte("viewed_at", boostStart)
-            .lte("viewed_at", boostEnd);
+        Array.from(offerBoostGroups.entries()).map(async ([discountId, boosts]) => {
+          const activeBoosts = boosts.filter(b => b.status !== 'pending');
+          const windows = activeBoosts.map(b => getBoostWindow(b));
 
-          const { count: redemptionClicks } = await supabase
-            .from("engagement_events")
-            .select("id", { count: "exact", head: true })
-            .eq("event_type", "offer_redeem_click")
-            .eq("entity_id", discountId)
-            .gte("created_at", boostStart)
-            .lte("created_at", boostEnd);
+          const overallStart = windows.reduce((min, w) => w.startIso < min ? w.startIso : min, windows[0]?.startIso || '');
+          const overallEnd = windows.reduce((max, w) => w.endIso > max ? w.endIso : max, windows[0]?.endIso || '');
 
-          const { count: visits } = await supabase
-            .from("offer_purchases")
-            .select("*", { count: "exact", head: true })
-            .eq("discount_id", discountId)
-            .not("redeemed_at", "is", null)
-            .gte("created_at", boostStart)
-            .lte("created_at", boostEnd);
+          if (!overallStart || !overallEnd) {
+            const bestBoost = boosts[0];
+            return {
+              id: bestBoost.id, discount_id: discountId, boost_tier: bestBoost.boost_tier || "standard",
+              start_date: bestBoost.start_date, end_date: bestBoost.end_date,
+              total_cost_cents: boosts.reduce((s, b) => s + b.total_cost_cents, 0),
+              active: bestBoost.active, status: bestBoost.status || "deactivated",
+              offer_title: bestBoost.discounts?.title || "Offer",
+              impressions: 0, interactions: 0, visits: 0,
+              created_at: bestBoost.created_at, duration_mode: bestBoost.duration_mode,
+              duration_hours: bestBoost.duration_hours,
+            };
+          }
+
+          const [viewsRes, clicksRes, purchasesRes] = await Promise.all([
+            supabase.from("discount_views").select("viewed_at").eq("discount_id", discountId)
+              .gte("viewed_at", overallStart).lte("viewed_at", overallEnd),
+            supabase.from("engagement_events").select("created_at")
+              .eq("event_type", "offer_redeem_click").eq("entity_id", discountId)
+              .gte("created_at", overallStart).lte("created_at", overallEnd),
+            supabase.from("offer_purchases").select("created_at, redeemed_at").eq("discount_id", discountId)
+              .not("redeemed_at", "is", null)
+              .gte("created_at", overallStart).lte("created_at", overallEnd),
+          ]);
+
+          const impressions = (viewsRes.data || []).filter(v => isInAnyWindow(v.viewed_at, windows)).length;
+          const interactions = (clicksRes.data || []).filter(c => isInAnyWindow(c.created_at, windows)).length;
+          const visits = (purchasesRes.data || []).filter(p => isInAnyWindow(p.created_at, windows)).length;
+
+          const sortedBoosts = [...boosts].sort((a, b) => {
+            const aActive = a.status === "active" && isBoostWithinWindow(a);
+            const bActive = b.status === "active" && isBoostWithinWindow(b);
+            if (aActive && !bActive) return -1;
+            if (!aActive && bActive) return 1;
+            return new Date(b.end_date).getTime() - new Date(a.end_date).getTime();
+          });
+          const bestBoost = sortedBoosts[0];
 
           return {
-            id: boost.id,
-            discount_id: discountId,
-            boost_tier: boost.boost_tier || "standard",
-            start_date: boost.start_date,
-            end_date: boost.end_date,
-            total_cost_cents: boost.total_cost_cents,
-            active: boost.active,
-            status: boost.status || (boost.active ? "active" : "deactivated"),
-            offer_title: boost.discounts?.title || "Offer",
-            impressions: impressions || 0,
-            interactions: redemptionClicks || 0,
-            visits: visits || 0,
-            created_at: boost.created_at,
-            duration_mode: boost.duration_mode,
-            duration_hours: boost.duration_hours,
+            id: bestBoost.id, discount_id: discountId, boost_tier: bestBoost.boost_tier || "standard",
+            start_date: bestBoost.start_date, end_date: bestBoost.end_date,
+            total_cost_cents: boosts.reduce((s, b) => s + b.total_cost_cents, 0),
+            active: bestBoost.active,
+            status: bestBoost.status || (bestBoost.active ? "active" : "deactivated"),
+            offer_title: bestBoost.discounts?.title || "Offer",
+            impressions, interactions, visits,
+            created_at: bestBoost.created_at, duration_mode: bestBoost.duration_mode,
+            duration_hours: bestBoost.duration_hours,
           };
         })
       );
 
-      // Deduplicate by discount_id - aggregate metrics across all boosts
-      const deduplicatedOfferBoosts = Object.values(
-        offerBoostsWithMetrics.reduce((acc, boost) => {
-          const existing = acc[boost.discount_id];
-          if (!existing) {
-            acc[boost.discount_id] = boost;
-          } else {
-            // Aggregate metrics
-            existing.impressions += boost.impressions;
-            existing.interactions += boost.interactions;
-            existing.visits += boost.visits;
-            existing.total_cost_cents += boost.total_cost_cents;
-
-            const existingActive = existing.status === "active" && isBoostWithinWindow(existing);
-            const currentActive = boost.status === "active" && isBoostWithinWindow(boost);
-            if (currentActive && !existingActive) {
-              const metrics = {
-                impressions: existing.impressions, interactions: existing.interactions,
-                visits: existing.visits, total_cost_cents: existing.total_cost_cents,
-              };
-              acc[boost.discount_id] = { ...boost, ...metrics };
-            } else if (!existingActive && !currentActive && new Date(boost.end_date) > new Date(existing.end_date)) {
-              const metrics = {
-                impressions: existing.impressions, interactions: existing.interactions,
-                visits: existing.visits, total_cost_cents: existing.total_cost_cents,
-              };
-              acc[boost.discount_id] = { ...boost, ...metrics };
-            }
-          }
-          return acc;
-        }, {} as Record<string, OfferBoostWithMetrics>)
-      );
-
-      setOfferBoosts(deduplicatedOfferBoosts);
+      setOfferBoosts(offerBoostsWithMetrics);
     } catch (error: any) {
       toast.error(language === "el" ? "Σφάλμα" : "Error", {
         description: error.message,
