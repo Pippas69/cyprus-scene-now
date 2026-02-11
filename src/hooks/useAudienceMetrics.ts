@@ -13,6 +13,8 @@ export const useAudienceMetrics = (
 ) => {
   return useQuery({
     queryKey: ["audience-metrics", businessId, dateRange?.from, dateRange?.to],
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     queryFn: async (): Promise<AudienceMetrics> => {
       // Use the secure RPC function that bypasses RLS to calculate demographics
       // This runs server-side with SECURITY DEFINER, so it can access all profiles

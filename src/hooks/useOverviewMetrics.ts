@@ -13,6 +13,8 @@ export interface OverviewMetrics {
 export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date; to: Date }) => {
   return useQuery({
     queryKey: ["overview-metrics", businessId, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     queryFn: async (): Promise<OverviewMetrics> => {
       const startDate = dateRange?.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const endDate = dateRange?.to || new Date();
