@@ -484,7 +484,4 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
     enabled: !!businessId,
   });
 }
-    enabled: !!businessId,
-  });
-}
 };
