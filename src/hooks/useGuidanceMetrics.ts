@@ -483,8 +483,7 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
     },
     enabled: !!businessId,
     // Guidance should update quickly after subscription changes.
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000,
+    enabled: !!businessId,
   });
+}
 };
