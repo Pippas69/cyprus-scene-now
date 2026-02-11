@@ -11,6 +11,14 @@ const logStep = (step: string, details?: any) => {
   console.log(`[DOWNGRADE] ${step}${detailsStr}`);
 };
 
+// Safe timestamp to ISO helper
+const safeTimestampToISO = (val: any): string => {
+  if (!val) return new Date().toISOString();
+  if (typeof val === 'number') return new Date(val * 1000).toISOString();
+  if (typeof val === 'string') return val;
+  return new Date().toISOString();
+};
+
 // Plan hierarchy for validation
 const PLAN_HIERARCHY: Record<string, number> = { free: 0, basic: 1, pro: 2, elite: 3 };
 
@@ -119,8 +127,16 @@ Deno.serve(async (req) => {
     if (subscription.stripe_subscription_id) {
       try {
         const stripeSub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
-        effectiveDate = new Date(stripeSub.current_period_end * 1000).toISOString();
-
+        
+        // In Stripe API 2025-08-27.basil, current_period_end/start moved to items level
+        const subItem = stripeSub.items?.data?.[0];
+        const periodEnd = (subItem as any)?.current_period_end;
+        const periodStart = (subItem as any)?.current_period_start;
+        
+        logStep('Stripe sub period', { periodEnd, periodStart, status: stripeSub.status });
+        
+        effectiveDate = safeTimestampToISO(periodEnd);
+        
         if (targetPlan === 'free') {
           // ===== DOWNGRADE TO FREE: Cancel at period end =====
           await stripe.subscriptions.update(subscription.stripe_subscription_id, {
@@ -129,12 +145,10 @@ Deno.serve(async (req) => {
           logStep('Stripe subscription set to cancel at period end');
         } else {
           // ===== DOWNGRADE TO PAID PLAN: Schedule price change at period end =====
-          // Determine if current subscription is monthly or annual
-          const currentPriceId = stripeSub.items.data[0]?.price?.id;
-          const currentInterval = stripeSub.items.data[0]?.price?.recurring?.interval;
+          const currentPriceId = subItem?.price?.id;
+          const currentInterval = subItem?.price?.recurring?.interval;
           const isAnnual = currentInterval === 'year';
           
-          // Pick the correct target price ID based on billing interval
           const targetPriceId = isAnnual
             ? ANNUAL_PRICE_IDS[targetPlan]
             : MONTHLY_PRICE_IDS[targetPlan];
@@ -143,12 +157,7 @@ Deno.serve(async (req) => {
             throw new Error(`No price ID found for target plan: ${targetPlan}`);
           }
 
-          logStep('Scheduling plan change via Stripe', {
-            currentPriceId,
-            targetPriceId,
-            isAnnual,
-            effectiveDate,
-          });
+          logStep('Scheduling plan change', { currentPriceId, targetPriceId, isAnnual, periodEnd });
 
           // Release any existing schedule first
           const existingSchedules = await stripe.subscriptionSchedules.list({
@@ -156,13 +165,13 @@ Deno.serve(async (req) => {
             limit: 5,
           });
           
-          for (const schedule of existingSchedules.data) {
-            if (schedule.status === 'active' || schedule.status === 'not_started') {
+          for (const sched of existingSchedules.data) {
+            if (sched.status === 'active' || sched.status === 'not_started') {
               try {
-                await stripe.subscriptionSchedules.release(schedule.id);
-                logStep('Released existing schedule', { scheduleId: schedule.id });
+                await stripe.subscriptionSchedules.release(sched.id);
+                logStep('Released existing schedule', { scheduleId: sched.id });
               } catch (e) {
-                logStep('Could not release schedule', { scheduleId: schedule.id, error: String(e) });
+                logStep('Could not release schedule', { scheduleId: sched.id, error: String(e) });
               }
             }
           }
@@ -174,27 +183,22 @@ Deno.serve(async (req) => {
 
           logStep('Created schedule from subscription', { scheduleId: schedule.id });
 
-          // Update the schedule: keep current phase, add new phase with target price
           const currentPhase = schedule.phases[0];
           if (!currentPhase) {
             throw new Error('No current phase found in subscription schedule');
           }
           
           const currentPhaseStart = currentPhase.start_date;
-          const currentPhaseEnd = stripeSub.current_period_end;
-          const currentItemPrice = currentPhase.items[0]?.price;
+          // Use the item-level period end as the phase boundary
+          const currentPhaseEnd = periodEnd;
           
-          // Extract price ID string - could be a string or an object with id
+          // Extract price ID string
+          const currentItemPrice = currentPhase.items[0]?.price;
           const currentPriceStr = typeof currentItemPrice === 'string' 
             ? currentItemPrice 
             : (currentItemPrice as any)?.id || currentPriceId;
 
-          logStep('Schedule phase details', {
-            currentPhaseStart,
-            currentPhaseEnd,
-            currentPriceStr,
-            targetPriceId,
-          });
+          logStep('Schedule phases', { currentPhaseStart, currentPhaseEnd, currentPriceStr, targetPriceId });
 
           await stripe.subscriptionSchedules.update(schedule.id, {
             end_behavior: 'release',
@@ -214,18 +218,14 @@ Deno.serve(async (req) => {
             ],
           });
 
-          logStep('Subscription schedule updated with downgrade phase', {
-            scheduleId: schedule.id,
-            targetPriceId,
-            effectiveAt: new Date(currentPhaseEnd * 1000).toISOString(),
-          });
+          logStep('Downgrade scheduled in Stripe', { scheduleId: schedule.id, effectiveAt: safeTimestampToISO(currentPhaseEnd) });
         }
 
         // Update DB with real Stripe dates
         await supabaseClient
           .from('business_subscriptions')
           .update({
-            current_period_start: new Date(stripeSub.current_period_start * 1000).toISOString(),
+            current_period_start: safeTimestampToISO(periodStart),
             current_period_end: effectiveDate,
           })
           .eq('id', subscription.id);

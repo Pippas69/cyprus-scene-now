@@ -107,7 +107,7 @@ export function usePushNotifications(userId: string | null) {
         return;
       }
 
-      const subscription = await registration.pushManager.getSubscription();
+      const subscription = await (registration as any).pushManager.getSubscription();
       console.log('[Push] Existing subscription:', !!subscription);
       
       if (subscription) {
@@ -190,7 +190,7 @@ export function usePushNotifications(userId: string | null) {
       console.log('[Push] Service worker ready');
 
       // Check for existing subscription
-      let subscription = await registration.pushManager.getSubscription();
+      let subscription = await (registration as any).pushManager.getSubscription();
       console.log('[Push] Existing subscription:', !!subscription);
       
       if (!subscription) {
@@ -215,7 +215,7 @@ export function usePushNotifications(userId: string | null) {
         }
         
         console.log('[Push] Creating push subscription...');
-        subscription = await registration.pushManager.subscribe({
+        subscription = await (registration as any).pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
         });
@@ -301,7 +301,7 @@ export function usePushNotifications(userId: string | null) {
 
     try {
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const subscription = await (registration as any).pushManager.getSubscription();
       
       if (subscription) {
         // Unsubscribe from push manager
