@@ -298,22 +298,23 @@ export const useBoostValueMetrics = (
 
       const businessOfferIds = businessOffers?.map(o => o.id) || [];
 
-       // Get ALL offer boosts that actually ran (active/completed)
+       // Get ALL offer boosts that actually ran (active/completed/deactivated)
        const { data: allOfferBoosts } = await supabase
          .from("offer_boosts")
-         .select("discount_id, start_date, end_date, created_at, duration_mode, duration_hours")
+         .select("discount_id, start_date, end_date, created_at, duration_mode, duration_hours, status, updated_at")
          .eq("business_id", businessId)
-         .in("status", ["active", "completed"]);
+         .in("status", ["active", "completed", "deactivated"]);
 
       const offerBoostPeriods: BoostPeriod[] = (allOfferBoosts || [])
         .map((b) => {
-          const window = computeBoostWindow({
-            start_date: b.start_date,
-            end_date: b.end_date,
-            created_at: b.created_at,
-            duration_mode: b.duration_mode,
-            duration_hours: b.duration_hours,
-          });
+           const window = computeBoostWindow({
+             start_date: b.start_date,
+             end_date: b.end_date,
+             created_at: b.created_at,
+             duration_mode: b.duration_mode,
+             duration_hours: b.duration_hours,
+             deactivated_at: b.status === 'deactivated' ? b.updated_at : null,
+           });
           if (!window) return null;
           return {
             entityId: b.discount_id,
@@ -411,22 +412,23 @@ export const useBoostValueMetrics = (
 
       const businessEventIds = businessEvents?.map(e => e.id) || [];
 
-       // Get ALL event boosts that actually ran (active/completed) + canceled (boost was purchased and ran until cancel)
+       // Get ALL event boosts that actually ran (active/completed/canceled/deactivated)
        const { data: allEventBoosts } = await supabase
          .from("event_boosts")
-         .select("event_id, start_date, end_date, created_at, duration_mode, duration_hours")
+         .select("event_id, start_date, end_date, created_at, duration_mode, duration_hours, status, updated_at")
          .eq("business_id", businessId)
-         .in("status", ["active", "completed", "canceled"]);
+         .in("status", ["active", "completed", "canceled", "deactivated"]);
 
       const eventBoostPeriods: BoostPeriod[] = (allEventBoosts || [])
         .map((b) => {
-          const window = computeBoostWindow({
-            start_date: b.start_date,
-            end_date: b.end_date,
-            created_at: b.created_at,
-            duration_mode: b.duration_mode,
-            duration_hours: b.duration_hours,
-          });
+           const window = computeBoostWindow({
+             start_date: b.start_date,
+             end_date: b.end_date,
+             created_at: b.created_at,
+             duration_mode: b.duration_mode,
+             duration_hours: b.duration_hours,
+             deactivated_at: b.status === 'deactivated' ? b.updated_at : null,
+           });
           if (!window) return null;
           return {
             entityId: b.event_id,

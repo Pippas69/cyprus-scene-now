@@ -149,12 +149,12 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       const { data: offerBoosts } = await supabase
         .from("offer_boosts")
         .select(
-          "total_cost_cents, discount_id, start_date, end_date, status, created_at, duration_mode, duration_hours"
+          "total_cost_cents, discount_id, start_date, end_date, status, created_at, duration_mode, duration_hours, updated_at"
         )
         .eq("business_id", businessId)
         // Include ALL boosts that were actually paid/spent historically.
         // (We intentionally exclude scheduled/pending because they may not have been charged.)
-        .in("status", ["active", "completed", "canceled", "paused", "expired"]);
+        .in("status", ["active", "completed", "canceled", "paused", "expired", "deactivated"]);
 
       const boostSpentCents = (offerBoosts || []).reduce(
         (sum, b) => sum + (b.total_cost_cents || 0),
@@ -170,13 +170,14 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
 
       const offerBoostPeriods: BoostPeriod[] = (offerBoosts || [])
         .map((b) => {
-          const window = computeBoostWindow({
-            start_date: b.start_date,
-            end_date: b.end_date,
-            created_at: b.created_at,
-            duration_mode: b.duration_mode,
-            duration_hours: b.duration_hours,
-          });
+           const window = computeBoostWindow({
+             start_date: b.start_date,
+             end_date: b.end_date,
+             created_at: b.created_at,
+             duration_mode: b.duration_mode,
+             duration_hours: b.duration_hours,
+             deactivated_at: b.status === 'deactivated' ? b.updated_at : null,
+           });
           if (!window) return null;
           return {
             discountId: b.discount_id,
@@ -265,9 +266,9 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       // 3b) Boost windows for attribution (only boosts that actually ran)
       const { data: eventBoostsForAttribution } = await supabase
         .from("event_boosts")
-        .select("event_id, start_date, end_date, created_at, duration_mode, duration_hours")
+        .select("event_id, start_date, end_date, created_at, duration_mode, duration_hours, status, updated_at")
         .eq("business_id", businessId)
-        .in("status", ["active", "completed"]);
+        .in("status", ["active", "completed", "deactivated"]);
 
       interface EventBoostPeriod {
         eventId: string;
@@ -277,13 +278,14 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
 
       const eventBoostPeriods: EventBoostPeriod[] = (eventBoostsForAttribution || [])
         .map((b) => {
-          const window = computeBoostWindow({
-            start_date: b.start_date,
-            end_date: b.end_date,
-            created_at: b.created_at,
-            duration_mode: b.duration_mode,
-            duration_hours: b.duration_hours,
-          });
+           const window = computeBoostWindow({
+             start_date: b.start_date,
+             end_date: b.end_date,
+             created_at: b.created_at,
+             duration_mode: b.duration_mode,
+             duration_hours: b.duration_hours,
+             deactivated_at: b.status === 'deactivated' ? b.updated_at : null,
+           });
           if (!window) return null;
           return {
             eventId: b.event_id,

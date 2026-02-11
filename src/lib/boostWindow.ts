@@ -4,6 +4,8 @@ export type BoostWindowInput = {
   created_at?: string | null;
   duration_mode?: string | null;
   duration_hours?: number | null;
+  /** If the boost was deactivated, pass updated_at so the window ends at deactivation time */
+  deactivated_at?: string | null;
 };
 
 export type BoostWindow = {
@@ -44,7 +46,12 @@ export const computeBoostWindow = (input: BoostWindowInput): BoostWindow | null 
   // Hourly boosts start exactly when purchased/created.
   if (durationMode === "hourly" && input.created_at) {
     const start = new Date(normalizeToUtcIfNoTz(input.created_at)).toISOString();
-    const end = input.duration_hours ? addHoursISO(start, input.duration_hours) : start;
+    let end = input.duration_hours ? addHoursISO(start, input.duration_hours) : start;
+    // If deactivated before the window naturally ends, cap at deactivation time
+    if (input.deactivated_at) {
+      const deactTime = new Date(normalizeToUtcIfNoTz(input.deactivated_at)).toISOString();
+      if (deactTime < end) end = deactTime;
+    }
     return { start, end };
   }
 
@@ -70,6 +77,12 @@ export const computeBoostWindow = (input: BoostWindowInput): BoostWindow | null 
     );
   } else if (input.created_at) {
     end = new Date(normalizeToUtcIfNoTz(input.created_at)).toISOString();
+  }
+
+  // If deactivated before the window naturally ends, cap at deactivation time
+  if (end && input.deactivated_at) {
+    const deactTime = new Date(normalizeToUtcIfNoTz(input.deactivated_at)).toISOString();
+    if (deactTime < end) end = deactTime;
   }
 
   if (!start || !end) return null;

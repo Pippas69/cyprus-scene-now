@@ -111,16 +111,30 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         duration_mode?: string | null;
         duration_hours?: number | null;
         created_at?: string | null;
+        status?: string | null;
+        updated_at?: string | null;
       }) => {
+        let startIso: string;
+        let endIso: string;
+
         if (boost.duration_mode !== "hourly") {
-          const startIso = boost.start_date?.length === 10 ? `${boost.start_date}T00:00:00.000Z` : boost.start_date;
-          const endIso = boost.end_date?.length === 10 ? `${boost.end_date}T23:59:59.999Z` : boost.end_date;
-          return { startIso, endIso };
+          startIso = boost.start_date?.length === 10 ? `${boost.start_date}T00:00:00.000Z` : boost.start_date;
+          endIso = boost.end_date?.length === 10 ? `${boost.end_date}T23:59:59.999Z` : boost.end_date;
+        } else {
+          const start = boost.created_at ? new Date(boost.created_at) : new Date();
+          const hours = boost.duration_hours ?? 1;
+          const end = new Date(start.getTime() + hours * 60 * 60 * 1000);
+          startIso = start.toISOString();
+          endIso = end.toISOString();
         }
-        const start = boost.created_at ? new Date(boost.created_at) : new Date();
-        const hours = boost.duration_hours ?? 1;
-        const end = new Date(start.getTime() + hours * 60 * 60 * 1000);
-        return { startIso: start.toISOString(), endIso: end.toISOString() };
+
+        // For deactivated boosts, cap the end at deactivation time (updated_at)
+        if (boost.status === 'deactivated' && boost.updated_at) {
+          const deactTime = new Date(boost.updated_at).toISOString();
+          if (deactTime < endIso) endIso = deactTime;
+        }
+
+        return { startIso, endIso };
       };
 
       // Fetch event boosts
@@ -135,6 +149,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           total_cost_cents,
           status,
           created_at,
+          updated_at,
           duration_mode,
           duration_hours,
           events (
@@ -284,6 +299,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           active,
           status,
           created_at,
+          updated_at,
           duration_mode,
           duration_hours,
           discounts (
