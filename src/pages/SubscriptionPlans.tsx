@@ -599,7 +599,7 @@ export default function SubscriptionPlans({
       </AnimatePresence>
 
       {/* Compact Current Plan Banner - Only visible for paid plans (Basic, Pro, Elite) */}
-      {currentSubscription?.subscribed && <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-3' : 'pt-4 pb-3'}`}>
+      {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-3' : 'pt-4 pb-3'}`}>
           <motion.div initial={{
         opacity: 0,
         y: -10
@@ -623,7 +623,7 @@ export default function SubscriptionPlans({
                 </div>
               </div>
 
-              {/* Boost Credits */}
+              {/* Boost Credits (paid plans only) */}
               <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
                   <Rocket className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary shrink-0" />
@@ -635,12 +635,10 @@ export default function SubscriptionPlans({
                     / {formatCurrency(currentSubscription.event_boost_budget_cents)}
                   </span>
                 </div>
-                
               </div>
             </div>
           </motion.div>
         </div>}
-
 
       {/* Header Section with Free Plan */}
       <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-4`}>
