@@ -167,7 +167,7 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
-      // Get tickets with check-in - use checked_in_at for attribution
+      // Get tickets with check-in - attribution based on PURCHASE time (created_at)
       const { data: tickets } = await supabase
         .from("tickets")
         .select("event_id, checked_in_at, created_at")
@@ -176,10 +176,10 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
         .gte("checked_in_at", startDate.toISOString())
         .lte("checked_in_at", endDate.toISOString());
 
-      // Get reservations with check-in for event visits
+      // Get reservations with check-in for event visits - attribution based on RESERVATION time (created_at)
       const { data: eventReservations } = await supabase
         .from("reservations")
-        .select("event_id, checked_in_at")
+        .select("event_id, checked_in_at, created_at")
         .in("event_id", eventIds)
         .not("event_id", "is", null)
         .not("checked_in_at", "is", null)
@@ -205,19 +205,19 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
         else if (r.status === "interested") target.interested++;
       });
 
-      // Ticket check-ins - use checked_in_at for boost attribution
+      // Ticket check-ins - attribution based on PURCHASE time (created_at), not check-in time
       tickets?.forEach(t => {
         if (!t.checked_in_at || !t.event_id) return;
-        const isBoosted = isWithinBoostPeriod(t.checked_in_at, getEventBoostPeriods(t.event_id));
+        const isBoosted = isWithinBoostPeriod(t.created_at, getEventBoostPeriods(t.event_id));
         const target = isBoosted ? eventsWithBoost : eventsWithoutBoost;
         target.ticketsAndCheckIn++;
         target.visits++;
       });
 
-      // Reservation check-ins for events - use checked_in_at for boost attribution
+      // Reservation check-ins for events - attribution based on RESERVATION time (created_at), not check-in time
       eventReservations?.forEach(r => {
         if (!r.checked_in_at || !r.event_id) return;
-        const isBoosted = isWithinBoostPeriod(r.checked_in_at, getEventBoostPeriods(r.event_id));
+        const isBoosted = isWithinBoostPeriod(r.created_at, getEventBoostPeriods(r.event_id));
         const target = isBoosted ? eventsWithBoost : eventsWithoutBoost;
         target.visits++;
       });

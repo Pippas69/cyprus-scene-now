@@ -371,16 +371,16 @@ export const useBoostValueMetrics = (
         }
       });
 
-      // Offer visits (redemptions)
+      // Offer visits (redemptions) — attribution based on CLAIM time (created_at), not redemption time
       let boostedOfferVisits = 0;
       let nonBoostedOfferVisits = 0;
 
       if (businessOfferIds.length > 0) {
-        const allOfferRedemptions = await fetchAll<{ discount_id: string; redeemed_at: string | null }>(
+        const allOfferRedemptions = await fetchAll<{ discount_id: string; created_at: string; redeemed_at: string | null }>(
           async (from, to) => {
             const { data } = await supabase
               .from("offer_purchases")
-              .select("discount_id, redeemed_at")
+              .select("discount_id, created_at, redeemed_at")
               .in("discount_id", businessOfferIds)
               .not("redeemed_at", "is", null)
               .gte("redeemed_at", startDate)
@@ -391,7 +391,8 @@ export const useBoostValueMetrics = (
         );
 
         (allOfferRedemptions || []).forEach(redemption => {
-          if (redemption.redeemed_at && isWithinBoostPeriod(redemption.redeemed_at, redemption.discount_id, offerBoostPeriods)) {
+          // Attribution: was the offer boosted when the user CLAIMED it?
+          if (redemption.created_at && isWithinBoostPeriod(redemption.created_at, redemption.discount_id, offerBoostPeriods)) {
             boostedOfferVisits++;
           } else {
             nonBoostedOfferVisits++;
