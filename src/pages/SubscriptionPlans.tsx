@@ -686,11 +686,13 @@ export default function SubscriptionPlans({
                   </AlertDialog>
                 )}
                 
-                {/* Pending downgrade indicator */}
-                {currentSubscription?.downgrade_pending && (
-                  <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20">
-                    <span className="py-0.5">
-                      {t.downgradeWillSwitch} {(currentSubscription.downgrade_target_plan || 'Free').charAt(0).toUpperCase() + (currentSubscription.downgrade_target_plan || 'free').slice(1)} {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
+                {/* Pending downgrade to FREE indicator - only show here when target is free */}
+                {currentSubscription?.downgrade_pending && (currentSubscription.downgrade_target_plan === 'free' || !currentSubscription.downgrade_target_plan) && (
+                  <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20 max-w-[200px]">
+                    <span className="py-0.5 text-center leading-[1.3]">
+                      {t.downgradeWillSwitch} Free
+                      <br />
+                      {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
                     </span>
                   </Badge>
                 )}
@@ -810,6 +812,7 @@ export default function SubscriptionPlans({
                         {t.yourPlan}
                       </Badge>
                     </div>}
+
                   
                   <CardHeader className="pb-3">
                     {/* Plan Icon & Name */}
@@ -819,6 +822,17 @@ export default function SubscriptionPlans({
                       </div>
                       <h3 className="text-xl font-bold uppercase">{planSlug}</h3>
                     </div>
+
+                    {/* Pending downgrade badge - shown on the TARGET plan card */}
+                    {currentSubscription?.downgrade_pending && currentSubscription.downgrade_target_plan === planSlug && (
+                      <Badge variant="outline" className="text-[9px] px-2 py-0.5 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20 w-fit mb-2">
+                        <span className="leading-[1.3]">
+                          {t.downgradeWillSwitch} {planSlug.charAt(0).toUpperCase() + planSlug.slice(1)}
+                          <br />
+                          {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
+                        </span>
+                      </Badge>
+                    )}
 
                     {/* Price */}
                     <div className="flex items-baseline gap-1">
