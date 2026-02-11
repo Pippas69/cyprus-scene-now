@@ -517,7 +517,7 @@ const BusinessProfile = () => {
 
           {/* Category as plain text (not badges) */}
           <p className="text-sm text-muted-foreground mb-1">
-            {business.category.map(cat => getCategoryLabel(cat, language)).join(" & ")}
+            {business.category.map(cat => getCategoryLabel(cat, language, { singular: true })).join(" & ")}
           </p>
           
           {/* Description - centered */}
