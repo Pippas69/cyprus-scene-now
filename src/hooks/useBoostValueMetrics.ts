@@ -56,6 +56,8 @@ export const useBoostValueMetrics = (
 ) => {
   return useQuery<BoostValueData>({
     queryKey: ["boost-value-metrics", businessId, dateRange?.from, dateRange?.to],
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     queryFn: async () => {
       const startDate = dateRange?.from?.toISOString() || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const endDate = dateRange?.to?.toISOString() || new Date().toISOString();
@@ -670,9 +672,5 @@ export const useBoostValueMetrics = (
       };
     },
     enabled: !!businessId,
-    // Analytics should reflect plan changes quickly; also helps avoid seeing cached numbers.
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000,
   });
 };

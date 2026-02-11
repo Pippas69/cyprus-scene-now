@@ -35,6 +35,8 @@ interface TicketAnalyticsData {
 export function useTicketAnalytics(businessId: string, dateRange?: DateRange) {
   return useQuery({
     queryKey: ["ticket-analytics", businessId, dateRange?.from, dateRange?.to],
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     queryFn: async (): Promise<TicketAnalyticsData> => {
       const startDate = dateRange?.from || subDays(new Date(), 30);
       const endDate = dateRange?.to || new Date();
