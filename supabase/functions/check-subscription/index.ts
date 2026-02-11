@@ -72,17 +72,20 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
     
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error('User not authenticated or email not available');
-    logStep('User authenticated', { userId: user.id, email: user.email });
+    // Use getClaims for signing-keys compatibility
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) throw new Error(`Authentication error: ${claimsError?.message || 'invalid claims'}`);
+    
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    if (!userId || !userEmail) throw new Error('User not authenticated or email not available');
+    logStep('User authenticated', { userId, email: userEmail });
 
     // Get business ID for this user
     const { data: business, error: businessError } = await supabaseClient
       .from('businesses')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (businessError || !business) {
@@ -103,7 +106,7 @@ Deno.serve(async (req) => {
       .single();
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     
     // If no Stripe customer but has DB subscription, use that
     if (customers.data.length === 0) {
