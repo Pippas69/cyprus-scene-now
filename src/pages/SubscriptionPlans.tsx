@@ -725,18 +725,16 @@ export default function SubscriptionPlans({
                   <Check className="w-3 h-3" />
                   {t.freeAnalytics}
                 </span>
-                {/* Stats - inline on tablet (md), separate on mobile/desktop */}
+                {/* Stats - inline on tablet (md) */}
                 <span className="hidden md:flex lg:hidden items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px]">Commission: {t.freeCommission}</span>
-                <span className="hidden md:flex lg:hidden items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px]">Boost: {t.freeBoostCredits}</span>
               </div>
               
-              {/* Separator - hidden on tablet since Commission/Boost are inline */}
+              {/* Separator */}
               <div className="hidden lg:block h-4 w-px bg-border" />
               
-              {/* Stats - compact pills (hidden on tablet, shown on mobile/desktop) */}
+              {/* Stats - compact pills (shown on mobile/desktop) */}
               <div className="flex md:hidden lg:flex items-center gap-2 text-xs">
                 <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Commission: {t.freeCommission}</span>
-                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Boost: {t.freeBoostCredits}</span>
               </div>
             </div>
           </div>
