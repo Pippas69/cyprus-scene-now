@@ -481,9 +481,10 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
     return isTimestampWithinWindow(new Date().toISOString(), window);
   };
 
-  // Active = status "active" AND within window, OR "pending" purchase boosts (processing)
+  // Active = status "active" AND within window, or "scheduled"
+  // Pending boosts are hidden (unpaid) — they don't exist in the UI
   // Expired/Deactivated = everything else
-  const isActiveOrPending = (status: string) => status === "active" || status === "pending" || status === "scheduled";
+  const isActiveOrPending = (status: string) => status === "active" || status === "scheduled";
 
   // Helper: check if the event itself has ended
   const isEventEnded = (b: EventBoostWithMetrics) => {
@@ -493,9 +494,8 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
   const activeEventBoosts = useMemo(() => 
     eventBoosts.filter(b => 
-      !isEventEnded(b) && (
+      b.status !== "pending" && !isEventEnded(b) && (
         (b.status === "active" && isBoostWithinWindow(b)) || 
-        b.status === "pending" || 
         b.status === "scheduled"
       )
     ),
@@ -503,22 +503,26 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   );
   const expiredEventBoosts = useMemo(() => 
     eventBoosts.filter(b => 
-      isEventEnded(b) || 
-      !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "pending" || b.status === "scheduled")
+      b.status !== "pending" && (
+        isEventEnded(b) || 
+        !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "scheduled")
+      )
     ),
     [eventBoosts]
   );
   const activeOfferBoosts = useMemo(() => 
     offerBoosts.filter(b => 
-      (b.status === "active" && isBoostWithinWindow(b)) || 
-      b.status === "pending" || 
-      b.status === "scheduled"
+      b.status !== "pending" && (
+        (b.status === "active" && isBoostWithinWindow(b)) || 
+        b.status === "scheduled"
+      )
     ),
     [offerBoosts]
   );
   const expiredOfferBoosts = useMemo(() => 
     offerBoosts.filter(b => 
-      !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "pending" || b.status === "scheduled")
+      b.status !== "pending" && 
+      !((b.status === "active" && isBoostWithinWindow(b)) || b.status === "scheduled")
     ),
     [offerBoosts]
   );
@@ -642,7 +646,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const renderEventBoostCard = (boost: EventBoostWithMetrics, isExpiredSection: boolean) => {
     const isActive = boost.status === "active";
     const isDeactivated = boost.status === "deactivated";
-    const isPending = boost.status === "pending";
     const isScheduled = boost.status === "scheduled";
     
     return (
@@ -654,10 +657,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             <div className="flex items-center gap-1.5 shrink-0">
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
-              ) : isPending ? (
-                <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap animate-pulse">
-                  {t.pending}
-                </Badge>
               ) : isScheduled ? (
                 <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap">
                   {t.scheduled}
@@ -786,7 +785,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const renderOfferBoostCard = (boost: OfferBoostWithMetrics, isExpiredSection: boolean) => {
     const isActive = boost.status === "active";
     const isDeactivated = boost.status === "deactivated";
-    const isPending = boost.status === "pending";
     const isScheduled = boost.status === "scheduled";
 
     return (
@@ -798,10 +796,6 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             <div className="flex items-center gap-1.5 shrink-0">
               {isActive ? (
                 <Badge variant="default" className="text-[9px] sm:text-xs whitespace-nowrap">{t.active}</Badge>
-              ) : isPending ? (
-                <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap animate-pulse">
-                  {t.pending}
-                </Badge>
               ) : isScheduled ? (
                 <Badge variant="secondary" className="text-[9px] sm:text-xs whitespace-nowrap">
                   {t.scheduled}
