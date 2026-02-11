@@ -599,7 +599,7 @@ export default function SubscriptionPlans({
       </AnimatePresence>
 
       {/* Compact Current Plan Banner - Only visible for paid plans (Basic, Pro, Elite) */}
-      {currentSubscription?.subscribed && <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-3' : 'pt-4 pb-3'}`}>
+      {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-3' : 'pt-4 pb-3'}`}>
           <motion.div initial={{
         opacity: 0,
         y: -10
@@ -623,7 +623,7 @@ export default function SubscriptionPlans({
                 </div>
               </div>
 
-              {/* Boost Credits */}
+              {/* Boost Credits (paid plans only) */}
               <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
                   <Rocket className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary shrink-0" />
@@ -635,12 +635,10 @@ export default function SubscriptionPlans({
                     / {formatCurrency(currentSubscription.event_boost_budget_cents)}
                   </span>
                 </div>
-                
               </div>
             </div>
           </motion.div>
         </div>}
-
 
       {/* Header Section with Free Plan */}
       <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-4`}>
@@ -662,7 +660,7 @@ export default function SubscriptionPlans({
                 <span className="font-medium text-sm text-foreground">{t.freeTitle}</span>
                 
                 {/* Downgrade to Free badge - only visible when on paid plan */}
-                {currentSubscription?.subscribed && !currentSubscription?.downgrade_pending && (
+                {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && !currentSubscription?.downgrade_pending && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <button className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground border border-border/50 transition-colors cursor-pointer">
@@ -685,9 +683,9 @@ export default function SubscriptionPlans({
                     </AlertDialogContent>
                   </AlertDialog>
                 )}
-                
-                {/* Pending downgrade to FREE indicator - only show here when target is free */}
-                {currentSubscription?.downgrade_pending && (currentSubscription.downgrade_target_plan === 'free' || !currentSubscription.downgrade_target_plan) && (
+
+                {/* Pending downgrade to FREE indicator - only show here when target is free (and current plan is not already free) */}
+                {currentSubscription?.plan_slug !== 'free' && currentSubscription?.downgrade_pending && (currentSubscription.downgrade_target_plan === 'free' || !currentSubscription.downgrade_target_plan) && (
                   <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20 max-w-[200px]">
                     <span className="py-0.5 text-center leading-[1.3]">
                       {t.downgradeWillSwitch} Free
@@ -727,18 +725,16 @@ export default function SubscriptionPlans({
                   <Check className="w-3 h-3" />
                   {t.freeAnalytics}
                 </span>
-                {/* Stats - inline on tablet (md), separate on mobile/desktop */}
+                {/* Stats - inline on tablet (md) */}
                 <span className="hidden md:flex lg:hidden items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px]">Commission: {t.freeCommission}</span>
-                <span className="hidden md:flex lg:hidden items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px]">Boost: {t.freeBoostCredits}</span>
               </div>
               
-              {/* Separator - hidden on tablet since Commission/Boost are inline */}
+              {/* Separator */}
               <div className="hidden lg:block h-4 w-px bg-border" />
               
-              {/* Stats - compact pills (hidden on tablet, shown on mobile/desktop) */}
+              {/* Stats - compact pills (shown on mobile/desktop) */}
               <div className="flex md:hidden lg:flex items-center gap-2 text-xs">
                 <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Commission: {t.freeCommission}</span>
-                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Boost: {t.freeBoostCredits}</span>
               </div>
             </div>
           </div>
