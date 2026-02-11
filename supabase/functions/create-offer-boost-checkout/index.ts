@@ -103,12 +103,7 @@ Deno.serve(async (req) => {
       throw new Error("No payment needed - use subscription budget instead");
     }
 
-    // Determine initial status based on start date
-    const now = new Date();
-    const start = new Date(startDate);
-    const status = start <= now ? "active" : "scheduled";
-
-    // Create boost record with active status (payment is about to happen)
+    // Create boost record with PENDING status — only activated after payment confirmation
     const { data: boostData, error: boostError } = await supabaseClient
       .from("offer_boosts")
       .insert({
@@ -124,9 +119,9 @@ Deno.serve(async (req) => {
         start_date: startDate,
         end_date: endDate,
         source: "purchase",
-        status,
+        status: "pending",
         commission_percent: 0,
-        active: status === "active",
+        active: false,
       })
       .select()
       .single();
@@ -134,7 +129,7 @@ Deno.serve(async (req) => {
     if (boostError) throw boostError;
     
     const boostId = boostData.id;
-    logStep("Boost record created", { boostId, status, durationMode });
+    logStep("Boost record created with pending status", { boostId, durationMode });
 
     // Create Stripe checkout session
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
