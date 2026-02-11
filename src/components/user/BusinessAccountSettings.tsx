@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MAPBOX_CONFIG } from "@/config/mapbox";
 import { businessTranslations, cities } from "@/components/business/translations";
 import { BusinessCategorySelector } from "@/components/business/BusinessCategorySelector";
+import { normalizeBusinessCategories } from "@/lib/categoryFilterMapping";
 import { validationTranslations } from "@/translations/validationTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { compressImage } from "@/lib/imageCompression";
@@ -272,7 +273,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           website: data.website || '',
           address: data.address || '',
           city: data.city,
-          category: data.category || [],
+          category: normalizeBusinessCategories(data.category || []),
         });
         setCurrentLogoUrl(data.logo_url);
         setCurrentCoverUrl(data.cover_url);

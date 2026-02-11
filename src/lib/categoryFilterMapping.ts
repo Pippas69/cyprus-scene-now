@@ -65,6 +65,43 @@ export const mapFilterIdsToDbCategories = (filterIds: string[]): string[] => {
   return Array.from(dbCategories);
 };
 
+// Reverse mapping: from ANY legacy DB value to the canonical unified ID
+// Used to normalize old category values when loading business data
+const DB_VALUE_TO_FILTER_ID: Record<string, string> = {};
+Object.entries(FILTER_ID_TO_DB_VALUES).forEach(([filterId, dbValues]) => {
+  dbValues.forEach(dbVal => {
+    DB_VALUE_TO_FILTER_ID[dbVal.toLowerCase()] = filterId;
+  });
+});
+
+// All valid sub-option IDs that businesses can select
+const VALID_BUSINESS_CATEGORY_IDS = new Set([
+  "clubs", "bars", "wine-bars", "pubs",
+  "events",
+  "fine-dining", "casual-dining",
+  "beach-bars", "summer-events", "seaside-restaurants",
+]);
+
+/**
+ * Normalize a business's category array from legacy DB values to valid unified IDs.
+ * Removes any categories that don't map to a valid sub-option.
+ * Used when loading business data in settings/signup.
+ */
+export const normalizeBusinessCategories = (dbCategories: string[]): string[] => {
+  const normalized = new Set<string>();
+  dbCategories.forEach(cat => {
+    const lower = cat.toLowerCase();
+    const filterId = DB_VALUE_TO_FILTER_ID[lower];
+    if (filterId && VALID_BUSINESS_CATEGORY_IDS.has(filterId)) {
+      normalized.add(filterId);
+    } else if (VALID_BUSINESS_CATEGORY_IDS.has(lower)) {
+      normalized.add(lower);
+    }
+    // Invalid/legacy categories are silently dropped
+  });
+  return Array.from(normalized);
+};
+
 /**
  * Check if a category array from the database matches any of the selected filter IDs.
  * Used for client-side filtering (e.g., in useMapBusinesses, useMapEvents).
