@@ -108,6 +108,8 @@ const DashboardBusiness = () => {
       });
       window.history.replaceState({}, '', window.location.pathname);
     } else if (boostStatus === 'canceled') {
+      // Clean up pending (unpaid) boost records
+      supabase.functions.invoke("cancel-pending-boost").catch(() => {});
       toast.info(language === 'el' ? 'Η πληρωμή boost ακυρώθηκε' : 'Boost payment canceled');
       window.history.replaceState({}, '', window.location.pathname);
     }

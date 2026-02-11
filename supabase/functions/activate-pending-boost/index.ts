@@ -102,6 +102,31 @@ Deno.serve(async (req) => {
       logStep("Offer boost activated", { boostId: pendingOfferBoost.id, status: newStatus });
     }
 
+    // Check for pending profile boosts
+    const { data: pendingProfileBoost } = await supabaseClient
+      .from("profile_boosts")
+      .select("id, start_date, end_date")
+      .eq("business_id", businessId)
+      .eq("status", "pending")
+      .eq("source", "purchase")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (pendingProfileBoost) {
+      const startDate = new Date(pendingProfileBoost.start_date);
+      const newStatus = startDate <= now ? "active" : "scheduled";
+
+      const { error: updateError } = await supabaseClient
+        .from("profile_boosts")
+        .update({ status: newStatus })
+        .eq("id", pendingProfileBoost.id);
+
+      if (updateError) throw updateError;
+      activated = true;
+      logStep("Profile boost activated", { boostId: pendingProfileBoost.id, status: newStatus });
+    }
+
     if (!activated) {
       logStep("No pending boosts found");
     }
