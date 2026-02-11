@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
         await supabaseClient
           .from('business_subscriptions')
           .update({
-            current_period_start: new Date(stripeSub.current_period_start * 1000).toISOString(),
+            current_period_start: safeTimestampToISO(stripeSub.current_period_start),
             current_period_end: effectiveDate,
           })
           .eq('id', subscription.id);
