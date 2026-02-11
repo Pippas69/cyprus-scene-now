@@ -344,6 +344,14 @@ Deno.serve(async (req) => {
             : subscription.items.data[0].price.product?.id || '';
 
           const PRODUCT_TO_PLAN_NEW: Record<string, string> = {
+            // CURRENT products
+            'prod_TwR5CuBhxobuaB': 'basic',
+            'prod_TwR5dSukCnRhmV': 'basic',
+            'prod_TwR5lPqVQDQwdM': 'pro',
+            'prod_TwR5KM1dqUMxPJ': 'pro',
+            'prod_TwR5XZb3OfOGxA': 'elite',
+            'prod_TwR5uz1rCytowj': 'elite',
+            // Older products
             'prod_TnXuZRPpopjiki': 'basic',
             'prod_TnXujnMCC4egp8': 'basic',
             'prod_TnXuM6SsuuyScm': 'pro',
