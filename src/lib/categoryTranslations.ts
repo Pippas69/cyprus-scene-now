@@ -2,6 +2,20 @@
 
 type Language = 'el' | 'en';
 
+// Singular forms for business-facing UIs
+const singularMap: Record<string, { el: string; en: string }> = {
+  'clubs': { el: 'Club', en: 'Club' },
+  'bars': { el: 'Bar', en: 'Bar' },
+  'wine-bars': { el: 'Wine Bar', en: 'Wine Bar' },
+  'pubs': { el: 'Pub', en: 'Pub' },
+  'events': { el: 'Event', en: 'Event' },
+  'fine-dining': { el: 'Επίσημη Εστίαση', en: 'Fine Dining' },
+  'casual-dining': { el: 'Χαλαρή Εστίαση', en: 'Casual Dining' },
+  'beach-bars': { el: 'Beach Bar', en: 'Beach Bar' },
+  'summer-events': { el: 'Summer Event', en: 'Summer Event' },
+  'seaside-restaurants': { el: 'Παραθαλάσσιο Εστιατόριο', en: 'Seaside Restaurant' },
+};
+
 const categoryMap: Record<string, { el: string; en: string }> = {
   // Main categories (4 core categories)
   'nightlife': { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
@@ -109,11 +123,21 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'art culture': { el: 'Τέχνη & Πολιτισμός', en: 'Art & Culture' },
 };
 
-export function getCategoryLabel(category: string | null | undefined, language: Language): string {
+export function getCategoryLabel(category: string | null | undefined, language: Language, options?: { singular?: boolean }): string {
   if (!category) return language === 'el' ? 'Εκδήλωση' : 'Event';
   
   // Normalize the category key (lowercase, trim)
   const normalizedKey = category.toLowerCase().trim();
+  
+  // If singular requested, check singular map first
+  if (options?.singular) {
+    const singularMapping = singularMap[normalizedKey];
+    if (singularMapping) return singularMapping[language];
+    // Also try hyphenated
+    const hyphenatedKey = normalizedKey.replace(/\s+/g, '-');
+    const singularHyphen = singularMap[hyphenatedKey];
+    if (singularHyphen) return singularHyphen[language];
+  }
   
   // Look up in the map - try exact match first
   let mapping = categoryMap[normalizedKey];
