@@ -25,21 +25,21 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
       // Get boost periods - include both active and completed boosts
       const { data: profileBoosts } = await supabase
         .from("profile_boosts")
-        .select("start_date, end_date")
+        .select("start_date, end_date, status, updated_at")
         .eq("business_id", businessId)
-        .in("status", ["active", "completed"]);
+        .in("status", ["active", "completed", "deactivated"]);
 
       const { data: eventBoosts } = await supabase
         .from("event_boosts")
-        .select("event_id, start_date, end_date")
+        .select("event_id, start_date, end_date, status, updated_at")
         .eq("business_id", businessId)
-        .in("status", ["active", "completed"]);
+        .in("status", ["active", "completed", "deactivated"]);
 
       const { data: offerBoosts } = await supabase
         .from("offer_boosts")
-        .select("discount_id, start_date, end_date")
+        .select("discount_id, start_date, end_date, status, updated_at")
         .eq("business_id", businessId)
-        .in("status", ["active", "completed"]);
+        .in("status", ["active", "completed", "deactivated"]);
 
       // Get events and offers for this business
       const { data: events } = await supabase
@@ -55,10 +55,24 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
       const discountIds = discounts?.map(d => d.id) || [];
 
       // Helper to check if a date is within any boost period
-      const isWithinBoostPeriod = (date: string, boostPeriods: Array<{ start_date: string; end_date: string }> | null) => {
+      // For deactivated boosts, cap the end_date at updated_at (deactivation time)
+      const getEffectiveEnd = (bp: { start_date: string; end_date: string; status?: string; updated_at?: string }) => {
+        if (bp.status === 'deactivated' && bp.updated_at) {
+          const endDate = new Date(bp.end_date + (bp.end_date.includes('T') ? '' : 'T23:59:59.999Z'));
+          const deactDate = new Date(bp.updated_at);
+          return deactDate < endDate ? deactDate : endDate;
+        }
+        return new Date(bp.end_date + (bp.end_date.includes('T') ? '' : 'T23:59:59.999Z'));
+      };
+
+      const isWithinBoostPeriod = (date: string, boostPeriods: Array<{ start_date: string; end_date: string; status?: string; updated_at?: string }> | null) => {
         if (!boostPeriods || boostPeriods.length === 0) return false;
         const d = new Date(date);
-        return boostPeriods.some(bp => d >= new Date(bp.start_date) && d <= new Date(bp.end_date));
+        return boostPeriods.some(bp => {
+          const start = new Date(bp.start_date + (bp.start_date.includes('T') ? '' : 'T00:00:00.000Z'));
+          const end = getEffectiveEnd(bp);
+          return d >= start && d <= end;
+        });
       };
 
       // PROFILE METRICS
