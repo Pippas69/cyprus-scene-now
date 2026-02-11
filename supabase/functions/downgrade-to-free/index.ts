@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
           logStep('Subscription schedule updated with downgrade phase', {
             scheduleId: schedule.id,
             targetPriceId,
-            effectiveAt: new Date(currentPhaseEnd * 1000).toISOString(),
+            effectiveAt: safeTimestampToISO(currentPhaseEnd),
           });
         }
 
