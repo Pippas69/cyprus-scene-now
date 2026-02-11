@@ -107,7 +107,7 @@ export function usePushNotifications(userId: string | null) {
         return;
       }
 
-      const subscription = await registration.pushManager.getSubscription();
+      const subscription = await (registration as any).pushManager.getSubscription();
       console.log('[Push] Existing subscription:', !!subscription);
       
       if (subscription) {
