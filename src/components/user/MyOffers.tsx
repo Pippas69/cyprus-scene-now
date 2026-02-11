@@ -207,8 +207,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     },
   });
 
-  // Filter out null discounts (deleted offers) BEFORE any categorization
-  const validPurchases = purchases?.filter(p => p.discounts !== null) || [];
+  // Filter out null discounts (deleted offers) and cancelled purchases BEFORE any categorization
+  const validPurchases = purchases?.filter(p => p.discounts !== null && p.status !== 'cancelled') || [];
 
   // Helper: check if a purchase is expired (considers reservation time for reservation-linked offers)
   const isPurchaseExpired = (p: OfferPurchase) => {
