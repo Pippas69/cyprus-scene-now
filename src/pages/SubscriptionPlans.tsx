@@ -324,14 +324,7 @@ export default function SubscriptionPlans({
         }
       });
       if (error) throw error;
-      if (data?.upgraded) {
-        // Upgrade was processed immediately (no checkout needed)
-        toast.success(language === 'el' ? 'Η αναβάθμιση ολοκληρώθηκε!' : 'Upgrade completed!');
-        refetchSubscription();
-        triggerConfetti();
-        setShowSuccessState(true);
-        setTimeout(() => setShowSuccessState(false), 4000);
-      } else if (data?.url) {
+      if (data?.url) {
         const popup = window.open(data.url, '_blank');
         if (!popup || popup.closed || typeof popup.closed === 'undefined') {
           window.location.href = data.url;
