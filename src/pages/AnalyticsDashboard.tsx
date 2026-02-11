@@ -63,6 +63,14 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     ? { from: dateRange.from, to: dateRange.to }
     : undefined;
 
+  // Prefetch ALL tab data in parallel on mount — so switching tabs is instant
+  useOverviewMetrics(businessId, convertedDateRange);
+  usePerformanceMetrics(businessId, convertedDateRange);
+  useAudienceMetrics(businessId, convertedDateRange);
+  useBoostValueMetrics(businessId, convertedDateRange);
+  useGuidanceData(businessId, convertedDateRange);
+  useGuidanceMetrics(businessId, convertedDateRange);
+
   // Check access for each tab
   const hasOverviewAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('overview'));
   const hasPerformanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('performance'));
