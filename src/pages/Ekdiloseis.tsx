@@ -11,6 +11,7 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import { FilterChips } from "@/components/feed/FilterChips";
+import { mapFilterIdsToDbCategories } from "@/lib/categoryFilterMapping";
 import { Button } from "@/components/ui/button";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import { isEventPaused } from "@/lib/eventVisibility";
@@ -382,7 +383,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
 
       // Filter by categories if selected
       if (selectedCategories.length > 0) {
-        query = query.overlaps('category', selectedCategories);
+        query = query.overlaps('category', mapFilterIdsToDbCategories(selectedCategories));
       }
 
       // Apply time filter if selected (Boosted must respect the same time window)
@@ -440,7 +441,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
 
       // Filter by categories if selected
       if (selectedCategories.length > 0) {
-        query = query.overlaps('category', selectedCategories);
+        query = query.overlaps('category', mapFilterIdsToDbCategories(selectedCategories));
       }
 
       // Apply time filter only if selected

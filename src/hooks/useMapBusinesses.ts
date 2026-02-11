@@ -6,6 +6,7 @@ import {
   sortBusinessesByPlanAndProximity,
   type PlanSlug 
 } from "@/lib/businessRanking";
+import { doesCategoryMatchFilters } from "@/lib/categoryFilterMapping";
 
 export interface BusinessLocation {
   id: string;
@@ -134,31 +135,8 @@ export const useMapBusinesses = (
 
           // Category filtering
           if (selectedCategories.length > 0) {
-            const categoryMap: Record<string, string[]> = {
-              'nightlife': ['Nightlife', 'nightlife', 'Νυχτερινή Ζωή'],
-              'clubs': ['Clubs', 'clubs', 'Κλαμπ'], // Now a nightlife sub-option
-              'bars': ['Bars', 'bars', 'Μπαρ'],
-              'wine-bars': ['Wine Bars', 'wine-bars'],
-              'pubs': ['Pubs', 'pubs'],
-              'events': ['Events', 'events'], // New top-level category
-              'dining': ['Dining', 'dining', 'Εστίαση', 'Restaurants', 'restaurants'],
-              'restaurants': ['Restaurants', 'restaurants', 'Εστιατόρια'],
-              'cafes': ['Cafes', 'cafes', 'Καφέ'],
-              'street-food': ['Street Food', 'street-food', 'Φαγητό Δρόμου'],
-              'beach-summer': ['Beach & Summer', 'beach-summer', 'Παραλία & Καλοκαίρι'],
-              'beach-bars': ['Beach Bars', 'beach-bars', 'Μπαρ Παραλίας'],
-              'pool-parties': ['Pool Parties', 'pool-parties', 'Πάρτι Πισίνας'],
-              'boat-parties': ['Boat Parties', 'boat-parties', 'Θαλάσσια Πάρτι'],
-            };
-
-            const dbCategories = selectedCategories.flatMap(cat => categoryMap[cat] || [cat]);
-            
             mappedBusinesses = mappedBusinesses.filter(business =>
-              business.category.some(cat => 
-                dbCategories.some(dbCat => 
-                  cat.toLowerCase() === dbCat.toLowerCase()
-                )
-              )
+              doesCategoryMatchFilters(business.category, selectedCategories)
             );
           }
 

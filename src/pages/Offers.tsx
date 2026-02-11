@@ -11,6 +11,7 @@ import OfferCardSkeleton from "@/components/OfferCardSkeleton";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import { FilterChips } from "@/components/feed/FilterChips";
+import { mapFilterIdsToDbCategories } from "@/lib/categoryFilterMapping";
 import { Button } from "@/components/ui/button";
 import { isBoostCurrentlyActive, type OfferBoostRecord } from "@/lib/boostUtils";
 
@@ -354,7 +355,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
 
       // Filter by categories if selected (filter by business category)
       if (selectedCategories.length > 0) {
-        query = query.overlaps('businesses.category', selectedCategories);
+        query = query.overlaps('businesses.category', mapFilterIdsToDbCategories(selectedCategories));
       }
 
       // Apply time filter if selected (Boosted must respect the same time window)
@@ -405,7 +406,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
 
       // Filter by categories if selected (filter by business category)
       if (selectedCategories.length > 0) {
-        query = query.overlaps('businesses.category', selectedCategories);
+        query = query.overlaps('businesses.category', mapFilterIdsToDbCategories(selectedCategories));
       }
 
       // Apply time filter: show offers that END within the selected time window

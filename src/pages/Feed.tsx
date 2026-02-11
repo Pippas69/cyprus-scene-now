@@ -13,6 +13,7 @@ import CompactLocationDropdown from "@/components/feed/CompactLocationDropdown";
 
 import BusinessDirectorySection from "@/components/feed/BusinessDirectorySection";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
+import { mapFilterIdsToDbCategories } from "@/lib/categoryFilterMapping";
 import { FilterChips } from "@/components/feed/FilterChips";
 import { Button } from "@/components/ui/button";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
@@ -142,7 +143,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         .order("start_at", { ascending: true }); // Chronological order
 
       if (selectedCity) query = query.eq("businesses.city", selectedCity);
-      if (selectedCategories.length > 0) query = query.overlaps("category", selectedCategories);
+      if (selectedCategories.length > 0) query = query.overlaps("category", mapFilterIdsToDbCategories(selectedCategories));
 
       const { data, error } = await query;
       if (error) throw error;
