@@ -126,9 +126,12 @@ Deno.serve(async (req) => {
     let effectiveDate = subscription.current_period_end;
     if (subscription.stripe_subscription_id) {
       try {
-        const stripeSub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
-        effectiveDate = new Date(stripeSub.current_period_end * 1000).toISOString();
-
+        logStep('Stripe sub retrieved', { 
+          current_period_end: stripeSub.current_period_end, 
+          current_period_start: stripeSub.current_period_start,
+          type_end: typeof stripeSub.current_period_end,
+        });
+        effectiveDate = safeTimestampToISO(stripeSub.current_period_end);
         if (targetPlan === 'free') {
           // ===== DOWNGRADE TO FREE: Cancel at period end =====
           await stripe.subscriptions.update(subscription.stripe_subscription_id, {
