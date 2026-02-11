@@ -1,0 +1,2 @@
+ALTER TABLE public.offer_purchases DROP CONSTRAINT valid_status;
+ALTER TABLE public.offer_purchases ADD CONSTRAINT valid_status CHECK (status = ANY (ARRAY['pending', 'paid', 'redeemed', 'expired', 'refunded', 'cancelled']));
