@@ -35,6 +35,8 @@ interface DateRange {
 export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) => {
   return useQuery<GuidanceMetrics>({
     queryKey: ["guidance-metrics", businessId, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    gcTime: 1000 * 60 * 10, // Keep in memory for 10 minutes
     queryFn: async () => {
       // Date range for filtering (default: last 30 days)
       const startDate = dateRange?.from?.toISOString() || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
