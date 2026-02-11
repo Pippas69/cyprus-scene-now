@@ -284,35 +284,31 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
   };
 
   const handleCancelReservation = async (reservationId: string) => {
-    try {
-      setUpcomingReservations((prev) => prev.filter((r) => r.id !== reservationId));
+    // Close dialog & remove from UI immediately for snappy UX
+    setCancelDialog({ open: false, reservationId: null });
+    setUpcomingReservations((prev) => prev.filter((r) => r.id !== reservationId));
+    toast.success(tt.reservationCancelled);
 
-      const { data: updatedRows, error } = await supabase
+    try {
+      // Fire all independent DB writes in parallel
+      const cancelReservation = supabase
         .from('reservations')
         .update({ status: 'cancelled', updated_at: new Date().toISOString() })
         .eq('id', reservationId)
-        .eq('user_id', userId)
-        .select('id, status');
+        .eq('user_id', userId);
 
-      if (error) throw error;
-      if (!updatedRows || updatedRows.length === 0) {
-        throw new Error('No reservation row updated');
-      }
-
-      // Also cancel any linked offer purchase so the user can't check in
-      const { data: linkedPurchase } = await supabase
+      const cancelLinkedOffer = supabase
         .from('offer_purchases')
-        .select('id, status')
+        .update({ status: 'cancelled' })
         .eq('reservation_id', reservationId)
-        .maybeSingle();
+        .neq('status', 'redeemed')
+        .neq('status', 'cancelled');
 
-      if (linkedPurchase && linkedPurchase.status !== 'cancelled' && linkedPurchase.status !== 'redeemed') {
-        await supabase
-          .from('offer_purchases')
-          .update({ status: 'cancelled' })
-          .eq('id', linkedPurchase.id);
-      }
+      const [resResult] = await Promise.all([cancelReservation, cancelLinkedOffer]);
 
+      if (resResult.error) throw resResult.error;
+
+      // Profile update + email can run in background without blocking
       const { data: profile } = await supabase
         .from('profiles')
         .select('reservation_cancellation_count')
@@ -330,22 +326,17 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
 
       await supabase.from('profiles').update(updateData).eq('id', userId);
 
-      try {
-        await supabase.functions.invoke('send-reservation-notification', {
-          body: { reservationId: reservationId, type: 'cancellation' }
-        });
-      } catch (emailError) {
+      supabase.functions.invoke('send-reservation-notification', {
+        body: { reservationId: reservationId, type: 'cancellation' }
+      }).catch((emailError) => {
         console.error('Error sending cancellation email:', emailError);
-      }
+      });
 
-      toast.success(tt.reservationCancelled);
       fetchReservations();
     } catch (error) {
       console.error('Error cancelling reservation:', error);
       toast.error(tt.failed);
       fetchReservations();
-    } finally {
-      setCancelDialog({ open: false, reservationId: null });
     }
   };
 
