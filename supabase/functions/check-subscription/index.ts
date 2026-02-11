@@ -25,20 +25,27 @@ const safeTimestampToISO = (timestamp: number | null | undefined): string => {
 
 // Product ID to plan slug mapping - NEW (Basic/Pro/Elite)
 const PRODUCT_TO_PLAN: Record<string, string> = {
-  // NEW products
-  'prod_TnXuZRPpopjiki': 'basic',       // Basic Monthly
-  'prod_TnXujnMCC4egp8': 'basic',       // Basic Annual
-  'prod_TnXuM6SsuuyScm': 'pro',         // Pro Monthly
-  'prod_TnXu1Cjr9IvzhA': 'pro',         // Pro Annual
-  'prod_TnXuOoALyrNdew': 'elite',       // Elite Monthly
-  'prod_TnXuV3hkfa3wQJ': 'elite',       // Elite Annual
-  // LEGACY products (map to new slugs for backwards compatibility)
-  'prod_TjOhhBOl8h6KSY': 'basic',       // Old Starter Monthly
-  'prod_TjOvLr9W7CmRrp': 'basic',       // Old Starter Annual
-  'prod_TjOj8tEFcsmxHJ': 'pro',         // Old Growth Monthly
-  'prod_TjOwPgvfysk22': 'pro',          // Old Growth Annual
-  'prod_TjOlA1wCzel4BC': 'elite',       // Old Professional Monthly
-  'prod_TjOwpvKhaDl3xS': 'elite',       // Old Professional Annual
+  // CURRENT products (from price_1SyYD* prices)
+  'prod_TwR5CuBhxobuaB': 'basic',       // Basic Monthly
+  'prod_TwR5dSukCnRhmV': 'basic',       // Basic Annual
+  'prod_TwR5lPqVQDQwdM': 'pro',         // Pro Monthly
+  'prod_TwR5KM1dqUMxPJ': 'pro',         // Pro Annual
+  'prod_TwR5XZb3OfOGxA': 'elite',       // Elite Monthly
+  'prod_TwR5uz1rCytowj': 'elite',       // Elite Annual
+  // NEW products (prod_TnXu*)
+  'prod_TnXuZRPpopjiki': 'basic',
+  'prod_TnXujnMCC4egp8': 'basic',
+  'prod_TnXuM6SsuuyScm': 'pro',
+  'prod_TnXu1Cjr9IvzhA': 'pro',
+  'prod_TnXuOoALyrNdew': 'elite',
+  'prod_TnXuV3hkfa3wQJ': 'elite',
+  // LEGACY products
+  'prod_TjOhhBOl8h6KSY': 'basic',
+  'prod_TjOvLr9W7CmRrp': 'basic',
+  'prod_TjOj8tEFcsmxHJ': 'pro',
+  'prod_TjOwPgvfysk22': 'pro',
+  'prod_TjOlA1wCzel4BC': 'elite',
+  'prod_TjOwpvKhaDl3xS': 'elite',
 };
 
 Deno.serve(async (req) => {
@@ -135,14 +142,52 @@ Deno.serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep('Found Stripe customer', { customerId });
 
-    // Don't use expand - Stripe limits nested expansion depth
+    // Fetch all active subscriptions (handle potential duplicates)
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: 'active',
-      limit: 1,
+      limit: 10,
     });
 
     const hasActiveSub = subscriptions.data.length > 0;
+
+    // If multiple active subscriptions exist, pick the highest-tier one
+    let bestSubscription: Stripe.Subscription | null = null;
+    let bestPlanSlug = 'free';
+    let bestLevel = -1;
+
+    const PLAN_HIERARCHY: Record<string, number> = {
+      free: 0, basic: 1, starter: 1, pro: 2, growth: 2, elite: 3, professional: 3,
+    };
+
+    if (hasActiveSub) {
+      for (const sub of subscriptions.data) {
+        const prodId = typeof sub.items.data[0].price.product === 'string'
+          ? sub.items.data[0].price.product
+          : sub.items.data[0].price.product?.id || '';
+        const slug = PRODUCT_TO_PLAN[prodId] || 'basic';
+        const level = PLAN_HIERARCHY[slug] ?? 0;
+        if (level > bestLevel) {
+          bestLevel = level;
+          bestPlanSlug = slug;
+          bestSubscription = sub;
+        }
+      }
+
+      // Cancel lower-tier duplicate subscriptions
+      if (subscriptions.data.length > 1 && bestSubscription) {
+        for (const sub of subscriptions.data) {
+          if (sub.id !== bestSubscription.id) {
+            try {
+              await stripe.subscriptions.cancel(sub.id);
+              logStep('Auto-cancelled duplicate lower-tier subscription', { id: sub.id });
+            } catch (e) {
+              logStep('Failed to cancel duplicate', { id: sub.id, error: String(e) });
+            }
+          }
+        }
+      }
+    }
 
     // If no Stripe subscription, but has DB subscription, use that
     if (!hasActiveSub) {
@@ -178,7 +223,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const subscription = subscriptions.data[0];
+    const subscription = bestSubscription!;
     const subscriptionEnd = safeTimestampToISO(subscription.current_period_end);
     const subscriptionStart = safeTimestampToISO(subscription.current_period_start);
     
@@ -190,7 +235,7 @@ Deno.serve(async (req) => {
       ? priceItem.price.product 
       : priceItem.price.product?.id || '';
     
-    const planSlug = PRODUCT_TO_PLAN[productId] || 'basic';
+    const planSlug = bestPlanSlug;
     logStep('Determined subscription details', { 
       subscriptionId: subscription.id, 
       priceId,
