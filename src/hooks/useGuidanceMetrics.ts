@@ -78,18 +78,20 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
         .filter((i) => new Date(i.from) <= new Date(i.to));
 
       for (const interval of paidIntervals) {
-        // Get all checked-in reservations with event_id IS NULL in this interval
+        // Attribution: based on RESERVATION CREATION TIME, not check-in time.
+        // If the reservation was created while the plan was paid, the visit counts as "featured"
+        // regardless of when the check-in happens.
         let reservationsQ = supabase
           .from("reservations")
           .select("id, special_requests")
           .eq("business_id", businessId)
           .is("event_id", null)
           .not("checked_in_at", "is", null)
-          .gte("checked_in_at", interval.from);
+          .gte("created_at", interval.from);
 
         reservationsQ = interval.endInclusive
-          ? reservationsQ.lte("checked_in_at", interval.to)
-          : reservationsQ.lt("checked_in_at", interval.to);
+          ? reservationsQ.lte("created_at", interval.to)
+          : reservationsQ.lt("created_at", interval.to);
 
         const { data: checkedInReservations } = await reservationsQ;
         
