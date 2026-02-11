@@ -127,10 +127,11 @@ Deno.serve(async (req) => {
     if (subscription.stripe_subscription_id) {
       try {
         const stripeSub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
-        logStep('Stripe sub retrieved', { 
-          current_period_end: stripeSub.current_period_end, 
-          current_period_start: stripeSub.current_period_start,
-          type_end: typeof stripeSub.current_period_end,
+        logStep('Stripe sub keys', { keys: Object.keys(stripeSub).join(',') });
+        logStep('Stripe sub details', { 
+          current_period_end: (stripeSub as any).current_period_end, 
+          current_period_start: (stripeSub as any).current_period_start,
+          items_count: stripeSub.items?.data?.length,
         });
         effectiveDate = safeTimestampToISO(stripeSub.current_period_end);
         if (targetPlan === 'free') {
