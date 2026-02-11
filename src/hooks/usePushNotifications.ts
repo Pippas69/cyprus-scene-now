@@ -190,7 +190,7 @@ export function usePushNotifications(userId: string | null) {
       console.log('[Push] Service worker ready');
 
       // Check for existing subscription
-      let subscription = await registration.pushManager.getSubscription();
+      let subscription = await (registration as any).pushManager.getSubscription();
       console.log('[Push] Existing subscription:', !!subscription);
       
       if (!subscription) {
