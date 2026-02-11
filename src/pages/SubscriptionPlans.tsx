@@ -812,6 +812,19 @@ export default function SubscriptionPlans({
                         {t.yourPlan}
                       </Badge>
                     </div>}
+
+                  {/* Pending downgrade badge - shown on the TARGET plan card */}
+                  {currentSubscription?.downgrade_pending && currentSubscription.downgrade_target_plan === planSlug && (
+                    <div className="mt-2 mb--1 flex justify-center">
+                      <Badge variant="outline" className="text-[9px] px-2 py-0.5 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20 max-w-[200px]">
+                        <span className="text-center leading-[1.3]">
+                          {t.downgradeWillSwitch} {planSlug.charAt(0).toUpperCase() + planSlug.slice(1)}
+                          <br />
+                          {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
+                        </span>
+                      </Badge>
+                    </div>
+                  )}
                   
                   <CardHeader className="pb-3">
                     {/* Plan Icon & Name */}
