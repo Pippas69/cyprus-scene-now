@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
     let effectiveDate = subscription.current_period_end;
     if (subscription.stripe_subscription_id) {
       try {
+        const stripeSub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
         logStep('Stripe sub retrieved', { 
           current_period_end: stripeSub.current_period_end, 
           current_period_start: stripeSub.current_period_start,
