@@ -660,7 +660,7 @@ export default function SubscriptionPlans({
                 <span className="font-medium text-sm text-foreground">{t.freeTitle}</span>
                 
                 {/* Downgrade to Free badge - only visible when on paid plan */}
-                {currentSubscription?.subscribed && !currentSubscription?.downgrade_pending && (
+                {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && !currentSubscription?.downgrade_pending && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <button className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground border border-border/50 transition-colors cursor-pointer">
@@ -683,9 +683,9 @@ export default function SubscriptionPlans({
                     </AlertDialogContent>
                   </AlertDialog>
                 )}
-                
-                {/* Pending downgrade to FREE indicator - only show here when target is free */}
-                {currentSubscription?.downgrade_pending && (currentSubscription.downgrade_target_plan === 'free' || !currentSubscription.downgrade_target_plan) && (
+
+                {/* Pending downgrade to FREE indicator - only show here when target is free (and current plan is not already free) */}
+                {currentSubscription?.plan_slug !== 'free' && currentSubscription?.downgrade_pending && (currentSubscription.downgrade_target_plan === 'free' || !currentSubscription.downgrade_target_plan) && (
                   <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20 max-w-[200px]">
                     <span className="py-0.5 text-center leading-[1.3]">
                       {t.downgradeWillSwitch} Free
