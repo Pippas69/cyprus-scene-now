@@ -11,6 +11,13 @@ import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from 
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Lock, Zap, Star, Crown } from 'lucide-react';
+// Prefetch hooks — called at mount so data is ready when user switches tabs
+import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
+import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
+import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
+import { useBoostValueMetrics } from '@/hooks/useBoostValueMetrics';
+import { useGuidanceData } from '@/hooks/useGuidanceData';
+import { useGuidanceMetrics } from '@/hooks/useGuidanceMetrics';
 
 const translations = {
   el: {
