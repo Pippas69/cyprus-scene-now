@@ -346,6 +346,27 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
           }
         }
 
+        // Fetch plan history for per-transaction commission calculation
+        const { data: planHistoryData } = await supabase
+          .from("business_subscription_plan_history")
+          .select("plan_slug, valid_from, valid_to")
+          .eq("business_id", businessId)
+          .order("valid_from", { ascending: true });
+        const planHistory = planHistoryData || [];
+
+        const commissionRatesMap: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
+
+        const getCommissionForTimestamp = (createdAt: string): number => {
+          if (planHistory.length === 0) return reservationCommissionPercent;
+          for (let i = planHistory.length - 1; i >= 0; i--) {
+            const h = planHistory[i];
+            if (createdAt >= h.valid_from && (!h.valid_to || createdAt <= h.valid_to)) {
+              return commissionRatesMap[h.plan_slug] ?? 12;
+            }
+          }
+          return 12;
+        };
+
         // ------------------------
         // TICKET REVENUE
         // ------------------------
@@ -382,10 +403,13 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
           0
         );
 
-        // Commission is based on the business plan (Lovable Cloud truth)
-        const ticketCommission = Math.round(
-          ticketRevenue * (reservationCommissionPercent / 100)
-        );
+        // Commission per ticket based on plan active at purchase time
+        const ticketCommission = boostedTickets.reduce((sum, t) => {
+          const price = tierPriceById.get(t.tier_id) ?? 0;
+          if (price === 0) return sum;
+          const rate = getCommissionForTimestamp(t.created_at);
+          return sum + Math.round(price * (rate / 100));
+        }, 0);
 
         // ------------------------
         // RESERVATION REVENUE (prepaid minimum charge)
@@ -412,9 +436,13 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
           0
         );
 
-        const reservationCommission = Math.round(
-          reservationRevenue * (reservationCommissionPercent / 100)
-        );
+        // Commission per reservation based on plan active at creation time
+        const reservationCommission = boostedReservations.reduce((sum, r) => {
+          const charge = r.prepaid_min_charge_cents || 0;
+          if (charge === 0) return sum;
+          const rate = getCommissionForTimestamp(r.created_at);
+          return sum + Math.round(charge * (rate / 100));
+        }, 0);
 
         // Total revenue WITH commission (what user paid)
         eventRevenueWithCommission = ticketRevenue + reservationRevenue;
@@ -424,7 +452,7 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
           (ticketRevenue - ticketCommission) +
           (reservationRevenue - reservationCommission);
 
-        // Commission percent: show the plan commission (stable, predictable)
+        // Commission percent: show the current plan commission for display
         avgCommissionPercent = reservationCommissionPercent;
       }
 

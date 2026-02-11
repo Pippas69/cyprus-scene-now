@@ -106,15 +106,41 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       // Fetch only confirmed (accepted) reservations for this event
       const { data: reservationsRaw, error: reservationsError } = await supabase
         .from("reservations")
-        .select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents")
+        .select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at")
         .eq("event_id", eventId)
         .eq("status", "accepted"); // Only confirmed reservations
 
       if (reservationsError) throw reservationsError;
 
-      const reservations = (reservationsRaw || []) as ReservationData[];
+      const reservations = (reservationsRaw || []) as (ReservationData & { created_at: string })[];
 
       const checkedIn = reservations.filter(r => r.checked_in_at).length;
+
+      // Fetch plan history for this business to calculate per-reservation commission
+      const resolvedBizId = businessId || null;
+      let planHistory: { plan_slug: string; valid_from: string; valid_to: string | null }[] = [];
+      if (resolvedBizId) {
+        const { data: history } = await supabase
+          .from("business_subscription_plan_history")
+          .select("plan_slug, valid_from, valid_to")
+          .eq("business_id", resolvedBizId)
+          .order("valid_from", { ascending: true });
+        planHistory = history || [];
+      }
+
+      const commissionRates: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
+
+      const getCommissionForTimestamp = (createdAt: string): number => {
+        if (planHistory.length === 0) return commissionPercent;
+        // Find the plan that was active at this timestamp
+        for (let i = planHistory.length - 1; i >= 0; i--) {
+          const h = planHistory[i];
+          if (createdAt >= h.valid_from && (!h.valid_to || createdAt <= h.valid_to)) {
+            return commissionRates[h.plan_slug] ?? 12;
+          }
+        }
+        return 12; // default free
+      };
 
       // Group by seating type - only count categorized reservations
       const seatingTypeIds = new Set(seatingTypes.map(st => st.id));
@@ -145,8 +171,17 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       const totalReservations = seatingStats.reduce((sum, st) => sum + st.booked, 0);
       const totalRevenue = seatingStats.reduce((sum, st) => sum + st.revenue, 0);
 
-      // Calculate commission based on the business's plan (dynamic)
-      const totalCommission = Math.round(totalRevenue * (commissionPercent / 100));
+      // Calculate commission per-reservation using the plan that was active at each reservation's creation
+      const categorizedReservations = reservations.filter(
+        r => r.seating_type_id && seatingTypeIds.has(r.seating_type_id) || 
+             r.seating_preference && seatingTypeNames.has(r.seating_preference)
+      );
+      const totalCommission = categorizedReservations.reduce((sum, r) => {
+        const charge = r.prepaid_min_charge_cents || 0;
+        if (charge === 0) return sum;
+        const rate = getCommissionForTimestamp(r.created_at);
+        return sum + Math.round(charge * (rate / 100));
+      }, 0);
 
       return {
         seatingTypes: seatingStats,

@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Ticket, Euro, Users, TrendingUp, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useCommissionRate } from "@/hooks/useCommissionRate";
+
 
 interface TicketSalesOverviewProps {
   eventId: string;
@@ -46,22 +46,8 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
   const { language } = useLanguage();
   const text = t[language];
 
-  // Resolve businessId (if not provided) so commission can be dynamic everywhere this component is used.
-  const { data: eventBusiness } = useQuery({
-    queryKey: ["ticket-sales-event-business", eventId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("events")
-        .select("business_id")
-        .eq("id", eventId)
-        .maybeSingle();
-      return data?.business_id ?? null;
-    },
-  });
 
-  const resolvedBusinessId = businessId || eventBusiness || null;
-  const { data: commissionData } = useCommissionRate(resolvedBusinessId);
-  const commissionPercent = commissionData?.commissionPercent ?? 12;
+
 
   const { data: overview, isLoading } = useQuery({
     queryKey: ["ticket-sales-overview", eventId],
@@ -75,10 +61,10 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
 
       if (tiersError) throw tiersError;
 
-      // Fetch orders (revenue source of truth)
+      // Fetch orders (revenue source of truth) - include stored commission
       const { data: orders, error: ordersError } = await supabase
         .from("ticket_orders")
-        .select("subtotal_cents")
+        .select("subtotal_cents, commission_cents")
         .eq("event_id", eventId)
         .eq("status", "completed");
 
@@ -93,12 +79,14 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
       if (ticketsError) throw ticketsError;
 
       const totalRevenue = orders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
+      const storedCommission = orders?.reduce((sum, o) => sum + (o.commission_cents || 0), 0) || 0;
       const ticketsSold = tiers?.reduce((sum, t) => sum + (t.quantity_sold || 0), 0) || 0;
       const checkedIn = tickets?.filter((t) => t.status === "used").length || 0;
 
       return {
         tiers: tiers || [],
         totalRevenue,
+        storedCommission,
         ticketsSold,
         checkedIn,
         totalTickets: tickets?.length || 0,
@@ -129,9 +117,8 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
 
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
 
-  const totalCommission = Math.round(
-    (overview?.totalRevenue || 0) * (commissionPercent / 100)
-  );
+  // Use stored per-order commission (calculated at purchase time with the plan that was active)
+  const totalCommission = overview?.storedCommission || 0;
   const netRevenue = (overview?.totalRevenue || 0) - totalCommission;
 
   return (
