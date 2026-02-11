@@ -59,6 +59,13 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  // Anon-key client for JWT verification (getClaims requires anon key)
+  const authClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    { auth: { persistSession: false } }
+  );
+
   try {
     logStep('Function started');
 
@@ -73,7 +80,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     
     // Use getClaims for signing-keys compatibility
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) throw new Error(`Authentication error: ${claimsError?.message || 'invalid claims'}`);
     
     const userId = claimsData.claims.sub as string;
