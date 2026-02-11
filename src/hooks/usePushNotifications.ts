@@ -215,7 +215,7 @@ export function usePushNotifications(userId: string | null) {
         }
         
         console.log('[Push] Creating push subscription...');
-        subscription = await registration.pushManager.subscribe({
+        subscription = await (registration as any).pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
         });
