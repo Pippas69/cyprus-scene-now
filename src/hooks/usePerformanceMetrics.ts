@@ -255,6 +255,5 @@ export const usePerformanceMetrics = (
       };
     },
     enabled: !!businessId,
-    staleTime: 2 * 60 * 1000,
   });
 };
