@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from "date-fns";
+import { doesCategoryMatchFilters } from "@/lib/categoryFilterMapping";
 
 export interface EventLocation {
   id: string;
@@ -163,7 +164,7 @@ export const useMapEvents = (
           // Category filtering
           if (selectedCategories.length > 0) {
             mappedEvents = mappedEvents.filter(event =>
-              event.category.some(cat => selectedCategories.includes(cat))
+              doesCategoryMatchFilters(event.category, selectedCategories)
             );
           }
 

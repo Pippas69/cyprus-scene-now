@@ -9,6 +9,7 @@ import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/business
 import { useCallback, useRef } from "react";
 import { trackEngagement, useViewTracking } from "@/lib/analyticsTracking";
 import { translateCity } from "@/lib/cityTranslations";
+import { mapFilterIdsToDbCategories } from "@/lib/categoryFilterMapping";
 interface Business {
   id: string;
   name: string;
@@ -32,43 +33,6 @@ interface BusinessDirectorySectionProps {
   userCity?: string | null;
   showStudentDiscountBadges?: boolean;
 }
-
-// Map filter IDs to database category values
-// This converts UI filter selections to actual database values
-const CATEGORY_ID_TO_DB_VALUES: Record<string, string[]> = {
-  // Main categories
-  "nightlife": ["Nightlife"],
-  "events": ["Events"],
-  "dining": ["Dining"],
-  "beach-summer": ["Beach & Summer"],
-  // Nightlife sub-options (Clubs is now here)
-  "clubs": ["Nightlife", "Clubs"],
-  "bars": ["Nightlife", "Bars"],
-  "wine-bars": ["Nightlife", "Wine Bars"],
-  "pubs": ["Nightlife", "Pubs"],
-  // Dining sub-options
-  "fine-dining": ["Dining", "Fine Dining"],
-  "casual-dining": ["Dining", "Casual Dining"],
-  // Beach & Summer sub-options
-  "beach-bars": ["Beach & Summer", "Beach Bars"],
-  "summer-events": ["Beach & Summer", "Summer Events"],
-  "seaside-restaurants": ["Beach & Summer", "Seaside Restaurants"]
-};
-
-// Convert filter IDs to database category values for querying
-const mapFilterIdsToDbCategories = (filterIds: string[]): string[] => {
-  const dbCategories = new Set<string>();
-  filterIds.forEach(id => {
-    const values = CATEGORY_ID_TO_DB_VALUES[id];
-    if (values) {
-      values.forEach(v => dbCategories.add(v));
-    } else {
-      // Fallback: use the ID directly (capitalized)
-      dbCategories.add(id.charAt(0).toUpperCase() + id.slice(1));
-    }
-  });
-  return Array.from(dbCategories);
-};
 const translations = {
   el: {
     noBusinesses: "Δεν βρέθηκαν επιχειρήσεις"
