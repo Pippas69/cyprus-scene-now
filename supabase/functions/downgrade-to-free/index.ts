@@ -175,9 +175,26 @@ Deno.serve(async (req) => {
           logStep('Created schedule from subscription', { scheduleId: schedule.id });
 
           // Update the schedule: keep current phase, add new phase with target price
-          const currentPhaseStart = schedule.phases[0]?.start_date;
+          const currentPhase = schedule.phases[0];
+          if (!currentPhase) {
+            throw new Error('No current phase found in subscription schedule');
+          }
+          
+          const currentPhaseStart = currentPhase.start_date;
           const currentPhaseEnd = stripeSub.current_period_end;
-          const currentItemId = schedule.phases[0]?.items[0]?.price;
+          const currentItemPrice = currentPhase.items[0]?.price;
+          
+          // Extract price ID string - could be a string or an object with id
+          const currentPriceStr = typeof currentItemPrice === 'string' 
+            ? currentItemPrice 
+            : (currentItemPrice as any)?.id || currentPriceId;
+
+          logStep('Schedule phase details', {
+            currentPhaseStart,
+            currentPhaseEnd,
+            currentPriceStr,
+            targetPriceId,
+          });
 
           await stripe.subscriptionSchedules.update(schedule.id, {
             end_behavior: 'release',
@@ -185,7 +202,7 @@ Deno.serve(async (req) => {
               {
                 start_date: currentPhaseStart,
                 end_date: currentPhaseEnd,
-                items: [{ price: currentItemId as string }],
+                items: [{ price: currentPriceStr }],
                 proration_behavior: 'none',
               },
               {
@@ -200,7 +217,7 @@ Deno.serve(async (req) => {
           logStep('Subscription schedule updated with downgrade phase', {
             scheduleId: schedule.id,
             targetPriceId,
-            startsAt: new Date(currentPhaseEnd * 1000).toISOString(),
+            effectiveAt: new Date(currentPhaseEnd * 1000).toISOString(),
           });
         }
 
