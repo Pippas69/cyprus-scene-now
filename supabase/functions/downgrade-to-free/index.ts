@@ -11,6 +11,14 @@ const logStep = (step: string, details?: any) => {
   console.log(`[DOWNGRADE] ${step}${detailsStr}`);
 };
 
+// Safe timestamp to ISO helper
+const safeTimestampToISO = (val: any): string => {
+  if (!val) return new Date().toISOString();
+  if (typeof val === 'number') return new Date(val * 1000).toISOString();
+  if (typeof val === 'string') return val;
+  return new Date().toISOString();
+};
+
 // Plan hierarchy for validation
 const PLAN_HIERARCHY: Record<string, number> = { free: 0, basic: 1, pro: 2, elite: 3 };
 
