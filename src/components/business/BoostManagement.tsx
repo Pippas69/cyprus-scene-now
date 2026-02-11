@@ -261,23 +261,53 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         })
       );
 
-      // Deduplicate by event_id - prefer active/within-window boost, then most recent
+      // Deduplicate by event_id - aggregate metrics across all boosts, keep best metadata
       const deduplicatedEventBoosts = Object.values(
         eventBoostsWithMetrics.reduce((acc, boost) => {
           const existing = acc[boost.event_id];
           if (!existing) {
             acc[boost.event_id] = boost;
           } else {
+            // Aggregate metrics from all boosts for the same event
+            existing.impressions += boost.impressions;
+            existing.interactions += boost.interactions;
+            existing.visits += boost.visits;
+            existing.tickets_sold += boost.tickets_sold;
+            existing.ticket_revenue_cents += boost.ticket_revenue_cents;
+            existing.reservations_count += boost.reservations_count;
+            existing.reservation_guests += boost.reservation_guests;
+            existing.reservation_revenue_cents += boost.reservation_revenue_cents;
+            existing.total_cost_cents += boost.total_cost_cents;
+            existing.has_paid_content = existing.has_paid_content || boost.has_paid_content;
+
+            // Prefer active boost's metadata, or the one with later end_date
             const existingActive = existing.status === "active" && isBoostWithinWindow(existing);
             const currentActive = boost.status === "active" && isBoostWithinWindow(boost);
-            // Prefer active boost over non-active
             if (currentActive && !existingActive) {
-              acc[boost.event_id] = boost;
-            } else if (currentActive === existingActive) {
-              // Both active or both expired — keep the one with later end_date
-              if (new Date(boost.end_date) > new Date(existing.end_date)) {
-                acc[boost.event_id] = boost;
-              }
+              // Keep aggregated metrics but use active boost's metadata
+              const metrics = {
+                impressions: existing.impressions, interactions: existing.interactions,
+                visits: existing.visits, tickets_sold: existing.tickets_sold,
+                ticket_revenue_cents: existing.ticket_revenue_cents,
+                reservations_count: existing.reservations_count,
+                reservation_guests: existing.reservation_guests,
+                reservation_revenue_cents: existing.reservation_revenue_cents,
+                total_cost_cents: existing.total_cost_cents,
+                has_paid_content: existing.has_paid_content,
+              };
+              acc[boost.event_id] = { ...boost, ...metrics };
+            } else if (!existingActive && !currentActive && new Date(boost.end_date) > new Date(existing.end_date)) {
+              const metrics = {
+                impressions: existing.impressions, interactions: existing.interactions,
+                visits: existing.visits, tickets_sold: existing.tickets_sold,
+                ticket_revenue_cents: existing.ticket_revenue_cents,
+                reservations_count: existing.reservations_count,
+                reservation_guests: existing.reservation_guests,
+                reservation_revenue_cents: existing.reservation_revenue_cents,
+                total_cost_cents: existing.total_cost_cents,
+                has_paid_content: existing.has_paid_content,
+              };
+              acc[boost.event_id] = { ...boost, ...metrics };
             }
           }
           return acc;
@@ -360,21 +390,33 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         })
       );
 
-      // Deduplicate by discount_id - prefer active/within-window boost, then latest end_date
+      // Deduplicate by discount_id - aggregate metrics across all boosts
       const deduplicatedOfferBoosts = Object.values(
         offerBoostsWithMetrics.reduce((acc, boost) => {
           const existing = acc[boost.discount_id];
           if (!existing) {
             acc[boost.discount_id] = boost;
           } else {
+            // Aggregate metrics
+            existing.impressions += boost.impressions;
+            existing.interactions += boost.interactions;
+            existing.visits += boost.visits;
+            existing.total_cost_cents += boost.total_cost_cents;
+
             const existingActive = existing.status === "active" && isBoostWithinWindow(existing);
             const currentActive = boost.status === "active" && isBoostWithinWindow(boost);
             if (currentActive && !existingActive) {
-              acc[boost.discount_id] = boost;
-            } else if (currentActive === existingActive) {
-              if (new Date(boost.end_date) > new Date(existing.end_date)) {
-                acc[boost.discount_id] = boost;
-              }
+              const metrics = {
+                impressions: existing.impressions, interactions: existing.interactions,
+                visits: existing.visits, total_cost_cents: existing.total_cost_cents,
+              };
+              acc[boost.discount_id] = { ...boost, ...metrics };
+            } else if (!existingActive && !currentActive && new Date(boost.end_date) > new Date(existing.end_date)) {
+              const metrics = {
+                impressions: existing.impressions, interactions: existing.interactions,
+                visits: existing.visits, total_cost_cents: existing.total_cost_cents,
+              };
+              acc[boost.discount_id] = { ...boost, ...metrics };
             }
           }
           return acc;
