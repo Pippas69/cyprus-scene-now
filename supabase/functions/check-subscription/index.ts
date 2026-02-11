@@ -271,13 +271,26 @@ Deno.serve(async (req) => {
     let monthlyBudgetRemaining = plan.event_boost_budget_cents;
     let commissionFreeOffersRemaining = plan.commission_free_offers_count || 0;
 
-    if (existingSub && existingSub.current_period_start === subscriptionStart) {
-      // Same billing period, keep existing values
-      monthlyBudgetRemaining = existingSub.monthly_budget_remaining_cents || 0;
-      commissionFreeOffersRemaining = existingSub.commission_free_offers_remaining || 0;
-      logStep('Same billing period, keeping existing budget values');
+    if (existingSub) {
+      // Compare billing period starts using epoch seconds to avoid timestamp format mismatches
+      const existingStartEpoch = Math.floor(new Date(existingSub.current_period_start).getTime() / 1000);
+      const stripeStartEpoch = Math.floor(new Date(subscriptionStart).getTime() / 1000);
+      
+      if (existingStartEpoch === stripeStartEpoch) {
+        // Same billing period, keep existing values (preserves boost deductions)
+        monthlyBudgetRemaining = existingSub.monthly_budget_remaining_cents ?? 0;
+        commissionFreeOffersRemaining = existingSub.commission_free_offers_remaining ?? 0;
+        logStep('Same billing period, keeping existing budget values', { 
+          monthlyBudgetRemaining, commissionFreeOffersRemaining 
+        });
+      } else {
+        logStep('New billing period detected, resetting budgets', { 
+          dbStart: existingSub.current_period_start, stripeStart: subscriptionStart,
+          dbEpoch: existingStartEpoch, stripeEpoch: stripeStartEpoch
+        });
+      }
     } else {
-      logStep('New billing period, resetting budgets');
+      logStep('No existing subscription record, using plan defaults');
     }
 
     // Upsert business_subscriptions record
