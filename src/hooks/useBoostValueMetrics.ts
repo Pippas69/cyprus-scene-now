@@ -184,48 +184,53 @@ export const useBoostValueMetrics = (
         return (eventsCount || 0) + (followerCount || 0);
       };
 
-       const countProfileVisits = async (
-         rangeStart: string,
-         rangeEnd: string,
-         endInclusive: boolean
-       ) => {
-         // Profile visits = direct profile reservation check-ins (event_id IS NULL)
-         // EXCLUDING reservations created via offers (offer_purchases.reservation_id).
+       // Profile visits attribution: based on RESERVATION CREATION TIME, not check-in time.
+       // A visit is "Featured" if the reservation was created while the business had a paid plan,
+       // regardless of what plan they have at the time of the actual check-in.
+       const isWithinPaidInterval = (timestamp: string): boolean => {
+         const ts = new Date(timestamp).getTime();
+         return paidIntervals.some((interval) => {
+           const from = new Date(interval.from).getTime();
+           const to = new Date(interval.to).getTime();
+           if (interval.endInclusive) {
+             return ts >= from && ts <= to;
+           }
+           return ts >= from && ts < to;
+         });
+       };
 
-         const fetchAllIds = async () => {
+       const computeProfileVisitAttribution = async () => {
+         // Fetch ALL profile reservation check-ins in the date range (filtered by checked_in_at for date range)
+         const fetchAllReservations = async () => {
            const pageSize = 1000;
-           const out: { id: string; special_requests: string | null }[] = [];
+           const out: { id: string; created_at: string; special_requests: string | null }[] = [];
            for (let from = 0; ; from += pageSize) {
-             let q = supabase
+             const { data } = await supabase
                .from("reservations")
-               .select("id, special_requests")
+               .select("id, created_at, special_requests")
                .eq("business_id", businessId)
                .is("event_id", null)
                .not("checked_in_at", "is", null)
-               .gte("checked_in_at", rangeStart)
+               .gte("checked_in_at", startDate)
+               .lte("checked_in_at", endDate)
                .range(from, from + pageSize - 1);
 
-             q = endInclusive ? q.lte("checked_in_at", rangeEnd) : q.lt("checked_in_at", rangeEnd);
-             const { data } = await q;
-
-             const page = (data || []) as { id: string; special_requests: string | null }[];
+             const page = (data || []) as { id: string; created_at: string; special_requests: string | null }[];
              out.push(...page);
              if (page.length < pageSize) break;
            }
            return out;
          };
 
-         const checkedInReservations = await fetchAllIds();
-         
-         // Offer-linked reservations can have event_id = NULL.
-         // Some offer-reservations are only marked in reservations.special_requests
-         // (e.g. "Offer claim: ..."), so we exclude those too.
+         const checkedInReservations = await fetchAllReservations();
+
+         // Exclude offer-linked reservations
          const offerMarkedReservationIds = new Set(
            checkedInReservations
              .filter((r) => (r.special_requests || "").toLowerCase().includes("offer claim:"))
              .map((r) => r.id)
          );
-         
+
          const reservationIds = checkedInReservations.map((r) => r.id);
 
          let offerLinkedReservationIds = new Set<string>();
@@ -243,24 +248,45 @@ export const useBoostValueMetrics = (
            );
          }
 
-         const directProfileReservationVisits = reservationIds.filter(
-           (id) => !offerLinkedReservationIds.has(id) && !offerMarkedReservationIds.has(id)
-         ).length;
+         const directReservations = checkedInReservations.filter(
+           (r) => !offerLinkedReservationIds.has(r.id) && !offerMarkedReservationIds.has(r.id)
+         );
 
-         // Also count student discount redemptions
-         let studentQ = supabase
-           .from("student_discount_redemptions")
-           .select("id", { count: "exact", head: true })
-           .eq("business_id", businessId)
-           .gte("created_at", rangeStart);
+         let featured = 0;
+         let nonFeatured = 0;
 
-         studentQ = endInclusive
-           ? studentQ.lte("created_at", rangeEnd)
-           : studentQ.lt("created_at", rangeEnd);
+         directReservations.forEach((r) => {
+           // Attribution: was the business on a paid plan when the RESERVATION was created?
+           if (isWithinPaidInterval(r.created_at)) {
+             featured++;
+           } else {
+             nonFeatured++;
+           }
+         });
 
-         const { count: studentCount } = await studentQ;
+         // Student discount redemptions: attribute based on their creation time
+         const allStudentRedemptions = await fetchAll<{ id: string; created_at: string }>(
+           async (from, to) => {
+             const { data } = await supabase
+               .from("student_discount_redemptions")
+               .select("id, created_at")
+               .eq("business_id", businessId)
+               .gte("created_at", startDate)
+               .lte("created_at", endDate)
+               .range(from, from + 999);
+             return (data || []) as any;
+           }
+         );
 
-         return directProfileReservationVisits + (studentCount || 0);
+         allStudentRedemptions.forEach((s) => {
+           if (isWithinPaidInterval(s.created_at)) {
+             featured++;
+           } else {
+             nonFeatured++;
+           }
+         });
+
+         return { featured, nonFeatured };
        };
 
       // We compute totals for the whole range, then compute "featured" by summing counts
@@ -271,19 +297,19 @@ export const useBoostValueMetrics = (
       const totalInteractions = await countProfileInteractions(startDate, endDate, true);
       const featuredInteractions = await sumCountsOverIntervals(countProfileInteractions);
 
-      const totalVisits = await countProfileVisits(startDate, endDate, true);
-      const featuredVisits = await sumCountsOverIntervals(countProfileVisits);
+      // Profile visits: attribution based on reservation creation time, not check-in time
+      const visitAttribution = await computeProfileVisitAttribution();
 
       profileWith = {
         views: featuredViews,
         interactions: featuredInteractions,
-        visits: featuredVisits,
+        visits: visitAttribution.featured,
       };
 
       profileWithout = {
         views: Math.max(0, totalViews - featuredViews),
         interactions: Math.max(0, totalInteractions - featuredInteractions),
-        visits: Math.max(0, totalVisits - featuredVisits),
+        visits: visitAttribution.nonFeatured,
       };
 
       // ========================================
