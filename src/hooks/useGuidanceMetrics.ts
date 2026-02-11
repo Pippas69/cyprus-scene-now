@@ -203,19 +203,19 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       let offerUniqueVisitors = 0;
 
       if (boostedOfferIds.length > 0) {
-        // Count QR redemptions (offer_purchases with redeemed_at) that occurred during boost periods
-        // Also filter by the selected date range
+        // Count QR redemptions — attribution based on CLAIM time (created_at), not redemption time
+        // Filter by redeemed_at for the date range (visit happened in range), but attribute by created_at
         const { data: offerRedemptions } = await supabase
           .from("offer_purchases")
-          .select("id, user_id, discount_id, redeemed_at")
+          .select("id, user_id, discount_id, created_at, redeemed_at")
           .in("discount_id", boostedOfferIds)
           .not("redeemed_at", "is", null)
           .gte("redeemed_at", startDate)
           .lte("redeemed_at", endDate);
 
-        // Filter to only count redemptions that happened during a boost period
+        // Filter: was the offer boosted when the user CLAIMED it?
         const boostedRedemptions = (offerRedemptions || []).filter(
-          (r) => r.redeemed_at && isWithinOfferBoostPeriod(r.redeemed_at, r.discount_id)
+          (r) => r.created_at && isWithinOfferBoostPeriod(r.created_at, r.discount_id)
         );
 
         offerTotalVisits = boostedRedemptions.length;
