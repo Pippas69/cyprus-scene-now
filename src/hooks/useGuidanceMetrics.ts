@@ -79,70 +79,80 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
         }))
         .filter((i) => new Date(i.from) <= new Date(i.to));
 
-      for (const interval of paidIntervals) {
-        // Attribution: based on RESERVATION CREATION TIME, not check-in time.
-        // If the reservation was created while the plan was paid, the visit counts as "featured"
-        // regardless of when the check-in happens.
-        let reservationsQ = supabase
-          .from("reservations")
-          .select("id, special_requests")
-          .eq("business_id", businessId)
-          .is("event_id", null)
-          .not("checked_in_at", "is", null)
-          .gte("created_at", interval.from);
+      const intervalCounts = await Promise.all(
+        paidIntervals.map(async (interval) => {
+          // Attribution: based on RESERVATION CREATION TIME, not check-in time.
+          // If the reservation was created while the plan was paid, the visit counts as "featured"
+          // regardless of when the check-in happens.
+          let reservationsQ = supabase
+            .from("reservations")
+            .select("id, special_requests")
+            .eq("business_id", businessId)
+            .is("event_id", null)
+            .not("checked_in_at", "is", null)
+            .gte("created_at", interval.from);
 
-        reservationsQ = interval.endInclusive
-          ? reservationsQ.lte("created_at", interval.to)
-          : reservationsQ.lt("created_at", interval.to);
+          reservationsQ = interval.endInclusive
+            ? reservationsQ.lte("created_at", interval.to)
+            : reservationsQ.lt("created_at", interval.to);
 
-        const { data: checkedInReservations } = await reservationsQ;
-        
-        // Offer-linked reservations can have event_id = NULL.
-        // Some offer-reservations are only marked in reservations.special_requests
-        // (e.g. "Offer claim: ..."), so we exclude those too.
-        const offerMarkedReservationIds = new Set(
-          (checkedInReservations || [])
-            .filter((r) => ((r as any).special_requests || "").toLowerCase().includes("offer claim:"))
-            .map((r) => r.id)
-        );
-        
-        const reservationIds = (checkedInReservations || []).map((r) => r.id);
+          const { data: checkedInReservations } = await reservationsQ;
 
-        // IMPORTANT: Exclude reservations that were created via offer purchases
-        // to prevent double-counting (they are counted under "offer visits" instead).
-        let offerLinkedReservationIds = new Set<string>();
-        if (reservationIds.length > 0) {
-          const { data: offerLinks } = await supabase
-            .from("offer_purchases")
-            .select("reservation_id")
-            .in("reservation_id", reservationIds)
-            .not("reservation_id", "is", null);
-
-          offerLinkedReservationIds = new Set(
-            (offerLinks || [])
-              .map((o) => (o as { reservation_id: string | null }).reservation_id)
-              .filter(Boolean) as string[]
+          // Offer-linked reservations can have event_id = NULL.
+          // Some offer-reservations are only marked in reservations.special_requests
+          // (e.g. "Offer claim: ..."), so we exclude those too.
+          const offerMarkedReservationIds = new Set(
+            (checkedInReservations || [])
+              .filter((r) =>
+                ((r as any).special_requests || "")
+                  .toLowerCase()
+                  .includes("offer claim:")
+              )
+              .map((r) => r.id)
           );
-        }
 
-        const directProfileReservationVisits = reservationIds.filter(
-          (id) => !offerLinkedReservationIds.has(id) && !offerMarkedReservationIds.has(id)
-        ).length;
+          const reservationIds = (checkedInReservations || []).map((r) => r.id);
 
-        let studentQ = supabase
-          .from("student_discount_redemptions")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .gte("created_at", interval.from);
+          // IMPORTANT: Exclude reservations that were created via offer purchases
+          // to prevent double-counting (they are counted under "offer visits" instead).
+          let offerLinkedReservationIds = new Set<string>();
+          if (reservationIds.length > 0) {
+            const { data: offerLinks } = await supabase
+              .from("offer_purchases")
+              .select("reservation_id")
+              .in("reservation_id", reservationIds)
+              .not("reservation_id", "is", null);
 
-        studentQ = interval.endInclusive
-          ? studentQ.lte("created_at", interval.to)
-          : studentQ.lt("created_at", interval.to);
+            offerLinkedReservationIds = new Set(
+              (offerLinks || [])
+                .map((o) => (o as { reservation_id: string | null }).reservation_id)
+                .filter(Boolean) as string[]
+            );
+          }
 
-        const { count: studentCount } = await studentQ;
+          const directProfileReservationVisits = reservationIds.filter(
+            (id) =>
+              !offerLinkedReservationIds.has(id) &&
+              !offerMarkedReservationIds.has(id)
+          ).length;
 
-        newCustomers += directProfileReservationVisits + (studentCount || 0);
-      }
+          let studentQ = supabase
+            .from("student_discount_redemptions")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", businessId)
+            .gte("created_at", interval.from);
+
+          studentQ = interval.endInclusive
+            ? studentQ.lte("created_at", interval.to)
+            : studentQ.lt("created_at", interval.to);
+
+          const { count: studentCount } = await studentQ;
+
+          return directProfileReservationVisits + (studentCount || 0);
+        })
+      );
+
+      newCustomers = intervalCounts.reduce((sum, n) => sum + n, 0);
 
 
       // ========================================

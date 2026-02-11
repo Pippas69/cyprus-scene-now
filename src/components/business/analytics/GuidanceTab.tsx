@@ -912,7 +912,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
     }
   };
 
-  if (isLoading) {
+  if (isLoading || metricsLoading) {
     return (
       <div className="space-y-6">
         {[1, 2, 3, 4, 5].map(i => (
