@@ -167,7 +167,7 @@ const HierarchicalCategoryFilter = ({
     if (!onToggleStudentDiscounts) return null;
     const isActive = !!showStudentDiscounts;
     return (
-      <div className={`relative mt-0 ${language === "el" ? "lg:-ml-36" : "lg:-ml-44"}`}>
+      <div className="relative mt-0">
         <Badge
           variant={isActive ? "default" : "outline"}
           className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-[10px] md:text-[10px] lg:text-xs font-medium min-h-[28px] md:min-h-[28px] lg:min-h-[36px] flex items-center justify-center gap-1 md:gap-1 lg:gap-1.5 rounded-full select-none whitespace-nowrap ${
@@ -313,10 +313,10 @@ const HierarchicalCategoryFilter = ({
         </div>
       ) : (
         isDesktopLg ? (
-          // Desktop: 4 categories in one row, Student Discount on the next row centered
-          <div className="flex flex-col gap-2 pb-2">
-            <div className="flex gap-2">{categories.map((cat) => renderBadge(cat))}</div>
-            <div className="flex justify-center">{renderStudentDiscountBadge()}</div>
+          // Desktop: all categories + Student Discount in one row
+          <div className="flex gap-2 pb-2 items-center">
+            {categories.map((cat) => renderBadge(cat))}
+            {renderStudentDiscountBadge()}
           </div>
         ) : (
           // Mobile/Tablet: Summer + Student Discount on the same row (as per mock)
