@@ -482,7 +482,8 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       };
     },
     enabled: !!businessId,
-    // Guidance should update quickly after subscription changes.
+  });
+}
     enabled: !!businessId,
   });
 }
