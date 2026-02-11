@@ -299,6 +299,20 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
         throw new Error('No reservation row updated');
       }
 
+      // Also cancel any linked offer purchase so the user can't check in
+      const { data: linkedPurchase } = await supabase
+        .from('offer_purchases')
+        .select('id, status')
+        .eq('reservation_id', reservationId)
+        .maybeSingle();
+
+      if (linkedPurchase && linkedPurchase.status !== 'cancelled' && linkedPurchase.status !== 'redeemed') {
+        await supabase
+          .from('offer_purchases')
+          .update({ status: 'cancelled' })
+          .eq('id', linkedPurchase.id);
+      }
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('reservation_cancellation_count')
