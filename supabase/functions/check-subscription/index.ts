@@ -272,21 +272,24 @@ Deno.serve(async (req) => {
     let commissionFreeOffersRemaining = plan.commission_free_offers_count || 0;
 
     if (existingSub) {
-      // Compare billing period starts using epoch seconds to avoid timestamp format mismatches
+      // Compare billing period starts using epoch seconds
+      // Treat as same period if difference is less than 24 hours (handles Stripe timestamp drift)
       const existingStartEpoch = Math.floor(new Date(existingSub.current_period_start).getTime() / 1000);
       const stripeStartEpoch = Math.floor(new Date(subscriptionStart).getTime() / 1000);
+      const diffSeconds = Math.abs(stripeStartEpoch - existingStartEpoch);
+      const ONE_DAY = 86400;
       
-      if (existingStartEpoch === stripeStartEpoch) {
+      if (diffSeconds < ONE_DAY) {
         // Same billing period, keep existing values (preserves boost deductions)
         monthlyBudgetRemaining = existingSub.monthly_budget_remaining_cents ?? 0;
         commissionFreeOffersRemaining = existingSub.commission_free_offers_remaining ?? 0;
         logStep('Same billing period, keeping existing budget values', { 
-          monthlyBudgetRemaining, commissionFreeOffersRemaining 
+          monthlyBudgetRemaining, commissionFreeOffersRemaining, diffSeconds
         });
       } else {
         logStep('New billing period detected, resetting budgets', { 
           dbStart: existingSub.current_period_start, stripeStart: subscriptionStart,
-          dbEpoch: existingStartEpoch, stripeEpoch: stripeStartEpoch
+          diffSeconds
         });
       }
     } else {
