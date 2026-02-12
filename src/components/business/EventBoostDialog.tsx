@@ -76,7 +76,7 @@ const EventBoostDialog = ({
   };
 
   const selectedTier = tiers[tier];
-  const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
 
   const totalCost = durationMode === "hourly" 
     ? selectedTier.hourlyRate * durationHours 
@@ -95,11 +95,11 @@ const EventBoostDialog = ({
   const handleBoost = async () => {
     setIsSubmitting(true);
     try {
-      const formattedStartDate = startDate.toISOString().split("T")[0];
+      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
       const calculatedEndDate = durationMode === "hourly" 
         ? addHours(startDate, durationHours) 
         : endDate;
-      const formattedEndDate = calculatedEndDate.toISOString().split("T")[0];
+      const formattedEndDate = format(calculatedEndDate, 'yyyy-MM-dd');
 
       if (canUseSubscriptionBudget || totalCostCents === 0) {
         const { data, error } = await supabase.functions.invoke("create-event-boost", {
