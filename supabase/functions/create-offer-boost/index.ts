@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     } else {
       const start = new Date(startDate);
       const end = new Date(endDate);
-      const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+      const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1); // Include both start and end day
       totalCostCents = tierData.dailyRateCents * days;
       logStep("Daily cost calculated", { days, totalCostCents });
     }
