@@ -115,8 +115,14 @@ Deno.serve(async (req) => {
       throw new Error(`Cannot downgrade: ${currentPlanSlug} → ${targetPlan} is not a downgrade`);
     }
 
-    // If already has a pending downgrade, we'll just update it (allow plan changes)
-    // This enables the "downgrade chain" where a user can change their scheduled plan multiple times
+    // If already has a pending downgrade, allow changing the target plan
+    const hasPendingDowngrade = !!subscription.downgraded_to_free_at;
+    if (hasPendingDowngrade) {
+      logStep('Updating existing downgrade schedule', { 
+        previousTarget: subscription.downgrade_target_plan, 
+        newTarget: targetPlan 
+      });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
 
@@ -134,6 +140,32 @@ Deno.serve(async (req) => {
         logStep('Stripe sub period', { periodEnd, periodStart, status: stripeSub.status });
         
         effectiveDate = safeTimestampToISO(periodEnd);
+
+        // First, clean up any existing Stripe schedules or cancel_at_period_end
+        if (hasPendingDowngrade) {
+          // Undo cancel_at_period_end if it was set (previous target was 'free')
+          if (stripeSub.cancel_at_period_end) {
+            await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+              cancel_at_period_end: false,
+            });
+            logStep('Undid cancel_at_period_end from previous free downgrade');
+          }
+          // Release any existing schedules
+          const existingSchedules = await stripe.subscriptionSchedules.list({
+            customer: stripeSub.customer as string,
+            limit: 5,
+          });
+          for (const sched of existingSchedules.data) {
+            if (sched.status === 'active' || sched.status === 'not_started') {
+              try {
+                await stripe.subscriptionSchedules.release(sched.id);
+                logStep('Released existing schedule', { scheduleId: sched.id });
+              } catch (e) {
+                logStep('Could not release schedule', { scheduleId: sched.id, error: String(e) });
+              }
+            }
+          }
+        }
         
         if (targetPlan === 'free') {
           // ===== DOWNGRADE TO FREE: Cancel at period end =====
@@ -157,19 +189,21 @@ Deno.serve(async (req) => {
 
           logStep('Scheduling plan change', { currentPriceId, targetPriceId, isAnnual, periodEnd });
 
-          // Release any existing schedule first
-          const existingSchedules = await stripe.subscriptionSchedules.list({
-            customer: stripeSub.customer as string,
-            limit: 5,
-          });
-          
-          for (const sched of existingSchedules.data) {
-            if (sched.status === 'active' || sched.status === 'not_started') {
-              try {
-                await stripe.subscriptionSchedules.release(sched.id);
-                logStep('Released existing schedule', { scheduleId: sched.id });
-              } catch (e) {
-                logStep('Could not release schedule', { scheduleId: sched.id, error: String(e) });
+          // Release any existing schedule first (if not already done above)
+          if (!hasPendingDowngrade) {
+            const existingSchedules = await stripe.subscriptionSchedules.list({
+              customer: stripeSub.customer as string,
+              limit: 5,
+            });
+            
+            for (const sched of existingSchedules.data) {
+              if (sched.status === 'active' || sched.status === 'not_started') {
+                try {
+                  await stripe.subscriptionSchedules.release(sched.id);
+                  logStep('Released existing schedule', { scheduleId: sched.id });
+                } catch (e) {
+                  logStep('Could not release schedule', { scheduleId: sched.id, error: String(e) });
+                }
               }
             }
           }

@@ -671,7 +671,7 @@ export default function SubscriptionPlans({
                 <span className="font-medium text-sm text-foreground">{t.freeTitle}</span>
                 
                 {/* Downgrade to Free badge - only visible when on paid plan */}
-                {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && !currentSubscription?.downgrade_pending && (
+                {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && (!currentSubscription?.downgrade_pending || (currentSubscription?.downgrade_target_plan && currentSubscription.downgrade_target_plan !== 'free')) && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <button className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground border border-border/50 transition-colors cursor-pointer">
