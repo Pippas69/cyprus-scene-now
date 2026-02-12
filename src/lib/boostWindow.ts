@@ -65,6 +65,13 @@ export const computeBoostWindow = (input: BoostWindowInput): BoostWindow | null 
     start = new Date(normalizeToUtcIfNoTz(input.created_at)).toISOString();
   }
 
+  // Cap daily boost start at created_at: a boost cannot attribute actions
+  // that occurred before it was actually created, even on the same day.
+  if (start && input.created_at) {
+    const createdIso = new Date(normalizeToUtcIfNoTz(input.created_at)).toISOString();
+    if (createdIso > start) start = createdIso;
+  }
+
   let end: string | null = null;
   if (input.end_date) {
     end = hasTimeComponent(input.end_date)
