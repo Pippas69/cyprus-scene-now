@@ -155,7 +155,7 @@ const OfferBoostSection = ({
   };
 
   return (
-    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border-2 border-dashed rounded-lg">
+    <div className="space-y-2 sm:space-y-4 p-2 sm:p-4 border-2 border-dashed rounded-lg">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <Label className="text-xs sm:text-base font-semibold flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">

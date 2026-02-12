@@ -1221,13 +1221,13 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       </SectionCard>
 
       {/* Terms & Conditions (Optional) */}
-      <div className="space-y-2">
-        <Label className="text-[10px] sm:text-xs md:text-sm font-medium">{t.termsConditions}</Label>
+      <div className="space-y-1 sm:space-y-2">
+        <Label className="text-xs sm:text-sm font-medium">{t.termsConditions}</Label>
         <Textarea
           value={formData.termsAndConditions}
           onChange={(e) => updateField('termsAndConditions', e.target.value)}
           placeholder={t.termsPlaceholder}
-          className="min-h-[60px] text-[10px] sm:text-xs md:text-sm resize-none"
+          className="min-h-[40px] sm:min-h-[60px] text-xs sm:text-sm resize-none py-1.5 sm:py-2"
           rows={2}
         />
       </div>
@@ -1243,16 +1243,16 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       <Button
         onClick={handleSubmit}
         disabled={isSubmitting || !isBusinessVerified}
-        className="w-full py-3 sm:py-6 text-xs sm:text-lg font-semibold"
+        className="w-full h-10 sm:h-14 text-sm sm:text-lg font-semibold"
         size="lg"
       >
         {isSubmitting ? (
           <>
             <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
-            <span>{t.publishing}</span>
+            {t.publishing}
           </>
         ) : (
-          <span>{t.publishOffer}</span>
+          t.publishOffer
         )}
       </Button>
 
