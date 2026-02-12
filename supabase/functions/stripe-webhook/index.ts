@@ -148,8 +148,8 @@ Deno.serve(async (req) => {
             stripe_subscription_id: subscription.id,
             status: 'active',
             billing_cycle: subscription.items.data[0].price.recurring?.interval === 'year' ? 'annual' : 'monthly',
-            current_period_start: safeTimestampToISO(subscription.current_period_start),
-            current_period_end: safeTimestampToISO(subscription.current_period_end),
+            current_period_start: safeTimestampToISO((subscription.items.data[0] as any).current_period_end ? (subscription.items.data[0] as any).current_period_start : subscription.current_period_start),
+            current_period_end: safeTimestampToISO((subscription.items.data[0] as any).current_period_end ?? subscription.current_period_end),
             monthly_budget_remaining_cents: resolvedPlan.event_boost_budget_cents,
             commission_free_offers_remaining: resolvedPlan.commission_free_offers_count
           });
@@ -383,8 +383,8 @@ Deno.serve(async (req) => {
                 .update({
                   plan_id: newPlan.id,
                   billing_cycle: billingCycle,
-                  current_period_start: safeTimestampToISO(subscription.current_period_start),
-                  current_period_end: safeTimestampToISO(subscription.current_period_end),
+                  current_period_start: safeTimestampToISO((subscription.items.data[0] as any).current_period_start ?? subscription.current_period_start),
+                  current_period_end: safeTimestampToISO((subscription.items.data[0] as any).current_period_end ?? subscription.current_period_end),
                   monthly_budget_remaining_cents: newPlan.event_boost_budget_cents,
                   commission_free_offers_remaining: newPlan.commission_free_offers_count || 0,
                   downgraded_to_free_at: null, // Clear any pending downgrade
@@ -399,7 +399,7 @@ Deno.serve(async (req) => {
                 business_id: businessSub.business_id,
                 plan_slug: newPlanSlug,
                 source: 'stripe_subscription_updated',
-                valid_from: safeTimestampToISO(subscription.current_period_start),
+                valid_from: safeTimestampToISO((subscription.items.data[0] as any).current_period_start ?? subscription.current_period_start),
               });
             }
           }
@@ -486,8 +486,8 @@ Deno.serve(async (req) => {
             .update({
               monthly_budget_remaining_cents: businessSub.subscription_plans.event_boost_budget_cents,
               commission_free_offers_remaining: businessSub.subscription_plans.commission_free_offers_count,
-              current_period_start: safeTimestampToISO(subscription.current_period_start),
-              current_period_end: safeTimestampToISO(subscription.current_period_end)
+              current_period_start: safeTimestampToISO((subscription.items.data[0] as any).current_period_start ?? subscription.current_period_start),
+              current_period_end: safeTimestampToISO((subscription.items.data[0] as any).current_period_end ?? subscription.current_period_end)
             })
             .eq('id', businessSub.id);
 
