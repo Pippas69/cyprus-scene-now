@@ -115,10 +115,8 @@ Deno.serve(async (req) => {
       throw new Error(`Cannot downgrade: ${currentPlanSlug} → ${targetPlan} is not a downgrade`);
     }
 
-    // If already has a pending downgrade
-    if (subscription.downgraded_to_free_at) {
-      throw new Error('Already scheduled for downgrade');
-    }
+    // If already has a pending downgrade, we'll just update it (allow plan changes)
+    // This enables the "downgrade chain" where a user can change their scheduled plan multiple times
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
 

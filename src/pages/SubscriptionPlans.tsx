@@ -241,6 +241,7 @@ export default function SubscriptionPlans({
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [showSuccessState, setShowSuccessState] = useState(false);
   const [loadingDowngrade, setLoadingDowngrade] = useState(false);
+  const [downgradeConfirmPlan, setDowngradeConfirmPlan] = useState<string | null>(null);
   const {
     isActive: confettiActive,
     trigger: triggerConfetti,
@@ -311,6 +312,16 @@ export default function SubscriptionPlans({
         navigate('/login');
         return;
       }
+
+      // Check if this is a downgrade
+      if (isDowngrade(planSlug)) {
+        // For downgrades, show confirmation dialog
+        setLoadingPlan(null);
+        setDowngradeConfirmPlan(planSlug);
+        return;
+      }
+
+      // For upgrades and new subscriptions, proceed with Stripe checkout
       const {
         data,
         error
@@ -918,5 +929,35 @@ export default function SubscriptionPlans({
           </div>
         </motion.div>
       </div>
+
+      {/* Downgrade Confirmation Dialog */}
+      <AlertDialog open={!!downgradeConfirmPlan} onOpenChange={(open) => {
+        if (!open) setDowngradeConfirmPlan(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.downgradeConfirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.downgradeConfirmDesc}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDowngradeConfirmPlan(null)}>
+              {t.downgradeCancel}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setDowngradeConfirmPlan(null);
+                if (downgradeConfirmPlan) {
+                  handleDowngrade(downgradeConfirmPlan);
+                }
+              }}
+              disabled={loadingDowngrade}
+            >
+              {loadingDowngrade ? t.loading : t.downgradeConfirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 }
