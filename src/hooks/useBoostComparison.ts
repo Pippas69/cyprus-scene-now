@@ -25,19 +25,19 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
       // Get boost periods - include both active and completed boosts
       const { data: profileBoosts } = await supabase
         .from("profile_boosts")
-        .select("start_date, end_date, status, updated_at")
+        .select("start_date, end_date, status, updated_at, created_at")
         .eq("business_id", businessId)
         .in("status", ["active", "completed", "deactivated"]);
 
       const { data: eventBoosts } = await supabase
         .from("event_boosts")
-        .select("event_id, start_date, end_date, status, updated_at")
+        .select("event_id, start_date, end_date, status, updated_at, created_at, duration_mode, duration_hours")
         .eq("business_id", businessId)
         .in("status", ["active", "completed", "deactivated"]);
 
       const { data: offerBoosts } = await supabase
         .from("offer_boosts")
-        .select("discount_id, start_date, end_date, status, updated_at")
+        .select("discount_id, start_date, end_date, status, updated_at, created_at, duration_mode, duration_hours")
         .eq("business_id", businessId)
         .in("status", ["active", "completed", "deactivated"]);
 
