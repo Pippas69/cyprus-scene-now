@@ -207,12 +207,6 @@ const translations = {
 
 // Plan configuration
 const PLAN_CONFIG = {
-  free: {
-    icon: Gift,
-    gradient: 'from-gray-400 to-gray-500',
-    monthlyPrice: 0,
-    annualMonthlyPrice: 0
-  },
   basic: {
     icon: Zap,
     gradient: 'from-blue-500 to-cyan-500',
@@ -384,53 +378,44 @@ export default function SubscriptionPlans({
     }
   };
 
-   const handleDowngrade = async (targetPlan: string = 'free') => {
-     setLoadingDowngrade(true);
-     try {
-       const { data: { session } } = await supabase.auth.getSession();
-       if (!session) {
-         toast.error(language === 'el' ? 'Παρακαλώ συνδεθείτε' : 'Please log in');
-         return;
-       }
-       const { data, error } = await supabase.functions.invoke('downgrade-to-free', {
-         body: { target_plan: targetPlan },
-         headers: { Authorization: `Bearer ${session.access_token}` },
-       });
-       if (error) {
-         // Try to parse the error message from the response
-         let errorMsg = error.message || String(error);
-         try {
-           if (error.context && typeof error.context === 'object') {
-             const body = await error.context.json?.();
-             if (body?.error) errorMsg = body.error;
-           }
-         } catch {}
-         throw new Error(errorMsg);
-       }
-       const targetName = (targetPlan.charAt(0).toUpperCase() + targetPlan.slice(1));
-       
-       // Translate plan names for better UX
-       const planNameMap: Record<string, string> = {
-         free: language === 'el' ? 'Free' : 'Free',
-         basic: language === 'el' ? 'Basic' : 'Basic',
-         pro: language === 'el' ? 'Pro' : 'Pro',
-         elite: language === 'el' ? 'Elite' : 'Elite',
-       };
-       
-       toast.success(
-         language === 'el'
-           ? `Η υποβάθμιση σε ${planNameMap[targetPlan] || targetName} προγραμματίστηκε. Ισχύει από ${formatDate(data.effective_date)}`
-           : `Downgrade to ${planNameMap[targetPlan] || targetName} scheduled. Effective from ${formatDate(data.effective_date)}`
-       );
-       refetchSubscription();
-     } catch (error) {
-       const message = error instanceof Error ? error.message : String(error);
-       console.error('Error downgrading:', error);
-       toast.error(language === 'el' ? `Αποτυχία υποβάθμισης: ${message}` : `Failed to downgrade: ${message}`);
-     } finally {
-       setLoadingDowngrade(false);
-     }
-   };
+  const handleDowngrade = async (targetPlan: string = 'free') => {
+    setLoadingDowngrade(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error(language === 'el' ? 'Παρακαλώ συνδεθείτε' : 'Please log in');
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke('downgrade-to-free', {
+        body: { target_plan: targetPlan },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) {
+        // Try to parse the error message from the response
+        let errorMsg = error.message || String(error);
+        try {
+          if (error.context && typeof error.context === 'object') {
+            const body = await error.context.json?.();
+            if (body?.error) errorMsg = body.error;
+          }
+        } catch {}
+        throw new Error(errorMsg);
+      }
+      const targetName = (targetPlan.charAt(0).toUpperCase() + targetPlan.slice(1));
+      toast.success(
+        language === 'el'
+          ? `Η υποβάθμιση σε ${targetName} προγραμματίστηκε. Ισχύει από ${formatDate(data.effective_date)}`
+          : `Downgrade to ${targetName} scheduled. Effective from ${formatDate(data.effective_date)}`
+      );
+      refetchSubscription();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error downgrading:', error);
+      toast.error(language === 'el' ? `Αποτυχία υποβάθμισης: ${message}` : `Failed to downgrade: ${message}`);
+    } finally {
+      setLoadingDowngrade(false);
+    }
+  };
 
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
   const formatCurrency = (cents: number) => `€${(cents / 100).toFixed(2)}`;
@@ -452,35 +437,6 @@ export default function SubscriptionPlans({
   const isDowngrade = (planSlug: string) => currentSubscription?.subscribed && (planHierarchy[planSlug] ?? 0) < currentPlanLevel;
 
   // Get features for each plan
-  const getFreeFeatures = () => [{
-    icon: Building2,
-    text: t.freeBusinessProfile
-  }, {
-    icon: Rocket,
-    text: t.freeEventCreation
-  }, {
-    icon: Gift,
-    text: t.freeOfferCreation
-  }, {
-    icon: MapPin,
-    text: t.freeMarketplace
-  }, {
-    icon: MapPin,
-    text: t.freeMapPresence
-  }, {
-    icon: BarChart3,
-    text: t.freeAnalytics
-  }, {
-    icon: Percent,
-    text: t.freeCommission
-  }, {
-    icon: Zap,
-    text: t.freeBoostCredits
-  }, {
-    icon: Mail,
-    text: t.freeSupport
-  }];
-  
   const getBasicFeatures = () => [{
     icon: Gift,
     text: t.basicAllFree
@@ -574,7 +530,7 @@ export default function SubscriptionPlans({
   const currentPlanConfig = currentSubscription?.plan_slug ? PLAN_CONFIG[currentSubscription.plan_slug as keyof typeof PLAN_CONFIG] : null;
   const PlanIcon = currentPlanConfig?.icon || Zap;
   const currentPlanGradient = currentPlanConfig?.gradient || 'from-blue-500 to-cyan-500';
-  const plans = ['basic', 'pro', 'elite', 'free'] as const;
+  const plans = ['basic', 'pro', 'elite'] as const;
   const renderFeatureItem = (feature: {
     icon: any;
     text: string;
@@ -816,19 +772,13 @@ export default function SubscriptionPlans({
       {/* Plans Grid - Single column on mobile/tablet, 3 columns on desktop */}
       <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-8`}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
-          {plans.filter(planSlug => {
-            // Hide free plan if user is already on free or not subscribed
-            if (planSlug === 'free' && (!currentSubscription?.subscribed || currentSubscription?.plan_slug === 'free')) {
-              return false;
-            }
-            return true;
-          }).map((planSlug, index) => {
+          {plans.map((planSlug, index) => {
           const config = PLAN_CONFIG[planSlug];
           const price = billingCycle === 'monthly' ? config.monthlyPrice : config.annualMonthlyPrice;
           const isMostPopular = planSlug === 'pro';
           const isCurrent = isCurrentPlan(planSlug);
           const PlanIconComponent = config.icon;
-          const features = planSlug === 'free' ? getFreeFeatures() : planSlug === 'basic' ? getBasicFeatures() : planSlug === 'pro' ? getProFeatures() : getEliteFeatures();
+          const features = planSlug === 'basic' ? getBasicFeatures() : planSlug === 'pro' ? getProFeatures() : getEliteFeatures();
           return <motion.div key={planSlug} initial={{
             opacity: 0,
             y: 30
