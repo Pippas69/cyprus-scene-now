@@ -1222,12 +1222,12 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
 
       {/* Terms & Conditions (Optional) */}
       <div className="space-y-2">
-        <Label className="text-xs sm:text-sm font-medium">{t.termsConditions}</Label>
+        <Label className="text-[10px] sm:text-xs md:text-sm font-medium">{t.termsConditions}</Label>
         <Textarea
           value={formData.termsAndConditions}
           onChange={(e) => updateField('termsAndConditions', e.target.value)}
           placeholder={t.termsPlaceholder}
-          className="min-h-[60px] text-xs sm:text-sm resize-none"
+          className="min-h-[60px] text-[10px] sm:text-xs md:text-sm resize-none"
           rows={2}
         />
       </div>
@@ -1243,16 +1243,16 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
       <Button
         onClick={handleSubmit}
         disabled={isSubmitting || !isBusinessVerified}
-        className="w-full py-6 text-lg font-semibold"
+        className="w-full py-3 sm:py-6 text-xs sm:text-lg font-semibold"
         size="lg"
       >
         {isSubmitting ? (
           <>
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            {t.publishing}
+            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+            <span>{t.publishing}</span>
           </>
         ) : (
-          t.publishOffer
+          <span>{t.publishOffer}</span>
         )}
       </Button>
 
