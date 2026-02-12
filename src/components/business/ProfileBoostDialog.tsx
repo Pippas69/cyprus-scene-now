@@ -117,7 +117,7 @@ export const ProfileBoostDialog = ({
     totalCost = totalCostCents / 100;
   } else {
     const diffMs = endDate.getTime() - startDate.getTime();
-    const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1);
+    const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
     totalCostCents = tierData.dailyRateCents * days;
     totalCost = totalCostCents / 100;
   }
