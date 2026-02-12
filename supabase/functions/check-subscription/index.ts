@@ -234,8 +234,10 @@ Deno.serve(async (req) => {
     }
 
     const subscription = bestSubscription!;
-    const subscriptionEnd = safeTimestampToISO(subscription.current_period_end);
-    const subscriptionStart = safeTimestampToISO(subscription.current_period_start);
+    // In Stripe API 2025-08-27.basil, current_period_start/end moved to items level
+    const subItem = subscription.items.data[0];
+    const subscriptionEnd = safeTimestampToISO((subItem as any).current_period_end ?? subscription.current_period_end);
+    const subscriptionStart = safeTimestampToISO((subItem as any).current_period_start ?? subscription.current_period_start);
     
     const priceItem = subscription.items.data[0];
     
