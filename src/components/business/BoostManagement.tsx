@@ -120,6 +120,11 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         if (boost.duration_mode !== "hourly") {
           startIso = boost.start_date?.length === 10 ? `${boost.start_date}T00:00:00.000Z` : boost.start_date;
           endIso = boost.end_date?.length === 10 ? `${boost.end_date}T23:59:59.999Z` : boost.end_date;
+          // Cap start at created_at so we don't count pre-boost data
+          if (boost.created_at) {
+            const createdIso = new Date(boost.created_at).toISOString();
+            if (createdIso > startIso) startIso = createdIso;
+          }
         } else {
           const start = boost.created_at ? new Date(boost.created_at) : new Date();
           const hours = boost.duration_hours ?? 1;
