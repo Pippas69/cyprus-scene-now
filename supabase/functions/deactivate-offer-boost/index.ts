@@ -29,6 +29,8 @@ serve(async (req) => {
     const { boostId } = await req.json();
     if (!boostId) throw new Error("boostId required");
 
+    console.log("[DEACTIVATE-OFFER-BOOST] Starting", { boostId, userId: user.id });
+
     // Fetch boost
     const { data: boost, error: fetchError } = await supabaseClient
       .from("offer_boosts")
@@ -36,7 +38,23 @@ serve(async (req) => {
       .eq("id", boostId)
       .single();
 
-    if (fetchError || !boost) throw new Error("Boost not found");
+    if (fetchError || !boost) {
+      console.error("[DEACTIVATE-OFFER-BOOST] Boost not found", { fetchError });
+      throw new Error("Boost not found");
+    }
+
+    console.log("[DEACTIVATE-OFFER-BOOST] Boost found", {
+      status: boost.status,
+      duration_mode: boost.duration_mode,
+      total_cost_cents: boost.total_cost_cents,
+      duration_hours: boost.duration_hours,
+      start_date: boost.start_date,
+      end_date: boost.end_date,
+      created_at: boost.created_at,
+      daily_rate_cents: boost.daily_rate_cents,
+      hourly_rate_cents: boost.hourly_rate_cents,
+      business_id: boost.business_id,
+    });
 
     // Calculate remaining value
     const createdAt = new Date(boost.created_at);
@@ -51,6 +69,10 @@ serve(async (req) => {
       
       const hourlyRate = boost.hourly_rate_cents || (boost.total_cost_cents / (boost.duration_hours || 1));
       remainingCents = Math.round(remainingHours * hourlyRate);
+
+      console.log("[DEACTIVATE-OFFER-BOOST] Hourly calc", {
+        elapsedHours, usedHours, remainingHours, hourlyRate, remainingCents,
+      });
     } else {
       const startDate = new Date(boost.start_date);
       const endDate = new Date(boost.end_date);
@@ -62,29 +84,57 @@ serve(async (req) => {
       
       const dailyRate = boost.daily_rate_cents || (boost.total_cost_cents / totalDays);
       remainingCents = Math.round(remainingDays * dailyRate);
+
+      console.log("[DEACTIVATE-OFFER-BOOST] Daily calc", {
+        startDate: startDate.toISOString(), endDate: endDate.toISOString(),
+        elapsedDays, usedDays, totalDays, remainingDays, dailyRate, remainingCents,
+      });
     }
 
     // Fetch business subscription to determine refund policy
-    const { data: subscription } = await supabaseClient
+    const { data: subscription, error: subError } = await supabaseClient
       .from("business_subscriptions")
-      .select("*")
+      .select("*, subscription_plans(slug)")
       .eq("business_id", boost.business_id)
       .single();
+
+    console.log("[DEACTIVATE-OFFER-BOOST] Subscription", {
+      found: !!subscription,
+      status: subscription?.status,
+      plan_id: subscription?.plan_id,
+      plan_slug: (subscription?.subscription_plans as any)?.slug,
+      monthly_budget_remaining_cents: subscription?.monthly_budget_remaining_cents,
+      subError,
+    });
 
     // Determine if it's a Free, Paid, or Hybrid situation
     const isFreeUser = !subscription || subscription.status === "canceled" || !subscription.plan_id;
     
+    console.log("[DEACTIVATE-OFFER-BOOST] Refund decision", {
+      isFreeUser, remainingCents,
+      willRefund: !isFreeUser && remainingCents > 0,
+    });
+
     // For Free users: no refund
     // For Paid users: return remaining to budget
     if (!isFreeUser && remainingCents > 0) {
+      const newBudget = (subscription?.monthly_budget_remaining_cents || 0) + remainingCents;
       const { error: updateError } = await supabaseClient
         .from("business_subscriptions")
         .update({
-          monthly_budget_remaining_cents: (subscription?.monthly_budget_remaining_cents || 0) + remainingCents,
+          monthly_budget_remaining_cents: newBudget,
         })
         .eq("business_id", boost.business_id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("[DEACTIVATE-OFFER-BOOST] Budget update error", updateError);
+        throw updateError;
+      }
+      console.log("[DEACTIVATE-OFFER-BOOST] Budget updated", {
+        oldBudget: subscription?.monthly_budget_remaining_cents,
+        added: remainingCents,
+        newBudget,
+      });
     }
 
     // Update boost status to "deactivated" instead of deleting
@@ -97,14 +147,21 @@ serve(async (req) => {
       })
       .eq("id", boostId);
 
-    if (deactivateError) throw deactivateError;
+    if (deactivateError) {
+      console.error("[DEACTIVATE-OFFER-BOOST] Deactivate error", deactivateError);
+      throw deactivateError;
+    }
+
+    const result = {
+      success: true,
+      remainingCents,
+      refunded: !isFreeUser,
+    };
+
+    console.log("[DEACTIVATE-OFFER-BOOST] Done", result);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        remainingCents,
-        refunded: !isFreeUser,
-      }),
+      JSON.stringify(result),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
