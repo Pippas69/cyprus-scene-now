@@ -991,9 +991,9 @@ const EventCreationForm = ({
         </SectionCard>
 
         {/* Terms & Conditions (Optional) */}
-        <div className="space-y-2">
+        <div className="space-y-1 sm:space-y-2">
           <Label className="text-xs sm:text-sm">{t.termsConditions}</Label>
-          <Textarea value={formData.termsAndConditions} onChange={e => updateField('termsAndConditions', e.target.value)} placeholder={t.termsPlaceholder} className="min-h-[80px] text-xs sm:text-sm resize-none" maxLength={500} />
+          <Textarea value={formData.termsAndConditions} onChange={e => updateField('termsAndConditions', e.target.value)} placeholder={t.termsPlaceholder} className="min-h-[50px] sm:min-h-[80px] text-xs sm:text-sm resize-none py-1.5 sm:py-2" maxLength={500} />
           <p className="text-[9px] sm:text-xs text-muted-foreground">
             {500 - formData.termsAndConditions.length} {language === 'el' ? 'χαρακτήρες απομένουν' : 'characters remaining'}
           </p>
