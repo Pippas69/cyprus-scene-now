@@ -283,46 +283,67 @@ Deno.serve(async (req) => {
     let monthlyBudgetRemaining = plan.event_boost_budget_cents;
     let commissionFreeOffersRemaining = plan.commission_free_offers_count || 0;
 
+    let planChanged = false;
     if (existingSub) {
-      // Compare billing period starts using epoch seconds
-      // Treat as same period if difference is less than 24 hours (handles Stripe timestamp drift)
-      const existingStartEpoch = Math.floor(new Date(existingSub.current_period_start).getTime() / 1000);
-      const stripeStartEpoch = Math.floor(new Date(subscriptionStart).getTime() / 1000);
-      const diffSeconds = Math.abs(stripeStartEpoch - existingStartEpoch);
-      const ONE_DAY = 86400;
+      // Check if the plan has changed (upgrade/downgrade)
+      planChanged = existingSub.plan_id !== plan.id;
       
-      if (diffSeconds < ONE_DAY) {
-        // Same billing period, keep existing values (preserves boost deductions)
-        monthlyBudgetRemaining = existingSub.monthly_budget_remaining_cents ?? 0;
-        commissionFreeOffersRemaining = existingSub.commission_free_offers_remaining ?? 0;
-        logStep('Same billing period, keeping existing budget values', { 
-          monthlyBudgetRemaining, commissionFreeOffersRemaining, diffSeconds
+      if (planChanged) {
+        // Plan changed — reset budget to new plan's full allocation
+        monthlyBudgetRemaining = plan.event_boost_budget_cents;
+        commissionFreeOffersRemaining = plan.commission_free_offers_count || 0;
+        logStep('Plan changed, resetting budget to new plan values', { 
+          oldPlanId: existingSub.plan_id, newPlanId: plan.id,
+          monthlyBudgetRemaining, commissionFreeOffersRemaining
         });
       } else {
-        logStep('New billing period detected, resetting budgets', { 
-          dbStart: existingSub.current_period_start, stripeStart: subscriptionStart,
-          diffSeconds
-        });
+        // Same plan — check if new billing period
+        const existingStartEpoch = Math.floor(new Date(existingSub.current_period_start).getTime() / 1000);
+        const stripeStartEpoch = Math.floor(new Date(subscriptionStart).getTime() / 1000);
+        const diffSeconds = Math.abs(stripeStartEpoch - existingStartEpoch);
+        const ONE_DAY = 86400;
+        
+        if (diffSeconds < ONE_DAY) {
+          // Same billing period, keep existing values (preserves boost deductions)
+          monthlyBudgetRemaining = existingSub.monthly_budget_remaining_cents ?? 0;
+          commissionFreeOffersRemaining = existingSub.commission_free_offers_remaining ?? 0;
+          logStep('Same billing period, keeping existing budget values', { 
+            monthlyBudgetRemaining, commissionFreeOffersRemaining, diffSeconds
+          });
+        } else {
+          logStep('New billing period detected, resetting budgets', { 
+            dbStart: existingSub.current_period_start, stripeStart: subscriptionStart,
+            diffSeconds
+          });
+        }
       }
     } else {
       logStep('No existing subscription record, using plan defaults');
     }
 
     // Upsert business_subscriptions record
+    const upsertData: Record<string, any> = {
+      business_id: business.id,
+      plan_id: plan.id,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      status: 'active',
+      billing_cycle: billingCycle,
+      current_period_start: subscriptionStart,
+      current_period_end: subscriptionEnd,
+      monthly_budget_remaining_cents: monthlyBudgetRemaining,
+      commission_free_offers_remaining: commissionFreeOffersRemaining,
+    };
+
+    // Clear downgrade state when plan actually changes
+    if (planChanged) {
+      upsertData.downgraded_to_free_at = null;
+      upsertData.downgrade_target_plan = null;
+    }
+
     const { error: upsertError } = await supabaseClient
       .from('business_subscriptions')
-      .upsert({
-        business_id: business.id,
-        plan_id: plan.id,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscription.id,
-        status: 'active',
-        billing_cycle: billingCycle,
-        current_period_start: subscriptionStart,
-        current_period_end: subscriptionEnd,
-        monthly_budget_remaining_cents: monthlyBudgetRemaining,
-        commission_free_offers_remaining: commissionFreeOffersRemaining,
-      }, {
+      .upsert(upsertData, {
         onConflict: 'business_id',
       });
 
