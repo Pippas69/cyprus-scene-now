@@ -369,7 +369,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
         .from('events')
         .select(`
           *,
-          businesses!inner (name, logo_url, city, verified)
+          businesses!inner (name, logo_url, city, verified, category)
         `)
         .in('id', Array.from(boostedEventIds))
         .eq('businesses.verified', true)
@@ -379,11 +379,6 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
       // Filter by city if selected
       if (selectedCity) {
         query = query.eq('businesses.city', selectedCity);
-      }
-
-      // Filter by categories if selected
-      if (selectedCategories.length > 0) {
-        query = query.overlaps('category', mapFilterIdsToDbCategories(selectedCategories));
       }
 
       // Apply time filter if selected (Boosted must respect the same time window)
@@ -396,7 +391,18 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
        const { data, error } = await query;
        if (error) throw error;
        
-       const visible = (data || []).filter((e: any) => !isEventPaused(e));
+       let visible = (data || []).filter((e: any) => !isEventPaused(e));
+
+       // Client-side category filtering: match event OR business categories
+       if (selectedCategories.length > 0) {
+         const dbCats = mapFilterIdsToDbCategories(selectedCategories);
+         visible = visible.filter((event: any) => {
+           const eventCats: string[] = event.category || [];
+           const bizCats: string[] = (event.businesses as any)?.category || [];
+           return eventCats.some(c => dbCats.some(dc => c.toLowerCase() === dc.toLowerCase())) ||
+                  bizCats.some(c => dbCats.some(dc => c.toLowerCase() === dc.toLowerCase()));
+         });
+       }
 
        // Fetch RSVP counts
        const eventsWithStats = await Promise.all(
@@ -428,7 +434,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
         .from('events')
         .select(`
           *,
-          businesses!inner (name, logo_url, city, verified)
+          businesses!inner (name, logo_url, city, verified, category)
         `)
         .eq('businesses.verified', true)
         .gte('end_at', new Date().toISOString())
@@ -437,11 +443,6 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
       // Filter by city if selected
       if (selectedCity) {
         query = query.eq('businesses.city', selectedCity);
-      }
-
-      // Filter by categories if selected
-      if (selectedCategories.length > 0) {
-        query = query.overlaps('category', mapFilterIdsToDbCategories(selectedCategories));
       }
 
       // Apply time filter only if selected
@@ -460,7 +461,18 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
 
       if (error) throw error;
 
-      const visible = (data || []).filter((e: any) => !isEventPaused(e));
+      let visible = (data || []).filter((e: any) => !isEventPaused(e));
+
+      // Client-side category filtering: match event OR business categories
+      if (selectedCategories.length > 0) {
+        const dbCats = mapFilterIdsToDbCategories(selectedCategories);
+        visible = visible.filter((event: any) => {
+          const eventCats: string[] = event.category || [];
+          const bizCats: string[] = (event.businesses as any)?.category || [];
+          return eventCats.some(c => dbCats.some(dc => c.toLowerCase() === dc.toLowerCase())) ||
+                 bizCats.some(c => dbCats.some(dc => c.toLowerCase() === dc.toLowerCase()));
+        });
+      }
 
       // Fetch RSVP counts
       const eventsWithStats = await Promise.all(
