@@ -122,6 +122,7 @@ Deno.serve(async (req) => {
         status: "pending",
         commission_percent: 0,
         active: false,
+        partial_budget_cents: partialBudgetCents,
       })
       .select()
       .single();

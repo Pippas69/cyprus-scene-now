@@ -10,6 +10,45 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ACTIVATE-PENDING-BOOST] ${step}${detailsStr}`);
 };
 
+async function deductPartialBudget(
+  supabaseClient: any,
+  businessId: string,
+  partialBudgetCents: number,
+  boostType: string,
+  boostId: string
+): Promise<boolean> {
+  if (partialBudgetCents <= 0) return true;
+
+  logStep("Deducting partial budget", { businessId, partialBudgetCents, boostType, boostId });
+
+  const { data: subscription, error: subError } = await supabaseClient
+    .from("business_subscriptions")
+    .select("id, monthly_budget_remaining_cents")
+    .eq("business_id", businessId)
+    .single();
+
+  if (subError || !subscription) {
+    logStep("WARNING: No subscription found for budget deduction", { businessId, error: subError?.message });
+    return false;
+  }
+
+  const currentBudget = subscription.monthly_budget_remaining_cents || 0;
+  const newBudget = Math.max(0, currentBudget - partialBudgetCents);
+
+  const { error: updateError } = await supabaseClient
+    .from("business_subscriptions")
+    .update({ monthly_budget_remaining_cents: newBudget })
+    .eq("id", subscription.id);
+
+  if (updateError) {
+    logStep("ERROR: Failed to deduct budget", { error: updateError.message });
+    return false;
+  }
+
+  logStep("Budget deducted successfully", { previousBudget: currentBudget, deducted: partialBudgetCents, newBudget });
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -52,7 +91,7 @@ Deno.serve(async (req) => {
     // Check for pending event boosts
     const { data: pendingEventBoost } = await supabaseClient
       .from("event_boosts")
-      .select("id, start_date, end_date")
+      .select("id, start_date, end_date, partial_budget_cents")
       .eq("business_id", businessId)
       .eq("status", "pending")
       .eq("source", "purchase")
@@ -64,20 +103,38 @@ Deno.serve(async (req) => {
       const startDate = new Date(pendingEventBoost.start_date);
       const newStatus = startDate <= now ? "active" : "scheduled";
 
-      const { error: updateError } = await supabaseClient
-        .from("event_boosts")
-        .update({ status: newStatus })
-        .eq("id", pendingEventBoost.id);
+      const partialBudget = pendingEventBoost.partial_budget_cents || 0;
 
-      if (updateError) throw updateError;
-      activated = true;
-      logStep("Event boost activated", { boostId: pendingEventBoost.id, status: newStatus });
+      // Deduct partial budget first
+      if (partialBudget > 0) {
+        const deducted = await deductPartialBudget(supabaseClient, businessId, partialBudget, "event_boost", pendingEventBoost.id);
+        if (!deducted) {
+          logStep("Failed to deduct budget for event boost, keeping pending", { boostId: pendingEventBoost.id });
+          // Don't activate - keep pending
+        } else {
+          const { error: updateError } = await supabaseClient
+            .from("event_boosts")
+            .update({ status: newStatus })
+            .eq("id", pendingEventBoost.id);
+          if (updateError) throw updateError;
+          activated = true;
+          logStep("Event boost activated", { boostId: pendingEventBoost.id, status: newStatus, budgetDeducted: partialBudget });
+        }
+      } else {
+        const { error: updateError } = await supabaseClient
+          .from("event_boosts")
+          .update({ status: newStatus })
+          .eq("id", pendingEventBoost.id);
+        if (updateError) throw updateError;
+        activated = true;
+        logStep("Event boost activated (no budget deduction needed)", { boostId: pendingEventBoost.id, status: newStatus });
+      }
     }
 
     // Check for pending offer boosts
     const { data: pendingOfferBoost } = await supabaseClient
       .from("offer_boosts")
-      .select("id, start_date, end_date")
+      .select("id, start_date, end_date, partial_budget_cents")
       .eq("business_id", businessId)
       .eq("status", "pending")
       .eq("source", "purchase")
@@ -89,23 +146,36 @@ Deno.serve(async (req) => {
       const startDate = new Date(pendingOfferBoost.start_date);
       const newStatus = startDate <= now ? "active" : "scheduled";
 
-      const { error: updateError } = await supabaseClient
-        .from("offer_boosts")
-        .update({ 
-          status: newStatus,
-          active: newStatus === "active",
-        })
-        .eq("id", pendingOfferBoost.id);
+      const partialBudget = pendingOfferBoost.partial_budget_cents || 0;
 
-      if (updateError) throw updateError;
-      activated = true;
-      logStep("Offer boost activated", { boostId: pendingOfferBoost.id, status: newStatus });
+      if (partialBudget > 0) {
+        const deducted = await deductPartialBudget(supabaseClient, businessId, partialBudget, "offer_boost", pendingOfferBoost.id);
+        if (!deducted) {
+          logStep("Failed to deduct budget for offer boost, keeping pending", { boostId: pendingOfferBoost.id });
+        } else {
+          const { error: updateError } = await supabaseClient
+            .from("offer_boosts")
+            .update({ status: newStatus, active: newStatus === "active" })
+            .eq("id", pendingOfferBoost.id);
+          if (updateError) throw updateError;
+          activated = true;
+          logStep("Offer boost activated", { boostId: pendingOfferBoost.id, status: newStatus, budgetDeducted: partialBudget });
+        }
+      } else {
+        const { error: updateError } = await supabaseClient
+          .from("offer_boosts")
+          .update({ status: newStatus, active: newStatus === "active" })
+          .eq("id", pendingOfferBoost.id);
+        if (updateError) throw updateError;
+        activated = true;
+        logStep("Offer boost activated (no budget deduction needed)", { boostId: pendingOfferBoost.id, status: newStatus });
+      }
     }
 
     // Check for pending profile boosts
     const { data: pendingProfileBoost } = await supabaseClient
       .from("profile_boosts")
-      .select("id, start_date, end_date")
+      .select("id, start_date, end_date, partial_budget_cents")
       .eq("business_id", businessId)
       .eq("status", "pending")
       .eq("source", "purchase")
@@ -117,14 +187,30 @@ Deno.serve(async (req) => {
       const startDate = new Date(pendingProfileBoost.start_date);
       const newStatus = startDate <= now ? "active" : "scheduled";
 
-      const { error: updateError } = await supabaseClient
-        .from("profile_boosts")
-        .update({ status: newStatus })
-        .eq("id", pendingProfileBoost.id);
+      const partialBudget = pendingProfileBoost.partial_budget_cents || 0;
 
-      if (updateError) throw updateError;
-      activated = true;
-      logStep("Profile boost activated", { boostId: pendingProfileBoost.id, status: newStatus });
+      if (partialBudget > 0) {
+        const deducted = await deductPartialBudget(supabaseClient, businessId, partialBudget, "profile_boost", pendingProfileBoost.id);
+        if (!deducted) {
+          logStep("Failed to deduct budget for profile boost, keeping pending", { boostId: pendingProfileBoost.id });
+        } else {
+          const { error: updateError } = await supabaseClient
+            .from("profile_boosts")
+            .update({ status: newStatus })
+            .eq("id", pendingProfileBoost.id);
+          if (updateError) throw updateError;
+          activated = true;
+          logStep("Profile boost activated", { boostId: pendingProfileBoost.id, status: newStatus, budgetDeducted: partialBudget });
+        }
+      } else {
+        const { error: updateError } = await supabaseClient
+          .from("profile_boosts")
+          .update({ status: newStatus })
+          .eq("id", pendingProfileBoost.id);
+        if (updateError) throw updateError;
+        activated = true;
+        logStep("Profile boost activated (no budget deduction needed)", { boostId: pendingProfileBoost.id, status: newStatus });
+      }
     }
 
     if (!activated) {
