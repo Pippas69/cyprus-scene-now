@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { computeBoostWindow, isTimestampWithinWindow } from "@/lib/boostWindow";
 
 interface BoostMetrics {
   views: number;
@@ -25,19 +26,19 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
       // Get boost periods - include both active and completed boosts
       const { data: profileBoosts } = await supabase
         .from("profile_boosts")
-        .select("start_date, end_date, status, updated_at")
+        .select("start_date, end_date, status, updated_at, created_at")
         .eq("business_id", businessId)
         .in("status", ["active", "completed", "deactivated"]);
 
       const { data: eventBoosts } = await supabase
         .from("event_boosts")
-        .select("event_id, start_date, end_date, status, updated_at")
+        .select("event_id, start_date, end_date, status, updated_at, created_at, duration_mode, duration_hours")
         .eq("business_id", businessId)
         .in("status", ["active", "completed", "deactivated"]);
 
       const { data: offerBoosts } = await supabase
         .from("offer_boosts")
-        .select("discount_id, start_date, end_date, status, updated_at")
+        .select("discount_id, start_date, end_date, status, updated_at, created_at, duration_mode, duration_hours")
         .eq("business_id", businessId)
         .in("status", ["active", "completed", "deactivated"]);
 
@@ -54,24 +55,20 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
         .eq("business_id", businessId);
       const discountIds = discounts?.map(d => d.id) || [];
 
-      // Helper to check if a date is within any boost period
-      // For deactivated boosts, cap the end_date at updated_at (deactivation time)
-      const getEffectiveEnd = (bp: { start_date: string; end_date: string; status?: string; updated_at?: string }) => {
-        if (bp.status === 'deactivated' && bp.updated_at) {
-          const endDate = new Date(bp.end_date + (bp.end_date.includes('T') ? '' : 'T23:59:59.999Z'));
-          const deactDate = new Date(bp.updated_at);
-          return deactDate < endDate ? deactDate : endDate;
-        }
-        return new Date(bp.end_date + (bp.end_date.includes('T') ? '' : 'T23:59:59.999Z'));
-      };
-
-      const isWithinBoostPeriod = (date: string, boostPeriods: Array<{ start_date: string; end_date: string; status?: string; updated_at?: string }> | null) => {
+      // Helper to check if a date is within any boost period using computeBoostWindow
+      const isWithinBoostPeriod = (date: string, boostPeriods: Array<{ start_date: string; end_date: string; status?: string; updated_at?: string; created_at?: string; duration_mode?: string; duration_hours?: number }> | null) => {
         if (!boostPeriods || boostPeriods.length === 0) return false;
-        const d = new Date(date);
         return boostPeriods.some(bp => {
-          const start = new Date(bp.start_date + (bp.start_date.includes('T') ? '' : 'T00:00:00.000Z'));
-          const end = getEffectiveEnd(bp);
-          return d >= start && d <= end;
+          const window = computeBoostWindow({
+            start_date: bp.start_date,
+            end_date: bp.end_date,
+            created_at: bp.created_at,
+            duration_mode: bp.duration_mode,
+            duration_hours: bp.duration_hours,
+            deactivated_at: bp.status === 'deactivated' ? bp.updated_at : null,
+          });
+          if (!window) return false;
+          return isTimestampWithinWindow(date, window);
         });
       };
 
