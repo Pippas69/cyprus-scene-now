@@ -639,16 +639,39 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
             console.error("Boost function error:", boostFnError);
             toast.error(language === "el" ? "Σφάλμα προώθησης" : "Boost error");
           } else if (boostResult?.needsPayment) {
-            // Need to redirect to Stripe checkout for boost payment
-            toast.info(language === "el" 
-              ? "Η προώθηση απαιτεί πληρωμή μέσω Stripe" 
-              : "Boost requires Stripe payment");
-            // Show boost dialog for Stripe payment
-            setCreatedOfferId(offerData.id);
-            setCreatedOfferTitle(formData.title);
-            setShowBoostDialog(true);
+            // Redirect directly to Stripe checkout with already-configured boost params
             toast.success(t.offerCreated);
-            return; // Exit early - user will complete boost in dialog
+            toast.info(language === "el" 
+              ? "Ανακατεύθυνση στην πληρωμή προώθησης..." 
+              : "Redirecting to boost payment...");
+            
+            const partialBudgetCents = (subscriptionData?.subscribed && (subscriptionData.monthly_budget_remaining_cents || 0) > 0)
+              ? Math.min(subscriptionData.monthly_budget_remaining_cents || 0, boostData.totalCostCents)
+              : 0;
+
+            const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+              "create-offer-boost-checkout",
+              {
+                body: {
+                  discountId: offerData.id,
+                  tier: boostData.tier,
+                  durationMode: boostData.durationMode,
+                  startDate: boostData.startDate.toISOString().split('T')[0],
+                  endDate: boostData.endDate.toISOString().split('T')[0],
+                  durationHours: boostData.durationMode === "hourly" ? boostData.durationHours : undefined,
+                  partialBudgetCents,
+                },
+              }
+            );
+
+            if (checkoutError || !checkoutData?.url) {
+              console.error("Checkout error:", checkoutError);
+              toast.error(language === "el" ? "Σφάλμα πληρωμής προώθησης" : "Boost payment error");
+              navigate('/dashboard-business/offers');
+            } else {
+              window.location.assign(checkoutData.url);
+            }
+            return;
           } else if (boostResult?.success) {
             boostCreatedSuccessfully = true;
             toast.success(language === "el" 
