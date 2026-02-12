@@ -28,6 +28,8 @@ export default function SubscriptionStatus() {
       if (error) throw error;
       return data;
     },
+    staleTime: 3 * 60 * 1000, // 3 minutes - avoid redundant refetches
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer
     refetchInterval: 60000, // Refetch every 60 seconds
   });
 
