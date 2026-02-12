@@ -95,11 +95,11 @@ const EventBoostDialog = ({
   const handleBoost = async () => {
     setIsSubmitting(true);
     try {
-      const formattedStartDate = startDate.toISOString().split("T")[0];
+      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
       const calculatedEndDate = durationMode === "hourly" 
         ? addHours(startDate, durationHours) 
         : endDate;
-      const formattedEndDate = calculatedEndDate.toISOString().split("T")[0];
+      const formattedEndDate = format(calculatedEndDate, 'yyyy-MM-dd');
 
       if (canUseSubscriptionBudget || totalCostCents === 0) {
         const { data, error } = await supabase.functions.invoke("create-event-boost", {
