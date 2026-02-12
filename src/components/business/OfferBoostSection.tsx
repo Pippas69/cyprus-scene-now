@@ -70,7 +70,7 @@ const OfferBoostSection = ({
   const selectedTier = tiers[tier];
   
   // Calculate cost based on duration mode
-  const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
   const totalCost = durationMode === "hourly" 
     ? selectedTier.hourlyRate * durationHours 
     : selectedTier.dailyRate * days;
