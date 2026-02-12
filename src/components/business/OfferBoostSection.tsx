@@ -94,7 +94,7 @@ const OfferBoostSection = ({
     newDurationHours: number
   ) => {
     const tierData = tiers[newTier];
-    const newDays = Math.max(1, Math.ceil((newEndDate.getTime() - newStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    const newDays = Math.max(1, Math.ceil((newEndDate.getTime() - newStartDate.getTime()) / (1000 * 60 * 60 * 24)));
     const cost = newDurationMode === "hourly" 
       ? tierData.hourlyRateCents * newDurationHours 
       : tierData.dailyRateCents * newDays;
