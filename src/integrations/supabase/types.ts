@@ -1592,6 +1592,7 @@ export type Database = {
           frozen_hours: number | null
           hourly_rate_cents: number | null
           id: string
+          partial_budget_cents: number
           source: Database["public"]["Enums"]["boost_source"]
           start_date: string
           status: Database["public"]["Enums"]["boost_status"] | null
@@ -1613,6 +1614,7 @@ export type Database = {
           frozen_hours?: number | null
           hourly_rate_cents?: number | null
           id?: string
+          partial_budget_cents?: number
           source: Database["public"]["Enums"]["boost_source"]
           start_date: string
           status?: Database["public"]["Enums"]["boost_status"] | null
@@ -1634,6 +1636,7 @@ export type Database = {
           frozen_hours?: number | null
           hourly_rate_cents?: number | null
           id?: string
+          partial_budget_cents?: number
           source?: Database["public"]["Enums"]["boost_source"]
           start_date?: string
           status?: Database["public"]["Enums"]["boost_status"] | null
@@ -2325,6 +2328,7 @@ export type Database = {
           frozen_hours: number | null
           hourly_rate_cents: number | null
           id: string
+          partial_budget_cents: number
           source: string | null
           start_date: string | null
           status: string | null
@@ -2347,6 +2351,7 @@ export type Database = {
           frozen_hours?: number | null
           hourly_rate_cents?: number | null
           id?: string
+          partial_budget_cents?: number
           source?: string | null
           start_date?: string | null
           status?: string | null
@@ -2369,6 +2374,7 @@ export type Database = {
           frozen_hours?: number | null
           hourly_rate_cents?: number | null
           id?: string
+          partial_budget_cents?: number
           source?: string | null
           start_date?: string | null
           status?: string | null
@@ -2709,6 +2715,7 @@ export type Database = {
           end_date: string
           hourly_rate_cents: number | null
           id: string
+          partial_budget_cents: number
           source: Database["public"]["Enums"]["boost_source"]
           start_date: string
           status: Database["public"]["Enums"]["boost_status"] | null
@@ -2727,6 +2734,7 @@ export type Database = {
           end_date: string
           hourly_rate_cents?: number | null
           id?: string
+          partial_budget_cents?: number
           source: Database["public"]["Enums"]["boost_source"]
           start_date: string
           status?: Database["public"]["Enums"]["boost_status"] | null
@@ -2745,6 +2753,7 @@ export type Database = {
           end_date?: string
           hourly_rate_cents?: number | null
           id?: string
+          partial_budget_cents?: number
           source?: Database["public"]["Enums"]["boost_source"]
           start_date?: string
           status?: Database["public"]["Enums"]["boost_status"] | null

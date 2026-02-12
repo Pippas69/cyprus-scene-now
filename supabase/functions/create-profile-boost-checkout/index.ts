@@ -173,6 +173,7 @@ Deno.serve(async (req) => {
         source: "purchase",
         status: "pending",
         targeting_quality: tierData.quality,
+        partial_budget_cents: partialBudgetCents,
       })
       .select()
       .single();
