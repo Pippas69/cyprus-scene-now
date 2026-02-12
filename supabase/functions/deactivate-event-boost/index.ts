@@ -57,7 +57,7 @@ serve(async (req) => {
       const elapsedDays = (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
       const usedDays = Math.ceil(elapsedDays);
       
-      const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const totalDays = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
       const remainingDays = Math.max(0, totalDays - usedDays);
       
       const dailyRate = boost.daily_rate_cents || (boost.total_cost_cents / totalDays);
