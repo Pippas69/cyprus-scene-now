@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
     logStep("Creating new Stripe Connect Express account");
     const account = await stripe.accounts.create({
       type: "express",
-      country: "GR", // Greece
+      country: "CY", // Cyprus
       email: user.email!,
       capabilities: {
         card_payments: { requested: true },
