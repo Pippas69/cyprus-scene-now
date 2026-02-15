@@ -118,28 +118,45 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
 
       // Fetch plan history for this business to calculate per-reservation commission
       const resolvedBizId = businessId || null;
-      let planHistory: { plan_slug: string; valid_from: string; valid_to: string | null }[] = [];
+      let planHistory: { plan_slug: string; valid_from: string; valid_to: string | null; source: string }[] = [];
       if (resolvedBizId) {
         const { data: history } = await supabase
           .from("business_subscription_plan_history")
-          .select("plan_slug, valid_from, valid_to")
+          .select("plan_slug, valid_from, valid_to, source")
           .eq("business_id", resolvedBizId)
           .order("valid_from", { ascending: true });
-        planHistory = history || [];
+        // Filter out downgrade_scheduled entries (future plans, not yet active)
+        planHistory = (history || []).filter(h => h.source !== 'downgrade_scheduled');
       }
 
       const commissionRates: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
 
+      // Also get the CURRENT active subscription as fallback truth
+      let currentPlanCommission = commissionPercent;
+      if (resolvedBizId) {
+        const { data: currentSub } = await supabase
+          .from("business_subscriptions")
+          .select("plan_id, status, subscription_plans(slug)")
+          .eq("business_id", resolvedBizId)
+          .eq("status", "active")
+          .maybeSingle();
+        if (currentSub?.subscription_plans) {
+          const slug = (currentSub.subscription_plans as any)?.slug || 'free';
+          currentPlanCommission = commissionRates[slug] ?? 12;
+        }
+      }
+
       const getCommissionForTimestamp = (createdAt: string): number => {
-        if (planHistory.length === 0) return commissionPercent;
+        if (planHistory.length === 0) return currentPlanCommission;
         // Find the plan that was active at this timestamp
         for (let i = planHistory.length - 1; i >= 0; i--) {
           const h = planHistory[i];
           if (createdAt >= h.valid_from && (!h.valid_to || createdAt <= h.valid_to)) {
-            return commissionRates[h.plan_slug] ?? 12;
+            return commissionRates[h.plan_slug] ?? currentPlanCommission;
           }
         }
-        return 12; // default free
+        // No history match — use current active plan rate
+        return currentPlanCommission;
       };
 
       // Group by seating type - only count categorized reservations

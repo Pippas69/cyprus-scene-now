@@ -328,59 +328,41 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       let avgCommissionPercent = 12; // Default commission
 
       if (boostedEventIds.length > 0) {
-        // Get business commission rate (backend source of truth)
+        // Get current active subscription plan for this business (DB source of truth)
+        const commissionRatesMap: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
         let reservationCommissionPercent = 12;
-        try {
-          const { data, error } = await supabase.functions.invoke("check-subscription");
-          if (!error && data && (data as any).commission_percent != null) {
-            reservationCommissionPercent = (data as any).commission_percent;
-          }
-        } catch {
-          // Fallback to DB lookup
-          const { data: subscriptionData } = await supabase
-            .from("business_subscriptions")
-            .select("plan_id")
-            .eq("business_id", businessId)
-            .eq("status", "active")
-            .maybeSingle();
 
-          if (subscriptionData?.plan_id) {
-            const { data: planData } = await supabase
-              .from("subscription_plans")
-              .select("slug")
-              .eq("id", subscriptionData.plan_id)
-              .maybeSingle();
+        const { data: subscriptionData } = await supabase
+          .from("business_subscriptions")
+          .select("plan_id, subscription_plans(slug)")
+          .eq("business_id", businessId)
+          .eq("status", "active")
+          .maybeSingle();
 
-            const commissionRates: Record<string, number> = {
-              free: 12,
-              basic: 10,
-              pro: 8,
-              elite: 6,
-            };
-            reservationCommissionPercent =
-              commissionRates[planData?.slug || "free"] || 12;
-          }
+        if (subscriptionData?.subscription_plans) {
+          const slug = (subscriptionData.subscription_plans as any)?.slug || "free";
+          reservationCommissionPercent = commissionRatesMap[slug] ?? 12;
         }
 
         // Fetch plan history for per-transaction commission calculation
+        // Filter out downgrade_scheduled entries (future plans, not yet active)
         const { data: planHistoryData } = await supabase
           .from("business_subscription_plan_history")
-          .select("plan_slug, valid_from, valid_to")
+          .select("plan_slug, valid_from, valid_to, source")
           .eq("business_id", businessId)
           .order("valid_from", { ascending: true });
-        const planHistory = planHistoryData || [];
-
-        const commissionRatesMap: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
+        const planHistory = (planHistoryData || []).filter(h => h.source !== 'downgrade_scheduled');
 
         const getCommissionForTimestamp = (createdAt: string): number => {
           if (planHistory.length === 0) return reservationCommissionPercent;
           for (let i = planHistory.length - 1; i >= 0; i--) {
             const h = planHistory[i];
             if (createdAt >= h.valid_from && (!h.valid_to || createdAt <= h.valid_to)) {
-              return commissionRatesMap[h.plan_slug] ?? 12;
+              return commissionRatesMap[h.plan_slug] ?? reservationCommissionPercent;
             }
           }
-          return 12;
+          // No history match — use current active plan rate
+          return reservationCommissionPercent;
         };
 
         // ------------------------
