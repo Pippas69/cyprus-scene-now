@@ -450,6 +450,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
             planSlug={business.planSlug}
             markerId={business.id}
             name={business.name}
+            zoom={zoom}
             onClick={() => {
               // PROFILE VIEW = user clicks on pin to see business info
               // This counts as a VIEW because user is actively seeking to see the profile

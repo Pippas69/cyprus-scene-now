@@ -16,6 +16,8 @@ interface BusinessMarkerProps {
   markerId: string;
   name: string;
   onClick: () => void;
+  /** Current map zoom level for dynamic pin scaling */
+  zoom?: number;
 }
 
 /**
@@ -36,11 +38,11 @@ const PIN_CONFIG: Record<PlanSlug, {
   isPremiumShape: boolean;
   hasPulseAnimation: boolean;
 }> = {
-  // Free - smallest pins
+  // Free - smallest pins (slightly larger for visibility)
   free: {
-    desktopSize: 9,
-    tabletSize: 9,
-    mobileSize: 8,
+    desktopSize: 12,
+    tabletSize: 11,
+    mobileSize: 10,
     opacity: 0.7,
     shadowBlur: 2,
     strokeWidth: 1,
@@ -139,7 +141,7 @@ const PremiumPinPath = () => (
   />
 );
 
-export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMarkerProps) => {
+export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }: BusinessMarkerProps) => {
   const config = PIN_CONFIG[planSlug];
   const colors = PIN_COLORS[planSlug];
   const { opacity, shadowBlur, strokeWidth, glowRadius, isPremiumShape, hasPulseAnimation, desktopSize, tabletSize, mobileSize } = config;
@@ -152,7 +154,11 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick }: BusinessMa
     if (width < 1024) return tabletSize;
     return desktopSize;
   };
-  const size = getResponsiveSize();
+  const baseSize = getResponsiveSize();
+  
+  // Scale pins up slightly as user zooms in (1.0x at zoom 7, up to ~1.5x at zoom 16+)
+  const zoomScale = 1 + Math.max(0, Math.min(zoom - 7, 9)) * 0.055;
+  const size = Math.round(baseSize * zoomScale);
 
   const safeId = toSvgSafeId(`${planSlug}-${markerId}`);
 
