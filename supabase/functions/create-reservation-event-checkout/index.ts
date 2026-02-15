@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLATFORM_FEE_PERCENT = 12;
+// Commission rate is now dynamically determined based on the business's subscription plan
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -96,6 +96,30 @@ serve(async (req) => {
 
     const business = event.businesses;
 
+    // Get business subscription to determine commission rate (same logic as create-ticket-checkout)
+    const { data: subscription } = await supabaseClient
+      .from("business_subscriptions")
+      .select("*, subscription_plans(*)")
+      .eq("business_id", event.business_id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    let planSlug = "free";
+    if (subscription?.subscription_plans?.slug) {
+      planSlug = subscription.subscription_plans.slug;
+    }
+    console.log("[CHECKOUT] Subscription plan:", { planSlug });
+
+    // Get commission rate for this plan
+    const { data: commissionRate } = await supabaseClient
+      .from("ticket_commission_rates")
+      .select("commission_percent")
+      .eq("plan_slug", planSlug)
+      .single();
+
+    const commissionPercent = commissionRate?.commission_percent ?? 12;
+    console.log("[CHECKOUT] Commission rate:", { commissionPercent });
+
     // Allow destination charges if business has completed Stripe Connect onboarding.
     // In preview/dev environments, allow platform checkout for testing.
     const origin = req.headers.get("origin") ?? "";
@@ -163,7 +187,7 @@ serve(async (req) => {
     }
 
     const prepaidAmountCents = priceTier.prepaid_min_charge_cents;
-    const platformFeeCents = Math.round(prepaidAmountCents * (PLATFORM_FEE_PERCENT / 100));
+    const platformFeeCents = Math.round(prepaidAmountCents * (commissionPercent / 100));
 
     // Create pending reservation
     const confirmationCode = `RES-${Date.now().toString(36).toUpperCase()}`;
