@@ -116,8 +116,28 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
 
       const checkedIn = reservations.filter(r => r.checked_in_at).length;
 
-      // Fetch plan history for this business to calculate per-reservation commission
+      // Fetch current active subscription as the SOURCE OF TRUTH
       const resolvedBizId = businessId || null;
+      const commissionRates: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
+      let currentPlanSlug = 'free';
+      let currentPeriodStart = '';
+
+      if (resolvedBizId) {
+        const { data: currentSub } = await supabase
+          .from("business_subscriptions")
+          .select("plan_id, status, current_period_start, subscription_plans(slug)")
+          .eq("business_id", resolvedBizId)
+          .eq("status", "active")
+          .maybeSingle();
+        if (currentSub?.subscription_plans) {
+          currentPlanSlug = (currentSub.subscription_plans as any)?.slug || 'free';
+          currentPeriodStart = currentSub.current_period_start || '';
+        }
+      }
+
+      const currentPlanCommission = commissionRates[currentPlanSlug] ?? 12;
+
+      // Fetch plan history only for transactions BEFORE the current billing period
       let planHistory: { plan_slug: string; valid_from: string; valid_to: string | null; source: string }[] = [];
       if (resolvedBizId) {
         const { data: history } = await supabase
@@ -125,37 +145,22 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
           .select("plan_slug, valid_from, valid_to, source")
           .eq("business_id", resolvedBizId)
           .order("valid_from", { ascending: true });
-        // Filter out downgrade_scheduled entries (future plans, not yet active)
         planHistory = (history || []).filter(h => h.source !== 'downgrade_scheduled');
       }
 
-      const commissionRates: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
-
-      // Also get the CURRENT active subscription as fallback truth
-      let currentPlanCommission = commissionPercent;
-      if (resolvedBizId) {
-        const { data: currentSub } = await supabase
-          .from("business_subscriptions")
-          .select("plan_id, status, subscription_plans(slug)")
-          .eq("business_id", resolvedBizId)
-          .eq("status", "active")
-          .maybeSingle();
-        if (currentSub?.subscription_plans) {
-          const slug = (currentSub.subscription_plans as any)?.slug || 'free';
-          currentPlanCommission = commissionRates[slug] ?? 12;
-        }
-      }
-
       const getCommissionForTimestamp = (createdAt: string): number => {
-        if (planHistory.length === 0) return currentPlanCommission;
-        // Find the plan that was active at this timestamp
+        // CRITICAL: If the transaction happened during the CURRENT billing period,
+        // ALWAYS use the current active subscription rate — plan history may be stale/corrupt
+        if (currentPeriodStart && createdAt >= currentPeriodStart) {
+          return currentPlanCommission;
+        }
+        // For older transactions, look up plan history
         for (let i = planHistory.length - 1; i >= 0; i--) {
           const h = planHistory[i];
           if (createdAt >= h.valid_from && (!h.valid_to || createdAt <= h.valid_to)) {
             return commissionRates[h.plan_slug] ?? currentPlanCommission;
           }
         }
-        // No history match — use current active plan rate
         return currentPlanCommission;
       };
 
