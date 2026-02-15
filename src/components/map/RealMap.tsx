@@ -302,7 +302,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     directionsMarkerRef.current = new mapboxgl.Marker({ 
       element: div,
       anchor: 'top',
-      offset: [0, 32]
+      offset: [0, 22]
     })
       .setLngLat([lng, lat])
       .addTo(map.current);
