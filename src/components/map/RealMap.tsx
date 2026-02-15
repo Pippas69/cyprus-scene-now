@@ -352,9 +352,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       />
     );
     // Pin label must sit just above the pin - very close spacing
-    // Responsive offset: smaller on mobile/tablet to bring popup closer to pin
+    // Offset popup down so the circular image covers the pin underneath
     const isMobileOrTablet = window.innerWidth < 1024;
-    const popupOffset: [number, number] = isMobileOrTablet ? [0, -8] : [0, -22];
+    const popupOffset: [number, number] = isMobileOrTablet ? [0, 20] : [0, 12];
     
     popupRef.current = new mapboxgl.Popup({
       closeButton: false,
