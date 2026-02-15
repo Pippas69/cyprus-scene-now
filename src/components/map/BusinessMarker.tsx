@@ -40,9 +40,9 @@ const PIN_CONFIG: Record<PlanSlug, {
 }> = {
   // Free - smallest pins (slightly larger for visibility)
   free: {
-    desktopSize: 12,
+    desktopSize: 11,
     tabletSize: 11,
-    mobileSize: 10,
+    mobileSize: 11,
     opacity: 0.7,
     shadowBlur: 2,
     strokeWidth: 1,
