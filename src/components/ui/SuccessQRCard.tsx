@@ -293,7 +293,7 @@ export const SuccessQRCard = ({
       </div>
 
       {/* Main Content - Frosted Glass Effect */}
-      <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
+      <div className="bg-white dark:bg-white backdrop-blur-xl px-4 py-3">
         {/* Success Message */}
         {showSuccessMessage && (
           <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-green-50 rounded-lg">
@@ -333,7 +333,7 @@ export const SuccessQRCard = ({
           <Button 
             variant="outline" 
             onClick={handleDownload}
-            className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+            className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
           >
             <Download className="h-3 w-3 mr-1.5 shrink-0" />
             {text.downloadQR}
@@ -358,7 +358,7 @@ export const SuccessQRCard = ({
       </div>
 
       {/* Wave Decoration */}
-      <div className="relative h-6 bg-white/95">
+      <div className="relative h-6 bg-white dark:bg-white">
         <svg 
           viewBox="0 0 400 24" 
           className="absolute bottom-0 left-0 w-full h-6"

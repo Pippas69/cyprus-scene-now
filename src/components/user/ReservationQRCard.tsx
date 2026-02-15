@@ -126,7 +126,7 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
           </div>
 
           {/* Main Content - Frosted Glass Effect */}
-          <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
+          <div className="bg-white dark:bg-white backdrop-blur-xl px-4 py-3">
             {/* Title - Event or Table Reservation */}
             <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">
               {reservation?.eventTitle || (language === "el" ? "Κράτηση Τραπεζιού" : "Table Reservation")}
@@ -181,7 +181,7 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
               <Button 
                 variant="outline" 
                 onClick={handleDownloadQR} 
-                className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+                className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
               >
                 <Download className="h-3 w-3 mr-1.5 shrink-0" />
                 {text.downloadQR}
@@ -190,7 +190,7 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
           </div>
 
           {/* Wave Decoration */}
-          <div className="relative h-6 bg-white/95">
+          <div className="relative h-6 bg-white dark:bg-white">
             <svg 
               viewBox="0 0 400 24" 
               className="absolute bottom-0 left-0 w-full h-6"
