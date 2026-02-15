@@ -330,22 +330,24 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
       if (boostedEventIds.length > 0) {
         // Get current active subscription plan for this business (DB source of truth)
         const commissionRatesMap: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
-        let reservationCommissionPercent = 12;
+        let currentPlanSlug = 'free';
+        let currentPeriodStart = '';
 
         const { data: subscriptionData } = await supabase
           .from("business_subscriptions")
-          .select("plan_id, subscription_plans(slug)")
+          .select("plan_id, current_period_start, subscription_plans(slug)")
           .eq("business_id", businessId)
           .eq("status", "active")
           .maybeSingle();
 
         if (subscriptionData?.subscription_plans) {
-          const slug = (subscriptionData.subscription_plans as any)?.slug || "free";
-          reservationCommissionPercent = commissionRatesMap[slug] ?? 12;
+          currentPlanSlug = (subscriptionData.subscription_plans as any)?.slug || "free";
+          currentPeriodStart = subscriptionData.current_period_start || '';
         }
 
-        // Fetch plan history for per-transaction commission calculation
-        // Filter out downgrade_scheduled entries (future plans, not yet active)
+        const reservationCommissionPercent = commissionRatesMap[currentPlanSlug] ?? 12;
+
+        // Fetch plan history only for transactions BEFORE the current billing period
         const { data: planHistoryData } = await supabase
           .from("business_subscription_plan_history")
           .select("plan_slug, valid_from, valid_to, source")
@@ -354,14 +356,18 @@ export const useGuidanceMetrics = (businessId: string, dateRange?: DateRange) =>
         const planHistory = (planHistoryData || []).filter(h => h.source !== 'downgrade_scheduled');
 
         const getCommissionForTimestamp = (createdAt: string): number => {
-          if (planHistory.length === 0) return reservationCommissionPercent;
+          // CRITICAL: If the transaction happened during the CURRENT billing period,
+          // ALWAYS use the current active subscription rate — plan history may be stale/corrupt
+          if (currentPeriodStart && createdAt >= currentPeriodStart) {
+            return reservationCommissionPercent;
+          }
+          // For older transactions, look up plan history
           for (let i = planHistory.length - 1; i >= 0; i--) {
             const h = planHistory[i];
             if (createdAt >= h.valid_from && (!h.valid_to || createdAt <= h.valid_to)) {
               return commissionRatesMap[h.plan_slug] ?? reservationCommissionPercent;
             }
           }
-          // No history match — use current active plan rate
           return reservationCommissionPercent;
         };
 
