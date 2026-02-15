@@ -1,47 +1,40 @@
 
+# Fix: QR Card Dark Theme Bug
 
-## Διόρθωση: Αφαίρεση partial budget credits μετά από πληρωμή Stripe
+## Problem
+All QR card components (Tickets, Reservations, Offers, Success) use hardcoded light colors for their card design (branded FOMO cards). However, the "QR Εικόνα" download button and other elements inherit dark theme styles from the `outline` button variant (`bg-background`), causing the dark navy text (`text-[#102b4a]`) to become invisible against the dark background.
 
-### Πρόβλημα
-Οταν ενα boost κοστίζει €40 αλλά εχεις μόνο €39.50 credits, το σύστημα σωστά σε στέλνει στο Stripe να πληρώσεις τα €0.50. Ομως τα €39.50 credits **δεν αφαιρούνται ποτέ** απο το budget σου. Η συνάρτηση `activate-pending-boost` απλά αλλάζει το status σε "active" χωρίς να κάνει αφαίρεση.
+## Root Cause
+The buttons inside QR cards use `variant="outline"` which applies `bg-background` -- in dark mode this is a dark color. The inline className adds `text-[#102b4a]` (dark navy) but the background becomes dark, making text unreadable. The `bg-white/95` on the card body may also become semi-transparent over dark backgrounds.
 
-### Λύση
-Θα ενημερωθεί η `activate-pending-boost` edge function ωστε οταν ενεργοποιεί ένα boost που εχει `partial_budget_cents > 0`, να αφαιρεί αυτό το ποσό απο τα `monthly_budget_remaining_cents` του subscription.
+## Solution
+Force all QR card inner content to remain light-themed regardless of the app's dark/light mode. These are branded FOMO cards that should always appear with their light design.
 
-### Τεχνικές αλλαγές
+## Files to Update (4 files)
 
-**1. `supabase/functions/create-boost-checkout/index.ts` (Event boosts)**
-- Αποθήκευση `partial_budget_cents` μέσα στο boost record (νέο πεδίο ή χρήση υπάρχοντος) ωστε να είναι διαθέσιμο στο `activate-pending-boost`.
+### 1. `src/components/tickets/TicketQRDialog.tsx`
+- Change the "QR Εικόνα" button to explicitly use `bg-white` instead of inheriting `bg-background` from the outline variant
+- Ensure the card body uses `bg-white` (not `bg-white/95`) or add explicit dark-mode overrides
 
-**2. `supabase/functions/create-offer-boost-checkout/index.ts` (Offer boosts)**
-- Ίδια αλλαγή: αποθήκευση `partial_budget_cents` στο offer_boosts record.
+### 2. `src/components/user/ReservationQRCard.tsx`
+- Same button fix: override dark theme on "QR Εικόνα" button
 
-**3. `supabase/functions/create-profile-boost-checkout/index.ts` (Profile boosts)**  
-- Ίδια αλλαγή.
+### 3. `src/components/user/OfferQRCard.tsx`
+- Same button fix
 
-**4. Database migration**
-- Προσθήκη column `partial_budget_cents` (integer, default 0) στους πίνακες `event_boosts`, `offer_boosts`, και `profile_boosts`.
+### 4. `src/components/ui/SuccessQRCard.tsx`
+- Same button fix
 
-**5. `supabase/functions/activate-pending-boost/index.ts`** (κύρια διόρθωση)
-- Μετά την ενεργοποίηση κάθε pending boost, έλεγχος αν `partial_budget_cents > 0`.
-- Αν ναι, αφαίρεση αυτού του ποσού απο `business_subscriptions.monthly_budget_remaining_cents`.
-- Αν αποτύχει η αφαίρεση, rollback (επαναφορά boost σε pending).
-
-### Ροή μετά τη διόρθωση
-
-```text
-Χρήστης επιλέγει boost €40, εχει €39.50 credits
-    |
-    v
-create-*-checkout: Δημιουργεί pending boost 
-    με partial_budget_cents=3950, χρεώνει €0.50 στο Stripe
-    |
-    v
-Χρήστης πληρώνει στο Stripe
-    |
-    v
-activate-pending-boost: 
-    1. Ενεργοποιεί το boost (status -> active)
-    2. Αφαιρεί €39.50 απο budget (budget -> €0.00)
+## Technical Approach
+For each file, the download button(s) will be changed from:
+```
+className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+```
+To include explicit light background overrides:
+```
+className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
 ```
 
+Additionally, the card body `bg-white/95` sections and wave decoration sections will be hardened with `dark:bg-white/95` to prevent dark theme from overriding the card's white appearance. The info grid cells (`bg-[#f0f9ff]`) already use hardcoded colors so they should be fine.
+
+The DialogContent wrapper uses `bg-transparent` which is correct -- the card itself provides all the background.
