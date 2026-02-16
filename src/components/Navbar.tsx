@@ -142,25 +142,25 @@ const Navbar = () => {
             <div className="hidden md:flex lg:hidden items-center gap-3 ml-3">
               <button 
                 onClick={() => navigate("/")} 
-                className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+                className="text-seafoam font-inter text-xs tracking-wide hover:text-seafoam/80 transition-colors whitespace-nowrap"
               >
                 {language === "el" ? "Αρχική" : "Home"}
               </button>
               <button 
                 onClick={() => navigate("/feed")} 
-                className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+                className="text-seafoam font-inter text-xs tracking-wide hover:text-seafoam/80 transition-colors whitespace-nowrap"
               >
                 {language === "el" ? "Εξερεύνηση" : "Explore"}
               </button>
               <button 
                 onClick={() => navigate("/for-visitors")} 
-                className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+                className="text-seafoam font-inter text-xs tracking-wide hover:text-seafoam/80 transition-colors whitespace-nowrap"
               >
                 {language === "el" ? "Επισκέπτες" : "Visitors"}
               </button>
               <button 
                 onClick={() => navigate("/for-businesses")} 
-                className="text-aegean font-inter text-xs tracking-wide hover:text-aegean-deep transition-colors whitespace-nowrap"
+                className="text-seafoam font-inter text-xs tracking-wide hover:text-seafoam/80 transition-colors whitespace-nowrap"
               >
                 {language === "el" ? "Επιχειρήσεις" : "Businesses"}
               </button>
@@ -170,25 +170,25 @@ const Navbar = () => {
             <div className="hidden lg:flex items-center gap-4 ml-4">
             <button 
               onClick={() => navigate("/")} 
-              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
+              className="text-seafoam font-inter text-sm tracking-wide hover:text-seafoam/80 transition-colors"
             >
               {language === "el" ? "Αρχική" : "Home"}
             </button>
             <button 
               onClick={() => navigate("/feed")} 
-              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
+              className="text-seafoam font-inter text-sm tracking-wide hover:text-seafoam/80 transition-colors"
             >
               {language === "el" ? "Εξερεύνηση" : "Explore"}
             </button>
             <button 
               onClick={() => navigate("/for-visitors")} 
-              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
+              className="text-seafoam font-inter text-sm tracking-wide hover:text-seafoam/80 transition-colors"
             >
               {language === "el" ? "Επισκέπτες" : "Visitors"}
             </button>
             <button 
               onClick={() => navigate("/for-businesses")} 
-              className="text-aegean font-inter text-sm tracking-wide hover:text-aegean-deep transition-colors"
+              className="text-seafoam font-inter text-sm tracking-wide hover:text-seafoam/80 transition-colors"
             >
               {language === "el" ? "Επιχειρήσεις" : "Businesses"}
             </button>
