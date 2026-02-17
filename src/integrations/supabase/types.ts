@@ -822,13 +822,16 @@ export type Database = {
           commission_amount_cents: number
           commission_percent: number
           created_at: string | null
-          discount_id: string
+          discount_id: string | null
           id: string
           invoice_id: string | null
           original_price_cents: number
           redeemed_at: string
-          redemption_id: string
+          redemption_id: string | null
+          reservation_id: string | null
+          source_type: string
           status: Database["public"]["Enums"]["commission_status"] | null
+          ticket_order_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -836,13 +839,16 @@ export type Database = {
           commission_amount_cents: number
           commission_percent: number
           created_at?: string | null
-          discount_id: string
+          discount_id?: string | null
           id?: string
           invoice_id?: string | null
           original_price_cents: number
           redeemed_at: string
-          redemption_id: string
+          redemption_id?: string | null
+          reservation_id?: string | null
+          source_type?: string
           status?: Database["public"]["Enums"]["commission_status"] | null
+          ticket_order_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -850,13 +856,16 @@ export type Database = {
           commission_amount_cents?: number
           commission_percent?: number
           created_at?: string | null
-          discount_id?: string
+          discount_id?: string | null
           id?: string
           invoice_id?: string | null
           original_price_cents?: number
           redeemed_at?: string
-          redemption_id?: string
+          redemption_id?: string | null
+          reservation_id?: string | null
+          source_type?: string
           status?: Database["public"]["Enums"]["commission_status"] | null
+          ticket_order_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -900,6 +909,20 @@ export type Database = {
             columns: ["redemption_id"]
             isOneToOne: false
             referencedRelation: "redemptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_ledger_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_ledger_ticket_order_id_fkey"
+            columns: ["ticket_order_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_orders"
             referencedColumns: ["id"]
           },
         ]
