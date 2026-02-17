@@ -962,8 +962,8 @@ const EventCreationForm = ({
                             </div>
                             <p className="text-[10px] sm:text-xs text-muted-foreground">{t.rangeHint}</p>
                             
-                            {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1 sm:gap-3 bg-background p-1.5 sm:p-3 rounded-lg flex-nowrap overflow-x-auto">
-                                <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
+                            {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1 sm:gap-3 bg-background p-1.5 sm:p-3 rounded-lg flex-nowrap">
+                                <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap shrink-0">
                                   <NumberInput 
                                     value={tier.minPeople} 
                                     onChange={value => updateTier(type, index, { minPeople: value })} 
@@ -979,7 +979,7 @@ const EventCreationForm = ({
                                     max={99}
                                     className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
                                   />
-                                  <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap">
+                                  <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap shrink-0 ml-0.5">
                                     {language === 'el' ? 'άτ.' : 'ppl'}
                                   </span>
                                 </div>
