@@ -96,7 +96,7 @@ const CommissionBanner: React.FC<CommissionBannerProps> = ({
 // TYPES
 // ============================================
 
-type EventType = 'ticket' | 'reservation' | 'free_entry';
+type EventType = 'ticket' | 'reservation' | 'free_entry' | 'ticket_and_reservation';
 type AppearanceMode = 'hours' | 'days';
 type SeatingType = 'bar' | 'table' | 'vip' | 'sofa';
 interface PersonTier {
@@ -180,6 +180,7 @@ const translations = {
     withTicket: "Με Εισιτήριο",
     withReservation: "Με Κράτηση",
     freeEntry: "Ελεύθερη Είσοδος",
+    ticketAndReservation: "Εισιτήριο & Κράτηση",
     ticketConfig: "Ρυθμίσεις Εισιτηρίου",
     reservationConfig: "Ρυθμίσεις Κράτησης",
     freeEntryConfig: "Δήλωση Ελεύθερης Εισόδου",
@@ -263,6 +264,7 @@ const translations = {
     withTicket: "With Ticket",
     withReservation: "With Reservation",
     freeEntry: "Free Entry",
+    ticketAndReservation: "Ticket & Reservation",
     ticketConfig: "Ticket Settings",
     reservationConfig: "Reservation Settings",
     freeEntryConfig: "Free Entry Declaration",
@@ -552,7 +554,10 @@ const EventCreationForm = ({
     if (!formData.eventType) return t.allFieldsRequired;
 
     // Type-specific validation
-    if (formData.eventType === 'ticket') {
+    const hasTickets = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
+    const hasReservation = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+
+    if (hasTickets) {
       const tierErrors = validateTicketTiers(formData.ticketTiers, language);
       if (tierErrors.length > 0) {
         setTicketValidationErrors(tierErrors);
@@ -563,7 +568,7 @@ const EventCreationForm = ({
       }
       setTicketValidationErrors([]);
     }
-    if (formData.eventType === 'reservation') {
+    if (hasReservation) {
       if (formData.selectedSeatingTypes.length === 0) return t.addAtLeastOneSeating;
       for (const type of formData.selectedSeatingTypes) {
         const config = formData.seatingConfigs[type];
@@ -632,11 +637,11 @@ const EventCreationForm = ({
         appearance_start_at: appearance.start?.toISOString() || null,
         appearance_end_at: appearance.end?.toISOString() || null,
         free_entry_declaration: formData.eventType === 'free_entry',
-        accepts_reservations: formData.eventType === 'reservation',
-        requires_approval: formData.eventType === 'reservation',
-        dress_code: formData.eventType === 'ticket' && formData.ticketTiers.length > 0 ? formData.ticketTiers[0].dress_code : null,
-        reservation_hours_from: formData.eventType === 'reservation' ? formData.reservationFromTime : null,
-        reservation_hours_to: formData.eventType === 'reservation' ? formData.reservationToTime : null,
+        accepts_reservations: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
+        requires_approval: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
+        dress_code: (formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation') && formData.ticketTiers.length > 0 ? formData.ticketTiers[0].dress_code : null,
+        reservation_hours_from: (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') ? formData.reservationFromTime : null,
+        reservation_hours_to: (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') ? formData.reservationToTime : null,
         terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
       };
       const {
@@ -646,7 +651,10 @@ const EventCreationForm = ({
       if (insertError) throw insertError;
 
       // Save ticket tiers for ticket events
-      if (formData.eventType === 'ticket' && formData.ticketTiers.length > 0) {
+      const submitHasTickets = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
+      const submitHasReservation = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+
+      if (submitHasTickets && formData.ticketTiers.length > 0) {
         const tiersToInsert = formData.ticketTiers.map((tier, index) => ({
           event_id: createdEvent.id,
           name: tier.name,
@@ -664,7 +672,7 @@ const EventCreationForm = ({
       }
 
       // Save seating types and tiers for reservation events
-      if (formData.eventType === 'reservation') {
+      if (submitHasReservation) {
         for (const seatingType of formData.selectedSeatingTypes) {
           const config = formData.seatingConfigs[seatingType];
           if (!config) {
@@ -813,181 +821,226 @@ const EventCreationForm = ({
 
         {/* Step 7: Event Type */}
         <SectionCard title={t.step7} required requiredLabel={t.required}>
-          <div className="grid grid-cols-3 gap-2 sm:gap-4">
-            {/* Ticket */}
-            <button type="button" onClick={() => updateField('eventType', 'ticket')} className={cn("p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3", formData.eventType === 'ticket' ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50")}>
-              <Ticket className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
-              <p className="font-medium text-xs sm:text-base">{t.withTicket}</p>
-            </button>
+          {(() => {
+            const isTicketSelected = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
+            const isReservationSelected = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+            const isFreeEntrySelected = formData.eventType === 'free_entry';
 
-            {/* Reservation */}
-            <button type="button" onClick={() => updateField('eventType', 'reservation')} className={cn("p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3", formData.eventType === 'reservation' ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50")}>
-              <Users className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
-              <p className="font-medium text-xs sm:text-base">{t.withReservation}</p>
-            </button>
+            const toggleTicket = () => {
+              if (isTicketSelected && isReservationSelected) {
+                updateField('eventType', 'reservation');
+              } else if (isTicketSelected) {
+                updateField('eventType', null);
+              } else if (isReservationSelected) {
+                updateField('eventType', 'ticket_and_reservation');
+              } else {
+                updateField('eventType', 'ticket');
+              }
+            };
 
-            {/* Free Entry */}
-            <button type="button" onClick={() => updateField('eventType', 'free_entry')} className={cn("p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3", formData.eventType === 'free_entry' ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50")}>
-              <Gift className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
-              <p className="font-medium text-xs sm:text-base">{t.freeEntry}</p>
-            </button>
-          </div>
+            const toggleReservation = () => {
+              if (isReservationSelected && isTicketSelected) {
+                updateField('eventType', 'ticket');
+              } else if (isReservationSelected) {
+                updateField('eventType', null);
+              } else if (isTicketSelected) {
+                updateField('eventType', 'ticket_and_reservation');
+              } else {
+                updateField('eventType', 'reservation');
+              }
+            };
+
+            const selectFreeEntry = () => {
+              updateField('eventType', isFreeEntrySelected ? null : 'free_entry');
+            };
+
+            return (
+              <>
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                  {/* Ticket */}
+                  <button type="button" onClick={toggleTicket} className={cn("p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3", isTicketSelected ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50")}>
+                    <Ticket className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+                    <p className="font-medium text-xs sm:text-base">{t.withTicket}</p>
+                  </button>
+
+                  {/* Reservation */}
+                  <button type="button" onClick={toggleReservation} className={cn("p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3", isReservationSelected ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50")}>
+                    <Users className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+                    <p className="font-medium text-xs sm:text-base">{t.withReservation}</p>
+                  </button>
+
+                  {/* Free Entry */}
+                  <button type="button" onClick={selectFreeEntry} className={cn("p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3", isFreeEntrySelected ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50")}>
+                    <Gift className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+                    <p className="font-medium text-xs sm:text-base">{t.freeEntry}</p>
+                  </button>
+                </div>
+
+                {isTicketSelected && isReservationSelected && (
+                  <div className="mt-2 p-2 rounded-lg bg-primary/5 border border-primary/20 text-center">
+                    <p className="text-xs sm:text-sm font-medium text-primary">{t.ticketAndReservation}</p>
+                  </div>
+                )}
 
           {/* TICKET CONFIG */}
-          {formData.eventType === 'ticket' && <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
-              <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
-                <Ticket className="h-3 w-3 sm:h-4 sm:w-4" />
-                {t.ticketConfig}
-              </h4>
-              
-              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
-              
-              <TicketTierEditor tiers={formData.ticketTiers} onTiersChange={tiers => updateField('ticketTiers', tiers)} commissionPercent={commissionPercent} validationErrors={ticketValidationErrors} autoEnabled={true} />
-            </div>}
-
-          {/* RESERVATION CONFIG */}
-          {formData.eventType === 'reservation' && <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6 p-3 sm:p-4 bg-muted/30 rounded-lg">
-              <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
-                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                {t.reservationConfig}
-              </h4>
-              
-              <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
-              
-              {/* Reservation Hours */}
-              <div className="space-y-2">
-                <Label className="text-xs sm:text-sm">{t.reservationHours}</Label>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm text-muted-foreground">{t.from}</span>
-                    <Input type="time" value={formData.reservationFromTime} onChange={e => updateField('reservationFromTime', e.target.value)} className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm text-muted-foreground">{t.to}</span>
-                    <Input type="time" value={formData.reservationToTime} onChange={e => updateField('reservationToTime', e.target.value)} className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Seating Types Selection */}
-              <div className="space-y-2 sm:space-y-3">
-                <Label className="text-xs sm:text-sm">{t.seatingTypes}</Label>
-                <p className="text-[10px] sm:text-sm text-muted-foreground">{t.selectSeatingTypes}</p>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {(['bar', 'table', 'vip', 'sofa'] as SeatingType[]).map(type => <Button key={type} type="button" variant={formData.selectedSeatingTypes.includes(type) ? "default" : "outline"} size="sm" onClick={() => toggleSeatingType(type)} className="text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3">
-                      {formData.selectedSeatingTypes.includes(type) && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />}
-                      {t[type]}
-                    </Button>)}
-                </div>
-              </div>
-
-              {/* Config for each selected type */}
-              {formData.selectedSeatingTypes.map(type => {
-            const config = formData.seatingConfigs[type];
-            return <div key={type} className="border rounded-lg p-2 sm:p-4 space-y-3 sm:space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-medium capitalize text-xs sm:text-base">{t[type]}</h5>
-                    </div>
+                {/* TICKET CONFIG */}
+                {isTicketSelected && <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
+                      <Ticket className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {t.ticketConfig}
+                    </h4>
                     
-                    {/* Available Slots */}
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
-                      <NumberInput 
-                        value={config.availableSlots} 
-                        onChange={value => updateSeatingConfig(type, { availableSlots: value })} 
-                        min={1}
-                        max={999}
-                        className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm" 
-                      />
-                    </div>
+                    <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
                     
-                    {/* Person Tiers */}
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs sm:text-sm">{t.personRanges}</Label>
-                        {config.tiers.length < 3 && <Button type="button" variant="ghost" size="sm" onClick={() => addTier(type)} className="text-[10px] sm:text-sm h-7 sm:h-9">
-                            <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                            {t.addRange}
-                          </Button>}
+                    <TicketTierEditor tiers={formData.ticketTiers} onTiersChange={tiers => updateField('ticketTiers', tiers)} commissionPercent={commissionPercent} validationErrors={ticketValidationErrors} autoEnabled={true} />
+                  </div>}
+
+                {/* RESERVATION CONFIG */}
+                {isReservationSelected && <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6 p-3 sm:p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
+                      <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {t.reservationConfig}
+                    </h4>
+                    
+                    {!isTicketSelected && <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />}
+                    
+                    {/* Reservation Hours */}
+                    <div className="space-y-2">
+                      <Label className="text-xs sm:text-sm">{t.reservationHours}</Label>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs sm:text-sm text-muted-foreground">{t.from}</span>
+                          <Input type="time" value={formData.reservationFromTime} onChange={e => updateField('reservationFromTime', e.target.value)} className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs sm:text-sm text-muted-foreground">{t.to}</span>
+                          <Input type="time" value={formData.reservationToTime} onChange={e => updateField('reservationToTime', e.target.value)} className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
+                        </div>
                       </div>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">{t.rangeHint}</p>
-                      
-                      {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1 sm:gap-3 bg-background p-1.5 sm:p-3 rounded-lg flex-nowrap overflow-x-auto">
-                          <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
-                            <NumberInput 
-                              value={tier.minPeople} 
-                              onChange={value => updateTier(type, index, { minPeople: value })} 
-                              min={1} 
-                              max={99}
-                              className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
-                            />
-                            <span className="text-muted-foreground text-[10px] sm:text-xs">-</span>
-                            <NumberInput 
-                              value={tier.maxPeople} 
-                              onChange={value => updateTier(type, index, { maxPeople: value })} 
-                              min={tier.minPeople} 
-                              max={99}
-                              className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
-                            />
-                            <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap">
-                              {language === 'el' ? 'άτ.' : 'ppl'}
-                            </span>
-                          </div>
-                          <span className="text-muted-foreground text-[10px] sm:text-xs">→</span>
-                          <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
-                            <span className="text-muted-foreground text-[10px] sm:text-xs">€</span>
-                            <NumberInput 
-                              value={Math.round(tier.prepaidChargeCents / 100)} 
-                              onChange={value => updateTier(type, index, { prepaidChargeCents: value * 100 })} 
-                              min={0}
-                              max={9999}
-                              className="w-12 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" 
-                            />
-                          </div>
-                          {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-5 w-5 sm:h-8 sm:w-8 text-destructive flex-shrink-0 p-0">
-                              <Trash2 className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
-                            </Button>}
-                        </div>)}
                     </div>
-                  </div>;
-          })}
 
-            </div>}
+                    {/* Seating Types Selection */}
+                    <div className="space-y-2 sm:space-y-3">
+                      <Label className="text-xs sm:text-sm">{t.seatingTypes}</Label>
+                      <p className="text-[10px] sm:text-sm text-muted-foreground">{t.selectSeatingTypes}</p>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                        {(['bar', 'table', 'vip', 'sofa'] as SeatingType[]).map(type => <Button key={type} type="button" variant={formData.selectedSeatingTypes.includes(type) ? "default" : "outline"} size="sm" onClick={() => toggleSeatingType(type)} className="text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3">
+                            {formData.selectedSeatingTypes.includes(type) && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />}
+                            {t[type]}
+                          </Button>)}
+                      </div>
+                    </div>
 
-          {/* FREE ENTRY CONFIG */}
-          {formData.eventType === 'free_entry' && <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
-              <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
-                <Gift className="h-3 w-3 sm:h-4 sm:w-4" />
-                {t.freeEntryConfig}
-              </h4>
-              
-              <p className="text-xs sm:text-sm font-medium">{t.freeEntryDeclarations}</p>
-              
-              <div className="space-y-2 sm:space-y-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Checkbox id="noTicket" checked={formData.freeEntryAccepted.noTicket} onCheckedChange={checked => updateField('freeEntryAccepted', {
-                ...formData.freeEntryAccepted,
-                noTicket: !!checked
-              })} />
-                  <Label htmlFor="noTicket" className="cursor-pointer text-xs sm:text-sm">{t.noTicketRequired}</Label>
-                </div>
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Checkbox id="noMinSpend" checked={formData.freeEntryAccepted.noMinSpend} onCheckedChange={checked => updateField('freeEntryAccepted', {
-                ...formData.freeEntryAccepted,
-                noMinSpend: !!checked
-              })} />
-                  <Label htmlFor="noMinSpend" className="cursor-pointer text-xs sm:text-sm">{t.noMinSpend}</Label>
-                </div>
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Checkbox id="noReservation" checked={formData.freeEntryAccepted.noReservation} onCheckedChange={checked => updateField('freeEntryAccepted', {
-                ...formData.freeEntryAccepted,
-                noReservation: !!checked
-              })} />
-                  <Label htmlFor="noReservation" className="cursor-pointer text-xs sm:text-sm">{t.noReservationRequired}</Label>
-                </div>
-              </div>
-              
-            </div>}
+                    {/* Config for each selected type */}
+                    {formData.selectedSeatingTypes.map(type => {
+                  const config = formData.seatingConfigs[type];
+                  return <div key={type} className="border rounded-lg p-2 sm:p-4 space-y-3 sm:space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h5 className="font-medium capitalize text-xs sm:text-base">{t[type]}</h5>
+                          </div>
+                          
+                          {/* Available Slots */}
+                          <div className="space-y-1.5 sm:space-y-2">
+                            <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
+                            <NumberInput 
+                              value={config.availableSlots} 
+                              onChange={value => updateSeatingConfig(type, { availableSlots: value })} 
+                              min={1}
+                              max={999}
+                              className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm" 
+                            />
+                          </div>
+                          
+                          {/* Person Tiers */}
+                          <div className="space-y-2 sm:space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs sm:text-sm">{t.personRanges}</Label>
+                              {config.tiers.length < 3 && <Button type="button" variant="ghost" size="sm" onClick={() => addTier(type)} className="text-[10px] sm:text-sm h-7 sm:h-9">
+                                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                  {t.addRange}
+                                </Button>}
+                            </div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">{t.rangeHint}</p>
+                            
+                            {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1 sm:gap-3 bg-background p-1.5 sm:p-3 rounded-lg flex-nowrap overflow-x-auto">
+                                <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
+                                  <NumberInput 
+                                    value={tier.minPeople} 
+                                    onChange={value => updateTier(type, index, { minPeople: value })} 
+                                    min={1} 
+                                    max={99}
+                                    className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
+                                  />
+                                  <span className="text-muted-foreground text-[10px] sm:text-xs">-</span>
+                                  <NumberInput 
+                                    value={tier.maxPeople} 
+                                    onChange={value => updateTier(type, index, { maxPeople: value })} 
+                                    min={tier.minPeople} 
+                                    max={99}
+                                    className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
+                                  />
+                                  <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap">
+                                    {language === 'el' ? 'άτ.' : 'ppl'}
+                                  </span>
+                                </div>
+                                <span className="text-muted-foreground text-[10px] sm:text-xs">→</span>
+                                <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
+                                  <span className="text-muted-foreground text-[10px] sm:text-xs">€</span>
+                                  <NumberInput 
+                                    value={Math.round(tier.prepaidChargeCents / 100)} 
+                                    onChange={value => updateTier(type, index, { prepaidChargeCents: value * 100 })} 
+                                    min={0}
+                                    max={9999}
+                                    className="w-12 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" 
+                                  />
+                                </div>
+                                {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-5 w-5 sm:h-8 sm:w-8 text-destructive flex-shrink-0 p-0">
+                                    <Trash2 className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
+                                  </Button>}
+                              </div>)}
+                          </div>
+                        </div>;
+                })}
+
+                  </div>}
+
+                {/* FREE ENTRY CONFIG */}
+                {isFreeEntrySelected && <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
+                      <Gift className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {t.freeEntryConfig}
+                    </h4>
+                    
+                    <p className="text-xs sm:text-sm font-medium">{t.freeEntryDeclarations}</p>
+                    
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <Checkbox id="noTicket" checked={formData.freeEntryAccepted.noTicket} onCheckedChange={checked => updateField('freeEntryAccepted', {
+                      ...formData.freeEntryAccepted,
+                      noTicket: !!checked
+                    })} />
+                        <Label htmlFor="noTicket" className="cursor-pointer text-xs sm:text-sm">{t.noTicketRequired}</Label>
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <Checkbox id="noMinSpend" checked={formData.freeEntryAccepted.noMinSpend} onCheckedChange={checked => updateField('freeEntryAccepted', {
+                      ...formData.freeEntryAccepted,
+                      noMinSpend: !!checked
+                    })} />
+                        <Label htmlFor="noMinSpend" className="cursor-pointer text-xs sm:text-sm">{t.noMinSpend}</Label>
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <Checkbox id="noReservation" checked={formData.freeEntryAccepted.noReservation} onCheckedChange={checked => updateField('freeEntryAccepted', {
+                      ...formData.freeEntryAccepted,
+                      noReservation: !!checked
+                    })} />
+                        <Label htmlFor="noReservation" className="cursor-pointer text-xs sm:text-sm">{t.noReservationRequired}</Label>
+                      </div>
+                    </div>
+                    
+                  </div>}
+              </>
+            );
+          })()}
         </SectionCard>
 
         {/* Terms & Conditions (Optional) */}

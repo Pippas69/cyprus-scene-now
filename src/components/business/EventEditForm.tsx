@@ -102,7 +102,7 @@ const CommissionBanner: React.FC<CommissionBannerProps> = ({
 // TYPES
 // ============================================
 
-type EventType = 'ticket' | 'reservation' | 'free_entry';
+type EventType = 'ticket' | 'reservation' | 'free_entry' | 'ticket_and_reservation';
 type AppearanceMode = 'hours' | 'days';
 type SeatingType = 'bar' | 'table' | 'vip' | 'sofa';
 
@@ -379,7 +379,8 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
     try {
       // Determine event type
       let eventType: EventType | null = null;
-      if (event.event_type === 'ticket') eventType = 'ticket';
+      if (event.event_type === 'ticket_and_reservation') eventType = 'ticket_and_reservation';
+      else if (event.event_type === 'ticket') eventType = 'ticket';
       else if (event.event_type === 'reservation') eventType = 'reservation';
       else if (event.event_type === 'free_entry' || event.free_entry_declaration) eventType = 'free_entry';
 

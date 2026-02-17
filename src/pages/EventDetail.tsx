@@ -406,33 +406,34 @@ export default function EventDetail() {
 
   // Determine event type
   const eventType = event?.event_type || (hasNativeTickets ? 'ticket' : (event?.accepts_reservations ? 'reservation' : 'free_entry'));
+  const eventHasTickets = eventType === 'ticket' || eventType === 'ticket_and_reservation';
+  const eventHasReservation = eventType === 'reservation' || eventType === 'ticket_and_reservation' || event?.accepts_reservations;
   
   const getEventTypeBadge = () => {
     switch (eventType) {
       case 'ticket':
         return (
-          <Badge
-            variant="outline"
-            className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border"
-          >
+          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border">
             {language === 'el' ? 'Με Εισιτήριο (Event)' : 'Ticketed (Event)'}
           </Badge>
         );
+      case 'ticket_and_reservation':
+        return (
+          <div className="flex gap-1.5">
+            <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border">
+              {language === 'el' ? 'Εισιτήριο & Κράτηση' : 'Ticket & Reservation'}
+            </Badge>
+          </div>
+        );
       case 'reservation':
         return (
-          <Badge
-            variant="outline"
-            className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border"
-          >
+          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border">
             {language === 'el' ? 'Με Κράτηση (Event)' : 'Reservation (Event)'}
           </Badge>
         );
       case 'free_entry':
         return (
-          <Badge
-            variant="outline"
-            className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border"
-          >
+          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border">
             {language === 'el' ? 'Ελεύθερη Είσοδος (Event)' : 'Free Entry (Event)'}
           </Badge>
         );
@@ -591,7 +592,7 @@ export default function EventDetail() {
                 />
               )}
 
-              {eventType === 'reservation' && event.event_type === 'reservation' && user && (
+              {eventHasReservation && event.event_type === 'reservation' && user && (
                 <RippleButton
                   className="w-full gap-2 h-9 text-sm"
                   onClick={() => setShowReservationCheckout(true)}
@@ -601,7 +602,17 @@ export default function EventDetail() {
                 </RippleButton>
               )}
 
-              {user && event.accepts_reservations && event.event_type !== 'reservation' && (
+              {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && (
+                <RippleButton
+                  className="w-full gap-2 h-9 text-sm"
+                  onClick={() => setShowReservationCheckout(true)}
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  {text.makeReservation}
+                </RippleButton>
+              )}
+
+              {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' && (
                 <RippleButton
                   className="w-full gap-2 h-9 text-sm"
                   onClick={() => setShowReservationDialog(true)}
@@ -800,7 +811,7 @@ export default function EventDetail() {
               />
             )}
 
-            {eventType === 'reservation' && event.event_type === 'reservation' && user && (
+            {eventHasReservation && event.event_type === 'reservation' && user && (
               <RippleButton
                 className="w-full gap-2"
                 onClick={() => setShowReservationCheckout(true)}
@@ -810,7 +821,17 @@ export default function EventDetail() {
               </RippleButton>
             )}
 
-            {user && event.accepts_reservations && event.event_type !== 'reservation' && (
+            {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && (
+              <RippleButton
+                className="w-full gap-2"
+                onClick={() => setShowReservationCheckout(true)}
+              >
+                <Calendar className="h-4 w-4" />
+                {text.makeReservation}
+              </RippleButton>
+            )}
+
+            {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' && (
               <RippleButton
                 className="w-full gap-2"
                 onClick={() => setShowReservationDialog(true)}
@@ -934,7 +955,7 @@ export default function EventDetail() {
       )}
 
       {/* Reservation Event Checkout Dialog (for new reservation events) */}
-      {user && event.event_type === 'reservation' && (
+      {user && (event.event_type === 'reservation' || event.event_type === 'ticket_and_reservation') && (
         <ReservationEventCheckout
           open={showReservationCheckout}
           onOpenChange={setShowReservationCheckout}
