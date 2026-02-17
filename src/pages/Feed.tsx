@@ -152,7 +152,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       
       // Filter out sold-out ticket events
       const ticketEventIds = events
-        .filter((e: any) => e.event_type === 'ticket')
+        .filter((e: any) => e.event_type === 'ticket' || e.event_type === 'ticket_and_reservation')
         .map((e: any) => e.id);
       
       if (ticketEventIds.length === 0) return events;

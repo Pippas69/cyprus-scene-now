@@ -281,7 +281,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
     });
   };
 
-  const getEventType = (event: any): 'ticket' | 'reservation' | 'free_entry' => {
+  const getEventType = (event: any): 'ticket' | 'reservation' | 'free_entry' | 'ticket_and_reservation' => {
+    if (event.event_type === 'ticket_and_reservation') return 'ticket_and_reservation';
     if (event.event_type === 'ticket') return 'ticket';
     if (event.event_type === 'reservation' || event.accepts_reservations) return 'reservation';
     return 'free_entry';
@@ -295,7 +296,11 @@ const EventsList = ({ businessId }: EventsListProps) => {
   // Filter and separate active vs expired events
   const typeFilteredEvents = events?.filter(event => {
     if (activeFilter === 'all') return true;
-    return getEventType(event) === activeFilter;
+    const type = getEventType(event);
+    if (type === 'ticket_and_reservation') {
+      return activeFilter === 'ticket' || activeFilter === 'reservation';
+    }
+    return type === activeFilter;
   }) || [];
 
   const activeEvents = typeFilteredEvents.filter(event => !isEventExpired(event));

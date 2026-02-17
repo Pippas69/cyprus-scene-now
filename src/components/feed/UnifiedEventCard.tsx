@@ -144,8 +144,9 @@ export const UnifiedEventCard = ({
   const goingCount = event.going_count || 0;
 
   // Determine entry type badge: Free (Δωρεάν), Reservation (Κράτηση), or Ticket (Εισιτήριο)
-  const getEntryType = (): 'free' | 'reservation' | 'ticket' | null => {
+  const getEntryType = (): 'free' | 'reservation' | 'ticket' | 'ticket_and_reservation' | null => {
     // If event_type is explicitly set, use it
+    if (event.event_type === 'ticket_and_reservation') return 'ticket_and_reservation';
     if (event.event_type === 'ticket') return 'ticket';
     if (event.event_type === 'reservation') return 'reservation';
     if (event.event_type === 'free_entry') return 'free';
@@ -164,6 +165,7 @@ export const UnifiedEventCard = ({
     if (entryType === 'free') return t.free;
     if (entryType === 'reservation') return t.reservation;
     if (entryType === 'ticket') return t.ticket;
+    if (entryType === 'ticket_and_reservation') return language === 'el' ? 'Εισιτήριο & Κράτηση' : 'Ticket & Reservation';
     return null;
   };
   
