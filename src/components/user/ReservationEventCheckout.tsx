@@ -15,7 +15,7 @@ import {
   GlassWater, TableIcon, Crown, Sofa, Users, Shirt, 
   Clock, Phone, User, MessageSquare, CreditCard, 
   CheckCircle, ArrowRight, ArrowLeft, Loader2, Euro,
-  AlertCircle, Info, Calendar
+  AlertCircle, Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -78,7 +78,6 @@ const translations = {
     partySize: "Μέγεθος παρέας",
     people: "άτομα",
     prepaidAmount: "Ελάχιστη Προπληρωμή",
-    creditNote: "Αυτό το ποσό λειτουργεί ως πίστωση στο μαγαζί",
     name: "Όνομα κράτησης",
     phone: "Τηλέφωνο",
     arrivalHours: "Ώρες άφιξης",
@@ -134,7 +133,6 @@ const translations = {
     partySize: "Party size",
     people: "people",
     prepaidAmount: "Prepaid Minimum Charge",
-    creditNote: "This amount counts as credit at the venue",
     name: "Reservation name",
     phone: "Phone number",
     arrivalHours: "Arrival hours",
@@ -202,6 +200,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // State
   const [step, setStep] = useState(1);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [seatingOptions, setSeatingOptions] = useState<SeatingTypeOption[]>([]);
@@ -227,6 +226,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       fetchSeatingOptions();
     }
   }, [open, eventId]);
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
   const fetchSeatingOptions = async () => {
     setLoading(true);
@@ -428,11 +432,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
       case 2: // Details (merged: party size + prepayment + personal details)
         return (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Reservation Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
+            <div className="space-y-1">
+              <Label htmlFor="name" className="flex items-center gap-2 text-sm">
+                <User className="h-3.5 w-3.5" />
                 {t.name} *
               </Label>
               <Input
@@ -440,13 +444,14 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={reservationName}
                 onChange={(e) => setReservationName(e.target.value)}
                 placeholder="John Doe"
+                className="h-9 text-sm"
               />
             </div>
 
             {/* Phone */}
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
+            <div className="space-y-1">
+              <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
+                <Phone className="h-3.5 w-3.5" />
                 {t.phone}
               </Label>
               <Input
@@ -455,57 +460,52 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="+357 99 123456"
+                className="h-9 text-sm"
               />
             </div>
 
             {/* Party Size */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
+            <div className="space-y-1">
+              <Label className="flex items-center gap-2 text-sm">
+                <Users className="h-3.5 w-3.5" />
                 {t.partySize}
               </Label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 shrink-0"
+                  className="h-8 w-8 shrink-0"
                   onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
                   disabled={partySize <= partySizeLimits.min}
                 >
                   -
                 </Button>
-                <span className="text-2xl font-bold min-w-[2ch] text-center">
+                <span className="text-lg font-bold min-w-[2ch] text-center">
                   {partySize}
                 </span>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 shrink-0"
+                  className="h-8 w-8 shrink-0"
                   onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
                   disabled={partySize >= partySizeLimits.max}
                 >
                   +
                 </Button>
-                <span className="text-sm text-muted-foreground shrink-0">{t.people}</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">{t.people}</span>
               </div>
             </div>
 
             {/* Prepaid Amount */}
             {price ? (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary">
-                <div>
-                  <span className="text-sm font-medium">{t.prepaidAmount}</span>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <Info className="h-3 w-3 shrink-0" />
-                    {t.creditNote}
-                  </p>
-                </div>
-                <span className="text-xl font-bold text-primary ml-3 shrink-0">
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary">
+                <span className="text-sm font-medium">{t.prepaidAmount}</span>
+                <span className="text-base font-bold text-primary ml-3 shrink-0">
                   {formatPrice(price)}
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive text-sm text-destructive">
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-destructive/5 border border-destructive text-sm text-destructive">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {t.errorNoTier}
               </div>
@@ -513,22 +513,23 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             {/* Arrival Hours */}
             {(reservationHoursFrom || reservationHoursTo) && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
+              <div className="space-y-1">
+                <Label className="flex items-center gap-2 text-sm">
+                  <Clock className="h-3.5 w-3.5" />
                   {t.arrivalHours}
                 </Label>
                 <Input
                   readOnly
                   value={`${reservationHoursFrom || '—'} - ${reservationHoursTo || '—'}`}
+                  className="h-9 text-sm"
                 />
               </div>
             )}
 
             {/* Special Requests */}
-            <div className="space-y-2">
-              <Label htmlFor="requests" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
+            <div className="space-y-1">
+              <Label htmlFor="requests" className="flex items-center gap-2 text-sm">
+                <MessageSquare className="h-3.5 w-3.5" />
                 {t.specialRequests}
                 <span className="text-xs text-muted-foreground">({t.optional})</span>
               </Label>
@@ -537,6 +538,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
                 rows={2}
+                className="text-sm"
               />
             </div>
           </div>
@@ -748,7 +750,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             <DrawerTitle>{t.title}</DrawerTitle>
             <DrawerDescription>{eventTitle}</DrawerDescription>
           </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto">
+          <div ref={scrollRef} className="px-4 pb-6 overflow-y-auto">
             {content}
           </div>
         </DrawerContent>
@@ -758,7 +760,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent ref={scrollRef} className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t.title}</DialogTitle>
           <DialogDescription>{eventTitle}</DialogDescription>
