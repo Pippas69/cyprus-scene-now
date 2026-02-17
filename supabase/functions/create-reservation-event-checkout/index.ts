@@ -90,7 +90,7 @@ serve(async (req) => {
       throw new Error("Event not found");
     }
 
-    if (event.event_type !== "reservation") {
+    if (event.event_type !== "reservation" && event.event_type !== "ticket_and_reservation") {
       throw new Error("This event does not accept prepaid reservations");
     }
 

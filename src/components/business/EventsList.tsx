@@ -438,7 +438,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
                       {/* Event type badge only */}
                       <div className="flex items-center pt-1 md:pt-1.5">
-                        {eventType === 'ticket' && (
+                      {eventType === 'ticket' && (
                           <Badge
                             className="bg-teal-600 hover:bg-teal-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
                             onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}
@@ -455,6 +455,24 @@ const EventsList = ({ businessId }: EventsListProps) => {
                             <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
                             {t.badgeReservation}
                           </Badge>
+                        )}
+                        {eventType === 'ticket_and_reservation' && (
+                          <div className="flex items-center gap-1">
+                            <Badge
+                              className="bg-teal-600 hover:bg-teal-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
+                              onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}
+                            >
+                              <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                              {t.badgeTicket}
+                            </Badge>
+                            <Badge
+                              className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
+                              onClick={() => setReservationEvent({ id: event.id, title: event.title })}
+                            >
+                              <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                              {t.badgeReservation}
+                            </Badge>
+                          </div>
                         )}
                         {eventType === 'free_entry' && (
                           <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2">

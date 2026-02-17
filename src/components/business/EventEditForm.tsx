@@ -391,9 +391,9 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
         appearanceMode = 'days';
       }
 
-      // Load ticket tiers if ticket event
+      // Load ticket tiers if ticket event (or combined)
       let ticketTiers: TicketTier[] = [];
-      if (eventType === 'ticket') {
+      if (eventType === 'ticket' || eventType === 'ticket_and_reservation') {
         const { data: tiers } = await supabase
           .from('ticket_tiers')
           .select('*')
@@ -424,7 +424,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
         sofa: getDefaultSeatingConfig('sofa'),
       };
 
-      if (eventType === 'reservation') {
+      if (eventType === 'reservation' || eventType === 'ticket_and_reservation') {
         const { data: seatingTypes } = await supabase
           .from('reservation_seating_types')
           .select('*')
@@ -580,7 +580,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       }
     }
 
-    if (formData.eventType === 'reservation') {
+    if (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') {
       if (formData.selectedSeatingTypes.length === 0) {
         toast.error(t.addAtLeastOneSeating);
         return;
@@ -593,7 +593,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       }
     }
 
-    if (formData.eventType === 'ticket') {
+    if (formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation') {
       const errors = validateTicketTiers(formData.ticketTiers, language);
       if (errors.length > 0) {
         setTicketValidationErrors(errors);
@@ -655,16 +655,18 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           appearance_mode: formData.appearanceMode === 'hours' ? 'hourly' : 'date_range',
           appearance_start_at: appearanceStart?.toISOString() || null,
           appearance_end_at: appearanceEnd?.toISOString() || null,
-          reservation_hours_from: formData.eventType === 'reservation' ? formData.reservationFromTime : null,
-          reservation_hours_to: formData.eventType === 'reservation' ? formData.reservationToTime : null,
+          event_type: formData.eventType === 'free_entry' ? 'free' : formData.eventType,
+          accepts_reservations: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
+          reservation_hours_from: (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') ? formData.reservationFromTime : null,
+          reservation_hours_to: (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') ? formData.reservationToTime : null,
           terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
         })
         .eq('id', event.id);
 
       if (updateError) throw updateError;
 
-      // Update ticket tiers if ticket event
-      if (formData.eventType === 'ticket') {
+      // Update ticket tiers if ticket event (or combined)
+      if (formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation') {
         // Get existing tiers
         const { data: existingTiers } = await supabase
           .from('ticket_tiers')
@@ -733,8 +735,8 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
         }
       }
 
-      // Update seating types if reservation event
-      if (formData.eventType === 'reservation') {
+      // Update seating types if reservation event (or combined)
+      if (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') {
         // Get existing seating types with their details
         const { data: existingSeating } = await supabase
           .from('reservation_seating_types')
@@ -1007,35 +1009,90 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             />
           </SectionCard>
 
-          {/* Step 7: Event Type (Read-only display) */}
+          {/* Step 7: Event Type (Editable) */}
           <SectionCard title={t.step7} required requiredLabel={t.required}>
-            <p className="text-xs sm:text-sm text-muted-foreground mb-4">{t.eventTypeReadonly}</p>
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
-              <div className={cn(
-                "p-3 sm:p-6 rounded-xl border-2 text-center space-y-1 sm:space-y-3",
-                formData.eventType === 'ticket' ? "border-primary bg-primary/5" : "border-muted opacity-50"
-              )}>
-                <Ticket className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4">{t.chooseEventType}</p>
+            <div className="space-y-3">
+              {/* Ticket toggle */}
+              <div
+                className={cn(
+                  "p-3 sm:p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all",
+                  (formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation')
+                    ? "border-teal-500 bg-teal-50 dark:bg-teal-950/30"
+                    : "border-muted hover:border-muted-foreground/40"
+                )}
+                onClick={() => {
+                  const hasTicket = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
+                  const hasReservation = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+                  if (hasTicket) {
+                    // Remove ticket
+                    updateField('eventType', hasReservation ? 'reservation' : 'free_entry');
+                  } else {
+                    // Add ticket
+                    if (formData.eventType === 'free_entry' || !formData.eventType) {
+                      updateField('eventType', 'ticket');
+                    } else if (formData.eventType === 'reservation') {
+                      updateField('eventType', 'ticket_and_reservation');
+                    }
+                  }
+                }}
+              >
+                <Ticket className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600 flex-shrink-0" />
                 <p className="font-medium text-xs sm:text-base">{t.withTicket}</p>
+                {(formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation') && (
+                  <Check className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 ml-auto" />
+                )}
               </div>
-              <div className={cn(
-                "p-3 sm:p-6 rounded-xl border-2 text-center space-y-1 sm:space-y-3",
-                formData.eventType === 'reservation' ? "border-primary bg-primary/5" : "border-muted opacity-50"
-              )}>
-                <Users className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+              {/* Reservation toggle */}
+              <div
+                className={cn(
+                  "p-3 sm:p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all",
+                  (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation')
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                    : "border-muted hover:border-muted-foreground/40"
+                )}
+                onClick={() => {
+                  const hasTicket = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
+                  const hasReservation = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+                  if (hasReservation) {
+                    // Remove reservation
+                    updateField('eventType', hasTicket ? 'ticket' : 'free_entry');
+                  } else {
+                    // Add reservation
+                    if (formData.eventType === 'free_entry' || !formData.eventType) {
+                      updateField('eventType', 'reservation');
+                    } else if (formData.eventType === 'ticket') {
+                      updateField('eventType', 'ticket_and_reservation');
+                    }
+                  }
+                }}
+              >
+                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
                 <p className="font-medium text-xs sm:text-base">{t.withReservation}</p>
+                {(formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') && (
+                  <Check className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 ml-auto" />
+                )}
               </div>
-              <div className={cn(
-                "p-3 sm:p-6 rounded-xl border-2 text-center space-y-1 sm:space-y-3",
-                formData.eventType === 'free_entry' ? "border-primary bg-primary/5" : "border-muted opacity-50"
-              )}>
-                <Gift className="h-5 w-5 sm:h-8 sm:w-8 mx-auto text-primary" />
+              {/* Free entry toggle */}
+              <div
+                className={cn(
+                  "p-3 sm:p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all",
+                  formData.eventType === 'free_entry'
+                    ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                    : "border-muted hover:border-muted-foreground/40"
+                )}
+                onClick={() => updateField('eventType', 'free_entry')}
+              >
+                <Gift className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 flex-shrink-0" />
                 <p className="font-medium text-xs sm:text-base">{t.freeEntry}</p>
+                {formData.eventType === 'free_entry' && (
+                  <Check className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 ml-auto" />
+                )}
               </div>
             </div>
 
             {/* TICKET CONFIG */}
-            {formData.eventType === 'ticket' && (
+            {(formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation') && (
               <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
                 <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
                   <Ticket className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -1055,7 +1112,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             )}
 
             {/* RESERVATION CONFIG */}
-            {formData.eventType === 'reservation' && (
+            {(formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') && (
               <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6 p-3 sm:p-4 bg-muted/30 rounded-lg">
                 <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
                   <Users className="h-3 w-3 sm:h-4 sm:w-4" />
