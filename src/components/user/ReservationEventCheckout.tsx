@@ -56,7 +56,6 @@ const translations = {
     title: "Κράτηση Θέσης",
     steps: {
       seating: "Επιλογή Θέσης",
-      party: "Μέγεθος Παρέας",
       details: "Στοιχεία",
       review: "Επισκόπηση",
     },
@@ -113,7 +112,6 @@ const translations = {
     title: "Book a Seat",
     steps: {
       seating: "Choose Seating",
-      party: "Party Size",
       details: "Your Details",
       review: "Review",
     },
@@ -331,8 +329,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const canProceedToStep3 = price !== null;
-  const canProceedToStep4 = reservationName.trim().length >= 2;
+  const canProceedToStep3 = reservationName.trim().length >= 2 && price !== null;
 
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
@@ -429,69 +426,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           </div>
         );
 
-      case 2: // Party Size
-        return (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <Label className="flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5" />
-                {t.partySize}
-              </Label>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
-                  disabled={partySize <= partySizeLimits.min}
-                >
-                  -
-                </Button>
-                <span className="text-3xl font-bold min-w-[3ch] text-center">
-                  {partySize}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
-                  disabled={partySize >= partySizeLimits.max}
-                >
-                  +
-                </Button>
-                <span className="text-muted-foreground">{t.people}</span>
-              </div>
-            </div>
-
-            {price ? (
-              <Card className="bg-primary/5 border-primary">
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{t.prepaidAmount}</span>
-                    <span className="text-2xl font-bold text-primary">
-                      {formatPrice(price)}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Info className="h-3 w-3" />
-                    {t.creditNote}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="bg-destructive/5 border-destructive">
-                <CardContent className="p-4">
-                  <p className="text-sm text-destructive flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    {t.errorNoTier}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        );
-
-      case 3: // Details
+      case 2: // Details (merged: party size + prepayment + personal details)
         return (
           <div className="space-y-4">
+            {/* Reservation Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
@@ -505,6 +443,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               />
             </div>
 
+            {/* Phone */}
             <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
@@ -519,6 +458,60 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               />
             </div>
 
+            {/* Party Size */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {t.partySize}
+              </Label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
+                  disabled={partySize <= partySizeLimits.min}
+                >
+                  -
+                </Button>
+                <span className="text-2xl font-bold min-w-[2ch] text-center">
+                  {partySize}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
+                  disabled={partySize >= partySizeLimits.max}
+                >
+                  +
+                </Button>
+                <span className="text-sm text-muted-foreground shrink-0">{t.people}</span>
+              </div>
+            </div>
+
+            {/* Prepaid Amount */}
+            {price ? (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary">
+                <div>
+                  <span className="text-sm font-medium">{t.prepaidAmount}</span>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Info className="h-3 w-3 shrink-0" />
+                    {t.creditNote}
+                  </p>
+                </div>
+                <span className="text-xl font-bold text-primary ml-3 shrink-0">
+                  {formatPrice(price)}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {t.errorNoTier}
+              </div>
+            )}
+
+            {/* Arrival Hours */}
             {(reservationHoursFrom || reservationHoursTo) && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
@@ -532,6 +525,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
             )}
 
+            {/* Special Requests */}
             <div className="space-y-2">
               <Label htmlFor="requests" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -542,13 +536,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 id="requests"
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
-                rows={3}
+                rows={2}
               />
             </div>
           </div>
         );
 
-      case 4: // Review
+      case 3: // Review
         return (
           <div className="space-y-4">
             <h3 className="font-semibold">{t.summary}</h3>
@@ -626,13 +620,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         <div />
       )}
 
-      {step < 4 ? (
+      {step < 3 ? (
         <Button
           onClick={() => setStep(step + 1)}
           disabled={
             (step === 1 && !canProceedToStep2) ||
-            (step === 2 && !canProceedToStep3) ||
-            (step === 3 && !canProceedToStep4)
+            (step === 2 && !canProceedToStep3)
           }
         >
           {t.next}
@@ -663,7 +656,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Step indicator
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
-      {[1, 2, 3, 4].map(s => (
+      {[1, 2, 3].map(s => (
         <div
           key={s}
           className={cn(
