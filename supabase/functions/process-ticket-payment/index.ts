@@ -359,7 +359,37 @@ Deno.serve(async (req) => {
 
     // Record commission in commission_ledger if applicable
     if (order.commission_cents > 0) {
-      logStep("Commission recorded", { amount: order.commission_cents });
+      try {
+        // Get business_id from event
+        const { data: eventData } = await supabaseClient
+          .from("events")
+          .select("business_id")
+          .eq("id", order.event_id)
+          .single();
+
+        if (eventData?.business_id) {
+          const { error: ledgerError } = await supabaseClient
+            .from("commission_ledger")
+            .insert({
+              source_type: 'ticket',
+              business_id: eventData.business_id,
+              ticket_order_id: orderId,
+              original_price_cents: order.total_cents,
+              commission_percent: order.commission_percent || 0,
+              commission_amount_cents: order.commission_cents,
+              status: 'pending',
+              redeemed_at: new Date().toISOString(),
+            });
+
+          if (ledgerError) {
+            logStep("Commission ledger insert error", { error: ledgerError.message });
+          } else {
+            logStep("Commission recorded in ledger", { amount: order.commission_cents, businessId: eventData.business_id });
+          }
+        }
+      } catch (err) {
+        logStep("Commission ledger error", { error: err instanceof Error ? err.message : String(err) });
+      }
     }
 
     return new Response(JSON.stringify({ 

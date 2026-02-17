@@ -125,6 +125,55 @@ serve(async (req) => {
 
       logStep("Reservation updated to paid/accepted", { reservationId });
 
+      // Record commission in commission_ledger
+      if (paidAmountCents > 0 && reservation.events?.businesses?.id) {
+        try {
+          const resBusinessId = reservation.events.businesses.id;
+          
+          // Get commission rate from business subscription plan
+          let commissionPercent = 12; // default Free plan rate
+          const { data: subscription } = await supabaseClient
+            .from("business_subscriptions")
+            .select("plan_id, subscription_plans(slug)")
+            .eq("business_id", resBusinessId)
+            .eq("status", "active")
+            .single();
+
+          if (subscription?.subscription_plans) {
+            const planSlug = (subscription.subscription_plans as any).slug;
+            const rateMap: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
+            commissionPercent = rateMap[planSlug] ?? 12;
+          }
+
+          const commissionAmountCents = Math.round(paidAmountCents * commissionPercent / 100);
+
+          const { error: ledgerError } = await supabaseClient
+            .from("commission_ledger")
+            .insert({
+              source_type: 'reservation',
+              business_id: resBusinessId,
+              reservation_id: reservationId,
+              original_price_cents: paidAmountCents,
+              commission_percent: commissionPercent,
+              commission_amount_cents: commissionAmountCents,
+              status: 'pending',
+              redeemed_at: new Date().toISOString(),
+            });
+
+          if (ledgerError) {
+            logStep("Commission ledger insert error", { error: ledgerError.message });
+          } else {
+            logStep("Commission recorded in ledger", { 
+              amount: commissionAmountCents, 
+              percent: commissionPercent, 
+              businessId: resBusinessId 
+            });
+          }
+        } catch (commErr) {
+          logStep("Commission ledger error", { error: commErr instanceof Error ? commErr.message : String(commErr) });
+        }
+      }
+
       // Decrement seating slots
       if (seatingTypeId) {
         const { error: decrementError } = await supabaseClient
