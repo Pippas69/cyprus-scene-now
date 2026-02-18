@@ -55,10 +55,10 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       ).
       gte("start_at", new Date().toISOString()).
       order("start_at", { ascending: true }).
-      limit(6);
+      limit(20);
 
       if (!error && data) {
-        const visible = (data as unknown as Event[]).filter((e) => !isEventPaused(e));
+        const visible = (data as unknown as Event[]).filter((e) => !isEventPaused(e)).slice(0, 6);
         setEvents(visible);
       }
       setLoading(false);
