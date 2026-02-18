@@ -404,46 +404,6 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
           </div>
         </CardContent>
       </Card>
-
-      {/* App Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.appPreferences}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="language">{t.languagePreference}</Label>
-            <Select
-              value={language}
-              onValueChange={(value: 'el' | 'en') => setLanguage(value)}
-            >
-              <SelectTrigger id="language" className="h-9 sm:h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="el">Ελληνικά</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="theme">{t.theme}</Label>
-            <Select
-              value={preferences.theme_preference || 'system'}
-              onValueChange={(value) => updatePreferences({ theme_preference: value })}
-            >
-              <SelectTrigger id="theme" className="h-9 sm:h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">{t.light}</SelectItem>
-                <SelectItem value="dark">{t.dark}</SelectItem>
-                <SelectItem value="system">{t.system}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

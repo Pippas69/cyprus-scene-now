@@ -744,49 +744,6 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           </div>
         </CardContent>
       </Card>
-
-      {/* App Preferences */}
-      <Card>
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 whitespace-nowrap text-sm sm:text-base">
-            <SettingsIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            {t.appPreferences}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 sm:space-y-4">
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="language" className="text-xs sm:text-sm">{t.languagePreference}</Label>
-            <Select
-              value={language}
-              onValueChange={(value: 'el' | 'en') => setLanguage(value)}
-            >
-              <SelectTrigger id="language" className="rounded-xl text-xs sm:text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="el">Ελληνικά</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="theme" className="text-xs sm:text-sm">{t.theme}</Label>
-            <Select
-              value={preferences.theme_preference || 'system'}
-              onValueChange={(value) => updatePreferences({ theme_preference: value })}
-            >
-              <SelectTrigger id="theme" className="rounded-xl text-xs sm:text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">{t.light}</SelectItem>
-                <SelectItem value="dark">{t.dark}</SelectItem>
-                <SelectItem value="system">{t.system}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
