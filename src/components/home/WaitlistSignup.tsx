@@ -166,7 +166,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
                 placeholder={t.firstName}
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="h-11 sm:h-12 md:h-14 bg-white dark:bg-white border border-[#ddd] text-[#2E2E2E] placeholder:text-[#999] focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
+                className="h-11 sm:h-12 md:h-14 !bg-white border border-[#ddd] !text-[#2E2E2E] placeholder:!text-[#999] focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
                 disabled={isLoading} />
 
               <Input
@@ -174,7 +174,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
                 placeholder={t.lastName}
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="h-11 sm:h-12 md:h-14 bg-white dark:bg-white border border-[#ddd] text-[#2E2E2E] placeholder:text-[#999] focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
+                className="h-11 sm:h-12 md:h-14 !bg-white border border-[#ddd] !text-[#2E2E2E] placeholder:!text-[#999] focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
                 disabled={isLoading} />
 
             </div>
@@ -183,7 +183,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
               placeholder={t.email}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-11 sm:h-12 md:h-14 bg-white dark:bg-white border border-[#ddd] text-[#2E2E2E] placeholder:text-[#999] focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
+              className="h-11 sm:h-12 md:h-14 !bg-white border border-[#ddd] !text-[#2E2E2E] placeholder:!text-[#999] focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
               disabled={isLoading} />
 
             <div>
@@ -192,7 +192,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
                 placeholder={t.password}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-11 sm:h-12 md:h-14 bg-white dark:bg-white border border-[#ddd] text-[#2E2E2E] placeholder:text-[#999] focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
+                className="h-11 sm:h-12 md:h-14 !bg-white border border-[#ddd] !text-[#2E2E2E] placeholder:!text-[#999] focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
                 disabled={isLoading} />
 
               <p className="text-[#777] text-xs sm:text-sm mt-1.5 sm:mt-2 text-left ml-3 sm:ml-4">{t.passwordHint}</p>
