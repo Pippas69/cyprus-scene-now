@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-
+import { isEventPaused } from "@/lib/eventVisibility";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import UnifiedEventCard from "@/components/feed/UnifiedEventCard";
@@ -21,6 +21,8 @@ interface Event {
   cover_image_url: string | null;
   category: string[];
   business_id: string;
+  appearance_start_at?: string | null;
+  appearance_end_at?: string | null;
   businesses: {
     id: string;
     name: string;
@@ -56,7 +58,8 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       limit(6);
 
       if (!error && data) {
-        setEvents((data as unknown as Event[]));
+        const visible = (data as unknown as Event[]).filter((e) => !isEventPaused(e));
+        setEvents(visible);
       }
       setLoading(false);
     };
