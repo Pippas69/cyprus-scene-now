@@ -31,7 +31,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
       success: "Επιτυχής εγγραφή! Θα σε ειδοποιήσουμε σύντομα.",
       errorExists: "Αυτό το email χρησιμοποιείται ήδη",
       errorGeneric: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
-      passwordHint: "Τουλάχιστον 6 χαρακτήρες",
+      passwordHint: "Τουλάχιστον 6 χαρακτήρες"
     },
     en: {
       badge: "Early Access",
@@ -45,15 +45,15 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
       success: "You're on the list! We'll notify you soon.",
       errorExists: "This email is already registered",
       errorGeneric: "Something went wrong. Please try again.",
-      passwordHint: "At least 6 characters",
-    },
+      passwordHint: "At least 6 characters"
+    }
   };
 
   const t = text[language];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
       toast.error(language === "el" ? "Συμπλήρωσε όλα τα πεδία" : "Please fill all fields");
       return;
@@ -68,7 +68,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
 
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -77,9 +77,9 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
           data: {
             first_name: firstName.trim(),
             last_name: lastName.trim(),
-            is_waitlist: true,
-          },
-        },
+            is_waitlist: true
+          }
+        }
       });
 
       if (error) {
@@ -93,18 +93,18 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
 
       // Update the profile to mark as waitlist (the trigger should handle it but we ensure it)
       if (data.user) {
-        await supabase
-          .from("profiles")
-          .update({ is_waitlist: true })
-          .eq("id", data.user.id);
+        await supabase.
+        from("profiles").
+        update({ is_waitlist: true }).
+        eq("id", data.user.id);
       }
 
       setIsSuccess(true);
       toast.success(t.success);
-      
+
       // Sign out immediately so they don't get redirected
       await supabase.auth.signOut();
-      
+
     } catch (err) {
       toast.error(t.errorGeneric);
     } finally {
@@ -119,8 +119,8 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="max-w-md mx-auto text-center"
-          >
+            className="max-w-md mx-auto text-center">
+
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-seafoam/20 flex items-center justify-center">
               <Check className="w-10 h-10 text-seafoam" />
             </div>
@@ -129,8 +129,8 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
             </h2>
           </motion.div>
         </div>
-      </section>
-    );
+      </section>);
+
   }
 
   return (
@@ -140,8 +140,8 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-2xl mx-auto text-center"
-        >
+          className="max-w-2xl mx-auto text-center">
+
           {/* Badge */}
           <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-seafoam/80 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full mb-5 sm:mb-6 md:mb-8">
             <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
@@ -151,9 +151,9 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
           </div>
 
           {/* Title */}
-          <h2 className="font-cinzel text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-seafoam italic mb-3 sm:mb-4 px-2">
-            {t.title}
-          </h2>
+          
+
+
           
           {/* Subtitle */}
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg mb-6 sm:mb-8 md:mb-10 px-4">{t.subtitle}</p>
@@ -167,16 +167,16 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 className="h-11 sm:h-12 md:h-14 bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
-                disabled={isLoading}
-              />
+                disabled={isLoading} />
+
               <Input
                 type="text"
                 placeholder={t.lastName}
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 className="h-11 sm:h-12 md:h-14 bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
-                disabled={isLoading}
-              />
+                disabled={isLoading} />
+
             </div>
             <Input
               type="email"
@@ -184,8 +184,8 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-11 sm:h-12 md:h-14 bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
-              disabled={isLoading}
-            />
+              disabled={isLoading} />
+
             <div>
               <Input
                 type="password"
@@ -193,29 +193,29 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-11 sm:h-12 md:h-14 bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-seafoam/30 rounded-full px-4 sm:px-5 md:px-6 text-sm sm:text-base"
-                disabled={isLoading}
-              />
+                disabled={isLoading} />
+
               <p className="text-muted-foreground text-xs sm:text-sm mt-1.5 sm:mt-2 text-left ml-3 sm:ml-4">{t.passwordHint}</p>
             </div>
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-11 sm:h-12 md:h-14 bg-gradient-to-r from-seafoam to-aegean hover:opacity-90 text-white font-semibold text-sm sm:text-base md:text-lg rounded-full transition-all duration-300"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-              ) : (
-                <>
+              className="w-full h-11 sm:h-12 md:h-14 bg-gradient-to-r from-seafoam to-aegean hover:opacity-90 text-white font-semibold text-sm sm:text-base md:text-lg rounded-full transition-all duration-300">
+
+              {isLoading ?
+              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> :
+
+              <>
                   <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
                   {t.button}
                 </>
-              )}
+              }
             </Button>
           </form>
         </motion.div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default WaitlistSignup;
