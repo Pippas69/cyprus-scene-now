@@ -34,10 +34,10 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select(
-          `
+      const { data, error } = await supabase.
+      from("events").
+      select(
+        `
           id,
           title,
           location,
@@ -49,11 +49,11 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
           appearance_start_at,
           appearance_end_at,
           businesses!inner(id, name, logo_url)
-        `,
-        )
-        .gte("start_at", new Date().toISOString())
-        .order("start_at", { ascending: true })
-        .limit(6);
+        `
+      ).
+      gte("start_at", new Date().toISOString()).
+      order("start_at", { ascending: true }).
+      limit(6);
 
       if (!error && data) {
         const visible = (data as unknown as Event[]).filter((e: any) => !isEventPaused(e));
@@ -70,14 +70,14 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       title: "Upcoming Events",
       subtitle: "Don't miss what's happening next",
       viewAll: "View All Events",
-      noEvents: "No upcoming events",
+      noEvents: "No upcoming events"
     },
     el: {
       title: "Επερχόμενες Εκδηλώσεις",
       subtitle: "Μη χάσεις τι γίνεται στη συνέχεια",
       viewAll: "Δες Όλες τις Εκδηλώσεις",
-      noEvents: "Δεν υπάρχουν επερχόμενες εκδηλώσεις",
-    },
+      noEvents: "Δεν υπάρχουν επερχόμενες εκδηλώσεις"
+    }
   };
 
   if (loading) {
@@ -90,13 +90,13 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
             <Skeleton className="h-6 w-96 mx-auto" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-72 rounded-2xl" />
-            ))}
+            {[1, 2].map((i) =>
+            <Skeleton key={i} className="h-72 rounded-2xl" />
+            )}
           </div>
         </div>
-      </section>
-    );
+      </section>);
+
   }
 
   if (events.length === 0) {
@@ -114,11 +114,11 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center"
-          >
-            <h2 className="font-cinzel text-2xl sm:text-3xl md:text-5xl font-bold text-aegean mb-2 sm:mb-4 tracking-tight">
-              {content[language].title}
-            </h2>
+            className="text-center">
+
+            
+
+
             <p className="text-aegean/70 text-sm sm:text-base md:text-lg px-2">
               {content[language].subtitle}
             </p>
@@ -135,15 +135,15 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
         <div className="container mx-auto px-3 sm:px-4 relative z-10">
           {/* Mobile: show only 1 event, Tablet/Desktop: show 2 - same grid as MyEvents */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 sm:mb-10 md:mb-12 max-w-4xl mx-auto">
-            {events.slice(0, 2).map((event, index) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className={index > 0 ? "hidden md:block" : ""}
-              >
+            {events.slice(0, 2).map((event, index) =>
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className={index > 0 ? "hidden md:block" : ""}>
+
                 {/* Mobile: mobileFixed matches MyEvents card, Desktop: full */}
                 <div className="md:hidden">
                   <UnifiedEventCard event={event} language={language} size="mobileFixed" />
@@ -152,21 +152,21 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
                   <UnifiedEventCard event={event} language={language} size="full" />
                 </div>
               </motion.div>
-            ))}
+            )}
           </div>
 
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center"
-          >
+            className="text-center">
+
             <Button
               asChild
               variant="outline"
               size="default"
-              className="bg-white border-aegean/30 hover:bg-white/80 hover:border-aegean text-aegean group rounded-full px-5 sm:px-6 md:px-8 text-sm sm:text-base"
-            >
+              className="bg-white border-aegean/30 hover:bg-white/80 hover:border-aegean text-aegean group rounded-full px-5 sm:px-6 md:px-8 text-sm sm:text-base">
+
               <Link to="/feed">
                 {content[language].viewAll}
                 <ArrowRight className="ml-1.5 sm:ml-2 w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
@@ -175,8 +175,8 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
           </motion.div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default UpcomingEventsPreview;
