@@ -10,8 +10,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from
+"@/components/ui/select";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, Instagram } from "lucide-react";
 import { useState } from "react";
@@ -29,14 +29,14 @@ const Contact = () => {
     business_type: "",
     business_name: "",
     website: "",
-    message: "",
+    message: ""
   });
 
   const text = {
     el: {
       heroTitle: "Επικοινώνησε μαζί μας",
       heroSubtitle:
-        "Έχεις ερωτήσεις; Θέλεις να μάθεις περισσότερα; Είμαστε εδώ για σένα.",
+      "Έχεις ερωτήσεις; Θέλεις να μάθεις περισσότερα; Είμαστε εδώ για σένα.",
       firstName: "Όνομα",
       lastName: "Επώνυμο",
       email: "Email",
@@ -54,19 +54,19 @@ const Contact = () => {
         venue: "Χώρος / Venue",
         organizer: "Διοργανωτής Εκδηλώσεων",
         advertiser: "Διαφημιζόμενος",
-        other: "Άλλο",
+        other: "Άλλο"
       },
       contactInfo: "Στοιχεία Επικοινωνίας",
       followUs: "Ακολούθησέ μας",
       demoTitle: "Κλείσε Demo",
       demoDesc:
-        "Θέλεις να δεις το ΦΟΜΟ σε δράση; Κλείσε μια δωρεάν επίδειξη με την ομάδα μας.",
-      bookDemo: "Κλείσε Demo",
+      "Θέλεις να δεις το ΦΟΜΟ σε δράση; Κλείσε μια δωρεάν επίδειξη με την ομάδα μας.",
+      bookDemo: "Κλείσε Demo"
     },
     en: {
       heroTitle: "Contact Us",
       heroSubtitle:
-        "Have questions? Want to learn more? We're here for you.",
+      "Have questions? Want to learn more? We're here for you.",
       firstName: "First Name",
       lastName: "Last Name",
       email: "Email",
@@ -84,15 +84,15 @@ const Contact = () => {
         venue: "Venue / Location",
         organizer: "Event Organizer",
         advertiser: "Advertiser",
-        other: "Other",
+        other: "Other"
       },
       contactInfo: "Contact Information",
       followUs: "Follow Us",
       demoTitle: "Book a Demo",
       demoDesc:
-        "Want to see ΦΟΜΟ in action? Book a free demo with our team.",
-      bookDemo: "Book Demo",
-    },
+      "Want to see ΦΟΜΟ in action? Book a free demo with our team.",
+      bookDemo: "Book Demo"
+    }
   };
 
   const t = text[language];
@@ -102,14 +102,14 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from("contact_submissions")
-        .insert([formData]);
+      const { error } = await supabase.
+      from("contact_submissions").
+      insert([formData]);
 
       if (error) throw error;
 
       toast.success(t.successTitle, {
-        description: t.successMessage,
+        description: t.successMessage
       });
 
       setFormData({
@@ -120,7 +120,7 @@ const Contact = () => {
         business_type: "",
         business_name: "",
         website: "",
-        message: "",
+        message: ""
       });
     } catch (error) {
       toast.error(t.errorMessage);
@@ -142,26 +142,26 @@ const Contact = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 bg-seafoam/10 border border-seafoam/30 text-seafoam px-4 py-1.5 rounded-full text-sm font-medium mb-6"
-          >
+            className="inline-flex items-center gap-2 bg-seafoam/10 border border-seafoam/30 text-seafoam px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+
             <span className="w-2 h-2 bg-seafoam rounded-full animate-pulse" />
             {language === "el" ? "Επικοινωνία" : "Contact"}
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-6 tracking-tight"
-          >
-            {t.heroTitle}
-          </motion.h1>
+          
+
+
+
+
+
+
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
-          >
+            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+
             {t.heroSubtitle}
           </motion.p>
         </div>
@@ -175,8 +175,8 @@ const Contact = () => {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
+              transition={{ delay: 0.2 }}>
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -186,9 +186,9 @@ const Contact = () => {
                       required
                       value={formData.first_name}
                       onChange={(e) =>
-                        setFormData({ ...formData, first_name: e.target.value })
-                      }
-                    />
+                      setFormData({ ...formData, first_name: e.target.value })
+                      } />
+
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="last_name">{t.lastName} *</Label>
@@ -197,9 +197,9 @@ const Contact = () => {
                       required
                       value={formData.last_name}
                       onChange={(e) =>
-                        setFormData({ ...formData, last_name: e.target.value })
-                      }
-                    />
+                      setFormData({ ...formData, last_name: e.target.value })
+                      } />
+
                   </div>
                 </div>
 
@@ -212,9 +212,9 @@ const Contact = () => {
                       required
                       value={formData.email}
                       onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                    />
+                      setFormData({ ...formData, email: e.target.value })
+                      } />
+
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">{t.phone}</Label>
@@ -223,9 +223,9 @@ const Contact = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
-                      }
-                    />
+                      setFormData({ ...formData, phone: e.target.value })
+                      } />
+
                   </div>
                 </div>
 
@@ -234,9 +234,9 @@ const Contact = () => {
                   <Select
                     value={formData.business_type}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, business_type: value })
-                    }
-                  >
+                    setFormData({ ...formData, business_type: value })
+                    }>
+
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -264,12 +264,12 @@ const Contact = () => {
                       id="business_name"
                       value={formData.business_name}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          business_name: e.target.value,
-                        })
-                      }
-                    />
+                      setFormData({
+                        ...formData,
+                        business_name: e.target.value
+                      })
+                      } />
+
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="website">{t.website}</Label>
@@ -279,9 +279,9 @@ const Contact = () => {
                       placeholder="https://"
                       value={formData.website}
                       onChange={(e) =>
-                        setFormData({ ...formData, website: e.target.value })
-                      }
-                    />
+                      setFormData({ ...formData, website: e.target.value })
+                      } />
+
                   </div>
                 </div>
 
@@ -292,25 +292,25 @@ const Contact = () => {
                     rows={5}
                     value={formData.message}
                     onChange={(e) =>
-                      setFormData({ ...formData, message: e.target.value })
-                    }
-                  />
+                    setFormData({ ...formData, message: e.target.value })
+                    } />
+
                 </div>
 
                 <Button
                   type="submit"
                   size="lg"
                   className="w-full"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    t.sending
-                  ) : (
-                    <>
+                  disabled={isSubmitting}>
+
+                  {isSubmitting ?
+                  t.sending :
+
+                  <>
                       <Send className="w-4 h-4 mr-2" />
                       {t.submit}
                     </>
-                  )}
+                  }
                 </Button>
               </form>
             </motion.div>
@@ -320,8 +320,8 @@ const Contact = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="space-y-8"
-            >
+              className="space-y-8">
+
               <div>
                 <h2 className="font-urbanist text-2xl font-bold mb-6">
                   {t.contactInfo}
@@ -333,8 +333,8 @@ const Contact = () => {
                       window.location.href = "mailto:support@fomocy.com";
                     }}
                     className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors cursor-pointer w-full text-left"
-                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-                  >
+                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
+
                     <Mail className="w-5 h-5 flex-shrink-0" />
                     <span>support@fomocy.com</span>
                   </button>
@@ -344,8 +344,8 @@ const Contact = () => {
                       window.location.href = "tel:+35799123456";
                     }}
                     className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors cursor-pointer w-full text-left"
-                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-                  >
+                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
+
                     <Phone className="w-5 h-5 flex-shrink-0" />
                     <span>+357 99 123 456</span>
                   </button>
@@ -366,8 +366,8 @@ const Contact = () => {
                     }}
                     className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
                     style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-                    aria-label="Instagram"
-                  >
+                    aria-label="Instagram">
+
                     <Instagram className="w-5 h-5" />
                   </button>
                   <button
@@ -377,10 +377,10 @@ const Contact = () => {
                     }}
                     className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
                     style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-                    aria-label="TikTok"
-                  >
+                    aria-label="TikTok">
+
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                     </svg>
                   </button>
                   <button
@@ -390,8 +390,8 @@ const Contact = () => {
                     }}
                     className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
                     style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-                    aria-label="Email"
-                  >
+                    aria-label="Email">
+
                     <Mail className="w-5 h-5" />
                   </button>
                 </div>
@@ -402,8 +402,8 @@ const Contact = () => {
       </section>
 
       <Footer />
-    </div>
-  );
+    </div>);
+
 };
 
 export default Contact;
