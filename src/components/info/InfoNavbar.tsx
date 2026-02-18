@@ -121,7 +121,7 @@ const InfoNavbar = () => {
               </Button>
             </Link>
             <Link to="/signup-business">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 whitespace-nowrap flex-shrink-0">
+              <Button size="sm" className="bg-[#4ECDC4] text-white hover:bg-[#3dbdb5] border-0 whitespace-nowrap flex-shrink-0">
                 {t.getStarted}
               </Button>
             </Link>
