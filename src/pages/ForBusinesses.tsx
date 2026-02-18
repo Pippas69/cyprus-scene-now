@@ -415,21 +415,21 @@ const ForBusinesses = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 bg-seafoam text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full mb-6 text-xs sm:text-sm font-medium">
+            <div className="inline-flex items-center gap-1.5 bg-seafoam text-white px-2.5 py-1 sm:px-4 sm:py-2 rounded-full mb-6 text-[11px] sm:text-sm font-medium">
               <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>{content.hero.badge}</span>
             </div>
-            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-seafoam mb-6 tracking-tight whitespace-nowrap">
+            <h1 className="font-cinzel text-[clamp(1.25rem,5vw,3rem)] font-bold text-seafoam mb-6 tracking-tight">
               {content.hero.title}
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               {content.hero.subtitle}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="text-lg bg-seafoam hover:bg-seafoam/90 text-white">
+            <div className="flex flex-row gap-3 sm:gap-4 justify-center">
+              <Button asChild size="lg" className="text-sm sm:text-lg bg-seafoam hover:bg-seafoam/90 text-white px-4 sm:px-6">
                 <Link to="/signup-business">{content.hero.cta}</Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="text-lg border-aegean/30 text-aegean hover:bg-aegean/5">
+              <Button asChild variant="outline" size="lg" className="text-sm sm:text-lg border-aegean/30 text-aegean hover:bg-aegean/5 px-4 sm:px-6">
                 <Link to="/features">{content.hero.demo}</Link>
               </Button>
             </div>
