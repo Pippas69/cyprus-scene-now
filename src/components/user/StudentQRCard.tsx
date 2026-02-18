@@ -100,7 +100,7 @@ export function StudentQRCard({ verification, language, businessId, discountMode
                 {isRedeemed ? (
                   <Badge variant="destructive" className="text-[9px] sm:text-[10px] h-4 sm:h-5 px-1.5 sm:px-2">{t.redeemed}</Badge>
                 ) : discountMode === 'once' ? (
-                  <Badge variant="outline" className="border-amber-500 text-amber-600 text-[9px] sm:text-[10px] h-4 sm:h-5 px-1.5 sm:px-2">{t.oneTime}</Badge>
+                  <Badge variant="secondary" className="bg-orange-500 text-white hover:bg-orange-600 text-[9px] sm:text-[10px] h-4 sm:h-5 px-1.5 sm:px-2">{t.oneTime}</Badge>
                 ) : (
                   <Badge variant="default" className="bg-green-600 text-[9px] sm:text-[10px] h-4 sm:h-5 px-1.5 sm:px-2">{t.unlimited}</Badge>
                 )}
