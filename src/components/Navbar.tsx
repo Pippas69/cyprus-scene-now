@@ -238,7 +238,7 @@ const Navbar = () => {
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="gradient" className="gap-1">
+                  <Button className="gap-1 bg-[#4ECDC4] text-white hover:bg-[#3dbdb5] border-0">
                     {t.signup} <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -311,8 +311,7 @@ const Navbar = () => {
                   ) : (
                     <div className="space-y-3">
                       <Button 
-                        variant="gradient" 
-                        className="w-full text-sm" 
+                        className="w-full text-sm bg-[#4ECDC4] text-white hover:bg-[#3dbdb5] border-0" 
                         size="default" 
                         onClick={() => {
                           navigate("/signup-business");
