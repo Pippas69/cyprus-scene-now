@@ -68,13 +68,13 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   const content = {
     en: {
       title: "Upcoming Events",
-      subtitle: "Don't miss what's happening next",
+      subtitle: "Stay tuned with all events in Cyprus",
       viewAll: "View All Events",
       noEvents: "No upcoming events"
     },
     el: {
       title: "Επερχόμενες Εκδηλώσεις",
-      subtitle: "Μη χάσεις τι γίνεται στη συνέχεια",
+      subtitle: "Συντονίσου με όλα τα events της Κύπρου",
       viewAll: "Δες Όλες τις Εκδηλώσεις",
       noEvents: "Δεν υπάρχουν επερχόμενες εκδηλώσεις"
     }
