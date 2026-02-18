@@ -246,7 +246,7 @@ const Navbar = () => {
                   <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/signup")}>
                     {t.joinFomo}
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="font-medium cursor-pointer text-secondary" onClick={() => navigate("/signup-business")}>
+                  <DropdownMenuItem className="font-medium cursor-pointer text-white" onClick={() => navigate("/signup-business")}>
                     {t.forBusinesses}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
