@@ -12,7 +12,7 @@ const LanguageToggle = () => {
         onClick={() => setLanguage("el")}
         className={`h-6 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs font-semibold rounded-full transition-all ${
           language === "el"
-            ? "bg-primary text-primary-foreground shadow-sm"
+            ? "bg-gradient-ocean text-white shadow-sm"
             : "bg-transparent text-muted-foreground hover:bg-transparent"
         }`}
       >
@@ -24,7 +24,7 @@ const LanguageToggle = () => {
         onClick={() => setLanguage("en")}
         className={`h-6 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs font-semibold rounded-full transition-all ${
           language === "en"
-            ? "bg-primary text-primary-foreground shadow-sm"
+            ? "bg-gradient-ocean text-white shadow-sm"
             : "bg-transparent text-muted-foreground hover:bg-transparent"
         }`}
       >
