@@ -142,25 +142,25 @@ const Navbar = () => {
             <div className="hidden md:flex lg:hidden items-center gap-3 ml-3">
               <button 
                 onClick={() => navigate("/")} 
-                className="text-gradient-ocean font-inter text-xs tracking-wide hover:opacity-80 transition-opacity whitespace-nowrap"
+                className="text-foreground font-inter text-xs font-bold tracking-wide hover:opacity-80 transition-opacity whitespace-nowrap"
               >
                 {language === "el" ? "Αρχική" : "Home"}
               </button>
               <button 
                 onClick={() => navigate("/feed")} 
-                className="text-gradient-ocean font-inter text-xs tracking-wide hover:opacity-80 transition-opacity whitespace-nowrap"
+                className="text-foreground font-inter text-xs font-bold tracking-wide hover:opacity-80 transition-opacity whitespace-nowrap"
               >
                 {language === "el" ? "Εξερεύνηση" : "Explore"}
               </button>
               <button 
                 onClick={() => navigate("/for-visitors")} 
-                className="text-gradient-ocean font-inter text-xs tracking-wide hover:opacity-80 transition-opacity whitespace-nowrap"
+                className="text-foreground font-inter text-xs font-bold tracking-wide hover:opacity-80 transition-opacity whitespace-nowrap"
               >
                 {language === "el" ? "Επισκέπτες" : "Visitors"}
               </button>
               <button 
                 onClick={() => navigate("/for-businesses")} 
-                className="text-gradient-ocean font-inter text-xs tracking-wide hover:opacity-80 transition-opacity whitespace-nowrap"
+                className="text-foreground font-inter text-xs font-bold tracking-wide hover:opacity-80 transition-opacity whitespace-nowrap"
               >
                 {language === "el" ? "Επιχειρήσεις" : "Businesses"}
               </button>
@@ -170,25 +170,25 @@ const Navbar = () => {
             <div className="hidden lg:flex items-center gap-4 ml-4">
             <button 
               onClick={() => navigate("/")} 
-              className="text-gradient-ocean font-inter text-sm tracking-wide hover:opacity-80 transition-opacity"
+              className="text-foreground font-inter text-sm font-bold tracking-wide hover:opacity-80 transition-opacity"
             >
               {language === "el" ? "Αρχική" : "Home"}
             </button>
             <button 
               onClick={() => navigate("/feed")} 
-              className="text-gradient-ocean font-inter text-sm tracking-wide hover:opacity-80 transition-opacity"
+              className="text-foreground font-inter text-sm font-bold tracking-wide hover:opacity-80 transition-opacity"
             >
               {language === "el" ? "Εξερεύνηση" : "Explore"}
             </button>
             <button 
               onClick={() => navigate("/for-visitors")} 
-              className="text-gradient-ocean font-inter text-sm tracking-wide hover:opacity-80 transition-opacity"
+              className="text-foreground font-inter text-sm font-bold tracking-wide hover:opacity-80 transition-opacity"
             >
               {language === "el" ? "Επισκέπτες" : "Visitors"}
             </button>
             <button 
               onClick={() => navigate("/for-businesses")} 
-              className="text-gradient-ocean font-inter text-sm tracking-wide hover:opacity-80 transition-opacity"
+              className="text-foreground font-inter text-sm font-bold tracking-wide hover:opacity-80 transition-opacity"
             >
               {language === "el" ? "Επιχειρήσεις" : "Businesses"}
             </button>

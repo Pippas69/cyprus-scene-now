@@ -81,7 +81,7 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
   };
 
   return (
-    <section className="relative py-10 sm:py-12 md:py-16 overflow-hidden bg-white">
+    <section className="relative py-10 sm:py-12 md:py-16 overflow-hidden bg-white dark:bg-white">
       <div className="container mx-auto px-3 sm:px-4 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -109,11 +109,11 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="bg-card/80 backdrop-blur-md border border-border/50 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-10 lg:p-12 shadow-card">
+              className="bg-[#3d5a6e] backdrop-blur-md border border-[#4a6b7f]/50 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-10 lg:p-12 shadow-card">
 
-              <Quote className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-aegean/30 mb-4 sm:mb-5 md:mb-6" />
+              <Quote className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-seafoam/50 mb-4 sm:mb-5 md:mb-6" />
               
-              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-foreground mb-5 sm:mb-6 md:mb-8 leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white mb-5 sm:mb-6 md:mb-8 leading-relaxed">
                 "{testimonials[current].text[language]}"
               </p>
 
@@ -121,18 +121,18 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
                 <img
                   src={testimonials[current].avatar}
                   alt={testimonials[current].name}
-                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-aegean/30" />
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-white/30" />
 
                 <div>
-                  <h4 className="font-semibold text-foreground text-sm sm:text-base">
+                  <h4 className="font-semibold text-white text-sm sm:text-base">
                     {testimonials[current].name}
                   </h4>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-white/70">
                     {testimonials[current].role[language]}
                   </p>
                   <div className="flex gap-0.5 sm:gap-1 mt-1">
                     {Array.from({ length: testimonials[current].rating }).map((_, i) =>
-                    <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-aegean text-aegean" />
+                    <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-seafoam text-seafoam" />
                     )}
                   </div>
                 </div>
@@ -148,8 +148,8 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
               onClick={() => setCurrent(i)}
               className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
               i === current ?
-              "bg-aegean w-4 sm:w-6" :
-              "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5 sm:w-2"}`
+              "bg-[#0d3b66] w-4 sm:w-6" :
+              "bg-[#0d3b66]/30 hover:bg-[#0d3b66]/50 w-1.5 sm:w-2"}`
               } />
 
             )}

@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import Typewriter from "@/components/ui/typewriter";
-import ParticleBackground from "@/components/ui/particle-background";
 
 interface HeroSectionProps {
   language: "el" | "en";
@@ -31,10 +30,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-seafoam/5">
-      {/* Particle background */}
-      <ParticleBackground particleCount={25} className="z-0" />
-      
-      {/* Premium floating decorative shapes */}
+      {/* Premium floating decorative shapes - blurred ambient glow only */}
       <motion.div
         animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -49,23 +45,6 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         animate={{ y: [0, 15, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         className="absolute bottom-32 left-[20%] w-24 h-24 rounded-full bg-seafoam/15 blur-2xl"
-      />
-      
-      {/* Small floating circles */}
-      <motion.div
-        animate={{ y: [0, -30, 0], x: [0, 10, 0] }}
-        transition={{ duration: 5, repeat: Infinity }}
-        className="absolute top-[30%] left-[5%] w-4 h-4 rounded-full bg-seafoam/60"
-      />
-      <motion.div
-        animate={{ y: [0, 20, 0], x: [0, -15, 0] }}
-        transition={{ duration: 6, repeat: Infinity }}
-        className="absolute top-[20%] right-[10%] w-3 h-3 rounded-full bg-aegean/60"
-      />
-      <motion.div
-        animate={{ y: [0, -15, 0] }}
-        transition={{ duration: 4, repeat: Infinity }}
-        className="absolute bottom-[40%] right-[5%] w-5 h-5 rounded-full bg-seafoam/60"
       />
 
       {/* Tagline badge - positioned at top, perfectly centered */}
