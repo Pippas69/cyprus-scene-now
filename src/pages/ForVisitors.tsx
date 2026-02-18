@@ -207,13 +207,13 @@ const ForVisitors = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 bg-seafoam/10 text-seafoam px-4 py-2 rounded-full mb-6 border border-seafoam/20">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">
+            <div className="inline-flex items-center gap-2 bg-seafoam text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full mb-6 text-xs sm:text-sm font-medium">
+              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>
                 {language === "el" ? "Για επισκέπτες" : "For visitors"}
               </span>
             </div>
-            <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-seafoam via-aegean to-seafoam bg-clip-text text-transparent mb-6 tracking-tight">
+            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-seafoam mb-6 tracking-tight whitespace-nowrap">
               {content.hero.title}
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
