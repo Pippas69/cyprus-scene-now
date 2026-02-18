@@ -106,7 +106,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   return (
     <section className="relative overflow-hidden">
       {/* Title area with gradient from seafoam to white */}
-      <div className="relative py-8 sm:py-10 md:py-16">
+      <div className="relative py-3 sm:py-4 md:py-6">
         <div className="absolute inset-0 bg-[#4dd4c4]" />
         
         <div className="container mx-auto px-3 sm:px-4 relative z-10">
@@ -127,7 +127,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       </div>
 
       {/* Events cards on seafoam background with soft fade-to-white at bottom */}
-      <div className="relative py-6 sm:py-8 md:py-12 pb-16 sm:pb-20 md:pb-24 overflow-hidden">
+      <div className="relative py-4 sm:py-6 md:py-8 pb-16 sm:pb-20 md:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-[#4dd4c4]" />
         {/* Soft, subtle gradient fade at bottom - matches reference image */}
         <div className="absolute inset-x-0 bottom-0 h-24 sm:h-32 md:h-40 bg-gradient-to-b from-transparent via-[#4dd4c4]/30 to-white" />
