@@ -12,6 +12,15 @@ input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* White autofill for light-themed sections (e.g. Waitlist) */
+.bg-white input:-webkit-autofill,
+.bg-white input:-webkit-autofill:hover,
+.bg-white input:-webkit-autofill:focus,
+.bg-white input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: #2E2E2E !important;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
