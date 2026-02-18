@@ -109,11 +109,11 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="bg-[#3d5a6e] backdrop-blur-md border border-[#4a6b7f]/50 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-10 lg:p-12 shadow-card">
+              className="bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-10 lg:p-12 shadow-card">
 
               <Quote className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-seafoam/50 mb-4 sm:mb-5 md:mb-6" />
               
-              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white mb-5 sm:mb-6 md:mb-8 leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-800 mb-5 sm:mb-6 md:mb-8 leading-relaxed">
                 "{testimonials[current].text[language]}"
               </p>
 
@@ -121,13 +121,13 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
                 <img
                   src={testimonials[current].avatar}
                   alt={testimonials[current].name}
-                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-white/30" />
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-gray-200" />
 
                 <div>
-                  <h4 className="font-semibold text-white text-sm sm:text-base">
+                  <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
                     {testimonials[current].name}
                   </h4>
-                  <p className="text-xs sm:text-sm text-white/70">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {testimonials[current].role[language]}
                   </p>
                   <div className="flex gap-0.5 sm:gap-1 mt-1">

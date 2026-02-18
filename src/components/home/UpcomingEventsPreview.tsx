@@ -144,12 +144,11 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
               transition={{ delay: index * 0.1 }}
               className={index > 0 ? "hidden md:block" : ""}>
 
-                {/* Mobile: mobileFixed matches MyEvents card, Desktop: full */}
-                <div className="md:hidden">
-                  <UnifiedEventCard event={event} language={language} size="mobileFixed" />
+                <div className="md:hidden [&_.event-card]:bg-white [&_.event-card]:text-gray-900">
+                  <UnifiedEventCard event={event} language={language} size="mobileFixed" className="!bg-white !border-gray-200 [&_*]:!text-gray-800 [&_.text-muted-foreground]:!text-gray-500" />
                 </div>
                 <div className="hidden md:block">
-                  <UnifiedEventCard event={event} language={language} size="full" />
+                  <UnifiedEventCard event={event} language={language} size="full" className="!bg-white !border-gray-200 [&_*]:!text-gray-800 [&_.text-muted-foreground]:!text-gray-500" />
                 </div>
               </motion.div>
             )}

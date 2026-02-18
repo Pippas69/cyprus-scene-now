@@ -66,7 +66,7 @@ const Index = () => {
       <div className="relative">
         <WaitlistSignup language={language} />
         {/* Gradient transition before FAQ */}
-        <div className="h-24 sm:h-32 md:h-40 bg-gradient-to-b from-white dark:from-white via-[#e0f5f1] to-[#c5f0ea]" />
+        <div className="h-24 sm:h-32 md:h-40 bg-gradient-to-b from-white via-[#e0f5f1] to-[#c5f0ea]" />
         <FAQSection language={language} />
         <Footer />
       </div>
