@@ -207,7 +207,7 @@ const ForVisitors = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-1.5 bg-seafoam text-white px-2.5 py-1 sm:px-4 sm:py-2 rounded-full mb-6 text-[11px] sm:text-sm font-medium">
+            <div className="inline-flex items-center gap-1.5 bg-seafoam text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full mb-6 text-[11px] sm:text-sm font-medium">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>
                 {language === "el" ? "Για επισκέπτες" : "For visitors"}
@@ -220,10 +220,10 @@ const ForVisitors = () => {
               {content.hero.subtitle}
             </p>
             <div className="flex flex-row gap-3 sm:gap-4 justify-center">
-              <Button asChild size="lg" className="text-sm sm:text-lg bg-seafoam hover:bg-seafoam/90 text-white px-4 sm:px-6">
+              <Button asChild className="text-sm sm:text-base bg-seafoam hover:bg-seafoam/90 text-white px-4 sm:px-6 h-10 sm:h-11 rounded-xl">
                 <Link to="/signup">{content.hero.cta}</Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="text-sm sm:text-lg border-aegean/30 text-aegean hover:bg-aegean/5 px-4 sm:px-6">
+              <Button asChild variant="outline" className="text-sm sm:text-base border-seafoam/40 text-seafoam hover:bg-seafoam/10 px-4 sm:px-6 h-10 sm:h-11 rounded-xl">
                 <Link to="/feed">{content.hero.exploreCta}</Link>
               </Button>
             </div>
@@ -234,7 +234,7 @@ const ForVisitors = () => {
       {/* Features Grid */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-center text-seafoam mb-12">
+          <h2 className="font-cinzel text-[clamp(1.25rem,5vw,3rem)] font-bold text-center text-seafoam mb-12">
             {content.features.title}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
