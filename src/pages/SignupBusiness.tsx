@@ -389,7 +389,7 @@ const SignupBusiness = () => {
         {/* Main Form */}
         <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
-            <h1 className="font-cinzel text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-2">
+            <h1 className="font-cinzel text-xl sm:text-2xl md:text-4xl font-bold text-white mb-2">
               {language === 'el' ? 'Εγγραφή Επιχείρησης στο ΦΟΜΟ' : 'Business Registration to ΦΟΜΟ'}
             </h1>
             <p className="font-inter text-sm sm:text-base md:text-lg text-muted-foreground">
