@@ -309,22 +309,21 @@ const Navbar = () => {
                       </button>
                     </>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <Button 
                         variant="gradient" 
-                        className="w-full" 
-                        size="lg" 
+                        className="w-full text-sm" 
+                        size="default" 
                         onClick={() => {
-                          navigate("/signup");
+                          navigate("/signup-business");
                           setMobileOpen(false);
                         }}
                       >
                         {t.joinFomo}
                       </Button>
                       <Button 
-                        variant="premium" 
-                        className="w-full" 
-                        size="lg" 
+                        className="w-full text-sm bg-[#4ECDC4] text-white hover:bg-[#3dbdb5] border-0" 
+                        size="default" 
                         onClick={() => {
                           navigate("/signup-business");
                           setMobileOpen(false);
@@ -334,8 +333,8 @@ const Navbar = () => {
                       </Button>
                       <Button 
                         variant="outline" 
-                        className="w-full border-aegean text-aegean hover:bg-aegean hover:text-white" 
-                        size="lg" 
+                        className="w-full text-sm border-[#0D3B66] text-white hover:bg-[#0D3B66] hover:text-white" 
+                        size="default" 
                         onClick={() => {
                           navigate("/login");
                           setMobileOpen(false);
