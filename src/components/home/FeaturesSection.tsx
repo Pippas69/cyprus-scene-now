@@ -104,11 +104,11 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
                 <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white" />
               </div>
               
-              <h3 className="font-poppins text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 text-foreground">
+              <h3 className="font-poppins text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 text-[#2E2E2E]">
                 {feature.title}
               </h3>
               
-              <p className="text-muted-foreground leading-relaxed text-xs sm:text-sm">
+              <p className="text-[#555] leading-relaxed text-xs sm:text-sm">
                 {feature.description}
               </p>
             </motion.div>
