@@ -89,9 +89,9 @@ const TestimonialsSection = ({ language }: TestimonialsSectionProps) => {
           viewport={{ once: true }}
           className="text-center mb-6 sm:mb-8 md:mb-10">
 
-          <h2 className="font-display text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-2 sm:mb-4">
-            {content[language].title}
-          </h2>
+          
+
+
           
 
 
