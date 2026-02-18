@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { isEventPaused } from "@/lib/eventVisibility";
+
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import UnifiedEventCard from "@/components/feed/UnifiedEventCard";
@@ -56,8 +56,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       limit(6);
 
       if (!error && data) {
-        const visible = (data as unknown as Event[]).filter((e: any) => !isEventPaused(e));
-        setEvents(visible);
+        setEvents((data as unknown as Event[]));
       }
       setLoading(false);
     };
