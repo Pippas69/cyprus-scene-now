@@ -17,38 +17,14 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
 
 // Component to sync theme with user preferences
 const ThemeSyncer = ({ children }: { children: React.ReactNode }) => {
-  const { setTheme } = useTheme();
+  const { setTheme, theme } = useTheme();
 
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
-    },
-  });
-
-  const { data: preferences } = useQuery({
-    queryKey: ['user-preferences', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('theme_preference')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (error) return null;
-      return data;
-    },
-    enabled: !!session?.user?.id,
-  });
-
+  // Force dark mode always - never allow light mode
   useEffect(() => {
-    if (preferences?.theme_preference) {
-      setTheme(preferences.theme_preference);
+    if (theme !== 'dark') {
+      setTheme('dark');
     }
-  }, [preferences?.theme_preference, setTheme]);
+  }, [theme, setTheme]);
 
   return <>{children}</>;
 };
