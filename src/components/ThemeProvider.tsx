@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -9,7 +9,7 @@ interface ThemeProviderProps {
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   return (
-    <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="fomo-theme">
       <ThemeSyncer>{children}</ThemeSyncer>
     </NextThemesProvider>
   );
@@ -17,6 +17,8 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
 
 // Component to sync theme with user preferences
 const ThemeSyncer = ({ children }: { children: React.ReactNode }) => {
+  const { setTheme } = useTheme();
+
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -44,17 +46,9 @@ const ThemeSyncer = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (preferences?.theme_preference) {
-      const root = window.document.documentElement;
-      root.classList.remove('light', 'dark');
-      
-      if (preferences.theme_preference === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        root.classList.add(systemTheme);
-      } else {
-        root.classList.add(preferences.theme_preference);
-      }
+      setTheme(preferences.theme_preference);
     }
-  }, [preferences?.theme_preference]);
+  }, [preferences?.theme_preference, setTheme]);
 
   return <>{children}</>;
 };
