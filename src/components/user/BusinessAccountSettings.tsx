@@ -922,40 +922,6 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 sm:space-y-5 p-4 sm:p-6 pt-0 sm:pt-0">
-          {/* Language */}
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="language" className="text-xs sm:text-sm">{t.languagePreference}</Label>
-            <Select
-              value={language}
-              onValueChange={(value: 'el' | 'en') => setLanguage(value)}
-            >
-              <SelectTrigger id="language" className="text-xs sm:text-sm h-9 sm:h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="el">Ελληνικά</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Theme */}
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="theme" className="text-xs sm:text-sm">{t.theme}</Label>
-            <Select
-              value={preferences.theme_preference || 'system'}
-              onValueChange={(value) => updatePreferences({ theme_preference: value })}
-            >
-              <SelectTrigger id="theme" className="text-xs sm:text-sm h-9 sm:h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">{t.light}</SelectItem>
-                <SelectItem value="dark">{t.dark}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Delete Account */}
           <div className="pt-3 sm:pt-4 border-t border-border/50 space-y-2 sm:space-y-3">
             <p className="text-[10px] sm:text-sm text-muted-foreground">{t.deleteWarning}</p>
