@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
             customerName: userName,
             partySize,
             claimedAt: new Date().toISOString(),
-            remainingPeople: newPeopleRemaining,
+            remainingPeople: claimResult.remaining,
             totalPeople: discount.total_people,
             hasReservation: !!reservationId,
             reservationDate: reservationData?.preferred_date,
