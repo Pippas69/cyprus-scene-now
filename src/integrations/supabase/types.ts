@@ -4321,6 +4321,27 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_events_processed: {
+        Row: {
+          event_type: string
+          metadata: Json | null
+          processed_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          event_type: string
+          metadata?: Json | null
+          processed_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          event_type?: string
+          metadata?: Json | null
+          processed_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       connection_stats_monitor: {
@@ -4722,6 +4743,10 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: number
       }
+      claim_offer_spots_atomically: {
+        Args: { p_discount_id: string; p_party_size: number }
+        Returns: Json
+      }
       create_business_with_geo: {
         Args: {
           p_address: string
@@ -5073,6 +5098,10 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       process_no_show_reservations: { Args: never; Returns: number }
+      release_offer_spots: {
+        Args: { p_discount_id: string; p_party_size: number }
+        Returns: undefined
+      }
       release_tickets: {
         Args: { p_quantity: number; p_tier_id: string }
         Returns: undefined
