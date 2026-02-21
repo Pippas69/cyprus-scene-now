@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Scan, CheckCircle2, XCircle, Loader2, Camera, Keyboard, RefreshCw } from "lucide-react";
+import { Scan, CheckCircle2, XCircle, Loader2, Camera, Keyboard, RefreshCw, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { queueOfflineScan } from "@/lib/offlineScanQueue";
+import { resilientCall } from "@/lib/apiRetry";
 
 interface ScanResult {
   valid: boolean;
@@ -76,6 +79,7 @@ const t = {
 export const TicketScanner = ({ eventId }: TicketScannerProps) => {
   const { language } = useLanguage();
   const text = t[language];
+  const { isOffline } = useOfflineStatus();
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
@@ -86,6 +90,7 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [mode, setMode] = useState<"camera" | "manual">("camera");
   const [lastScannedToken, setLastScannedToken] = useState("");
+  const [offlineQueued, setOfflineQueued] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -134,14 +139,37 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
 
     setLastScannedToken(qrToken);
     setIsProcessing(true);
+    setOfflineQueued(false);
     stopScanning();
 
-    try {
-      const { data, error } = await supabase.functions.invoke("validate-ticket", {
-        body: { qrToken, action },
-      });
+    // Offline: queue locally
+    if (!navigator.onLine) {
+      try {
+        await queueOfflineScan({
+          scanType: 'ticket',
+          qrData: qrToken,
+          businessId: 'ticket-scanner', // Will be resolved on sync
+          scannedAt: new Date().toISOString(),
+        });
+        setOfflineQueued(true);
+        setScanResult({ valid: true, checkedIn: false });
+        toast.info(language === 'el' ? 'Αποθηκεύτηκε offline' : 'Saved offline - will sync when online');
+      } catch {
+        setScanResult({ valid: false, error: 'Failed to save offline' });
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
 
-      if (error) throw error;
+    try {
+      const data = await resilientCall('validate-ticket', async () => {
+        const { data, error } = await supabase.functions.invoke("validate-ticket", {
+          body: { qrToken, action },
+        });
+        if (error) throw error;
+        return data;
+      }, { maxRetries: 2 });
 
       setScanResult(data as ScanResult);
 
@@ -150,10 +178,24 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
       }
     } catch (error: any) {
       console.error("Validation error:", error);
-      setScanResult({
-        valid: false,
-        error: error.message || "Validation failed",
-      });
+      // Fallback to offline if network error
+      if (!navigator.onLine || error?.message?.includes('fetch')) {
+        try {
+          await queueOfflineScan({
+            scanType: 'ticket',
+            qrData: qrToken,
+            businessId: 'ticket-scanner',
+            scannedAt: new Date().toISOString(),
+          });
+          setOfflineQueued(true);
+          setScanResult({ valid: true, checkedIn: false });
+          toast.info(language === 'el' ? 'Αποθηκεύτηκε offline' : 'Saved offline');
+        } catch {
+          setScanResult({ valid: false, error: error.message || "Validation failed" });
+        }
+      } else {
+        setScanResult({ valid: false, error: error.message || "Validation failed" });
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -169,6 +211,7 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
     setScanResult(null);
     setManualCode("");
     setLastScannedToken("");
+    setOfflineQueued(false);
     if (mode === "camera") {
       startScanning();
     }
@@ -180,6 +223,12 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
         <CardTitle className="flex items-center gap-2">
           <Scan className="h-5 w-5 text-primary" />
           {text.ticketScanner}
+          {isOffline && (
+            <Badge variant="destructive" className="gap-1 text-[10px]">
+              <WifiOff className="h-3 w-3" />
+              Offline
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
 

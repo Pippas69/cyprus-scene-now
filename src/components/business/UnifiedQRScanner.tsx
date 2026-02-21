@@ -6,11 +6,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Camera, CheckCircle, XCircle, Loader2, QrCode, GraduationCap, Ticket, Users, Percent, Euro } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, Loader2, QrCode, GraduationCap, Ticket, Users, Percent, Euro, WifiOff, CloudUpload } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCreateStudentRedemption } from '@/hooks/useStudentRedemptions';
+import { useOfflineStatus } from '@/hooks/useOfflineStatus';
+import { queueOfflineScan } from '@/lib/offlineScanQueue';
+import { useOfflineScanSync } from '@/hooks/useOfflineScanSync';
+import { resilientCall } from '@/lib/apiRetry';
 
 interface UnifiedQRScannerProps {
   businessId: string;
@@ -77,13 +81,11 @@ const translations = {
     cameraNotFound: 'Δεν βρέθηκε κάμερα',
     scanError: 'Σφάλμα σάρωσης',
     sessionExpired: 'Η συνεδρία σας έληξε. Παρακαλώ ξανασυνδεθείτε.',
-    // Type labels
     ticket: 'Εισιτήριο',
     offer: 'Προσφορά',
     reservation: 'Κράτηση',
     student: 'Φοιτητής',
     unknown: 'Άγνωστο',
-    // Details labels
     customer: 'Πελάτης',
     event: 'Εκδήλωση',
     tier: 'Κατηγορία',
@@ -95,7 +97,6 @@ const translations = {
     directReservation: 'Απευθείας Κράτηση',
     eventReservation: 'Κράτηση Εκδήλωσης',
     paid: 'ΠΛΗΡΩΜΕΝΟ',
-    // Student
     originalPrice: 'Αρχική Τιμή (€)',
     discountedPrice: 'Τιμή με Έκπτωση (€)',
     discount: 'Έκπτωση',
@@ -104,6 +105,10 @@ const translations = {
     discountRecorded: 'Η έκπτωση καταγράφηκε!',
     itemDescription: 'Περιγραφή Προϊόντος (προαιρετικό)',
     university: 'Πανεπιστήμιο',
+    offlineQueued: 'Αποθηκεύτηκε offline - θα συγχρονιστεί αυτόματα',
+    offlineMode: 'Λειτουργία Offline',
+    pendingSync: 'Εκκρεμείς σαρώσεις',
+    syncNow: 'Συγχρονισμός Τώρα',
   },
   en: {
     scanQR: 'Scan QR',
@@ -118,13 +123,11 @@ const translations = {
     cameraNotFound: 'No camera found',
     scanError: 'Scan error',
     sessionExpired: 'Your session has expired. Please log in again.',
-    // Type labels
     ticket: 'Ticket',
     offer: 'Offer',
     reservation: 'Reservation',
     student: 'Student',
     unknown: 'Unknown',
-    // Details labels
     customer: 'Customer',
     event: 'Event',
     tier: 'Tier',
@@ -136,7 +139,6 @@ const translations = {
     directReservation: 'Direct Reservation',
     eventReservation: 'Event Reservation',
     paid: 'PAID',
-    // Student
     originalPrice: 'Original Price (€)',
     discountedPrice: 'Discounted Price (€)',
     discount: 'Discount',
@@ -145,6 +147,10 @@ const translations = {
     discountRecorded: 'Discount recorded!',
     itemDescription: 'Item Description (optional)',
     university: 'University',
+    offlineQueued: 'Saved offline - will sync automatically',
+    offlineMode: 'Offline Mode',
+    pendingSync: 'Pending scans',
+    syncNow: 'Sync Now',
   },
 };
 
@@ -169,6 +175,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
   const [isScanning, setIsScanning] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [offlineQueued, setOfflineQueued] = useState(false);
   
   // Student discount state
   const [originalPrice, setOriginalPrice] = useState('');
@@ -179,6 +186,8 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
   const scannerRef = useRef<QrScanner | null>(null);
   const isVerifyingRef = useRef(false);
   
+  const { isOffline } = useOfflineStatus();
+  const { pendingCount, isSyncing, syncAllPending } = useOfflineScanSync(language);
   const createRedemption = useCreateStudentRedemption();
   
   const discountPercent = scanResult?.details?.discountPercent || 0;
@@ -285,23 +294,49 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
   };
 
   const handleScan = async (qrData: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('validate-qr', {
-        body: {
+    // If offline, queue the scan locally
+    if (!navigator.onLine) {
+      try {
+        // Detect QR type from data pattern
+        const scanType = qrData.startsWith('TKT-') ? 'ticket' as const
+          : qrData.startsWith('RES-') ? 'reservation' as const
+          : qrData.startsWith('STD-') ? 'student' as const
+          : 'offer' as const;
+
+        await queueOfflineScan({
+          scanType,
           qrData,
           businessId,
-          language,
-        },
-      });
+          scannedAt: new Date().toISOString(),
+        });
 
-      if (error) {
-        console.error('validate-qr invoke error:', error);
-        // Check if it's an authentication error (401)
-        const isAuthError = error.message?.includes('401') || error.message?.includes('Unauthorized');
-        const errorMessage = isAuthError ? t.sessionExpired : t.scanError;
-        setScanResult({ success: false, message: errorMessage, qrType: 'unknown' });
-        return;
+        setOfflineQueued(true);
+        setScanResult({
+          success: true,
+          message: t.offlineQueued,
+          qrType: scanType,
+        });
+        toast.info(t.offlineQueued);
+      } catch (err) {
+        console.error('Failed to queue offline scan:', err);
+        setScanResult({ success: false, message: t.scanError, qrType: 'unknown' });
+      } finally {
+        setVerifying(false);
+        isVerifyingRef.current = false;
+        stopScanner();
       }
+      return;
+    }
+
+    // Online: call API with retry/circuit breaker
+    try {
+      const data = await resilientCall('validate-qr', async () => {
+        const { data, error } = await supabase.functions.invoke('validate-qr', {
+          body: { qrData, businessId, language },
+        });
+        if (error) throw error;
+        return data;
+      }, { maxRetries: 2 });
 
       const result = data as ScanResult;
       setScanResult(result);
@@ -312,9 +347,28 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
       } else if (!result.success) {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Verification error:', error);
-      setScanResult({ success: false, message: t.scanError, qrType: 'unknown' });
+      
+      // If network failed, fallback to offline queue
+      if (!navigator.onLine || error?.message?.includes('fetch') || error?.message?.includes('network')) {
+        try {
+          await queueOfflineScan({
+            scanType: 'offer',
+            qrData,
+            businessId,
+            scannedAt: new Date().toISOString(),
+          });
+          setOfflineQueued(true);
+          setScanResult({ success: true, message: t.offlineQueued, qrType: 'unknown' });
+          toast.info(t.offlineQueued);
+        } catch {
+          setScanResult({ success: false, message: t.scanError, qrType: 'unknown' });
+        }
+      } else {
+        const isAuthError = error?.message?.includes('401') || error?.message?.includes('Unauthorized');
+        setScanResult({ success: false, message: isAuthError ? t.sessionExpired : t.scanError, qrType: 'unknown' });
+      }
     } finally {
       setVerifying(false);
       isVerifyingRef.current = false;
@@ -352,6 +406,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
     stopScanner();
     setIsOpen(false);
     setScanResult(null);
+    setOfflineQueued(false);
     setDiscountRecorded(false);
     setOriginalPrice('');
     setItemDescription('');
@@ -359,6 +414,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
 
   const handleScanAnother = () => {
     setScanResult(null);
+    setOfflineQueued(false);
     setDiscountRecorded(false);
     setOriginalPrice('');
     setItemDescription('');
@@ -383,18 +439,25 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
 
   return (
     <>
-      <Button
-        size="sm"
-        onClick={() => {
-          setIsOpen(true);
-          setTimeout(() => startScanning(), 100);
-        }}
-        className="gap-1 sm:gap-1.5 bg-aegean hover:bg-aegean-deep text-white h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs"
-      >
-        <Camera className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-        <span className="sm:hidden">QR</span>
-        <span className="hidden sm:inline">{t.scanQR}</span>
-      </Button>
+      <div className="relative inline-flex">
+        <Button
+          size="sm"
+          onClick={() => {
+            setIsOpen(true);
+            setTimeout(() => startScanning(), 100);
+          }}
+          className="gap-1 sm:gap-1.5 bg-aegean hover:bg-aegean-deep text-white h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs"
+        >
+          {isOffline ? <WifiOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <Camera className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+          <span className="sm:hidden">QR</span>
+          <span className="hidden sm:inline">{t.scanQR}</span>
+        </Button>
+        {pendingCount > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+            {pendingCount}
+          </span>
+        )}
+      </div>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
@@ -402,10 +465,37 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
             <DialogTitle className="flex items-center gap-2">
               <QrCode className="h-5 w-5" />
               {t.scanQR}
+              {isOffline && (
+                <Badge variant="destructive" className="gap-1 text-[10px]">
+                  <WifiOff className="h-3 w-3" />
+                  {t.offlineMode}
+                </Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Pending sync banner */}
+            {pendingCount > 0 && !isOffline && (
+              <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+                <CloudUpload className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span className="text-amber-700 dark:text-amber-400 text-sm">
+                    {t.pendingSync}: {pendingCount}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => syncAllPending()}
+                    disabled={isSyncing}
+                    className="h-7 text-xs"
+                  >
+                    {isSyncing ? <Loader2 className="h-3 w-3 animate-spin" /> : t.syncNow}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Scanning View */}
             {!scanResult && (
               <div className="space-y-4">

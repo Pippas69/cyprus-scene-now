@@ -80,6 +80,45 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_trail: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          business_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type?: string
+          business_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          business_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       beta_invite_codes: {
         Row: {
           business_id: string | null
@@ -2572,6 +2611,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      offline_scan_results: {
+        Row: {
+          business_id: string
+          conflict_reason: string | null
+          created_at: string
+          id: string
+          qr_data: string
+          scan_type: string
+          scanned_at: string
+          scanned_by: string | null
+          server_result: Json | null
+          sync_status: string
+          synced_at: string | null
+        }
+        Insert: {
+          business_id: string
+          conflict_reason?: string | null
+          created_at?: string
+          id?: string
+          qr_data: string
+          scan_type: string
+          scanned_at: string
+          scanned_by?: string | null
+          server_result?: Json | null
+          sync_status?: string
+          synced_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          conflict_reason?: string | null
+          created_at?: string
+          id?: string
+          qr_data?: string
+          scan_type?: string
+          scanned_at?: string
+          scanned_by?: string | null
+          server_result?: Json | null
+          sync_status?: string
+          synced_at?: string | null
+        }
+        Relationships: []
       }
       payment_invoices: {
         Row: {
