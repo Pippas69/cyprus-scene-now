@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 
 interface SeatingTypeOption {
   id: string;
@@ -194,6 +196,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   onSuccess,
 }) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const t = translations[language];
 
   // REMOVED: Preview-only free booking logic - always use Stripe checkout
@@ -673,41 +676,19 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Success Screen
   if (successData) {
     const successContent = (
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full max-w-sm mx-auto">
-        <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
-          <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
-        </div>
-        <div className="bg-white/95 backdrop-blur-xl px-4 py-3">
-          <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-green-50 rounded-lg">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <p className="text-sm font-semibold text-green-700">
-              {language === 'el' ? 'Η κράτησή σας έγινε επιτυχώς!' : 'Your reservation was successful!'}
-            </p>
-          </div>
-          <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2">{eventTitle}</h2>
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase">{language === 'el' ? 'ΗΜΕΡ/ΝΙΑ' : 'DATE'}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">{format(new Date(eventDate), 'EEE, d MMM')}</p>
-            </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase">{language === 'el' ? 'ΩΡΑ' : 'TIME'}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">{format(new Date(eventDate), 'HH:mm')}</p>
-            </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <CreditCard className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase">{language === 'el' ? 'ΚΡΑΤΗΣΗ' : 'RESERVATION'}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">{formatPrice(successData.prepaidAmount)}</p>
-            </div>
-          </div>
-          <p className="text-[10px] text-[#64748b] text-center mb-3">{language === 'el' ? 'Σαρώστε στην επιχείρηση' : 'Scan at the venue'}</p>
-          <Button onClick={() => { onSuccess?.(); onOpenChange(false); }} className="w-full bg-[#102b4a] hover:bg-[#1a3d5c] h-8 text-xs">
-            {language === 'el' ? 'Κλείσιμο' : 'Close'}
-          </Button>
-        </div>
-      </div>
+      <SuccessQRCard
+        type="event_reservation"
+        qrToken={successData.qrToken}
+        title={eventTitle}
+        businessName=""
+        language={language}
+        reservationDate={eventDate}
+        prepaidAmountCents={successData.prepaidAmount}
+        showSuccessMessage={true}
+        onViewDashboard={() => { navigate('/dashboard-user?tab=events&subtab=reservations'); onOpenChange(false); }}
+        viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
+        onClose={() => { onSuccess?.(); onOpenChange(false); }}
+      />
     );
 
     if (isMobile) {
