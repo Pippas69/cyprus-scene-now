@@ -350,7 +350,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6">
 
       {/* Profile Details - Matching Signup Form */}
       <Card>
