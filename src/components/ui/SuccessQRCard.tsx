@@ -358,7 +358,7 @@ export const SuccessQRCard = ({
       </div>
 
       {/* Wave Decoration */}
-      <div className="relative h-6 bg-white dark:bg-white">
+      <div className="relative h-6 bg-white dark:bg-white rounded-b-2xl">
         <svg 
           viewBox="0 0 400 24" 
           className="absolute bottom-0 left-0 w-full h-6"
@@ -376,18 +376,6 @@ export const SuccessQRCard = ({
           />
         </svg>
       </div>
-
-      {/* Business Logo */}
-      {businessLogo && (
-        <div className="relative h-24 overflow-hidden">
-          <img 
-            src={businessLogo} 
-            alt={businessName}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#102b4a]/60 to-transparent" />
-        </div>
-      )}
     </div>
   );
 };

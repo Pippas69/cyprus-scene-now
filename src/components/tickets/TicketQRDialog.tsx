@@ -192,38 +192,26 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
             </div>
           </div>
 
-          {/* Wave Decoration */}
-          <div className="relative h-6 bg-white dark:bg-white">
-            <svg 
-              viewBox="0 0 400 24" 
-              className="absolute bottom-0 left-0 w-full h-6"
-              preserveAspectRatio="none"
-            >
-              <path 
-                d="M0,24 C100,0 300,0 400,24 L400,24 L0,24 Z" 
-                fill="#3ec3b7"
-                opacity="0.3"
-              />
-              <path 
-                d="M0,24 C150,8 250,8 400,24 L400,24 L0,24 Z" 
-                fill="#3ec3b7"
-                opacity="0.5"
-              />
-            </svg>
-          </div>
-
-          {/* Event Cover Image */}
-          {ticket?.eventCoverImage && (
-            <div className="relative h-24 overflow-hidden">
-              <img 
-                src={ticket.eventCoverImage} 
-                alt={ticket.eventTitle}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#102b4a]/60 to-transparent" />
-            </div>
-          )}
+        {/* Wave Decoration */}
+        <div className="relative h-6 bg-white dark:bg-white rounded-b-2xl">
+          <svg 
+            viewBox="0 0 400 24" 
+            className="absolute bottom-0 left-0 w-full h-6"
+            preserveAspectRatio="none"
+          >
+            <path 
+              d="M0,24 C100,0 300,0 400,24 L400,24 L0,24 Z" 
+              fill="#3ec3b7"
+              opacity="0.3"
+            />
+            <path 
+              d="M0,24 C150,8 250,8 400,24 L400,24 L0,24 Z" 
+              fill="#3ec3b7"
+              opacity="0.5"
+            />
+          </svg>
         </div>
+      </div>
       </DialogContent>
     </Dialog>
   );

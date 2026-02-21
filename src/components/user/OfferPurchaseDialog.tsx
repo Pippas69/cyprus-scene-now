@@ -846,10 +846,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             <Button 
               variant="outline" 
               onClick={handleViewMyOffers}
-              className="flex-1 border-[#3ec3b7] text-[#102b4a] hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+              className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
             >
               <Tag className="h-3 w-3 mr-1.5 shrink-0" />
-              {t("viewMyOffers")}
+              <span className="truncate">{t("viewMyOffers")}</span>
             </Button>
             <Button 
               onClick={onClose}
@@ -861,7 +861,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
 
         {/* Wave Decoration */}
-        <div className="relative h-6 bg-white/95">
+        <div className="relative h-6 bg-white dark:bg-white rounded-b-2xl">
           <svg 
             viewBox="0 0 400 24" 
             className="absolute bottom-0 left-0 w-full h-6"
@@ -879,18 +879,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             />
           </svg>
         </div>
-
-        {/* Business Logo */}
-        {claimSuccess.businessLogo && (
-          <div className="relative h-24 overflow-hidden">
-            <img 
-              src={claimSuccess.businessLogo} 
-              alt={claimSuccess.businessName}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#102b4a]/60 to-transparent" />
-          </div>
-        )}
       </div>
     );
 

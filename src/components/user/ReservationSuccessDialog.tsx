@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 
 interface ReservationSuccessDialogProps {
@@ -25,6 +26,7 @@ export const ReservationSuccessDialog = ({
   language,
 }: ReservationSuccessDialogProps) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   if (!reservation) return null;
 
@@ -34,12 +36,13 @@ export const ReservationSuccessDialog = ({
       qrToken={reservation.qr_code_token}
       title={language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}
       businessName={reservation.business_name}
-      businessLogo={reservation.business_logo}
       language={language}
       reservationDate={reservation.preferred_time}
       confirmationCode={reservation.confirmation_code}
       partySize={reservation.party_size}
       showSuccessMessage={true}
+      onViewDashboard={() => { navigate('/dashboard-user?tab=reservations'); onOpenChange(false); }}
+      viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
       onClose={() => onOpenChange(false)}
     />
   );
