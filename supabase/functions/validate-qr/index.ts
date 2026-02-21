@@ -299,19 +299,35 @@ async function handleTicketQR(
     });
   }
 
-  // Check in the ticket
-  const { error: updateError } = await supabaseAdmin
-    .from("tickets")
-    .update({
-      status: "used",
-      checked_in_at: new Date().toISOString(),
-      checked_in_by: staffUserId,
-    })
-    .eq("id", ticket.id);
+  // Atomic check-in: UPDATE WHERE status='valid' prevents double check-in race condition
+  const { data: checkinResult, error: checkinError } = await supabaseAdmin
+    .rpc("atomic_ticket_checkin", {
+      p_ticket_id: ticket.id,
+      p_staff_user_id: staffUserId,
+    });
 
-  if (updateError) {
-    logStep("Ticket update failed", { updateError });
+  if (checkinError) {
+    logStep("Atomic ticket checkin RPC failed", { checkinError });
     return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "ticket" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (!checkinResult?.success) {
+    logStep("Atomic ticket checkin rejected", { error: checkinResult?.error });
+    const errorMessage = checkinResult?.error === 'ALREADY_USED' ? m.ticketAlreadyUsed : m.ticketCancelled;
+    return new Response(JSON.stringify({
+      success: false,
+      message: errorMessage,
+      qrType: "ticket",
+      alreadyUsed: checkinResult?.error === 'ALREADY_USED',
+      details: {
+        tierName: ticket.ticket_tiers?.name,
+        customerName: ticket.ticket_orders?.customer_name,
+        eventTitle: ticket.events?.title,
+      }
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -704,17 +720,16 @@ async function handleReservationQR(
     });
   }
 
-  // Perform check-in
+  // Atomic check-in: UPDATE WHERE checked_in_at IS NULL prevents double check-in race condition
   const nowIso = new Date().toISOString();
-  const { error: updateError } = await supabaseAdmin
-    .from("reservations")
-    .update({
-      checked_in_at: nowIso,
-      checked_in_by: staffUserId,
-    })
-    .eq("id", reservation.id);
+  const { data: checkinResult, error: checkinError } = await supabaseAdmin
+    .rpc("atomic_reservation_checkin", {
+      p_reservation_id: reservation.id,
+      p_staff_user_id: staffUserId,
+    });
 
-  if (updateError) {
+  if (checkinError) {
+    logStep("Atomic reservation checkin RPC failed", { checkinError });
     return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "reservation" }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

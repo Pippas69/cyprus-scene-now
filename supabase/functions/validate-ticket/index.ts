@@ -142,19 +142,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // If action is "checkin", mark ticket as used
+    // If action is "checkin", mark ticket as used atomically
     if (action === "checkin") {
-      const { error: updateError } = await supabaseClient
-        .from("tickets")
-        .update({
-          status: "used",
-          checked_in_at: new Date().toISOString(),
-          checked_in_by: staffUserId,
-        })
-        .eq("id", ticket.id);
+      const { data: checkinResult, error: checkinError } = await supabaseClient
+        .rpc("atomic_ticket_checkin", {
+          p_ticket_id: ticket.id,
+          p_staff_user_id: staffUserId,
+        });
 
-      if (updateError) {
-        throw new Error("Failed to check in ticket: " + updateError.message);
+      if (checkinError) {
+        throw new Error("Failed to check in ticket: " + checkinError.message);
+      }
+
+      if (!checkinResult?.success) {
+        return new Response(JSON.stringify({
+          valid: false,
+          error: checkinResult?.error === 'ALREADY_USED' ? "Ticket already used" : "Ticket cannot be checked in",
+          ticket: {
+            id: ticket.id,
+            tierName: ticket.ticket_tiers?.name,
+            customerName: ticket.ticket_orders?.customer_name,
+            eventTitle: ticket.events?.title,
+            status: ticket.status,
+          }
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
       }
 
       logStep("Ticket checked in", { ticketId: ticket.id });

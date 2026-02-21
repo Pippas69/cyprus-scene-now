@@ -91,21 +91,9 @@ Deno.serve(async (req) => {
     }
     logStep("Tickets created", { count: ticketsToCreate.length });
 
-    // Update quantity_sold for each tier
-    for (const item of ticketBreakdown) {
-      const { data: tier } = await supabaseClient
-        .from("ticket_tiers")
-        .select("quantity_sold")
-        .eq("id", item.tierId)
-        .single();
-
-      if (tier) {
-        await supabaseClient
-          .from("ticket_tiers")
-          .update({ quantity_sold: tier.quantity_sold + item.quantity })
-          .eq("id", item.tierId);
-      }
-    }
+    // quantity_sold already reserved atomically at checkout creation time
+    // No need to update again here - prevents double counting
+    logStep("Tier quantities already reserved at checkout");
     logStep("Tier quantities updated");
 
     // Update order status
