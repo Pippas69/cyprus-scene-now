@@ -65,25 +65,32 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Idempotency check: prevent duplicate processing of the same Stripe event
-    const { data: existingEvent } = await supabaseClient
+    // Idempotency: INSERT ON CONFLICT DO NOTHING — atomic, race-condition-free
+    const { data: insertedEvent, error: idempotencyError } = await supabaseClient
       .from("webhook_events_processed")
+      .insert({ stripe_event_id: event.id, event_type: event.type })
       .select("stripe_event_id")
-      .eq("stripe_event_id", event.id)
       .maybeSingle();
 
-    if (existingEvent) {
+    if (idempotencyError) {
+      // Unique constraint violation = already processed
+      if (idempotencyError.code === '23505') {
+        logStep("Event already processed (conflict), skipping", { eventId: event.id });
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      throw idempotencyError;
+    }
+
+    if (!insertedEvent) {
       logStep("Event already processed, skipping", { eventId: event.id });
       return new Response(JSON.stringify({ received: true, duplicate: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
-
-    // Record this event as being processed
-    await supabaseClient
-      .from("webhook_events_processed")
-      .insert({ stripe_event_id: event.id, event_type: event.type });
 
     // Handle checkout.session.completed
     if (event.type === "checkout.session.completed") {
@@ -513,6 +520,171 @@ Deno.serve(async (req) => {
 
           if (resetError) throw resetError;
           logStep("Subscription budget and offers reset");
+        }
+      }
+    }
+
+    // ============================================================
+    // Handle charge.refunded — invalidate tickets, update commission
+    // ============================================================
+    if (event.type === "charge.refunded") {
+      const charge = event.data.object as Stripe.Charge;
+      logStep("Processing charge.refunded", { chargeId: charge.id, paymentIntent: charge.payment_intent });
+
+      const paymentIntentId = charge.payment_intent as string;
+      if (paymentIntentId) {
+        // Find ticket order by payment intent
+        const { data: ticketOrder } = await supabaseClient
+          .from("ticket_orders")
+          .select("id, event_id, user_id, total_cents, commission_cents")
+          .eq("stripe_payment_intent_id", paymentIntentId)
+          .maybeSingle();
+
+        if (ticketOrder) {
+          logStep("Refunding ticket order", { orderId: ticketOrder.id });
+
+          // Mark all tickets as refunded — blocks check-in
+          await supabaseClient
+            .from("tickets")
+            .update({ status: "refunded" })
+            .eq("order_id", ticketOrder.id)
+            .in("status", ["valid", "used"]);
+
+          // Update order status
+          await supabaseClient
+            .from("ticket_orders")
+            .update({ status: "refunded" })
+            .eq("id", ticketOrder.id);
+
+          // Update commission ledger
+          await supabaseClient
+            .from("commission_ledger")
+            .update({ status: "refunded" })
+            .eq("ticket_order_id", ticketOrder.id);
+
+          // Release ticket inventory
+          const { data: tickets } = await supabaseClient
+            .from("tickets")
+            .select("tier_id")
+            .eq("order_id", ticketOrder.id);
+
+          if (tickets) {
+            const tierCounts: Record<string, number> = {};
+            for (const t of tickets) {
+              tierCounts[t.tier_id] = (tierCounts[t.tier_id] || 0) + 1;
+            }
+            for (const [tierId, qty] of Object.entries(tierCounts)) {
+              await supabaseClient.rpc("release_tickets", { p_tier_id: tierId, p_quantity: qty });
+            }
+          }
+
+          // Notify business owner
+          const { data: eventData } = await supabaseClient
+            .from("events")
+            .select("title, businesses(user_id)")
+            .eq("id", ticketOrder.event_id)
+            .single();
+
+          if ((eventData?.businesses as any)?.user_id) {
+            await supabaseClient.from("notifications").insert({
+              user_id: (eventData.businesses as any).user_id,
+              title: "⚠️ Επιστροφή χρημάτων εισιτηρίου",
+              message: `Επιστροφή €${(charge.amount_refunded / 100).toFixed(2)} για "${eventData.title}"`,
+              type: "business",
+              event_type: "ticket_refunded",
+              entity_type: "ticket_order",
+              entity_id: ticketOrder.id,
+              deep_link: "/dashboard-business/ticket-sales",
+              delivered_at: new Date().toISOString(),
+            });
+          }
+
+          logStep("Ticket order refunded successfully", { orderId: ticketOrder.id });
+        }
+
+        // Check reservation payments
+        const { data: reservation } = await supabaseClient
+          .from("reservations")
+          .select("id, business_id")
+          .eq("stripe_payment_intent_id", paymentIntentId)
+          .maybeSingle();
+
+        if (reservation) {
+          await supabaseClient
+            .from("reservations")
+            .update({ prepaid_charge_status: "refunded", status: "cancelled" })
+            .eq("id", reservation.id);
+
+          await supabaseClient
+            .from("commission_ledger")
+            .update({ status: "refunded" })
+            .eq("reservation_id", reservation.id);
+
+          logStep("Reservation refunded", { reservationId: reservation.id });
+        }
+      }
+    }
+
+    // ============================================================
+    // Handle charge.dispute.created — auto-block tickets, alert venue
+    // ============================================================
+    if (event.type === "charge.dispute.created") {
+      const dispute = event.data.object as Stripe.Dispute;
+      logStep("Processing charge.dispute.created", { disputeId: dispute.id, chargeId: dispute.charge });
+
+      const chargeId = typeof dispute.charge === "string" ? dispute.charge : (dispute.charge as any)?.id;
+      if (chargeId) {
+        const charge = await stripe.charges.retrieve(chargeId);
+        const paymentIntentId = charge.payment_intent as string;
+
+        if (paymentIntentId) {
+          const { data: ticketOrder } = await supabaseClient
+            .from("ticket_orders")
+            .select("id, event_id, user_id")
+            .eq("stripe_payment_intent_id", paymentIntentId)
+            .maybeSingle();
+
+          if (ticketOrder) {
+            // Block tickets — prevents check-in
+            await supabaseClient
+              .from("tickets")
+              .update({ status: "cancelled" })
+              .eq("order_id", ticketOrder.id)
+              .eq("status", "valid");
+
+            await supabaseClient
+              .from("ticket_orders")
+              .update({ status: "disputed" })
+              .eq("id", ticketOrder.id);
+
+            await supabaseClient
+              .from("commission_ledger")
+              .update({ status: "disputed" })
+              .eq("ticket_order_id", ticketOrder.id);
+
+            // Alert business
+            const { data: eventData } = await supabaseClient
+              .from("events")
+              .select("title, businesses(user_id)")
+              .eq("id", ticketOrder.event_id)
+              .single();
+
+            if ((eventData?.businesses as any)?.user_id) {
+              await supabaseClient.from("notifications").insert({
+                user_id: (eventData.businesses as any).user_id,
+                title: "🚨 Chargeback / Dispute!",
+                message: `Dispute €${(dispute.amount / 100).toFixed(2)} για "${eventData.title}". Τα εισιτήρια ακυρώθηκαν αυτόματα.`,
+                type: "business",
+                event_type: "ticket_disputed",
+                entity_type: "ticket_order",
+                entity_id: ticketOrder.id,
+                deep_link: "/dashboard-business/ticket-sales",
+                delivered_at: new Date().toISOString(),
+              });
+            }
+
+            logStep("Dispute: tickets blocked, venue notified", { orderId: ticketOrder.id });
+          }
         }
       }
     }

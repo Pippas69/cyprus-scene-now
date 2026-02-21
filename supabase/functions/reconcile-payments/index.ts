@@ -40,16 +40,17 @@ Deno.serve(async (req) => {
     // 1. Find pending ticket orders with Stripe session IDs
     //    that should have been processed but weren't
     // ============================================================
-    const cutoffTime = new Date(Date.now() - 30 * 60 * 1000).toISOString(); // 30 min ago
-    const maxAge = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24h ago
+    // Grace window: 45 min (not 30) — prevents race with user who pays at minute 29
+    const cutoffTime = new Date(Date.now() - 45 * 60 * 1000).toISOString();
+    const maxAge = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { data: pendingTicketOrders, error: ticketOrdersError } = await supabaseClient
       .from("ticket_orders")
-      .select("id, stripe_checkout_session_id, event_id, user_id, status")
+      .select("id, stripe_checkout_session_id, event_id, user_id, status, total_cents, commission_cents")
       .eq("status", "pending")
       .not("stripe_checkout_session_id", "is", null)
-      .lt("created_at", cutoffTime) // At least 30 min old (give checkout time to complete)
-      .gt("created_at", maxAge); // No older than 24h
+      .lt("created_at", cutoffTime)
+      .gt("created_at", maxAge);
 
     if (ticketOrdersError) {
       logStep("Error fetching pending ticket orders", { error: ticketOrdersError.message });
@@ -63,9 +64,28 @@ Deno.serve(async (req) => {
           const session = await stripe.checkout.sessions.retrieve(order.stripe_checkout_session_id);
 
           if (session.payment_status === "paid") {
-            logStep("Found paid but unprocessed ticket order", { orderId: order.id });
+            // VALIDATE: amount_total must match order total
+            const stripeAmountCents = session.amount_total || 0;
+            const stripeCurrency = session.currency?.toLowerCase() || "eur";
+            const metadataOrderId = session.metadata?.order_id;
 
-            // Invoke the process-ticket-payment function to complete the order
+            if (metadataOrderId && metadataOrderId !== order.id) {
+              results.errors.push(`Ticket order ${order.id}: metadata order_id mismatch (${metadataOrderId})`);
+              continue;
+            }
+
+            if (order.total_cents > 0 && Math.abs(stripeAmountCents - order.total_cents) > 1) {
+              results.errors.push(`Ticket order ${order.id}: amount mismatch (stripe=${stripeAmountCents}, db=${order.total_cents})`);
+              continue;
+            }
+
+            if (stripeCurrency !== "eur") {
+              results.errors.push(`Ticket order ${order.id}: unexpected currency ${stripeCurrency}`);
+              continue;
+            }
+
+            logStep("Found paid+validated ticket order", { orderId: order.id, amount: stripeAmountCents });
+
             const { error: invokeError } = await supabaseClient.functions.invoke(
               "process-ticket-payment",
               {
@@ -82,7 +102,6 @@ Deno.serve(async (req) => {
               results.tickets_reconciled++;
             }
           } else if (session.payment_status === "unpaid" && session.status === "expired") {
-            // Session expired without payment - release reserved tickets
             logStep("Expired unpaid session, releasing tickets", { orderId: order.id });
 
             const ticketBreakdown = JSON.parse(session.metadata?.ticket_breakdown || "[]");
