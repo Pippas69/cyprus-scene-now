@@ -4,10 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, CheckCircle, XCircle, UserCheck } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, UserCheck, WifiOff } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toastTranslations } from '@/translations/toastTranslations';
+import { useOfflineStatus } from '@/hooks/useOfflineStatus';
+import { queueOfflineScan } from '@/lib/offlineScanQueue';
+import { resilientCall } from '@/lib/apiRetry';
 
 interface QRScannerProps {
   businessId: string;
@@ -18,6 +21,7 @@ interface QRScannerProps {
 export const QRScanner = ({ businessId, language, onReservationVerified }: QRScannerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [offlineQueued, setOfflineQueued] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
     success: boolean;
     reservation?: any;
@@ -27,6 +31,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
   } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
+  const { isOffline } = useOfflineStatus();
 
   const text = {
     el: {
@@ -210,10 +215,31 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       scannerRef.current.stop();
     }
     setScanning(false);
+    setOfflineQueued(false);
+
+    // If offline, queue locally
+    if (!navigator.onLine) {
+      try {
+        await queueOfflineScan({
+          scanType: 'reservation',
+          qrData: data,
+          businessId,
+          scannedAt: new Date().toISOString(),
+        });
+        setOfflineQueued(true);
+        setVerificationResult({
+          success: true,
+          message: language === 'el' ? 'Αποθηκεύτηκε offline - θα συγχρονιστεί αυτόματα' : 'Saved offline - will sync automatically',
+        });
+        toast.info(language === 'el' ? 'Αποθηκεύτηκε offline' : 'Saved offline');
+      } catch {
+        setVerificationResult({ success: false, message: t.invalid });
+      }
+      return;
+    }
 
     try {
       // Query reservation by QR token or confirmation code
-      // Support both event-based and direct reservations
       const { data: reservation, error } = await supabase
         .from('reservations')
         .select(`
@@ -269,7 +295,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           success: false,
           reservation,
           message: t.cancelled,
-          isDirectReservation: isDirectReservation,
+          isDirectReservation,
         });
         toast.error(toastTranslations[language].reservationCancelledStatus);
         return;
@@ -280,7 +306,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           success: false,
           reservation,
           message: t.declined,
-          isDirectReservation: isDirectReservation,
+          isDirectReservation,
         });
         toast.error(toastTranslations[language].reservationDeclined);
         return;
@@ -291,7 +317,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           success: false,
           reservation,
           message: t.pending,
-          isDirectReservation: isDirectReservation,
+          isDirectReservation,
         });
         toast.error(language === 'el' ? 'Η κράτηση εκκρεμεί έγκριση' : 'Reservation is pending approval');
         return;
@@ -303,17 +329,16 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
           success: true,
           reservation,
           message: t.alreadyCheckedIn,
-          isDirectReservation: isDirectReservation,
+          isDirectReservation,
           alreadyCheckedIn: true,
         });
         toast.info(language === 'el' ? 'Ήδη έχει γίνει check-in' : 'Already checked in');
         return;
       }
 
-      // Success - perform check-in
+      // Success - perform atomic check-in
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Update reservation with check-in info
       const { error: updateError } = await supabase
         .from('reservations')
         .update({
@@ -342,7 +367,7 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
         success: true,
         reservation: { ...reservation, checked_in_at: new Date().toISOString() },
         message: t.checkedIn,
-        isDirectReservation: isDirectReservation,
+        isDirectReservation,
       });
       toast.success(toastTranslations[language].reservationVerified);
 
@@ -351,22 +376,43 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
       }
     } catch (error) {
       console.error('Error verifying reservation:', error);
-      setVerificationResult({
-        success: false,
-        message: t.invalid,
-      });
-      toast.error(toastTranslations[language].qrInvalid);
+      
+      // Fallback to offline if network failed
+      if (!navigator.onLine) {
+        try {
+          await queueOfflineScan({
+            scanType: 'reservation',
+            qrData: data,
+            businessId,
+            scannedAt: new Date().toISOString(),
+          });
+          setOfflineQueued(true);
+          setVerificationResult({
+            success: true,
+            message: language === 'el' ? 'Αποθηκεύτηκε offline' : 'Saved offline',
+          });
+          toast.info(language === 'el' ? 'Αποθηκεύτηκε offline' : 'Saved offline');
+        } catch {
+          setVerificationResult({ success: false, message: t.invalid });
+          toast.error(toastTranslations[language].qrInvalid);
+        }
+      } else {
+        setVerificationResult({ success: false, message: t.invalid });
+        toast.error(toastTranslations[language].qrInvalid);
+      }
     }
   };
 
   const handleClose = () => {
     setIsOpen(false);
     setVerificationResult(null);
+    setOfflineQueued(false);
     setScanning(false);
   };
 
   const handleScanAnother = () => {
     setVerificationResult(null);
+    setOfflineQueued(false);
     if (scannerRef.current && videoRef.current) {
       scannerRef.current.start();
       setScanning(true);
@@ -389,14 +435,22 @@ export const QRScanner = ({ businessId, language, onReservationVerified }: QRSca
   return (
     <>
       <Button onClick={() => setIsOpen(true)} className="gap-2">
-        <Camera className="h-4 w-4" />
+        {isOffline ? <WifiOff className="h-4 w-4" /> : <Camera className="h-4 w-4" />}
         {t.scanQR}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-md" aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>{t.scanQR}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              {t.scanQR}
+              {isOffline && (
+                <Badge variant="destructive" className="gap-1 text-[10px]">
+                  <WifiOff className="h-3 w-3" />
+                  Offline
+                </Badge>
+              )}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">

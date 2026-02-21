@@ -44,7 +44,7 @@ export const useDatabaseMonitoring = () => {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-database-metrics`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/health-check`,
         {
           method: 'POST',
           headers: {
