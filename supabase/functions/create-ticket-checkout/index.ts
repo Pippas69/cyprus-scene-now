@@ -123,9 +123,19 @@ Deno.serve(async (req) => {
         throw new Error(`Tier ${item.tierId} not found`);
       }
 
-      const available = tier.quantity_total - tier.quantity_sold;
-      if (item.quantity > available) {
-        throw new Error(`Not enough tickets available for ${tier.name}. Only ${available} left.`);
+      // Use atomic function to check AND reserve tickets in one step
+      const { data: reserveResult, error: reserveError } = await supabaseClient
+        .rpc("reserve_tickets_atomically", {
+          p_tier_id: item.tierId,
+          p_quantity: item.quantity,
+        });
+
+      if (reserveError) {
+        throw new Error(`Failed to reserve tickets for ${tier.name}: ${reserveError.message}`);
+      }
+
+      if (!reserveResult?.success) {
+        throw new Error(reserveResult?.message || `Not enough tickets available for ${tier.name}`);
       }
 
       if (item.quantity > tier.max_per_order) {
@@ -217,16 +227,7 @@ Deno.serve(async (req) => {
         throw new Error("Failed to create tickets: " + ticketsError.message);
       }
 
-      // Update quantity_sold for each tier
-      for (const item of items) {
-        const tier = tiers.find(t => t.id === item.tierId);
-        if (tier) {
-          await supabaseClient
-            .from("ticket_tiers")
-            .update({ quantity_sold: tier.quantity_sold + item.quantity })
-            .eq("id", item.tierId);
-        }
-      }
+      // quantity_sold already updated atomically by reserve_tickets_atomically()
 
       logStep("Free order completed", { orderId: order.id });
 

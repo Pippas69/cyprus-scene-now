@@ -4695,6 +4695,14 @@ export type Database = {
         Args: { is_suspended: boolean; reason?: string; target_user_id: string }
         Returns: boolean
       }
+      atomic_reservation_checkin: {
+        Args: { p_reservation_id: string; p_staff_user_id: string }
+        Returns: Json
+      }
+      atomic_ticket_checkin: {
+        Args: { p_staff_user_id: string; p_ticket_id: string }
+        Returns: Json
+      }
       book_slot_atomically: {
         Args: {
           p_business_id: string
@@ -5065,6 +5073,14 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       process_no_show_reservations: { Args: never; Returns: number }
+      release_tickets: {
+        Args: { p_quantity: number; p_tier_id: string }
+        Returns: undefined
+      }
+      reserve_tickets_atomically: {
+        Args: { p_quantity: number; p_tier_id: string }
+        Returns: Json
+      }
       search_content:
         | {
             Args: { search_query: string }
