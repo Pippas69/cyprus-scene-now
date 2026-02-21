@@ -103,11 +103,21 @@ Deno.serve(async (req) => {
       throw new Error(`Maximum ${maxPeoplePerRedemption} people per redemption`);
     }
 
-    // Check availability
-    const peopleRemaining = discount.people_remaining ?? discount.total_people ?? 999;
-    if (peopleRemaining < partySize) {
-      throw new Error(`Only ${peopleRemaining} spots remaining`);
+    // Atomic availability check with advisory lock
+    const { data: claimResult, error: claimError } = await supabaseAdmin
+      .rpc("claim_offer_spots_atomically", {
+        p_discount_id: discountId,
+        p_party_size: partySize,
+      });
+
+    if (claimError) {
+      throw new Error("Failed to check availability: " + claimError.message);
     }
+
+    if (!claimResult?.success) {
+      throw new Error(claimResult?.message || "Not enough spots remaining");
+    }
+    const peopleRemaining = claimResult.remaining === -1 ? 999 : claimResult.remaining + partySize; // pre-decrement value for logging
 
     // Check one-per-user constraint
     if (discount.one_per_user) {
@@ -235,20 +245,8 @@ Deno.serve(async (req) => {
     }
     logStep("Claim record created", { purchaseId: purchase.id, hasReservation: !!reservationId });
 
-    // Deduct people from availability
-    const newPeopleRemaining = peopleRemaining - partySize;
-    const { error: updateError } = await supabaseAdmin
-      .from("discounts")
-      .update({ 
-        people_remaining: newPeopleRemaining,
-        active: newPeopleRemaining > 0 ? discount.active : false
-      })
-      .eq("id", discountId);
-
-    if (updateError) {
-      logStep("Failed to update availability", updateError);
-    }
-    logStep("Availability updated", { newPeopleRemaining });
+    // Availability already decremented atomically by claim_offer_spots_atomically()
+    logStep("Availability already decremented atomically", { remaining: claimResult.remaining });
 
     // Get user profile for emails
     const { data: userProfile } = await supabaseAdmin

@@ -65,6 +65,26 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    // Idempotency check: prevent duplicate processing of the same Stripe event
+    const { data: existingEvent } = await supabaseClient
+      .from("webhook_events_processed")
+      .select("stripe_event_id")
+      .eq("stripe_event_id", event.id)
+      .maybeSingle();
+
+    if (existingEvent) {
+      logStep("Event already processed, skipping", { eventId: event.id });
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Record this event as being processed
+    await supabaseClient
+      .from("webhook_events_processed")
+      .insert({ stripe_event_id: event.id, event_type: event.type });
+
     // Handle checkout.session.completed
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;

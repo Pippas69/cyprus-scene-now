@@ -114,12 +114,14 @@ Deno.serve(async (req) => {
 
     // ============================================================
     // 2. Find pending reservation payments
+    // Note: reservations use stripe_payment_intent_id, not stripe_checkout_session_id
+    // We look for reservations with prepaid_charge_status = 'pending' and a payment_intent
     // ============================================================
     const { data: pendingReservations, error: resError } = await supabaseClient
       .from("reservations")
-      .select("id, stripe_checkout_session_id, status, prepaid_charge_status")
+      .select("id, stripe_payment_intent_id, status, prepaid_charge_status")
       .eq("prepaid_charge_status", "pending")
-      .not("stripe_checkout_session_id", "is", null)
+      .not("stripe_payment_intent_id", "is", null)
       .lt("created_at", cutoffTime)
       .gt("created_at", maxAge);
 
@@ -130,25 +132,26 @@ Deno.serve(async (req) => {
 
       for (const res of pendingReservations) {
         try {
-          if (!res.stripe_checkout_session_id) continue;
+          if (!res.stripe_payment_intent_id) continue;
 
-          const session = await stripe.checkout.sessions.retrieve(res.stripe_checkout_session_id);
+          // Check payment intent status directly
+          const paymentIntent = await stripe.paymentIntents.retrieve(res.stripe_payment_intent_id);
 
-          if (session.payment_status === "paid") {
+          if (paymentIntent.status === "succeeded") {
             logStep("Found paid but unprocessed reservation", { reservationId: res.id });
 
-            const { error: invokeError } = await supabaseClient.functions.invoke(
-              "process-reservation-event-payment",
-              {
-                body: {
-                  sessionId: res.stripe_checkout_session_id,
-                  reservationId: res.id,
-                },
-              }
-            );
+            // Directly update the reservation since we know payment succeeded
+            const { error: updateError } = await supabaseClient
+              .from("reservations")
+              .update({
+                prepaid_charge_status: "paid",
+                status: "accepted",
+              })
+              .eq("id", res.id)
+              .eq("prepaid_charge_status", "pending");
 
-            if (invokeError) {
-              results.errors.push(`Reservation ${res.id}: ${invokeError.message}`);
+            if (updateError) {
+              results.errors.push(`Reservation ${res.id}: ${updateError.message}`);
             } else {
               results.reservations_reconciled++;
             }
