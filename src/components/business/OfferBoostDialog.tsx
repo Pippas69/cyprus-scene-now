@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2, Target, Rocket, Clock, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Loader2, Target, Rocket, Clock, AlertTriangle, Minus, Plus } from "lucide-react";
 import { format, addDays, addHours } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

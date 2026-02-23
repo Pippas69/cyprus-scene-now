@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Target, Rocket, Clock, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Target, Rocket, Clock, AlertTriangle, Minus, Plus } from "lucide-react";
 import { format, addDays, addHours } from "date-fns";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
