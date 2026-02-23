@@ -12,8 +12,8 @@ const logStep = (step: string, details?: any) => {
 
 // 2-tier boost system with hourly and daily rates (in cents)
 const BOOST_TIERS = {
-  standard: { dailyRateCents: 4000, hourlyRateCents: 550, quality: 4 },
-  premium: { dailyRateCents: 6000, hourlyRateCents: 850, quality: 5 },
+  standard: { dailyRateCents: 2500, hourlyRateCents: 300, quality: 4 },
+  premium: { dailyRateCents: 4000, hourlyRateCents: 600, quality: 5 },
 };
 
 Deno.serve(async (req) => {

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2, Target, Rocket, Clock, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Loader2, Target, Rocket, Clock, AlertTriangle, Minus, Plus } from "lucide-react";
 import { format, addDays, addHours } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 type BoostTier = "standard" | "premium";
 type DurationMode = "hourly" | "daily";
 
-const HOUR_PRESETS = [1, 2, 3, 6, 12];
+import { Input } from "@/components/ui/input";
 
 interface OfferBoostDialogProps {
   open: boolean;
@@ -56,19 +56,19 @@ const OfferBoostDialog = ({
   // 2-tier boost system with hourly and daily rates
   const tiers = {
     standard: { 
-      dailyRate: 40, 
-      hourlyRate: 5.5, 
-      hourlyRateCents: 550, 
-      dailyRateCents: 4000,
+      dailyRate: 25, 
+      hourlyRate: 3, 
+      hourlyRateCents: 300, 
+      dailyRateCents: 2500,
       icon: Target, 
       quality: 70, 
       color: "text-purple-500" 
     },
     premium: { 
-      dailyRate: 60, 
-      hourlyRate: 8.5, 
-      hourlyRateCents: 850,
-      dailyRateCents: 6000, 
+      dailyRate: 40, 
+      hourlyRate: 6, 
+      hourlyRateCents: 600,
+      dailyRateCents: 4000, 
       icon: Rocket, 
       quality: 100, 
       color: "text-rose-500" 
@@ -332,18 +332,41 @@ const OfferBoostDialog = ({
                   
                   <div className="space-y-2">
                     <Label>{language === "el" ? "Διάρκεια" : "Duration"}</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {HOUR_PRESETS.map((hours) => (
-                        <Button
-                          key={hours}
-                          type="button"
-                          variant={durationHours === hours ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setDurationHours(hours)}
-                        >
-                          {hours}{language === "el" ? "ω" : "h"}
-                        </Button>
-                      ))}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => setDurationHours(Math.max(1, durationHours - 1))}
+                        disabled={durationHours <= 1}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={24}
+                          value={durationHours}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value);
+                            if (!isNaN(v)) setDurationHours(Math.min(24, Math.max(1, v)));
+                          }}
+                          className="w-16 text-center"
+                        />
+                        <span className="text-sm text-muted-foreground">{language === "el" ? "ώρες" : "hours"}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => setDurationHours(Math.min(24, durationHours + 1))}
+                        disabled={durationHours >= 24}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>

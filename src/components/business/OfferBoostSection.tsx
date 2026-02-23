@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Target, Rocket, Clock, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Target, Rocket, Clock, AlertTriangle, Minus, Plus } from "lucide-react";
 import { format, addDays, addHours } from "date-fns";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ interface OfferBoostSectionProps {
   remainingBudgetCents?: number;
 }
 
-const HOUR_PRESETS = [1, 2, 3, 6, 12];
+import { Input } from "@/components/ui/input";
 
 const OfferBoostSection = ({
   onBoostChange,
@@ -48,19 +48,19 @@ const OfferBoostSection = ({
   // 2-tier boost system with hourly and daily rates
   const tiers = {
     standard: { 
-      dailyRate: 40, 
-      dailyRateCents: 4000, 
-      hourlyRate: 5.5, 
-      hourlyRateCents: 550, 
+      dailyRate: 25, 
+      dailyRateCents: 2500, 
+      hourlyRate: 3, 
+      hourlyRateCents: 300, 
       icon: Target, 
       quality: 70, 
       color: "text-purple-500" 
     },
     premium: { 
-      dailyRate: 60, 
-      dailyRateCents: 6000, 
-      hourlyRate: 8.5, 
-      hourlyRateCents: 850, 
+      dailyRate: 40, 
+      dailyRateCents: 4000, 
+      hourlyRate: 6, 
+      hourlyRateCents: 600, 
       icon: Rocket, 
       quality: 100, 
       color: "text-rose-500" 
@@ -271,18 +271,41 @@ const OfferBoostSection = ({
               
               <div className="space-y-2">
                 <Label>{language === "el" ? "Διάρκεια" : "Duration"}</Label>
-                <div className="flex flex-wrap gap-2">
-                  {HOUR_PRESETS.map((hours) => (
-                    <Button
-                      key={hours}
-                      type="button"
-                      variant={durationHours === hours ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleDurationHoursChange(hours)}
-                    >
-                      {hours}{language === "el" ? "ω" : "h"}
-                    </Button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => handleDurationHoursChange(Math.max(1, durationHours - 1))}
+                    disabled={durationHours <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={24}
+                      value={durationHours}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value);
+                        if (!isNaN(v)) handleDurationHoursChange(Math.min(24, Math.max(1, v)));
+                      }}
+                      className="w-16 text-center"
+                    />
+                    <span className="text-sm text-muted-foreground">{language === "el" ? "ώρες" : "hours"}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => handleDurationHoursChange(Math.min(24, durationHours + 1))}
+                    disabled={durationHours >= 24}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
