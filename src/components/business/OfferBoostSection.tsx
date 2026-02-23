@@ -44,6 +44,7 @@ const OfferBoostSection = ({
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 7));
   const [durationHours, setDurationHours] = useState<number>(3);
+  const [durationHoursInput, setDurationHoursInput] = useState<string>("3");
 
   // 2-tier boost system with hourly and daily rates
   const tiers = {

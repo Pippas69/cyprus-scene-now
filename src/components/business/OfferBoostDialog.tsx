@@ -40,6 +40,7 @@ const OfferBoostDialog = ({
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 7));
   const [durationHours, setDurationHours] = useState<number>(3);
+  const [durationHoursInput, setDurationHoursInput] = useState<string>("3");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);

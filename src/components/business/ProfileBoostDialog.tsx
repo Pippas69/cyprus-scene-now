@@ -105,6 +105,7 @@ export const ProfileBoostDialog = ({
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 3));
   const [durationHours, setDurationHours] = useState(3);
+  const [durationHoursInput, setDurationHoursInput] = useState<string>("3");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
