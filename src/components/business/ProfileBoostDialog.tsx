@@ -6,7 +6,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CalendarIcon, Zap, Crown, Clock, Building2 } from "lucide-react";
+import { Loader2, CalendarIcon, Zap, Crown, Clock, Building2, Minus, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { format, addDays } from "date-fns";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,14 +76,14 @@ const translations = {
 
 const tiers = {
   standard: {
-    dailyRateCents: 4000,
-    hourlyRateCents: 550,
+    dailyRateCents: 2500,
+    hourlyRateCents: 300,
     icon: Zap,
     quality: 3.5,
   },
   premium: {
-    dailyRateCents: 6000,
-    hourlyRateCents: 850,
+    dailyRateCents: 4000,
+    hourlyRateCents: 600,
     icon: Crown,
     quality: 5,
   },
@@ -190,7 +191,7 @@ export const ProfileBoostDialog = ({
     }
   };
 
-  const hourPresets = [1, 2, 3, 6, 12];
+  // Hour input replaces presets
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -283,17 +284,41 @@ export const ProfileBoostDialog = ({
             {durationMode === "hourly" ? (
               <div className="space-y-2">
                 <Label>{t.duration}</Label>
-                <div className="flex gap-2 flex-wrap">
-                  {hourPresets.map((hours) => (
-                    <Button
-                      key={hours}
-                      variant={durationHours === hours ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setDurationHours(hours)}
-                    >
-                      {hours}h
-                    </Button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => setDurationHours(Math.max(1, durationHours - 1))}
+                    disabled={durationHours <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={24}
+                      value={durationHours}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value);
+                        if (!isNaN(v)) setDurationHours(Math.min(24, Math.max(1, v)));
+                      }}
+                      className="w-16 text-center"
+                    />
+                    <span className="text-sm text-muted-foreground">{t.hours}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => setDurationHours(Math.min(24, durationHours + 1))}
+                    disabled={durationHours >= 24}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ) : (
