@@ -152,7 +152,23 @@ Deno.serve(async (req) => {
     const start = new Date(startDate);
     const status = start <= now ? "active" : "scheduled";
 
-    // Always create a new boost record (consistent with event boost logic)
+    // Deactivate any existing active boost for this discount (unique constraint: one active per discount)
+    const { data: existingActive } = await supabaseClient
+      .from("offer_boosts")
+      .select("id")
+      .eq("discount_id", discountId)
+      .eq("active", true)
+      .maybeSingle();
+
+    if (existingActive) {
+      await supabaseClient
+        .from("offer_boosts")
+        .update({ active: false, status: "deactivated" })
+        .eq("id", existingActive.id);
+      logStep("Deactivated existing active boost", { existingId: existingActive.id });
+    }
+
+    // Create new boost record
     const { data: createdBoost, error: boostError } = await supabaseClient
       .from("offer_boosts")
       .insert({
