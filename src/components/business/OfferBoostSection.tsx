@@ -31,7 +31,6 @@ interface OfferBoostSectionProps {
 }
 
 import { Input } from "@/components/ui/input";
-import { Minus, Plus } from "lucide-react";
 
 const OfferBoostSection = ({
   onBoostChange,

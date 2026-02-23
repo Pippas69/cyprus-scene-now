@@ -16,7 +16,6 @@ type BoostTier = "standard" | "premium";
 type DurationMode = "hourly" | "daily";
 
 import { Input } from "@/components/ui/input";
-import { Minus, Plus } from "lucide-react";
 
 interface OfferBoostDialogProps {
   open: boolean;
