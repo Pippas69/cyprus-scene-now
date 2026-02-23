@@ -282,6 +282,7 @@ Deno.serve(async (req) => {
     // Check if we need to reset monthly budgets (new billing period)
     let monthlyBudgetRemaining = plan.event_boost_budget_cents;
     let commissionFreeOffersRemaining = plan.commission_free_offers_count || 0;
+    const maxBudget = plan.event_boost_budget_cents;
 
     let planChanged = false;
     if (existingSub) {
