@@ -184,9 +184,9 @@ export default function SubscriptionStatus() {
     );
   }
 
-  // Active subscription - cap remaining to never exceed total
+  // Active subscription - credits can exceed plan max (e.g. refunds from deactivated boosts)
   const totalBudget = displayData.event_boost_budget_cents || 0;
-  const remainingBudget = Math.min(displayData.monthly_budget_remaining_cents ?? 0, totalBudget);
+  const remainingBudget = displayData.monthly_budget_remaining_cents ?? 0;
   
   const budgetUsedPercent = totalBudget > 0
     ? ((totalBudget - remainingBudget) / totalBudget) * 100
