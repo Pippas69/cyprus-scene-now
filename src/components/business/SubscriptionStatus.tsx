@@ -189,7 +189,7 @@ export default function SubscriptionStatus() {
   const remainingBudget = displayData.monthly_budget_remaining_cents ?? 0;
   
   const budgetUsedPercent = totalBudget > 0
-    ? ((totalBudget - remainingBudget) / totalBudget) * 100
+    ? Math.max(0, Math.min(100, ((totalBudget - remainingBudget) / totalBudget) * 100))
     : 0;
 
   const offersUsedPercent = displayData.commission_free_offers_count > 0
