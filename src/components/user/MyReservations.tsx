@@ -3,13 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, Building2, CreditCard, Tag, Ticket } from 'lucide-react';
+import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, Building2, Ticket } from 'lucide-react';
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { Link } from 'react-router-dom';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ReservationQRCard } from './ReservationQRCard';
 
@@ -64,16 +64,10 @@ interface ReservationData {
     address: string | null;
   } | null;
   isOfferBased?: boolean;
-  offerTitle?: string;
-  offerPercentOff?: number;
-  offerPurchaseId?: string;
 }
-
-type ReservationType = 'direct' | 'offer' | 'event';
 
 export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const navigate = useNavigate();
-  const dateLocale = language === 'el' ? el : enUS;
   const isPreviewOrigin =
     typeof window !== 'undefined' &&
     (window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
@@ -87,7 +81,6 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   });
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
   const [selectedReservationForQR, setSelectedReservationForQR] = useState<ReservationData | null>(null);
-  const [offerLinkedReservationIds, setOfferLinkedReservationIds] = useState<Map<string, { title: string; percentOff: number; purchaseId: string }>>(new Map());
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -110,9 +103,6 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setLoading(true);
     const now = new Date().toISOString();
 
-    let allUpcoming: ReservationData[] = [];
-    let allPast: ReservationData[] = [];
-
     const reservationFields = `
       id, event_id, business_id, user_id, reservation_name, party_size, status,
       created_at, checked_in_at, phone_number, preferred_time, seating_preference, special_requests,
@@ -120,31 +110,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       seating_type_id, prepaid_min_charge_cents, prepaid_charge_status
     `;
 
-    // Fetch offer_purchases with discount info
+    // Fetch offer_purchases to identify offer-based reservations (we'll exclude them)
     const { data: offerPurchases } = await supabase
       .from('offer_purchases')
-      .select(`
-        id,
-        reservation_id,
-        discounts (
-          title,
-          percent_off
-        )
-      `)
+      .select('reservation_id')
       .eq('user_id', userId)
       .not('reservation_id', 'is', null);
 
-const offerReservationMap = new Map<string, { title: string; percentOff: number; purchaseId: string }>();
-    (offerPurchases || []).forEach(p => {
-      if (p.reservation_id && p.discounts) {
-        offerReservationMap.set(p.reservation_id, {
-          title: (p.discounts as any).title || '',
-          percentOff: (p.discounts as any).percent_off || 0,
-          purchaseId: (p as any).id || ''
-        });
-      }
-    });
-    setOfferLinkedReservationIds(offerReservationMap);
+    const offerReservationIds = new Set(
+      (offerPurchases || []).map(p => p.reservation_id).filter(Boolean)
+    );
 
     // 1. Event-based reservations (upcoming)
     const { data: upcomingEventRes } = await supabase
@@ -152,12 +127,7 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       .select(`
         ${reservationFields},
         events!inner(
-          id,
-          title,
-          start_at,
-          end_at,
-          location,
-          event_type,
+          id, title, start_at, end_at, location, event_type,
           businesses(id, name, logo_url)
         )
       `)
@@ -172,12 +142,7 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       .select(`
         ${reservationFields},
         events!inner(
-          id,
-          title,
-          start_at,
-          end_at,
-          location,
-          event_type,
+          id, title, start_at, end_at, location, event_type,
           businesses(id, name, logo_url)
         )
       `)
@@ -188,10 +153,7 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
     // 3. Direct business reservations (upcoming)
     const { data: upcomingDirectRes } = await supabase
       .from('reservations')
-      .select(`
-        ${reservationFields},
-        businesses(id, name, logo_url, address)
-      `)
+      .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
       .eq('user_id', userId)
       .is('event_id', null)
       .not('business_id', 'is', null)
@@ -201,28 +163,17 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
     // 4. Direct business reservations (past)
     const { data: pastDirectRes } = await supabase
       .from('reservations')
-      .select(`
-        ${reservationFields},
-        businesses(id, name, logo_url, address)
-      `)
+      .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
       .eq('user_id', userId)
       .is('event_id', null)
       .not('business_id', 'is', null)
       .lt('preferred_time', now);
 
-    const markOfferBased = (reservations: ReservationData[]) => 
-      reservations.map(r => {
-        const offerInfo = offerReservationMap.get(r.id);
-        return {
-          ...r,
-          isOfferBased: !!offerInfo,
-          offerTitle: offerInfo?.title,
-          offerPercentOff: offerInfo?.percentOff,
-          offerPurchaseId: offerInfo?.purchaseId
-        };
-      });
+    // Filter out offer-based reservations
+    const filterOutOffers = (reservations: ReservationData[]) =>
+      reservations.filter(r => !offerReservationIds.has(r.id));
 
-    allUpcoming = markOfferBased([
+    const allUpcoming = filterOutOffers([
       ...(upcomingEventRes as unknown as ReservationData[] || []),
       ...(upcomingDirectRes as unknown as ReservationData[] || [])
     ]).sort((a, b) => {
@@ -231,7 +182,7 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       return new Date(dateA).getTime() - new Date(dateB).getTime();
     });
 
-    allPast = markOfferBased([
+    const allPast = filterOutOffers([
       ...(pastEventRes as unknown as ReservationData[] || []),
       ...(pastDirectRes as unknown as ReservationData[] || [])
     ]).sort((a, b) => {
@@ -240,21 +191,17 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
 
-    // Preview-only: if the user has no event-based reservations at all,
-    // create one demo reservation so the section can be previewed.
+    // Preview-only seeding
     try {
       const hasAnyEventReservations = (upcomingEventRes?.length || 0) + (pastEventRes?.length || 0) > 0;
       const seedKey = `seeded_event_reservation_${userId}`;
-
       if (isPreviewOrigin && !hasAnyEventReservations && !localStorage.getItem(seedKey)) {
         localStorage.setItem(seedKey, '1');
         await supabase.functions.invoke('create-free-reservation-event', { body: {} });
-        // Re-fetch after seeding
         await fetchReservations();
         return;
       }
     } catch (e) {
-      // Silent fail: seeding is just for preview UX.
       console.warn('Event reservation seeding failed', e);
     }
 
@@ -267,7 +214,7 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
   const generateQRCodes = async (reservations: ReservationData[]) => {
     const codes: Record<string, string> = {};
     for (const reservation of reservations) {
-      if (reservation.qr_code_token && !reservation.isOfferBased) {
+      if (reservation.qr_code_token) {
         try {
           const qrDataUrl = await QRCode.toDataURL(reservation.qr_code_token, {
             width: 256,
@@ -284,13 +231,11 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
   };
 
   const handleCancelReservation = async (reservationId: string) => {
-    // Close dialog & remove from UI immediately for snappy UX
     setCancelDialog({ open: false, reservationId: null });
     setUpcomingReservations((prev) => prev.filter((r) => r.id !== reservationId));
     toast.success(tt.reservationCancelled);
 
     try {
-      // Fire all independent DB writes in parallel
       const cancelReservation = supabase
         .from('reservations')
         .update({ status: 'cancelled', updated_at: new Date().toISOString() })
@@ -305,10 +250,8 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
         .neq('status', 'cancelled');
 
       const [resResult] = await Promise.all([cancelReservation, cancelLinkedOffer]);
-
       if (resResult.error) throw resResult.error;
 
-      // Profile update + email can run in background without blocking
       const { data: profile } = await supabase
         .from('profiles')
         .select('reservation_cancellation_count')
@@ -317,20 +260,16 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
 
       const newCount = (profile?.reservation_cancellation_count || 0) + 1;
       const updateData: any = { reservation_cancellation_count: newCount };
-      
       if (newCount >= 3) {
         const restrictedUntil = new Date();
         restrictedUntil.setDate(restrictedUntil.getDate() + 14);
         updateData.reservation_restricted_until = restrictedUntil.toISOString();
       }
-
       await supabase.from('profiles').update(updateData).eq('id', userId);
 
       supabase.functions.invoke('send-reservation-notification', {
-        body: { reservationId: reservationId, type: 'cancellation' }
-      }).catch((emailError) => {
-        console.error('Error sending cancellation email:', emailError);
-      });
+        body: { reservationId, type: 'cancellation' }
+      }).catch(console.error);
 
       fetchReservations();
     } catch (error) {
@@ -338,12 +277,6 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       toast.error(tt.failed);
       fetchReservations();
     }
-  };
-
-  const getReservationType = (reservation: ReservationData): ReservationType => {
-    if (reservation.events) return 'event';
-    if (reservation.isOfferBased) return 'offer';
-    return 'direct';
   };
 
   const text = {
@@ -362,14 +295,10 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       pending: 'Εκκρεμής',
       checkedIn: 'Check-in',
       noShow: 'No-Show',
-      prepaidCredit: 'Προπληρωμένη Πίστωση',
-      directReservationsSection: 'Απλές Κρατήσεις',
-      offerReservationsSection: 'Κρατήσεις μέσω Προσφορών',
-      eventReservationsSection: 'Κρατήσεις μέσω Εκδηλώσεων',
+      directTab: 'Απλές Κρατήσεις',
+      eventTab: 'Μέσω Εκδηλώσεων',
       noDirectReservations: 'Δεν υπάρχουν απλές κρατήσεις',
-      noOfferReservations: 'Δεν υπάρχουν κρατήσεις μέσω προσφορών',
       noEventReservations: 'Δεν υπάρχουν κρατήσεις μέσω εκδηλώσεων',
-      qrInOffers: 'QR στις Προσφορές',
       code: 'Κωδικός',
     },
     en: {
@@ -387,14 +316,10 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       pending: 'Pending',
       checkedIn: 'Check-in',
       noShow: 'No-Show',
-      prepaidCredit: 'Prepaid Credit',
-      directReservationsSection: 'Direct Reservations',
-      offerReservationsSection: 'Reservations via Offers',
-      eventReservationsSection: 'Reservations via Events',
+      directTab: 'Direct Reservations',
+      eventTab: 'Via Events',
       noDirectReservations: 'No direct reservations',
-      noOfferReservations: 'No reservations via offers',
       noEventReservations: 'No reservations via events',
-      qrInOffers: 'QR in Offers',
       code: 'Code',
     },
   };
@@ -405,7 +330,6 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
     if (reservation.checked_in_at) {
       return <Badge className="bg-green-500 text-white text-xs h-7 px-3">{t.checkedIn}</Badge>;
     }
-
     if (reservation.status === 'accepted' && reservation.preferred_time) {
       const slotTime = new Date(reservation.preferred_time);
       const graceEnd = new Date(slotTime.getTime() + 15 * 60 * 1000);
@@ -414,11 +338,9 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
       }
       return <Badge className="bg-primary text-primary-foreground text-xs h-7 px-3">{t.confirmed}</Badge>;
     }
-
     if (reservation.status === 'pending') {
       return <Badge variant="secondary" className="text-xs h-7 px-3">{t.pending}</Badge>;
     }
-
     return <Badge className="bg-primary text-primary-foreground text-xs h-7 px-3">{t.confirmed}</Badge>;
   };
 
@@ -426,40 +348,34 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
     return <div className="text-center py-8">Loading...</div>;
   }
 
-  // Format date without year in Cyprus time: "31 Ιανουαρίου, 19:00"
   const formatDateTime = (dateStr: string) => {
     const date = new Date(dateStr);
-
     const locale = language === 'el' ? 'el-GR' : 'en-GB';
     const timeZone = 'Europe/Nicosia';
-
     const day = new Intl.DateTimeFormat(locale, { timeZone, day: 'numeric' }).format(date);
     const month = new Intl.DateTimeFormat(locale, { timeZone, month: 'long' }).format(date);
-    const time = new Intl.DateTimeFormat(locale, {
-      timeZone,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(date);
-
+    const time = new Intl.DateTimeFormat(locale, { timeZone, hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
     return language === 'el' ? `${day} ${month}, ${time}` : `${month} ${day}, ${time}`;
   };
-  // ============= DIRECT RESERVATION CARD =============
-  const renderDirectReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
-    const businessInfo = reservation.businesses;
-    const dateTime = reservation.preferred_time;
-    const location = reservation.businesses?.address;
+
+  // ============= RESERVATION CARD (shared for direct & event) =============
+  const renderReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
+    const isEvent = !!reservation.events;
+    const businessInfo = isEvent ? reservation.events?.businesses : reservation.businesses;
+    const dateTime = reservation.preferred_time || reservation.events?.start_at;
+    const location = isEvent ? reservation.events?.location : reservation.businesses?.address;
+    const title = isEvent ? reservation.events?.title : t.tableReservation;
 
     return (
       <Card key={reservation.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
         <CardContent className="p-4 space-y-0.5">
-          {/* Row 1: Title + Status Badge */}
+          {/* Row 1: Title + Status */}
           <div className="flex items-center justify-between gap-2 mb-1">
-            <h4 className="font-semibold text-base">{t.tableReservation}</h4>
+            <h4 className="font-semibold text-base line-clamp-1">{title}</h4>
             {getStatusBadge(reservation)}
           </div>
 
-          {/* Row 2: Business name with logo */}
+          {/* Row 2: Business */}
           <div className="flex items-center gap-1.5">
             {businessInfo?.logo_url && (
               <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover" />
@@ -483,337 +399,165 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
 
           {/* Row 5: Location */}
           {location && (
-            <button
-              onClick={() => reservation.business_id && navigate(`/xartis?business=${reservation.business_id}&src=dashboard_user`)}
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
-            >
-              <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs truncate">{location}</span>
-            </button>
+            isEvent ? (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs truncate">{location}</span>
+              </a>
+            ) : (
+              <button
+                onClick={() => reservation.business_id && navigate(`/xartis?business=${reservation.business_id}&src=dashboard_user`)}
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs truncate">{location}</span>
+              </button>
+            )
           )}
 
-          {/* QR Code Button - Styled like mockup */}
-          {reservation.confirmation_code && !isPast && (
-            <button
-              type="button"
-              onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
-              className="mt-2 w-full flex items-center justify-between bg-muted/50 border border-border rounded-lg px-3 py-2 hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{t.code}</span>
-                <span className="text-sm font-bold text-foreground tracking-wider">{reservation.confirmation_code}</span>
-              </div>
-              <div className="flex items-center gap-1 text-primary">
-                <QrCode className="h-4 w-4" />
-                <span className="text-xs font-medium">QR</span>
-              </div>
-            </button>
-          )}
-
-          {/* Cancel Button */}
-          {(reservation.status === 'pending' || reservation.status === 'accepted') && !isPast && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
-              onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-            >
-              {t.cancelReservation}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // ============= OFFER-BASED RESERVATION CARD =============
-  const renderOfferReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
-    const businessInfo = reservation.businesses;
-    const dateTime = reservation.preferred_time;
-    const location = reservation.businesses?.address;
-
-    return (
-      <Card key={reservation.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
-        <CardContent className="p-4 space-y-0.5">
-          {/* Row 1: Business + Discount Badge + Status */}
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <div className="flex items-center gap-2">
-              {businessInfo?.logo_url && (
-                <img src={businessInfo.logo_url} alt="" className="h-5 w-5 rounded-full object-cover" />
-              )}
-              <span className="font-semibold text-sm">{businessInfo?.name}</span>
-              {reservation.offerPercentOff && reservation.offerPercentOff > 0 && (
-                <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-[10px] h-5 px-1.5">
-                  -{reservation.offerPercentOff}%
-                </Badge>
-              )}
-            </div>
-            {getStatusBadge(reservation)}
-          </div>
-
-          {/* Row 2: Offer Title */}
-          {reservation.offerTitle && (
-            <h4 className="font-medium text-sm text-foreground">{reservation.offerTitle}</h4>
-          )}
-
-          {/* Row 3: Date/Time */}
-          {dateTime && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs">{formatDateTime(dateTime)}</span>
-            </div>
-          )}
-
-          {/* Row 4: Party size */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Users className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs">{reservation.party_size} {t.people}</span>
-          </div>
-
-          {/* Row 5: Location */}
-          {location && (
-            <button
-              onClick={() => reservation.business_id && navigate(`/xartis?business=${reservation.business_id}&src=dashboard_user`)}
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
-            >
-              <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs truncate">{location}</span>
-            </button>
-          )}
-
-          {/* QR in Offers Button - Orange styled */}
+          {/* QR Code + Cancel on same line */}
           {!isPast && (
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="mt-2 w-full h-8 text-xs border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300"
-            >
-              <Link to={`/dashboard-user?tab=offers${reservation.offerPurchaseId ? `&purchaseId=${reservation.offerPurchaseId}` : ''}`}>
-                <QrCode className="h-3.5 w-3.5 mr-1.5" />
-                {t.qrInOffers}
-              </Link>
-            </Button>
-          )}
-
-          {/* Cancel Button */}
-          {(reservation.status === 'pending' || reservation.status === 'accepted') && !isPast && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-1 w-full h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
-              onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-            >
-              {t.cancelReservation}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // ============= EVENT-BASED RESERVATION CARD =============
-  const renderEventReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
-    const eventInfo = reservation.events;
-    const businessInfo = eventInfo?.businesses;
-    const dateTime = reservation.preferred_time || eventInfo?.start_at;
-    const location = eventInfo?.location;
-
-    return (
-      <Card key={reservation.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
-        <CardContent className="p-4 space-y-0.5">
-          {/* Row 1: Business + Status */}
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <div className="flex items-center gap-2">
-              {businessInfo?.logo_url && (
-                <img src={businessInfo.logo_url} alt="" className="h-5 w-5 rounded-full object-cover" />
+            <div className="flex items-center gap-2 mt-2">
+              {/* QR Code Button */}
+              {reservation.confirmation_code && (
+                <button
+                  type="button"
+                  onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
+                  className="flex-1 flex items-center justify-between bg-muted/50 border border-border rounded-lg px-3 py-2 hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{t.code}</span>
+                    <span className="text-sm font-bold text-foreground tracking-wider">{reservation.confirmation_code}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-primary">
+                    <QrCode className="h-4 w-4" />
+                    <span className="text-xs font-medium">QR</span>
+                  </div>
+                </button>
               )}
-              <span className="font-semibold text-sm">{businessInfo?.name}</span>
+
+              {/* Cancel Button - compact */}
+              {(reservation.status === 'pending' || reservation.status === 'accepted') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-[38px] text-xs text-destructive border-destructive/30 hover:bg-destructive/10 px-3 shrink-0"
+                  onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
+                >
+                  {t.cancelReservation}
+                </Button>
+              )}
             </div>
-            {getStatusBadge(reservation)}
-          </div>
-
-          {/* Row 2: Event Title */}
-          {eventInfo?.title && (
-            <h4 className="font-medium text-sm text-foreground">{eventInfo.title}</h4>
-          )}
-
-          {/* Row 3: Date/Time */}
-          {dateTime && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs">{formatDateTime(dateTime)}</span>
-            </div>
-          )}
-
-          {/* Row 4: Party size */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Users className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs">{reservation.party_size} {t.people}</span>
-          </div>
-
-          {/* Row 5: Location - opens Google Maps */}
-          {location && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
-            >
-              <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs truncate">{location}</span>
-            </a>
-          )}
-
-          {/* Prepaid Credit Info */}
-          {reservation.prepaid_min_charge_cents && reservation.prepaid_min_charge_cents > 0 && !isPast && (
-            <div className="mt-2 flex items-center justify-between bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2">
-              <div className="flex items-center gap-1.5">
-                <CreditCard className="h-3.5 w-3.5 text-green-600" />
-                <span className="text-xs font-medium text-green-700 dark:text-green-300">{t.prepaidCredit}</span>
-              </div>
-              <span className="text-sm font-bold text-green-700 dark:text-green-400">
-                €{(reservation.prepaid_min_charge_cents / 100).toFixed(2)}
-              </span>
-            </div>
-          )}
-
-          {/* QR Code Button - Same style as direct reservations */}
-          {reservation.confirmation_code && !isPast && (
-            <button
-              type="button"
-              onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
-              className="mt-2 w-full flex items-center justify-between bg-muted/50 border border-border rounded-lg px-3 py-2 hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{t.code}</span>
-                <span className="text-sm font-bold text-foreground tracking-wider">{reservation.confirmation_code}</span>
-              </div>
-              <div className="flex items-center gap-1 text-primary">
-                <QrCode className="h-4 w-4" />
-                <span className="text-xs font-medium">QR</span>
-              </div>
-            </button>
-          )}
-
-          {/* Cancel Button */}
-          {(reservation.status === 'pending' || reservation.status === 'accepted') && !isPast && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
-              onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-            >
-              {t.cancelReservation}
-            </Button>
           )}
         </CardContent>
       </Card>
     );
   };
 
-  const renderReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
-    const type = getReservationType(reservation);
-    switch (type) {
-      case 'direct':
-        return renderDirectReservationCard(reservation, isPast);
-      case 'offer':
-        return renderOfferReservationCard(reservation, isPast);
-      case 'event':
-        return renderEventReservationCard(reservation, isPast);
-    }
-  };
+  // Categorize
+  const directReservations = upcomingReservations.filter(r => !r.events);
+  const eventReservations = upcomingReservations.filter(r => !!r.events);
 
-  // Categorize reservations
-  const directReservations = upcomingReservations.filter(r => getReservationType(r) === 'direct');
-  const offerReservations = upcomingReservations.filter(r => getReservationType(r) === 'offer');
-  const eventReservations = upcomingReservations.filter(r => getReservationType(r) === 'event');
+  const pastDirectReservations = pastReservations.filter(r => !r.events);
+  const pastEventReservations = pastReservations.filter(r => !!r.events);
 
-  const renderSection = (
-    reservations: ReservationData[], 
-    icon: React.ReactNode, 
-    title: string, 
-    emptyMessage: string,
-    colorClass: string
-  ) => (
-    <div className="space-y-3">
-      <div className={`flex items-center gap-2 px-1 ${colorClass}`}>
-        {icon}
-        <h3 className="font-semibold text-sm">{title}</h3>
-        <span className="text-xs text-muted-foreground">({reservations.length})</span>
-      </div>
-      {reservations.length === 0 ? (
-        <Card className="p-4 text-center bg-muted/30">
-          <p className="text-muted-foreground text-xs">{emptyMessage}</p>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {reservations.map(r => renderReservationCard(r, false))}
-        </div>
-      )}
-    </div>
-  );
+  const hasPast = pastReservations.length > 0;
 
   return (
-    <div className="space-y-6">
-      {upcomingReservations.length === 0 && pastReservations.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-muted-foreground text-sm">{t.noReservations}</p>
-        </Card>
-      ) : (
-        <>
-          {upcomingReservations.length === 0 ? (
-            <Card className="p-6 text-center">
-              <p className="text-muted-foreground text-sm">{t.noReservations}</p>
-            </Card>
+    <div className="space-y-4">
+      <Tabs defaultValue="direct" className="w-full">
+        <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
+          <TabsTrigger
+            value="direct"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+          >
+            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">{t.directTab}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
+              {directReservations.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="event"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+          >
+            <Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">{t.eventTab}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
+              {eventReservations.length}
+            </span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="direct" className="mt-4">
+          {directReservations.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
           ) : (
-            <div className="space-y-6">
-              {renderSection(
-                directReservations,
-                <Building2 className="h-4 w-4" />,
-                t.directReservationsSection,
-                t.noDirectReservations,
-                'text-blue-700 dark:text-blue-400'
-              )}
-
-              {renderSection(
-                offerReservations,
-                <Tag className="h-4 w-4" />,
-                t.offerReservationsSection,
-                t.noOfferReservations,
-                'text-orange-700 dark:text-orange-400'
-              )}
-
-              {renderSection(
-                eventReservations,
-                <Ticket className="h-4 w-4" />,
-                t.eventReservationsSection,
-                t.noEventReservations,
-                'text-purple-700 dark:text-purple-400'
-              )}
+            <div className="grid gap-3">
+              {directReservations.map(r => renderReservationCard(r, false))}
             </div>
           )}
+        </TabsContent>
 
-          {/* History Section */}
-          {pastReservations.length > 0 && (
-            <Collapsible open={showHistory} onOpenChange={setShowHistory}>
-              <CollapsibleTrigger asChild>
-                <button className="flex items-center justify-between w-full p-3 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{t.history} ({pastReservations.length})</span>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showHistory ? 'rotate-180' : ''}`} />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3">
-                <div className="grid gap-3">
-                  {pastReservations.map(reservation => renderReservationCard(reservation, true))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+        <TabsContent value="event" className="mt-4">
+          {eventReservations.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p>
+          ) : (
+            <div className="grid gap-3">
+              {eventReservations.map(r => renderReservationCard(r, false))}
+            </div>
           )}
-        </>
+        </TabsContent>
+      </Tabs>
+
+      {/* History */}
+      {hasPast && (
+        <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center justify-between w-full p-3 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors text-sm">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{t.history} ({pastReservations.length})</span>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-3">
+            <Tabs defaultValue="past-direct" className="w-full">
+              <TabsList className="w-full h-auto gap-1 bg-muted/30 p-1 rounded-lg">
+                <TabsTrigger value="past-direct" className="flex-1 text-xs px-2 py-1.5">
+                  {t.directTab} ({pastDirectReservations.length})
+                </TabsTrigger>
+                <TabsTrigger value="past-event" className="flex-1 text-xs px-2 py-1.5">
+                  {t.eventTab} ({pastEventReservations.length})
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="past-direct" className="mt-4">
+                {pastDirectReservations.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
+                ) : (
+                  <div className="grid gap-3">
+                    {pastDirectReservations.map(r => renderReservationCard(r, true))}
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="past-event" className="mt-4">
+                {pastEventReservations.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p>
+                ) : (
+                  <div className="grid gap-3">
+                    {pastEventReservations.map(r => renderReservationCard(r, true))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
@@ -838,7 +582,6 @@ const offerReservationMap = new Map<string, { title: string; percentOff: number;
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* QR Code Dialog - Premium Style */}
       <ReservationQRCard
         reservation={selectedReservationForQR ? {
           qrCodeToken: selectedReservationForQR.qr_code_token || undefined,
