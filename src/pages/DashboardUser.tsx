@@ -36,18 +36,18 @@ const DashboardUser = () => {
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       navigate('/login');
       return;
     }
 
     // Check if user is a business
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    const { data: profile } = await supabase.
+    from('profiles').
+    select('role').
+    eq('id', user.id).
+    single();
 
     if (profile?.role === 'business') {
       navigate('/dashboard-business');
@@ -67,7 +67,7 @@ const DashboardUser = () => {
       offers: 'Οι Προσφορές Μου',
       settings: 'Ρυθμίσεις',
       browseEvents: 'Ανακάλυψε Εκδηλώσεις',
-      exploreMap: 'Εξερεύνησε Χάρτη',
+      exploreMap: 'Εξερεύνησε Χάρτη'
     },
     en: {
       welcome: 'Welcome',
@@ -77,8 +77,8 @@ const DashboardUser = () => {
       offers: 'My Offers',
       settings: 'Settings',
       browseEvents: 'Browse Events',
-      exploreMap: 'Explore Map',
-    },
+      exploreMap: 'Explore Map'
+    }
   };
 
   const t = text[language];
@@ -87,8 +87,8 @@ const DashboardUser = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+      </div>);
+
   }
 
   // Get the current section title based on active tab
@@ -97,7 +97,7 @@ const DashboardUser = () => {
       events: t.myEvents,
       reservations: t.reservations,
       offers: t.offers,
-      settings: t.settings,
+      settings: t.settings
     };
     return titles[activeTab] || t.dashboard;
   };
@@ -106,20 +106,20 @@ const DashboardUser = () => {
     <div className="w-full max-w-full px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
       {/* Welcome Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{getSectionTitle()}</h1>
+        
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           {language === 'el' ? 'Διαχειριστείτε τα δεδομένα σας' : 'Manage your data'}
         </p>
       </div>
 
-      <Tabs 
-        value={activeTab} 
+      <Tabs
+        value={activeTab}
         onValueChange={(value) => {
           setActiveTab(value);
           navigate(`/dashboard-user?tab=${value}`, { replace: true });
-        }} 
-        className="w-full"
-      >
+        }}
+        className="w-full">
+
         <TabsContent value="events" className="animate-fade-in">
           <MyEvents userId={user.id} language={language} />
         </TabsContent>
@@ -138,8 +138,8 @@ const DashboardUser = () => {
       </Tabs>
 
       {/* Quick Actions FAB - REMOVED per user request */}
-    </div>
-  );
+    </div>);
+
 };
 
 export default DashboardUser;
