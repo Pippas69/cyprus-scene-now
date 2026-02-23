@@ -32,7 +32,7 @@ async function deductPartialBudget(
     return false;
   }
 
-  const currentBudget = subscription.monthly_budget_remaining_cents || 0;
+  const currentBudget = subscription.monthly_budget_remaining_cents ?? 0;
   const newBudget = Math.max(0, currentBudget - partialBudgetCents);
 
   const { error: updateError } = await supabaseClient

@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       .eq("business_id", businessId)
       .single();
 
-    const remainingBudget = subscription?.monthly_budget_remaining_cents || 0;
+    const remainingBudget = subscription?.monthly_budget_remaining_cents ?? 0;
     const hasActiveSubscription = !subError && !!subscription && subscription.status === "active";
 
     if (!hasActiveSubscription) {
