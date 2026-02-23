@@ -107,9 +107,9 @@ const DashboardUser = () => {
       {/* Welcome Header */}
       <div className="mb-6 sm:mb-8">
         
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          {language === 'el' ? 'Διαχειριστείτε τα δεδομένα σας' : 'Manage your data'}
-        </p>
+        
+
+
       </div>
 
       <Tabs
