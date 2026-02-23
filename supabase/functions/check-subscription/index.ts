@@ -306,10 +306,11 @@ Deno.serve(async (req) => {
         
         if (diffSeconds < ONE_DAY) {
           // Same billing period, keep existing values (preserves boost deductions)
-          monthlyBudgetRemaining = existingSub.monthly_budget_remaining_cents ?? 0;
+          // Cap to max budget to fix any corrupted data
+          monthlyBudgetRemaining = Math.min(existingSub.monthly_budget_remaining_cents ?? 0, maxBudget);
           commissionFreeOffersRemaining = existingSub.commission_free_offers_remaining ?? 0;
           logStep('Same billing period, keeping existing budget values', { 
-            monthlyBudgetRemaining, commissionFreeOffersRemaining, diffSeconds
+            monthlyBudgetRemaining, commissionFreeOffersRemaining, diffSeconds, maxBudget
           });
         } else {
           logStep('New billing period detected, resetting budgets', { 
