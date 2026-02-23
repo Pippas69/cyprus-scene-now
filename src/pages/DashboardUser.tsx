@@ -104,13 +104,7 @@ const DashboardUser = () => {
 
   return (
     <div className="w-full max-w-full px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
-      {/* Welcome Header */}
-      <div className="mb-6 sm:mb-8">
-        
-        
-
-
-      </div>
+      {/* Welcome Header removed - no content needed */}
 
       <Tabs
         value={activeTab}
