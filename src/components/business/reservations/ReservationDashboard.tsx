@@ -18,7 +18,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     () => ({
       el: {
         reservations: 'Κρατήσεις',
-        staffControl: 'Έλεγχος Staff',
+        staffControl: 'Έλεγχος',
         settings: 'Ρυθμίσεις',
         list: 'Λίστα Κρατήσεων',
         description: 'Διαχειριστείτε τις κρατήσεις από το προφίλ και τις προσφορές σας',
