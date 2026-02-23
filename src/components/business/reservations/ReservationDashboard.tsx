@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReservationSlotManager } from './ReservationSlotManager';
 import { ReservationStaffControls } from './ReservationStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
-import { Settings2, Power } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 
 interface ReservationDashboardProps {
   businessId: string;
@@ -52,7 +52,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
             <span className="truncate">{t.list}</span>
           </TabsTrigger>
           <TabsTrigger value="staff" className="gap-2 flex-1 min-w-0">
-            <Power className="h-4 w-4 shrink-0" />
+            
             <span className="truncate">{t.staffControl}</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="gap-2 flex-1 min-w-0">
