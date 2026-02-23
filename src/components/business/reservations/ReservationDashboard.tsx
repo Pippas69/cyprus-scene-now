@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReservationSlotManager } from './ReservationSlotManager';
 import { ReservationStaffControls } from './ReservationStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
-import { Settings2, Power, List } from 'lucide-react';
+import { Settings2, Power } from 'lucide-react';
 
 interface ReservationDashboardProps {
   businessId: string;
@@ -21,15 +21,15 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         staffControl: 'Έλεγχος',
         settings: 'Ρυθμίσεις',
         list: 'Διαχείριση',
-        description: 'Διαχειριστείτε τις κρατήσεις από το προφίλ και τις προσφορές σας',
+        description: 'Διαχειριστείτε τις κρατήσεις από το προφίλ και τις προσφορές σας'
       },
       en: {
         reservations: 'Reservations',
         staffControl: 'Staff Control',
         settings: 'Settings',
         list: 'Reservation List',
-        description: 'Manage reservations from your profile and offers',
-      },
+        description: 'Manage reservations from your profile and offers'
+      }
     }),
     []
   );
@@ -48,7 +48,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         {/* Tabs: compact + never overflow the page */}
         <TabsList className="w-full flex gap-2 p-1 overflow-x-hidden">
           <TabsTrigger value="list" className="gap-2 flex-1 min-w-0">
-            <List className="h-4 w-4 shrink-0" />
+            
             <span className="truncate">{t.list}</span>
           </TabsTrigger>
           <TabsTrigger value="staff" className="gap-2 flex-1 min-w-0">
@@ -73,7 +73,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           <ReservationSlotManager businessId={businessId} language={language} />
         </TabsContent>
       </Tabs>
-    </div>
-  );
-};
+    </div>);
 
+};
