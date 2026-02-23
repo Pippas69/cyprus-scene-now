@@ -3,10 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Users, Phone, Calendar, Building2, 
-  Tag, Clock, Loader2, QrCode
-} from 'lucide-react';
+import {
+  Users, Phone, Calendar, Building2,
+  Tag, Clock, Loader2, QrCode } from
+'lucide-react';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -27,9 +27,9 @@ interface DirectReservation {
   confirmation_code: string | null;
   qr_code_token: string | null;
   checked_in_at: string | null;
-  profiles?: { name: string; email: string };
+  profiles?: {name: string;email: string;};
   // Track if linked to an offer
-  offer_purchase?: { id: string; discount: { title: string } } | null;
+  offer_purchase?: {id: string;discount: {title: string;};} | null;
 }
 
 interface DirectReservationsListProps {
@@ -73,7 +73,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       stats: 'Στατιστικά',
       total: 'Σύνολο',
       today: 'Σήμερα',
-      checkedInCount: 'Check-ins',
+      checkedInCount: 'Check-ins'
     },
     en: {
       title: 'Profile & Offer Reservations',
@@ -103,22 +103,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       stats: 'Statistics',
       total: 'Total',
       today: 'Today',
-      checkedInCount: 'Check-ins',
-    },
+      checkedInCount: 'Check-ins'
+    }
   };
 
   const t = text[language];
 
   useEffect(() => {
     fetchReservations();
-    const channel = supabase
-      .channel('direct_reservations_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'reservations' },
-        () => fetchReservations()
-      )
-      .subscribe();
+    const channel = supabase.
+    channel('direct_reservations_changes').
+    on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'reservations' },
+      () => fetchReservations()
+    ).
+    subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -136,39 +136,39 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
     setLoading(true);
     try {
       // Fetch direct reservations (event_id is null)
-      const { data, error } = await supabase
-        .from('reservations')
-        .select(`
+      const { data, error } = await supabase.
+      from('reservations').
+      select(`
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, confirmation_code, qr_code_token, checked_in_at,
           profiles(name, email)
-        `)
-        .eq('business_id', businessId)
-        .is('event_id', null)
-        .order('preferred_time', { ascending: false }); // Most recent first
+        `).
+      eq('business_id', businessId).
+      is('event_id', null).
+      order('preferred_time', { ascending: false }); // Most recent first
 
       if (error) throw error;
 
       // Check which reservations are linked to offers
-      const reservationIds = data?.map(r => r.id) || [];
-      
+      const reservationIds = data?.map((r) => r.id) || [];
+
       let offerLinkedIds = new Set<string>();
       if (reservationIds.length > 0) {
-        const { data: offerPurchases } = await supabase
-          .from('offer_purchases')
-          .select('reservation_id, discounts(title)')
-          .in('reservation_id', reservationIds)
-          .not('reservation_id', 'is', null);
+        const { data: offerPurchases } = await supabase.
+        from('offer_purchases').
+        select('reservation_id, discounts(title)').
+        in('reservation_id', reservationIds).
+        not('reservation_id', 'is', null);
 
         if (offerPurchases) {
-          offerPurchases.forEach(p => {
+          offerPurchases.forEach((p) => {
             if (p.reservation_id) offerLinkedIds.add(p.reservation_id);
           });
         }
       }
 
-      const enrichedData = (data || []).map(r => ({
+      const enrichedData = (data || []).map((r) => ({
         ...r,
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
@@ -186,9 +186,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         return false;
       };
 
-      const pendingReservations = enrichedData.filter(r => !isCompleted(r));
-      const completedReservations = enrichedData.filter(r => isCompleted(r));
-      
+      const pendingReservations = enrichedData.filter((r) => !isCompleted(r));
+      const completedReservations = enrichedData.filter((r) => isCompleted(r));
+
       // Sort each group by preferred_time descending (most recent first)
       const sortByTime = (a: DirectReservation, b: DirectReservation) => {
         const timeA = a.preferred_time ? new Date(a.preferred_time).getTime() : 0;
@@ -224,9 +224,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
     // "Σύνολο" = όλες οι κρατήσεις που εμφανίζονται στη λίστα (ανεξαρτήτως κατάστασης)
     total: reservations.length,
     // "Σήμερα" = κρατήσεις που δημιουργήθηκαν σήμερα και ΔΕΝ είναι ακυρωμένες
-    today: reservations.filter(r => isSameDay(r.created_at) && r.status !== 'cancelled').length,
+    today: reservations.filter((r) => isSameDay(r.created_at) && r.status !== 'cancelled').length,
     // "Check-ins" = όλα τα check-ins από όλες τις κρατήσεις (όχι μόνο σήμερα)
-    checkedIn: reservations.filter(r => Boolean(r.checked_in_at)).length,
+    checkedIn: reservations.filter((r) => Boolean(r.checked_in_at)).length
   };
 
   const getStatusBadge = (reservation: DirectReservation) => {
@@ -234,12 +234,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
     if (reservation.checked_in_at) {
       return <Badge className="bg-green-500 text-white">{t.checkedIn}</Badge>;
     }
-    
+
     // Cancelled by user
     if (reservation.status === 'cancelled') {
       return <Badge variant="outline" className="text-muted-foreground">{t.cancelled}</Badge>;
     }
-    
+
     // No-Show: grace period (15 min) expired without check-in
     if (reservation.status === 'accepted' && reservation.preferred_time) {
       const slotTime = new Date(reservation.preferred_time);
@@ -263,23 +263,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800">
           <Tag className="h-3 w-3 mr-1" />
           {t.fromOffer}
-        </Badge>
-      );
+        </Badge>);
+
     }
     return (
       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
         <Building2 className="h-3 w-3 mr-1" />
         {t.fromProfile}
-      </Badge>
-    );
+      </Badge>);
+
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center p-6">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -315,21 +315,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
 
       {/* Section title (single line) */}
       <div className="min-w-0">
-        <h2 className="text-base font-semibold truncate">{t.title}</h2>
+        
       </div>
 
       {/* Reservations List */}
-      {filteredReservations.length === 0 ? (
-        <Card>
+      {filteredReservations.length === 0 ?
+      <Card>
           <CardContent className="py-10 text-center">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">{t.noReservations}</p>
           </CardContent>
-        </Card>
-      ) : isMobile ? (
-        <div className="space-y-3">
-          {filteredReservations.map((reservation) => (
-            <Card key={reservation.id} className="min-w-0">
+        </Card> :
+      isMobile ?
+      <div className="space-y-3">
+          {filteredReservations.map((reservation) =>
+        <Card key={reservation.id} className="min-w-0">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-3 min-w-0">
                   <div className="flex-1 min-w-0">
@@ -337,9 +337,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                       <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
                       {getTypeBadge(reservation)}
                     </div>
-                    {reservation.profiles?.email && (
-                      <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
-                    )}
+                    {reservation.profiles?.email &&
+                <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
+                }
                   </div>
                   {getStatusBadge(reservation)}
                 </div>
@@ -350,36 +350,36 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                     <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="truncate">{reservation.party_size} {t.people}</span>
                   </div>
-                  {reservation.preferred_time && (
-                    <div className="flex items-center gap-2 min-w-0">
+                  {reservation.preferred_time &&
+              <div className="flex items-center gap-2 min-w-0">
                       <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="truncate">
                         {format(new Date(reservation.preferred_time), 'MMM dd, HH:mm', { locale: language === 'el' ? el : enUS })}
                       </span>
                     </div>
-                  )}
-                  {reservation.phone_number && (
-                    <div className="flex items-center gap-2 min-w-0">
+              }
+                  {reservation.phone_number &&
+              <div className="flex items-center gap-2 min-w-0">
                       <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="truncate">{reservation.phone_number}</span>
                     </div>
-                  )}
-                  {reservation.confirmation_code && (
-                    <div className="flex items-center gap-2 min-w-0">
+              }
+                  {reservation.confirmation_code &&
+              <div className="flex items-center gap-2 min-w-0">
                       <QrCode className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="font-mono truncate">{reservation.confirmation_code}</span>
                     </div>
-                  )}
+              }
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      ) : (
-        /* Tablet uses mobile card layout */
-        <div className="space-y-3 lg:hidden">
-          {filteredReservations.map((reservation) => (
-            <Card key={reservation.id} className="min-w-0">
+        )}
+        </div> : (
+
+      /* Tablet uses mobile card layout */
+      <div className="space-y-3 lg:hidden">
+          {filteredReservations.map((reservation) =>
+        <Card key={reservation.id} className="min-w-0">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-3 min-w-0">
                   <div className="flex-1 min-w-0">
@@ -387,9 +387,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                       <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
                       {getTypeBadge(reservation)}
                     </div>
-                    {reservation.profiles?.email && (
-                      <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
-                    )}
+                    {reservation.profiles?.email &&
+                <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
+                }
                   </div>
                   {getStatusBadge(reservation)}
                 </div>
@@ -400,36 +400,36 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                     <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="truncate">{reservation.party_size} {t.people}</span>
                   </div>
-                  {reservation.preferred_time && (
-                    <div className="flex items-center gap-2 min-w-0">
+                  {reservation.preferred_time &&
+              <div className="flex items-center gap-2 min-w-0">
                       <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="truncate">
                         {format(new Date(reservation.preferred_time), 'MMM dd, HH:mm', { locale: language === 'el' ? el : enUS })}
                       </span>
                     </div>
-                  )}
-                  {reservation.phone_number && (
-                    <div className="flex items-center gap-2 min-w-0">
+              }
+                  {reservation.phone_number &&
+              <div className="flex items-center gap-2 min-w-0">
                       <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="truncate">{reservation.phone_number}</span>
                     </div>
-                  )}
-                  {reservation.confirmation_code && (
-                    <div className="flex items-center gap-2 min-w-0">
+              }
+                  {reservation.confirmation_code &&
+              <div className="flex items-center gap-2 min-w-0">
                       <QrCode className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="font-mono truncate">{reservation.confirmation_code}</span>
                     </div>
-                  )}
+              }
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+        )}
+        </div>)
+      }
       
       {/* Desktop table - only on lg+ */}
-      {filteredReservations.length > 0 && (
-        <div className="rounded-md border w-full max-w-full overflow-x-auto hidden lg:block">
+      {filteredReservations.length > 0 &&
+      <div className="rounded-md border w-full max-w-full overflow-x-auto hidden lg:block">
           <Table className="w-full min-w-[980px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
@@ -442,8 +442,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredReservations.map((reservation) => (
-                <TableRow key={reservation.id}>
+              {filteredReservations.map((reservation) =>
+            <TableRow key={reservation.id}>
                   <TableCell className="min-w-0 align-top">
                     <div className="min-w-0">
                       <div className="font-medium truncate">{reservation.reservation_name}</div>
@@ -452,14 +452,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                   </TableCell>
 
                   <TableCell className="align-top">
-                    {reservation.preferred_time && (
-                      <div className="flex items-center gap-2 min-w-0">
+                    {reservation.preferred_time &&
+                <div className="flex items-center gap-2 min-w-0">
                         <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <span className="whitespace-nowrap">
                           {format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
                         </span>
                       </div>
-                    )}
+                }
                   </TableCell>
 
                   <TableCell className="align-top">
@@ -467,33 +467,33 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
                       <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <span className="whitespace-nowrap">{reservation.party_size} {t.people}</span>
                     </div>
-                    {reservation.phone_number && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1 min-w-0">
+                    {reservation.phone_number &&
+                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1 min-w-0">
                         <Phone className="h-3 w-3 flex-shrink-0" />
                         <span className="whitespace-nowrap">{reservation.phone_number}</span>
                       </div>
-                    )}
+                }
                   </TableCell>
 
                   <TableCell className="min-w-0 align-top">{getTypeBadge(reservation)}</TableCell>
 
                   <TableCell className="align-top">
-                    {reservation.confirmation_code && (
-                      <span className="font-mono text-sm bg-primary/10 px-2 py-1 rounded whitespace-nowrap inline-block">
+                    {reservation.confirmation_code &&
+                <span className="font-mono text-sm bg-primary/10 px-2 py-1 rounded whitespace-nowrap inline-block">
                         {reservation.confirmation_code}
                       </span>
-                    )}
+                }
                   </TableCell>
 
                   <TableCell className="align-top">{getStatusBadge(reservation)}</TableCell>
                 </TableRow>
-              ))}
+            )}
             </TableBody>
           </Table>
           </div>
-        )}
+      }
       
 
-    </div>
-  );
+    </div>);
+
 };
