@@ -40,6 +40,7 @@ const EventBoostDialog = ({
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 7));
   const [durationHours, setDurationHours] = useState<number>(3);
+  const [durationHoursInput, setDurationHoursInput] = useState<string>("3");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -351,13 +352,23 @@ const EventBoostDialog = ({
                       </Button>
                       <div className="flex items-center gap-1.5">
                         <Input
-                          type="number"
-                          min={1}
-                          max={24}
-                          value={durationHours}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={durationHoursInput}
                           onChange={(e) => {
-                            const v = parseInt(e.target.value);
-                            if (!isNaN(v)) setDurationHours(Math.min(24, Math.max(1, v)));
+                            const raw = e.target.value;
+                            if (raw === '' || /^\d+$/.test(raw)) {
+                              setDurationHoursInput(raw);
+                              const v = parseInt(raw);
+                              if (!isNaN(v) && v >= 1 && v <= 24) setDurationHours(v);
+                            }
+                          }}
+                          onBlur={() => {
+                            const v = parseInt(durationHoursInput);
+                            if (isNaN(v) || v < 1) { setDurationHours(1); setDurationHoursInput("1"); }
+                            else if (v > 24) { setDurationHours(24); setDurationHoursInput("24"); }
+                            else { setDurationHours(v); setDurationHoursInput(String(v)); }
                           }}
                           className="w-16 text-center"
                         />
