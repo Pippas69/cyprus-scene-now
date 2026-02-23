@@ -12,8 +12,62 @@ import { useQuery } from '@tanstack/react-query';
 export default function SubscriptionStatus() {
   const navigate = useNavigate();
 
-  // Fetch subscription status
-  const { data: subscriptionData, isLoading, refetch } = useQuery({
+  // FAST: Read directly from DB for instant display
+  const { data: dbData, isLoading: isDbLoading } = useQuery({
+    queryKey: ['subscription-db-fast'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      // Get business for this user
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!business) return null;
+
+      // Get subscription with plan details
+      const { data: sub } = await supabase
+        .from('business_subscriptions')
+        .select('*, subscription_plans(*)')
+        .eq('business_id', business.id)
+        .eq('status', 'active')
+        .single();
+
+      if (!sub || !sub.subscription_plans) return null;
+
+      const plan = sub.subscription_plans as any;
+      const budgetRemaining = Math.min(
+        sub.monthly_budget_remaining_cents ?? plan.event_boost_budget_cents,
+        plan.event_boost_budget_cents
+      );
+
+      return {
+        subscribed: true,
+        plan_slug: plan.slug,
+        plan_name: plan.name,
+        billing_cycle: sub.billing_cycle || 'monthly',
+        status: 'active',
+        subscription_end: sub.current_period_end,
+        monthly_budget_remaining_cents: budgetRemaining,
+        event_boost_budget_cents: plan.event_boost_budget_cents,
+        commission_free_offers_remaining: sub.commission_free_offers_remaining ?? 0,
+        commission_free_offers_count: plan.commission_free_offers_count || 0,
+        commission_percent: plan.commission_percent || 12,
+        analytics_level: plan.analytics_level || 'overview',
+        downgrade_pending: !!sub.downgraded_to_free_at,
+        downgrade_effective_date: sub.downgraded_to_free_at ? sub.current_period_end : null,
+        downgrade_target_plan: sub.downgrade_target_plan || 'free',
+      };
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // BACKGROUND: Stripe sync (slower, but keeps data accurate)
+  const { data: subscriptionData, refetch } = useQuery({
     queryKey: ['subscription-status'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -28,10 +82,13 @@ export default function SubscriptionStatus() {
       if (error) throw error;
       return data;
     },
-    staleTime: 3 * 60 * 1000, // 3 minutes - avoid redundant refetches
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer
-    refetchInterval: 60000, // Refetch every 60 seconds
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 60000,
   });
+
+  // Use Stripe data if available, otherwise use fast DB data
+  const displayData = subscriptionData || dbData;
 
   // Auto-refresh on mount and when returning from Stripe
   useEffect(() => {
@@ -39,7 +96,6 @@ export default function SubscriptionStatus() {
     if (params.get('subscription') === 'success') {
       toast.success('Subscription activated successfully!');
       refetch();
-      // Clean up URL
       window.history.replaceState({}, '', '/dashboard-business');
     } else if (params.get('subscription') === 'canceled') {
       toast.info('Subscription purchase canceled');
@@ -89,7 +145,8 @@ export default function SubscriptionStatus() {
     });
   };
 
-  if (isLoading) {
+  // Only show loading if DB query is still loading (should be very fast)
+  if (isDbLoading) {
     return (
       <div className="space-y-4">
         <Card>
@@ -102,7 +159,7 @@ export default function SubscriptionStatus() {
   }
 
   // No active subscription
-  if (!subscriptionData?.subscribed) {
+  if (!displayData?.subscribed) {
     return (
       <Card className="border-dashed">
         <CardHeader>
@@ -127,15 +184,17 @@ export default function SubscriptionStatus() {
     );
   }
 
-  // Active subscription
-  const budgetUsedPercent = subscriptionData.event_boost_budget_cents > 0
-    ? ((subscriptionData.event_boost_budget_cents - subscriptionData.monthly_budget_remaining_cents) / 
-       subscriptionData.event_boost_budget_cents) * 100
+  // Active subscription - cap remaining to never exceed total
+  const totalBudget = displayData.event_boost_budget_cents || 0;
+  const remainingBudget = Math.min(displayData.monthly_budget_remaining_cents ?? 0, totalBudget);
+  
+  const budgetUsedPercent = totalBudget > 0
+    ? ((totalBudget - remainingBudget) / totalBudget) * 100
     : 0;
 
-  const offersUsedPercent = subscriptionData.commission_free_offers_count > 0
-    ? ((subscriptionData.commission_free_offers_count - subscriptionData.commission_free_offers_remaining) / 
-       subscriptionData.commission_free_offers_count) * 100
+  const offersUsedPercent = displayData.commission_free_offers_count > 0
+    ? ((displayData.commission_free_offers_count - displayData.commission_free_offers_remaining) / 
+       displayData.commission_free_offers_count) * 100
     : 0;
 
   return (
@@ -146,21 +205,21 @@ export default function SubscriptionStatus() {
           <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-2xl">
-                {subscriptionData.plan_name}
+                {displayData.plan_name}
               </CardTitle>
               <CardDescription className="mt-1">
-                {subscriptionData.billing_cycle === 'annual' ? 'Annual' : 'Monthly'} billing
+                {displayData.billing_cycle === 'annual' ? 'Annual' : 'Monthly'} billing
               </CardDescription>
             </div>
             <Badge variant="default" className="bg-green-500">
-              {subscriptionData.status === 'active' ? 'Active' : subscriptionData.status}
+              {displayData.status === 'active' ? 'Active' : displayData.status}
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <p className="text-sm text-muted-foreground">Subscription renews on</p>
-            <p className="text-lg font-semibold">{formatDate(subscriptionData.subscription_end)}</p>
+            <p className="text-lg font-semibold">{formatDate(displayData.subscription_end)}</p>
           </div>
 
           <div className="flex gap-2">
@@ -193,13 +252,13 @@ export default function SubscriptionStatus() {
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Remaining this month</span>
             <span className="font-semibold">
-              {formatCurrency(subscriptionData.monthly_budget_remaining_cents)} of{' '}
-              {formatCurrency(subscriptionData.event_boost_budget_cents)}
+              {formatCurrency(remainingBudget)} of{' '}
+              {formatCurrency(totalBudget)}
             </span>
           </div>
           <Progress value={budgetUsedPercent} className="h-2" />
           <p className="text-xs text-muted-foreground">
-            Budget resets on {formatDate(subscriptionData.subscription_end)}
+            Budget resets on {formatDate(displayData.subscription_end)}
           </p>
         </CardContent>
       </Card>
