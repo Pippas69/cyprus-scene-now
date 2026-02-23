@@ -345,7 +345,7 @@ const EventBoostDialog = ({
                         variant="outline"
                         size="icon"
                         className="h-9 w-9 shrink-0"
-                        onClick={() => setDurationHours(Math.max(1, durationHours - 1))}
+                        onClick={() => { const v = Math.max(1, durationHours - 1); setDurationHours(v); setDurationHoursInput(String(v)); }}
                         disabled={durationHours <= 1}
                       >
                         <Minus className="h-4 w-4" />
@@ -379,7 +379,7 @@ const EventBoostDialog = ({
                         variant="outline"
                         size="icon"
                         className="h-9 w-9 shrink-0"
-                        onClick={() => setDurationHours(Math.min(24, durationHours + 1))}
+                        onClick={() => { const v = Math.min(24, durationHours + 1); setDurationHours(v); setDurationHoursInput(String(v)); }}
                         disabled={durationHours >= 24}
                       >
                         <Plus className="h-4 w-4" />
