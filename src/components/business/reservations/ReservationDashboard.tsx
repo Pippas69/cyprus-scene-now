@@ -20,7 +20,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         reservations: 'Κρατήσεις',
         staffControl: 'Έλεγχος',
         settings: 'Ρυθμίσεις',
-        list: 'Λίστα Κρατήσεων',
+        list: 'Διαχείριση',
         description: 'Διαχειριστείτε τις κρατήσεις από το προφίλ και τις προσφορές σας',
       },
       en: {
