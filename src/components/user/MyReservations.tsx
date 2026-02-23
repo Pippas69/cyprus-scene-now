@@ -422,21 +422,21 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* QR Code + Cancel on same line */}
           {!isPast && (
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1.5 mt-2">
               {/* QR Code Button */}
               {reservation.confirmation_code && (
                 <button
                   type="button"
                   onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
-                  className="flex-1 flex items-center justify-between bg-muted/50 border border-border rounded-lg px-3 py-2 hover:bg-muted transition-colors"
+                  className="flex-1 flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{t.code}</span>
-                    <span className="text-sm font-bold text-foreground tracking-wider">{reservation.confirmation_code}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground">{t.code}</span>
+                    <span className="text-xs font-semibold text-foreground tracking-wider">{reservation.confirmation_code}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-primary">
-                    <QrCode className="h-4 w-4" />
-                    <span className="text-xs font-medium">QR</span>
+                  <div className="flex items-center gap-0.5 text-primary">
+                    <QrCode className="h-3.5 w-3.5" />
+                    <span className="text-[10px] font-medium">QR</span>
                   </div>
                 </button>
               )}
@@ -446,7 +446,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-[38px] text-xs text-destructive border-destructive/30 hover:bg-destructive/10 px-3 shrink-0"
+                  className="h-[30px] text-[10px] text-destructive border-destructive/30 hover:bg-destructive/10 px-2.5 shrink-0"
                   onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
                 >
                   {t.cancelReservation}
