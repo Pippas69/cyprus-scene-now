@@ -41,7 +41,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       {/* Header */}
       <div className="min-w-0">
         <h1 className="text-2xl md:text-3xl font-bold truncate">{t.reservations}</h1>
-        <p className="text-muted-foreground mt-1 text-sm md:text-base">{t.description}</p>
+        
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full">
