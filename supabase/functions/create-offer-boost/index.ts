@@ -128,30 +128,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    const remainingBudget = subscription.monthly_budget_remaining_cents || 0;
+    const remainingBudget = subscription.monthly_budget_remaining_cents ?? 0;
 
-    // Determine initial status based on start date
-    const now = new Date();
-    const start = new Date(startDate);
-    const status = start <= now ? "active" : "scheduled";
-
-    // If there's already an active boost for this offer, UPDATE it instead of creating a second active record
-    const { data: existingActive } = await supabaseClient
-      .from("offer_boosts")
-      .select("id,total_cost_cents")
-      .eq("discount_id", discountId)
-      .eq("active", true)
-      .maybeSingle();
-
-    const existingCost = Number(existingActive?.total_cost_cents ?? 0);
-    const deltaCents = totalCostCents - existingCost;
-
-    // If delta is positive, ensure we have enough budget for the incremental difference
-    if (deltaCents > 0 && remainingBudget < deltaCents) {
+    // Check if budget is sufficient for full cost
+    if (remainingBudget < totalCostCents) {
+      logStep("Insufficient subscription budget", { remainingBudget, totalCostCents });
       return new Response(
         JSON.stringify({
           needsPayment: true,
-          totalCostCents: deltaCents,
+          totalCostCents,
           tier,
           durationMode,
           durationHours: calculatedDurationHours,
@@ -162,79 +147,50 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (existingActive?.id) {
-      // Update existing boost
-      const { error: updateBoostError } = await supabaseClient
-        .from("offer_boosts")
-        .update({
-          boost_tier: tier,
-          targeting_quality: tierData.quality,
-          daily_rate_cents: tierData.dailyRateCents,
-          hourly_rate_cents: durationMode === "hourly" ? tierData.hourlyRateCents : null,
-          duration_mode: durationMode,
-          duration_hours: calculatedDurationHours,
-          total_cost_cents: totalCostCents,
-          start_date: startDate,
-          end_date: endDate,
-          status,
-          source: "subscription",
-          commission_percent: 0,
-          active: status === "active",
-        })
-        .eq("id", existingActive.id);
+    // Determine initial status based on start date
+    const now = new Date();
+    const start = new Date(startDate);
+    const status = start <= now ? "active" : "scheduled";
 
-      if (updateBoostError) throw updateBoostError;
+    // Always create a new boost record (consistent with event boost logic)
+    const { data: createdBoost, error: boostError } = await supabaseClient
+      .from("offer_boosts")
+      .insert({
+        discount_id: discountId,
+        business_id: businessId,
+        boost_tier: tier,
+        targeting_quality: tierData.quality,
+        daily_rate_cents: tierData.dailyRateCents,
+        hourly_rate_cents: durationMode === "hourly" ? tierData.hourlyRateCents : null,
+        duration_mode: durationMode,
+        duration_hours: calculatedDurationHours,
+        total_cost_cents: totalCostCents,
+        start_date: startDate,
+        end_date: endDate,
+        status,
+        source: "subscription",
+        commission_percent: 0,
+        active: status === "active",
+      })
+      .select("id")
+      .single();
 
-      // Apply budget delta (can be negative => refund)
-      const newBudget = remainingBudget - deltaCents;
-      const { error: budgetError } = await supabaseClient
-        .from("business_subscriptions")
-        .update({ monthly_budget_remaining_cents: newBudget })
-        .eq("id", subscription.id);
+    if (boostError) throw boostError;
 
-      if (budgetError) throw budgetError;
+    // Deduct full cost from subscription budget AFTER successful boost creation
+    const newBudget = remainingBudget - totalCostCents;
+    const { error: budgetError } = await supabaseClient
+      .from("business_subscriptions")
+      .update({ monthly_budget_remaining_cents: newBudget })
+      .eq("id", subscription.id);
 
-      logStep("Existing offer boost updated", { existingId: existingActive.id, existingCost, newCost: totalCostCents, deltaCents, newBudget });
-    } else {
-      // Create new boost record FIRST
-      const { data: createdBoost, error: boostError } = await supabaseClient
-        .from("offer_boosts")
-        .insert({
-          discount_id: discountId,
-          business_id: businessId,
-          boost_tier: tier,
-          targeting_quality: tierData.quality,
-          daily_rate_cents: tierData.dailyRateCents,
-          hourly_rate_cents: durationMode === "hourly" ? tierData.hourlyRateCents : null,
-          duration_mode: durationMode,
-          duration_hours: calculatedDurationHours,
-          total_cost_cents: totalCostCents,
-          start_date: startDate,
-          end_date: endDate,
-          status,
-          source: "subscription",
-          commission_percent: 0,
-          active: status === "active",
-        })
-        .select("id")
-        .single();
-
-      if (boostError) throw boostError;
-
-      // Deduct from subscription budget AFTER successful boost creation
-      const newBudget = remainingBudget - totalCostCents;
-      const { error: budgetError } = await supabaseClient
-        .from("business_subscriptions")
-        .update({ monthly_budget_remaining_cents: newBudget })
-        .eq("id", subscription.id);
-
-      if (budgetError) {
-        await supabaseClient.from("offer_boosts").delete().eq("id", createdBoost.id);
-        throw budgetError;
-      }
-
-      logStep("Budget deducted", { previousBudget: remainingBudget, deducted: totalCostCents, newBudget });
+    if (budgetError) {
+      // Best-effort rollback
+      await supabaseClient.from("offer_boosts").delete().eq("id", createdBoost.id);
+      throw budgetError;
     }
+
+    logStep("Budget deducted", { previousBudget: remainingBudget, deducted: totalCostCents, newBudget });
 
     logStep("Offer boost created", { tier, targetingQuality: tierData.quality, status, durationMode });
 
