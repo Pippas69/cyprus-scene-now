@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
 
       try {
         await resend.emails.send({
-          from: "ΦΟΜΟ <offers@fomo.com.cy>",
+          from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [profile.email],
           subject: `✅ Reservation Accepted - Complete Your Payment for ${purchase.discounts.businesses.name}`,
           html: emailHtml,

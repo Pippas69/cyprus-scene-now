@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     const html = wrapBusinessEmail(content, '🎟️ Νέα Πώληση');
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <noreply@fomo.com.cy>",
+      from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [businessEmail],
       subject: `🎟️ Νέα πώληση: ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} για ${eventTitle}`,
       html,

@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
     const html = wrapPremiumEmail(content, subheader);
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <offers@fomo.com.cy>",
+      from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [data.userEmail],
       subject: emailSubject,
       html,

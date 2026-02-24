@@ -383,7 +383,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (userEmailAddr && userHtml && !(await wasAlreadySent(supabase, reservation.user_id, userEmailKey))) {
       try {
         await resend.emails.send({
-          from: "ΦΟΜΟ <noreply@fomo.com.cy>",
+          from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [userEmailAddr],
           subject: userSubject,
           html: userHtml,
@@ -399,7 +399,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (businessData?.user_id && bizEmailAddr && businessHtml && bizEmailKey && !(await wasAlreadySent(supabase, businessData.user_id, bizEmailKey))) {
       try {
         await resend.emails.send({
-          from: "ΦΟΜΟ <noreply@fomo.com.cy>",
+          from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [bizEmailAddr],
           subject: businessSubject,
           html: businessHtml,
