@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
     const html = wrapBusinessEmail(content, subheader);
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <noreply@fomo.com.cy>",
+      from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [data.businessEmail],
       subject: emailSubject,
       html,

@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     const emailHtml = wrapPremiumEmail(content, '🎓 Επαλήθευση Φοιτητή');
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <noreply@fomo.com.cy>",
+      from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [universityEmail],
       subject: "🎓 Επαλήθευση Φοιτητικής Ιδιότητας - ΦΟΜΟ",
       html: emailHtml,

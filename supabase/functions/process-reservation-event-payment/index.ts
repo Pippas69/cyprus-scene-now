@@ -310,7 +310,7 @@ serve(async (req) => {
           const userEmailHtml = wrapPremiumEmail(userContent, '✓ Κράτηση Εκδήλωσης');
 
           await resend.emails.send({
-            from: "ΦΟΜΟ <notifications@fomo.com.cy>",
+            from: "ΦΟΜΟ <support@fomo.com.cy>",
             to: [profile.email],
             subject: `✓ Κράτηση επιβεβαιώθηκε - ${eventTitle}`,
             html: userEmailHtml,
@@ -403,7 +403,7 @@ serve(async (req) => {
             const bizEmailHtml = wrapBusinessEmail(bizContent, '🎟️ Κράτηση Εκδήλωσης');
 
             await resend.emails.send({
-              from: "ΦΟΜΟ <notifications@fomo.com.cy>",
+              from: "ΦΟΜΟ <support@fomo.com.cy>",
               to: [bizProfile.email],
               subject: `🎟️ Νέα Κράτηση Εκδήλωσης: ${reservation.reservation_name}`,
               html: bizEmailHtml,

@@ -1101,7 +1101,7 @@ async function handleStudentQR(
 
     if (studentEmail) {
       await resend.emails.send({
-        from: "ΦΟΜΟ <notifications@fomo.com.cy>",
+        from: "ΦΟΜΟ <support@fomo.com.cy>",
         to: [studentEmail],
         subject: subjectUser,
         html: userHtml,
@@ -1110,7 +1110,7 @@ async function handleStudentQR(
 
     if (businessEmail) {
       await resend.emails.send({
-        from: "ΦΟΜΟ <notifications@fomo.com.cy>",
+        from: "ΦΟΜΟ <support@fomo.com.cy>",
         to: [businessEmail],
         subject: subjectBusiness,
         html: businessHtml,

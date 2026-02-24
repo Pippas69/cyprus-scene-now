@@ -337,7 +337,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             `);
 
             await resend.emails.send({
-              from: "ΦΟΜΟ <suggestions@fomo.com.cy>",
+              from: "ΦΟΜΟ <support@fomo.com.cy>",
               to: [profile.email],
               subject: "🎯 Νέο περιεχόμενο για εσένα στο ΦΟΜΟ!",
               html: emailHtml,

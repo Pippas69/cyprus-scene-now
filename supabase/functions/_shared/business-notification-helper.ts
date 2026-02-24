@@ -243,7 +243,7 @@ async function sendEmailNotification(
 ): Promise<boolean> {
   try {
     await resend.emails.send({
-      from: "ΦΟΜΟ <notifications@fomo.com.cy>",
+      from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [email],
       subject,
       html,

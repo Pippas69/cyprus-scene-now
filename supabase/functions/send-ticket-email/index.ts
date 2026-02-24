@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
     const emailHtml = wrapPremiumEmail(content, '🎟️ Εισιτήρια Έτοιμα');
 
     const emailResponse = await resend.emails.send({
-      from: "ΦΟΜΟ <tickets@fomo.com.cy>",
+      from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [userEmail],
       subject: `🎟️ Τα εισιτήριά σου για ${eventTitle}`,
       html: emailHtml,

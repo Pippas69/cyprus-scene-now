@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
 
             try {
               await resend.emails.send({
-                from: "ΦΟΜΟ <noreply@fomo.com.cy>",
+                from: "ΦΟΜΟ <support@fomo.com.cy>",
                 to: [businessOwner.email],
                 subject: `⏰ Payment Expired - Reservation Cancelled`,
                 html: emailHtml,
