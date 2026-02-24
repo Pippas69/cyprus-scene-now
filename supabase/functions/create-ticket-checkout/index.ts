@@ -285,6 +285,53 @@ Deno.serve(async (req) => {
         logStep("Business in-app notification error", String(notifError));
       }
 
+      // Send ticket confirmation email
+      try {
+        const formattedTickets = ticketsToCreate.map((t, idx) => {
+          const tier = tiers.find(tr => tr.id === t.tier_id);
+          const priceCents = tier?.price_cents || 0;
+          return {
+            id: `ticket-${idx}`,
+            qrToken: '',
+            tierName: tier?.name || 'Εισιτήριο',
+            pricePaid: priceCents > 0 ? `€${(priceCents / 100).toFixed(2)}` : 'Δωρεάν',
+          };
+        });
+
+        // Fetch created tickets to get qr_code_tokens
+        const { data: createdTickets } = await supabaseClient
+          .from('tickets')
+          .select('id, qr_code_token, tier_id')
+          .eq('order_id', order.id);
+
+        if (createdTickets) {
+          createdTickets.forEach((ct, idx) => {
+            if (formattedTickets[idx]) {
+              formattedTickets[idx].id = ct.id;
+              formattedTickets[idx].qrToken = ct.qr_code_token || '';
+            }
+          });
+        }
+
+        await supabaseClient.functions.invoke('send-ticket-email', {
+          body: {
+            orderId: order.id,
+            userId: user.id,
+            userEmail: customerEmail || user.email,
+            customerName: customerName,
+            eventTitle: event.title,
+            eventDate: event.start_at,
+            eventLocation: event.venue_name || event.location,
+            businessName: business.name,
+            eventCoverImage: event.cover_image_url,
+            tickets: formattedTickets,
+          },
+        });
+        logStep("Ticket email sent");
+      } catch (emailError) {
+        logStep("Ticket email error", String(emailError));
+      }
+
       return new Response(JSON.stringify({ 
         success: true, 
         orderId: order.id,
