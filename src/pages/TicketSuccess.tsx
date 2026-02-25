@@ -106,35 +106,50 @@ export const TicketSuccess = () => {
           }
         }
 
-        // Fetch ticket details
-        const { data: tickets, error: fetchError } = await supabase
-          .from("tickets")
-          .select(`
-            id,
-            qr_code_token,
-            ticket_tiers!inner(name, events!inner(title, start_at, businesses!inner(name, logo_url)))
-          `)
-          .eq("order_id", orderId)
-          .limit(1)
-          .single();
+        // Fetch ticket details — retry a few times since the ticket row
+        // might not exist yet (edge function / webhook still processing).
+        let tickets: any = null;
+        let fetchError: any = null;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const { data, error } = await supabase
+            .from("tickets")
+            .select(`
+              id,
+              qr_code_token,
+              ticket_tiers(name),
+              events(title, start_at, businesses(name, logo_url))
+            `)
+            .eq("order_id", orderId)
+            .limit(1)
+            .single();
 
-        if (fetchError) {
+          if (!error && data) {
+            tickets = data;
+            fetchError = null;
+            break;
+          }
+          fetchError = error;
+          // Wait progressively longer between retries
+          await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+        }
+
+        if (fetchError || !tickets) {
           console.error("Ticket fetch error:", fetchError);
           // Still show success but with minimal data
           setStatus("success");
           return;
         }
 
-        const ticketTier = tickets.ticket_tiers as any;
-        const event = ticketTier?.events;
-        const business = event?.businesses;
+        const tierData = tickets.ticket_tiers as any;
+        const eventData = tickets.events as any;
+        const business = eventData?.businesses;
 
         setTicketData({
           id: tickets.id,
           qr_code_token: tickets.qr_code_token,
-          tier_name: ticketTier?.name || "General",
-          event_title: event?.title || "Event",
-          event_date: event?.start_at || "",
+          tier_name: tierData?.name || "General",
+          event_title: eventData?.title || "Event",
+          event_date: eventData?.start_at || "",
           business_name: business?.name || "",
           business_logo: business?.logo_url || null,
         });
