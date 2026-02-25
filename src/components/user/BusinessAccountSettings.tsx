@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -875,9 +876,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
         <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="current-password" className="text-xs sm:text-sm">{t.currentPassword}</Label>
-            <Input
+            <PasswordInput
               id="current-password"
-              type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               className="text-xs sm:text-sm h-9 sm:h-10"
@@ -885,9 +885,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           </div>
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="new-password" className="text-xs sm:text-sm">{t.newPassword}</Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="text-xs sm:text-sm h-9 sm:h-10"
@@ -895,9 +894,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           </div>
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="confirm-password" className="text-xs sm:text-sm">{t.confirmPassword}</Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="text-xs sm:text-sm h-9 sm:h-10"

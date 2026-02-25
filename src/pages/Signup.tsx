@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -460,7 +461,7 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel>{t.password}</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder={t.passwordPlaceholder} {...field} className="rounded-xl" />
+                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />

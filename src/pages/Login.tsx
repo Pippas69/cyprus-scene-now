@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -174,7 +175,7 @@ const Login = () => {
                   <FormItem>
                     <FormLabel>{t.password}</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder={t.passwordPlaceholder} {...field} className="rounded-xl" />
+                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

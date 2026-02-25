@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -187,8 +188,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
               disabled={isLoading} />
 
             <div>
-              <Input
-                type="password"
+              <PasswordInput
                 placeholder={t.password}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -245,9 +246,8 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="current-password">{t.currentPassword}</Label>
-            <Input
+            <PasswordInput
               id="current-password"
-              type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               className="h-9 sm:h-10"
@@ -255,9 +255,8 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
           </div>
           <div className="space-y-2">
             <Label htmlFor="new-password">{t.newPassword}</Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="h-9 sm:h-10"
@@ -265,9 +264,8 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">{t.confirmPassword}</Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="h-9 sm:h-10"
