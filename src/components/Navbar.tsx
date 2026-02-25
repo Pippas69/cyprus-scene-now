@@ -313,13 +313,13 @@ const Navbar = () => {
                       <Button 
                         className="w-full text-sm bg-[#4ECDC4] text-white hover:bg-[#3dbdb5] border-0" 
                         size="default" 
-                        onClick={() => {
-                          navigate("/signup-business");
-                          setMobileOpen(false);
-                        }}
-                      >
-                        {t.joinFomo}
-                      </Button>
+                         onClick={() => {
+                           navigate("/signup");
+                           setMobileOpen(false);
+                         }}
+                       >
+                         {t.joinFomo}
+                       </Button>
                       <Button 
                         className="w-full text-sm bg-[#4ECDC4] text-white hover:bg-[#3dbdb5] border-0" 
                         size="default" 
