@@ -111,7 +111,7 @@ export const DirectReservationDialog = ({
       preferredDate: 'Ημερομηνία',
       preferredTime: 'Ώρα Άφιξης',
       phoneNumber: 'Τηλέφωνο',
-      phonePlaceholder: 'π.χ. +30 123 456 7890',
+      phonePlaceholder: 'π.χ. 99123456',
       specialRequests: 'Ειδικές Απαιτήσεις (Προαιρετικό)',
       requestsPlaceholder: 'Οποιεσδήποτε ειδικές απαιτήσεις...',
       submit: 'Επιβεβαίωση Κράτησης',
@@ -142,7 +142,7 @@ export const DirectReservationDialog = ({
       preferredDate: 'Date',
       preferredTime: 'Arrival Time',
       phoneNumber: 'Phone Number',
-      phonePlaceholder: 'e.g. +30 123 456 7890',
+      phonePlaceholder: 'e.g. 99123456',
       specialRequests: 'Special Requests (Optional)',
       requestsPlaceholder: 'Any special requirements...',
       submit: 'Confirm Reservation',
@@ -392,6 +392,12 @@ export const DirectReservationDialog = ({
 
     if (!formData.phone_number.trim()) {
       toast.error(language === 'el' ? 'Παρακαλώ εισάγετε τηλέφωνο' : 'Please enter a phone number');
+      return;
+    }
+
+    const phoneDigits = formData.phone_number.replace(/\D/g, '').length;
+    if (phoneDigits < 8 || phoneDigits > 15) {
+      toast.error(language === 'el' ? 'Το τηλέφωνο πρέπει να έχει 8-15 ψηφία' : 'Phone must have 8-15 digits');
       return;
     }
 

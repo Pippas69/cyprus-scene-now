@@ -39,7 +39,10 @@ const SignupBusiness = () => {
     city: z.string().min(1, "Επιλέξτε πόλη"),
     address: z.string().min(5, "Εισάγετε διεύθυνση"),
     email: z.string().email("Μη έγκυρο email"),
-    phone: z.string().min(8, "Εισάγετε έγκυρο τηλέφωνο"),
+    phone: z.string()
+      .regex(/^[0-9\s\-\+\(\)]+$/, language === 'el' ? 'Μη έγκυρο τηλέφωνο' : 'Invalid phone number')
+      .refine((val) => val.replace(/\D/g, '').length >= 8, { message: language === 'el' ? 'Το τηλέφωνο πρέπει να έχει τουλάχιστον 8 ψηφία' : 'Phone must be at least 8 digits' })
+      .refine((val) => val.replace(/\D/g, '').length <= 15, { message: language === 'el' ? 'Το τηλέφωνο δεν μπορεί να υπερβαίνει τα 15 ψηφία' : 'Phone cannot exceed 15 digits' }),
     website: z.string().optional(),
     password: z.string().min(6, "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες"),
     confirmPassword: z.string(),
