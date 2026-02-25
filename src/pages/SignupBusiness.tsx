@@ -429,7 +429,7 @@ const SignupBusiness = () => {
             {/* City */}
             <div>
               <Label htmlFor="city">{language === 'el' ? 'Τοποθεσία / Πόλη *' : 'Location / City *'}</Label>
-              <select id="city" {...register("city")} className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <select id="city" {...register("city")} className="w-full mt-1 rounded-md border border-input bg-background px-3 h-10 text-sm">
                 <option value="">{language === 'el' ? 'Επιλέξτε πόλη' : 'Select city'}</option>
                 {getCityOptions(language).map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
