@@ -46,6 +46,7 @@ export const authTranslations = {
     
     // Toast messages
     wrongCredentials: "Λάθος email ή κωδικός",
+    emailNotConfirmed: "Το email σου δεν έχει επιβεβαιωθεί. Έλεγξε τα εισερχόμενά σου για το email επιβεβαίωσης.",
     loginSuccess: "Επιτυχής σύνδεση!",
     adminWelcome: "Καλωσόρισες, Διαχειριστή του ΦΟΜΟ!",
     businessWelcome: "Καλωσόρισες στο dashboard σου!",
@@ -102,6 +103,7 @@ export const authTranslations = {
     
     // Toast messages
     wrongCredentials: "Wrong email or password",
+    emailNotConfirmed: "Your email is not confirmed. Check your inbox for the confirmation email.",
     loginSuccess: "Login successful!",
     adminWelcome: "Welcome, ΦΟΜΟ Admin!",
     businessWelcome: "Welcome to your dashboard!",
