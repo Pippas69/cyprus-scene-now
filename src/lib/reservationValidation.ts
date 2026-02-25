@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { phoneRegex, getDigitCount } from './phoneValidation';
 
 export const reservationSchema = z.object({
   reservation_name: z
@@ -15,9 +16,9 @@ export const reservationSchema = z.object({
   
   phone_number: z
     .string()
-    .regex(/^\+?[\d\s\-()]+$/, 'Invalid phone number format')
-    .min(10, 'Phone number must be at least 10 digits')
-    .max(20, 'Phone number must not exceed 20 characters')
+    .regex(phoneRegex, 'Invalid phone number format')
+    .refine((val) => getDigitCount(val) >= 8, { message: 'Phone number must be at least 8 digits' })
+    .refine((val) => getDigitCount(val) <= 15, { message: 'Phone number cannot exceed 15 digits' })
     .optional()
     .or(z.literal('')),
   

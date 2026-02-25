@@ -25,7 +25,10 @@ const createBusinessProfileSchema = (language: 'el' | 'en') => {
   return z.object({
     name: z.string().min(2, v.nameRequired),
     description: z.string().max(500, v.descriptionTooLong).optional(),
-    phone: z.string().regex(/^[0-9\s\-\+\(\)]+$/, v.invalidPhone).optional().or(z.literal('')),
+    phone: z.string().regex(/^[0-9\s\-\+\(\)]+$/, v.invalidPhone)
+      .refine((val) => val.replace(/\D/g, '').length >= 8, { message: v.invalidPhone })
+      .refine((val) => val.replace(/\D/g, '').length <= 15, { message: v.invalidPhone })
+      .optional().or(z.literal('')),
     website: z.string().url(v.invalidUrl).optional().or(z.literal('')),
     address: z.string().optional(),
     city: z.string().min(1, v.cityRequired),
