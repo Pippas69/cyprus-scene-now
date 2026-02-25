@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -655,9 +656,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         <CardContent className="space-y-3 sm:space-y-4">
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="current-password" className="text-xs sm:text-sm">{t.currentPassword}</Label>
-            <Input
+            <PasswordInput
               id="current-password"
-              type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               className="rounded-xl text-sm"
@@ -665,9 +665,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           </div>
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="new-password" className="text-xs sm:text-sm">{t.newPassword}</Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="rounded-xl text-sm"
@@ -675,9 +674,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           </div>
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="confirm-password" className="text-xs sm:text-sm">{t.confirmPassword}</Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="rounded-xl text-sm"

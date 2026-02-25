@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -504,12 +505,12 @@ const SignupBusiness = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="password">{language === 'el' ? 'Κωδικός Πρόσβασης *' : 'Password *'}</Label>
-                <Input id="password" type="password" {...register("password")} className="mt-1" />
+                <PasswordInput id="password" {...register("password")} className="mt-1" />
                 {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
               </div>
               <div>
                 <Label htmlFor="confirmPassword">{language === 'el' ? 'Επιβεβαίωση Κωδικού *' : 'Confirm Password *'}</Label>
-                <Input id="confirmPassword" type="password" {...register("confirmPassword")} className="mt-1" />
+                <PasswordInput id="confirmPassword" {...register("confirmPassword")} className="mt-1" />
                 {errors.confirmPassword && <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>}
               </div>
             </div>
