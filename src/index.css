@@ -12,6 +12,20 @@ input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+
+/* Hide native browser password reveal buttons to avoid double-eye with custom toggle */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-caps-lock-indicator {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* White autofill for light-themed sections (e.g. Waitlist) */
 .bg-white input:-webkit-autofill,
 .bg-white input:-webkit-autofill:hover,
