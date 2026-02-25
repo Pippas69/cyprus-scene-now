@@ -348,47 +348,6 @@ const SignupBusiness = () => {
           {language === 'el' ? 'Πίσω στην Εγγραφή Χρήστη' : 'Back to User Signup'}
         </Button>
 
-        {/* Why Join ΦΟΜΟ Section */}
-        <div className="bg-card/95 backdrop-blur rounded-3xl shadow-elegant p-8 mb-8">
-          <h2 className="font-cinzel text-2xl text-foreground mb-6 text-center font-bold">
-            {language === 'el' ? 'Τι προσφέρει το ΦΟΜΟ στις επιχειρήσεις:' : 'What ΦΟΜΟ offers to businesses:'}
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                <Target className="h-6 w-6 text-white" />
-              </div>
-              <p className="font-inter text-sm text-muted-foreground">
-                {language === 'el' 
-                  ? 'Προβολή των εκδηλώσεών σου σε χιλιάδες χρήστες στην Κύπρο'
-                  : 'Showcase your events to thousands of users in Cyprus'
-                }
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageCircle className="h-6 w-6 text-white" />
-              </div>
-              <p className="font-inter text-sm text-muted-foreground">
-                {language === 'el'
-                  ? 'Επαφή με το κοινό που ενδιαφέρεται πραγματικά για την επιχείρησή σου'
-                  : 'Connect with an audience genuinely interested in your business'
-                }
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                <Ticket className="h-6 w-6 text-white" />
-              </div>
-              <p className="font-inter text-sm text-muted-foreground">
-                {language === 'el'
-                  ? 'QR προσφορές και προγράμματα συνεργασίας που αυξάνουν την επισκεψιμότητα'
-                  : 'QR offers and partnership programs that increase foot traffic'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Main Form */}
         <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12">
