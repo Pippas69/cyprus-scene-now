@@ -276,7 +276,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
 
           {/* Bottom overlay: Discount badge + Redeem (premium size) */}
           <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
-            <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+            <div className="flex items-center gap-1">
               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
                 <Badge className="text-[9px] lg:text-[11px] px-1.5 lg:px-2.5 py-0.5 h-5 lg:h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md">
                   -{offer.percent_off}%
@@ -285,17 +285,14 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
               {offer.discount_type === "special_deal" && offer.special_deal_text && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <button type="button" className="inline-flex">
                       <Badge className="text-[9px] lg:text-[11px] px-1.5 lg:px-2.5 py-0.5 h-5 lg:h-6 font-bold border-0 bg-primary text-primary-foreground cursor-pointer shadow-md">
                         Offer
                       </Badge>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72 p-4 rounded-xl" side="top" align="start">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-bold text-foreground">{offer.title}</h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{offer.special_deal_text}</p>
-                    </div>
+                    <p className="text-sm font-medium text-foreground leading-relaxed">{offer.special_deal_text}</p>
                   </PopoverContent>
                 </Popover>
               )}

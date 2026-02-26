@@ -229,24 +229,9 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
             <div className="flex items-center gap-1.5" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex">
-                      <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md cursor-pointer hover:bg-primary/90 transition-colors">
-                        -{offerData.percent_off}%
-                      </Badge>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 p-4 rounded-xl" side="top" align="start">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-bold text-foreground">{offerData.title}</h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{getBenefitText()}</p>
-                      {offerData.description && (
-                        <p className="text-xs text-muted-foreground">{offerData.description}</p>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md">
+                  -{offerData.percent_off}%
+                </Badge>
               )}
               {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
                 <Popover>
@@ -258,36 +243,15 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72 p-4 rounded-xl" side="top" align="start">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-bold text-foreground">{offerData.title}</h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{offerData.special_deal_text}</p>
-                      {offerData.description && (
-                        <p className="text-xs text-muted-foreground">{offerData.description}</p>
-                      )}
-                    </div>
+                    <p className="text-sm font-medium text-foreground leading-relaxed">{offerData.special_deal_text}</p>
                   </PopoverContent>
                 </Popover>
               )}
               {isCredit && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex">
-                      <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md cursor-pointer hover:bg-primary/90 transition-colors">
-                        <Wallet className="h-3 w-3 mr-1" />
-                        {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
-                      </Badge>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 p-4 rounded-xl" side="top" align="start">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-bold text-foreground">{offerData.title}</h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{getBenefitText()}</p>
-                      {offerData.description && (
-                        <p className="text-xs text-muted-foreground">{offerData.description}</p>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md">
+                  <Wallet className="h-3 w-3 mr-1" />
+                  {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
+                </Badge>
               )}
             </div>
             <Button 
