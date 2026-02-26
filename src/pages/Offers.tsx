@@ -11,7 +11,7 @@ import OfferCardSkeleton from "@/components/OfferCardSkeleton";
 import LocationSwitcher from "@/components/feed/LocationSwitcher";
 import HierarchicalCategoryFilter from "@/components/HierarchicalCategoryFilter";
 import { FilterChips } from "@/components/feed/FilterChips";
-import { mapFilterIdsToDbCategories } from "@/lib/categoryFilterMapping";
+import { mapFilterIdsToDbCategories, doesCategoryMatchFilters } from "@/lib/categoryFilterMapping";
 import { Button } from "@/components/ui/button";
 import { isBoostCurrentlyActive, type OfferBoostRecord } from "@/lib/boostUtils";
 
