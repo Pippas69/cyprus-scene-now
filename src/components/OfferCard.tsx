@@ -293,17 +293,30 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             <span className="text-xs truncate">{formatExpiryChip(offerData.end_at)}</span>
           </div>
 
-          {/* Location - fully clickable */}
-          <button 
-            onClick={handleMapClick}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors w-full text-left"
-            title={language === "el" ? "Δες στο χάρτη" : "View on map"}
-          >
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="text-xs truncate">
-              {translateCity(offerData.businesses.city, language)} · {offerData.businesses.name}
-            </span>
-          </button>
+          {/* Location + Share on same line */}
+          <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
+            <button 
+              onClick={handleMapClick}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-left min-w-0 flex-1"
+              title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+            >
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs truncate">
+                {translateCity(offerData.businesses.city, language)} · {offerData.businesses.name}
+              </span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsShareOpen(true);
+              }}
+              className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+              title={language === "el" ? "Κοινοποίηση" : "Share"}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </CardContent>
 
