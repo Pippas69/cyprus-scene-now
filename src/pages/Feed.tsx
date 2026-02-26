@@ -447,7 +447,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
             {/* Student Discount results (only when filter is active) - uses same square card design */}
             {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
               <motion.div 
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3"
+                className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
@@ -483,11 +483,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                       </div>
                       
                       {/* Content at bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <h4 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-primary-foreground transition-colors">
+                      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
+                        <h4 className="text-[10px] sm:text-sm font-semibold text-white line-clamp-2 sm:line-clamp-1 group-hover:text-primary-foreground transition-colors leading-tight">
                           {business.name}
                         </h4>
-                        <p className="text-xs text-white/80 mt-0.5">
+                        <p className="text-[9px] sm:text-xs text-white/80 mt-0.5">
                           {translateCity(business.city, language)}
                         </p>
                         {business.student_discount_mode === "once" && (
