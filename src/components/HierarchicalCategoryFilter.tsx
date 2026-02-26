@@ -310,11 +310,17 @@ const HierarchicalCategoryFilter = ({
           {categories.map((cat) => renderBadge(cat, true))}
         </div>
       ) : (
-        // All screens: 3 categories + Student Discount in one row
-        <div className="flex gap-1.5 md:gap-2 pb-1.5 md:pb-2 items-center flex-wrap">
-          {categories.map((cat) => renderBadge(cat))}
-          {renderStudentDiscountBadge()}
-        </div>
+        <>
+          <div className="flex gap-1.5 md:gap-2 pb-1 md:pb-2 items-center justify-center md:justify-start">
+            {categories.map((cat) => renderBadge(cat))}
+          </div>
+          <div className="flex justify-center md:hidden pb-1.5">
+            {renderStudentDiscountBadge()}
+          </div>
+          <div className="hidden md:flex pb-2 items-center">
+            {renderStudentDiscountBadge()}
+          </div>
+        </>
       )}
 
       {/* Portal Dropdown Menu (must render for BOTH feed & map) */}

@@ -196,7 +196,7 @@ const BusinessCard = ({
       trackEngagement(business.id, 'profile_click', 'business', business.id, {
         source: 'feed'
       });
-    }} className="relative aspect-[5/4] sm:aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block">
+    }} className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block">
         {/* Full background image - uses logo */}
         <div className="absolute inset-0 bg-cover bg-center" style={{
         backgroundImage: business.logo_url ? `url(${business.logo_url})` : undefined,
