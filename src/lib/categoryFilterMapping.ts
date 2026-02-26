@@ -5,31 +5,38 @@
 const FILTER_ID_TO_DB_VALUES: Record<string, string[]> = {
   // Main categories
   "nightlife": ["nightlife", "Nightlife", "Νυχτερινή Ζωή", "Νυχτερινή Διασκέδαση"],
-  "events": ["events", "Events", "event"],
   "dining": ["dining", "Dining", "Εστίαση"],
-  "summer": ["summer", "Summer", "beach-summer", "Beach & Summer", "Παραλία & Καλοκαίρι", "Παραλία / Καλοκαίρι", "Καλοκαίρι", "beach_summer"],
+  "performances": ["performances", "Performances", "Παραστάσεις", "Παράσταση"],
 
   // Nightlife sub-options
   "clubs": ["clubs", "Clubs", "Κλαμπ"],
   "bars": ["bars", "Bars", "Μπαρ"],
-  "wine-bars": ["wine-bars", "Wine Bars", "Wine bars"],
+  "events": ["events", "Events", "event"],
   "pubs": ["pubs", "Pubs"],
 
   // Dining sub-options
   "fine-dining": ["fine-dining", "Fine Dining", "Fine dining", "Επίσημη Εστίαση"],
   "casual-dining": ["casual-dining", "Casual Dining", "Casual dining", "Χαλαρή Εστίαση"],
 
-  // Summer sub-options
+  // Performances sub-options
+  "theatre": ["theatre", "Theatre", "Θέατρο", "Θέατρα"],
+  "music": ["music", "Music", "Μουσική"],
+  "dance": ["dance", "Dance", "Χορός"],
+  "kids": ["kids", "Kids", "Παιδικό", "Παιδικά"],
+
+  // Legacy: keep wine-bars, beach-bars etc. mappings so old data still works
+  "wine-bars": ["wine-bars", "Wine Bars", "Wine bars"],
   "beach-bars": ["beach-bars", "Beach Bars", "Beach bars", "Μπαρ Παραλίας"],
   "summer-events": ["summer-events", "Summer Events", "Summer events"],
   "seaside-restaurants": ["seaside-restaurants", "Seaside Restaurants", "Seaside restaurants", "Παραθαλάσσια Εστιατόρια"],
+  "summer": ["summer", "Summer", "beach-summer", "Beach & Summer", "Παραλία & Καλοκαίρι", "Παραλία / Καλοκαίρι", "Καλοκαίρι", "beach_summer"],
 };
 
 // Parent category mapping: when a main category is selected, also include its sub-options
 const PARENT_TO_CHILDREN: Record<string, string[]> = {
-  "nightlife": ["clubs", "bars", "wine-bars", "pubs"],
+  "nightlife": ["clubs", "bars", "events", "pubs"],
   "dining": ["fine-dining", "casual-dining"],
-  "summer": ["beach-bars", "summer-events", "seaside-restaurants"],
+  "performances": ["theatre", "music", "dance", "kids"],
 };
 
 /**
@@ -76,10 +83,9 @@ Object.entries(FILTER_ID_TO_DB_VALUES).forEach(([filterId, dbValues]) => {
 
 // All valid sub-option IDs that businesses can select
 const VALID_BUSINESS_CATEGORY_IDS = new Set([
-  "clubs", "bars", "wine-bars", "pubs",
-  "events",
+  "clubs", "bars", "events", "pubs",
   "fine-dining", "casual-dining",
-  "beach-bars", "summer-events", "seaside-restaurants",
+  "theatre", "music", "dance", "kids",
 ]);
 
 /**

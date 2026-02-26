@@ -6,31 +6,34 @@ type Language = 'el' | 'en';
 const singularMap: Record<string, { el: string; en: string }> = {
   'clubs': { el: 'Club', en: 'Club' },
   'bars': { el: 'Bar', en: 'Bar' },
-  'wine-bars': { el: 'Wine Bar', en: 'Wine Bar' },
   'pubs': { el: 'Pub', en: 'Pub' },
   'events': { el: 'Event', en: 'Event' },
   'fine-dining': { el: 'Επίσημη Εστίαση', en: 'Fine Dining' },
   'casual-dining': { el: 'Χαλαρή Εστίαση', en: 'Casual Dining' },
+  'theatre': { el: 'Θέατρο', en: 'Theatre' },
+  'music': { el: 'Μουσική', en: 'Music' },
+  'dance': { el: 'Χορός', en: 'Dance' },
+  'kids': { el: 'Παιδικό', en: 'Kids' },
+  // Legacy
+  'wine-bars': { el: 'Wine Bar', en: 'Wine Bar' },
   'beach-bars': { el: 'Beach Bar', en: 'Beach Bar' },
   'summer-events': { el: 'Summer Event', en: 'Summer Event' },
   'seaside-restaurants': { el: 'Παραθαλάσσιο Εστιατόριο', en: 'Seaside Restaurant' },
 };
 
 const categoryMap: Record<string, { el: string; en: string }> = {
-  // Main categories (4 core categories)
-  'nightlife': { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
-  'events': { el: 'Events', en: 'Events' },
-  'event': { el: 'Event', en: 'Event' },
+  // Main categories (3 core categories)
+  'nightlife': { el: 'Nightlife', en: 'Nightlife' },
   'dining': { el: 'Εστίαση', en: 'Dining' },
-  'summer': { el: 'Καλοκαίρι', en: 'Summer' },
+  'performances': { el: 'Παραστάσεις', en: 'Performances' },
   
-  // Nightlife sub-options (plural for users) - Clubs is now a sub-option
+  // Nightlife sub-options
   'clubs': { el: 'Clubs', en: 'Clubs' },
   'club': { el: 'Club', en: 'Club' },
   'bars': { el: 'Bars', en: 'Bars' },
   'bar': { el: 'Bar', en: 'Bar' },
-  'wine-bars': { el: 'Wine Bars', en: 'Wine Bars' },
-  'wine-bar': { el: 'Wine Bar', en: 'Wine Bar' },
+  'events': { el: 'Events', en: 'Events' },
+  'event': { el: 'Event', en: 'Event' },
   'pubs': { el: 'Pubs', en: 'Pubs' },
   'pub': { el: 'Pub', en: 'Pub' },
   
@@ -38,16 +41,23 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'fine-dining': { el: 'Επίσημη Εστίαση', en: 'Fine Dining' },
   'casual-dining': { el: 'Χαλαρή Εστίαση', en: 'Casual Dining' },
   
-  // Summer sub-options (plural for users)
+  // Performances sub-options
+  'theatre': { el: 'Θέατρα', en: 'Theatre' },
+  'music': { el: 'Μουσική', en: 'Music' },
+  'dance': { el: 'Χορός', en: 'Dance' },
+  'kids': { el: 'Παιδικά', en: 'Kids' },
+  
+  // Legacy categories for backward compatibility
+  'summer': { el: 'Καλοκαίρι', en: 'Summer' },
+  'beach-summer': { el: 'Καλοκαίρι', en: 'Summer' },
+  'wine-bars': { el: 'Wine Bars', en: 'Wine Bars' },
+  'wine-bar': { el: 'Wine Bar', en: 'Wine Bar' },
   'beach-bars': { el: 'Beach Bars', en: 'Beach Bars' },
   'beach-bar': { el: 'Beach Bar', en: 'Beach Bar' },
   'summer-events': { el: 'Summer Events', en: 'Summer Events' },
   'summer-event': { el: 'Summer Event', en: 'Summer Event' },
   'seaside-restaurants': { el: 'Παραθαλάσσια Εστιατόρια', en: 'Seaside Restaurants' },
   'seaside-restaurant': { el: 'Παραθαλάσσιο Εστιατόριο', en: 'Seaside Restaurant' },
-  
-  // Legacy categories for backward compatibility (still translate existing data)
-  'beach-summer': { el: 'Καλοκαίρι', en: 'Summer' },
   'wine-cocktail-bars': { el: 'Wine & Cocktail Bars', en: 'Wine & Cocktail Bars' },
   'live-music': { el: 'Ζωντανή Μουσική', en: 'Live Music' },
   'cafe': { el: 'Καφέ', en: 'Café' },
@@ -66,15 +76,14 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'family': { el: 'Οικογένεια', en: 'Family' },
   'business': { el: 'Επιχειρήσεις', en: 'Business' },
   'food': { el: 'Φαγητό & Ποτό', en: 'Food & Drinks' },
-  'music': { el: 'Μουσική', en: 'Music' },
   'culture': { el: 'Πολιτισμός', en: 'Culture' },
   'entertainment': { el: 'Ψυχαγωγία', en: 'Entertainment' },
   'concert': { el: 'Συναυλία', en: 'Concert' },
   
   // Greek values (for backward compatibility with database values)
-  'νυχτερινή ζωή': { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
-  'νυχτερινή διασκέδαση': { el: 'Νυχτερινή Διασκέδαση', en: 'Nightlife' },
-  'νυχτερινή διασκέδαση & live music': { el: 'Νυχτερινή Διασκέδαση & Live Music', en: 'Nightlife & Live Music' },
+  'νυχτερινή ζωή': { el: 'Nightlife', en: 'Nightlife' },
+  'νυχτερινή διασκέδαση': { el: 'Nightlife', en: 'Nightlife' },
+  'νυχτερινή διασκέδαση & live music': { el: 'Nightlife & Live Music', en: 'Nightlife & Live Music' },
   'φαγητό & ποτό': { el: 'Φαγητό & Ποτό', en: 'Food & Drinks' },
   'καφέ': { el: 'Καφέ', en: 'Cafe' },
   'τέχνη': { el: 'Τέχνη', en: 'Art' },
@@ -92,14 +101,19 @@ const categoryMap: Record<string, { el: string; en: string }> = {
   'παραλία / καλοκαίρι': { el: 'Καλοκαίρι', en: 'Summer' },
   'καλοκαίρι': { el: 'Καλοκαίρι', en: 'Summer' },
   'gay': { el: 'Gay', en: 'Gay' },
+  'παραστάσεις': { el: 'Παραστάσεις', en: 'Performances' },
+  'θέατρο': { el: 'Θέατρο', en: 'Theatre' },
+  'θέατρα': { el: 'Θέατρα', en: 'Theatre' },
+  'χορός': { el: 'Χορός', en: 'Dance' },
+  'παιδικό': { el: 'Παιδικό', en: 'Kids' },
+  'παιδικά': { el: 'Παιδικά', en: 'Kids' },
   // Mixed language categories from database
   'clubs & παραλία / καλοκαίρι': { el: 'Clubs & Καλοκαίρι', en: 'Clubs & Summer' },
   'clubs & παραλία/καλοκαίρι': { el: 'Clubs & Καλοκαίρι', en: 'Clubs & Summer' },
-  'bars & νυχτερινή διασκέδαση': { el: 'Bars & Νυχτερινή Διασκέδαση', en: 'Bars & Nightlife' },
-  'clubs & νυχτερινή διασκέδαση': { el: 'Clubs & Νυχτερινή Διασκέδαση', en: 'Clubs & Nightlife' },
+  'bars & νυχτερινή διασκέδαση': { el: 'Bars & Nightlife', en: 'Bars & Nightlife' },
+  'clubs & νυχτερινή διασκέδαση': { el: 'Clubs & Nightlife', en: 'Clubs & Nightlife' },
   'εστίαση & καφέ': { el: 'Εστίαση & Καφέ', en: 'Dining & Cafe' },
-  'nightlife & bars': { el: 'Νυχτερινή Διασκέδαση & Bars', en: 'Nightlife & Bars' },
-  // Additional mixed formats from database
+  'nightlife & bars': { el: 'Nightlife & Bars', en: 'Nightlife & Bars' },
   'εστίαση & casual dining': { el: 'Εστίαση & Χαλαρή Εστίαση', en: 'Dining & Casual Dining' },
   'εστίαση & casual-dining': { el: 'Εστίαση & Χαλαρή Εστίαση', en: 'Dining & Casual Dining' },
   'dining & casual dining': { el: 'Εστίαση & Χαλαρή Εστίαση', en: 'Dining & Casual Dining' },
