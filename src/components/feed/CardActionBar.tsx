@@ -211,9 +211,10 @@ export const CardActionBar = ({
           >
             <Heart
               className={cn(
-                "h-3 w-3 sm:h-3.5 sm:w-3.5",
+                "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
                 isInterested && "fill-secondary text-secondary"
               )}
+              strokeWidth={2.5}
             />
             <span className="font-extrabold">{interestedCount}</span>
         </button>
@@ -233,9 +234,10 @@ export const CardActionBar = ({
           >
             <Users
               className={cn(
-                "h-3 w-3 sm:h-3.5 sm:w-3.5",
+                "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
                 isGoing && "text-ocean"
               )}
+              strokeWidth={2.5}
             />
             <span className="font-extrabold">{goingCount}</span>
         </button>
@@ -250,7 +252,7 @@ export const CardActionBar = ({
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+          <Share2 className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
         </button>
       </div>
 
