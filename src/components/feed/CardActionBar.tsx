@@ -24,6 +24,8 @@ interface CardActionBarProps {
     };
   };
   className?: string;
+  /** When true, uses white/light colors for overlay on images */
+  onImage?: boolean;
 }
 
 export const CardActionBar = ({
@@ -34,6 +36,7 @@ export const CardActionBar = ({
   language,
   shareData,
   className,
+  onImage = false,
 }: CardActionBarProps) => {
   const { toast } = useToast();
   const [isInterested, setIsInterested] = useState(false);
@@ -197,46 +200,55 @@ export const CardActionBar = ({
         <button
           onClick={(e) => handleAction(e, "interested")}
           disabled={loading}
-          className={cn(
-            "flex items-center gap-1 text-[11px] transition-colors",
-            isInterested
-              ? "text-secondary"
-              : "text-muted-foreground hover:text-secondary"
-          )}
-        >
-          <Heart
             className={cn(
-              "h-3.5 w-3.5",
-              isInterested && "fill-secondary text-secondary"
+              "flex items-center gap-1 text-[11px] transition-colors",
+              isInterested
+                ? "text-secondary"
+                : onImage
+                  ? "text-white/80 hover:text-secondary"
+                  : "text-muted-foreground hover:text-secondary"
             )}
-          />
-          <span>{interestedCount}</span>
+          >
+            <Heart
+              className={cn(
+                "h-3.5 w-3.5",
+                isInterested && "fill-secondary text-secondary"
+              )}
+            />
+            <span>{interestedCount}</span>
         </button>
 
         {/* Going Button */}
         <button
           onClick={(e) => handleAction(e, "going")}
           disabled={loading}
-          className={cn(
-            "flex items-center gap-1 text-[11px] transition-colors",
-            isGoing
-              ? "text-ocean"
-              : "text-muted-foreground hover:text-ocean"
-          )}
-        >
-          <Users
             className={cn(
-              "h-3.5 w-3.5",
-              isGoing && "text-ocean"
+              "flex items-center gap-1 text-[11px] transition-colors",
+              isGoing
+                ? "text-ocean"
+                : onImage
+                  ? "text-white/80 hover:text-ocean"
+                  : "text-muted-foreground hover:text-ocean"
             )}
-          />
-          <span>{goingCount}</span>
+          >
+            <Users
+              className={cn(
+                "h-3.5 w-3.5",
+                isGoing && "text-ocean"
+              )}
+            />
+            <span>{goingCount}</span>
         </button>
 
         {/* Share Button */}
         <button
           onClick={handleShare}
-          className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(
+            "flex items-center transition-colors",
+            onImage
+              ? "text-white/80 hover:text-white"
+              : "text-muted-foreground hover:text-foreground"
+          )}
         >
           <Share2 className="h-3.5 w-3.5" />
         </button>

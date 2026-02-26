@@ -230,16 +230,38 @@ export const UnifiedEventCard = ({
             </div>
           )}
 
-          {entryBadgeLabel && (
-            <Badge className={cn(
-              "absolute bottom-1.5 right-1.5 lg:bottom-2 lg:right-2 text-white text-[9px] lg:text-[10px] px-1 lg:px-1.5 py-0 h-4 lg:h-5 border-0 z-10",
-              isBoosted 
-                ? "bg-gradient-to-r from-amber-500 to-orange-500" 
-                : "bg-gradient-to-r from-accent to-seafoam"
-            )}>
-              {entryBadgeLabel}
-            </Badge>
-          )}
+          {/* Bottom overlay: Action bar (left) + Entry badge (right) */}
+          <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
+            <CardActionBar
+              entityId={event.id}
+              entityType="event"
+              interestedCount={interestedCount}
+              goingCount={goingCount}
+              language={language}
+              className="drop-shadow-md"
+              onImage
+              shareData={{
+                title: event.title,
+                location: event.location,
+                start_at: event.start_at,
+                cover_image_url: event.cover_image_url || undefined,
+                businesses: event.businesses ? {
+                  id: event.business_id || event.businesses.id || event.businesses.name,
+                  name: event.businesses.name,
+                } : undefined,
+              }}
+            />
+            {entryBadgeLabel && (
+              <Badge className={cn(
+                "text-white text-[9px] lg:text-[10px] px-1 lg:px-1.5 py-0 h-4 lg:h-5 border-0",
+                isBoosted 
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500" 
+                  : "bg-gradient-to-r from-accent to-seafoam"
+              )}>
+                {entryBadgeLabel}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Content section */}
@@ -258,23 +280,6 @@ export const UnifiedEventCard = ({
             <MapPin className="h-3 w-3 lg:h-3.5 lg:w-3.5 flex-shrink-0" />
             <span className="text-[10px] lg:text-xs truncate">{locationLine || event.location}</span>
           </button>
-          <CardActionBar
-            entityId={event.id}
-            entityType="event"
-            interestedCount={interestedCount}
-            goingCount={goingCount}
-            language={language}
-            shareData={{
-              title: event.title,
-              location: event.location,
-              start_at: event.start_at,
-              cover_image_url: event.cover_image_url || undefined,
-              businesses: event.businesses ? {
-                id: event.business_id || event.businesses.id || event.businesses.name,
-                name: event.businesses.name,
-              } : undefined,
-            }}
-          />
         </div>
       </Link>
     );
@@ -322,20 +327,41 @@ export const UnifiedEventCard = ({
             </div>
           )}
 
-          {/* Entry type badge */}
-          {entryBadgeLabel && (
-            <Badge className={cn(
-              "absolute bottom-2 right-2 text-white text-[10px] px-1.5 py-0 h-5 border-0 z-10",
-              isBoosted 
-                ? "bg-gradient-to-r from-amber-500 to-orange-500" 
-                : "bg-gradient-to-r from-accent to-seafoam"
-            )}>
-              {entryBadgeLabel}
-            </Badge>
-          )}
+          {/* Bottom overlay: Action bar (left) + Entry badge (right) */}
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
+            <CardActionBar
+              entityId={event.id}
+              entityType="event"
+              interestedCount={interestedCount}
+              goingCount={goingCount}
+              language={language}
+              className="drop-shadow-md"
+              onImage
+              shareData={{
+                title: event.title,
+                location: event.location,
+                start_at: event.start_at,
+                cover_image_url: event.cover_image_url || undefined,
+                businesses: event.businesses ? {
+                  id: event.business_id || event.businesses.id || event.businesses.name,
+                  name: event.businesses.name,
+                } : undefined,
+              }}
+            />
+            {entryBadgeLabel && (
+              <Badge className={cn(
+                "text-white text-[10px] px-1.5 py-0 h-5 border-0",
+                isBoosted 
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500" 
+                  : "bg-gradient-to-r from-accent to-seafoam"
+              )}>
+                {entryBadgeLabel}
+              </Badge>
+            )}
+          </div>
         </Link>
 
-        {/* Content section - matching reference image layout */}
+        {/* Content section */}
         <div className="p-2.5 flex-1 flex flex-col gap-0.5">
           {/* Title */}
           <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
@@ -350,7 +376,7 @@ export const UnifiedEventCard = ({
             <span className="text-xs truncate">{dateLabel}</span>
           </div>
 
-          {/* Location with pin icon - fully clickable */}
+          {/* Location with pin icon */}
           <button
             onClick={handleMapClick}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors w-full text-left"
@@ -359,27 +385,6 @@ export const UnifiedEventCard = ({
             <MapPin className="h-3 w-3 shrink-0" />
             <span className="text-xs truncate">{locationLine || event.location}</span>
           </button>
-
-          {/* Action Bar - heart, people, share at bottom */}
-          <div className="mt-auto pt-0.5">
-            <CardActionBar
-              entityId={event.id}
-              entityType="event"
-              interestedCount={interestedCount}
-              goingCount={goingCount}
-              language={language}
-              shareData={{
-                title: event.title,
-                location: event.location,
-                start_at: event.start_at,
-                cover_image_url: event.cover_image_url || undefined,
-                businesses: event.businesses ? {
-                  id: event.business_id || event.businesses.id || event.businesses.name,
-                  name: event.businesses.name,
-                } : undefined,
-              }}
-            />
-          </div>
         </div>
       </CardContent>
     </Card>
