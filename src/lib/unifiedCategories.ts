@@ -18,15 +18,15 @@ export interface UnifiedCategory {
   subOptions?: SubOption[];
 }
 
-// Main unified categories with bilingual labels (4 core categories)
-// Order: Nightlife → Clubs → Dining → Summer
-// User context: Plural forms (Bars, Clubs, etc.)
-// Business context: Singular forms (Bar, Club, etc.)
+// Main unified categories with bilingual labels (3 core categories)
+// Order: Nightlife → Dining → Παραστάσεις
+// User context: Plural forms (Bars, Clubs, Θέατρα, etc.)
+// Business context: Singular forms (Bar, Club, Θέατρο, etc.)
 export const unifiedCategories: UnifiedCategory[] = [
   {
     id: "nightlife",
-    label: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
-    singularLabel: { el: "Νυχτερινή Ζωή", en: "Nightlife" },
+    label: { el: "Nightlife", en: "Nightlife" },
+    singularLabel: { el: "Nightlife", en: "Nightlife" },
     icon: "🍸",
     hasDropdown: true,
     subOptions: [
@@ -41,9 +41,9 @@ export const unifiedCategories: UnifiedCategory[] = [
         singularLabel: { el: "Bar", en: "Bar" }
       },
       { 
-        id: "wine-bars", 
-        label: { el: "Wine Bars", en: "Wine Bars" },
-        singularLabel: { el: "Wine Bar", en: "Wine Bar" }
+        id: "events", 
+        label: { el: "Events", en: "Events" },
+        singularLabel: { el: "Event", en: "Event" }
       },
       { 
         id: "pubs", 
@@ -51,13 +51,6 @@ export const unifiedCategories: UnifiedCategory[] = [
         singularLabel: { el: "Pub", en: "Pub" }
       },
     ],
-  },
-  { 
-    id: "events", 
-    label: { el: "Events", en: "Events" },
-    singularLabel: { el: "Event", en: "Event" },
-    icon: "🎉",
-    hasDropdown: false 
   },
   {
     id: "dining",
@@ -79,26 +72,31 @@ export const unifiedCategories: UnifiedCategory[] = [
     ],
   },
   {
-    id: "summer",
-    label: { el: "Καλοκαίρι", en: "Summer" },
-    singularLabel: { el: "Καλοκαίρι", en: "Summer" },
-    icon: "☀️",
+    id: "performances",
+    label: { el: "Παραστάσεις", en: "Performances" },
+    singularLabel: { el: "Παράσταση", en: "Performance" },
+    icon: "🎭",
     hasDropdown: true,
     subOptions: [
       { 
-        id: "beach-bars", 
-        label: { el: "Beach Bars", en: "Beach Bars" },
-        singularLabel: { el: "Beach Bar", en: "Beach Bar" }
+        id: "theatre", 
+        label: { el: "Θέατρα", en: "Theatre" },
+        singularLabel: { el: "Θέατρο", en: "Theatre" }
       },
       { 
-        id: "summer-events", 
-        label: { el: "Summer Events", en: "Summer Events" },
-        singularLabel: { el: "Summer Event", en: "Summer Event" }
+        id: "music", 
+        label: { el: "Μουσική", en: "Music" },
+        singularLabel: { el: "Μουσική", en: "Music" }
       },
       { 
-        id: "seaside-restaurants", 
-        label: { el: "Παραθαλάσσια Εστιατόρια", en: "Seaside Restaurants" },
-        singularLabel: { el: "Παραθαλάσσιο Εστιατόριο", en: "Seaside Restaurant" }
+        id: "dance", 
+        label: { el: "Χορός", en: "Dance" },
+        singularLabel: { el: "Χορός", en: "Dance" }
+      },
+      { 
+        id: "kids", 
+        label: { el: "Παιδικά", en: "Kids" },
+        singularLabel: { el: "Παιδικό", en: "Kids" }
       },
     ],
   },

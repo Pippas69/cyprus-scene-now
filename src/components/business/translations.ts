@@ -2,22 +2,26 @@
 export const eventCategories = {
   el: {
     // Main categories
-    nightlife: "Νυχτερινή Ζωή",
-    events: "Events",
+    nightlife: "Nightlife",
     dining: "Εστίαση",
-    "beach-summer": "Παραλία/Καλοκαίρι",
-    // Nightlife sub-options (Clubs is now here)
+    performances: "Παραστάσεις",
+    // Nightlife sub-options
     clubs: "Clubs",
     bars: "Bars",
-    "live-music": "Ζωντανή Μουσική",
+    events: "Events",
+    pubs: "Pubs",
     // Dining sub-options
     "fine-dining": "Επίσημη Εστίαση",
     "casual-dining": "Χαλαρή Εστίαση",
-    // Beach/Summer sub-options
+    // Performances sub-options
+    theatre: "Θέατρα",
+    music: "Μουσική",
+    dance: "Χορός",
+    kids: "Παιδικά",
+    // Legacy categories for backward compatibility
     "beach-bars": "Beach Bars",
     "summer-events": "Καλοκαιρινές Εκδηλώσεις",
     "seaside-restaurants": "Παραθαλάσσια Εστιατόρια",
-    // Legacy categories for backward compatibility
     cafe: "Καφέ",
     restaurant: "Εστιατόρια",
     brunch: "Brunch",
@@ -33,20 +37,25 @@ export const eventCategories = {
   en: {
     // Main categories
     nightlife: "Nightlife",
-    events: "Events",
     dining: "Dining",
-    "beach-summer": "Beach/Summer",
-    // Nightlife sub-options (Clubs is now here)
+    performances: "Performances",
+    // Nightlife sub-options
     clubs: "Clubs",
     bars: "Bars",
+    events: "Events",
+    pubs: "Pubs",
     // Dining sub-options
     "fine-dining": "Fine Dining",
     "casual-dining": "Casual Dining",
-    // Beach/Summer sub-options
+    // Performances sub-options
+    theatre: "Theatre",
+    music: "Music",
+    dance: "Dance",
+    kids: "Kids",
+    // Legacy categories for backward compatibility
     "beach-bars": "Beach Bars",
     "summer-events": "Summer Events",
     "seaside-restaurants": "Seaside Restaurants",
-    // Legacy categories for backward compatibility
     cafe: "Café",
     restaurant: "Restaurant",
     brunch: "Brunch",

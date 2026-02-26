@@ -13,30 +13,34 @@ interface FilterChipsProps {
   language: 'el' | 'en';
 }
 
-// 4 core categories + their sub-options
+// 3 core categories + their sub-options
 const categoryLabels: Record<string, { el: string; en: string }> = {
   // Main categories
-  nightlife: { el: 'Νυχτερινή Ζωή', en: 'Nightlife' },
-  events: { el: 'Events', en: 'Events' },
+  nightlife: { el: 'Nightlife', en: 'Nightlife' },
   dining: { el: 'Εστίαση', en: 'Dining' },
-  'beach-summer': { el: 'Παραλία/Καλοκαίρι', en: 'Beach/Summer' },
+  performances: { el: 'Παραστάσεις', en: 'Performances' },
   
-  // Nightlife sub-options (Clubs is now here)
+  // Nightlife sub-options
   clubs: { el: 'Clubs', en: 'Clubs' },
   bars: { el: 'Bars', en: 'Bars' },
-  'wine-bars': { el: 'Wine Bars', en: 'Wine Bars' },
+  events: { el: 'Events', en: 'Events' },
   pubs: { el: 'Pubs', en: 'Pubs' },
   
   // Dining sub-options
   'fine-dining': { el: 'Επίσημη Εστίαση', en: 'Fine Dining' },
   'casual-dining': { el: 'Χαλαρή Εστίαση', en: 'Casual Dining' },
   
-  // Beach/Summer sub-options
-  'beach-bars': { el: 'Beach Bars', en: 'Beach Bars' },
-  'summer-events': { el: 'Καλοκαιρινές Εκδηλώσεις', en: 'Summer Events' },
-  'seaside-restaurants': { el: 'Παραθαλάσσια Εστιατόρια', en: 'Seaside Restaurants' },
+  // Performances sub-options
+  theatre: { el: 'Θέατρα', en: 'Theatre' },
+  music: { el: 'Μουσική', en: 'Music' },
+  dance: { el: 'Χορός', en: 'Dance' },
+  kids: { el: 'Παιδικά', en: 'Kids' },
   
   // Legacy categories for backward compatibility
+  'wine-bars': { el: 'Wine Bars', en: 'Wine Bars' },
+  'beach-bars': { el: 'Beach Bars', en: 'Beach Bars' },
+  'summer-events': { el: 'Summer Events', en: 'Summer Events' },
+  'seaside-restaurants': { el: 'Παραθαλάσσια Εστιατόρια', en: 'Seaside Restaurants' },
   cafe: { el: 'Καφέ', en: 'Café' },
   restaurant: { el: 'Εστιατόρια', en: 'Restaurant' },
   brunch: { el: 'Brunch', en: 'Brunch' },
