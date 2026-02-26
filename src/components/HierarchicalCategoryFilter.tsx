@@ -70,23 +70,31 @@ const HierarchicalCategoryFilter = ({
     })),
   }));
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking/touching outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (openDropdown) {
-        const badgeEl = badgeRefs.current[openDropdown];
-        const dropdownEl = dropdownRef.current;
-        const target = event.target as Node;
-        
-        if (badgeEl && !badgeEl.contains(target) && dropdownEl && !dropdownEl.contains(target)) {
-          setOpenDropdown(null);
-          setDropdownPosition(null);
-        }
+    if (!openDropdown) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      const dropdownEl = dropdownRef.current;
+
+      // Check all badge refs (mobile- and desktop- prefixed)
+      const clickedOnBadge = Object.entries(badgeRefs.current).some(
+        ([key, el]) => el && key.endsWith(openDropdown) && el.contains(target)
+      );
+
+      if (!clickedOnBadge && dropdownEl && !dropdownEl.contains(target)) {
+        setOpenDropdown(null);
+        setDropdownPosition(null);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [openDropdown]);
 
   // Update dropdown position on scroll/resize
