@@ -208,7 +208,7 @@ export const UnifiedEventCard = ({
         )}
       >
         {/* Image section - larger on mobile for boosted */}
-        <div className={cn("relative overflow-visible", size === "boosted" ? "h-36 lg:h-40" : "h-32 lg:h-40")}>
+        <div className={cn("relative overflow-visible", size === "boosted" ? "h-28 lg:h-40" : "h-32 lg:h-40")}>
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
