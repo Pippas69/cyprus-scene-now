@@ -140,7 +140,7 @@ export const BusinessDirectorySection = ({
       </div>;
   }
   return <div className="w-full">
-      <motion.div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3" initial={{
+      <motion.div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3" initial={{
       opacity: 0
     }} animate={{
       opacity: 1
@@ -196,7 +196,7 @@ const BusinessCard = ({
       trackEngagement(business.id, 'profile_click', 'business', business.id, {
         source: 'feed'
       });
-    }} className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block">
+    }} className="relative aspect-[4/5] sm:aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block">
         {/* Full background image - uses logo */}
         <div className="absolute inset-0 bg-cover bg-center" style={{
         backgroundImage: business.logo_url ? `url(${business.logo_url})` : undefined,

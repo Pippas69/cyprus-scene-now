@@ -75,7 +75,7 @@ export const unifiedCategories: UnifiedCategory[] = [
     id: "performances",
     label: { el: "Παραστάσεις", en: "Performances" },
     singularLabel: { el: "Παράσταση", en: "Performance" },
-    icon: "🎭",
+    icon: "🎬",
     hasDropdown: true,
     subOptions: [
       { 
