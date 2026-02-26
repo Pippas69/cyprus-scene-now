@@ -189,9 +189,9 @@ export const UnifiedEventCard = ({
   if (size === "compact" || size === "default" || size === "boosted") {
     // Boosted cards are slightly larger on mobile than business cards
     const sizeClasses = {
-      compact: "min-w-[160px] max-w-[160px] sm:min-w-[200px] sm:max-w-[200px]",
-      default: "min-w-[180px] max-w-[180px] sm:min-w-[220px] sm:max-w-[220px]",
-      boosted: "min-w-[220px] max-w-[220px] sm:min-w-[240px] sm:max-w-[240px]"
+      compact: "min-w-[160px] max-w-[160px] lg:min-w-[200px] lg:max-w-[200px]",
+      default: "min-w-[180px] max-w-[180px] lg:min-w-[220px] lg:max-w-[220px]",
+      boosted: "min-w-[220px] max-w-[220px] lg:min-w-[240px] lg:max-w-[240px]"
     };
 
     return (
@@ -208,7 +208,7 @@ export const UnifiedEventCard = ({
         )}
       >
         {/* Image section - larger on mobile for boosted */}
-        <div className={cn("relative overflow-visible", size === "boosted" ? "h-36 sm:h-40" : "h-32 sm:h-40")}>
+        <div className={cn("relative overflow-visible", size === "boosted" ? "h-36 lg:h-40" : "h-32 lg:h-40")}>
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
@@ -218,21 +218,21 @@ export const UnifiedEventCard = ({
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-primary/50" />
+                <Calendar className="h-6 w-6 lg:h-8 lg:w-8 text-primary/50" />
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           </div>
 
           {isBoosted && (
-            <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
+            <div className="absolute -top-1.5 -right-1.5 lg:-top-2 lg:-right-2 z-10">
               <PremiumBadge type="event" />
             </div>
           )}
 
           {entryBadgeLabel && (
             <Badge className={cn(
-              "absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 border-0 z-10",
+              "absolute bottom-1.5 right-1.5 lg:bottom-2 lg:right-2 text-white text-[9px] lg:text-[10px] px-1 lg:px-1.5 py-0 h-4 lg:h-5 border-0 z-10",
               isBoosted 
                 ? "bg-gradient-to-r from-amber-500 to-orange-500" 
                 : "bg-gradient-to-r from-accent to-seafoam"
@@ -243,20 +243,20 @@ export const UnifiedEventCard = ({
         </div>
 
         {/* Content section */}
-        <div className="flex-1 p-2 sm:p-3 flex flex-col justify-between min-h-0 gap-0.5">
-          <h4 className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
+        <div className="flex-1 p-2 lg:p-3 flex flex-col justify-between min-h-0 gap-0.5">
+          <h4 className="text-xs lg:text-sm font-semibold truncate group-hover:text-primary transition-colors">
             {event.title}
           </h4>
-          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground min-w-0">
-            <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-            <span className="text-[10px] sm:text-xs truncate">{dateLabel}</span>
+          <div className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground min-w-0">
+            <Clock className="h-3 w-3 lg:h-3.5 lg:w-3.5 flex-shrink-0" />
+            <span className="text-[10px] lg:text-xs truncate">{dateLabel}</span>
           </div>
           <button 
             onClick={handleMapClick}
-            className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground hover:text-primary transition-colors w-full text-left"
+            className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground hover:text-primary transition-colors w-full text-left"
           >
-            <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-            <span className="text-[10px] sm:text-xs truncate">{locationLine || event.location}</span>
+            <MapPin className="h-3 w-3 lg:h-3.5 lg:w-3.5 flex-shrink-0" />
+            <span className="text-[10px] lg:text-xs truncate">{locationLine || event.location}</span>
           </button>
           <CardActionBar
             entityId={event.id}
@@ -336,7 +336,7 @@ export const UnifiedEventCard = ({
         </Link>
 
         {/* Content section - matching reference image layout */}
-        <div className="p-2.5 sm:p-3 flex-1 flex flex-col gap-0.5">
+        <div className="p-2.5 flex-1 flex flex-col gap-0.5">
           {/* Title */}
           <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
             <h3 className="font-semibold text-sm leading-tight truncate hover:text-primary transition-colors">
