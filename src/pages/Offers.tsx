@@ -190,7 +190,7 @@ const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
       transition={{ duration: 0.6 }}
       className="relative"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 relative">
         {isLoading ? (
           [1, 2, 3, 4, 5, 6].map((i) => (
             <OfferCardSkeleton key={i} />
@@ -466,7 +466,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
       {/* BOOSTED ZONE - No header, just cards with badge */}
       {hasBoostedOffers && (
         <section>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {boostedOffers.map((offer: any) => (
               <div
                 key={offer.id}
@@ -489,13 +489,13 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
       {/* Regular Offers List */}
       <section>
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <OfferCardSkeleton key={i} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {regularOffers && regularOffers.map((offer: any, index: number) => (
               <motion.div
                 key={offer.id}
