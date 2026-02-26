@@ -389,10 +389,11 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
   // Update markers when businesses change or map moves
   useEffect(() => {
-    if (!map.current || !businesses.length) return;
-
+    // Always clear old markers first (even if businesses is empty after filtering)
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
+
+    if (!map.current || !businesses.length) return;
 
     const doInitialCamera = () => {
       if (!map.current) return;
