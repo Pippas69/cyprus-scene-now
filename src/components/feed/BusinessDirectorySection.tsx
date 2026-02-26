@@ -204,7 +204,7 @@ const BusinessCard = ({
       }} />
         
         {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         
         {/* Plan badges - top right (Pro=Star, Elite=Crown) */}
         <div className="absolute top-2 right-2">
@@ -216,10 +216,10 @@ const BusinessCard = ({
         
         {/* Content at bottom (name + city only; no category) */}
         <div className="absolute bottom-0 left-0 right-0 p-2">
-          <h4 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-primary-foreground transition-colors">
+          <h4 className="text-[10px] sm:text-sm font-semibold text-white line-clamp-2 sm:line-clamp-1 group-hover:text-primary-foreground transition-colors leading-tight">
             {business.name}
           </h4>
-          <p className="text-xs text-white/80 mt-1">
+          <p className="text-[9px] sm:text-xs text-white/80 mt-0.5 sm:mt-1">
             {translateCity(business.city, language)}
           </p>
         </div>
