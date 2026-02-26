@@ -195,13 +195,13 @@ export const CardActionBar = ({
 
   return (
     <>
-      <div className={cn("flex items-center gap-4", className)}>
+      <div className={cn("flex items-center gap-2.5 sm:gap-4", className)}>
         {/* Interested Button */}
         <button
           onClick={(e) => handleAction(e, "interested")}
           disabled={loading}
             className={cn(
-              "flex items-center gap-1 text-[11px] font-bold transition-colors",
+              "flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-extrabold transition-colors",
               isInterested
                 ? "text-secondary"
                 : onImage
@@ -211,11 +211,11 @@ export const CardActionBar = ({
           >
             <Heart
               className={cn(
-                "h-3.5 w-3.5",
+                "h-3 w-3 sm:h-3.5 sm:w-3.5",
                 isInterested && "fill-secondary text-secondary"
               )}
             />
-            <span className="font-bold">{interestedCount}</span>
+            <span className="font-extrabold">{interestedCount}</span>
         </button>
 
         {/* Going Button */}
@@ -223,7 +223,7 @@ export const CardActionBar = ({
           onClick={(e) => handleAction(e, "going")}
           disabled={loading}
             className={cn(
-              "flex items-center gap-1 text-[11px] font-bold transition-colors",
+              "flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-extrabold transition-colors",
               isGoing
                 ? "text-ocean"
                 : onImage
@@ -233,11 +233,11 @@ export const CardActionBar = ({
           >
             <Users
               className={cn(
-                "h-3.5 w-3.5",
+                "h-3 w-3 sm:h-3.5 sm:w-3.5",
                 isGoing && "text-ocean"
               )}
             />
-            <span className="font-bold">{goingCount}</span>
+            <span className="font-extrabold">{goingCount}</span>
         </button>
 
         {/* Share Button */}
@@ -250,7 +250,7 @@ export const CardActionBar = ({
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Share2 className="h-3.5 w-3.5" />
+          <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
         </button>
       </div>
 
