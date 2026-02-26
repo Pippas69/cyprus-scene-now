@@ -136,15 +136,15 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
         <div className="container mx-auto px-3 sm:px-4 relative z-10">
           {/* Mobile: show only 1 event, Tablet/Desktop: show 2 - same grid as MyEvents */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 sm:mb-10 md:mb-12 max-w-4xl mx-auto">
-            {events.slice(0, 2).map((event, index) =>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-8 sm:mb-10 md:mb-12 max-w-5xl mx-auto">
+            {events.slice(0, 3).map((event, index) =>
             <motion.div
               key={event.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={index > 0 ? "hidden md:block" : ""}>
+              className={index === 0 ? "" : index === 1 ? "hidden md:block" : "hidden lg:block"}>
 
                 <div className="md:hidden [&_.event-card]:bg-white [&_.event-card]:text-gray-900">
                   <UnifiedEventCard event={event} language={language} size="mobileFixed" className="!bg-white !border-gray-200 [&_*]:!text-gray-800 [&_.text-muted-foreground]:!text-gray-500" />
