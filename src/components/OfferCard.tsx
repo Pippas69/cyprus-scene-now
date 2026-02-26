@@ -225,9 +225,68 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </div>
           )}
           
+          {/* Bottom overlay: Discount badge + Share + Redeem (same line) */}
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
+            <div className="flex items-center gap-1">
+              {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
+                <Badge className="text-[10px] px-1.5 py-0 h-5 font-bold border-0 bg-primary text-primary-foreground">
+                  -{offerData.percent_off}%
+                </Badge>
+              )}
+              {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button type="button" className="inline-flex">
+                      <Badge className="text-[10px] px-1.5 py-0 h-5 font-bold border-0 bg-primary text-primary-foreground cursor-pointer">
+                        Offer
+                      </Badge>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3" side="top" align="start">
+                    <p className="text-sm font-medium">{offerData.special_deal_text}</p>
+                  </PopoverContent>
+                </Popover>
+              )}
+              {isCredit && (
+                <Badge className="text-[10px] px-1.5 py-0 h-5 border-0 bg-primary text-primary-foreground">
+                  <Wallet className="h-3 w-3 mr-0.5" />
+                  {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-white hover:text-white/70 hover:bg-white/10"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsShareOpen(true);
+                }}
+                title={language === "el" ? "Κοινοποίηση" : "Share"}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
+                  setIsPurchaseOpen(true);
+                }} 
+                size="sm" 
+                variant="default"
+                className="text-xs h-7 px-3 font-bold"
+              >
+                {language === "el" ? "Εξαργύρωσε" : "Redeem"}
+              </Button>
+            </div>
+          </div>
+          
           {/* Bundle badge */}
           {isBundle && (
-            <div className="absolute left-3 bottom-3 z-10">
+            <div className="absolute left-3 top-3 z-10" style={offerData.requires_reservation ? { top: '2.5rem' } : undefined}>
               <Badge variant="outline" className="text-xs bg-background/85 backdrop-blur">
                 <Package className="h-3 w-3 mr-1" />
                 {language === "el" ? "Πακέτο" : "Bundle"}
@@ -239,7 +298,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
         {/* Content section - compact spacing */}
         <div className="p-3 space-y-1">
           {/* Title */}
-          <h3 className="font-bold text-sm leading-tight truncate">
+          <h3 className="font-bold text-sm text-foreground leading-tight truncate">
             {offerData.title}
           </h3>
 
@@ -260,70 +319,6 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               {translateCity(offerData.businesses.city, language)} · {offerData.businesses.name}
             </span>
           </button>
-
-          {/* Bottom row: Discount badge + Share + Redeem button */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-1">
-              {/* Percentage discount badge */}
-              {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
-                <Badge variant="outline" className="text-xs px-2 py-0.5 h-6 font-semibold">
-                  -{offerData.percent_off}%
-                </Badge>
-              )}
-              {/* Special deal badge (non-percentage) - clickable with popover showing special_deal_text */}
-              {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex">
-                      <Badge 
-                        variant="outline" 
-                        className="text-xs px-2 py-0.5 h-6 font-semibold cursor-pointer hover:bg-accent transition-colors"
-                      >
-                        Offer
-                      </Badge>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-3" side="top" align="start">
-                    <p className="text-sm font-medium">{offerData.special_deal_text}</p>
-                  </PopoverContent>
-                </Popover>
-              )}
-              {isCredit && (
-                <Badge variant="outline" className="text-xs px-2 py-0.5 h-6">
-                  <Wallet className="h-3 w-3 mr-0.5" />
-                  {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsShareOpen(true);
-                }}
-                title={language === "el" ? "Κοινοποίηση" : "Share"}
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
-              <Button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
-                  setIsPurchaseOpen(true);
-                }} 
-                size="sm" 
-                variant="default"
-                className="text-xs h-7 px-3"
-              >
-                {language === "el" ? "Εξαργύρωσε" : "Redeem"}
-              </Button>
-            </div>
-          </div>
         </div>
       </CardContent>
 
