@@ -293,7 +293,7 @@ export const UnifiedEventCard = ({
       interactive
       className={cn(
         "overflow-visible transition-all duration-300",
-        size === "mobileFixed" && "h-[290px]",
+        size === "mobileFixed" && "md:h-[290px]",
         className
       )}
     >
@@ -302,7 +302,7 @@ export const UnifiedEventCard = ({
         <Link
           to={`/event/${event.id}${linkSearch || ""}`}
           onClick={handleCardClick}
-          className="block relative h-36 overflow-visible rounded-t-xl flex-shrink-0"
+          className="block relative aspect-square md:aspect-auto md:h-36 overflow-visible rounded-t-xl flex-shrink-0"
         >
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
