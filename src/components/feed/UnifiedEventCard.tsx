@@ -238,7 +238,8 @@ export const UnifiedEventCard = ({
               interestedCount={interestedCount}
               goingCount={goingCount}
               language={language}
-              className="text-white drop-shadow-md"
+              className="drop-shadow-md"
+              onImage
               shareData={{
                 title: event.title,
                 location: event.location,
