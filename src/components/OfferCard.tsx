@@ -231,7 +231,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <button type="button" className="inline-flex">
                       <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md cursor-pointer hover:bg-primary/90 transition-colors">
                         -{offerData.percent_off}%
                       </Badge>
@@ -251,7 +251,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <button type="button" className="inline-flex">
                       <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
                         Offer
                       </Badge>
@@ -271,7 +271,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               {isCredit && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <button type="button" className="inline-flex">
                       <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md cursor-pointer hover:bg-primary/90 transition-colors">
                         <Wallet className="h-3 w-3 mr-1" />
                         {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
