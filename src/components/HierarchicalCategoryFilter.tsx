@@ -94,7 +94,8 @@ const HierarchicalCategoryFilter = ({
     if (!openDropdown) return;
 
     const updatePosition = () => {
-      const badgeEl = badgeRefs.current[openDropdown];
+      const prefix = window.innerWidth < 768 ? "mobile-" : "desktop-";
+      const badgeEl = badgeRefs.current[`${prefix}${openDropdown}`] || badgeRefs.current[openDropdown];
       if (badgeEl) {
         const rect = badgeEl.getBoundingClientRect();
         setDropdownPosition({
@@ -120,7 +121,8 @@ const HierarchicalCategoryFilter = ({
       setOpenDropdown(null);
       setDropdownPosition(null);
     } else {
-      const badgeEl = badgeRefs.current[categoryId];
+      const prefix = window.innerWidth < 768 ? "mobile-" : "desktop-";
+      const badgeEl = badgeRefs.current[`${prefix}${categoryId}`] || badgeRefs.current[categoryId];
       if (badgeEl) {
         const rect = badgeEl.getBoundingClientRect();
         setDropdownPosition({
