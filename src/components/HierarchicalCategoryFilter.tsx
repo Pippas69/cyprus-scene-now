@@ -94,7 +94,8 @@ const HierarchicalCategoryFilter = ({
     if (!openDropdown) return;
 
     const updatePosition = () => {
-      const badgeEl = badgeRefs.current[openDropdown];
+      const prefix = window.innerWidth < 768 ? "mobile-" : "desktop-";
+      const badgeEl = badgeRefs.current[`${prefix}${openDropdown}`] || badgeRefs.current[openDropdown];
       if (badgeEl) {
         const rect = badgeEl.getBoundingClientRect();
         setDropdownPosition({
@@ -120,7 +121,8 @@ const HierarchicalCategoryFilter = ({
       setOpenDropdown(null);
       setDropdownPosition(null);
     } else {
-      const badgeEl = badgeRefs.current[categoryId];
+      const prefix = window.innerWidth < 768 ? "mobile-" : "desktop-";
+      const badgeEl = badgeRefs.current[`${prefix}${categoryId}`] || badgeRefs.current[categoryId];
       if (badgeEl) {
         const rect = badgeEl.getBoundingClientRect();
         setDropdownPosition({
@@ -186,11 +188,11 @@ const HierarchicalCategoryFilter = ({
 
   // Badge rendering with mapMode support
   // Slightly larger text on mobile/tablet for Ekdiloseis/Offers pages
-  const renderBadge = (category: Category, isMapStyle: boolean = false) => (
+  const renderBadge = (category: Category, isMapStyle: boolean = false, refPrefix: string = "") => (
     <div
-      key={category.id}
+      key={`${refPrefix}${category.id}`}
       className="relative shrink-0"
-      ref={(el) => (badgeRefs.current[category.id] = el)}
+      ref={(el) => (badgeRefs.current[`${refPrefix}${category.id}`] = el)}
     >
       <Badge
         variant={
@@ -314,13 +316,13 @@ const HierarchicalCategoryFilter = ({
           {/* Mobile: categories centered, student discount centered below */}
           <div className="flex flex-col items-center gap-1 md:hidden pb-1.5">
             <div className="flex gap-1.5 items-center">
-              {categories.map((cat) => renderBadge(cat))}
+              {categories.map((cat) => renderBadge(cat, false, "mobile-"))}
             </div>
             {renderStudentDiscountBadge()}
           </div>
           {/* Tablet & Desktop: all in one row */}
           <div className="hidden md:flex gap-2 pb-2 items-center">
-            {categories.map((cat) => renderBadge(cat))}
+            {categories.map((cat) => renderBadge(cat, false, "desktop-"))}
             {renderStudentDiscountBadge()}
           </div>
         </>
