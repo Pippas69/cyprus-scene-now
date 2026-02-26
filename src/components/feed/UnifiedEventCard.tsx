@@ -292,12 +292,12 @@ export const UnifiedEventCard = ({
       variant="glass"
       interactive
       className={cn(
-        "overflow-visible transition-all duration-300",
+        "overflow-visible transition-all duration-300 h-full",
         size === "mobileFixed" && "md:h-[290px]",
         className
       )}
     >
-      <CardContent className="p-0 flex flex-col">
+      <CardContent className="p-0 h-full flex flex-col">
         {/* Image section - consistent height across all devices to match mobile design */}
         <Link
           to={`/event/${event.id}${linkSearch || ""}`}
@@ -362,7 +362,7 @@ export const UnifiedEventCard = ({
         </Link>
 
         {/* Content section */}
-        <div className="p-2.5 flex flex-col gap-0.5">
+        <div className="p-2.5 flex flex-col gap-0.5 mt-auto">
           {/* Title */}
           <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
             <h3 className="font-semibold text-sm text-foreground leading-tight truncate">
