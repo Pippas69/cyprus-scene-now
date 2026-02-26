@@ -30,7 +30,7 @@ export const EmailChangeEmail = ({
   confirmationUrl,
 }: EmailChangeEmailProps) => (
   <Html lang="el" dir="ltr">
-    <Head />
+    <Head><meta charSet="utf-8" /></Head>
     <Preview>Αλλαγή email — ΦΟΜΟ</Preview>
     <Body style={main}>
       <Container style={container}>

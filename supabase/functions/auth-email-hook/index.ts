@@ -16,12 +16,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  signup: '\u0395\u03C0\u03B9\u03B2\u03B5\u03B2\u03B1\u03AF\u03C9\u03C3\u03B5 \u03C4\u03BF email \u03C3\u03BF\u03C5',
+  invite: '\u03A3\u03B5 \u03C0\u03C1\u03BF\u03C3\u03BA\u03B1\u03BB\u03AD\u03C3\u03B1\u03BC\u03B5 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F!',
+  magiclink: '\u03A3\u03CD\u03BD\u03B4\u03B5\u03C3\u03BC\u03BF\u03C2 \u03C3\u03CD\u03BD\u03B4\u03B5\u03C3\u03B7\u03C2',
+  recovery: '\u0395\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC \u03BA\u03C9\u03B4\u03B9\u03BA\u03BF\u03CD',
+  email_change: '\u0391\u03BB\u03BB\u03B1\u03B3\u03AE email',
+  reauthentication: '\u039A\u03C9\u03B4\u03B9\u03BA\u03CC\u03C2 \u03B5\u03C0\u03B1\u03BB\u03AE\u03B8\u03B5\u03C5\u03C3\u03B7\u03C2',
 }
 
 // Template mapping

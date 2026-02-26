@@ -28,7 +28,7 @@ export const InviteEmail = ({
   confirmationUrl,
 }: InviteEmailProps) => (
   <Html lang="el" dir="ltr">
-    <Head />
+    <Head><meta charSet="utf-8" /></Head>
     <Preview>Σε προσκαλέσαμε στο ΦΟΜΟ!</Preview>
     <Body style={main}>
       <Container style={container}>
