@@ -302,7 +302,7 @@ export const UnifiedEventCard = ({
         <Link
           to={`/event/${event.id}${linkSearch || ""}`}
           onClick={handleCardClick}
-          className="block relative h-48 overflow-visible rounded-t-xl flex-shrink-0"
+          className="block relative h-36 overflow-visible rounded-t-xl flex-shrink-0"
         >
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
