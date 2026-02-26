@@ -225,9 +225,9 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </div>
           )}
           
-          {/* Bottom overlay: Discount badge + Share + Redeem (same line) */}
+          {/* Bottom overlay: Discount badge + Redeem (same line, same size) */}
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
                 <Badge className="text-[10px] px-1.5 py-0 h-5 font-bold border-0 bg-primary text-primary-foreground">
                   -{offerData.percent_off}%
@@ -236,7 +236,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex">
+                    <button type="button" className="inline-flex" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                       <Badge className="text-[10px] px-1.5 py-0 h-5 font-bold border-0 bg-primary text-primary-foreground cursor-pointer">
                         Offer
                       </Badge>
@@ -254,34 +254,19 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-white hover:text-white/70 hover:bg-white/10"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsShareOpen(true);
-                }}
-                title={language === "el" ? "Κοινοποίηση" : "Share"}
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
-              <Button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
-                  setIsPurchaseOpen(true);
-                }} 
-                size="sm" 
-                variant="default"
-                className="text-xs h-7 px-3 font-bold"
-              >
-                {language === "el" ? "Εξαργύρωσε" : "Redeem"}
-              </Button>
-            </div>
+            <Button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
+                setIsPurchaseOpen(true);
+              }} 
+              size="sm" 
+              variant="default"
+              className="text-[10px] px-1.5 py-0 h-5 font-bold"
+            >
+              {language === "el" ? "Εξαργύρωσε" : "Redeem"}
+            </Button>
           </div>
           
           {/* Bundle badge */}
@@ -308,17 +293,30 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             <span className="text-xs truncate">{formatExpiryChip(offerData.end_at)}</span>
           </div>
 
-          {/* Location - fully clickable */}
-          <button 
-            onClick={handleMapClick}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors w-full text-left"
-            title={language === "el" ? "Δες στο χάρτη" : "View on map"}
-          >
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="text-xs truncate">
-              {translateCity(offerData.businesses.city, language)} · {offerData.businesses.name}
-            </span>
-          </button>
+          {/* Location + Share on same line */}
+          <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
+            <button 
+              onClick={handleMapClick}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-left min-w-0 flex-1"
+              title={language === "el" ? "Δες στο χάρτη" : "View on map"}
+            >
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs truncate">
+                {translateCity(offerData.businesses.city, language)} · {offerData.businesses.name}
+              </span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsShareOpen(true);
+              }}
+              className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+              title={language === "el" ? "Κοινοποίηση" : "Share"}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </CardContent>
 
