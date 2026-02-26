@@ -266,7 +266,7 @@ const HierarchicalCategoryFilter = ({
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
               style={{
-                position: "absolute",
+                position: "fixed",
                 top: dropdownPosition.top,
                 left,
                 zIndex: 9999,
