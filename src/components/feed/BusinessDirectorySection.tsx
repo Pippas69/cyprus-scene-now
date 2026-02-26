@@ -216,10 +216,10 @@ const BusinessCard = ({
         
         {/* Content at bottom (name + city only; no category) */}
         <div className="absolute bottom-0 left-0 right-0 p-2">
-          <h4 className="text-[10px] sm:text-sm font-semibold text-white line-clamp-2 sm:line-clamp-1 group-hover:text-primary-foreground transition-colors leading-tight">
+          <h4 className="text-[10px] sm:text-xs md:text-xs font-semibold text-white line-clamp-2 sm:line-clamp-1 group-hover:text-primary-foreground transition-colors leading-tight">
             {business.name}
           </h4>
-          <p className="text-[9px] sm:text-xs text-white/80 mt-0.5 sm:mt-1">
+          <p className="text-[9px] sm:text-[10px] md:text-[10px] text-white/80 mt-0.5 sm:mt-1">
             {translateCity(business.city, language)}
           </p>
         </div>
