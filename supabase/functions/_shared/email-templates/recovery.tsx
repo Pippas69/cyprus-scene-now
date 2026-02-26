@@ -30,13 +30,12 @@ export const RecoveryEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
-          <Text style={logoIcon}>Φ</Text>
+          <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>Επαναφορά κωδικού 🔐</Heading>
+        <Heading style={h1}>{'\u0395\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC \u03BA\u03C9\u03B4\u03B9\u03BA\u03BF\u03CD \uD83D\uDD10'}</Heading>
         <Text style={text}>
-          Λάβαμε αίτημα επαναφοράς κωδικού για τον λογαριασμό σου στο ΦΟΜΟ.
-          Πάτησε το παρακάτω κουμπί για να ορίσεις νέο κωδικό.
+          {'\u039B\u03AC\u03B2\u03B1\u03BC\u03B5 \u03B1\u03AF\u03C4\u03B7\u03BC\u03B1 \u03B5\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC\u03C2 \u03BA\u03C9\u03B4\u03B9\u03BA\u03BF\u03CD \u03B3\u03B9\u03B1 \u03C4\u03BF\u03BD \u03BB\u03BF\u03B3\u03B1\u03C1\u03B9\u03B1\u03C3\u03BC\u03CC \u03C3\u03BF\u03C5 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F. \u03A0\u03AC\u03C4\u03B7\u03C3\u03B5 \u03C4\u03BF \u03C0\u03B1\u03C1\u03B1\u03BA\u03AC\u03C4\u03C9 \u03BA\u03BF\u03C5\u03BC\u03C0\u03AF \u03B3\u03B9\u03B1 \u03BD\u03B1 \u03BF\u03C1\u03AF\u03C3\u03B5\u03B9\u03C2 \u03BD\u03AD\u03BF \u03BA\u03C9\u03B4\u03B9\u03BA\u03CC.'}
         </Text>
         <Section style={buttonSection}>
           <Button style={button} href={confirmationUrl}>
@@ -58,7 +57,7 @@ export default RecoveryEmail
 const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }
 const container = { padding: '40px 25px', maxWidth: '480px', margin: '0 auto' }
 const logoSection = { textAlign: 'center' as const, marginBottom: '16px' }
-const logoIcon = { display: 'inline-block' as const, width: '48px', height: '48px', lineHeight: '48px', borderRadius: '50%', backgroundColor: '#0D3B66', color: '#ffffff', fontSize: '24px', fontWeight: 'bold' as const, textAlign: 'center' as const, margin: '0 auto', letterSpacing: '0' }
+const logoIcon = { display: 'inline-block' as const, padding: '8px 16px', borderRadius: '24px', backgroundColor: '#0D3B66', color: '#ffffff', fontSize: '20px', fontWeight: 'bold' as const, textAlign: 'center' as const, margin: '0 auto', letterSpacing: '3px' }
 const divider = { borderColor: '#e2e8f0', margin: '20px 0' }
 const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0D3B66', margin: '0 0 16px' }
 const text = { fontSize: '14px', color: '#334155', lineHeight: '1.6', margin: '0 0 16px' }
