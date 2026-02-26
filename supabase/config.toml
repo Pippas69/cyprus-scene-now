@@ -1,196 +1,135 @@
 project_id = "iasahlgurfxufrtdigcr"
 
-[functions.create-subscription-checkout]
-verify_jwt = true
-
-[functions.check-subscription]
-verify_jwt = true
-
-[functions.customer-portal]
-verify_jwt = true
-
-[functions.create-event-boost]
-verify_jwt = true
-
-[functions.create-boost-checkout]
-verify_jwt = true
-
-[functions.create-offer-boost]
-verify_jwt = true
-
-[functions.seed-analytics]
-verify_jwt = true
-
-[functions.send-reservation-notification]
-verify_jwt = false
-
-[functions.send-business-notification]
-verify_jwt = false
-
-[functions.check-expiring-offers]
-verify_jwt = false
-
-[functions.geocode-existing-businesses]
-verify_jwt = true
-
-[functions.monitor-database-performance]
-verify_jwt = false
-
-[functions.monitor-database-performance.schedule]
-cron = "*/5 * * * *"
-
-[functions.get-database-metrics]
-verify_jwt = false
-
-[functions.stripe-webhook]
-verify_jwt = false
-
-[functions.calculate-monthly-commission]
-verify_jwt = false
-
-[functions.calculate-monthly-commission.schedule]
-cron = "0 0 1 * *"
-
-[functions.create-ticket-checkout]
-verify_jwt = true
-
-[functions.process-ticket-payment]
-verify_jwt = true
-
-[functions.validate-ticket]
-verify_jwt = true
-
-[functions.send-ticket-email]
-verify_jwt = false
-
-[functions.create-connect-account]
-verify_jwt = true
-
-[functions.create-connect-login-link]
-verify_jwt = true
-
-[functions.stripe-connect-webhook]
-verify_jwt = false
-
-[functions.send-ticket-sale-notification]
-verify_jwt = false
-
-[functions.send-daily-sales-summary]
-verify_jwt = false
-
-[functions.send-daily-sales-summary.schedule]
-cron = "0 6 * * *"
-
-[functions.send-push-notification]
-verify_jwt = false
-
-[functions.get-vapid-key]
-verify_jwt = false
-
-[functions.create-offer-checkout]
-verify_jwt = true
-
-[functions.process-offer-payment]
-verify_jwt = true
-
-[functions.send-offer-email]
-verify_jwt = false
-
-[functions.create-profile-boost-checkout]
-verify_jwt = true
-
-[functions.create-offer-checkout-with-reservation]
-verify_jwt = true
-
-[functions.handle-reservation-decline-refund]
-verify_jwt = true
-
-[functions.stripe-healthcheck]
-verify_jwt = false
-
-[functions.create-reservation-offer-pending]
-verify_jwt = true
-
-[functions.send-offer-payment-link]
-verify_jwt = false
-
-[functions.expire-unpaid-reservations]
-verify_jwt = false
-
-[functions.expire-unpaid-reservations.schedule]
-cron = "0 * * * *"
-
-[functions.claim-offer]
-verify_jwt = true
-
-[functions.send-offer-claim-email]
-verify_jwt = false
-
-[functions.send-offer-claim-business-notification]
-verify_jwt = false
-
-[functions.send-student-verification-email]
-verify_jwt = false
-
-[functions.verify-student-token]
-verify_jwt = false
-
-[functions.validate-offer]
-verify_jwt = true
-
-[functions.send-event-reminders]
-verify_jwt = false
-
-[functions.send-event-reminders.schedule]
-cron = "*/30 * * * *"
-
-[functions.send-reservation-reminders]
-verify_jwt = false
-
-[functions.send-reservation-reminders.schedule]
-cron = "*/30 * * * *"
-
-[functions.send-offer-expiry-reminders]
-verify_jwt = false
-
-[functions.send-offer-expiry-reminders.schedule]
-cron = "*/30 * * * *"
-
-[functions.send-personalized-notifications]
-verify_jwt = false
-
-[functions.send-personalized-notifications.schedule]
-cron = "*/30 * * * *"
-
-[functions.send-user-notification]
-verify_jwt = false
-
-[functions.send-business-reservation-notification]
-verify_jwt = false
-
-[functions.send-business-sale-notification]
-verify_jwt = false
-
-[functions.send-business-ops-notification]
-verify_jwt = false
-
-[functions.send-inventory-alert]
-verify_jwt = false
-
-[functions.send-weekly-sales-summary]
-verify_jwt = false
-
-[functions.send-weekly-sales-summary.schedule]
-cron = "0 9 * * 1"
-
-[functions.test-push-notification]
-verify_jwt = false
-
-[functions.send-follower-notifications]
-verify_jwt = false
-
-[functions.send-follower-notifications.schedule]
-cron = "*/30 * * * *"
-
-[functions.send-event-update-notification]
-verify_jwt = true
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.calculate-monthly-commission]
+    verify_jwt = false
+    [functions.calculate-monthly-commission.schedule]
+      cron = "0 0 1 * *"
+  [functions.check-expiring-offers]
+    verify_jwt = false
+  [functions.check-subscription]
+    verify_jwt = true
+  [functions.claim-offer]
+    verify_jwt = true
+  [functions.create-boost-checkout]
+    verify_jwt = true
+  [functions.create-connect-account]
+    verify_jwt = true
+  [functions.create-connect-login-link]
+    verify_jwt = true
+  [functions.create-event-boost]
+    verify_jwt = true
+  [functions.create-offer-boost]
+    verify_jwt = true
+  [functions.create-offer-checkout]
+    verify_jwt = true
+  [functions.create-offer-checkout-with-reservation]
+    verify_jwt = true
+  [functions.create-profile-boost-checkout]
+    verify_jwt = true
+  [functions.create-reservation-offer-pending]
+    verify_jwt = true
+  [functions.create-subscription-checkout]
+    verify_jwt = true
+  [functions.create-ticket-checkout]
+    verify_jwt = true
+  [functions.customer-portal]
+    verify_jwt = true
+  [functions.expire-unpaid-reservations]
+    verify_jwt = false
+    [functions.expire-unpaid-reservations.schedule]
+      cron = "0 * * * *"
+  [functions.geocode-existing-businesses]
+    verify_jwt = true
+  [functions.get-database-metrics]
+    verify_jwt = false
+  [functions.get-vapid-key]
+    verify_jwt = false
+  [functions.handle-reservation-decline-refund]
+    verify_jwt = true
+  [functions.monitor-database-performance]
+    verify_jwt = false
+    [functions.monitor-database-performance.schedule]
+      cron = "*/5 * * * *"
+  [functions.process-offer-payment]
+    verify_jwt = true
+  [functions.process-ticket-payment]
+    verify_jwt = true
+  [functions.seed-analytics]
+    verify_jwt = true
+  [functions.send-business-notification]
+    verify_jwt = false
+  [functions.send-business-ops-notification]
+    verify_jwt = false
+  [functions.send-business-reservation-notification]
+    verify_jwt = false
+  [functions.send-business-sale-notification]
+    verify_jwt = false
+  [functions.send-daily-sales-summary]
+    verify_jwt = false
+    [functions.send-daily-sales-summary.schedule]
+      cron = "0 6 * * *"
+  [functions.send-event-reminders]
+    verify_jwt = false
+    [functions.send-event-reminders.schedule]
+      cron = "*/30 * * * *"
+  [functions.send-event-update-notification]
+    verify_jwt = true
+  [functions.send-follower-notifications]
+    verify_jwt = false
+    [functions.send-follower-notifications.schedule]
+      cron = "*/30 * * * *"
+  [functions.send-inventory-alert]
+    verify_jwt = false
+  [functions.send-offer-claim-business-notification]
+    verify_jwt = false
+  [functions.send-offer-claim-email]
+    verify_jwt = false
+  [functions.send-offer-email]
+    verify_jwt = false
+  [functions.send-offer-expiry-reminders]
+    verify_jwt = false
+    [functions.send-offer-expiry-reminders.schedule]
+      cron = "*/30 * * * *"
+  [functions.send-offer-payment-link]
+    verify_jwt = false
+  [functions.send-personalized-notifications]
+    verify_jwt = false
+    [functions.send-personalized-notifications.schedule]
+      cron = "*/30 * * * *"
+  [functions.send-push-notification]
+    verify_jwt = false
+  [functions.send-reservation-notification]
+    verify_jwt = false
+  [functions.send-reservation-reminders]
+    verify_jwt = false
+    [functions.send-reservation-reminders.schedule]
+      cron = "*/30 * * * *"
+  [functions.send-student-verification-email]
+    verify_jwt = false
+  [functions.send-ticket-email]
+    verify_jwt = false
+  [functions.send-ticket-sale-notification]
+    verify_jwt = false
+  [functions.send-user-notification]
+    verify_jwt = false
+  [functions.send-weekly-sales-summary]
+    verify_jwt = false
+    [functions.send-weekly-sales-summary.schedule]
+      cron = "0 9 * * 1"
+  [functions.stripe-connect-webhook]
+    verify_jwt = false
+  [functions.stripe-healthcheck]
+    verify_jwt = false
+  [functions.stripe-webhook]
+    verify_jwt = false
+  [functions.test-push-notification]
+    verify_jwt = false
+  [functions.validate-offer]
+    verify_jwt = true
+  [functions.validate-ticket]
+    verify_jwt = true
+  [functions.verify-student-token]
+    verify_jwt = false
