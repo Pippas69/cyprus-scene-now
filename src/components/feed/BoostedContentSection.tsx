@@ -270,8 +270,52 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
           </Link>
 
           {/* BADGE - Top Right - Premium only for boosted */}
-          <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
+          <div className="absolute -top-1.5 -right-1.5 lg:-top-2 lg:-right-2 z-10">
             <PremiumBadge type="offer" />
+          </div>
+
+          {/* Bottom overlay: Discount badge + Share + Redeem */}
+          <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
+            <div className="flex items-center gap-1">
+              {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
+                <Badge className="text-[10px] lg:text-xs px-1 lg:px-1.5 py-0 h-4 lg:h-5 font-bold border-0 bg-primary text-primary-foreground">
+                  -{offer.percent_off}%
+                </Badge>
+              )}
+              {offer.discount_type === "special_deal" && offer.special_deal_text && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button type="button" className="inline-flex">
+                      <Badge className="text-[10px] lg:text-xs px-1 lg:px-1.5 py-0 h-4 lg:h-5 font-bold border-0 bg-primary text-primary-foreground cursor-pointer">
+                        Offer
+                      </Badge>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2" side="top" align="start">
+                    <p className="text-xs font-medium">{offer.special_deal_text}</p>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+            <div className="flex items-center gap-1 ml-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 lg:h-6 lg:w-6 text-white hover:text-white/70 hover:bg-white/10"
+                onClick={handleShareClick}
+                title={language === "el" ? "Κοινοποίηση" : "Share"}
+              >
+                <Share2 className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
+              </Button>
+              <Button 
+                onClick={handleRedeemClick}
+                size="sm" 
+                variant="default"
+                className="text-[10px] lg:text-xs h-5 lg:h-6 px-2 lg:px-2.5 font-bold"
+              >
+                {t.redeem}
+              </Button>
+            </div>
           </div>
         </div>
 
