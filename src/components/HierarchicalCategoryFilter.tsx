@@ -205,7 +205,7 @@ const HierarchicalCategoryFilter = ({
         className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
           isMapStyle 
             ? "px-2.5 md:px-3 lg:px-3 py-1.5 md:py-1.5 lg:py-2 text-[11px] md:text-[13px] lg:text-sm min-h-[30px] md:min-h-[34px] lg:min-h-[36px] gap-1 md:gap-1.5 lg:gap-2" 
-            : "px-3 md:px-3 lg:px-3 py-1.5 md:py-2 lg:py-2 text-[11px] md:text-xs lg:text-xs min-h-[32px] md:min-h-[40px] lg:min-h-[40px] gap-1 md:gap-1.5 lg:gap-1.5"
+            : "px-3 md:px-3 lg:px-3.5 py-1.5 md:py-2 lg:py-2 text-[11px] md:text-xs lg:text-sm min-h-[32px] md:min-h-[40px] lg:min-h-[40px] gap-1 md:gap-1.5 lg:gap-1.5"
         } font-medium flex items-center justify-center rounded-full select-none whitespace-nowrap ${
           category.hasDropdown
             ? hasAnySubOptionSelected(category)
