@@ -30,7 +30,7 @@ export const MagicLinkEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
-          <Text style={logoText}>ΦΟΜΟ</Text>
+          <Text style={logoIcon}>Φ</Text>
         </Section>
         <Hr style={divider} />
         <Heading style={h1}>Σύνδεση στο ΦΟΜΟ ✨</Heading>
@@ -56,8 +56,8 @@ export default MagicLinkEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }
 const container = { padding: '40px 25px', maxWidth: '480px', margin: '0 auto' }
-const logoSection = { textAlign: 'center' as const, marginBottom: '8px' }
-const logoText = { fontSize: '28px', fontWeight: 'bold' as const, color: '#0D3B66', letterSpacing: '2px', margin: '0' }
+const logoSection = { textAlign: 'center' as const, marginBottom: '16px' }
+const logoIcon = { display: 'inline-block' as const, width: '48px', height: '48px', lineHeight: '48px', borderRadius: '50%', backgroundColor: '#0D3B66', color: '#ffffff', fontSize: '24px', fontWeight: 'bold' as const, textAlign: 'center' as const, margin: '0 auto', letterSpacing: '0' }
 const divider = { borderColor: '#e2e8f0', margin: '20px 0' }
 const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0D3B66', margin: '0 0 16px' }
 const text = { fontSize: '14px', color: '#334155', lineHeight: '1.6', margin: '0 0 16px' }
