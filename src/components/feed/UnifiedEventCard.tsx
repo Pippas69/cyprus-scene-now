@@ -191,7 +191,7 @@ export const UnifiedEventCard = ({
     const sizeClasses = {
       compact: "min-w-[160px] max-w-[160px] lg:min-w-[200px] lg:max-w-[200px]",
       default: "min-w-[180px] max-w-[180px] lg:min-w-[220px] lg:max-w-[220px]",
-      boosted: "min-w-[220px] max-w-[220px] lg:min-w-[240px] lg:max-w-[240px]"
+      boosted: "min-w-[calc(50vw-24px)] max-w-[calc(50vw-24px)] lg:min-w-[240px] lg:max-w-[240px]"
     };
 
     return (
