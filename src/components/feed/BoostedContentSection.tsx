@@ -339,6 +339,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
               title={language === "el" ? "Κοινοποίηση" : "Share"}
             >
               <Share2 className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
+            </button>
           </div>
         </div>
       </div>
