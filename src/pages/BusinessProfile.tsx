@@ -544,7 +544,7 @@ const BusinessProfile = () => {
               }
               setReservationDialogOpen(true);
             }}
-            className="gap-1 text-xs px-2.5 py-[3px] sm:gap-2 sm:text-sm sm:px-4 sm:py-2">
+            className="gap-1 text-xs px-2.5 py-px sm:gap-2 sm:text-sm sm:px-4 sm:py-2">
 
               <CalendarCheck className="h-3.5 w-3.5" />
               {t.reserveTable}
