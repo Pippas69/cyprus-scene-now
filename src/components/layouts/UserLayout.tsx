@@ -106,8 +106,8 @@ export function UserLayout({ children }: UserLayoutProps) {
             <GlobalSearch language={language} resultTypes={['business', 'event', 'offer']} />
           </div>
 
-          {/* Spacer to push right-side items */}
-          <div className="flex-1 md:hidden" />
+          {/* Spacer to push right-side items on mobile */}
+          <div className="flex-1 md:flex-none" />
 
           {/* Mobile Search Button */}
           <div className="md:hidden mr-1 shrink-0">
