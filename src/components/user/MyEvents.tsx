@@ -139,7 +139,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
               <UnifiedEventCard
                 event={event}
                 language={language}
-                size="mobileFixed"
+                size="full"
                 isBoosted={isBoosted}
                 disableViewTracking
                 linkSearch="?src=dashboard_user"
@@ -172,7 +172,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
               <UnifiedEventCard
                 event={event}
                 language={language}
-                size="mobileFixed"
+                size="full"
                 isBoosted={isBoosted}
                 disableViewTracking
                 linkSearch="?src=dashboard_user"
