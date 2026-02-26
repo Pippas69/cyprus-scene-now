@@ -249,7 +249,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
         className="flex flex-col rounded-xl bg-card border border-border [@media(hover:hover)]:hover:border-primary/50 [@media(hover:hover)]:hover:shadow-lg transition-colors duration-200 group min-w-[calc(50vw-6px)] max-w-[calc(50vw-6px)] sm:min-w-[220px] sm:max-w-[220px] lg:min-w-[240px] lg:max-w-[240px] overflow-visible"
       >
         {/* TOP - Image section - responsive height, larger on mobile */}
-        <div className="relative h-28 lg:h-40 overflow-visible">
+        <div className="relative h-28 sm:h-36 lg:h-40 overflow-visible">
           {/* Image container - clipped, clickable to business profile */}
           <Link
             to={`/business/${offer.business_id}`}
