@@ -192,7 +192,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
       ref={cardRef as any}
       variant="glass"
       interactive
-      className={cn("overflow-visible transition-all duration-300", className)}
+      className={cn("overflow-visible transition-all duration-300 h-full", className)}
       style={style}
     >
       <CardContent className="p-0">
