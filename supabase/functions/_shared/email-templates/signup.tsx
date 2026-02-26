@@ -35,14 +35,14 @@ export const SignupEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
-          <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
+          <Text style={logoIcon}>ΦΟΜΟ</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>{'\u039A\u03B1\u03BB\u03CE\u03C2 \u03AE\u03C1\u03B8\u03B5\u03C2! \uD83C\uDF89'}</Heading>
+        <Heading style={h1}>Καλώς ήρθες! 🎉</Heading>
         <Text style={text}>
-          {'\u0395\u03C5\u03C7\u03B1\u03C1\u03B9\u03C3\u03C4\u03BF\u03CD\u03BC\u03B5 \u03C0\u03BF\u03C5 \u03B5\u03B3\u03B3\u03C1\u03AC\u03C6\u03B7\u03BA\u03B5\u03C2 \u03C3\u03C4\u03BF '}{' '}
+          Ευχαριστούμε που εγγράφηκες στο{' '}
           <Link href={siteUrl} style={link}>
-            <strong>{'\u03A6\u039F\u039C\u039F'}</strong>
+            <strong>ΦΟΜΟ</strong>
           </Link>
           !
         </Text>

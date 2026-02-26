@@ -25,7 +25,7 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
-          <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
+          <Text style={logoIcon}>ΦΟΜΟ</Text>
         </Section>
         <Hr style={divider} />
         <Heading style={h1}>Κωδικός επαλήθευσης 🔑</Heading>
