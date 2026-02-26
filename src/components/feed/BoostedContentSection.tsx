@@ -246,7 +246,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
       {/* Matching UnifiedEventCard boosted size - responsive, slightly larger than business cards on mobile */}
       <div
         ref={cardRef as any}
-        className="flex flex-col rounded-xl bg-card border border-border [@media(hover:hover)]:hover:border-primary/50 [@media(hover:hover)]:hover:shadow-lg transition-colors duration-200 group min-w-[calc(50vw-24px)] max-w-[calc(50vw-24px)] lg:min-w-[240px] lg:max-w-[240px] overflow-visible"
+        className="flex flex-col rounded-xl bg-card border border-border [@media(hover:hover)]:hover:border-primary/50 [@media(hover:hover)]:hover:shadow-lg transition-colors duration-200 group min-w-[calc(50vw-16px)] max-w-[calc(50vw-16px)] lg:min-w-[240px] lg:max-w-[240px] overflow-visible"
       >
         {/* TOP - Image section - responsive height, larger on mobile */}
         <div className="relative h-28 lg:h-40 overflow-visible">
