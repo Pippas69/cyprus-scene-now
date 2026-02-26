@@ -201,11 +201,11 @@ export const CardActionBar = ({
           onClick={(e) => handleAction(e, "interested")}
           disabled={loading}
             className={cn(
-              "flex items-center gap-1 text-[11px] transition-colors",
+              "flex items-center gap-1 text-[11px] font-bold transition-colors",
               isInterested
                 ? "text-secondary"
                 : onImage
-                  ? "text-white/80 hover:text-secondary"
+                  ? "text-white hover:text-secondary"
                   : "text-muted-foreground hover:text-secondary"
             )}
           >
@@ -215,7 +215,7 @@ export const CardActionBar = ({
                 isInterested && "fill-secondary text-secondary"
               )}
             />
-            <span>{interestedCount}</span>
+            <span className="font-bold">{interestedCount}</span>
         </button>
 
         {/* Going Button */}
@@ -223,11 +223,11 @@ export const CardActionBar = ({
           onClick={(e) => handleAction(e, "going")}
           disabled={loading}
             className={cn(
-              "flex items-center gap-1 text-[11px] transition-colors",
+              "flex items-center gap-1 text-[11px] font-bold transition-colors",
               isGoing
                 ? "text-ocean"
                 : onImage
-                  ? "text-white/80 hover:text-ocean"
+                  ? "text-white hover:text-ocean"
                   : "text-muted-foreground hover:text-ocean"
             )}
           >
@@ -237,7 +237,7 @@ export const CardActionBar = ({
                 isGoing && "text-ocean"
               )}
             />
-            <span>{goingCount}</span>
+            <span className="font-bold">{goingCount}</span>
         </button>
 
         {/* Share Button */}
@@ -246,7 +246,7 @@ export const CardActionBar = ({
           className={cn(
             "flex items-center transition-colors",
             onImage
-              ? "text-white/80 hover:text-white"
+              ? "text-white hover:text-white/70"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
