@@ -136,8 +136,8 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
         <div className="container mx-auto px-3 sm:px-4 relative z-10">
           {/* Mobile: show only 1 event, Tablet/Desktop: show 2 - same grid as MyEvents */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 sm:mb-10 md:mb-12 max-w-4xl mx-auto">
-            {events.slice(0, 2).map((event, index) =>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-8 sm:mb-10 md:mb-12 max-w-5xl mx-auto">
+            {events.slice(0, window.innerWidth >= 1024 ? 3 : 2).map((event, index) =>
             <motion.div
               key={event.id}
               initial={{ opacity: 0, y: 20 }}
