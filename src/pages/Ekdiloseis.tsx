@@ -225,7 +225,7 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick, selectedCity
       transition={{ duration: 0.6 }}
       className="relative"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8 relative">
         {loading ? (
           [1, 2, 3, 4, 5, 6].map((i) => (
             <EventCardSkeleton key={i} />
@@ -527,7 +527,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
       {/* BOOSTED ZONE - No header, just cards with badge */}
       {hasBoostedEvents && (
         <section>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {boostedEvents.map((event) => (
               <div
                 key={event.id}
@@ -548,13 +548,13 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
       {/* Regular Events List */}
       <section>
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <EventCardSkeleton key={i} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {regularEvents && regularEvents.map((event, index) => (
               <motion.div
                 key={event.id}

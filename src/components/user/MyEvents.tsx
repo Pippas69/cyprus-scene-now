@@ -104,7 +104,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {[1, 2, 3].map(i => (
             <Skeleton key={i} className="h-72 w-full rounded-xl" />
           ))}
@@ -123,7 +123,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       return <p className="text-center text-muted-foreground py-6 text-sm">{emptyMessage}</p>;
     }
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {eventsList.map(item => {
           const rawEvent = isRsvp ? item.event : item;
           const key = isRsvp ? item.id : rawEvent.id;
@@ -156,7 +156,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       return <p className="text-center text-muted-foreground py-6 text-sm">{t.noHistory}</p>;
     }
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {eventsList.map(item => {
           const rawEvent = isRsvp ? item.event : item;
           const key = isRsvp ? item.id : rawEvent.id;
@@ -193,7 +193,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       return <p className="text-center text-muted-foreground py-6 text-sm">{emptyMessage}</p>;
     }
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {ticketsList.map(ticket => {
           const businessName = (ticket.events as any)?.businesses?.name;
           return (
