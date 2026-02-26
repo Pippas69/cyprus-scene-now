@@ -263,7 +263,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               }} 
               size="sm" 
               variant="default"
-              className="text-[10px] px-1.5 py-0 h-5 font-bold"
+              className="text-[9px] px-1.5 py-0 h-5 font-bold"
             >
               {language === "el" ? "Εξαργύρωσε" : "Redeem"}
             </Button>

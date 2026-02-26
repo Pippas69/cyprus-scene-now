@@ -301,7 +301,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
               onClick={handleRedeemClick}
               size="sm" 
               variant="default"
-              className="text-[10px] lg:text-xs px-1 lg:px-1.5 py-0 h-4 lg:h-5 font-bold"
+              className="text-[9px] lg:text-[10px] px-1 lg:px-1.5 py-0 h-4 lg:h-5 font-bold"
             >
               {t.redeem}
             </Button>
