@@ -314,13 +314,13 @@ const HierarchicalCategoryFilter = ({
           {/* Mobile: categories centered, student discount centered below */}
           <div className="flex flex-col items-center gap-1 md:hidden pb-1.5">
             <div className="flex gap-1.5 items-center">
-              {categories.map((cat) => renderBadge(cat))}
+              {categories.map((cat) => renderBadge(cat, false, "mobile-"))}
             </div>
             {renderStudentDiscountBadge()}
           </div>
           {/* Tablet & Desktop: all in one row */}
           <div className="hidden md:flex gap-2 pb-2 items-center">
-            {categories.map((cat) => renderBadge(cat))}
+            {categories.map((cat) => renderBadge(cat, false, "desktop-"))}
             {renderStudentDiscountBadge()}
           </div>
         </>
