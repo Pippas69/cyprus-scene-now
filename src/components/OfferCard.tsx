@@ -199,7 +199,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
         {/* Image section - consistent height across all devices to match mobile design */}
         <Link
           to={`/business/${offerData.business_id}`}
-          className="block relative h-[45vw] md:aspect-auto md:h-36 overflow-hidden rounded-t-xl"
+          className="block relative h-[45vw] md:aspect-auto md:h-44 overflow-hidden rounded-t-xl"
           aria-label={offerData.businesses.name}
         >
           {imageUrl ? (
