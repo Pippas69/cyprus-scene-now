@@ -483,11 +483,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                       </div>
                       
                       {/* Content at bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <h4 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-primary-foreground transition-colors">
+                      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
+                        <h4 className="text-[10px] sm:text-sm font-semibold text-white line-clamp-2 sm:line-clamp-1 group-hover:text-primary-foreground transition-colors leading-tight">
                           {business.name}
                         </h4>
-                        <p className="text-xs text-white/80 mt-0.5">
+                        <p className="text-[9px] sm:text-xs text-white/80 mt-0.5">
                           {translateCity(business.city, language)}
                         </p>
                         {business.student_discount_mode === "once" && (
