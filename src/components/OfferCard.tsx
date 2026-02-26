@@ -298,7 +298,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
         {/* Content section - compact spacing */}
         <div className="p-3 space-y-1">
           {/* Title */}
-          <h3 className="font-bold text-sm text-foreground leading-tight truncate">
+          <h3 className="font-semibold text-sm text-foreground leading-tight truncate">
             {offerData.title}
           </h3>
 
