@@ -477,9 +477,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                       
                       {/* Student discount badge - top right */}
-                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full px-2 py-1 flex items-center gap-1">
-                        <GraduationCap className="h-3 w-3" />
-                        <span className="text-xs font-semibold">{business.student_discount_percent}%</span>
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 sm:px-2 sm:py-1 flex items-center gap-0.5 sm:gap-1">
+                        <GraduationCap className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                        <span className="text-[9px] sm:text-xs font-semibold">{business.student_discount_percent}%</span>
                       </div>
                       
                       {/* Content at bottom */}
@@ -490,11 +490,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                         <p className="text-[9px] sm:text-xs text-white/80 mt-0.5">
                           {translateCity(business.city, language)}
                         </p>
-                        {business.student_discount_mode === "once" && (
-                          <span className="text-[10px] text-white/60">
-                            ({language === "el" ? "1η φορά" : "1st time"})
-                          </span>
-                        )}
                       </div>
                     </Link>
                   </motion.div>
