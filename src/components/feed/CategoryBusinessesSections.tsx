@@ -172,7 +172,7 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
               <Building2 className="h-4 w-4 text-primary" />
               <Skeleton className="h-5 w-40" />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {Array.from({ length: 12 }).map((__, i) => (
                 <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border">
                   <Skeleton className="h-14 w-14 rounded-full" />
@@ -202,7 +202,7 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
             </div>
 
             <motion.div
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4"
+              className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-3"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ staggerChildren: 0.05 }}

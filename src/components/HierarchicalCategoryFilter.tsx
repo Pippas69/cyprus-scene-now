@@ -98,8 +98,8 @@ const HierarchicalCategoryFilter = ({
       if (badgeEl) {
         const rect = badgeEl.getBoundingClientRect();
         setDropdownPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + window.scrollX,
+          top: rect.bottom + 8,
+          left: rect.left,
         });
       }
     };
@@ -124,8 +124,8 @@ const HierarchicalCategoryFilter = ({
       if (badgeEl) {
         const rect = badgeEl.getBoundingClientRect();
         setDropdownPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + window.scrollX,
+          top: rect.bottom + 8,
+          left: rect.left,
         });
       }
       setOpenDropdown(categoryId);
@@ -250,8 +250,8 @@ const HierarchicalCategoryFilter = ({
   const renderDropdownPortal = () => {
     if (!openDropdown || !dropdownPosition) return null;
 
-    // Clamp against viewport (converted to page coordinates)
-    const maxLeft = window.scrollX + window.innerWidth - 220;
+    // Clamp against viewport
+    const maxLeft = window.innerWidth - 220;
     const left = Math.min(dropdownPosition.left, maxLeft);
 
     return createPortal(
