@@ -20,7 +20,7 @@ interface ReauthenticationEmailProps {
 
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="el" dir="ltr">
-    <Head />
+    <Head><meta charSet="utf-8" /></Head>
     <Preview>Κωδικός επαλήθευσης — ΦΟΜΟ</Preview>
     <Body style={main}>
       <Container style={container}>

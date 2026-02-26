@@ -30,7 +30,7 @@ export const SignupEmail = ({
   confirmationUrl,
 }: SignupEmailProps) => (
   <Html lang="el" dir="ltr">
-    <Head />
+    <Head><meta charSet="utf-8" /></Head>
     <Preview>Επιβεβαίωσε το email σου — ΦΟΜΟ</Preview>
     <Body style={main}>
       <Container style={container}>

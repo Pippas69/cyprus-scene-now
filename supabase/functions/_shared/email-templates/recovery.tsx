@@ -25,7 +25,7 @@ export const RecoveryEmail = ({
   confirmationUrl,
 }: RecoveryEmailProps) => (
   <Html lang="el" dir="ltr">
-    <Head />
+    <Head><meta charSet="utf-8" /></Head>
     <Preview>Επαναφορά κωδικού — ΦΟΜΟ</Preview>
     <Body style={main}>
       <Container style={container}>

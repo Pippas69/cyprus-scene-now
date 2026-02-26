@@ -25,7 +25,7 @@ export const MagicLinkEmail = ({
   confirmationUrl,
 }: MagicLinkEmailProps) => (
   <Html lang="el" dir="ltr">
-    <Head />
+    <Head><meta charSet="utf-8" /></Head>
     <Preview>Σύνδεσμος σύνδεσης — ΦΟΜΟ</Preview>
     <Body style={main}>
       <Container style={container}>
