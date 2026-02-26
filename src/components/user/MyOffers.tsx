@@ -347,7 +347,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         className="overflow-hidden relative transition-all duration-300"
       >
         {/* Image section - increased height */}
-        <div className="h-48 relative overflow-hidden rounded-t-xl">
+        <div className="h-36 relative overflow-hidden rounded-t-xl">
           {imageUrl ? (
             <img
               src={imageUrl}
