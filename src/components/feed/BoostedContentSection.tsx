@@ -322,7 +322,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
         {/* BOTTOM HALF - Offer Details - responsive */}
         <div className="flex-1 px-2 lg:px-3 pt-2 lg:pt-3 pb-1.5 lg:pb-2 flex flex-col justify-between min-h-0 gap-0.5">
           {/* LINE 1: Title */}
-          <h4 className="text-xs lg:text-sm font-bold text-foreground truncate">
+          <h4 className="text-xs lg:text-sm font-semibold text-foreground truncate">
             {offer.title}
           </h4>
           
