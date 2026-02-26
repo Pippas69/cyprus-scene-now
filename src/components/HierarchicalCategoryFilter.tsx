@@ -186,11 +186,11 @@ const HierarchicalCategoryFilter = ({
 
   // Badge rendering with mapMode support
   // Slightly larger text on mobile/tablet for Ekdiloseis/Offers pages
-  const renderBadge = (category: Category, isMapStyle: boolean = false) => (
+  const renderBadge = (category: Category, isMapStyle: boolean = false, refPrefix: string = "") => (
     <div
-      key={category.id}
+      key={`${refPrefix}${category.id}`}
       className="relative shrink-0"
-      ref={(el) => (badgeRefs.current[category.id] = el)}
+      ref={(el) => (badgeRefs.current[`${refPrefix}${category.id}`] = el)}
     >
       <Badge
         variant={
