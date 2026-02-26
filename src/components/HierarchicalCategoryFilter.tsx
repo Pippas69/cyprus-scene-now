@@ -167,7 +167,7 @@ const HierarchicalCategoryFilter = ({
     if (!onToggleStudentDiscounts) return null;
     const isActive = !!showStudentDiscounts;
     return (
-      <div className="relative mt-0 -ml-6">
+      <div className="relative mt-0 md:ml-6">
         <Badge
           variant={isActive ? "default" : "outline"}
           className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-[10px] md:text-[10px] lg:text-xs font-medium min-h-[28px] md:min-h-[28px] lg:min-h-[36px] flex items-center justify-center gap-0.5 md:gap-1 lg:gap-1.5 rounded-full select-none whitespace-nowrap ${
