@@ -35,14 +35,14 @@ export const SignupEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
-          <Text style={logoIcon}>Φ</Text>
+          <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>Καλώς ήρθες! 🎉</Heading>
+        <Heading style={h1}>{'\u039A\u03B1\u03BB\u03CE\u03C2 \u03AE\u03C1\u03B8\u03B5\u03C2! \uD83C\uDF89'}</Heading>
         <Text style={text}>
-          Ευχαριστούμε που εγγράφηκες στο{' '}
+          {'\u0395\u03C5\u03C7\u03B1\u03C1\u03B9\u03C3\u03C4\u03BF\u03CD\u03BC\u03B5 \u03C0\u03BF\u03C5 \u03B5\u03B3\u03B3\u03C1\u03AC\u03C6\u03B7\u03BA\u03B5\u03C2 \u03C3\u03C4\u03BF '}{' '}
           <Link href={siteUrl} style={link}>
-            <strong>ΦΟΜΟ</strong>
+            <strong>{'\u03A6\u039F\u039C\u039F'}</strong>
           </Link>
           !
         </Text>
@@ -73,7 +73,7 @@ export default SignupEmail
 const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }
 const container = { padding: '40px 25px', maxWidth: '480px', margin: '0 auto' }
 const logoSection = { textAlign: 'center' as const, marginBottom: '16px' }
-const logoIcon = { display: 'inline-block' as const, width: '48px', height: '48px', lineHeight: '48px', borderRadius: '50%', backgroundColor: '#0D3B66', color: '#ffffff', fontSize: '24px', fontWeight: 'bold' as const, textAlign: 'center' as const, margin: '0 auto', letterSpacing: '0' }
+const logoIcon = { display: 'inline-block' as const, padding: '8px 16px', borderRadius: '24px', backgroundColor: '#0D3B66', color: '#ffffff', fontSize: '20px', fontWeight: 'bold' as const, textAlign: 'center' as const, margin: '0 auto', letterSpacing: '3px' }
 const divider = { borderColor: '#e2e8f0', margin: '20px 0' }
 const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0D3B66', margin: '0 0 16px' }
 const text = { fontSize: '14px', color: '#334155', lineHeight: '1.6', margin: '0 0 16px' }
