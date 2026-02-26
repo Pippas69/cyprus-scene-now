@@ -320,79 +320,31 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
         </div>
 
         {/* BOTTOM HALF - Offer Details - responsive */}
-        <div className="flex-1 px-2 sm:px-3 pt-2 sm:pt-3 pb-1.5 sm:pb-2 flex flex-col justify-between min-h-0 gap-0.5">
-          {/* LINE 1: Title - aligned with event title */}
-          <h4 className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
+        <div className="flex-1 px-2 lg:px-3 pt-2 lg:pt-3 pb-1.5 lg:pb-2 flex flex-col justify-between min-h-0 gap-0.5">
+          {/* LINE 1: Title */}
+          <h4 className="text-xs lg:text-sm font-bold text-foreground truncate">
             {offer.title}
           </h4>
           
           {/* LINE 2: Expiry with calendar icon */}
-          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
-            <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-            <span className="text-[10px] sm:text-xs truncate">{getExpiryLabel()}</span>
+          <div className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground">
+            <Calendar className="h-3 w-3 lg:h-3.5 lg:w-3.5 flex-shrink-0" />
+            <span className="text-[10px] lg:text-xs truncate">{getExpiryLabel()}</span>
           </div>
 
           {/* LINE 3: Location + Business */}
-          <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+          <div className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground">
             <button 
               onClick={handleMapClick}
               className="flex items-center text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
               title={language === "el" ? "Δες στο χάρτη" : "View on map"}
             >
-              <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <MapPin className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
             </button>
-            <span className="text-[10px] sm:text-xs truncate">
+            <span className="text-[10px] lg:text-xs truncate">
               {translateCity(offer.businesses?.city, language)} · {offer.businesses?.name}
             </span>
           </div>
-
-          {/* LINE 4: Discount badge + Share + Redeem button */}
-          <div className="flex items-center justify-between mt-0.5">
-            {/* Discount badge on left */}
-             <div className="flex items-center gap-1">
-               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
-                 <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 h-5 sm:h-6">
-                   -{offer.percent_off}%
-                 </Badge>
-               )}
-
-               {offer.discount_type === "special_deal" && offer.special_deal_text && (
-                 <Popover>
-                   <PopoverTrigger asChild>
-                     <button type="button" className="inline-flex">
-                       <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 h-5 sm:h-6">
-                         Offer
-                       </Badge>
-                     </button>
-                   </PopoverTrigger>
-                    <PopoverContent className="w-48 p-2" side="top" align="start">
-                      <p className="text-xs font-medium">{offer.special_deal_text}</p>
-                    </PopoverContent>
-                 </Popover>
-               )}
-             </div>
-            {/* Share + Redeem buttons on right */}
-            <div className="flex items-center gap-1 ml-auto">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 sm:h-6 sm:w-6"
-                onClick={handleShareClick}
-                title={language === "el" ? "Κοινοποίηση" : "Share"}
-              >
-                <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              </Button>
-              <Button 
-                onClick={handleRedeemClick}
-                size="sm" 
-                variant="default"
-                className="text-[10px] sm:text-xs h-5 sm:h-6 px-2 sm:px-2.5"
-              >
-                {t.redeem}
-              </Button>
-            </div>
-          </div>
-
         </div>
       </div>
 
