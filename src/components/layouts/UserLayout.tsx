@@ -97,14 +97,17 @@ export function UserLayout({ children }: UserLayoutProps) {
           <SidebarTrigger className="mr-2 sm:mr-4 shrink-0" />
           
           {/* Logo - consistent with business dashboard */}
-          <button onClick={() => navigate("/")} className="mr-auto shrink-0">
+          <button onClick={() => navigate("/")} className="shrink-0">
             <Logo size="sm" />
           </button>
 
-          {/* Search - Desktop only in header */}
-          <div className="hidden md:flex flex-1 max-w-md mx-4 min-w-0">
+          {/* Search - Desktop only, right next to logo */}
+          <div className="hidden md:flex flex-1 max-w-md ml-3 min-w-0">
             <GlobalSearch language={language} resultTypes={['business', 'event', 'offer']} />
           </div>
+
+          {/* Spacer to push right-side items */}
+          <div className="flex-1 md:hidden" />
 
           {/* Mobile Search Button */}
           <div className="md:hidden mr-1 shrink-0">
