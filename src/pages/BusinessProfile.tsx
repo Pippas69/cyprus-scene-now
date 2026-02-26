@@ -507,7 +507,7 @@ const BusinessProfile = () => {
         >
           {/* Name + Verified - centered */}
           <div className="flex items-center justify-center gap-2 mb-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h1 className="text-xl md:text-3xl font-bold text-foreground">
               {business.name}
             </h1>
             {business.verified && (
@@ -544,9 +544,9 @@ const BusinessProfile = () => {
                 }
                 setReservationDialogOpen(true);
               }}
-              className="gap-2"
+              className="gap-2 text-sm px-4 py-2"
             >
-              <CalendarCheck className="h-4 w-4" />
+              <CalendarCheck className="h-3.5 w-3.5" />
               {t.reserveTable}
             </RippleButton>
           </motion.div>
