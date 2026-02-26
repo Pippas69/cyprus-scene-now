@@ -297,7 +297,7 @@ export const UnifiedEventCard = ({
         className
       )}
     >
-      <CardContent className="p-0 h-full flex flex-col">
+      <CardContent className="p-0 flex flex-col">
         {/* Image section - consistent height across all devices to match mobile design */}
         <Link
           to={`/event/${event.id}${linkSearch || ""}`}
@@ -362,7 +362,7 @@ export const UnifiedEventCard = ({
         </Link>
 
         {/* Content section */}
-        <div className="p-2.5 flex-1 flex flex-col gap-0.5">
+        <div className="p-2.5 flex flex-col gap-0.5">
           {/* Title */}
           <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
             <h3 className="font-semibold text-sm text-foreground leading-tight truncate">
