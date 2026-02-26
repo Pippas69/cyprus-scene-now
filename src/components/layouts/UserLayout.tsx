@@ -101,6 +101,20 @@ export function UserLayout({ children }: UserLayoutProps) {
             <Logo size="sm" />
           </button>
 
+          {/* Mobile Search Button - right next to logo */}
+          <div className="md:hidden ml-2 shrink-0">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
+                  <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="top" className="h-full">
+                <GlobalSearch language={language} fullscreen resultTypes={['business', 'event', 'offer']} />
+              </SheetContent>
+            </Sheet>
+          </div>
+
           {/* Search - Desktop only, right next to logo */}
           <div className="hidden md:flex w-full max-w-[560px] ml-3 min-w-0">
             <GlobalSearch language={language} resultTypes={['business', 'event', 'offer']} />
@@ -108,19 +122,6 @@ export function UserLayout({ children }: UserLayoutProps) {
 
           {/* Right-side controls */}
           <div className="ml-auto flex items-center">
-            {/* Mobile Search Button */}
-            <div className="md:hidden mr-1 shrink-0">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" aria-label={language === 'el' ? 'Αναζήτηση' : 'Search'}>
-                    <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="top" className="h-full">
-                  <GlobalSearch language={language} fullscreen resultTypes={['business', 'event', 'offer']} />
-                </SheetContent>
-              </Sheet>
-            </div>
 
             {/* Language Toggle - All device sizes */}
             <div className="mr-1 sm:mr-2 shrink-0">
