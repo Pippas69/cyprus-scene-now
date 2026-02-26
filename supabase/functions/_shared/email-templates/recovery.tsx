@@ -33,9 +33,9 @@ export const RecoveryEmail = ({
           <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>{'\u0395\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC \u03BA\u03C9\u03B4\u03B9\u03BA\u03BF\u03CD \uD83D\uDD10'}</Heading>
+        <Heading style={h1}>Επαναφορά κωδικού 🔐</Heading>
         <Text style={text}>
-          {'\u039B\u03AC\u03B2\u03B1\u03BC\u03B5 \u03B1\u03AF\u03C4\u03B7\u03BC\u03B1 \u03B5\u03C0\u03B1\u03BD\u03B1\u03C6\u03BF\u03C1\u03AC\u03C2 \u03BA\u03C9\u03B4\u03B9\u03BA\u03BF\u03CD \u03B3\u03B9\u03B1 \u03C4\u03BF\u03BD \u03BB\u03BF\u03B3\u03B1\u03C1\u03B9\u03B1\u03C3\u03BC\u03CC \u03C3\u03BF\u03C5 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F. \u03A0\u03AC\u03C4\u03B7\u03C3\u03B5 \u03C4\u03BF \u03C0\u03B1\u03C1\u03B1\u03BA\u03AC\u03C4\u03C9 \u03BA\u03BF\u03C5\u03BC\u03C0\u03AF \u03B3\u03B9\u03B1 \u03BD\u03B1 \u03BF\u03C1\u03AF\u03C3\u03B5\u03B9\u03C2 \u03BD\u03AD\u03BF \u03BA\u03C9\u03B4\u03B9\u03BA\u03CC.'}
+          Λάβαμε αίτημα επαναφοράς κωδικού για τον λογαριασμό σου στο ΦΟΜΟ. Πάτησε το παρακάτω κουμπί για να ορίσεις νέο κωδικό.
         </Text>
         <Section style={buttonSection}>
           <Button style={button} href={confirmationUrl}>
