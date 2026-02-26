@@ -336,7 +336,7 @@ export const UnifiedEventCard = ({
         </Link>
 
         {/* Content section - matching reference image layout */}
-        <div className="p-2.5 sm:p-3 flex-1 flex flex-col gap-0.5">
+        <div className="p-2.5 flex-1 flex flex-col gap-0.5">
           {/* Title */}
           <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
             <h3 className="font-semibold text-sm leading-tight truncate hover:text-primary transition-colors">
