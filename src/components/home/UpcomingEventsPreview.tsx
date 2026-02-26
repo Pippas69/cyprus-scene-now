@@ -144,7 +144,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={index > 0 ? "hidden md:block" : ""}>
+              className={index === 0 ? "" : index === 1 ? "hidden md:block" : "hidden lg:block"}>
 
                 <div className="md:hidden [&_.event-card]:bg-white [&_.event-card]:text-gray-900">
                   <UnifiedEventCard event={event} language={language} size="mobileFixed" className="!bg-white !border-gray-200 [&_*]:!text-gray-800 [&_.text-muted-foreground]:!text-gray-500" />
