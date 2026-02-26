@@ -168,7 +168,7 @@ const HierarchicalCategoryFilter = ({
       <div className="relative mt-0">
         <Badge
           variant={isActive ? "default" : "outline"}
-          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-[10px] md:text-[10px] lg:text-xs font-medium min-h-[28px] md:min-h-[28px] lg:min-h-[36px] flex items-center justify-center gap-1 md:gap-1 lg:gap-1.5 rounded-full select-none whitespace-nowrap ${
+          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] px-2 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-[10px] md:text-[10px] lg:text-xs font-medium min-h-[28px] md:min-h-[28px] lg:min-h-[36px] flex items-center justify-center gap-0.5 md:gap-1 lg:gap-1.5 rounded-full select-none whitespace-nowrap ${
             isActive
               ? "bg-ocean text-white border-ocean shadow-md"
               : "bg-card text-foreground border-border hover:bg-ocean/10 hover:border-ocean/30 hover:shadow-sm"
@@ -204,8 +204,8 @@ const HierarchicalCategoryFilter = ({
         }
         className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
           isMapStyle 
-            ? "px-2.5 md:px-3 lg:px-3 py-1.5 md:py-1.5 lg:py-2 text-[11px] md:text-[13px] lg:text-sm min-h-[30px] md:min-h-[34px] lg:min-h-[36px] gap-1 md:gap-1.5 lg:gap-2" 
-            : "px-2.5 md:px-3 lg:px-3 py-1.5 md:py-2 lg:py-2 text-xs md:text-xs lg:text-xs min-h-[32px] md:min-h-[40px] lg:min-h-[40px] gap-1.5 md:gap-1.5 lg:gap-1.5"
+            ? "px-2 md:px-3 lg:px-3 py-1 md:py-1.5 lg:py-2 text-[10px] md:text-[13px] lg:text-sm min-h-[28px] md:min-h-[34px] lg:min-h-[36px] gap-0.5 md:gap-1.5 lg:gap-2" 
+            : "px-2 md:px-3 lg:px-3 py-1 md:py-2 lg:py-2 text-[10px] md:text-xs lg:text-xs min-h-[28px] md:min-h-[40px] lg:min-h-[40px] gap-0.5 md:gap-1.5 lg:gap-1.5"
         } font-medium flex items-center justify-center rounded-full select-none whitespace-nowrap ${
           category.hasDropdown
             ? hasAnySubOptionSelected(category)
@@ -223,7 +223,7 @@ const HierarchicalCategoryFilter = ({
           }
         }}
       >
-        <span className={isMapStyle ? "text-[11px] md:text-[13px] lg:text-sm" : "text-xs md:text-sm lg:text-base"}>{category.icon}</span>
+        <span className={isMapStyle ? "text-[10px] md:text-[13px] lg:text-sm" : "text-[10px] md:text-sm lg:text-base"}>{category.icon}</span>
         <span>{category.label}</span>
         {category.hasDropdown && (
           <>
