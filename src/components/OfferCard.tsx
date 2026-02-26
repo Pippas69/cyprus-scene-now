@@ -225,11 +225,11 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </div>
           )}
           
-          {/* Bottom overlay: Discount badge + Redeem (same line, same size) */}
+          {/* Bottom overlay: Discount badge + Redeem (same line, premium size) */}
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
-            <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+            <div className="flex items-center gap-1.5" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
-                <Badge className="text-[10px] px-1.5 py-0 h-5 font-bold border-0 bg-primary text-primary-foreground">
+                <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md">
                   -{offerData.percent_off}%
                 </Badge>
               )}
@@ -237,19 +237,22 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 <Popover>
                   <PopoverTrigger asChild>
                     <button type="button" className="inline-flex" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                      <Badge className="text-[10px] px-1.5 py-0 h-5 font-bold border-0 bg-primary text-primary-foreground cursor-pointer">
+                      <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground cursor-pointer shadow-md">
                         Offer
                       </Badge>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-3" side="top" align="start">
-                    <p className="text-sm font-medium">{offerData.special_deal_text}</p>
+                  <PopoverContent className="w-72 p-4 rounded-xl" side="top" align="start">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-bold text-foreground">{offerData.title}</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{offerData.special_deal_text}</p>
+                    </div>
                   </PopoverContent>
                 </Popover>
               )}
               {isCredit && (
-                <Badge className="text-[10px] px-1.5 py-0 h-5 border-0 bg-primary text-primary-foreground">
-                  <Wallet className="h-3 w-3 mr-0.5" />
+                <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md">
+                  <Wallet className="h-3 w-3 mr-1" />
                   {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
                 </Badge>
               )}
@@ -263,7 +266,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               }} 
               size="sm" 
               variant="default"
-              className="text-[9px] px-1.5 py-0 h-5 font-bold"
+              className="text-[11px] px-2.5 py-0.5 h-6 font-bold shadow-md"
             >
               {language === "el" ? "Εξαργύρωσε" : "Redeem"}
             </Button>
