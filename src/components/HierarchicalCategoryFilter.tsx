@@ -159,9 +159,7 @@ const HierarchicalCategoryFilter = ({
     return getSelectedSubOptionsCount(category) > 0;
   };
 
-  // Separate first 3 categories (Nightlife, Clubs, Dining) and Summer for mobile/tablet layout
-  const firstRow = categories.slice(0, 3);
-  const secondRow = categories.slice(3); // Summer on row 2 (mobile/tablet)
+  // All 3 categories fit in one row now
 
   const renderStudentDiscountBadge = () => {
     if (!onToggleStudentDiscounts) return null;
@@ -306,28 +304,17 @@ const HierarchicalCategoryFilter = ({
 
   return (
     <div className="w-full">
-      {/* Map mode: all 4 categories inline, no student discount */}
+      {/* Map mode: all 3 categories inline, no student discount */}
       {mapMode || mapCompact ? (
         <div className="flex gap-1.5 md:gap-2 lg:gap-2.5 items-center">
           {categories.map((cat) => renderBadge(cat, true))}
         </div>
       ) : (
-        isDesktopLg ? (
-          // Desktop: all categories + Student Discount in one row
-          <div className="flex gap-2 pb-2 items-center">
-            {categories.map((cat) => renderBadge(cat))}
-            {renderStudentDiscountBadge()}
-          </div>
-        ) : (
-          // Mobile/Tablet: Summer + Student Discount on the same row (as per mock)
-          <div className="space-y-1.5 pb-1.5">
-            <div className="flex gap-1.5 justify-start">{firstRow.map((cat) => renderBadge(cat))}</div>
-            <div className="flex gap-1.5 justify-start items-center">
-              {secondRow.map((cat) => renderBadge(cat))}
-              {renderStudentDiscountBadge()}
-            </div>
-          </div>
-        )
+        // All screens: 3 categories + Student Discount in one row
+        <div className="flex gap-1.5 md:gap-2 pb-1.5 md:pb-2 items-center flex-wrap">
+          {categories.map((cat) => renderBadge(cat))}
+          {renderStudentDiscountBadge()}
+        </div>
       )}
 
       {/* Portal Dropdown Menu (must render for BOTH feed & map) */}

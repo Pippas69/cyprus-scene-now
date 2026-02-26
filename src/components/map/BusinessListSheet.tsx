@@ -23,20 +23,20 @@ const PLAN_TIER_ORDER = ['elite', 'pro', 'basic', 'free'] as const;
 // Map sub-categories to their parent category for icon lookup
 const getParentCategoryIcon = (categoryId: string): string => {
   // Nightlife sub-options
-  if (['bars', 'cocktail-bars', 'wine-bars', 'pubs'].includes(categoryId)) {
+  if (['bars', 'pubs', 'events'].includes(categoryId)) {
     return '🍸'; // Nightlife icon
   }
-  // Clubs - has its own icon
+  // Clubs
   if (categoryId === 'clubs') {
-    return '🎉'; // Clubs icon
+    return '🎉';
   }
   // Dining sub-options
   if (['fine-dining', 'casual-dining', 'dining'].includes(categoryId)) {
-    return '🍴'; // Dining icon
+    return '🍴';
   }
-  // Summer sub-options
-  if (['beach-bars', 'summer-events', 'seaside-restaurants', 'summer'].includes(categoryId)) {
-    return '☀️'; // Summer icon
+  // Performances sub-options
+  if (['theatre', 'music', 'dance', 'kids', 'performances'].includes(categoryId)) {
+    return '🎭';
   }
   // Nightlife main category
   if (categoryId === 'nightlife') {
