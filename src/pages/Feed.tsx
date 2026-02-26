@@ -447,7 +447,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
             {/* Student Discount results (only when filter is active) - uses same square card design */}
             {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
               <motion.div 
-                className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3"
+                className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
