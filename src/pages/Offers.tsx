@@ -398,7 +398,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
            valid_days, valid_start_time, valid_end_time, category, discount_type, special_deal_text,
            total_people, people_remaining, max_people_per_redemption, one_per_user, show_reservation_cta, requires_reservation,
            offer_type, bonus_percent, credit_amount_cents, pricing_type, bundle_price_cents,
-           businesses!inner (name, logo_url, cover_url, city, verified, stripe_payouts_enabled, accepts_direct_reservations, reservation_time_slots, reservation_days)
+            businesses!inner (name, logo_url, cover_url, city, category, verified, stripe_payouts_enabled, accepts_direct_reservations, reservation_time_slots, reservation_days)
          `)
         .eq('active', true)
         .eq('businesses.verified', true)
@@ -411,10 +411,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
         query = query.eq('businesses.city', selectedCity);
       }
 
-      // Filter by categories if selected (filter by business category)
-      if (selectedCategories.length > 0) {
-        query = query.overlaps('businesses.category', mapFilterIdsToDbCategories(selectedCategories));
-      }
+      // Category filtering is done client-side after fetch
 
       // Apply time filter: show offers that END within the selected time window
       if (timeBoundaries) {
@@ -430,13 +427,23 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
 
       if (error) throw error;
       
-      // Filter out sold-out offers (people_remaining = 0)
-      return (data || []).filter((offer: any) => {
+      // Filter out sold-out offers and apply category filtering client-side
+      let results = (data || []).filter((offer: any) => {
         if (offer.total_people !== null && offer.total_people > 0 && offer.people_remaining !== null && offer.people_remaining <= 0) {
           return false;
         }
         return true;
       });
+
+      // Client-side category filtering
+      if (selectedCategories.length > 0) {
+        results = results.filter((offer: any) => {
+          const bizCats: string[] = offer.businesses?.category || [];
+          return doesCategoryMatchFilters(bizCats, selectedCategories);
+        });
+      }
+
+      return results;
     },
   });
 
