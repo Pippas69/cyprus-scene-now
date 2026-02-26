@@ -293,7 +293,7 @@ export const UnifiedEventCard = ({
       interactive
       className={cn(
         "overflow-visible transition-all duration-300",
-        size === "mobileFixed" && "h-[290px]",
+        size === "mobileFixed" && "md:h-[290px]",
         className
       )}
     >
