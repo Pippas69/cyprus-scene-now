@@ -266,7 +266,7 @@ export const UnifiedEventCard = ({
 
         {/* Content section */}
         <div className="flex-1 p-2 lg:p-3 flex flex-col justify-between min-h-0 gap-0.5">
-          <h4 className="text-xs lg:text-sm font-bold text-foreground truncate">
+          <h4 className="text-xs lg:text-sm font-semibold text-foreground truncate">
             {event.title}
           </h4>
           <div className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground min-w-0">
@@ -365,7 +365,7 @@ export const UnifiedEventCard = ({
         <div className="p-2.5 flex-1 flex flex-col gap-0.5">
           {/* Title */}
           <Link to={`/event/${event.id}${linkSearch || ""}`} onClick={handleCardClick}>
-            <h3 className="font-bold text-sm text-foreground leading-tight truncate">
+            <h3 className="font-semibold text-sm text-foreground leading-tight truncate">
               {event.title}
             </h3>
           </Link>
