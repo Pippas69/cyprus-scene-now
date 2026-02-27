@@ -93,7 +93,7 @@ export function UserLayout({ children }: UserLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen flex flex-col w-full bg-background">
         {/* Fixed Header spanning full width - Mobile optimized */}
-        <header className="h-12 sm:h-14 border-b flex items-center px-2 sm:px-4 bg-background sticky top-0 z-50 overflow-visible">
+        <header className="h-12 sm:h-14 border-b border-white/10 flex items-center px-2 sm:px-4 bg-[#0D3B66] text-white sticky top-0 z-50 overflow-visible">
           <SidebarTrigger className="mr-2 sm:mr-4 shrink-0" />
           
           {/* Logo - consistent with business dashboard */}
