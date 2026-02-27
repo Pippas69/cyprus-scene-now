@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 
 const images = [
   "/images/hero-phone-1.png",
-  "/images/hero-phone-2.png",
-  "/images/hero-phone-3.png",
 ];
 
 const PhoneMockupCarousel = () => {
@@ -32,17 +30,13 @@ const PhoneMockupCarousel = () => {
                   style={{ opacity: i === current ? 1 : 0 }}
                 />
               ))}
-              {/* Overlay text for first slide */}
               <div
-                className="absolute inset-0 flex flex-col justify-between pointer-events-none transition-opacity duration-700 ease-in-out"
-                style={{ opacity: current === 0 ? 1 : 0 }}
+                className="absolute inset-0 flex flex-col justify-end pointer-events-none"
               >
-                <div className="pt-3 px-4">
-                  <h3 className="text-sm font-bold text-seafoam tracking-wide">Explore Events</h3>
-                </div>
-                <div className="pb-3 px-4 text-center">
+                <div className="pb-6 px-4 text-center">
                   <span className="text-[10px] font-semibold text-white/60 tracking-widest">2026 ΦΟΜΟ</span>
                 </div>
+              </div>
               </div>
           </div>
         </div>
