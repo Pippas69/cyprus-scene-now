@@ -17,7 +17,7 @@ const PartnerLogoMarquee = () => {
 
   return (
     <section className="py-8 overflow-hidden">
-      <p className="text-center text-muted-foreground font-poppins text-[10px] sm:text-xs uppercase tracking-[0.25em] mb-5">
+      <p className="text-center text-foreground font-playfair text-sm sm:text-base italic font-bold tracking-wide mb-5">
         Trusted By
       </p>
 
@@ -34,7 +34,7 @@ const PartnerLogoMarquee = () => {
             {marqueeItems.map((name, index) => (
               <span
                 key={`${name}-${index}`}
-                className="text-sm sm:text-base font-semibold text-foreground/30 tracking-wide flex-shrink-0"
+                className="text-sm sm:text-base font-playfair italic text-foreground/40 tracking-wide flex-shrink-0"
               >
                 {name}
               </span>

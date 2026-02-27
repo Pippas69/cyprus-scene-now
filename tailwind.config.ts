@@ -70,6 +70,7 @@ export default {
         poppins: ['Poppins', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
         cinzel: ['Cinzel Decorative', 'serif'],
+        playfair: ['Playfair Display', 'serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
