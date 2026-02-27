@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
 const images = [
   "/images/hero-phone-1.png",
@@ -19,23 +18,27 @@ const PhoneMockupCarousel = () => {
 
   return (
     <div className="relative mx-auto w-[240px]">
-      {/* Phone Frame - fixed size, never changes */}
-      <div className="rounded-[2.5rem] border-[5px] border-white/20 bg-black shadow-2xl overflow-hidden">
-        {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-b-xl z-20" />
-
-        {/* Fixed screen area */}
-        <div className="relative w-full" style={{ aspectRatio: "9/19.5" }}>
-          {/* All images stacked, only opacity changes */}
-          {images.map((src, i) => (
-            <img
-              key={src}
-              src={src}
-              alt="ΦΟΜΟ app"
-              className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-700 ease-in-out"
-              style={{ opacity: i === current ? 1 : 0 }}
-            />
-          ))}
+      {/* Phone Frame - seafoam border, no notch */}
+      <div
+        className="rounded-[2rem] overflow-hidden shadow-2xl shadow-seafoam/20"
+        style={{
+          padding: "4px",
+          background: "linear-gradient(135deg, #4ECDC4, #3ec3b7, #4ECDC4)",
+        }}
+      >
+        <div className="rounded-[1.75rem] overflow-hidden bg-[#0D3B66]">
+          {/* Fixed screen area */}
+          <div className="relative w-full" style={{ aspectRatio: "9/19" }}>
+            {images.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt="ΦΟΜΟ app"
+                className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out"
+                style={{ opacity: i === current ? 1 : 0 }}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
