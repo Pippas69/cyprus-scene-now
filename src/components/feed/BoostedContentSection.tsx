@@ -291,8 +291,8 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
                       </Badge>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-72 p-4 rounded-xl" side="top" align="start">
-                    <p className="text-sm font-medium text-foreground leading-relaxed">{offer.special_deal_text}</p>
+                  <PopoverContent className="w-auto max-w-[200px] p-2 px-3 rounded-lg" side="top" align="start">
+                    <p className="text-[11px] font-medium text-foreground leading-snug">{offer.special_deal_text}</p>
                   </PopoverContent>
                 </Popover>
               )}
