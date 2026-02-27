@@ -29,9 +29,9 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
 
   // Convert CSS variable to proper HSL format for Mapbox (requires commas)
   const cssVarToHsl = (varName: string, fallback: string) => {
-    const raw = getComputedStyle(document.documentElement)
-      .getPropertyValue(varName)
-      .trim();
+    const raw = getComputedStyle(document.documentElement).
+    getPropertyValue(varName).
+    trim();
     if (!raw) return fallback;
     // Ensure proper HSL format with commas: "207 72% 22%" -> "hsl(207, 72%, 22%)"
     const parts = raw.split(/\s+/);
@@ -46,7 +46,7 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
     ocean: cssVarToHsl('--ocean', 'hsl(207, 72%, 35%)'),
     sand: cssVarToHsl('--sand-white', 'hsl(45, 60%, 95%)'),
     seafoam: cssVarToHsl('--seafoam', 'hsl(174, 62%, 56%)'),
-    accent: cssVarToHsl('--accent', 'hsl(207, 40%, 40%)'),
+    accent: cssVarToHsl('--accent', 'hsl(207, 40%, 40%)')
   };
 
   const roadKeywords = ['road', 'street', 'highway', 'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'link', 'path', 'bridge', 'tunnel'];
@@ -75,9 +75,9 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
             mapInstance.setPaintProperty(layer.id, 'line-opacity', 0.75);
           }
         } catch {
+
           // ignore unsupported layers
-        }
-      }
+        }}
     }
 
     // Style water
@@ -86,18 +86,18 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
         mapInstance.setPaintProperty(layer.id, 'fill-color', COLORS.aegean);
         mapInstance.setPaintProperty(layer.id, 'fill-opacity', 0.35);
       } catch {
+
         // ignore
-      }
-    }
+      }}
 
     // Style land/background
     if (layer.type === 'fill' && (layerId.includes('land') || layerId.includes('background'))) {
       try {
         mapInstance.setPaintProperty(layer.id, 'fill-color', COLORS.sand);
       } catch {
+
         // ignore
-      }
-    }
+      }}
 
     // Style buildings
     if (layer.type === 'fill' && layerId.includes('building')) {
@@ -105,9 +105,9 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
         mapInstance.setPaintProperty(layer.id, 'fill-color', COLORS.accent);
         mapInstance.setPaintProperty(layer.id, 'fill-opacity', 0.08);
       } catch {
+
         // ignore
-      }
-    }
+      }}
 
     // Style parks
     if (layer.type === 'fill' && (layerId.includes('park') || layerId.includes('green'))) {
@@ -115,9 +115,9 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
         mapInstance.setPaintProperty(layer.id, 'fill-color', COLORS.seafoam);
         mapInstance.setPaintProperty(layer.id, 'fill-opacity', 0.18);
       } catch {
+
         // ignore
-      }
-    }
+      }}
 
     // Style road labels for visibility - using proper HSL format for Mapbox
     if (layer.type === 'symbol' && layerId.includes('road') && layerId.includes('label')) {
@@ -126,9 +126,9 @@ const applyOceanMapTheme = (mapInstance: mapboxgl.Map) => {
         mapInstance.setPaintProperty(layer.id, 'text-halo-color', COLORS.sand);
         mapInstance.setPaintProperty(layer.id, 'text-halo-width', 1.5);
       } catch {
+
         // ignore
-      }
-    }
+      }}
   });
 };
 
@@ -137,7 +137,7 @@ const MIN_ZOOM_FOR_PLAN: Record<'free' | 'basic' | 'pro' | 'elite', number> = {
   free: 7,
   basic: 7,
   pro: 7,
-  elite: 7,
+  elite: 7
 };
 
 const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: RealMapProps) => {
@@ -181,9 +181,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       zoom: 7,
       pitch: 0,
       maxBounds: MAPBOX_CONFIG.maxBounds,
-      minZoom: MAPBOX_CONFIG.minZoom,
+      minZoom: MAPBOX_CONFIG.minZoom
     });
-    
+
     // On load, fit bounds to show ALL of Cyprus with comfortable sea margins
     map.current.on('load', () => {
       map.current?.resize();
@@ -193,25 +193,25 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         { padding: getCyprusFitPadding(), duration: 0 }
       );
     });
-    
+
     map.current.on('style.load', () => {
       map.current?.setFog({
         color: MAPBOX_CONFIG.fog.color,
         'high-color': MAPBOX_CONFIG.fog.highColor,
         'horizon-blend': MAPBOX_CONFIG.fog.horizonBlend,
         'space-color': MAPBOX_CONFIG.fog.spaceColor,
-        'star-intensity': MAPBOX_CONFIG.fog.starIntensity,
+        'star-intensity': MAPBOX_CONFIG.fog.starIntensity
       });
-      
+
       if (map.current) {
         applyOceanMapTheme(map.current);
       }
     });
-    
+
     // Add navigation control with smaller buttons on mobile
     const navControl = new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: false });
     map.current.addControl(navControl, 'bottom-right');
-    
+
     // Apply smaller styling to zoom controls on mobile/tablet
     const applyZoomControlStyles = () => {
       // Style the container
@@ -249,14 +249,14 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         });
       }
     };
-    
+
     // Apply on load and resize
     setTimeout(applyZoomControlStyles, 100);
     window.addEventListener('resize', applyZoomControlStyles);
-    
-    return () => { 
+
+    return () => {
       window.removeEventListener('resize', applyZoomControlStyles);
-      map.current?.remove(); 
+      map.current?.remove();
     };
   }, [MAPBOX_TOKEN]);
 
@@ -276,7 +276,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
           return '--ocean';
       }
     };
-    
+
     // Remove existing directions marker
     if (directionsMarkerRef.current) {
       directionsMarkerRef.current.remove();
@@ -285,7 +285,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
     const [lng, lat] = business.coordinates;
     const planVar = getPlanColorVar(business.planSlug);
-    
+
     // Create directions pill element (must sit directly under the pin)
     const div = document.createElement('div');
     div.className = 'directions-marker';
@@ -294,32 +294,32 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       <button
         type="button"
         className={
-          "inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-0.5 " +
-          "text-[10px] md:text-[11px] font-bold leading-none text-white transition-transform hover:scale-[1.02] " +
-          "h-5 border-0"
+        "inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-0.5 " +
+        "text-[10px] md:text-[11px] font-bold leading-none text-white transition-transform hover:scale-[1.02] " +
+        "h-5 border-0"
         }
         style={{
           backgroundColor: `hsl(var(${planVar}))`,
-          boxShadow: `0 2px 8px hsl(var(${planVar}) / 0.4)`,
+          boxShadow: `0 2px 8px hsl(var(${planVar}) / 0.4)`
         }}
         onClick={(e) => {
           e.stopPropagation();
           window.open(getDirectionsUrl(business.address, lat, lng), "_blank", "noopener,noreferrer");
         }}
-        aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
-      >
+        aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}>
+
         {language === 'el' ? 'Οδηγίες' : 'Directions'}
       </button>
     );
 
     // Position the pill directly under the pin (centered, barely touching)
-    directionsMarkerRef.current = new mapboxgl.Marker({ 
+    directionsMarkerRef.current = new mapboxgl.Marker({
       element: div,
       anchor: 'top',
       offset: [0, 22]
-    })
-      .setLngLat([lng, lat])
-      .addTo(map.current);
+    }).
+    setLngLat([lng, lat]).
+    addTo(map.current);
   };
 
   const openBusinessPopup = (business: any) => {
@@ -343,8 +343,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         state: {
           analyticsTracked: true,
           analyticsSource: 'map',
-          from: `${window.location.pathname}${window.location.search}`,
-        },
+          from: `${window.location.pathname}${window.location.search}`
+        }
       });
     };
 
@@ -362,25 +362,25 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
           }
         }}
         language={language}
-        onProfileClick={handlePopupProfileClick}
-      />
+        onProfileClick={handlePopupProfileClick} />
+
     );
     // Pin label must sit just above the pin - very close spacing
     // Offset popup down so the circular image covers the pin underneath
     const isMobileOrTablet = window.innerWidth < 1024;
     const popupOffset: [number, number] = isMobileOrTablet ? [0, 20] : [0, 12];
-    
+
     popupRef.current = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
       maxWidth: 'none',
       anchor: 'bottom',
       offset: popupOffset,
-      className: 'fomo-pin-label',
-    })
-      .setLngLat([lng, lat])
-      .setDOMContent(popupDiv)
-      .addTo(map.current);
+      className: 'fomo-pin-label'
+    }).
+    setLngLat([lng, lat]).
+    setDOMContent(popupDiv).
+    addTo(map.current);
 
     // Ensure it never renders behind map controls/overlays.
     try {
@@ -395,9 +395,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         tip.parentElement.removeChild(tip);
       }
     } catch {
+
       // ignore
-    }
-    // Directions badge lives as a separate marker so it can sit BELOW the pin
+    } // Directions badge lives as a separate marker so it can sit BELOW the pin
     showDirectionsIcon(business);
   };
 
@@ -447,12 +447,12 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
 
-      const visibleBusinesses = businesses
-        .filter((business) => {
-          const minZoom = MIN_ZOOM_FOR_PLAN[business.planSlug];
-          return zoom >= minZoom;
-        })
-        .sort((a, b) => b.planTierIndex - a.planTierIndex);
+      const visibleBusinesses = businesses.
+      filter((business) => {
+        const minZoom = MIN_ZOOM_FOR_PLAN[business.planSlug];
+        return zoom >= minZoom;
+      }).
+      sort((a, b) => b.planTierIndex - a.planTierIndex);
 
       visibleBusinesses.forEach((business) => {
         const [lng, lat] = business.coordinates;
@@ -478,33 +478,33 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
                 center: [lng, lat],
                 zoom: 15,
                 duration: 800,
-                essential: true,
+                essential: true
               });
 
               setTimeout(() => {
                 openBusinessPopup(business);
               }, 500);
-            }}
-          />
+            }} />
+
         );
 
         markersRef.current.push(new mapboxgl.Marker({ element: div }).setLngLat([lng, lat]).addTo(map.current!));
       });
     };
-    
+
     map.current.on('moveend', updateMarkers);
     map.current.on('zoomend', updateMarkers);
     updateMarkers();
-    
-    return () => { 
-      map.current?.off('moveend', updateMarkers); 
-      map.current?.off('zoomend', updateMarkers); 
+
+    return () => {
+      map.current?.off('moveend', updateMarkers);
+      map.current?.off('zoomend', updateMarkers);
     };
   }, [businesses, language, focusBusinessId]);
 
   useEffect(() => {
     if (!map.current || !city) return;
-    const coords: Record<string, [number, number]> = { 
+    const coords: Record<string, [number, number]> = {
       'Λευκωσία': [33.3823, 35.1856], 'Λεμεσός': [33.0333, 34.6667], 'Λάρνακα': [33.6333, 34.9167], 'Πάφος': [32.4250, 34.7667], 'Παραλίμνι': [35.0381, 33.9833], 'Αγία Νάπα': [33.9833, 34.0],
       'Nicosia': [33.3823, 35.1856], 'Limassol': [33.0333, 34.6667], 'Larnaca': [33.6333, 34.9167], 'Paphos': [32.4250, 34.7667], 'Paralimni': [35.0381, 33.9833], 'Ayia Napa': [33.9833, 34.0]
     };
@@ -513,12 +513,12 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
   const handleSearchResultClick = (coords: [number, number], businessId: string) => {
     if (!map.current) return;
-    
+
     // Find the business
-    const business = businesses.find(b => b.id === businessId);
-    
+    const business = businesses.find((b) => b.id === businessId);
+
     map.current.flyTo({ center: coords, zoom: 15, duration: 1000 });
-    
+
     // Show popup after zoom
     if (business) {
       setTimeout(() => openBusinessPopup(business), 800);
@@ -549,24 +549,24 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         <div className="text-center space-y-2">
           <p className="text-muted-foreground">Mapbox token not configured</p>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
     <div className={`relative w-full rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20 transition-all duration-300 ${
-      isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-full min-h-[50vh]'
-    }`}>
+    isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-full min-h-[50vh]'}`
+    }>
       {/* Business count indicator - top left */}
-      {!loading && businesses.length > 0 && (
-        <div className="absolute top-2 left-2 z-10">
+      {!loading && businesses.length > 0 &&
+      <div className="absolute top-2 left-2 z-10">
           <BusinessListSheet
-            businesses={businesses}
-            language={language}
-            onBusinessClick={handleBusinessListClick}
-          />
+          businesses={businesses}
+          language={language}
+          onBusinessClick={handleBusinessListClick} />
+
         </div>
-      )}
+      }
 
       {/* Search bar - top right, next to expand button */}
       <div className="absolute top-2 right-10 md:right-12 z-10">
@@ -574,35 +574,35 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       </div>
 
       {/* Expand/Collapse button - top right corner */}
-      <Button
-        size="icon"
-        variant="outline"
-        className="absolute top-2 right-2 z-10 h-7 w-7 md:h-8 md:w-8 bg-[#0D3B66] border-[#0D3B66] text-white hover:bg-[#0D3B66]/90 hover:text-white shadow-lg"
-        onClick={toggleExpand}
-      >
-        {isExpanded ? (
-          <Minimize2 className="h-4 w-4" />
-        ) : (
-          <Maximize2 className="h-4 w-4" />
-        )}
-      </Button>
       
-      {loading && (
-        <div className="absolute inset-0 z-20 bg-background/50 backdrop-blur-sm flex items-center justify-center">
+
+
+
+
+
+
+
+
+
+
+
+      
+      {loading &&
+      <div className="absolute inset-0 z-20 bg-background/50 backdrop-blur-sm flex items-center justify-center">
           <div className="flex items-center gap-2 bg-background px-4 py-3 rounded-lg shadow-lg">
             <Loader2 className="animate-spin h-5 w-5 text-primary" />
             <span className="text-sm font-medium">{language === 'el' ? 'Φόρτωση επιχειρήσεων...' : 'Loading businesses...'}</span>
           </div>
         </div>
-      )}
+      }
       
       <div ref={mapContainer} className="absolute inset-0" />
       
       {/* Ocean gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-aegean/5 via-transparent to-seafoam/5 rounded-2xl" />
       
-    </div>
-  );
+    </div>);
+
 };
 
 export default RealMap;
