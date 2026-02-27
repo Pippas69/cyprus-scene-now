@@ -54,7 +54,7 @@ const Footer = () => {
   const t = text[language];
 
   return (
-    <footer className="bg-aegean border-t border-white/10">
+    <footer className="bg-[#0D3B66] border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10 md:py-12">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-16">
           {/* Column 1 - Logo */}

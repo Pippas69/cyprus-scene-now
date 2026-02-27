@@ -92,7 +92,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
 
   if (isSuccess) {
     return (
-      <section className="py-20 bg-aegean">
+      <section className="py-20 bg-[#0D3B66]">
         <div className="container mx-auto px-4">
           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="max-w-md mx-auto text-center">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-seafoam/20 flex items-center justify-center">
@@ -106,7 +106,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
   }
 
   return (
-    <section className="py-16 sm:py-20 md:py-28 bg-aegean relative overflow-hidden">
+    <section className="py-16 sm:py-20 md:py-28 bg-[#0D3B66] relative overflow-hidden">
       {/* Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] bg-seafoam/8 rounded-full blur-[120px]" />
 

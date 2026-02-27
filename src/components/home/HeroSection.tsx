@@ -36,7 +36,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         }}
       />
       {/* Dark overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-aegean/95 via-aegean/85 to-aegean" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0D3B66]/95 via-[#0D3B66]/85 to-[#0D3B66]" />
       
       {/* Subtle seafoam glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-seafoam/10 rounded-full blur-[120px]" />
@@ -140,7 +140,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       </div>
 
       {/* Bottom fade to next section */}
-      <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-aegean to-transparent" />
+      <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[#0D3B66] to-transparent" />
     </section>
   );
 };
