@@ -557,21 +557,20 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     <div className={`relative w-full rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20 transition-all duration-300 ${
     isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-full min-h-[50vh]'}`
     }>
-      {/* Business count indicator - top left */}
-      {!loading && businesses.length > 0 &&
+      {/* Search bar - top left */}
       <div className="absolute top-2 left-2 z-10">
+        <MapSearch onResultClick={handleSearchResultClick} language={language} />
+      </div>
+
+      {/* Business count indicator - top right, next to expand button */}
+      {!loading && businesses.length > 0 &&
+      <div className="absolute top-2 right-10 md:right-12 z-10">
           <BusinessListSheet
           businesses={businesses}
           language={language}
           onBusinessClick={handleBusinessListClick} />
-
         </div>
       }
-
-      {/* Search bar - top right, next to expand button */}
-      <div className="absolute top-2 right-10 md:right-12 z-10">
-        <MapSearch onResultClick={handleSearchResultClick} language={language} />
-      </div>
 
       {/* Expand/Collapse button - top right corner */}
       
