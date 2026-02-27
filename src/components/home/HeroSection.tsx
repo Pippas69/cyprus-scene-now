@@ -27,7 +27,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const t = text[language];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-16 sm:pt-24">
       {/* Cinematic background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -64,11 +64,9 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="space-y-2">
 
-            <h1 className="font-cinzel text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white/90 leading-tight">
-              {t.headline}
-            </h1>
-            <h1 className="font-cinzel text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight">
-              <span className="bg-gradient-to-r from-seafoam via-[#6ee7d4] to-seafoam bg-clip-text text-transparent">
+            <h1 className="font-cinzel text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight whitespace-nowrap">
+              {t.headline}{" "}
+              <span className="bg-gradient-to-r from-seafoam via-[#6ee7d4] to-seafoam bg-clip-text text-transparent font-black">
                 {t.headlineBold}
               </span>
             </h1>
