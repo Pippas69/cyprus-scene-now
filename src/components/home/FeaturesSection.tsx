@@ -8,41 +8,41 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
   const text = {
     el: {
       features: [
-        {
-          label: "Για Εσένα",
-          title: "Ανακάλυψε Νέους Κόσμους",
-          description: "Βρες events, clubs και venues που ταιριάζουν στο στυλ σου. Εξερεύνησε τον χάρτη, δες τι συμβαίνει γύρω σου και μην χάσεις ποτέ ξανά κάτι που αξίζει."
-        },
-        {
-          label: "Πρόσβαση",
-          title: "Εισιτήρια, Κρατήσεις & Προσφορές",
-          description: "Κλείσε τραπέζι, αγόρασε εισιτήρια και απόκτησε πρόσβαση σε αποκλειστικές προσφορές — όλα μέσα από ένα μέρος, χωρίς κόπο."
-        },
-        {
-          label: "Για Επιχειρήσεις",
-          title: "Μέγιστη Ορατότητα & Εργαλεία",
-          description: "Γίνε ορατός σε χιλιάδες χρήστες. Σύστημα κρατήσεων, εισιτηρίων, προσφορών και προβολή στον χάρτη — όλα σε μία πλατφόρμα, σχεδιασμένα για την ανάπτυξή σου."
-        }
-      ]
+      {
+        label: "Για Εσένα",
+        title: "Ανακάλυψε Νέους Κόσμους",
+        description: "Βρες events, clubs και venues που ταιριάζουν στο στυλ σου. Εξερεύνησε τον χάρτη, δες τι συμβαίνει γύρω σου και μην χάσεις ποτέ ξανά κάτι που αξίζει."
+      },
+      {
+        label: "Πρόσβαση",
+        title: "Εισιτήρια, Κρατήσεις & Προσφορές",
+        description: "Κλείσε τραπέζι, αγόρασε εισιτήρια και απόκτησε πρόσβαση σε αποκλειστικές προσφορές — όλα μέσα από ένα μέρος, χωρίς κόπο."
+      },
+      {
+        label: "Για Επιχειρήσεις",
+        title: "Μέγιστη Ορατότητα & Εργαλεία",
+        description: "Γίνε ορατός σε χιλιάδες χρήστες. Σύστημα κρατήσεων, εισιτηρίων, προσφορών και προβολή στον χάρτη — όλα σε μία πλατφόρμα, σχεδιασμένα για την ανάπτυξή σου."
+      }]
+
     },
     en: {
       features: [
-        {
-          label: "For You",
-          title: "Discover New Worlds",
-          description: "Find events, clubs and venues that match your style. Explore the map, see what's happening around you, and never miss out on something worth experiencing."
-        },
-        {
-          label: "Access",
-          title: "Tickets, Reservations & Deals",
-          description: "Book a table, grab tickets and unlock exclusive offers — all in one place, effortlessly."
-        },
-        {
-          label: "For Businesses",
-          title: "Maximum Visibility & Tools",
-          description: "Get seen by thousands of users. Reservations, ticketing, deals and map placement — all on one platform, designed for your growth."
-        }
-      ]
+      {
+        label: "For You",
+        title: "Discover New Worlds",
+        description: "Find events, clubs and venues that match your style. Explore the map, see what's happening around you, and never miss out on something worth experiencing."
+      },
+      {
+        label: "Access",
+        title: "Tickets, Reservations & Deals",
+        description: "Book a table, grab tickets and unlock exclusive offers — all in one place, effortlessly."
+      },
+      {
+        label: "For Businesses",
+        title: "Maximum Visibility & Tools",
+        description: "Get seen by thousands of users. Reservations, ticketing, deals and map placement — all on one platform, designed for your growth."
+      }]
+
     }
   };
 
@@ -66,9 +66,9 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-seafoam/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
               <div className="relative z-10">
-                <span className="inline-block text-seafoam text-xs font-semibold tracking-[0.2em] uppercase mb-4">
-                  {feature.label}
-                </span>
+                
+
+
                 
                 <h3 className="font-poppins text-lg sm:text-xl font-bold text-white mb-3">
                   {feature.title}
@@ -82,8 +82,8 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
           )}
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default FeaturesSection;
