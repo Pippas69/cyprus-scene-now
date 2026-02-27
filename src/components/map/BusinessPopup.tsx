@@ -66,10 +66,16 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
           <div className="absolute inset-x-0 bottom-0 px-1 pb-2 pt-6 text-center">
             <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[hsl(var(--foreground)/0.7)] to-transparent rounded-b-full" />
             <div className="relative">
-              <div className="text-[8px] md:text-[9px] lg:text-[10px] font-semibold leading-tight text-[hsl(var(--background))] text-center line-clamp-2 px-1">
+              <div
+                className="text-[8px] md:text-[9px] lg:text-[10px] font-bold leading-tight text-white text-center line-clamp-2 px-1"
+                style={{ textShadow: '0 0 4px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)' }}
+              >
                 {business.name}
               </div>
-              <div className="mt-0.5 text-[7px] md:text-[8px] leading-tight text-[hsl(var(--background))] opacity-90 text-center">
+              <div
+                className="mt-0.5 text-[7px] md:text-[8px] leading-tight text-white font-bold text-center"
+                style={{ textShadow: '0 0 4px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)' }}
+              >
                 {cityLabel}
               </div>
             </div>
