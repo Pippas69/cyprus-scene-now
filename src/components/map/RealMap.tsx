@@ -569,7 +569,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       )}
 
       {/* Search bar - top right, next to expand button */}
-      <div className="absolute top-2 right-9 md:right-11 z-10">
+      <div className="absolute top-2 right-10 md:right-12 z-10">
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
       </div>
 
@@ -577,13 +577,13 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       <Button
         size="icon"
         variant="outline"
-        className="absolute top-2 right-2 z-10 h-6 w-6 md:h-7 md:w-7 bg-[#0D3B66] border-[#0D3B66] text-white hover:bg-[#0D3B66]/90 hover:text-white shadow-lg"
+        className="absolute top-2 right-2 z-10 h-7 w-7 md:h-8 md:w-8 bg-[#0D3B66] border-[#0D3B66] text-white hover:bg-[#0D3B66]/90 hover:text-white shadow-lg"
         onClick={toggleExpand}
       >
         {isExpanded ? (
-          <Minimize2 className="h-3 w-3" />
+          <Minimize2 className="h-4 w-4" />
         ) : (
-          <Maximize2 className="h-3 w-3" />
+          <Maximize2 className="h-4 w-4" />
         )}
       </Button>
       
