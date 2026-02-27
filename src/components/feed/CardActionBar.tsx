@@ -203,7 +203,7 @@ export const CardActionBar = ({
             className={cn(
               "flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-extrabold transition-colors",
               isInterested
-                ? "text-red-400 drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]"
+                ? "text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.9)]"
                 : onImage
                   ? "text-white hover:text-red-400"
                   : "text-muted-foreground hover:text-red-400"
@@ -212,7 +212,7 @@ export const CardActionBar = ({
             <Heart
               className={cn(
                 "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
-                isInterested && "fill-red-400 text-red-400"
+                isInterested && "fill-red-500 text-red-500"
               )}
               strokeWidth={2.5}
             />
