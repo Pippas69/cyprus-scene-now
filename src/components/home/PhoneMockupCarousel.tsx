@@ -33,7 +33,7 @@ const PhoneMockupCarousel = () => {
               <div
                 className="absolute inset-0 flex flex-col justify-end pointer-events-none"
               >
-                <div className="pb-6 px-4 text-center">
+                <div className="pb-10 px-4 text-center">
                   <span className="text-[10px] font-semibold text-white/60 tracking-widest">2026 ΦΟΜΟ</span>
                 </div>
               </div>
