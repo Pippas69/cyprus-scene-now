@@ -58,9 +58,7 @@ const Login = () => {
       });
 
       if (error) {
-        if (error.message.includes("Email not confirmed")) {
-          toast.error(t.emailNotConfirmed, { duration: 6000 });
-        } else if (error.message.includes("Invalid login credentials")) {
+        if (error.message.includes("Invalid login credentials")) {
           toast.error(t.wrongCredentials);
         } else {
           toast.error(error.message);
