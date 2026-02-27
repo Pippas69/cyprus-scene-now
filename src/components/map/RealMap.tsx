@@ -279,12 +279,12 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         type="button"
         className={
           "inline-flex items-center justify-center whitespace-nowrap rounded-full px-2 " +
-          "text-[9px] font-bold leading-none text-white transition-transform hover:scale-[1.02] " +
+          "text-[9px] font-extrabold leading-none text-white transition-transform hover:scale-[1.02] " +
           "h-4 border-0"
         }
         style={{
-          backgroundColor: '#4ECDC4',
-          boxShadow: '0 2px 8px rgba(78,205,196,0.4)',
+          backgroundColor: `hsl(var(${planVar}))`,
+          boxShadow: `0 2px 8px hsl(var(${planVar}) / 0.4)`,
         }}
         onClick={(e) => {
           e.stopPropagation();
