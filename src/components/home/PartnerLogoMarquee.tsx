@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Building2 } from "lucide-react";
 
@@ -12,14 +13,20 @@ interface PartnerLogoMarqueeProps {
   language: "el" | "en";
 }
 
+const FALLBACK_BUSINESSES: Business[] = [
+  { id: "1", name: "Kaliva", logo_url: null },
+  { id: "2", name: "Blue Martini", logo_url: null },
+  { id: "3", name: "Crosta Nostra", logo_url: null },
+  { id: "4", name: "Sugar Wave", logo_url: null },
+  { id: "5", name: "Eterna", logo_url: null },
+  { id: "6", name: "Amnesia", logo_url: null },
+];
+
 const PartnerLogoMarquee = ({ language }: PartnerLogoMarqueeProps) => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const text = {
-    el: { title: "Εμπιστεύονται οι Καλύτεροι της Κύπρου" },
-    en: { title: "Trusted by Cyprus's Best" },
-  };
+  const title = language === "el" ? "Μας Εμπιστεύονται" : "Trusted By";
 
   useEffect(() => {
     const fetchBusinesses = async () => {
@@ -31,9 +38,9 @@ const PartnerLogoMarquee = ({ language }: PartnerLogoMarqueeProps) => {
           .limit(12);
 
         if (error) throw error;
-        setBusinesses(data || []);
-      } catch (error) {
-        console.error("Error fetching businesses:", error);
+        setBusinesses(data && data.length >= 4 ? data : FALLBACK_BUSINESSES);
+      } catch {
+        setBusinesses(FALLBACK_BUSINESSES);
       } finally {
         setIsLoading(false);
       }
@@ -42,85 +49,51 @@ const PartnerLogoMarquee = ({ language }: PartnerLogoMarqueeProps) => {
     fetchBusinesses();
   }, []);
 
-  // Create placeholder businesses if not enough real ones
-  const displayBusinesses = businesses.length >= 6 
-    ? businesses 
-    : [
-        { id: "1", name: "Παραλία Beach Bar", logo_url: null },
-        { id: "2", name: "Ouzeri Limassol", logo_url: null },
-        { id: "3", name: "Κέντρο Νυχτερινό", logo_url: null },
-        { id: "4", name: "Rooftop Lounge", logo_url: null },
-        { id: "5", name: "Taverna Cyprus", logo_url: null },
-        { id: "6", name: "Sunset Club", logo_url: null },
-        { id: "7", name: "Marina Restaurant", logo_url: null },
-        { id: "8", name: "Harbour Bar", logo_url: null },
-      ];
+  // Double for seamless loop
+  const marqueeItems = [...businesses, ...businesses];
 
-  // Double the array for seamless loop
-  const marqueeItems = [...displayBusinesses, ...displayBusinesses];
-
-  if (isLoading) {
-    return null;
-  }
+  if (isLoading) return null;
 
   return (
-    <section className="py-12 bg-muted/30 overflow-hidden">
-      <div className="container mx-auto px-4 mb-8">
-        <p className="text-center text-muted-foreground font-poppins text-sm uppercase tracking-widest">
-          {text[language].title}
-        </p>
-      </div>
-      
+    <section className="py-10 overflow-hidden bg-background/50">
+      <p className="text-center text-muted-foreground font-poppins text-[10px] sm:text-xs uppercase tracking-[0.25em] mb-6">
+        {title}
+      </p>
+
       <div className="relative">
-        {/* Gradient fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-muted/30 to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-muted/30 to-transparent z-10 pointer-events-none" />
-        
-        {/* Marquee container */}
-        <div className="flex animate-marquee">
-          {marqueeItems.map((business, index) => (
-            <div
-              key={`${business.id}-${index}`}
-              className="flex-shrink-0 mx-8 group"
-            >
-              <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center overflow-hidden transition-all duration-300 grayscale hover:grayscale-0 group-hover:border-primary/30 group-hover:shadow-lg">
+        {/* Gradient fades */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-32 bg-gradient-to-r from-background/50 to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-32 bg-gradient-to-l from-background/50 to-transparent z-10 pointer-events-none" />
+
+        {/* Marquee */}
+        <div className="flex overflow-hidden">
+          <motion.div
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="flex items-center gap-10 sm:gap-14 whitespace-nowrap"
+          >
+            {marqueeItems.map((business, index) => (
+              <div
+                key={`${business.id}-${index}`}
+                className="flex-shrink-0 group cursor-default"
+              >
                 {business.logo_url ? (
                   <img
                     src={business.logo_url}
                     alt={business.name}
-                    className="w-16 h-16 object-contain"
+                    className="h-10 sm:h-12 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
-                    <Building2 className="w-8 h-8" />
-                    <span className="text-[8px] mt-1 max-w-[60px] text-center truncate">
-                      {business.name}
-                    </span>
-                  </div>
+                  <span className="text-sm sm:text-base font-semibold text-muted-foreground/40 group-hover:text-foreground/80 transition-colors duration-300 tracking-wide">
+                    {business.name}
+                  </span>
                 )}
               </div>
-            </div>
-          ))}
+            ))}
+          </motion.div>
         </div>
       </div>
-      
-      <style>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
-        .animate-marquee:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
     </section>
   );
 };
