@@ -119,7 +119,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
             "pl-6 md:pl-8 shadow-lg border-0",
             "h-7 md:h-8",
             "text-[10px] md:text-xs text-white placeholder:text-white/70",
-            "w-[130px] md:w-[180px] lg:w-[220px]"
+            "w-[110px] md:w-[150px] lg:w-[180px]"
           )}
           style={{ backgroundColor: '#0D3B66' }}
         />
