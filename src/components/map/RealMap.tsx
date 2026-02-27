@@ -214,12 +214,23 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     
     // Apply smaller styling to zoom controls on mobile/tablet
     const applyZoomControlStyles = () => {
+      // Style the container
+      const ctrlGroup = mapContainer.current?.querySelector('.mapboxgl-ctrl-group') as HTMLElement;
+      if (ctrlGroup) {
+        ctrlGroup.style.backgroundColor = '#0D3B66';
+        ctrlGroup.style.borderRadius = '8px';
+        ctrlGroup.style.overflow = 'hidden';
+        ctrlGroup.style.border = 'none';
+        ctrlGroup.style.boxShadow = '0 4px 12px rgba(13,59,102,0.3)';
+      }
       const controls = mapContainer.current?.querySelectorAll('.mapboxgl-ctrl-zoom-in, .mapboxgl-ctrl-zoom-out');
       if (controls) {
         const isMobile = window.innerWidth < 768;
         const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
         controls.forEach((btn) => {
           const el = btn as HTMLElement;
+          el.style.backgroundColor = '#0D3B66';
+          el.style.color = 'white';
           if (isMobile) {
             el.style.width = '26px';
             el.style.height = '26px';
@@ -230,6 +241,11 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
             el.style.width = '29px';
             el.style.height = '29px';
           }
+        });
+        // Style the +/- icons
+        const spans = mapContainer.current?.querySelectorAll('.mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon, .mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon');
+        spans?.forEach((span) => {
+          (span as HTMLElement).style.filter = 'invert(1)';
         });
       }
     };
