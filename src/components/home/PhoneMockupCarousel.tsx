@@ -37,10 +37,9 @@ const PhoneMockupCarousel = () => {
                   <span className="text-[10px] font-semibold text-white/60 tracking-widest">2026 ΦΟΜΟ</span>
                 </div>
               </div>
-              </div>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Dots */}
       <div className="flex justify-center gap-1.5 mt-3">
