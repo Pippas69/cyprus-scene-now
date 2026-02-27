@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Target, TrendingUp, Sparkles } from "lucide-react";
 
 interface FeaturesSectionProps {
   language: "el" | "en";
@@ -8,46 +7,42 @@ interface FeaturesSectionProps {
 const FeaturesSection = ({ language }: FeaturesSectionProps) => {
   const text = {
     el: {
-      title: "Γιατί ΦΟΜΟ;",
-      subtitle: "Μια πλατφόρμα, άπειρες δυνατότητες",
       features: [
-      {
-        icon: Target,
-        title: "Στοχευμένη Ανακάλυψη",
-        description: "Βρείτε ακριβώς αυτό που ψάχνετε — εκδηλώσεις, προσφορές και εμπειρίες προσαρμοσμένες στα ενδιαφέροντά σας."
-      },
-      {
-        icon: TrendingUp,
-        title: "Αύξηση Εμπειριών",
-        description: "Ζήστε περισσότερα, ανακαλύψτε νέα μέρη και δημιουργήστε αναμνήσεις που θα θυμάστε."
-      },
-      {
-        icon: Sparkles,
-        title: "Αποκλειστικά Προνόμια",
-        description: "Πρόσβαση σε προσφορές και εκπτώσεις που δεν θα βρείτε πουθενά αλλού."
-      }]
-
+        {
+          label: "Για Εσένα",
+          title: "Ανακάλυψε Νέους Κόσμους",
+          description: "Βρες events, clubs και venues που ταιριάζουν στο στυλ σου. Εξερεύνησε τον χάρτη, δες τι συμβαίνει γύρω σου και μην χάσεις ποτέ ξανά κάτι που αξίζει."
+        },
+        {
+          label: "Πρόσβαση",
+          title: "Εισιτήρια, Κρατήσεις & Προσφορές",
+          description: "Κλείσε τραπέζι, αγόρασε εισιτήρια και απόκτησε πρόσβαση σε αποκλειστικές προσφορές — όλα μέσα από ένα μέρος, χωρίς κόπο."
+        },
+        {
+          label: "Για Επιχειρήσεις",
+          title: "Μέγιστη Ορατότητα & Εργαλεία",
+          description: "Γίνε ορατός σε χιλιάδες χρήστες. Σύστημα κρατήσεων, εισιτηρίων, προσφορών και προβολή στον χάρτη — όλα σε μία πλατφόρμα, σχεδιασμένα για την ανάπτυξή σου."
+        }
+      ]
     },
     en: {
-      title: "Why ΦΟΜΟ?",
-      subtitle: "One platform, endless possibilities",
       features: [
-      {
-        icon: Target,
-        title: "Targeted Discovery",
-        description: "Find exactly what you're looking for — events, offers and experiences tailored to your interests."
-      },
-      {
-        icon: TrendingUp,
-        title: "Enhanced Experiences",
-        description: "Live more, discover new places and create memories you'll remember."
-      },
-      {
-        icon: Sparkles,
-        title: "Exclusive Perks",
-        description: "Access offers and discounts you won't find anywhere else."
-      }]
-
+        {
+          label: "For You",
+          title: "Discover New Worlds",
+          description: "Find events, clubs and venues that match your style. Explore the map, see what's happening around you, and never miss out on something worth experiencing."
+        },
+        {
+          label: "Access",
+          title: "Tickets, Reservations & Deals",
+          description: "Book a table, grab tickets and unlock exclusive offers — all in one place, effortlessly."
+        },
+        {
+          label: "For Businesses",
+          title: "Maximum Visibility & Tools",
+          description: "Get seen by thousands of users. Reservations, ticketing, deals and map placement — all on one platform, designed for your growth."
+        }
+      ]
     }
   };
 
@@ -55,11 +50,9 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
 
   return (
     <section className="relative py-8 sm:py-10 md:py-14 overflow-hidden bg-[#0D3B66]">
-      {/* Subtle texture */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--seafoam)/0.08),transparent_50%)]" />
       
       <div className="container mx-auto px-4 relative z-10">
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
           {t.features.map((feature, index) =>
           <motion.div
@@ -70,15 +63,14 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
             transition={{ delay: index * 0.1 }}
             className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8 hover:bg-white/10 hover:border-seafoam/30 transition-all duration-500">
 
-              {/* Glow on hover */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-seafoam/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
               <div className="relative z-10">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-seafoam/15 flex items-center justify-center mb-5 sm:mb-6 group-hover:bg-seafoam/25 transition-colors duration-300">
-                  <feature.icon className="w-6 h-6 sm:w-7 sm:h-7 text-seafoam" />
-                </div>
+                <span className="inline-block text-seafoam text-xs font-semibold tracking-[0.2em] uppercase mb-4">
+                  {feature.label}
+                </span>
                 
-                <h3 className="font-poppins text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">
+                <h3 className="font-poppins text-lg sm:text-xl font-bold text-white mb-3">
                   {feature.title}
                 </h3>
                 
@@ -90,8 +82,8 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
           )}
         </div>
       </div>
-    </section>);
-
+    </section>
+  );
 };
 
 export default FeaturesSection;

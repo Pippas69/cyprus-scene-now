@@ -17,7 +17,7 @@ const PhoneMockupCarousel = () => {
   }, []);
 
   return (
-    <div className="relative mx-auto w-[180px] sm:w-[200px]">
+    <div className="relative mx-auto w-[240px] sm:w-[270px]">
       {/* Phone Frame - seafoam gradient border */}
       <div className="rounded-[1.75rem] p-[3px] bg-gradient-to-br from-seafoam via-seafoam/80 to-aegean shadow-2xl shadow-seafoam/15">
         <div className="relative rounded-[1.5rem] overflow-hidden bg-aegean">
