@@ -109,7 +109,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-5xl mx-auto mb-10 sm:mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10 sm:mb-12">
           {events.slice(0, 3).map((event, index) => (
             <motion.div
               key={event.id}
@@ -117,9 +117,9 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={index === 2 ? "hidden lg:block" : ""}
+              className={index === 0 ? "" : index === 1 ? "hidden md:block" : "hidden lg:block"}
             >
-              <UnifiedEventCard event={event} language={language} size="full" />
+              <UnifiedEventCard event={event} language={language} size={index === 0 ? "mobileFixed" : "full"} className="md:!size-auto" />
             </motion.div>
           ))}
         </div>
