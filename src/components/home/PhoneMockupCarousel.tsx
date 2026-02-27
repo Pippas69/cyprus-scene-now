@@ -19,8 +19,8 @@ const PhoneMockupCarousel = () => {
     <div className="relative mx-auto w-[300px] sm:w-[330px]">
       {/* Phone Frame - iPhone-style rounded with seafoam/aegean gradient border */}
       <div className="rounded-[2.8rem] p-[3px] bg-gradient-to-br from-seafoam via-seafoam/80 to-aegean shadow-2xl shadow-seafoam/15">
-        <div className="relative rounded-[2.6rem] overflow-hidden bg-background">
-          <div className="relative w-full" style={{ aspectRatio: "486/688" }}>
+        <div className="relative rounded-[2.6rem] overflow-hidden bg-[#0a1628]">
+          <div className="relative w-full" style={{ aspectRatio: "9/16" }}>
             {images.map((src, i) => (
               <img
                 key={src}
@@ -28,7 +28,7 @@ const PhoneMockupCarousel = () => {
                 alt="ΦΟΜΟ app"
                 draggable={false}
                 loading="eager"
-                className="absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ease-in-out"
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out"
                 style={{ opacity: i === current ? 1 : 0 }}
               />
             ))}
