@@ -65,7 +65,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="space-y-2">
 
-            <h1 className="font-cinzel text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight whitespace-nowrap">
+            <h1 className="text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight whitespace-nowrap">
               {t.headline}{" "}
               <span className="text-seafoam font-black">
                 {t.headlineBold}
