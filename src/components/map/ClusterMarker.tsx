@@ -13,13 +13,13 @@ export const ClusterMarker = ({ count, onClick }: ClusterMarkerProps) => {
     >
       {/* Outer ring */}
       <div
-        className="absolute inset-0 rounded-full bg-primary/20 animate-pulse"
+        className="absolute inset-0 rounded-full bg-[#0D3B66]/20 animate-pulse"
         style={{ width: size + 20, height: size + 20, left: -10, top: -10 }}
       />
 
       {/* Main circle */}
       <div
-        className="rounded-full bg-primary shadow-lg flex items-center justify-center font-bold text-white group-hover:shadow-xl transition-shadow"
+        className="rounded-full bg-[#0D3B66] shadow-lg flex items-center justify-center font-bold text-white group-hover:shadow-xl transition-shadow"
         style={{ width: size, height: size }}
       >
         <span className="text-sm">{count}</span>

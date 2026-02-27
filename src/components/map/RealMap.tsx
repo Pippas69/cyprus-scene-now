@@ -550,7 +550,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       <Button
         size="icon"
         variant="outline"
-        className="absolute top-2 right-2 z-10 h-8 w-8 md:h-9 md:w-9 bg-background/95 backdrop-blur-sm shadow-lg"
+        className="absolute top-2 right-2 z-10 h-8 w-8 md:h-9 md:w-9 bg-[#0D3B66] border-[#0D3B66] text-white hover:bg-[#0D3B66]/90 hover:text-white shadow-lg"
         onClick={toggleExpand}
       >
         {isExpanded ? (

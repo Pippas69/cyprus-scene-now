@@ -156,7 +156,7 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
       <SheetTrigger asChild>
         <button
           className={cn(
-            "flex items-center gap-1.5 bg-gradient-to-r from-aegean to-seafoam text-white rounded-lg shadow-lg",
+            "flex items-center gap-1.5 bg-[#0D3B66] text-white rounded-lg shadow-lg",
             "px-2.5 py-1.5 md:px-3 md:py-1.5",
             "text-xs md:text-sm font-medium",
             "hover:opacity-90 transition-opacity cursor-pointer"
