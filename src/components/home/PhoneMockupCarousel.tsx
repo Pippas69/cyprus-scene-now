@@ -27,7 +27,7 @@ const PhoneMockupCarousel = () => {
                   src={src}
                   alt="ΦΟΜΟ app"
                   draggable={false}
-                  className="absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ease-in-out"
+                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out"
                   style={{ opacity: i === current ? 1 : 0 }}
                 />
               ))}
