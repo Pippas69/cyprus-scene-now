@@ -14,8 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 // Tabs removed from Event Detail (Details/Live Feed section removed)
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+// Navbar and Footer removed - now wrapped in UserLayout
 import { useLanguage } from '@/hooks/useLanguage';
 import {
   Calendar,
@@ -453,8 +452,7 @@ export default function EventDetail() {
   if (error || !event) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8 pt-24">
+        <div className="container mx-auto px-4 py-8">
           <RippleButton
             variant="ghost"
             onClick={() => navigate(-1)}
@@ -477,9 +475,8 @@ export default function EventDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       
-      <div className="container mx-auto px-4 py-8 pt-24">
+      <div className="container mx-auto px-4 py-6">
         {/* Back Button */}
         <RippleButton
           variant="ghost"
@@ -934,7 +931,7 @@ export default function EventDetail() {
         </div>
       </div>
 
-      <Footer />
+      
 
       {/* Reservation Dialog */}
       {user && (
