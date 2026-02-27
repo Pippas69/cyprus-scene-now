@@ -62,7 +62,7 @@ const Footer = () => {
             <div className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-seafoam to-seafoam/70">
               <span className="font-cinzel text-lg sm:text-xl md:text-2xl font-bold text-aegean tracking-wider">ΦΟΜΟ</span>
             </div>
-            <div className="text-white/40 text-xs sm:text-sm leading-relaxed space-y-1">
+            <div className="text-white/40 text-xs sm:text-sm leading-relaxed space-y-1 whitespace-pre-line">
               <p>{t.description}</p>
               <p className="hidden sm:block">{t.descriptionSub}</p>
             </div>
