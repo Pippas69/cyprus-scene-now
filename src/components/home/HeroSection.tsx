@@ -47,10 +47,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="space-y-2">
 
-            <h1 className="font-cinzel text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight">
-              <span className="bg-gradient-to-r from-seafoam via-[#6ee7d4] to-seafoam bg-clip-text text-transparent">
-                ΦEAR OF MISSING OUT
-              </span>
+            <h1 className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight">
+              ΦEAR OF MISSING OUT!
             </h1>
           </motion.div>
 
