@@ -21,7 +21,7 @@ const PhoneMockupCarousel = () => {
       {/* Phone Frame - seafoam gradient border */}
       <div className="rounded-[1.75rem] p-[3px] bg-gradient-to-br from-seafoam via-seafoam/80 to-aegean shadow-2xl shadow-seafoam/15">
         <div className="relative rounded-[1.5rem] overflow-hidden bg-aegean">
-          <div className="relative w-full" style={{ aspectRatio: "9/15.5" }}>
+          <div className="relative w-full" style={{ aspectRatio: "9/14.5" }}>
             {images.map((src, i) => (
               <img
                 key={src}
