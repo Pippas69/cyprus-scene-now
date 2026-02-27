@@ -10,7 +10,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
       features: [
       {
         label: "Για Εσένα",
-        title: "Ανακάλυψε Νέους Κόσμους",
+        title: "Εξερεύνησε ότι σου ταιριάζει",
         description: "Βρες events, clubs και venues που ταιριάζουν στο στυλ σου. Εξερεύνησε τον χάρτη, δες τι συμβαίνει γύρω σου και μην χάσεις ποτέ ξανά κάτι που αξίζει."
       },
       {
