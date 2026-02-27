@@ -28,7 +28,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const t = text[language];
 
   return (
-    <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-20 sm:pt-24">
+    <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-[5.5rem] sm:pt-[6.5rem]">
       {/* Cinematic background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
