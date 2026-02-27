@@ -202,14 +202,14 @@ const Login = () => {
                 </button>
               </div>
 
-              
-
-
-
-
-
-
-
+              <div className="text-center text-sm mb-4 p-3 bg-muted/30 dark:bg-muted/20 rounded-lg border border-border">
+                <p className="font-medium text-foreground">
+                  {t.businessNote}
+                </p>
+                <p className="mt-1 text-foreground/80">
+                  {t.businessNoteDesc}
+                </p>
+              </div>
 
               <div className="text-center text-sm">
                 <span className="text-foreground/80">{t.noAccount}</span>{" "}
