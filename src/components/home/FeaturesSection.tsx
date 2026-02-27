@@ -68,9 +68,9 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
           
 
 
-          <p className="text-white/50 text-sm sm:text-base md:text-lg max-w-md mx-auto">
-            {t.subtitle}
-          </p>
+          
+
+
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
