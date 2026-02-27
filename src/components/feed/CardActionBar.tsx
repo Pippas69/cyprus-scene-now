@@ -203,16 +203,16 @@ export const CardActionBar = ({
             className={cn(
               "flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-extrabold transition-colors",
               isInterested
-                ? "text-secondary"
+                ? "text-red-400 drop-shadow-[0_0_6px_rgba(248,113,113,0.8)]"
                 : onImage
-                  ? "text-white hover:text-secondary"
-                  : "text-muted-foreground hover:text-secondary"
+                  ? "text-white hover:text-red-400"
+                  : "text-muted-foreground hover:text-red-400"
             )}
           >
             <Heart
               className={cn(
                 "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
-                isInterested && "fill-secondary text-secondary"
+                isInterested && "fill-red-400 text-red-400"
               )}
               strokeWidth={2.5}
             />
@@ -226,16 +226,16 @@ export const CardActionBar = ({
             className={cn(
               "flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-extrabold transition-colors",
               isGoing
-                ? "text-ocean"
+                ? "text-sky-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]"
                 : onImage
-                  ? "text-white hover:text-ocean"
-                  : "text-muted-foreground hover:text-ocean"
+                  ? "text-white hover:text-sky-400"
+                  : "text-muted-foreground hover:text-sky-400"
             )}
           >
             <Users
               className={cn(
                 "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
-                isGoing && "text-ocean"
+                isGoing && "text-sky-400"
               )}
               strokeWidth={2.5}
             />
