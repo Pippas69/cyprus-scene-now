@@ -13,13 +13,9 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   const text = {
     el: {
-      headline: "Αν συμβαίνει,",
-      headlineBold: "είναι στο ΦΟΜΟ.",
       subText: "Η #1 εφαρμογή εξόδου στην Κύπρο."
     },
     en: {
-      headline: "If it's happening,",
-      headlineBold: "it's on ΦΟΜΟ.",
       subText: "Cyprus's #1 event discovery platform."
     }
   };
@@ -44,19 +40,6 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       <div className="container mx-auto px-4 relative z-10 text-center">
         <div className="flex flex-col items-center space-y-6 sm:space-y-8 max-w-4xl mx-auto">
           
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}>
-
-            <span className="inline-flex items-center px-5 py-2 rounded-full border border-seafoam/30 bg-seafoam/10 backdrop-blur-sm">
-              <span className="text-seafoam text-xs sm:text-sm font-medium tracking-widest uppercase">
-                ΦEAR OF MISSING OUT
-              </span>
-            </span>
-          </motion.div>
-
           {/* Main headline */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -64,12 +47,9 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="space-y-2">
 
-            <h1 className="font-cinzel text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white/90 leading-tight">
-              {t.headline}
-            </h1>
             <h1 className="font-cinzel text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight">
               <span className="bg-gradient-to-r from-seafoam via-[#6ee7d4] to-seafoam bg-clip-text text-transparent">
-                {t.headlineBold}
+                ΦEAR OF MISSING OUT
               </span>
             </h1>
           </motion.div>
