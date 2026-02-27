@@ -279,7 +279,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         type="button"
         className={
           "inline-flex items-center justify-center whitespace-nowrap rounded-full px-2 " +
-          "text-[9px] font-extrabold leading-none text-white transition-transform hover:scale-[1.02] " +
+          "text-[9px] font-medium leading-none text-white transition-transform hover:scale-[1.02] " +
           "h-4 border-0"
         }
         style={{
