@@ -117,7 +117,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={index === 0 ? "" : index === 1 ? "hidden md:block" : "hidden lg:block"}
+              className={index <= 1 ? (index === 1 ? "md:block" : "") : "hidden lg:block"}
             >
               <UnifiedEventCard event={event} language={language} size={index === 0 ? "mobileFixed" : "full"} className="md:!size-auto" />
             </motion.div>
