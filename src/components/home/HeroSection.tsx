@@ -15,7 +15,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
     el: {
       headline: "Αν συμβαίνει,",
       headlineBold: "είναι στο ΦΟΜΟ.",
-      subText: "Η #1 εφαρμογή ανακάλυψης εκδηλώσεων στην Κύπρο."
+      subText: "Η #1 εφαρμογή εξόδου στην Κύπρο."
     },
     en: {
       headline: "If it's happening,",
