@@ -128,7 +128,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       </div>
 
       {/* Bottom fade to next section */}
-      <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-b from-transparent via-aegean/40 to-aegean/80" />
+      <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#0f4475] to-transparent" />
     </section>);
 
 };

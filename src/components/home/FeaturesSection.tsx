@@ -49,7 +49,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
   const t = text[language];
 
   return (
-    <section className="relative py-8 sm:py-10 md:py-14 overflow-hidden -mt-px bg-aegean">
+    <section className="relative py-8 sm:py-10 md:py-14 overflow-hidden bg-[#0D3B66]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--seafoam)/0.08),transparent_50%)]" />
       
       <div className="container mx-auto px-4 relative z-10">
