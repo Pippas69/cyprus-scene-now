@@ -62,13 +62,15 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
             <div className="h-full w-full bg-muted" />
           )}
 
-          {/* Text overlay - name only with plan-colored glow */}
-          <div className="absolute inset-x-0 bottom-0 px-1 pb-2.5 pt-6 text-center">
-            <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[hsl(var(--foreground)/0.7)] to-transparent rounded-b-full" />
+          {/* Name overlay - no gradient, clean text with plan-colored outline */}
+          <div className="absolute inset-x-0 bottom-0 px-1 pb-2.5 text-center">
             <div className="relative">
               <div
                 className="text-[9px] md:text-[10px] lg:text-[11px] font-bold leading-tight text-white text-center line-clamp-2 px-1"
-                style={{ textShadow: `0 0 6px hsl(var(${planVar})), 0 0 12px hsl(var(${planVar}) / 0.6), 0 1px 2px rgba(0,0,0,0.7)` }}
+                style={{
+                  WebkitTextStroke: `0.5px hsl(var(${planVar}))`,
+                  textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                }}
               >
                 {business.name}
               </div>
