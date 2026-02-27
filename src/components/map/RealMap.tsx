@@ -278,18 +278,16 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       <button
         type="button"
         className={
-          "inline-flex items-center justify-center whitespace-nowrap rounded-full border bg-background/90 px-2 " +
-          "text-[9px] font-medium leading-none backdrop-blur-sm transition-transform hover:scale-[1.02] " +
-          // Hard height cap so it never gets tall
-          "h-4"
+          "inline-flex items-center justify-center whitespace-nowrap rounded-full px-2 " +
+          "text-[9px] font-bold leading-none text-white transition-transform hover:scale-[1.02] " +
+          "h-4 border-0"
         }
         style={{
-          borderColor: `hsl(var(${planVar}))`,
-          boxShadow: `0 10px 20px -16px hsl(var(${planVar}) / 0.65)`,
+          backgroundColor: '#4ECDC4',
+          boxShadow: '0 2px 8px rgba(78,205,196,0.4)',
         }}
         onClick={(e) => {
           e.stopPropagation();
-          // Use business address for directions, fallback to coordinates
           window.open(getDirectionsUrl(business.address, lat, lng), "_blank", "noopener,noreferrer");
         }}
         aria-label={language === 'el' ? 'Οδηγίες' : 'Directions'}
