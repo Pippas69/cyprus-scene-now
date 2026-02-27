@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import Typewriter from "@/components/ui/typewriter";
+import PhoneMockupCarousel from "./PhoneMockupCarousel";
 
 interface HeroSectionProps {
   language: "el" | "en";
