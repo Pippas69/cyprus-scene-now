@@ -590,9 +590,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       {/* Ocean gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-aegean/5 via-transparent to-seafoam/5 rounded-2xl" />
       
-      {/* Business count indicator - bottom left corner, compact & clickable */}
+      {/* Business count indicator - top right, next to expand button */}
       {!loading && businesses.length > 0 && (
-        <div className="absolute bottom-2 left-2 z-10">
+        <div className="absolute top-2 right-12 md:right-[3.25rem] z-10">
           <BusinessListSheet
             businesses={businesses}
             language={language}
