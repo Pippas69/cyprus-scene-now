@@ -40,7 +40,7 @@ const Index = () => {
       <ScrollProgress />
       <Navbar />
       <HeroSection language={language} />
-      <PartnerLogoMarquee language={language} />
+      <PartnerLogoMarquee />
       <FeaturesSection language={language} />
       <UpcomingEventsPreview language={language} />
       <WaitlistSignup language={language} />
