@@ -17,11 +17,11 @@ const PhoneMockupCarousel = () => {
   }, []);
 
   return (
-    <div className="relative mx-auto w-[270px] sm:w-[300px]">
+    <div className="relative mx-auto w-[300px] sm:w-[330px]">
       {/* Phone Frame - iPhone-style rounded with seafoam/aegean gradient border */}
       <div className="rounded-[2.8rem] p-[3px] bg-gradient-to-br from-seafoam via-seafoam/80 to-aegean shadow-2xl shadow-seafoam/15">
         <div className="relative rounded-[2.6rem] overflow-hidden bg-aegean">
-          <div className="relative w-full" style={{ aspectRatio: "9/18" }}>
+          <div className="relative w-full" style={{ aspectRatio: "9/16" }}>
             {images.map((src, i) => (
               <img
                 key={src}
