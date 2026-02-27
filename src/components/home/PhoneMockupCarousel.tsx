@@ -8,7 +8,6 @@ const PhoneMockupCarousel = () => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (images.length <= 1) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % images.length);
     }, 5000);
@@ -16,40 +15,37 @@ const PhoneMockupCarousel = () => {
   }, []);
 
   return (
-    <div className="relative mx-auto w-[260px] sm:w-[280px]">
-      {/* Single clean phone image - no extra frame */}
-      <div className="relative w-full">
-        {images.map((src, i) => (
-          <img
-            key={src}
-            src={src}
-            alt="ΦΟΜΟ app"
-            draggable={false}
-            className="w-full h-auto transition-opacity duration-700 ease-in-out"
-            style={{
-              opacity: i === current ? 1 : 0,
-              position: i === 0 ? "relative" : "absolute",
-              inset: i === 0 ? undefined : 0,
-              imageRendering: "auto",
-            }}
+    <div className="relative mx-auto w-[300px] sm:w-[330px]">
+      {/* Phone Frame - iPhone-style rounded with seafoam/aegean gradient border */}
+      <div className="rounded-[2.8rem] p-[3px] bg-gradient-to-br from-seafoam via-seafoam/80 to-aegean shadow-2xl shadow-seafoam/15">
+        <div className="relative rounded-[2.6rem] overflow-hidden bg-background">
+          <div className="relative w-full" style={{ aspectRatio: "9/15" }}>
+            {images.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt="ΦΟΜΟ app"
+                draggable={false}
+                className="absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ease-in-out"
+                style={{ opacity: i === current ? 1 : 0 }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-1.5 mt-3">
+        {images.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i === current ? "bg-seafoam w-4" : "bg-white/30 w-1.5"
+            }`}
           />
         ))}
       </div>
-
-      {/* Dots - only show if multiple images */}
-      {images.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-3">
-          {images.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === current ? "bg-seafoam w-4" : "bg-white/30 w-1.5"
-              }`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 };
