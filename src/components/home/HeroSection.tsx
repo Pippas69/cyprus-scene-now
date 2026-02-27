@@ -73,41 +73,23 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             </h1>
           </motion.div>
 
-          {/* Typewriter */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}>
-
-            <p className="font-urbanist text-lg sm:text-xl md:text-2xl min-h-[1.5em]">
-              
-
-
-
-
-
-
-            </p>
-          </motion.div>
-
-          {/* Subtext */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-white/50 text-sm sm:text-base md:text-lg max-w-lg">
-
-            {t.subText}
-          </motion.p>
-
-          {/* Phone Mockup Carousel */}
+          {/* Phone Mockup Carousel - right after headline */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
           >
             <PhoneMockupCarousel />
           </motion.div>
+
+          {/* Subtext - after phone */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="text-white/50 text-sm sm:text-base md:text-lg max-w-lg">
+            {t.subText}
+          </motion.p>
 
 
 

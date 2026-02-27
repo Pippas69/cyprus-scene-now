@@ -5,7 +5,6 @@ const images = [
   "/images/hero-phone-1.png",
   "/images/hero-phone-2.png",
   "/images/hero-phone-3.png",
-  "/images/hero-phone-4.png",
 ];
 
 const PhoneMockupCarousel = () => {
@@ -19,20 +18,20 @@ const PhoneMockupCarousel = () => {
   }, []);
 
   return (
-    <div className="relative mx-auto" style={{ width: "min(260px, 60vw)" }}>
+    <div className="relative mx-auto" style={{ width: "min(220px, 50vw)" }}>
       {/* Phone Frame */}
-      <div className="relative rounded-[2.5rem] border-[6px] border-white/20 bg-[#0D3B66] shadow-2xl shadow-black/40 overflow-hidden">
+      <div className="relative rounded-[2rem] border-4 border-white/15 shadow-2xl shadow-black/50 overflow-hidden">
         {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-b-xl z-20" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-b-xl z-20" />
         
-        {/* Screen */}
-        <div className="relative aspect-[9/19.5] overflow-hidden rounded-[2rem] bg-[#0D3B66]">
+        {/* Screen - image fills entirely */}
+        <div className="relative overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.img
               key={current}
               src={images[current]}
               alt="ΦΟΜΟ app screenshot"
-              className="absolute inset-0 w-full h-full object-contain"
+              className="w-full h-auto block"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -43,15 +42,15 @@ const PhoneMockupCarousel = () => {
       </div>
 
       {/* Dots indicator */}
-      <div className="flex justify-center gap-2 mt-4">
+      <div className="flex justify-center gap-1.5 mt-3">
         {images.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+            className={`h-1.5 rounded-full transition-all duration-300 ${
               i === current
-                ? "bg-seafoam w-6"
-                : "bg-white/30 hover:bg-white/50"
+                ? "bg-seafoam w-5"
+                : "bg-white/30 w-1.5 hover:bg-white/50"
             }`}
           />
         ))}
