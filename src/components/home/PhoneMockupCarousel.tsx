@@ -10,7 +10,7 @@ const PhoneMockupCarousel = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % images.length);
-    }, 4000);
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
