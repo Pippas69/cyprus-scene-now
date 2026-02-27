@@ -157,9 +157,9 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
         <button
           className={cn(
             "flex items-center gap-1.5 bg-[#0D3B66] text-white rounded-lg shadow-lg",
-            "px-2 py-1 md:px-2.5 md:py-1.5",
-            "text-[10px] md:text-xs font-medium",
-            "hover:opacity-90 transition-opacity cursor-pointer"
+            "px-2 py-1.5 md:px-2.5 md:py-1.5",
+            "text-[10px] md:text-xs font-normal",
+            "hover:opacity-90 transition-opacity cursor-pointer text-white/80"
           )}
         >
           <Building2 className="h-3 w-3 md:h-3.5 md:w-3.5" />

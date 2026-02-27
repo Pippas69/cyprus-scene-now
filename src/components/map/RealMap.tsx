@@ -562,9 +562,9 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
       </div>
 
-      {/* Business count indicator - top right, next to expand button */}
+      {/* Business count indicator - top right corner */}
       {!loading && businesses.length > 0 &&
-      <div className="absolute top-2 right-10 md:right-12 z-10">
+      <div className="absolute top-2 right-2 z-10">
           <BusinessListSheet
           businesses={businesses}
           language={language}
