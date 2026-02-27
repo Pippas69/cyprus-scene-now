@@ -67,7 +67,7 @@ const queryClient = new QueryClient();
 // Component to conditionally render BottomNav
 function AppContent() {
   const location = useLocation();
-  const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/offers', '/dashboard-user', '/messages'];
+  const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/offers', '/dashboard-user', '/messages', '/event'];
   const adminRoutes = ['/admin'];
   const hideBottomNav = location.pathname === '/' ||
                         userLayoutRoutes.some(route => location.pathname.startsWith(route)) || 
@@ -127,7 +127,7 @@ function AppContent() {
           <Route path="/admin/forbidden" element={<AdminForbidden />} />
           
           <Route path="/business/:businessId" element={<BusinessProfile />} />
-          <Route path="/event/:eventId" element={<EventDetail />} />
+          <Route path="/event/:eventId" element={<UserLayout><EventDetail /></UserLayout>} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
         </AnimatePresence>
