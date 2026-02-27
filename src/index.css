@@ -73,7 +73,7 @@ All colors MUST be HSL.
 
     --border: 30 20% 90%;
     --input: 30 20% 90%;
-    --ring: 174 62% 56%;
+    --ring: 30 20% 90%;
 
     --radius: 1rem;
 
@@ -148,7 +148,7 @@ All colors MUST be HSL.
 
     --border: 207 40% 22%;
     --input: 207 40% 22%;
-    --ring: 174 62% 56%;
+    --ring: 207 40% 22%;
 
     /* Ocean theme shadows for dark mode */
     --shadow-card: 0 4px 20px -4px hsla(0 0% 0% / 0.4);
