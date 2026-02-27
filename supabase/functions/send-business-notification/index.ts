@@ -19,7 +19,7 @@ const emailHeader = `
 const emailFooter = `
   <div style="background: #102b4a; padding: 28px; text-align: center; border-radius: 0 0 12px 12px;">
     <p style="color: #3ec3b7; font-size: 18px; font-weight: bold; letter-spacing: 2px; margin: 0 0 8px 0; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</p>
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2025 ΦΟΜΟ. Discover events in Cyprus.</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 ΦΟΜΟ. Discover events in Cyprus.</p>
   </div>
 `;
 
@@ -87,32 +87,24 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `);
     } else if (type === "approval") {
-      subject = "Η Επιχείρησή σας εγκρίθηκε στο ΦΟΜΟ! 🎉";
+      subject = "Η επιχείρησή σου εγκρίθηκε! ✅";
       html = wrapEmailContent(`
-        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Συγχαρητήρια! ✅</h2>
+        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Συγχαρητήρια! 🎉</h2>
         <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-          Αγαπητέ/ή <strong>${businessName}</strong>,<br><br>
-          Η επιχείρησή σας έχει εγκριθεί και είναι πλέον ενεργή στο ΦΟΜΟ!
+          Η επιχείρησή σου <strong>${businessName}</strong> έχει εγκριθεί επιτυχώς στο <strong>ΦΟΜΟ</strong>!
+        </p>
+        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
+          Μπορείς τώρα να συνδεθείς στο dashboard σου και να αρχίσεις να δημιουργείς events, προσφορές και να διαχειρίζεσαι τις κρατήσεις σου.
         </p>
         
-        <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
-          <h3 style="color: #0d3b66; margin: 0 0 12px 0; font-size: 16px;">Τι μπορείτε να κάνετε τώρα:</h3>
-          <ul style="color: #475569; margin: 0; padding-left: 20px; line-height: 1.8;">
-            <li>📅 Δημιουργήστε εκδηλώσεις</li>
-            <li>🎁 Προσθέστε προσφορές</li>
-            <li>📊 Παρακολουθήστε τα analytics σας</li>
-            <li>👥 Προσεγγίστε νέο κοινό σε όλη την Κύπρο</li>
-          </ul>
-        </div>
-        
         <div style="text-align: center; margin: 32px 0;">
-          <a href="https://fomo.com.cy/login" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-            Συνδεθείτε τώρα
+          <a href="https://fomo.com.cy/login" style="display: inline-block; background: #0D3B66; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 16px; font-weight: bold; font-size: 16px;">
+            Σύνδεση στο Dashboard →
           </a>
         </div>
         
-        <p style="color: #64748b; font-size: 14px; text-align: center;">
-          Ευχαριστούμε που είστε μέλος της κοινότητας ΦΟΜΟ!
+        <p style="color: #64748b; font-size: 14px; margin: 24px 0 0 0;">
+          Αν χρειάζεσαι βοήθεια, απάντησε σε αυτό το email.
         </p>
       `);
     } else {

@@ -27,11 +27,10 @@ export const SignupEmail = ({
   siteName,
   siteUrl,
   recipient,
-  confirmationUrl,
 }: SignupEmailProps) => (
   <Html lang="el" dir="ltr">
     <Head><meta charSet="utf-8" /></Head>
-    <Preview>Επιβεβαίωσε το email σου — ΦΟΜΟ</Preview>
+    <Preview>Καλώς ήρθες στο ΦΟΜΟ! 🎉</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
@@ -40,22 +39,18 @@ export const SignupEmail = ({
         <Hr style={divider} />
         <Heading style={h1}>Καλώς ήρθες! 🎉</Heading>
         <Text style={text}>
-          Ευχαριστούμε που εγγράφηκες στο{' '}
+          Η εγγραφή σου στο{' '}
           <Link href={siteUrl} style={link}>
             <strong>ΦΟΜΟ</strong>
-          </Link>
-          !
+          </Link>{' '}
+          ολοκληρώθηκε επιτυχώς!
         </Text>
         <Text style={text}>
-          Επιβεβαίωσε το email σου (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) πατώντας το παρακάτω κουμπί:
+          Μπορείς τώρα να ανακαλύψεις τα καλύτερα events, προσφορές και εμπειρίες στην Κύπρο.
         </Text>
         <Section style={buttonSection}>
-          <Button style={button} href={confirmationUrl}>
-            Επιβεβαίωση Email
+          <Button style={button} href={siteUrl}>
+            Ξεκίνα Τώρα →
           </Button>
         </Section>
         <Text style={footer}>
