@@ -28,7 +28,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const t = text[language];
 
   return (
-    <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-24 sm:pt-28">
+    <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-20 sm:pt-24">
       {/* Cinematic background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -43,7 +43,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-seafoam/10 rounded-full blur-[120px]" />
 
       <div className="container mx-auto px-4 relative z-10 text-center">
-        <div className="flex flex-col items-center space-y-6 sm:space-y-8 max-w-4xl mx-auto">
+        <div className="flex flex-col items-center space-y-4 sm:space-y-5 max-w-4xl mx-auto">
           
           {/* Badge */}
           <motion.div
@@ -78,6 +78,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
+            className="-mt-2 sm:-mt-3"
           >
             <PhoneMockupCarousel />
           </motion.div>

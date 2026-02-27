@@ -17,26 +17,31 @@ const PhoneMockupCarousel = () => {
   }, []);
 
   return (
-    <div className="relative mx-auto w-[240px]">
-      {/* Phone Frame - seafoam border, no notch */}
-      <div
-        className="rounded-[2rem] overflow-hidden shadow-2xl shadow-seafoam/20"
-        style={{
-          padding: "4px",
-          background: "linear-gradient(135deg, #4ECDC4, #3ec3b7, #4ECDC4)",
-        }}
-      >
-        <div className="rounded-[1.75rem] overflow-hidden bg-[#0D3B66]">
+    <div className="relative mx-auto w-[250px] sm:w-[260px]">
+      {/* Phone Frame */}
+      <div className="rounded-[2rem] p-[4px] bg-gradient-to-br from-seafoam via-seafoam/90 to-aegean shadow-2xl shadow-seafoam/20">
+        <div className="relative rounded-[1.75rem] overflow-hidden bg-aegean">
           {/* Fixed screen area */}
-          <div className="relative w-full" style={{ aspectRatio: "9/19" }}>
+          <div className="relative w-full aspect-[9/19]">
             {images.map((src, i) => (
-              <img
-                key={src}
-                src={src}
-                alt="ΦΟΜΟ app"
-                className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out"
-                style={{ opacity: i === current ? 1 : 0 }}
-              />
+              <div key={src} className="absolute inset-0">
+                {/* Fill layer */}
+                <img
+                  src={src}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover object-center blur-sm scale-110 transition-opacity duration-700 ease-in-out"
+                  style={{ opacity: i === current ? 0.35 : 0 }}
+                />
+                {/* Sharp layer (no crop) */}
+                <img
+                  src={src}
+                  alt="ΦΟΜΟ app"
+                  draggable={false}
+                  className="absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ease-in-out"
+                  style={{ opacity: i === current ? 1 : 0 }}
+                />
+              </div>
             ))}
           </div>
         </div>
