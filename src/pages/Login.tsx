@@ -28,7 +28,7 @@ const Login = () => {
 
   const loginSchema = z.object({
     email: z.string().trim().email({ message: t.invalidEmail }),
-    password: z.string().min(6, { message: t.passwordTooShort }),
+    password: z.string().min(6, { message: t.passwordTooShort })
   });
 
   type LoginFormValues = z.infer<typeof loginSchema>;
@@ -45,8 +45,8 @@ const Login = () => {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
-      password: "",
-    },
+      password: ""
+    }
   });
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -54,7 +54,7 @@ const Login = () => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
-        password: values.password,
+        password: values.password
       });
 
       if (error) {
@@ -68,18 +68,18 @@ const Login = () => {
 
       if (data.user) {
         // Check user role
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .single();
+        const { data: profile } = await supabase.
+        from("profiles").
+        select("role").
+        eq("id", data.user.id).
+        single();
 
         // Check if user owns a business
-        const { data: business } = await supabase
-          .from("businesses")
-          .select("id, verified")
-          .eq("user_id", data.user.id)
-          .maybeSingle();
+        const { data: business } = await supabase.
+        from("businesses").
+        select("id, verified").
+        eq("user_id", data.user.id).
+        maybeSingle();
 
         // Determine redirect based on role and business ownership
         let redirectPath = "/feed";
@@ -90,9 +90,9 @@ const Login = () => {
           successMessage = t.adminWelcome;
         } else if (business) {
           redirectPath = "/dashboard-business";
-          successMessage = business.verified 
-            ? t.businessWelcome
-            : t.businessPendingVerification;
+          successMessage = business.verified ?
+          t.businessWelcome :
+          t.businessPendingVerification;
         }
 
         toast.success(successMessage);
@@ -119,8 +119,8 @@ const Login = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
-            className="text-white hover:text-seafoam"
-          >
+            className="text-white hover:text-seafoam">
+
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t.back}
           </Button>
@@ -131,13 +131,13 @@ const Login = () => {
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-white hover:text-seafoam"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
+              className="text-white hover:text-seafoam">
+
+              {theme === "dark" ?
+              <Sun className="h-5 w-5" /> :
+
+              <Moon className="h-5 w-5" />
+              }
             </Button>
           </div>
         </div>
@@ -147,9 +147,9 @@ const Login = () => {
             <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-2">
               {t.login}
             </h1>
-            <p className="font-inter text-foreground/80">
-              {t.welcomeBack}
-            </p>
+            
+
+
           </div>
 
           <Form {...form}>
@@ -157,38 +157,38 @@ const Login = () => {
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }) => (
-                  <FormItem>
+                render={({ field }) =>
+                <FormItem>
                     <FormLabel>{t.email}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
+                } />
+
 
               <FormField
                 control={form.control}
                 name="password"
-                render={({ field }) => (
-                  <FormItem>
+                render={({ field }) =>
+                <FormItem>
                     <FormLabel>{t.password}</FormLabel>
                     <FormControl>
                       <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
+                } />
+
 
               <Button
                 type="submit"
                 variant="gradient"
                 size="lg"
                 className="w-full"
-                disabled={isLoading}
-              >
+                disabled={isLoading}>
+
                 {isLoading ? t.loggingIn : t.loginButton}
               </Button>
 
@@ -196,8 +196,8 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/forgot-password")}
-                  className="text-sm text-accent hover:text-accent/80 hover:underline mb-4 font-medium"
-                >
+                  className="text-sm text-accent hover:text-accent/80 hover:underline mb-4 font-medium">
+
                   {t.forgotPassword}
                 </button>
               </div>
@@ -221,8 +221,8 @@ const Login = () => {
           </Form>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default Login;
