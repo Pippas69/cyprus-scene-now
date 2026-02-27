@@ -19,24 +19,24 @@ const PhoneMockupCarousel = () => {
   }, []);
 
   return (
-    <div className="relative mx-auto" style={{ width: "min(280px, 65vw)" }}>
+    <div className="relative mx-auto" style={{ width: "min(260px, 60vw)" }}>
       {/* Phone Frame */}
-      <div className="relative rounded-[2.5rem] border-[6px] border-white/20 bg-black/80 shadow-2xl shadow-black/40 overflow-hidden">
+      <div className="relative rounded-[2.5rem] border-[6px] border-white/20 bg-[#0D3B66] shadow-2xl shadow-black/40 overflow-hidden">
         {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-20" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-b-xl z-20" />
         
         {/* Screen */}
-        <div className="relative aspect-[9/19.5] overflow-hidden rounded-[2rem]">
+        <div className="relative aspect-[9/19.5] overflow-hidden rounded-[2rem] bg-[#0D3B66]">
           <AnimatePresence mode="wait">
             <motion.img
               key={current}
               src={images[current]}
               alt="ΦΟΜΟ app screenshot"
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.6, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full object-contain"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
             />
           </AnimatePresence>
         </div>
