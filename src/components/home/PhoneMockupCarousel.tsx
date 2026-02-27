@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 const images = [
   "/images/hero-phone-1.png",
+  "/images/hero-phone-2.png",
 ];
 
 const PhoneMockupCarousel = () => {
