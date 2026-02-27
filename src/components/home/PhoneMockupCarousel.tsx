@@ -4,8 +4,6 @@ const images = [
   "/images/hero-phone-1.png",
   "/images/hero-phone-2.png",
   "/images/hero-phone-3.png",
-  "/images/hero-phone-4.png",
-  "/images/hero-phone-5.png",
 ];
 
 const PhoneMockupCarousel = () => {
@@ -19,10 +17,10 @@ const PhoneMockupCarousel = () => {
   }, []);
 
   return (
-    <div className="relative mx-auto w-[200px] sm:w-[220px]">
-      {/* Phone Frame - smaller, seafoam gradient border */}
-      <div className="rounded-[2rem] p-[3px] bg-gradient-to-br from-seafoam via-seafoam/80 to-aegean shadow-2xl shadow-seafoam/15">
-        <div className="relative rounded-[1.8rem] overflow-hidden bg-aegean">
+    <div className="relative mx-auto w-[180px] sm:w-[200px]">
+      {/* Phone Frame - seafoam gradient border */}
+      <div className="rounded-[1.75rem] p-[3px] bg-gradient-to-br from-seafoam via-seafoam/80 to-aegean shadow-2xl shadow-seafoam/15">
+        <div className="relative rounded-[1.5rem] overflow-hidden bg-aegean">
           <div className="relative w-full" style={{ aspectRatio: "9/19.5" }}>
             {images.map((src, i) => (
               <img
