@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 
 const images = [
   "/images/hero-phone-1.png",
+  "/images/hero-phone-2.png",
+  "/images/hero-phone-3.png",
 ];
 
 const PhoneMockupCarousel = () => {
@@ -10,7 +12,7 @@ const PhoneMockupCarousel = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % images.length);
-    }, 5000);
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
