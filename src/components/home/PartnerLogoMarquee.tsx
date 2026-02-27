@@ -17,8 +17,8 @@ const PartnerLogoMarquee = () => {
 
   return (
     <section className="relative py-10 sm:py-14 overflow-hidden">
-      {/* Gradient transition from hero into this section */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0D3B66] via-[#0f4475] to-[#0D3B66] pointer-events-none" />
+      {/* Smooth gradient - no hard line */}
+      <div className="absolute inset-0 bg-[#0f4475] pointer-events-none" />
 
       <div className="relative z-10">
         <p className="text-center text-white/80 font-playfair text-xl sm:text-2xl italic font-semibold tracking-widest uppercase mb-8">
