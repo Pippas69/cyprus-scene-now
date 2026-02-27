@@ -17,7 +17,7 @@ const PartnerLogoMarquee = () => {
 
   return (
     <section className="py-8 overflow-hidden">
-      <p className="text-center text-foreground font-playfair text-2xl sm:text-3xl italic font-bold tracking-wide mb-5">
+      <p className="text-center text-foreground font-poppins text-2xl sm:text-3xl font-bold tracking-wide mb-5">
         Trusted By
       </p>
 
