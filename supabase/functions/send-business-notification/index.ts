@@ -1,4 +1,7 @@
+import * as React from 'npm:react@18.3.1'
+import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { BusinessApprovalEmail } from '../_shared/email-templates/business-approval.tsx'
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -8,7 +11,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Branded email template parts
+// Legacy HTML templates for registration and rejection (kept as-is)
 const emailHeader = `
   <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 48px 24px 36px 24px; text-align: center; border-radius: 12px 12px 0 0;">
     <h1 style="color: #ffffff; margin: 0; font-size: 42px; font-weight: bold; letter-spacing: 4px; font-family: 'Cinzel', Georgia, serif;">ΦΟΜΟ</h1>
@@ -64,8 +67,18 @@ const handler = async (req: Request): Promise<Response> => {
     let subject = "";
     let html = "";
 
-    if (type === "registration") {
-      subject = "Επιβεβαίωση Εγγραφής στο ΦΟΜΟ";
+    if (type === "approval") {
+      // Use React Email template for approval — matches signup email design
+      subject = "\u0397 \u03B5\u03C0\u03B9\u03C7\u03B5\u03AF\u03C1\u03B7\u03C3\u03AE \u03C3\u03BF\u03C5 \u03B5\u03B3\u03BA\u03C1\u03AF\u03B8\u03B7\u03BA\u03B5! \u2705";
+      html = await renderAsync(
+        React.createElement(BusinessApprovalEmail, {
+          businessName,
+          siteUrl: 'https://fomo.com.cy',
+          loginUrl: 'https://fomo.com.cy/login',
+        })
+      );
+    } else if (type === "registration") {
+      subject = "\u0395\u03C0\u03B9\u03B2\u03B5\u03B2\u03B1\u03AF\u03C9\u03C3\u03B7 \u0395\u03B3\u03B3\u03C1\u03B1\u03C6\u03AE\u03C2 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F";
       html = wrapEmailContent(`
         <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Καλώς ήρθατε στο ΦΟΜΟ! 🎉</h2>
         <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
@@ -86,29 +99,8 @@ const handler = async (req: Request): Promise<Response> => {
           Ευχαριστούμε για το ενδιαφέρον σας να γίνετε μέλος της κοινότητας ΦΟΜΟ!
         </p>
       `);
-    } else if (type === "approval") {
-      subject = "Η επιχείρησή σου εγκρίθηκε! ✅";
-      html = wrapEmailContent(`
-        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Συγχαρητήρια! 🎉</h2>
-        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-          Η επιχείρησή σου <strong>${businessName}</strong> έχει εγκριθεί επιτυχώς στο <strong>ΦΟΜΟ</strong>!
-        </p>
-        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-          Μπορείς τώρα να συνδεθείς στο dashboard σου και να αρχίσεις να δημιουργείς events, προσφορές και να διαχειρίζεσαι τις κρατήσεις σου.
-        </p>
-        
-        <div style="text-align: center; margin: 32px 0;">
-          <a href="https://fomo.com.cy/login" style="display: inline-block; background: #0D3B66; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 16px; font-weight: bold; font-size: 16px;">
-            Σύνδεση στο Dashboard →
-          </a>
-        </div>
-        
-        <p style="color: #64748b; font-size: 14px; margin: 24px 0 0 0;">
-          Αν χρειάζεσαι βοήθεια, απάντησε σε αυτό το email.
-        </p>
-      `);
     } else {
-      subject = "Η εγγραφή σας στο ΦΟΜΟ χρειάζεται ενημέρωση";
+      subject = "\u0397 \u03B5\u03B3\u03B3\u03C1\u03B1\u03C6\u03AE \u03C3\u03B1\u03C2 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F \u03C7\u03C1\u03B5\u03B9\u03AC\u03B6\u03B5\u03C4\u03B1\u03B9 \u03B5\u03BD\u03B7\u03BC\u03AD\u03C1\u03C9\u03C3\u03B7";
       html = wrapEmailContent(`
         <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Ενημέρωση Εγγραφής</h2>
         <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">

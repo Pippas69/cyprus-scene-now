@@ -16,45 +16,46 @@ import {
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
-interface SignupEmailProps {
-  siteName: string
+interface BusinessApprovalEmailProps {
+  businessName: string
   siteUrl: string
-  recipient: string
-  confirmationUrl: string
+  loginUrl: string
 }
 
-export const SignupEmail = ({
-  siteName,
-  siteUrl,
-  recipient,
-}: SignupEmailProps) => (
+export const BusinessApprovalEmail = ({
+  businessName,
+  siteUrl = 'https://fomo.com.cy',
+  loginUrl = 'https://fomo.com.cy/login',
+}: BusinessApprovalEmailProps) => (
   <Html lang="el" dir="ltr">
     <Head><meta charSet="utf-8" /></Head>
-    <Preview>{'\u039A\u03B1\u03BB\u03CE\u03C2 \u03AE\u03C1\u03B8\u03B5\u03C2 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F! \uD83C\uDF89'}</Preview>
+    <Preview>{'\u0397 \u03B5\u03C0\u03B9\u03C7\u03B5\u03AF\u03C1\u03B7\u03C3\u03AE \u03C3\u03BF\u03C5 \u03B5\u03B3\u03BA\u03C1\u03AF\u03B8\u03B7\u03BA\u03B5! \u2705'}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
           <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>{'\u039A\u03B1\u03BB\u03CE\u03C2 \u03AE\u03C1\u03B8\u03B5\u03C2! \uD83C\uDF89'}</Heading>
+        <Heading style={h1}>{'\u03A3\u03C5\u03B3\u03C7\u03B1\u03C1\u03B7\u03C4\u03AE\u03C1\u03B9\u03B1! \uD83C\uDF89'}</Heading>
         <Text style={text}>
-          {'\u0397 \u03B5\u03B3\u03B3\u03C1\u03B1\u03C6\u03AE \u03C3\u03BF\u03C5 \u03C3\u03C4\u03BF'}{' '}
+          {'\u0397 \u03B5\u03C0\u03B9\u03C7\u03B5\u03AF\u03C1\u03B7\u03C3\u03AE \u03C3\u03BF\u03C5'}{' '}
+          <strong>{businessName}</strong>{' '}
+          {'\u03AD\u03C7\u03B5\u03B9 \u03B5\u03B3\u03BA\u03C1\u03B9\u03B8\u03B5\u03AF \u03B5\u03C0\u03B9\u03C4\u03C5\u03C7\u03CE\u03C2 \u03C3\u03C4\u03BF'}{' '}
           <Link href={siteUrl} style={link}>
             <strong>{'\u03A6\u039F\u039C\u039F'}</strong>
-          </Link>{' '}
-          {'\u03BF\u03BB\u03BF\u03BA\u03BB\u03B7\u03C1\u03CE\u03B8\u03B7\u03BA\u03B5 \u03B5\u03C0\u03B9\u03C4\u03C5\u03C7\u03CE\u03C2!'}
+          </Link>
+          {'!'}
         </Text>
         <Text style={text}>
-          {'\u039C\u03C0\u03BF\u03C1\u03B5\u03AF\u03C2 \u03C4\u03CE\u03C1\u03B1 \u03BD\u03B1 \u03B1\u03BD\u03B1\u03BA\u03B1\u03BB\u03CD\u03C8\u03B5\u03B9\u03C2 \u03C4\u03B1 \u03BA\u03B1\u03BB\u03CD\u03C4\u03B5\u03C1\u03B1 events, \u03C0\u03C1\u03BF\u03C3\u03C6\u03BF\u03C1\u03AD\u03C2 \u03BA\u03B1\u03B9 \u03B5\u03BC\u03C0\u03B5\u03B9\u03C1\u03AF\u03B5\u03C2 \u03C3\u03C4\u03B7\u03BD \u039A\u03CD\u03C0\u03C1\u03BF.'}
+          {'\u039C\u03C0\u03BF\u03C1\u03B5\u03AF\u03C2 \u03C4\u03CE\u03C1\u03B1 \u03BD\u03B1 \u03C3\u03C5\u03BD\u03B4\u03B5\u03B8\u03B5\u03AF\u03C2 \u03C3\u03C4\u03BF dashboard \u03C3\u03BF\u03C5 \u03BA\u03B1\u03B9 \u03BD\u03B1 \u03B1\u03C1\u03C7\u03AF\u03C3\u03B5\u03B9\u03C2 \u03BD\u03B1 \u03B4\u03B7\u03BC\u03B9\u03BF\u03C5\u03C1\u03B3\u03B5\u03AF\u03C2 events, \u03C0\u03C1\u03BF\u03C3\u03C6\u03BF\u03C1\u03AD\u03C2 \u03BA\u03B1\u03B9 \u03BD\u03B1 \u03B4\u03B9\u03B1\u03C7\u03B5\u03B9\u03C1\u03AF\u03B6\u03B5\u03C3\u03B1\u03B9 \u03C4\u03B9\u03C2 \u03BA\u03C1\u03B1\u03C4\u03AE\u03C3\u03B5\u03B9\u03C2 \u03C3\u03BF\u03C5.'}
         </Text>
         <Section style={buttonSection}>
-          <Button style={button} href={siteUrl}>
-            {'\u039E\u03B5\u03BA\u03AF\u03BD\u03B1 \u03A4\u03CE\u03C1\u03B1 \u2192'}
+          <Button style={button} href={loginUrl}>
+            {'\u03A3\u03CD\u03BD\u03B4\u03B5\u03C3\u03B7 \u03C3\u03C4\u03BF Dashboard \u2192'}
           </Button>
         </Section>
         <Text style={footer}>
-          {'\u0391\u03BD \u03B4\u03B5\u03BD \u03B4\u03B7\u03BC\u03B9\u03BF\u03CD\u03C1\u03B3\u03B7\u03C3\u03B5\u03C2 \u03B5\u03C3\u03CD \u03BB\u03BF\u03B3\u03B1\u03C1\u03B9\u03B1\u03C3\u03BC\u03CC, \u03B1\u03B3\u03BD\u03CC\u03B7\u03C3\u03B5 \u03B1\u03C5\u03C4\u03CC \u03C4\u03BF email.'}
+          {'\u0391\u03BD \u03C7\u03C1\u03B5\u03B9\u03AC\u03B6\u03B5\u03C3\u03B1\u03B9 \u03B2\u03BF\u03AE\u03B8\u03B5\u03B9\u03B1, \u03B1\u03C0\u03AC\u03BD\u03C4\u03B7\u03C3\u03B5 \u03C3\u03B5 \u03B1\u03C5\u03C4\u03CC \u03C4\u03BF email.'}
         </Text>
         <Hr style={divider} />
         <Text style={brand}>{'\u00A9 2026 \u03A6\u039F\u039C\u039F \u00B7 fomo.com.cy'}</Text>
@@ -63,7 +64,7 @@ export const SignupEmail = ({
   </Html>
 )
 
-export default SignupEmail
+export default BusinessApprovalEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }
 const container = { padding: '40px 25px', maxWidth: '480px', margin: '0 auto' }
