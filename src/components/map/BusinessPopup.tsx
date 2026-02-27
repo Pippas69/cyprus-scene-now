@@ -66,10 +66,9 @@ export const BusinessPopup = ({ business, language, onProfileClick }: BusinessPo
           <div className="absolute inset-x-0 bottom-0 px-1 pb-2.5 text-center">
             <div className="relative">
               <div
-                className="text-[9px] md:text-[10px] lg:text-[11px] font-bold leading-tight text-white text-center line-clamp-2 px-1"
+                className="text-[10px] md:text-[11px] font-bold leading-tight text-white text-center line-clamp-2 px-1"
                 style={{
-                  WebkitTextStroke: `0.5px hsl(var(${planVar}))`,
-                  textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                  WebkitTextStroke: `0.4px hsl(var(${planVar}))`,
                 }}
               >
                 {business.name}
