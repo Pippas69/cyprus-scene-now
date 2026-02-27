@@ -23,7 +23,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const t = text[language];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-start pt-28 sm:pt-32 justify-center overflow-hidden">
       {/* Cinematic background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -47,8 +47,10 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="space-y-2">
 
-            <h1 className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight">
-              ΦEAR OF MISSING OUT!
+            <h1 className="font-inter text-[clamp(1.1rem,4.5vw,2.5rem)] font-bold leading-tight tracking-tight whitespace-nowrap">
+              <span className="bg-gradient-to-r from-seafoam via-[#6ee7d4] to-seafoam bg-clip-text text-transparent">
+                ΦEAR OF MISSING OUT
+              </span>
             </h1>
           </motion.div>
 
