@@ -54,7 +54,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
   const t = text[language];
 
   return (
-    <section className="relative py-16 sm:py-20 md:py-28 overflow-hidden bg-aegean">
+    <section className="relative py-16 sm:py-20 md:py-28 overflow-hidden bg-[#0D3B66]">
       {/* Subtle texture */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--seafoam)/0.08),transparent_50%)]" />
       

@@ -65,7 +65,7 @@ const FAQSection = ({ language }: FAQSectionProps) => {
   const t = content[language];
 
   return (
-    <section className="py-12 sm:py-16 md:py-24 bg-aegean relative overflow-hidden">
+    <section className="py-12 sm:py-16 md:py-24 bg-[#0D3B66] relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--seafoam)/0.06),transparent_50%)]" />
 
       <div className="container mx-auto px-4 relative z-10">
