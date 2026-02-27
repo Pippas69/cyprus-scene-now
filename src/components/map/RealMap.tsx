@@ -569,7 +569,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       )}
 
       {/* Search bar - top right, next to expand button */}
-      <div className="absolute top-2 right-12 md:right-[3.25rem] z-10">
+      <div className="absolute top-2 right-10 md:right-12 z-10">
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
       </div>
 
