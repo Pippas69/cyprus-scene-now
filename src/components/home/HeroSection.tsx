@@ -67,7 +67,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
             <h1 className="font-cinzel text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight whitespace-nowrap">
               {t.headline}{" "}
-              <span className="bg-gradient-to-r from-seafoam via-[#6ee7d4] to-seafoam bg-clip-text text-transparent font-black">
+              <span className="text-seafoam font-black">
                 {t.headlineBold}
               </span>
             </h1>
