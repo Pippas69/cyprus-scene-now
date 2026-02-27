@@ -238,7 +238,7 @@ const Navbar = () => {
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="gap-1 bg-[#4ECDC4] text-white hover:bg-[#3dbdb5] border-0">
+                  <Button className="gap-1 bg-gradient-ocean text-white hover:opacity-90 border-0">
                     {t.signup} <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
