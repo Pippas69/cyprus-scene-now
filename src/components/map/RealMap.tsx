@@ -557,8 +557,19 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     <div className={`relative w-full rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20 transition-all duration-300 ${
       isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-full min-h-[50vh]'
     }`}>
-      {/* Search bar - top left corner, compact */}
-      <div className="absolute top-2 left-2 z-10">
+      {/* Business count indicator - top left */}
+      {!loading && businesses.length > 0 && (
+        <div className="absolute top-2 left-2 z-10">
+          <BusinessListSheet
+            businesses={businesses}
+            language={language}
+            onBusinessClick={handleBusinessListClick}
+          />
+        </div>
+      )}
+
+      {/* Search bar - top right, next to expand button */}
+      <div className="absolute top-2 right-12 md:right-[3.25rem] z-10">
         <MapSearch onResultClick={handleSearchResultClick} language={language} />
       </div>
 
@@ -590,16 +601,6 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       {/* Ocean gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-aegean/5 via-transparent to-seafoam/5 rounded-2xl" />
       
-      {/* Business count indicator - top right, next to expand button */}
-      {!loading && businesses.length > 0 && (
-        <div className="absolute top-2 right-12 md:right-[3.25rem] z-10">
-          <BusinessListSheet
-            businesses={businesses}
-            language={language}
-            onBusinessClick={handleBusinessListClick}
-          />
-        </div>
-      )}
     </div>
   );
 };
