@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Typewriter from "@/components/ui/typewriter";
 
@@ -25,6 +26,89 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   };
 
   const t = text[language];
+  const [processedPhonesSrc, setProcessedPhonesSrc] = useState("/images/hero-phones.png");
+
+  useEffect(() => {
+    let isMounted = true;
+    const image = new Image();
+    image.src = "/images/hero-phones.png";
+
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx || !isMounted) return;
+
+      ctx.drawImage(image, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+      const width = canvas.width;
+      const height = canvas.height;
+      const visited = new Uint8Array(width * height);
+      const stack: number[] = [];
+
+      const isBgPixel = (idx: number) => {
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        const a = data[idx + 3];
+
+        if (a < 20) return true;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const isGray = max - min <= 18;
+        const isLight = r >= 190 && g >= 190 && b >= 190;
+
+        return isGray && isLight;
+      };
+
+      const pushIfBg = (x: number, y: number) => {
+        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        const pixelIndex = y * width + x;
+        if (visited[pixelIndex]) return;
+
+        const dataIndex = pixelIndex * 4;
+        if (!isBgPixel(dataIndex)) return;
+
+        visited[pixelIndex] = 1;
+        stack.push(pixelIndex);
+      };
+
+      for (let x = 0; x < width; x++) {
+        pushIfBg(x, 0);
+        pushIfBg(x, height - 1);
+      }
+
+      for (let y = 0; y < height; y++) {
+        pushIfBg(0, y);
+        pushIfBg(width - 1, y);
+      }
+
+      while (stack.length > 0) {
+        const pixelIndex = stack.pop()!;
+        const x = pixelIndex % width;
+        const y = Math.floor(pixelIndex / width);
+        const dataIndex = pixelIndex * 4;
+
+        data[dataIndex + 3] = 0;
+
+        pushIfBg(x + 1, y);
+        pushIfBg(x - 1, y);
+        pushIfBg(x, y + 1);
+        pushIfBg(x, y - 1);
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      if (isMounted) setProcessedPhonesSrc(canvas.toDataURL("image/png"));
+    };
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-[5.5rem] sm:pt-[6.5rem]">
@@ -79,10 +163,10 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="-mt-2 sm:-mt-3"
           >
-            <img 
-              src="/images/hero-phones.png" 
-              alt="ΦΟΜΟ app - Event και Κράτηση Θέσης" 
-              className="w-[340px] sm:w-[420px] md:w-[500px] lg:w-[560px] mx-auto drop-shadow-2xl"
+            <img
+              src={processedPhonesSrc}
+              alt="ΦΟΜΟ app - Event και Κράτηση Θέσης"
+              className="w-[96vw] max-w-[760px] sm:w-[92vw] md:w-[78vw] lg:w-[62vw] mx-auto drop-shadow-2xl"
               draggable={false}
             />
           </motion.div>
