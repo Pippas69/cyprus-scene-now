@@ -83,7 +83,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
               alt="ΦΟΜΟ app - Event και Κράτηση Θέσης"
               className="w-[340px] sm:w-[420px] md:w-[500px] lg:w-[560px] mx-auto drop-shadow-2xl"
-              draggable={false} src="/lovable-uploads/4a7a0128-646d-482c-a719-40b49fe48e88.png" />
+              draggable={false} src="/lovable-uploads/48b72a51-0d1f-4730-ad01-a7bfbbcd5728.png" />
 
           </motion.div>
 
