@@ -166,7 +166,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             <img
               src={processedPhonesSrc}
               alt="ΦΟΜΟ app - Event και Κράτηση Θέσης"
-              className="w-[92vw] max-w-[420px] sm:max-w-[520px] md:max-w-[600px] lg:max-w-[680px] mx-auto drop-shadow-2xl"
+              className="w-[96vw] max-w-[760px] sm:w-[92vw] md:w-[78vw] lg:w-[62vw] mx-auto drop-shadow-2xl"
               draggable={false}
             />
           </motion.div>
