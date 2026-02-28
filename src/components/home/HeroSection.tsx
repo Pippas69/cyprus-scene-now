@@ -61,7 +61,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15 }}>
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="space-y-2">
 
             <h1 className="text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight whitespace-nowrap">
               {t.headline}{" "}
@@ -76,7 +77,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="-mt-1"
+            className="-mt-2 sm:-mt-3"
           >
             <img 
               src="/images/hero-phones.png" 
