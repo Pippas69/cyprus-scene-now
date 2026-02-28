@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import Typewriter from "@/components/ui/typewriter";
-import PhoneMockupCarousel from "./PhoneMockupCarousel";
 
 interface HeroSectionProps {
   language: "el" | "en";
@@ -73,14 +72,19 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             </h1>
           </motion.div>
 
-          {/* Phone Mockup Carousel - right after headline */}
+          {/* Hero phones image */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="-mt-2 sm:-mt-3"
           >
-            <PhoneMockupCarousel />
+            <img 
+              src="/images/hero-phones.png" 
+              alt="ΦΟΜΟ app - Event και Κράτηση Θέσης" 
+              className="w-[340px] sm:w-[420px] md:w-[500px] lg:w-[560px] mx-auto drop-shadow-2xl"
+              draggable={false}
+            />
           </motion.div>
 
           {/* Subtext - after phone */}
