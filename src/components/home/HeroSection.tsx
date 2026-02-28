@@ -126,7 +126,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-seafoam/10 rounded-full blur-[120px]" />
 
       <div className="container mx-auto px-4 relative z-10 text-center">
-        <div className="flex flex-col items-center space-y-4 sm:space-y-5 max-w-4xl mx-auto">
+        <div className="flex flex-col items-center space-y-2 sm:space-y-3 max-w-4xl mx-auto">
           
           {/* Badge */}
           <motion.div
@@ -146,7 +146,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15 }}
-            className="space-y-2">
+            className="space-y-1">
 
             <h1 className="text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight whitespace-nowrap">
               {t.headline}{" "}
@@ -161,12 +161,12 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="-mt-2 sm:-mt-3"
+            className="-mt-7 sm:-mt-8 md:-mt-7"
           >
             <img
               src={processedPhonesSrc}
               alt="ΦΟΜΟ app - Event και Κράτηση Θέσης"
-              className="w-[92vw] max-w-[420px] sm:max-w-[520px] md:max-w-[600px] lg:max-w-[680px] mx-auto drop-shadow-2xl"
+              className="w-[108vw] max-w-none sm:w-[96vw] sm:max-w-[560px] md:max-w-[660px] lg:max-w-[760px] mx-auto drop-shadow-2xl"
               draggable={false}
             />
           </motion.div>
