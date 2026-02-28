@@ -77,14 +77,14 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="-mt-2 sm:-mt-3"
-          >
-            <img 
-              src="/images/hero-phones.png" 
-              alt="ΦΟΜΟ app - Event και Κράτηση Θέσης" 
+            className="-mt-2 sm:-mt-3">
+
+            <img
+
+              alt="ΦΟΜΟ app - Event και Κράτηση Θέσης"
               className="w-[340px] sm:w-[420px] md:w-[500px] lg:w-[560px] mx-auto drop-shadow-2xl"
-              draggable={false}
-            />
+              draggable={false} src="/lovable-uploads/d7edaab1-192e-4960-acf7-e346072147a7.png" />
+
           </motion.div>
 
           {/* Subtext - after phone */}
