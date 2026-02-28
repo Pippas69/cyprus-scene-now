@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { isNativePlatform } from '@/lib/platform';
 
-// Fetch VAPID public key from edge function
+// ── Web-only helpers ────────────────────────────────────────────────
+
 async function getVapidPublicKey(): Promise<string | null> {
   try {
     const { data, error } = await supabase.functions.invoke('get-vapid-key');
@@ -14,6 +16,27 @@ async function getVapidPublicKey(): Promise<string | null> {
   }
 }
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const cleanedKey = base64String
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\s/g, '');
+
+  const padding = '='.repeat((4 - (cleanedKey.length % 4)) % 4);
+  const base64 = (cleanedKey + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// ── State type ──────────────────────────────────────────────────────
+
 interface PushSubscriptionState {
   isSupported: boolean;
   isSubscribed: boolean;
@@ -21,26 +44,7 @@ interface PushSubscriptionState {
   permissionState: NotificationPermission | null;
 }
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  // Clean the key: remove whitespace, quotes, and normalize
-  const cleanedKey = base64String
-    .trim()
-    .replace(/^["']|["']$/g, '') // Remove wrapping quotes
-    .replace(/\s/g, '');          // Remove any whitespace
-  
-  const padding = '='.repeat((4 - (cleanedKey.length % 4)) % 4);
-  const base64 = (cleanedKey + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
+// ── Hook ────────────────────────────────────────────────────────────
 
 export function usePushNotifications(userId: string | null) {
   const [state, setState] = useState<PushSubscriptionState>({
@@ -50,17 +54,34 @@ export function usePushNotifications(userId: string | null) {
     permissionState: null,
   });
 
-  // Check if push notifications are supported
+  const native = isNativePlatform();
+
+  // ─── Support check ──────────────────────────────────────────────
   useEffect(() => {
     const checkSupport = async () => {
-      // Check basic support
-      const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-      
+      if (native) {
+        // Capacitor native — always supported
+        setState(prev => ({
+          ...prev,
+          isSupported: true,
+          permissionState: null,
+          isLoading: false,
+        }));
+        if (userId) checkSubscription();
+        return;
+      }
+
+      // Web fallback
+      const isSupported =
+        'serviceWorker' in navigator &&
+        'PushManager' in window &&
+        'Notification' in window;
+
       console.log('[Push] Support check:', {
         serviceWorker: 'serviceWorker' in navigator,
         PushManager: 'PushManager' in window,
         Notification: 'Notification' in window,
-        isSupported
+        isSupported,
       });
 
       if (!isSupported) {
@@ -75,15 +96,14 @@ export function usePushNotifications(userId: string | null) {
 
       const currentPermission = Notification.permission;
       console.log('[Push] Current permission:', currentPermission);
-      
+
       setState(prev => ({
         ...prev,
         isSupported: true,
         permissionState: currentPermission,
         isLoading: false,
       }));
-      
-      // Only check subscription if user is logged in and permission is granted
+
       if (userId && currentPermission === 'granted') {
         checkSubscription();
       }
@@ -92,37 +112,45 @@ export function usePushNotifications(userId: string | null) {
     checkSupport();
   }, [userId]);
 
+  // ─── Check existing subscription (DB lookup) ───────────────────
   const checkSubscription = useCallback(async () => {
     if (!userId) return;
-    
+
     console.log('[Push] Checking existing subscription...');
-    
+
     try {
-      // First check if service worker is registered
+      if (native) {
+        // On native we stored a device token – check if it's in DB
+        const { data } = await supabase
+          .from('push_subscriptions')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1)
+          .maybeSingle();
+
+        setState(prev => ({ ...prev, isSubscribed: !!data }));
+        return;
+      }
+
+      // Web fallback
       const registration = await navigator.serviceWorker.getRegistration('/sw.js');
-      
       if (!registration) {
-        console.log('[Push] No service worker registered');
         setState(prev => ({ ...prev, isSubscribed: false }));
         return;
       }
 
       const subscription = await (registration as any).pushManager.getSubscription();
       console.log('[Push] Existing subscription:', !!subscription);
-      
+
       if (subscription) {
-        // Verify it's in our database
         const { data } = await supabase
           .from('push_subscriptions')
           .select('id')
           .eq('user_id', userId)
           .eq('endpoint', subscription.endpoint)
           .maybeSingle();
-        
-        setState(prev => ({
-          ...prev,
-          isSubscribed: !!data,
-        }));
+
+        setState(prev => ({ ...prev, isSubscribed: !!data }));
       } else {
         setState(prev => ({ ...prev, isSubscribed: false }));
       }
@@ -130,11 +158,11 @@ export function usePushNotifications(userId: string | null) {
       console.error('[Push] Error checking subscription:', error);
       setState(prev => ({ ...prev, isSubscribed: false }));
     }
-  }, [userId]);
+  }, [userId, native]);
 
+  // ─── Subscribe ──────────────────────────────────────────────────
   const subscribe = useCallback(async (): Promise<boolean> => {
     if (!userId) {
-      console.log('[Push] No user ID');
       toast({
         title: 'Σύνδεση απαιτείται',
         description: 'Παρακαλώ συνδεθείτε για να ενεργοποιήσετε τις ειδοποιήσεις.',
@@ -144,7 +172,6 @@ export function usePushNotifications(userId: string | null) {
     }
 
     if (!state.isSupported) {
-      console.log('[Push] Not supported');
       toast({
         title: 'Δεν υποστηρίζονται',
         description: 'Ο browser σας δεν υποστηρίζει push ειδοποιήσεις.',
@@ -154,134 +181,12 @@ export function usePushNotifications(userId: string | null) {
     }
 
     setState(prev => ({ ...prev, isLoading: true }));
-    console.log('[Push] Starting subscription process...');
 
     try {
-      // Request permission
-      console.log('[Push] Requesting permission...');
-      const permission = await Notification.requestPermission();
-      console.log('[Push] Permission result:', permission);
-      
-      setState(prev => ({ ...prev, permissionState: permission }));
-      
-      if (permission !== 'granted') {
-        toast({
-          title: 'Δεν δόθηκε άδεια',
-          description: 'Ενεργοποιήστε τις ειδοποιήσεις στις ρυθμίσεις του browser.',
-          variant: 'destructive',
-        });
-        setState(prev => ({ ...prev, isLoading: false }));
-        return false;
+      if (native) {
+        return await subscribeNative(userId);
       }
-
-      // Register service worker (always re-register to force update)
-      console.log('[Push] Registering service worker...');
-      // Unregister old SW first to ensure fresh version
-      const existingReg = await navigator.serviceWorker.getRegistration('/sw.js');
-      if (existingReg) {
-        await existingReg.update();
-        console.log('[Push] Service worker updated');
-      }
-      let registration = existingReg || await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-      console.log('[Push] Service worker registered');
-      
-      // Wait for service worker to be ready
-      await navigator.serviceWorker.ready;
-      console.log('[Push] Service worker ready');
-
-      // Check for existing subscription
-      let subscription = await (registration as any).pushManager.getSubscription();
-      console.log('[Push] Existing subscription:', !!subscription);
-      
-      if (!subscription) {
-        // Get VAPID key from edge function
-        console.log('[Push] Fetching VAPID key...');
-        const vapidKey = await getVapidPublicKey();
-        
-        if (!vapidKey) {
-          throw new Error('VAPID key not configured');
-        }
-        console.log('[Push] VAPID key received');
-        console.log('[Push] VAPID key length:', vapidKey.length);
-        console.log('[Push] VAPID key starts with:', vapidKey.substring(0, 10) + '...');
-        
-        let applicationServerKey: Uint8Array;
-        try {
-          applicationServerKey = urlBase64ToUint8Array(vapidKey);
-        } catch (decodeError) {
-          console.error('[Push] Failed to decode VAPID key:', decodeError);
-          console.error('[Push] Key value (first 20 chars):', vapidKey.substring(0, 20));
-          throw new Error('Invalid VAPID key format. Please check the server configuration.');
-        }
-        
-        console.log('[Push] Creating push subscription...');
-        subscription = await (registration as any).pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
-        });
-        console.log('[Push] Push subscription created');
-      }
-
-      // Extract keys from subscription
-      const p256dh = subscription.getKey('p256dh');
-      const auth = subscription.getKey('auth');
-      
-      if (!p256dh || !auth) {
-        throw new Error('Failed to get subscription keys');
-      }
-
-      const p256dhArray = new Uint8Array(p256dh);
-      const authArray = new Uint8Array(auth);
-      
-      const p256dhKey = btoa(String.fromCharCode.apply(null, Array.from(p256dhArray)));
-      const authKey = btoa(String.fromCharCode.apply(null, Array.from(authArray)));
-
-      // Save to database
-      console.log('[Push] Saving subscription to database...');
-      const { error } = await supabase
-        .from('push_subscriptions')
-        .upsert({
-          user_id: userId,
-          endpoint: subscription.endpoint,
-          p256dh_key: p256dhKey,
-          auth_key: authKey,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id,endpoint',
-        });
-
-      if (error) {
-        console.error('[Push] Database error:', error);
-        throw error;
-      }
-
-      console.log('[Push] Subscription saved successfully');
-
-      // CRITICAL: Also enable push in user_preferences so backend doesn't skip sending
-      const { error: prefError } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: userId,
-          notification_push_enabled: true,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id',
-        });
-
-      if (prefError) {
-        console.warn('[Push] Failed to update preferences, but subscription saved:', prefError);
-      } else {
-        console.log('[Push] Push enabled in user_preferences');
-      }
-
-      setState(prev => ({ ...prev, isSubscribed: true, isLoading: false }));
-      
-      toast({
-        title: 'Push ειδοποιήσεις ενεργοποιήθηκαν!',
-        description: 'Θα λαμβάνετε άμεσες ειδοποιήσεις.',
-      });
-      
-      return true;
+      return await subscribeWeb(userId);
     } catch (error) {
       console.error('[Push] Error subscribing:', error);
       toast({
@@ -292,27 +197,210 @@ export function usePushNotifications(userId: string | null) {
       setState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
-  }, [userId, state.isSupported]);
+  }, [userId, state.isSupported, native]);
 
+  // ─── Native (Capacitor) subscribe ───────────────────────────────
+  const subscribeNative = async (uid: string): Promise<boolean> => {
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+
+    // Request permission
+    const permResult = await PushNotifications.requestPermissions();
+    console.log('[Push][Native] Permission result:', permResult.receive);
+
+    if (permResult.receive !== 'granted') {
+      toast({
+        title: 'Δεν δόθηκε άδεια',
+        description: 'Ενεργοποιήστε τις ειδοποιήσεις στις Ρυθμίσεις.',
+        variant: 'destructive',
+      });
+      setState(prev => ({ ...prev, isLoading: false }));
+      return false;
+    }
+
+    // Register for push — this triggers the 'registration' event
+    return new Promise<boolean>((resolve) => {
+      PushNotifications.addListener('registration', async (token) => {
+        console.log('[Push][Native] Device token received:', token.value.substring(0, 20) + '...');
+
+        try {
+          // Store the device token in our database
+          const { error } = await supabase
+            .from('push_subscriptions')
+            .upsert(
+              {
+                user_id: uid,
+                endpoint: `apns://${token.value}`, // prefix to distinguish from web endpoints
+                p256dh_key: '', // not used for native
+                auth_key: token.value, // store actual token here
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id,endpoint' }
+            );
+
+          if (error) throw error;
+
+          // Enable push in user preferences
+          await supabase
+            .from('user_preferences')
+            .upsert(
+              {
+                user_id: uid,
+                notification_push_enabled: true,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id' }
+            );
+
+          setState(prev => ({ ...prev, isSubscribed: true, isLoading: false }));
+          toast({
+            title: 'Push ειδοποιήσεις ενεργοποιήθηκαν!',
+            description: 'Θα λαμβάνετε άμεσες ειδοποιήσεις.',
+          });
+          resolve(true);
+        } catch (err) {
+          console.error('[Push][Native] Save error:', err);
+          setState(prev => ({ ...prev, isLoading: false }));
+          resolve(false);
+        }
+      });
+
+      PushNotifications.addListener('registrationError', (error) => {
+        console.error('[Push][Native] Registration error:', error);
+        setState(prev => ({ ...prev, isLoading: false }));
+        resolve(false);
+      });
+
+      PushNotifications.register();
+    });
+  };
+
+  // ─── Web subscribe (existing logic) ─────────────────────────────
+  const subscribeWeb = async (uid: string): Promise<boolean> => {
+    console.log('[Push] Requesting permission...');
+    const permission = await Notification.requestPermission();
+    console.log('[Push] Permission result:', permission);
+
+    setState(prev => ({ ...prev, permissionState: permission }));
+
+    if (permission !== 'granted') {
+      toast({
+        title: 'Δεν δόθηκε άδεια',
+        description: 'Ενεργοποιήστε τις ειδοποιήσεις στις ρυθμίσεις του browser.',
+        variant: 'destructive',
+      });
+      setState(prev => ({ ...prev, isLoading: false }));
+      return false;
+    }
+
+    // Register / update service worker
+    console.log('[Push] Registering service worker...');
+    const existingReg = await navigator.serviceWorker.getRegistration('/sw.js');
+    if (existingReg) {
+      await existingReg.update();
+      console.log('[Push] Service worker updated');
+    }
+    const registration =
+      existingReg || (await navigator.serviceWorker.register('/sw.js', { scope: '/' }));
+    console.log('[Push] Service worker registered');
+
+    await navigator.serviceWorker.ready;
+    console.log('[Push] Service worker ready');
+
+    let subscription = await (registration as any).pushManager.getSubscription();
+    console.log('[Push] Existing subscription:', !!subscription);
+
+    if (!subscription) {
+      console.log('[Push] Fetching VAPID key...');
+      const vapidKey = await getVapidPublicKey();
+      if (!vapidKey) throw new Error('VAPID key not configured');
+
+      console.log('[Push] VAPID key received');
+      const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+
+      console.log('[Push] Creating push subscription...');
+      subscription = await (registration as any).pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
+      });
+      console.log('[Push] Push subscription created');
+    }
+
+    // Extract keys
+    const p256dh = subscription.getKey('p256dh');
+    const auth = subscription.getKey('auth');
+    if (!p256dh || !auth) throw new Error('Failed to get subscription keys');
+
+    const p256dhKey = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(p256dh))));
+    const authKey = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(auth))));
+
+    // Save to database
+    console.log('[Push] Saving subscription to database...');
+    const { error } = await supabase.from('push_subscriptions').upsert(
+      {
+        user_id: uid,
+        endpoint: subscription.endpoint,
+        p256dh_key: p256dhKey,
+        auth_key: authKey,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,endpoint' }
+    );
+
+    if (error) throw error;
+    console.log('[Push] Subscription saved successfully');
+
+    // Enable push in preferences
+    const { error: prefError } = await supabase.from('user_preferences').upsert(
+      {
+        user_id: uid,
+        notification_push_enabled: true,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    );
+
+    if (prefError) {
+      console.warn('[Push] Failed to update preferences:', prefError);
+    }
+
+    setState(prev => ({ ...prev, isSubscribed: true, isLoading: false }));
+    toast({
+      title: 'Push ειδοποιήσεις ενεργοποιήθηκαν!',
+      description: 'Θα λαμβάνετε άμεσες ειδοποιήσεις.',
+    });
+
+    return true;
+  };
+
+  // ─── Unsubscribe ────────────────────────────────────────────────
   const unsubscribe = useCallback(async (): Promise<boolean> => {
     if (!userId) return false;
 
     setState(prev => ({ ...prev, isLoading: true }));
 
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await (registration as any).pushManager.getSubscription();
-      
-      if (subscription) {
-        // Unsubscribe from push manager
-        await subscription.unsubscribe();
-        
-        // Remove from database
+      if (native) {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        await PushNotifications.removeAllListeners();
+
+        // Remove all native subscriptions for this user
         await supabase
           .from('push_subscriptions')
           .delete()
           .eq('user_id', userId)
-          .eq('endpoint', subscription.endpoint);
+          .like('endpoint', 'apns://%');
+      } else {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await (registration as any).pushManager.getSubscription();
+
+        if (subscription) {
+          await subscription.unsubscribe();
+          await supabase
+            .from('push_subscriptions')
+            .delete()
+            .eq('user_id', userId)
+            .eq('endpoint', subscription.endpoint);
+        }
       }
 
       // Update preference
@@ -322,12 +410,12 @@ export function usePushNotifications(userId: string | null) {
         .eq('user_id', userId);
 
       setState(prev => ({ ...prev, isSubscribed: false, isLoading: false }));
-      
+
       toast({
         title: 'Push notifications disabled',
         description: 'You will no longer receive push notifications.',
       });
-      
+
       return true;
     } catch (error) {
       console.error('Error unsubscribing from push notifications:', error);
@@ -339,7 +427,7 @@ export function usePushNotifications(userId: string | null) {
       setState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
-  }, [userId]);
+  }, [userId, native]);
 
   return {
     ...state,
