@@ -5,7 +5,7 @@ interface HeroSectionProps {
 }
 
 const PhoneMockup = ({ src, alt }: {src: string;alt: string;}) =>
-<div className="w-[240px] sm:w-[280px] md:w-[330px] lg:w-[370px] flex-shrink-0">
+<div className="w-[280px] sm:w-[320px] md:w-[370px] lg:w-[420px] flex-shrink-0">
     <div
     className="relative rounded-[2.2rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] p-[4px] sm:p-[5px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.7),0_0_40px_rgba(78,205,196,0.06),inset_0_1px_0_rgba(255,255,255,0.1)]"
     style={{ aspectRatio: "9/19.5" }}>
