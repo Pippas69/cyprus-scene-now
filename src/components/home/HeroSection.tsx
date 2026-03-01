@@ -126,8 +126,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     <img
                       alt="ΦΟΜΟ app - Event Detail"
                       className="w-full h-full object-fill"
-                      style={{ 
-                        imageRendering: 'crisp-edges',
+                      style={{
+                        imageRendering: 'crisp-edges'
                       }}
                       draggable={false}
                       loading="eager"
@@ -168,13 +168,13 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   {/* Screen */}
                   <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black">
                     {/* Dynamic Island */}
-                    <div className="absolute top-[10px] sm:top-[12px] left-1/2 -translate-x-1/2 z-20 w-[60px] sm:w-[80px] h-[18px] sm:h-[22px] bg-black rounded-full" />
+                    
                     
                     <img
                       alt="ΦΟΜΟ app - Events Feed"
                       className="w-full h-full object-fill"
-                      style={{ 
-                        imageRendering: 'crisp-edges',
+                      style={{
+                        imageRendering: 'crisp-edges'
                       }}
                       draggable={false}
                       loading="eager"
