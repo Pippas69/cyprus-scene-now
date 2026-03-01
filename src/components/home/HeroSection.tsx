@@ -150,7 +150,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
                       alt="ΦΟΜΟ app - Events Feed"
                       className="w-full h-full object-contain"
-                      draggable={false} src="/lovable-uploads/bbfcc86d-977e-46d7-b9bc-b84eefc1efcf.png" />
+                      draggable={false} src="/lovable-uploads/4849590a-7421-4f01-86f4-6eb732922838.png" />
 
                   </div>
                 </div>
