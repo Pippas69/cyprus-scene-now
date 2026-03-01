@@ -145,11 +145,11 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   {/* Notch */}
                   
                   {/* Screen */}
-                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background">
+                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background flex items-end">
                     <img
 
                       alt="ΦΟΜΟ app - Events Feed"
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-full object-cover object-bottom"
                       draggable={false} src="/lovable-uploads/4849590a-7421-4f01-86f4-6eb732922838.png" />
 
                   </div>
