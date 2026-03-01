@@ -130,15 +130,17 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 md:w-48 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
           <div className="flex overflow-hidden">
-            <motion.div
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-              className="flex items-end gap-4 sm:gap-6 md:gap-8">
+            <div
+              className="flex items-end gap-4 sm:gap-6 md:gap-8 will-change-transform [transform:translate3d(0,0,0)]"
+              style={{
+                animation: "hero-marquee 40s linear infinite",
+                backfaceVisibility: "hidden"
+              }}>
 
               {marqueePhones.map((phone, index) =>
               <PhoneMockup key={`phone-${index}`} src={phone.src} alt={phone.alt} />
               )}
-            </motion.div>
+            </div>
           </div>
         </motion.div>
 
@@ -171,6 +173,16 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       </div>
 
       <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-background to-transparent" />
+      <style>{`
+        @keyframes hero-marquee {
+          from {
+            transform: translate3d(0, 0, 0);
+          }
+          to {
+            transform: translate3d(-50%, 0, 0);
+          }
+        }
+      `}</style>
     </section>);
 
 };
