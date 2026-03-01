@@ -18,7 +18,7 @@ const PhoneMockup = ({ src, alt }: {src: string;alt: string;}) =>
       <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black p-[6px] sm:p-[8px]">
         <img
         alt={alt}
-        className="w-full h-full object-cover rounded-[1.7rem] sm:rounded-[2.1rem]"
+        className="w-full h-full rounded-[1.7rem] sm:rounded-[2.1rem] object-contain"
         draggable={false}
         loading="eager"
         decoding="sync"
