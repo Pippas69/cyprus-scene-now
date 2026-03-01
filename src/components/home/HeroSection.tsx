@@ -94,8 +94,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           </motion.div>
 
           {/* Hero phones */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 -mt-2 sm:-mt-3">
-            {/* Phone 1 (was phone 2) */}
+          <div className="flex items-end justify-center gap-4 sm:gap-6 md:gap-8 -mt-2 sm:-mt-3">
+            {/* Phone 1 */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -108,28 +108,48 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
                 {/* iPhone frame */}
                 <div
-                  className="relative rounded-[2.2rem] sm:rounded-[2.8rem] overflow-hidden bg-[#1a1a1a] p-[3px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_50px_rgba(78,205,196,0.08)]"
+                  className="relative rounded-[2.2rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] p-[4px] sm:p-[5px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.7),0_0_50px_rgba(78,205,196,0.08),inset_0_1px_0_rgba(255,255,255,0.1)]"
                   style={{ aspectRatio: "9/19.5" }}>
 
-                  {/* Notch */}
-                  
+                  {/* Side buttons - left */}
+                  <div className="absolute -left-[2px] top-[18%] w-[3px] h-[8%] bg-[#2a2a2a] rounded-l-sm" />
+                  <div className="absolute -left-[2px] top-[30%] w-[3px] h-[12%] bg-[#2a2a2a] rounded-l-sm" />
+                  <div className="absolute -left-[2px] top-[44%] w-[3px] h-[12%] bg-[#2a2a2a] rounded-l-sm" />
+                  {/* Side button - right */}
+                  <div className="absolute -right-[2px] top-[32%] w-[3px] h-[14%] bg-[#2a2a2a] rounded-r-sm" />
+
                   {/* Screen */}
-                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background">
+                  <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black">
+                    {/* Dynamic Island */}
+                    <div className="absolute top-[10px] sm:top-[12px] left-1/2 -translate-x-1/2 z-20 w-[60px] sm:w-[80px] h-[18px] sm:h-[22px] bg-black rounded-full" />
+                    
                     <img
                       alt="ΦΟΜΟ app - Event Detail"
-                      className="w-full h-full object-cover object-top"
-                      style={{ imageRendering: 'auto', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
+                      className="w-full h-full"
+                      style={{ 
+                        imageRendering: '-webkit-optimize-contrast',
+                        WebkitBackfaceVisibility: 'hidden', 
+                        backfaceVisibility: 'hidden', 
+                        transform: 'translateZ(0) scale(1)',
+                        objectFit: 'cover',
+                        objectPosition: 'top center',
+                        willChange: 'transform',
+                        filter: 'contrast(1.02) saturate(1.05)',
+                      }}
                       draggable={false}
                       loading="eager"
-                      decoding="async"
+                      decoding="sync"
+                      fetchPriority="high"
                       src="/lovable-uploads/88997d31-4129-4023-a62a-6fca7477ec31.png" />
 
+                    {/* Home indicator */}
+                    <div className="absolute bottom-[6px] sm:bottom-[8px] left-1/2 -translate-x-1/2 w-[80px] sm:w-[100px] h-[4px] bg-white/30 rounded-full z-20" />
                   </div>
                 </div>
               </motion.div>
             </motion.div>
 
-            {/* Phone 2 (was phone 1) */}
+            {/* Phone 2 */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -142,22 +162,42 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
                 {/* iPhone frame */}
                 <div
-                  className="relative rounded-[2.2rem] sm:rounded-[2.8rem] overflow-hidden bg-[#1a1a1a] p-[3px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_50px_rgba(78,205,196,0.08)]"
+                  className="relative rounded-[2.2rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] p-[4px] sm:p-[5px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.7),0_0_50px_rgba(78,205,196,0.08),inset_0_1px_0_rgba(255,255,255,0.1)]"
                   style={{ aspectRatio: "9/19.5" }}>
 
-                  {/* Notch */}
-                  
+                  {/* Side buttons - left */}
+                  <div className="absolute -left-[2px] top-[18%] w-[3px] h-[8%] bg-[#2a2a2a] rounded-l-sm" />
+                  <div className="absolute -left-[2px] top-[30%] w-[3px] h-[12%] bg-[#2a2a2a] rounded-l-sm" />
+                  <div className="absolute -left-[2px] top-[44%] w-[3px] h-[12%] bg-[#2a2a2a] rounded-l-sm" />
+                  {/* Side button - right */}
+                  <div className="absolute -right-[2px] top-[32%] w-[3px] h-[14%] bg-[#2a2a2a] rounded-r-sm" />
+
                   {/* Screen */}
-                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background flex items-end">
+                  <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black">
+                    {/* Dynamic Island */}
+                    <div className="absolute top-[10px] sm:top-[12px] left-1/2 -translate-x-1/2 z-20 w-[60px] sm:w-[80px] h-[18px] sm:h-[22px] bg-black rounded-full" />
+                    
                     <img
                       alt="ΦΟΜΟ app - Events Feed"
-                      className="w-full h-full object-cover object-bottom"
-                      style={{ imageRendering: 'auto', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
+                      className="w-full h-full"
+                      style={{ 
+                        imageRendering: '-webkit-optimize-contrast',
+                        WebkitBackfaceVisibility: 'hidden', 
+                        backfaceVisibility: 'hidden', 
+                        transform: 'translateZ(0) scale(1)',
+                        objectFit: 'cover',
+                        objectPosition: 'bottom center',
+                        willChange: 'transform',
+                        filter: 'contrast(1.02) saturate(1.05)',
+                      }}
                       draggable={false}
                       loading="eager"
-                      decoding="async"
+                      decoding="sync"
+                      fetchPriority="high"
                       src="/lovable-uploads/760aa5ce-04dc-42b6-aa8e-a867fece3343.png" />
 
+                    {/* Home indicator */}
+                    <div className="absolute bottom-[6px] sm:bottom-[8px] left-1/2 -translate-x-1/2 w-[80px] sm:w-[100px] h-[4px] bg-white/30 rounded-full z-20" />
                   </div>
                 </div>
               </motion.div>
