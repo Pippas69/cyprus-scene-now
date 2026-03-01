@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import Typewriter from "@/components/ui/typewriter";
-
+import heroPhoneLeft from "@/assets/hero-phone-premium-left.png";
+import heroPhoneRight from "@/assets/hero-phone-premium-right.png";
 interface HeroSectionProps {
   language: "el" | "en";
 }
