@@ -6,8 +6,8 @@ interface LogoProps {
 }
 
 const sizeClasses = {
-  sm: "h-8 px-3 text-lg",
-  md: "h-10 px-4 text-xl md:h-12 md:px-5 md:text-2xl",
+  sm: "h-7 px-2.5 text-base",
+  md: "h-8 px-3 text-lg md:h-9 md:px-4 md:text-xl",
   lg: "h-14 px-6 text-3xl",
 };
 
