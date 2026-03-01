@@ -125,16 +125,9 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     
                     <img
                       alt="ΦΟΜΟ app - Event Detail"
-                      className="w-full h-full"
+                      className="w-full h-full object-fill"
                       style={{ 
-                        imageRendering: '-webkit-optimize-contrast',
-                        WebkitBackfaceVisibility: 'hidden', 
-                        backfaceVisibility: 'hidden', 
-                        transform: 'translateZ(0) scale(1)',
-                        objectFit: 'cover',
-                        objectPosition: 'top center',
-                        willChange: 'transform',
-                        filter: 'contrast(1.02) saturate(1.05)',
+                        imageRendering: 'crisp-edges',
                       }}
                       draggable={false}
                       loading="eager"
@@ -179,16 +172,9 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     
                     <img
                       alt="ΦΟΜΟ app - Events Feed"
-                      className="w-full h-full"
+                      className="w-full h-full object-fill"
                       style={{ 
-                        imageRendering: '-webkit-optimize-contrast',
-                        WebkitBackfaceVisibility: 'hidden', 
-                        backfaceVisibility: 'hidden', 
-                        transform: 'translateZ(0) scale(1)',
-                        objectFit: 'cover',
-                        objectPosition: 'bottom center',
-                        willChange: 'transform',
-                        filter: 'contrast(1.02) saturate(1.05)',
+                        imageRendering: 'crisp-edges',
                       }}
                       draggable={false}
                       loading="eager"
