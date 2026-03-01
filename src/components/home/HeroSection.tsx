@@ -114,11 +114,11 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   {/* Notch */}
                   <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-[35%] h-[22px] sm:h-[26px] bg-[#1a1a1a] rounded-b-2xl z-10" />
                   {/* Screen */}
-                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden">
+                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background">
                     <img
                       src="/images/hero-phone-2.png"
                       alt="ΦΟΜΟ app - Event Detail"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover object-top"
                       draggable={false} />
 
                   </div>
@@ -149,7 +149,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     <img
 
                       alt="ΦΟΜΟ app - Events Feed"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover object-top"
                       draggable={false} src="/lovable-uploads/bbfcc86d-977e-46d7-b9bc-b84eefc1efcf.png" />
 
                   </div>
