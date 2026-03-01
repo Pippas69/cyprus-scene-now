@@ -112,7 +112,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   style={{ aspectRatio: "9/19.5" }}>
 
                   {/* Notch */}
-                  <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-[35%] h-[22px] sm:h-[26px] bg-[#1a1a1a] rounded-b-2xl z-10" />
+                  
                   {/* Screen */}
                   <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background">
                     <img
