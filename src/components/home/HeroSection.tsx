@@ -88,7 +88,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                 {/* iPhone frame */}
                 <div
                   className="relative rounded-[2.2rem] sm:rounded-[2.8rem] overflow-hidden bg-[#1a1a1a] p-[3px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_50px_rgba(78,205,196,0.08)]"
-                  style={{ aspectRatio: "9/19.2" }}
+                  style={{ aspectRatio: "9/19.5" }}
                 >
                   {/* Notch */}
                   <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-[35%] h-[22px] sm:h-[26px] bg-[#1a1a1a] rounded-b-2xl z-10" />
@@ -97,7 +97,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     <img
                       src="/images/hero-phone-2.png"
                       alt="ΦΟΜΟ app - Event Detail"
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-full object-contain"
                       draggable={false}
                     />
                   </div>
@@ -119,16 +119,16 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                 {/* iPhone frame */}
                 <div
                   className="relative rounded-[2.2rem] sm:rounded-[2.8rem] overflow-hidden bg-[#1a1a1a] p-[3px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_50px_rgba(78,205,196,0.08)]"
-                  style={{ aspectRatio: "9/19.2" }}
+                  style={{ aspectRatio: "9/19.5" }}
                 >
                   {/* Notch */}
                   <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-[35%] h-[22px] sm:h-[26px] bg-[#1a1a1a] rounded-b-2xl z-10" />
                   {/* Screen */}
-                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden">
+                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background">
                     <img
                       src="/images/hero-phone-1.png"
                       alt="ΦΟΜΟ app - Events Feed"
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-full object-contain"
                       draggable={false}
                     />
                   </div>
