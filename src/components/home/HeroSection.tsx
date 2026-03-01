@@ -116,10 +116,10 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   {/* Screen */}
                   <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background">
                     <img
-                      src="/images/hero-phone-2.png"
+
                       alt="ΦΟΜΟ app - Event Detail"
-                      className="w-full h-full object-contain"
-                      draggable={false} />
+                      className="w-full h-full object-fill"
+                      draggable={false} src="/lovable-uploads/0ccbf9ce-c309-4cd3-9e9a-6b6b8d154c7a.png" />
 
                   </div>
                 </div>
