@@ -86,12 +86,13 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                 className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
               >
                 <div
-                  className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)] bg-[#0a1628]"
+                  className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]"
+                  style={{ aspectRatio: "9/19" }}
                 >
                   <img
                     src="/images/hero-phone-1.png"
                     alt="ΦΟΜΟ app - Events"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                     draggable={false}
                   />
                 </div>
