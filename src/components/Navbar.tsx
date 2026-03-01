@@ -332,7 +332,7 @@ const Navbar = () => {
                       </Button>
                       <Button 
                         variant="outline" 
-                        className="w-full text-sm border-[#0D3B66] text-white hover:bg-[#0D3B66] hover:text-white" 
+                        className="w-full text-sm border-background text-white hover:bg-background hover:text-white" 
                         size="default" 
                         onClick={() => {
                           navigate("/login");
