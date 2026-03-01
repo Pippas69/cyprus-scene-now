@@ -15,10 +15,10 @@ const PhoneMockup = ({ src, alt }: {src: string;alt: string;}) =>
       <div className="absolute -left-[2px] top-[44%] w-[3px] h-[12%] bg-[#2a2a2a] rounded-l-sm" />
       <div className="absolute -right-[2px] top-[32%] w-[3px] h-[14%] bg-[#2a2a2a] rounded-r-sm" />
 
-      <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black">
+      <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black p-[6px] sm:p-[8px]">
         <img
         alt={alt}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover rounded-[1.7rem] sm:rounded-[2.1rem]"
         draggable={false}
         loading="eager"
         decoding="sync"
