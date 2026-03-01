@@ -71,7 +71,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
   if (loading) {
     return (
-      <section className="relative py-16 md:py-20 bg-[#0D3B66]">
+      <section className="relative py-16 md:py-20 bg-background">
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-12">
             <Skeleton className="h-10 w-64 mx-auto mb-4 bg-white/10" />
@@ -90,7 +90,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   if (events.length === 0) return null;
 
   return (
-    <section className="relative py-16 sm:py-20 md:py-28 overflow-hidden bg-[#0D3B66]">
+    <section className="relative py-16 sm:py-20 md:py-28 overflow-hidden bg-background">
       {/* Subtle glow */}
       <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-seafoam/5 rounded-full blur-[150px]" />
       

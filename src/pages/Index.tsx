@@ -36,7 +36,7 @@ const Index = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-[#0D3B66]">
+    <div className="min-h-screen bg-background">
       <ScrollProgress />
       <Navbar />
       <HeroSection language={language} />
