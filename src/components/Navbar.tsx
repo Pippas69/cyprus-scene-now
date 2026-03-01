@@ -117,8 +117,8 @@ const Navbar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                    <Logo size="md" />
-                    <ChevronDown className="w-5 h-5 text-aegean" />
+                    <Logo size="sm" />
+                    <ChevronDown className="w-4 h-4 text-aegean" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 bg-background z-[60]">
