@@ -72,6 +72,27 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             </h1>
           </motion.div>
 
+          {/* Decorative dots above phones */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.25 }}
+            className="flex items-center gap-2 sm:gap-3">
+            <div className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent to-seafoam/40" />
+            <div className="flex gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
+              <span className="w-1.5 h-1.5 rounded-full bg-seafoam/30" />
+              <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
+            </div>
+            <span className="text-[10px] sm:text-xs text-white/30 tracking-[0.3em] uppercase font-medium">live preview</span>
+            <div className="flex gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
+              <span className="w-1.5 h-1.5 rounded-full bg-seafoam/30" />
+              <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
+            </div>
+            <div className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent to-seafoam/40" />
+          </motion.div>
+
           {/* Hero phones */}
           <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 -mt-2 sm:-mt-3">
             {/* Phone 1 (was phone 2) */}
