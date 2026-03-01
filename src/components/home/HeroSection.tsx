@@ -75,9 +75,9 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               transition={{ duration: 0.5 }}>
 
               <span className="inline-flex items-center px-5 py-2 rounded-full border border-seafoam/30 bg-seafoam/10 backdrop-blur-sm">
-                <span className="text-seafoam text-xs sm:text-sm font-medium tracking-widest uppercase">
-                  ΦEAR OF MISSING OUT
-                </span>
+                
+
+
               </span>
             </motion.div>
 
