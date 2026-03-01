@@ -32,7 +32,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
       success: "Επιτυχής εγγραφή! Θα σε ειδοποιήσουμε σύντομα.",
       errorExists: "Αυτό το email χρησιμοποιείται ήδη",
       errorGeneric: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
-      passwordHint: "Τουλάχιστον 6 χαρακτήρες",
+      passwordHint: "Τουλάχιστον 6 χαρακτήρες"
     },
     en: {
       badge: "Early Access",
@@ -46,8 +46,8 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
       success: "You're on the list! We'll notify you soon.",
       errorExists: "This email is already registered",
       errorGeneric: "Something went wrong. Please try again.",
-      passwordHint: "At least 6 characters",
-    },
+      passwordHint: "At least 6 characters"
+    }
   };
 
   const t = text[language];
@@ -70,8 +70,8 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: { first_name: firstName.trim(), last_name: lastName.trim(), is_waitlist: true },
-        },
+          data: { first_name: firstName.trim(), last_name: lastName.trim(), is_waitlist: true }
+        }
       });
       if (error) {
         toast.error(error.message.includes("already registered") ? t.errorExists : t.errorGeneric);
@@ -101,8 +101,8 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
             <h2 className="font-cinzel text-3xl font-bold text-white mb-4">{t.success}</h2>
           </motion.div>
         </div>
-      </section>
-    );
+      </section>);
+
   }
 
   return (
@@ -115,17 +115,17 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-xl mx-auto text-center"
-        >
+          className="max-w-xl mx-auto text-center">
+
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-seafoam/15 border border-seafoam/30 backdrop-blur-sm px-5 py-2 rounded-full mb-6 sm:mb-8">
             <Sparkles className="w-4 h-4 text-seafoam" />
             <span className="text-seafoam font-medium text-sm">{t.badge}</span>
           </div>
 
-          <h2 className="font-cinzel text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 sm:mb-4 tracking-tight">
-            {t.title}
-          </h2>
+          
+
+
           <p className="text-white/50 text-sm sm:text-base mb-8 sm:mb-10">{t.subtitle}</p>
 
           {/* Form */}
@@ -137,16 +137,16 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl focus:border-seafoam/50 focus:ring-seafoam/20"
-                disabled={isLoading}
-              />
+                disabled={isLoading} />
+
               <Input
                 type="text"
                 placeholder={t.lastName}
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl focus:border-seafoam/50 focus:ring-seafoam/20"
-                disabled={isLoading}
-              />
+                disabled={isLoading} />
+
             </div>
             <Input
               type="email"
@@ -154,37 +154,37 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl focus:border-seafoam/50 focus:ring-seafoam/20"
-              disabled={isLoading}
-            />
+              disabled={isLoading} />
+
             <div>
               <PasswordInput
                 placeholder={t.password}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl focus:border-seafoam/50 focus:ring-seafoam/20"
-                disabled={isLoading}
-              />
+                disabled={isLoading} />
+
               <p className="text-white/30 text-xs mt-1.5 text-left ml-1">{t.passwordHint}</p>
             </div>
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-seafoam to-seafoam/80 hover:from-seafoam/90 hover:to-seafoam/70 text-aegean font-semibold text-sm sm:text-base rounded-xl transition-all duration-300"
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
+              className="w-full h-12 bg-gradient-to-r from-seafoam to-seafoam/80 hover:from-seafoam/90 hover:to-seafoam/70 text-aegean font-semibold text-sm sm:text-base rounded-xl transition-all duration-300">
+
+              {isLoading ?
+              <Loader2 className="w-5 h-5 animate-spin" /> :
+
+              <>
                   <Sparkles className="w-4 h-4 mr-2" />
                   {t.button}
                 </>
-              )}
+              }
             </Button>
           </form>
         </motion.div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default WaitlistSignup;
