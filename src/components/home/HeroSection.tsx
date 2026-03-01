@@ -118,7 +118,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     <img
                       src="/images/hero-phone-2.png"
                       alt="ΦΟΜΟ app - Event Detail"
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-full object-contain"
                       draggable={false} />
 
                   </div>
@@ -149,7 +149,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     <img
 
                       alt="ΦΟΜΟ app - Events Feed"
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-full object-contain"
                       draggable={false} src="/lovable-uploads/bbfcc86d-977e-46d7-b9bc-b84eefc1efcf.png" />
 
                   </div>
