@@ -74,46 +74,58 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
           {/* Hero phones */}
           <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 -mt-2 sm:-mt-3">
-            {/* Phone 1 */}
+            {/* Phone 1 - Left half of image */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               <motion.div
-                animate={{ x: [0, -8, 0, 8, 0] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ x: [0, -6, 0, 6, 0] }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
                 className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
               >
-                <div className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]">
-                  <img
-                    src="/images/hero-phone-1.png"
-                    alt="ΦΟΜΟ app - Event"
-                    className="w-full h-auto object-contain"
-                    draggable={false}
-                  />
+                <div
+                  className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]"
+                  style={{ aspectRatio: "9/19" }}
+                >
+                  <div className="w-full h-full overflow-hidden">
+                    <img
+                      src="/images/hero-phone-2.png"
+                      alt="ΦΟΜΟ app - Screen 1"
+                      className="h-full object-cover object-left"
+                      style={{ width: "200%" }}
+                      draggable={false}
+                    />
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
 
-            {/* Phone 2 */}
+            {/* Phone 2 - Right half of image */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.45 }}
             >
               <motion.div
-                animate={{ x: [0, 8, 0, -8, 0] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                animate={{ x: [0, 6, 0, -6, 0] }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
               >
-                <div className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]">
-                  <img
-                    src="/images/hero-phone-2.png"
-                    alt="ΦΟΜΟ app - Κράτηση Θέσης"
-                    className="w-full h-auto object-contain"
-                    draggable={false}
-                  />
+                <div
+                  className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]"
+                  style={{ aspectRatio: "9/19" }}
+                >
+                  <div className="w-full h-full overflow-hidden">
+                    <img
+                      src="/images/hero-phone-2.png"
+                      alt="ΦΟΜΟ app - Screen 2"
+                      className="h-full object-cover object-right"
+                      style={{ width: "200%" }}
+                      draggable={false}
+                    />
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
