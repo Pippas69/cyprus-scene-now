@@ -25,7 +25,7 @@ const PhoneMockup = ({ src, alt }: {src: string;alt: string;}) =>
         fetchPriority="high"
         src={src} />
 
-        <div className="absolute bottom-[6px] sm:bottom-[8px] left-1/2 -translate-x-1/2 w-[80px] sm:w-[100px] h-[4px] bg-white/30 rounded-full z-20" />
+        
       </div>
     </div>
   </div>;
