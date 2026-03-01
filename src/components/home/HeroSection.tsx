@@ -74,7 +74,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
           {/* Hero phones */}
           <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 -mt-2 sm:-mt-3">
-            {/* Phone 1 - Left half of image */}
+            {/* Phone 1 (was phone 2) */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -83,23 +83,29 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               <motion.div
                 animate={{ x: [0, -6, 0, 6, 0] }}
                 transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
+                className="w-[175px] sm:w-[215px] md:w-[255px] lg:w-[280px]"
               >
+                {/* iPhone frame */}
                 <div
-                  className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]"
-                  style={{ aspectRatio: "9/19" }}
+                  className="relative rounded-[2.2rem] sm:rounded-[2.8rem] overflow-hidden bg-[#1a1a1a] p-[3px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_50px_rgba(78,205,196,0.08)]"
+                  style={{ aspectRatio: "9/19.2" }}
                 >
-                  <img
-                    src="/images/hero-phone-1.png"
-                    alt="ΦΟΜΟ app - Events"
-                    className="w-full h-full object-cover"
-                    draggable={false}
-                  />
+                  {/* Notch */}
+                  <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-[35%] h-[22px] sm:h-[26px] bg-[#1a1a1a] rounded-b-2xl z-10" />
+                  {/* Screen */}
+                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden">
+                    <img
+                      src="/images/hero-phone-2.png"
+                      alt="ΦΟΜΟ app - Event Detail"
+                      className="w-full h-full object-cover object-top"
+                      draggable={false}
+                    />
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
 
-            {/* Phone 2 - Right half of image */}
+            {/* Phone 2 (was phone 1) */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -108,18 +114,24 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               <motion.div
                 animate={{ x: [0, 6, 0, -6, 0] }}
                 transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
+                className="w-[175px] sm:w-[215px] md:w-[255px] lg:w-[280px]"
               >
+                {/* iPhone frame */}
                 <div
-                  className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]"
-                  style={{ aspectRatio: "9/19" }}
+                  className="relative rounded-[2.2rem] sm:rounded-[2.8rem] overflow-hidden bg-[#1a1a1a] p-[3px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_50px_rgba(78,205,196,0.08)]"
+                  style={{ aspectRatio: "9/19.2" }}
                 >
-                  <img
-                    src="/images/hero-phone-2.png"
-                    alt="ΦΟΜΟ app - Reservation"
-                    className="w-full h-full object-cover"
-                    draggable={false}
-                  />
+                  {/* Notch */}
+                  <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-[35%] h-[22px] sm:h-[26px] bg-[#1a1a1a] rounded-b-2xl z-10" />
+                  {/* Screen */}
+                  <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden">
+                    <img
+                      src="/images/hero-phone-1.png"
+                      alt="ΦΟΜΟ app - Events Feed"
+                      className="w-full h-full object-cover object-top"
+                      draggable={false}
+                    />
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
