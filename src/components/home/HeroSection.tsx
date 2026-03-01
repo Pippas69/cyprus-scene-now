@@ -151,11 +151,11 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               transition={{ duration: 0.6, delay: 0.6 }}
               className="flex flex-col items-center gap-1.5">
 
-              <div className="flex gap-1">
-                
-                <span className="w-2 h-1 rounded-full bg-seafoam/25" />
-                <span className="w-2 h-1 rounded-full bg-seafoam/15" />
-              </div>
+              
+
+
+
+
             </motion.div>
 
             <motion.p
