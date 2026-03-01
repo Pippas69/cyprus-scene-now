@@ -78,18 +78,18 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
+              transition={{ duration: 0.8, delay: 0.3 }}>
+
               <motion.div
                 animate={{ x: [0, -6, 0, 6, 0] }}
                 transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                className="w-[175px] sm:w-[215px] md:w-[255px] lg:w-[280px]"
-              >
+                className="w-[175px] sm:w-[215px] md:w-[255px] lg:w-[280px]">
+
                 {/* iPhone frame */}
                 <div
                   className="relative rounded-[2.2rem] sm:rounded-[2.8rem] overflow-hidden bg-[#1a1a1a] p-[3px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_50px_rgba(78,205,196,0.08)]"
-                  style={{ aspectRatio: "9/19.5" }}
-                >
+                  style={{ aspectRatio: "9/19.5" }}>
+
                   {/* Notch */}
                   <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-[35%] h-[22px] sm:h-[26px] bg-[#1a1a1a] rounded-b-2xl z-10" />
                   {/* Screen */}
@@ -98,8 +98,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                       src="/images/hero-phone-2.png"
                       alt="ΦΟΜΟ app - Event Detail"
                       className="w-full h-full object-contain"
-                      draggable={false}
-                    />
+                      draggable={false} />
+
                   </div>
                 </div>
               </motion.div>
@@ -109,28 +109,28 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.45 }}
-            >
+              transition={{ duration: 0.8, delay: 0.45 }}>
+
               <motion.div
                 animate={{ x: [0, 6, 0, -6, 0] }}
                 transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="w-[175px] sm:w-[215px] md:w-[255px] lg:w-[280px]"
-              >
+                className="w-[175px] sm:w-[215px] md:w-[255px] lg:w-[280px]">
+
                 {/* iPhone frame */}
                 <div
                   className="relative rounded-[2.2rem] sm:rounded-[2.8rem] overflow-hidden bg-[#1a1a1a] p-[3px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.6),0_0_50px_rgba(78,205,196,0.08)]"
-                  style={{ aspectRatio: "9/19.5" }}
-                >
+                  style={{ aspectRatio: "9/19.5" }}>
+
                   {/* Notch */}
                   <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-[35%] h-[22px] sm:h-[26px] bg-[#1a1a1a] rounded-b-2xl z-10" />
                   {/* Screen */}
                   <div className="w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-background">
                     <img
-                      src="/images/hero-phone-1.png"
+
                       alt="ΦΟΜΟ app - Events Feed"
                       className="w-full h-full object-contain"
-                      draggable={false}
-                    />
+                      draggable={false} src="/lovable-uploads/bbfcc86d-977e-46d7-b9bc-b84eefc1efcf.png" />
+
                   </div>
                 </div>
               </motion.div>
