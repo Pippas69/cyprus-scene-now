@@ -33,7 +33,8 @@ const PhoneMockup = ({ src, alt }: {src: string;alt: string;}) =>
 
 const PHONES = [
 { src: "/lovable-uploads/88997d31-4129-4023-a62a-6fca7477ec31.png", alt: "ΦΟΜΟ app - Event Detail" },
-{ src: "/lovable-uploads/hero-phone-reservation.jpg", alt: "ΦΟΜΟ app - Reservation Overview" }];
+{ src: "/lovable-uploads/hero-phone-reservation.jpg", alt: "ΦΟΜΟ app - Reservation Overview" },
+{ src: "/lovable-uploads/hero-phone-map.jpg", alt: "ΦΟΜΟ app - Map View" }];
 
 
 const HeroSection = ({ language }: HeroSectionProps) => {
