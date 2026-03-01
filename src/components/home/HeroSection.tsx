@@ -89,15 +89,12 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]"
                   style={{ aspectRatio: "9/19" }}
                 >
-                  <div className="w-full h-full overflow-hidden">
-                    <img
-                      src="/images/hero-phone-2.png"
-                      alt="ΦΟΜΟ app - Screen 1"
-                      className="h-full object-cover object-left"
-                      style={{ width: "200%" }}
-                      draggable={false}
-                    />
-                  </div>
+                  <img
+                    src="/images/hero-phone-1.png"
+                    alt="ΦΟΜΟ app - Events"
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
                 </div>
               </motion.div>
             </motion.div>
@@ -117,15 +114,12 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-[3px] border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(78,205,196,0.1)]"
                   style={{ aspectRatio: "9/19" }}
                 >
-                  <div className="w-full h-full overflow-hidden">
-                    <img
-                      src="/images/hero-phone-2.png"
-                      alt="ΦΟΜΟ app - Screen 2"
-                      className="h-full object-cover object-right"
-                      style={{ width: "200%" }}
-                      draggable={false}
-                    />
-                  </div>
+                  <img
+                    src="/images/hero-phone-2.png"
+                    alt="ΦΟΜΟ app - Reservation"
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
                 </div>
               </motion.div>
             </motion.div>
