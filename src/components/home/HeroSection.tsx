@@ -74,11 +74,11 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}>
 
-              <span className="inline-flex items-center px-5 py-2 rounded-full border border-seafoam/30 bg-seafoam/10 backdrop-blur-sm">
-                
+              
 
 
-              </span>
+
+
             </motion.div>
 
             {/* Headline */}
