@@ -158,6 +158,19 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             </motion.div>
           </div>
 
+          {/* Decorative swipe hint below phones */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="flex flex-col items-center gap-1.5 -mt-1">
+            <div className="flex gap-1">
+              <span className="w-6 h-1 rounded-full bg-seafoam/50" />
+              <span className="w-2 h-1 rounded-full bg-seafoam/25" />
+              <span className="w-2 h-1 rounded-full bg-seafoam/15" />
+            </div>
+          </motion.div>
+
           {/* Subtext - after phone */}
           <motion.p
             initial={{ opacity: 0 }}
