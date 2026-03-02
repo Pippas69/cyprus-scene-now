@@ -22,6 +22,9 @@ interface CheckoutRequest {
   items: TicketItem[];
   customerName: string;
   customerEmail: string;
+  customerPhone?: string | null;
+  specialRequests?: string | null;
+  seatingTypeId?: string | null;
   guests?: GuestData[];
 }
 
