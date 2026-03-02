@@ -20,7 +20,6 @@ const t = {
     of: "από",
     copyLink: "Αντιγραφή συνδέσμου",
     copied: "Αντιγράφηκε!",
-    copied: "Ο σύνδεσμος αντιγράφηκε!",
   },
   en: {
     processing: "Processing your payment...",
@@ -32,7 +31,6 @@ const t = {
     of: "of",
     copyLink: "Copy link",
     copied: "Copied!",
-    copied: "Link copied!",
   },
 };
 
