@@ -4020,6 +4020,7 @@ export type Database = {
           created_at: string
           customer_email: string
           customer_name: string
+          customer_phone: string | null
           event_id: string
           id: string
           linked_reservation_id: string | null
@@ -4038,6 +4039,7 @@ export type Database = {
           created_at?: string
           customer_email: string
           customer_name: string
+          customer_phone?: string | null
           event_id: string
           id?: string
           linked_reservation_id?: string | null
@@ -4056,6 +4058,7 @@ export type Database = {
           created_at?: string
           customer_email?: string
           customer_name?: string
+          customer_phone?: string | null
           event_id?: string
           id?: string
           linked_reservation_id?: string | null

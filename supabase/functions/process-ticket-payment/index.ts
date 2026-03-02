@@ -135,25 +135,35 @@ Deno.serve(async (req) => {
           const totalTicketCreditCents = order.total_cents || 0;
           const partySize = ticketsToCreate.length;
 
+          // Read extra reservation data from Stripe metadata
+          const seatingTypeId = session.metadata?.seating_type_id || null;
+          const specialRequestsFromMeta = session.metadata?.special_requests || null;
+
           const confirmationCode = `TR-${orderId.substring(0, 8).toUpperCase()}`;
           const reservationQrToken = crypto.randomUUID();
 
+          const reservationInsert: Record<string, unknown> = {
+            event_id: order.event_id,
+            business_id: eventInfo.business_id,
+            user_id: order.user_id,
+            reservation_name: order.customer_name || "Guest",
+            phone_number: order.customer_phone || null,
+            party_size: partySize,
+            status: "accepted",
+            auto_created_from_tickets: true,
+            ticket_credit_cents: totalTicketCreditCents,
+            confirmation_code: confirmationCode,
+            qr_code_token: reservationQrToken,
+            special_requests: specialRequestsFromMeta || `Auto-created from ticket purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
+          };
+
+          if (seatingTypeId) {
+            reservationInsert.seating_type_id = seatingTypeId;
+          }
+
           const { data: newReservation, error: reservationError } = await supabaseClient
             .from("reservations")
-            .insert({
-              event_id: order.event_id,
-              business_id: eventInfo.business_id,
-              user_id: order.user_id,
-              reservation_name: order.customer_name || "Guest",
-              phone_number: order.customer_phone || null,
-              party_size: partySize,
-              status: "accepted",
-              auto_created_from_tickets: true,
-              ticket_credit_cents: totalTicketCreditCents,
-              confirmation_code: confirmationCode,
-              qr_code_token: reservationQrToken,
-              special_requests: `Auto-created from ticket purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
-            })
+            .insert(reservationInsert)
             .select("id")
             .single();
 

@@ -35,6 +35,7 @@ import { el, enUS } from 'date-fns/locale';
 import { EventAttendees } from '@/components/EventAttendees';
 import { ShareDialog } from '@/components/sharing/ShareDialog';
 import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
+import { KalivaTicketReservationFlow } from '@/components/tickets/KalivaTicketReservationFlow';
 import { useTicketTiers } from '@/hooks/useTicketTiers';
 import { ErrorState } from '@/components/ErrorState';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
@@ -84,6 +85,7 @@ export default function EventDetail() {
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showReservationCheckout, setShowReservationCheckout] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showKalivaFlow, setShowKalivaFlow] = useState(false);
 
   const fromPath = `${location.pathname}${location.search}`;
   
@@ -577,12 +579,11 @@ export default function EventDetail() {
               </div>
 
               {/* Tickets/Reservations - DIRECTLY after RSVP buttons (before date) */}
-              {hasNativeTickets && (
+              {hasNativeTickets && !((event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation') && (
                 <TicketPurchaseCard
                   eventId={event.id}
                   eventTitle={event.title}
                   tiers={ticketTiers}
-                  isLinkedReservation={!!(event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation'}
                   onSuccess={(orderId, isFree) => {
                     if (isFree) {
                       toast.success(language === 'el' 
@@ -592,6 +593,17 @@ export default function EventDetail() {
                     }
                   }}
                 />
+              )}
+
+              {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
+              {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
+                <RippleButton
+                  className="w-full gap-2 h-9 text-sm"
+                  onClick={() => setShowKalivaFlow(true)}
+                >
+                  <Ticket className="h-3.5 w-3.5" />
+                  {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
+                </RippleButton>
               )}
 
               {eventHasReservation && event.event_type === 'reservation' && user && (
@@ -604,15 +616,7 @@ export default function EventDetail() {
                 </RippleButton>
               )}
 
-              {event.event_type === 'ticket_and_reservation' && user && (event as any).businesses?.ticket_reservation_linked && (
-                <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-center">
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'el' 
-                      ? '🎟️ Η αγορά εισιτηρίου δημιουργεί αυτόματα κράτηση. Η τιμή πιστώνεται στο minimum charge.'
-                      : '🎟️ Buying a ticket automatically creates a reservation. The price is credited towards the minimum charge.'}
-                  </p>
-                </div>
-              )}
+
 
               {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !(event as any).businesses?.ticket_reservation_linked && (
                 <RippleButton
@@ -807,12 +811,11 @@ export default function EventDetail() {
             </Card>
 
             {/* Tickets/Reservations - DIRECTLY after RSVP buttons */}
-            {hasNativeTickets && (
+            {hasNativeTickets && !((event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation') && (
               <TicketPurchaseCard
                 eventId={event.id}
                 eventTitle={event.title}
                 tiers={ticketTiers}
-                isLinkedReservation={!!(event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation'}
                 onSuccess={(orderId, isFree) => {
                   if (isFree) {
                     toast.success(language === 'el' 
@@ -824,6 +827,17 @@ export default function EventDetail() {
               />
             )}
 
+            {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
+            {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
+              <RippleButton
+                className="w-full gap-2"
+                onClick={() => setShowKalivaFlow(true)}
+              >
+                <Ticket className="h-4 w-4" />
+                {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
+              </RippleButton>
+            )}
+
             {eventHasReservation && event.event_type === 'reservation' && user && (
               <RippleButton
                 className="w-full gap-2"
@@ -832,16 +846,6 @@ export default function EventDetail() {
                 <Calendar className="h-4 w-4" />
                 {text.makeReservation}
               </RippleButton>
-            )}
-
-            {event.event_type === 'ticket_and_reservation' && user && (event as any).businesses?.ticket_reservation_linked && (
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
-                <p className="text-sm text-muted-foreground">
-                  {language === 'el' 
-                    ? '🎟️ Η αγορά εισιτηρίου δημιουργεί αυτόματα κράτηση. Η τιμή πιστώνεται στο minimum charge.'
-                    : '🎟️ Buying a ticket automatically creates a reservation. The price is credited towards the minimum charge.'}
-                </p>
-              </div>
             )}
 
             {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !(event as any).businesses?.ticket_reservation_linked && (
@@ -995,6 +999,23 @@ export default function EventDetail() {
           onSuccess={() => {
             setShowReservationCheckout(false);
             toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
+          }}
+        />
+      )}
+
+      {/* Kaliva Ticket + Reservation Flow */}
+      {user && hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
+        <KalivaTicketReservationFlow
+          open={showKalivaFlow}
+          onOpenChange={setShowKalivaFlow}
+          eventId={event.id}
+          eventTitle={event.title}
+          ticketTiers={ticketTiers}
+          onSuccess={(orderId, isFree) => {
+            setShowKalivaFlow(false);
+            if (isFree) {
+              toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
+            }
           }}
         />
       )}

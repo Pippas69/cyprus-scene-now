@@ -1,0 +1,1 @@
+ALTER TABLE public.ticket_orders ADD COLUMN IF NOT EXISTS customer_phone text DEFAULT NULL;

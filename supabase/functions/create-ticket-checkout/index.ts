@@ -22,6 +22,9 @@ interface CheckoutRequest {
   items: TicketItem[];
   customerName: string;
   customerEmail: string;
+  customerPhone?: string | null;
+  specialRequests?: string | null;
+  seatingTypeId?: string | null;
   guests?: GuestData[];
 }
 
@@ -54,8 +57,8 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail, guests }: CheckoutRequest = await req.json();
-    logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length });
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests }: CheckoutRequest = await req.json();
+    logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length, seatingTypeId });
 
     if (!eventId || !items || items.length === 0) {
       throw new Error("Missing required fields");
@@ -203,6 +206,7 @@ Deno.serve(async (req) => {
           status: "completed",
           customer_email: customerEmail || user.email,
           customer_name: customerName,
+          customer_phone: customerPhone || null,
         })
         .select()
         .single();
@@ -402,6 +406,7 @@ Deno.serve(async (req) => {
         status: "pending",
         customer_email: customerEmail || user.email,
         customer_name: customerName,
+        customer_phone: customerPhone || null,
       })
       .select()
       .single();
@@ -431,6 +436,8 @@ Deno.serve(async (req) => {
         user_id: user.id,
         ticket_breakdown: JSON.stringify(ticketBreakdown),
         guests: guests ? JSON.stringify(guests) : undefined,
+        seating_type_id: seatingTypeId || undefined,
+        special_requests: specialRequests || undefined,
       },
     };
     
