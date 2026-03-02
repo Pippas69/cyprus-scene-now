@@ -185,22 +185,24 @@ export const SuccessQRCard = ({
   // Render info grid based on type
   const renderInfoGrid = () => {
     switch (type) {
-      case "ticket":
+      case "ticket": {
+        const ticketHolderName = guestName || "-";
+        const ticketDateTime = eventDate ? `${formatDate(eventDate)} • ${formatTime(eventDate)}` : "-";
+
         return (
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {eventDate ? formatDate(eventDate) : "-"}
-              </p>
+              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketHolderName}</p>
+              {guestAge !== undefined && guestAge !== null && (
+                <p className="text-[9px] text-[#64748b]">{guestAge}</p>
+              )}
             </div>
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {eventDate ? formatTime(eventDate) : "-"}
-              </p>
+              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.dateAndTime}</p>
+              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{ticketDateTime}</p>
             </div>
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
@@ -209,6 +211,7 @@ export const SuccessQRCard = ({
             </div>
           </div>
         );
+      }
 
       case "reservation":
         return (
