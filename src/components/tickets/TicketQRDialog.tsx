@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import {
   Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+  DialogContent } from
+"@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, Calendar, Ticket, Copy, User } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -43,7 +43,7 @@ const t = {
     copyLink: "Αντιγραφή",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
     guest: "ΚΑΛΕΣΜΕΝΟΣ",
-    age: "ΗΛΙΚΙΑ",
+    age: "ΗΛΙΚΙΑ"
   },
   en: {
     scanAtEntry: "Scan at entry",
@@ -55,8 +55,8 @@ const t = {
     copyLink: "Copy",
     copied: "Link copied!",
     guest: "GUEST",
-    age: "AGE",
-  },
+    age: "AGE"
+  }
 };
 
 export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
@@ -73,17 +73,17 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
         margin: 2,
         color: {
           dark: "#102b4a",
-          light: "#ffffff",
-        },
-      })
-        .then(setQrDataUrl)
-        .catch(console.error);
+          light: "#ffffff"
+        }
+      }).
+      then(setQrDataUrl).
+      catch(console.error);
     }
   }, [ticket?.qrToken]);
 
   const handleDownloadQR = () => {
     if (!qrDataUrl || !ticket) return;
-    
+
     const link = document.createElement("a");
     const guestSuffix = ticket.guestName ? `-${ticket.guestName.replace(/[^a-zA-Z0-9]/g, '')}` : '';
     link.download = `fomo-qr-${ticket.eventTitle.slice(0, 20)}${guestSuffix}-${ticket.id.slice(0, 8)}.png`;
@@ -112,7 +112,7 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
         customerName: ticket.guestName || ticket.customerName,
         purchaseDate: ticket.purchaseDate,
         pricePaid: ticket.pricePaid,
-        businessName: ticket.businessName,
+        businessName: ticket.businessName
       });
     } catch (err) {
       console.error("PDF generation error:", err);
@@ -123,12 +123,12 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
 
   // Parse date and time
   const eventDateObj = ticket?.eventDate ? new Date(ticket.eventDate) : null;
-  const formattedDate = eventDateObj
-    ? format(eventDateObj, "EEE, d MMM", { locale: dateLocale })
-    : "";
-  const formattedTime = eventDateObj
-    ? format(eventDateObj, "HH:mm", { locale: dateLocale })
-    : "";
+  const formattedDate = eventDateObj ?
+  format(eventDateObj, "EEE, d MMM", { locale: dateLocale }) :
+  "";
+  const formattedTime = eventDateObj ?
+  format(eventDateObj, "HH:mm", { locale: dateLocale }) :
+  "";
   const displayName = ticket?.guestName || ticket?.customerName || "-";
   const displayDateTime = eventDateObj ? `${formattedDate} • ${formattedTime}` : "-";
 
@@ -140,9 +140,9 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
           {/* Header with ΦΟΜΟ branding - Compact */}
           <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
             <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
-            {ticket?.businessName && (
-              <p className="text-white/70 text-[10px] mt-0.5">by {ticket.businessName}</p>
-            )}
+            {ticket?.businessName &&
+            <p className="text-white/70 text-[10px] mt-0.5">by {ticket.businessName}</p>
+            }
           </div>
 
           {/* Main Content - Frosted Glass Effect - Compact */}
@@ -159,9 +159,9 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
                 <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
                 <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
                 <p className="text-xs font-semibold text-[#102b4a] truncate">{displayName}</p>
-                {ticket?.guestAge !== undefined && ticket?.guestAge !== null && (
-                  <p className="text-[9px] text-[#64748b]">{text.age}: {ticket.guestAge}</p>
-                )}
+                {ticket?.guestAge !== undefined && ticket?.guestAge !== null &&
+                <p className="text-[9px] text-[#64748b]">{text.age}: {ticket.guestAge}</p>
+                }
               </div>
 
               {/* Date & Time */}
@@ -180,36 +180,36 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
             </div>
 
             {/* QR Code - Slightly smaller */}
-            {qrDataUrl && (
-              <div className="flex flex-col items-center">
+            {qrDataUrl &&
+            <div className="flex flex-col items-center">
                 <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
-                  <img 
-                    src={qrDataUrl} 
-                    alt="Ticket QR Code" 
-                    className="w-44 h-44"
-                  />
+                  <img
+                  src={qrDataUrl}
+                  alt="Ticket QR Code"
+                  className="w-44 h-44" />
+                
                 </div>
                 <p className="text-[10px] text-[#64748b] mt-2 text-center">
                   {text.scanAtEntry}
                 </p>
               </div>
-            )}
+            }
 
             {/* Action Buttons */}
             <div className="flex gap-2 mt-3">
-              <Button 
-                variant="outline" 
-                onClick={handleDownloadQR} 
-                className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
-              >
-                <Download className="h-3 w-3 mr-1.5 shrink-0" />
-                {text.downloadQR}
-              </Button>
-              <Button 
-                onClick={handleDownloadPdf} 
+              
+
+
+
+
+
+
+              
+              <Button
+                onClick={handleDownloadPdf}
                 className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
-                disabled={isGeneratingPdf}
-              >
+                disabled={isGeneratingPdf}>
+                
                 <FileText className="h-3 w-3 mr-1.5 shrink-0" />
                 {text.downloadPdf}
               </Button>
@@ -224,8 +224,8 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
                 variant="outline"
                 size="sm"
                 onClick={handleCopyLink}
-                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
-              >
+                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0">
+                
                 <Copy className="h-3 w-3 mr-1" />
                 {text.copyLink}
               </Button>
@@ -234,27 +234,27 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
 
         {/* Wave Decoration */}
         <div className="relative h-6 bg-white dark:bg-white rounded-b-2xl">
-          <svg 
-            viewBox="0 0 400 24" 
-            className="absolute bottom-0 left-0 w-full h-6"
-            preserveAspectRatio="none"
-          >
-            <path 
-              d="M0,24 C100,0 300,0 400,24 L400,24 L0,24 Z" 
-              fill="#3ec3b7"
-              opacity="0.3"
-            />
-            <path 
-              d="M0,24 C150,8 250,8 400,24 L400,24 L0,24 Z" 
-              fill="#3ec3b7"
-              opacity="0.5"
-            />
+          <svg
+              viewBox="0 0 400 24"
+              className="absolute bottom-0 left-0 w-full h-6"
+              preserveAspectRatio="none">
+              
+            <path
+                d="M0,24 C100,0 300,0 400,24 L400,24 L0,24 Z"
+                fill="#3ec3b7"
+                opacity="0.3" />
+              
+            <path
+                d="M0,24 C150,8 250,8 400,24 L400,24 L0,24 Z"
+                fill="#3ec3b7"
+                opacity="0.5" />
+              
           </svg>
         </div>
       </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 };
 
 export default TicketQRDialog;
