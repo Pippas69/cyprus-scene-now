@@ -287,15 +287,6 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         optionsWithTiers.push({ ...st, tiers: tiers || [] });
       }
       setSeatingOptions(optionsWithTiers);
-      // Auto-select the first available seating option
-      const firstAvailable = optionsWithTiers.find(o => (o.available_slots - o.slots_booked) > 0);
-      if (firstAvailable) {
-        setSelectedSeating(firstAvailable);
-        if (firstAvailable.tiers.length > 0) {
-          const minPeople = Math.min(...firstAvailable.tiers.map(t => t.min_people));
-          setPartySize(minPeople);
-        }
-      }
     } catch (error) {
       console.error('Error fetching seating options:', error);
     } finally {
