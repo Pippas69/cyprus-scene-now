@@ -230,6 +230,10 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
     }
   };
 
+  const linkedReservationAmountCents = scanResult?.linkedReservation
+    ? (scanResult.linkedReservation.minimumChargeCents ?? scanResult.linkedReservation.ticketCreditCents)
+    : null;
+
   return (
     <Card className="max-w-md mx-auto">
       <CardHeader>
@@ -306,8 +310,8 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
                 <div className="mt-3 p-3 border border-primary/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold text-primary">{text.reservationActivated}</p>
                   <p><strong>{text.people}:</strong> {scanResult.linkedReservation.partySize}</p>
-                  {scanResult.linkedReservation.ticketCreditCents != null && scanResult.linkedReservation.ticketCreditCents > 0 && (
-                    <p><strong>{text.minimumCharge}:</strong> <span className="text-primary">€{(scanResult.linkedReservation.ticketCreditCents / 100).toFixed(2)}</span></p>
+                  {linkedReservationAmountCents != null && linkedReservationAmountCents > 0 && (
+                    <p><strong>{text.minimumCharge}:</strong> <span className="text-primary">€{(linkedReservationAmountCents / 100).toFixed(2)}</span></p>
                   )}
                 </div>
               )}
