@@ -224,10 +224,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [phoneNumber, setPhoneNumber] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
-  // Fetch seating options
+  // Fetch seating options (once per event)
+  const [hasFetchedSeating, setHasFetchedSeating] = useState<string | null>(null);
   useEffect(() => {
-    if (open && eventId) {
+    if (open && eventId && hasFetchedSeating !== eventId) {
       fetchSeatingOptions();
+      setHasFetchedSeating(eventId);
     }
   }, [open, eventId]);
 
