@@ -41,6 +41,8 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           status,
           checked_in_at,
           created_at,
+          guest_name,
+          guest_age,
           ticket_tiers(name, price_cents, currency),
           events(id, title, start_at, end_at, location, cover_image_url, business_id, businesses(name)),
           ticket_orders(customer_name, total_cents)
@@ -276,6 +278,8 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                       businessName: businessName,
                       eventCoverImage: ticket.events?.cover_image_url,
                       eventTime: ticket.events?.start_at,
+                      guestName: ticket.guest_name || undefined,
+                      guestAge: ticket.guest_age || undefined,
                     })}
                   >
                     <QrCode className="h-3 w-3 mr-1" />
