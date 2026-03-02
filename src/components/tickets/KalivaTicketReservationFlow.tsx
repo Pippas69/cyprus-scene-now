@@ -305,6 +305,22 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     }
   };
 
+  const fetchEventHours = async () => {
+    try {
+      const { data } = await supabase
+        .from('events')
+        .select('reservation_hours_from, reservation_hours_to')
+        .eq('id', eventId)
+        .single();
+      if (data) {
+        setReservationHoursFrom(data.reservation_hours_from);
+        setReservationHoursTo(data.reservation_hours_to);
+      }
+    } catch (error) {
+      console.error('Error fetching event hours:', error);
+    }
+  };
+
   const getPartySizeLimits = () => {
     if (!selectedSeating || selectedSeating.tiers.length === 0) return { min: 1, max: 20 };
     const allMins = selectedSeating.tiers.map(t => t.min_people);
