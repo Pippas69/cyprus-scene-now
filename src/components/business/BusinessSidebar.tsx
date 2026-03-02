@@ -56,21 +56,22 @@ export function BusinessSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
+  const { categories } = useBusinessOwner();
   const t = translations[language];
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Categories that should NOT see Offers
+  const noOffersCategories = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
+  const showOffers = !categories.some(cat => noOffersCategories.includes(cat.toLowerCase()));
+
   const dashboardItems = [
-    { title: t.feed, url: "/dashboard-business", icon: Home },
-    { title: t.map, url: "/dashboard-business/map", icon: MapPin },
-    { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
+    { title: t.analytics, url: "/dashboard-business", icon: TrendingUp },
   ];
 
   const contentItems = [
-    // Posts feature hidden but kept in code
-    // { title: t.posts, url: "/dashboard-business/posts", icon: PenSquare },
     { title: t.events, url: "/dashboard-business/events", icon: Calendar },
-    { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
+    ...(showOffers ? [{ title: t.offers, url: "/dashboard-business/offers", icon: Percent }] : []),
     { title: t.reservations, url: "/dashboard-business/reservations", icon: Users },
   ];
 
