@@ -43,6 +43,7 @@ interface DirectReservationsListProps {
   businessId: string;
   language: 'el' | 'en';
   refreshNonce?: number;
+  onReservationCountChange?: (count: number) => void;
 }
 
 // Cache for seating tiers
