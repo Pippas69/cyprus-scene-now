@@ -336,6 +336,7 @@ export function useGuidanceDataWithRange(businessId: string, dateRange?: DateRan
             .select('checked_in_at')
             .in('event_id', eventIds)
             .not('checked_in_at', 'is', null)
+            .neq('auto_created_from_tickets', true)
             .gte('checked_in_at', startDate)
             .lte('checked_in_at', endDate)
             .range(from, to);
