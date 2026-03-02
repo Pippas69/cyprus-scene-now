@@ -104,30 +104,52 @@ export const TicketPurchaseCard = ({
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [guests, setGuests] = useState<GuestInfo[]>([]);
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
+  const [allTiersData, setAllTiersData] = useState<{ min_people: number; max_people: number; prepaid_min_charge_cents: number }[]>([]);
 
-  // Fetch minimum charge for linked reservation events (Kaliva)
+  // Fetch all price tiers for linked reservation events (Kaliva)
   useEffect(() => {
     if (!isLinkedReservation) return;
-    const fetchMinCharge = async () => {
+    const fetchTiers = async () => {
       const { data: seatingTypes } = await supabase
         .from("reservation_seating_types")
         .select("id")
         .eq("event_id", eventId)
         .limit(1);
       if (seatingTypes && seatingTypes.length > 0) {
-        const { data: tiers } = await supabase
+        const { data: fetchedTiers } = await supabase
           .from("seating_type_tiers")
-          .select("prepaid_min_charge_cents")
+          .select("min_people, max_people, prepaid_min_charge_cents")
           .eq("seating_type_id", seatingTypes[0].id)
-          .order("min_people", { ascending: true })
-          .limit(1);
-        if (tiers && tiers.length > 0) {
-          setMinChargeCents(tiers[0].prepaid_min_charge_cents);
+          .order("min_people", { ascending: true });
+        if (fetchedTiers && fetchedTiers.length > 0) {
+          setAllTiersData(fetchedTiers);
+          // Set initial value from smallest tier
+          setMinChargeCents(fetchedTiers[0].prepaid_min_charge_cents);
         }
       }
     };
-    fetchMinCharge();
+    fetchTiers();
   }, [eventId, isLinkedReservation]);
+
+  // Update min charge based on total tickets (party size)
+  useEffect(() => {
+    if (!isLinkedReservation || allTiersData.length === 0) return;
+    const total = getTotalTickets();
+    if (total === 0) {
+      setMinChargeCents(allTiersData[0].prepaid_min_charge_cents);
+      return;
+    }
+    const matched = allTiersData.find(t => total >= t.min_people && total <= t.max_people);
+    if (matched) {
+      setMinChargeCents(matched.prepaid_min_charge_cents);
+    } else {
+      // If above max tier, use the highest tier
+      const last = allTiersData[allTiersData.length - 1];
+      if (total > last.max_people) {
+        setMinChargeCents(last.prepaid_min_charge_cents);
+      }
+    }
+  }, [quantities, allTiersData, isLinkedReservation]);
 
   // Reset checkout state when quantities change
   useEffect(() => {
