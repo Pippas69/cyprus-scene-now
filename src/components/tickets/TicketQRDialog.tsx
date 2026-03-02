@@ -5,7 +5,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Calendar, Clock, Ticket, Share2, User } from "lucide-react";
+import { Download, FileText, Calendar, Clock, Ticket, Link2, Copy, User } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { generateTicketPdf } from "@/lib/ticketPdf";
 import { format } from "date-fns";
@@ -40,9 +40,7 @@ const t = {
     date: "Ημερομηνία",
     time: "Ώρα",
     ticket: "Εισιτήριο",
-    share: "Κοινοποίηση",
-    shareTitle: "Εισιτήριο ΦΟΜΟ",
-    shareText: "Ορίστε το εισιτήριό σου για",
+    copyLink: "Αντιγραφή συνδέσμου",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
     guest: "ΚΑΛΕΣΜΕΝΟΣ",
     age: "ΗΛΙΚΙΑ",
@@ -54,9 +52,7 @@ const t = {
     date: "Date",
     time: "Time",
     ticket: "Ticket",
-    share: "Share",
-    shareTitle: "FOMO Ticket",
-    shareText: "Here's your ticket for",
+    copyLink: "Copy link",
     copied: "Link copied!",
     guest: "GUEST",
     age: "AGE",
