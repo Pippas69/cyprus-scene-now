@@ -508,34 +508,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   if (isTicketLinked) {
     return (
       <div className="space-y-4 w-full max-w-full">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-full">
-          <Card className="min-w-0">
-            <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="text-lg sm:text-2xl font-bold">{stats.total}</div>
-                <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.total}</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="min-w-0">
-            <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="text-lg sm:text-2xl font-bold text-blue-600">{stats.today}</div>
-                <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.today}</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="min-w-0">
-            <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="text-lg sm:text-2xl font-bold text-green-600">{stats.checkedIn}</div>
-                <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.checkedInCount}</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {filteredReservations.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center">
@@ -544,71 +516,72 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {filteredReservations.map((reservation) => {
-              const minAge = getMinAge(reservation.id);
-              const minChargeCents = reservation.ticket_credit_cents || 0;
-              const minChargeDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-';
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">{t.name}</TableHead>
+                  <TableHead className="text-xs">{t.details}</TableHead>
+                  <TableHead className="text-xs">{t.ages}</TableHead>
+                  <TableHead className="text-xs">Minimum Charge</TableHead>
+                  <TableHead className="text-xs">{t.status}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredReservations.map((reservation) => {
+                  const minAge = getMinAge(reservation.id);
+                  const minChargeCents = reservation.ticket_credit_cents || 0;
+                  const minChargeDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-';
 
-              return (
-                <Card key={reservation.id} className="min-w-0 group">
-                  <CardHeader className="pb-2 pt-3 px-4">
-                    <div className="flex justify-between items-center gap-3 min-w-0">
-                      <EditableCell
-                        reservationId={reservation.id}
-                        field="reservation_name"
-                        displayValue={reservation.reservation_name}
-                        rawValue={reservation.reservation_name}
-                      />
-                      {getStatusBadge(reservation)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-3 pt-0">
-                    <div className="grid grid-cols-3 gap-3 text-sm">
-                      {/* People - editable */}
-                      <div className="flex flex-col items-center bg-muted/30 rounded-lg py-2 px-1 group">
-                        <Users className="h-4 w-4 text-muted-foreground mb-0.5" />
-                        <span className="text-[9px] text-muted-foreground uppercase">{t.details}</span>
+                  return (
+                    <TableRow key={reservation.id} className="group">
+                      <TableCell className="font-medium">
                         <EditableCell
                           reservationId={reservation.id}
-                          field="party_size"
-                          displayValue={`${reservation.party_size} ${t.people}`}
-                          rawValue={String(reservation.party_size)}
+                          field="reservation_name"
+                          displayValue={reservation.reservation_name}
+                          rawValue={reservation.reservation_name}
                         />
-                      </div>
-
-                      {/* Ages */}
-                      <div className="flex flex-col items-center bg-muted/30 rounded-lg py-2 px-1">
-                        <Calendar className="h-4 w-4 text-muted-foreground mb-0.5" />
-                        <span className="text-[9px] text-muted-foreground uppercase">{t.ages}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="flex items-center gap-1 text-sm">
+                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                            <EditableCell
+                              reservationId={reservation.id}
+                              field="party_size"
+                              displayValue={`${reservation.party_size} ${t.people}`}
+                              rawValue={String(reservation.party_size)}
+                            />
+                          </span>
+                          {reservation.phone_number && (
+                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Phone className="h-3.5 w-3.5" />
+                              {reservation.phone_number}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <span className="text-sm font-semibold">{minAge}</span>
-                      </div>
-
-                      {/* Min Charge - editable */}
-                      <div className="flex flex-col items-center bg-muted/30 rounded-lg py-2 px-1 group">
-                        <CreditCard className="h-4 w-4 text-muted-foreground mb-0.5" />
-                        <span className="text-[9px] text-muted-foreground uppercase">{t.minCharge}</span>
+                      </TableCell>
+                      <TableCell>
                         <EditableCell
                           reservationId={reservation.id}
                           field="ticket_credit_cents"
                           displayValue={minChargeDisplay}
                           rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'}
                         />
-                      </div>
-                    </div>
-
-                    {/* Phone if available */}
-                    {reservation.phone_number && (
-                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        <span>{reservation.phone_number}</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(reservation)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
         )}
       </div>
     );
