@@ -38,7 +38,8 @@ const t = {
     downloadQR: "QR Εικόνα",
     downloadPdf: "PDF Εισιτήριο",
     name: "ΟΝΟΜΑ",
-    dateAndTime: "ΗΜ/ΝΙΑ & ΩΡΑ",
+    date: "ΗΜΕΡΟΜΗΝΙΑ",
+    time: "ΩΡΑ",
     ticket: "Εισιτήριο",
     copyLink: "Αντιγραφή",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
@@ -50,7 +51,8 @@ const t = {
     downloadQR: "QR Image",
     downloadPdf: "PDF Ticket",
     name: "NAME",
-    dateAndTime: "DATE & TIME",
+    date: "DATE",
+    time: "TIME",
     ticket: "Ticket",
     copyLink: "Copy",
     copied: "Link copied!",
@@ -130,7 +132,6 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
   format(eventDateObj, "HH:mm", { locale: dateLocale }) :
   "";
   const displayName = ticket?.guestName || ticket?.customerName || "-";
-  const displayDateTime = eventDateObj ? `${formattedDate}  ${formattedTime}` : "-";
 
   return (
     <Dialog open={!!ticket} onOpenChange={() => onClose()}>
@@ -159,23 +160,20 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
                 <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
                 <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
                 <p className="text-xs font-semibold text-[#102b4a] truncate">{displayName}</p>
-                {ticket?.guestAge !== undefined && ticket?.guestAge !== null &&
-                <p className="text-[9px] text-[#64748b]">{text.age}: {ticket.guestAge}</p>
-                }
               </div>
 
-              {/* Date & Time */}
+              {/* Date */}
               <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
                 <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.dateAndTime}</p>
-                <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{displayDateTime}</p>
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
+                <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{formattedDate || "-"}</p>
               </div>
 
-              {/* Ticket Tier */}
+              {/* Time */}
               <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
                 <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.ticket}</p>
-                <p className="text-xs font-semibold text-[#102b4a] truncate">{ticket?.tierName}</p>
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{formattedTime || "-"}</p>
               </div>
             </div>
 

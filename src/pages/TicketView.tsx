@@ -13,8 +13,8 @@ import { toast } from "sonner";
 const t = {
   el: {
     name: "ΟΝΟΜΑ",
-    dateAndTime: "ΗΜ/ΝΙΑ & ΩΡΑ",
-    ticket: "ΕΙΣΙΤΗΡΙΟ",
+    date: "ΗΜΕΡΟΜΗΝΙΑ",
+    time: "ΩΡΑ",
     scanAtEntry: "Σαρώστε στην είσοδο",
     copy: "Αντιγραφή",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
@@ -22,8 +22,8 @@ const t = {
   },
   en: {
     name: "NAME",
-    dateAndTime: "DATE & TIME",
-    ticket: "TICKET",
+    date: "DATE",
+    time: "TIME",
     scanAtEntry: "Scan at entry",
     copy: "Copy",
     copied: "Link copied!",
@@ -82,8 +82,7 @@ const TicketView = () => {
   const eventDateObj = event?.start_at ? new Date(event.start_at) : null;
   const displayName = ticket.guest_name || "-";
   const displayDate = eventDateObj ? format(eventDateObj, "EEE, d MMM", { locale: dateLocale }) : "-";
-  const displayTime = eventDateObj ? format(eventDateObj, "HH:mm", { locale: dateLocale }) : "";
-  const displayDateTime = eventDateObj ? `${displayDate} • ${displayTime}` : "-";
+  const displayTime = eventDateObj ? format(eventDateObj, "HH:mm", { locale: dateLocale }) : "-";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -101,21 +100,18 @@ const TicketView = () => {
               <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
               <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
               <p className="text-xs font-semibold text-[#102b4a] truncate">{displayName}</p>
-              {ticket.guest_age !== undefined && ticket.guest_age !== null && (
-                <p className="text-[9px] text-[#64748b]">{ticket.guest_age}</p>
-              )}
             </div>
 
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.dateAndTime}</p>
-              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{displayDateTime}</p>
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
+              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{displayDate}</p>
             </div>
 
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.ticket}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{tier?.name || "-"}</p>
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{displayTime}</p>
             </div>
           </div>
 
