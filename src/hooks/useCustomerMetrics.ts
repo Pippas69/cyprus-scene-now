@@ -55,18 +55,24 @@ export const useCustomerMetrics = (businessId: string, dateRange?: DateRange) =>
       });
 
       // B) Ticket check-ins
+      // Each ticket = a different person, so use ticket ID as unique identifier
+      // This ensures shared tickets (same user_id, different people) count correctly
+      let ticketCheckinIds: { id: string; user_id: string | null }[] = [];
       if (eventIds.length > 0) {
         const { data: ticketCheckins } = await supabase
           .from('tickets')
-          .select('user_id, checked_in_at')
+          .select('id, user_id, checked_in_at')
           .in('event_id', eventIds)
           .not('checked_in_at', 'is', null)
           .gte('checked_in_at', startDate.toISOString())
           .lte('checked_in_at', endDate.toISOString());
 
+        ticketCheckinIds = (ticketCheckins || []).map((t: any) => ({ id: t.id, user_id: t.user_id }));
+        // Each ticket is a unique customer
         (ticketCheckins || []).forEach((t: any) => {
-          if (t?.user_id && t?.checked_in_at) {
-            checkinEvents.push({ user_id: t.user_id, created_at: t.checked_in_at });
+          if (t?.checked_in_at) {
+            // Use ticket ID prefixed to avoid collision with user_ids
+            checkinEvents.push({ user_id: `ticket_${t.id}`, created_at: t.checked_in_at });
           }
         });
       }

@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       .select(`
         *,
         ticket_tiers(name, price_cents),
-        ticket_orders(customer_name, customer_email),
+        ticket_orders(customer_name, customer_email, user_id),
         events(id, title, start_at, business_id, businesses(id, user_id, name))
       `)
       .eq("qr_code_token", qrToken)
@@ -151,6 +151,27 @@ Deno.serve(async (req) => {
 
       logStep("Ticket checked in", { ticketId: ticket.id });
 
+      // Check for linked reservation (hybrid ticket+reservation flow)
+      let linkedReservation = null;
+      const orderUserId = ticket.ticket_orders?.user_id || ticket.user_id;
+      if (orderUserId && ticket.events?.id) {
+        const { data: resData } = await supabaseClient
+          .from("reservations")
+          .select("party_size, prepaid_min_charge_cents, ticket_credit_cents")
+          .eq("event_id", ticket.events.id)
+          .eq("user_id", orderUserId)
+          .eq("auto_created_from_tickets", true)
+          .maybeSingle();
+
+        if (resData) {
+          linkedReservation = {
+            partySize: resData.party_size,
+            minimumChargeCents: resData.prepaid_min_charge_cents,
+            ticketCreditCents: resData.ticket_credit_cents,
+          };
+        }
+      }
+
       return new Response(JSON.stringify({
         valid: true,
         checkedIn: true,
@@ -164,7 +185,8 @@ Deno.serve(async (req) => {
           eventStartAt: ticket.events?.start_at,
           status: "used",
           checkedInAt: new Date().toISOString(),
-        }
+        },
+        linkedReservation,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

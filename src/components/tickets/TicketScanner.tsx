@@ -29,6 +29,11 @@ interface ScanResult {
     status: string;
     checkedInAt?: string;
   };
+  linkedReservation?: {
+    partySize: number;
+    minimumChargeCents: number | null;
+    ticketCreditCents: number | null;
+  };
 }
 
 interface TicketScannerProps {
@@ -47,6 +52,7 @@ const t = {
     validTicket: "Έγκυρο Εισιτήριο",
     invalidTicket: "Μη Έγκυρο Εισιτήριο",
     checkedInSuccess: "Check-in Επιτυχές!",
+    checkedInWithReservation: "Check-in + Κράτηση ενεργοποιήθηκε!",
     alreadyUsed: "Το εισιτήριο έχει ήδη χρησιμοποιηθεί",
     customer: "Πελάτης",
     tier: "Κατηγορία",
@@ -54,6 +60,9 @@ const t = {
     scanning: "Σάρωση...",
     cameraError: "Σφάλμα κάμερας",
     processing: "Επεξεργασία...",
+    reservationActivated: "Κράτηση ενεργοποιήθηκε",
+    people: "Άτομα",
+    minimumCharge: "Minimum Charge",
   },
   en: {
     ticketScanner: "Ticket Scanner",
@@ -66,6 +75,7 @@ const t = {
     validTicket: "Valid Ticket",
     invalidTicket: "Invalid Ticket",
     checkedInSuccess: "Check-in Successful!",
+    checkedInWithReservation: "Check-in + Reservation activated!",
     alreadyUsed: "Ticket has already been used",
     customer: "Customer",
     tier: "Tier",
@@ -73,6 +83,9 @@ const t = {
     scanning: "Scanning...",
     cameraError: "Camera Error",
     processing: "Processing...",
+    reservationActivated: "Reservation activated",
+    people: "People",
+    minimumCharge: "Minimum Charge",
   },
 };
 
@@ -269,7 +282,7 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
             )}
             <AlertTitle>
               {scanResult.checkedIn 
-                ? text.checkedInSuccess 
+                ? (scanResult.linkedReservation ? text.checkedInWithReservation : text.checkedInSuccess)
                 : scanResult.valid 
                   ? text.validTicket 
                   : text.invalidTicket
@@ -286,6 +299,16 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
                     <p><strong>Price:</strong> €{(scanResult.ticket.tierPrice / 100).toFixed(2)}</p>
                   )}
                   <Badge className="mt-2">{scanResult.ticket.status}</Badge>
+                </div>
+              )}
+
+              {scanResult.linkedReservation && (
+                <div className="mt-3 p-3 border border-primary/30 rounded-lg space-y-1">
+                  <p className="text-sm font-semibold text-primary">{text.reservationActivated}</p>
+                  <p><strong>{text.people}:</strong> {scanResult.linkedReservation.partySize}</p>
+                  {scanResult.linkedReservation.ticketCreditCents != null && scanResult.linkedReservation.ticketCreditCents > 0 && (
+                    <p><strong>{text.minimumCharge}:</strong> <span className="text-primary">€{(scanResult.linkedReservation.ticketCreditCents / 100).toFixed(2)}</span></p>
+                  )}
                 </div>
               )}
             </AlertDescription>
