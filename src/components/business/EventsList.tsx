@@ -633,6 +633,24 @@ const EventsList = ({ businessId }: EventsListProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* Combined Ticket + Reservation Dialog */}
+      <Dialog open={!!combinedEvent} onOpenChange={(open) => !open && setCombinedEvent(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-teal-600" />
+              {t.combinedTitle} - {combinedEvent?.title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {combinedEvent && (
+            <div className="mt-4">
+              <CombinedTicketReservationOverview eventId={combinedEvent.id} businessId={businessId} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </>
   );
 };
