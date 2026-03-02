@@ -277,7 +277,7 @@ async function handleTicketQR(
       alreadyUsed: true,
       details: {
         tierName: ticket.ticket_tiers?.name,
-        customerName: ticket.ticket_orders?.customer_name,
+        customerName: ticket.guest_name || ticket.ticket_orders?.customer_name,
         eventTitle: ticket.events?.title,
         checkedInAt: ticket.checked_in_at,
       }
@@ -324,7 +324,7 @@ async function handleTicketQR(
       alreadyUsed: checkinResult?.error === 'ALREADY_USED',
       details: {
         tierName: ticket.ticket_tiers?.name,
-        customerName: ticket.ticket_orders?.customer_name,
+        customerName: ticket.guest_name || ticket.ticket_orders?.customer_name,
         eventTitle: ticket.events?.title,
       }
     }), {
@@ -468,7 +468,7 @@ async function handleTicketQR(
       id: ticket.id,
       tierName: ticket.ticket_tiers?.name,
       tierPrice: ticket.ticket_tiers?.price_cents,
-      customerName: ticket.ticket_orders?.customer_name,
+      customerName: ticket.guest_name || ticket.ticket_orders?.customer_name,
       customerEmail: maskEmail(ticket.ticket_orders?.customer_email),
       eventTitle: ticket.events?.title,
       eventStartAt: ticket.events?.start_at,
