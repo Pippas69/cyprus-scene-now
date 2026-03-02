@@ -119,6 +119,7 @@ const translations = {
     minimumCharge: 'Minimum Charge',
   },
   en: {
+    scanQR: 'Scan QR',
     scanning: 'Scanning...',
     verifying: 'Verifying...',
     startScan: 'Start Scanning',
