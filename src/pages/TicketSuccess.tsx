@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OceanLoader } from "@/components/ui/ocean-loader";
 import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
-import { AlertCircle, ArrowRight } from "lucide-react";
+import { AlertCircle, ArrowRight, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { toast } from "sonner";
 
 const t = {
   el: {
@@ -15,6 +16,11 @@ const t = {
     continueBrowsing: "Συνέχεια περιήγησης",
     error: "Κάτι πήγε στραβά",
     tryAgain: "Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε μαζί μας",
+    ticketOf: "Εισιτήριο",
+    of: "από",
+    shareAll: "Κοινοποίηση Εισιτηρίων",
+    shareText: "Ορίστε το εισιτήριό σου για",
+    copied: "Ο σύνδεσμος αντιγράφηκε!",
   },
   en: {
     processing: "Processing your payment...",
@@ -22,6 +28,11 @@ const t = {
     continueBrowsing: "Continue Browsing",
     error: "Something went wrong",
     tryAgain: "Please try again or contact support",
+    ticketOf: "Ticket",
+    of: "of",
+    shareAll: "Share Tickets",
+    shareText: "Here's your ticket for",
+    copied: "Link copied!",
   },
 };
 
@@ -33,6 +44,8 @@ interface TicketData {
   event_date: string;
   business_name: string;
   business_logo?: string | null;
+  guest_name?: string | null;
+  guest_age?: number | null;
 }
 
 export const TicketSuccess = () => {
@@ -42,15 +55,13 @@ export const TicketSuccess = () => {
   const [searchParams] = useSearchParams();
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [ticketData, setTicketData] = useState<TicketData | null>(null);
+  const [allTickets, setAllTickets] = useState<TicketData[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Prevent duplicate processing in Preview/Dev (React 18 StrictMode mounts effects twice).
-  // We persist the guard in sessionStorage so even a remount won't re-trigger pushes.
   const ranOnceRef = useRef(false);
 
   useEffect(() => {
-    // If this component remounts in StrictMode, this ref resets; sessionStorage is the real guard.
     if (ranOnceRef.current) return;
     ranOnceRef.current = true;
 
@@ -65,11 +76,9 @@ export const TicketSuccess = () => {
         return;
       }
 
-      // A stable key for this success page run.
       const processKey = `ticket_success_processed:${orderId}:${sessionId ?? (freeParam ? "free" : "no_session")}`;
 
       try {
-        // Determine if this is a free order (URL param OR backend order total)
         let isFreeOrder = freeParam;
         if (!isFreeOrder && !sessionId) {
           const { data: order, error: orderFetchError } = await supabase
@@ -84,19 +93,15 @@ export const TicketSuccess = () => {
 
         const alreadyProcessed = sessionStorage.getItem(processKey) === "1";
 
-        // Only trigger backend processing ONCE per order (per tab session).
-        // If we already processed, we just fetch the ticket data below.
         if (!alreadyProcessed) {
           sessionStorage.setItem(processKey, "1");
 
-          // For free tickets, call process-free-ticket (this triggers the ticket email)
           if (isFreeOrder) {
             const { error } = await supabase.functions.invoke("process-free-ticket", {
               body: { orderId },
             });
             if (error) throw error;
           } else if (sessionId) {
-            // For paid tickets
             const { data, error } = await supabase.functions.invoke("process-ticket-payment", {
               body: { sessionId, orderId },
             });
@@ -106,9 +111,8 @@ export const TicketSuccess = () => {
           }
         }
 
-        // Fetch ticket details — retry a few times since the ticket row
-        // might not exist yet (edge function / webhook still processing).
-        let tickets: any = null;
+        // Fetch ALL tickets for this order
+        let tickets: any[] | null = null;
         let fetchError: any = null;
         for (let attempt = 0; attempt < 5; attempt++) {
           const { data, error } = await supabase
@@ -116,49 +120,52 @@ export const TicketSuccess = () => {
             .select(`
               id,
               qr_code_token,
+              guest_name,
+              guest_age,
               ticket_tiers(name),
               events(title, start_at, businesses(name, logo_url))
             `)
             .eq("order_id", orderId)
-            .limit(1)
-            .single();
+            .order("created_at", { ascending: true });
 
-          if (!error && data) {
+          if (!error && data && data.length > 0) {
             tickets = data;
             fetchError = null;
             break;
           }
           fetchError = error;
-          // Wait progressively longer between retries
           await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
         }
 
-        if (fetchError || !tickets) {
+        if (fetchError || !tickets || tickets.length === 0) {
           console.error("Ticket fetch error:", fetchError);
-          // Still show success but with minimal data
           setStatus("success");
           return;
         }
 
-        const tierData = tickets.ticket_tiers as any;
-        const eventData = tickets.events as any;
-        const business = eventData?.businesses;
+        const allTicketData: TicketData[] = tickets.map((ticket: any) => {
+          const tierData = ticket.ticket_tiers as any;
+          const eventData = ticket.events as any;
+          const business = eventData?.businesses;
 
-        setTicketData({
-          id: tickets.id,
-          qr_code_token: tickets.qr_code_token,
-          tier_name: tierData?.name || "General",
-          event_title: eventData?.title || "Event",
-          event_date: eventData?.start_at || "",
-          business_name: business?.name || "",
-          business_logo: business?.logo_url || null,
+          return {
+            id: ticket.id,
+            qr_code_token: ticket.qr_code_token,
+            tier_name: tierData?.name || "General",
+            event_title: eventData?.title || "Event",
+            event_date: eventData?.start_at || "",
+            business_name: business?.name || "",
+            business_logo: business?.logo_url || null,
+            guest_name: ticket.guest_name || null,
+            guest_age: ticket.guest_age || null,
+          };
         });
 
+        setAllTickets(allTicketData);
         setStatus("success");
       } catch (err) {
         console.error("Payment processing error:", err);
 
-        // Allow retry if something failed.
         try {
           sessionStorage.removeItem(processKey);
         } catch {
@@ -173,6 +180,26 @@ export const TicketSuccess = () => {
     processPayment();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
+
+  const handleShareTicket = async (ticket: TicketData) => {
+    const shareUrl = `${window.location.origin}/ticket-view/${ticket.qr_code_token}`;
+    const shareMessage = `${text.shareText} ${ticket.event_title}${ticket.guest_name ? ` (${ticket.guest_name})` : ''}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `ΦΟΜΟ - ${ticket.event_title}`,
+          text: shareMessage,
+          url: shareUrl,
+        });
+      } catch {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success(text.copied);
+    }
+  };
 
   if (status === "loading") {
     return (
@@ -206,22 +233,71 @@ export const TicketSuccess = () => {
     );
   }
 
+  const currentTicket = allTickets[currentIdx];
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      {ticketData ? (
-        <SuccessQRCard
-          type="ticket"
-          qrToken={ticketData.qr_code_token}
-          title={ticketData.event_title}
-          businessName={ticketData.business_name}
-          businessLogo={ticketData.business_logo}
-          language={language}
-          eventDate={ticketData.event_date}
-          ticketTier={ticketData.tier_name}
-          showSuccessMessage={true}
-          onViewDashboard={() => navigate("/dashboard-user?tab=events&subtab=tickets")}
-          viewDashboardLabel={text.viewTickets}
-        />
+      {allTickets.length > 0 && currentTicket ? (
+        <div className="w-full max-w-sm mx-auto space-y-3">
+          {/* Ticket counter & navigation */}
+          {allTickets.length > 1 && (
+            <div className="flex items-center justify-between px-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))}
+                disabled={currentIdx === 0}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <p className="text-sm font-medium text-muted-foreground">
+                {text.ticketOf} {currentIdx + 1} {text.of} {allTickets.length}
+                {currentTicket.guest_name && (
+                  <span className="ml-1 text-foreground font-semibold">
+                    — {currentTicket.guest_name}
+                  </span>
+                )}
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentIdx(Math.min(allTickets.length - 1, currentIdx + 1))}
+                disabled={currentIdx === allTickets.length - 1}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          <SuccessQRCard
+            type="ticket"
+            qrToken={currentTicket.qr_code_token}
+            title={currentTicket.event_title}
+            businessName={currentTicket.business_name}
+            businessLogo={currentTicket.business_logo}
+            language={language}
+            eventDate={currentTicket.event_date}
+            ticketTier={currentTicket.tier_name}
+            guestName={currentTicket.guest_name || undefined}
+            guestAge={currentTicket.guest_age || undefined}
+            showSuccessMessage={currentIdx === 0}
+            onViewDashboard={() => navigate("/dashboard-user?tab=events&subtab=tickets")}
+            viewDashboardLabel={text.viewTickets}
+          />
+
+          {/* Share button for this ticket */}
+          <Button
+            variant="outline"
+            onClick={() => handleShareTicket(currentTicket)}
+            className="w-full border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-9 text-sm"
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            {text.shareAll}
+            {currentTicket.guest_name && ` — ${currentTicket.guest_name}`}
+          </Button>
+        </div>
       ) : (
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
