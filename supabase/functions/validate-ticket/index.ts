@@ -91,14 +91,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         valid: false,
         error: "Ticket already used",
-        ticket: {
-          id: ticket.id,
-          tierName: ticket.ticket_tiers?.name,
-          customerName: ticket.ticket_orders?.customer_name,
-          eventTitle: ticket.events?.title,
-          checkedInAt: ticket.checked_in_at,
-          status: ticket.status,
-        }
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -109,13 +101,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         valid: false,
         error: `Ticket has been ${ticket.status}`,
-        ticket: {
-          id: ticket.id,
-          tierName: ticket.ticket_tiers?.name,
-          customerName: ticket.ticket_orders?.customer_name,
-          eventTitle: ticket.events?.title,
-          status: ticket.status,
-        }
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -130,7 +115,7 @@ Deno.serve(async (req) => {
           id: ticket.id,
           tierName: ticket.ticket_tiers?.name,
           tierPrice: ticket.ticket_tiers?.price_cents,
-          customerName: ticket.ticket_orders?.customer_name,
+          customerName: ticket.guest_name || ticket.ticket_orders?.customer_name,
           customerEmail: maskEmail(ticket.ticket_orders?.customer_email),
           eventTitle: ticket.events?.title,
           eventStartAt: ticket.events?.start_at,
@@ -158,13 +143,6 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({
           valid: false,
           error: checkinResult?.error === 'ALREADY_USED' ? "Ticket already used" : "Ticket cannot be checked in",
-          ticket: {
-            id: ticket.id,
-            tierName: ticket.ticket_tiers?.name,
-            customerName: ticket.ticket_orders?.customer_name,
-            eventTitle: ticket.events?.title,
-            status: ticket.status,
-          }
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -180,7 +158,7 @@ Deno.serve(async (req) => {
           id: ticket.id,
           tierName: ticket.ticket_tiers?.name,
           tierPrice: ticket.ticket_tiers?.price_cents,
-          customerName: ticket.ticket_orders?.customer_name,
+          customerName: ticket.guest_name || ticket.ticket_orders?.customer_name,
           customerEmail: maskEmail(ticket.ticket_orders?.customer_email),
           eventTitle: ticket.events?.title,
           eventStartAt: ticket.events?.start_at,
