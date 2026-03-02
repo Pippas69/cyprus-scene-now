@@ -15,8 +15,8 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DialogTitle } from
+"@/components/ui/dialog";
 import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
 import { EventReservationOverview } from "./EventReservationOverview";
 import { CombinedTicketReservationOverview } from "./CombinedTicketReservationOverview";
@@ -27,18 +27,18 @@ interface EventsListProps {
 }
 
 // Helper component to show active boost badge - positioned half in/half out above icons
-const ActiveBoostBadge = ({ eventId, label }: { eventId: string; label: string }) => {
+const ActiveBoostBadge = ({ eventId, label }: {eventId: string;label: string;}) => {
   const { activeBoost } = useEventActiveBoost(eventId);
   if (!activeBoost) return null;
   return (
-    <Badge 
-      variant="default" 
-      className="absolute -top-2.5 right-0 bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center gap-0.5 shadow-md cursor-default text-[9px] md:text-[10px] lg:text-xs h-5 md:h-6 px-1.5 md:px-2"
-    >
+    <Badge
+      variant="default"
+      className="absolute -top-2.5 right-0 bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center gap-0.5 shadow-md cursor-default text-[9px] md:text-[10px] lg:text-xs h-5 md:h-6 px-1.5 md:px-2">
+      
       <Sparkles className="h-2.5 w-2.5 md:h-3 md:w-3" />
       {label}
-    </Badge>
-  );
+    </Badge>);
+
 };
 
 type EventFilter = 'all' | 'ticket' | 'reservation' | 'free_entry';
@@ -49,12 +49,12 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const { language } = useLanguage();
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [boostingEvent, setBoostingEvent] = useState<any>(null);
-  
+
   const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
-  const [ticketSalesEvent, setTicketSalesEvent] = useState<{ id: string; title: string } | null>(null);
-  const [reservationEvent, setReservationEvent] = useState<{ id: string; title: string } | null>(null);
-  const [combinedEvent, setCombinedEvent] = useState<{ id: string; title: string } | null>(null);
+  const [ticketSalesEvent, setTicketSalesEvent] = useState<{id: string;title: string;} | null>(null);
+  const [reservationEvent, setReservationEvent] = useState<{id: string;title: string;} | null>(null);
+  const [combinedEvent, setCombinedEvent] = useState<{id: string;title: string;} | null>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
 
@@ -65,7 +65,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
       return data;
-    },
+    }
   });
 
   const translations = {
@@ -106,7 +106,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       active: "Ενεργή",
       soldOut: "Εξαντλήθηκε",
       eventPaused: "Η εκδήλωση είναι σε παύση",
-      eventActivated: "Η εκδήλωση ενεργοποιήθηκε",
+      eventActivated: "Η εκδήλωση ενεργοποιήθηκε"
     },
     en: {
       title: "Events",
@@ -145,8 +145,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       active: "Active",
       soldOut: "Sold Out",
       eventPaused: "Event paused",
-      eventActivated: "Event activated",
-    },
+      eventActivated: "Event activated"
+    }
   };
 
   const t = translations[language];
@@ -154,23 +154,23 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const { data: events, isLoading } = useQuery({
     queryKey: ['business-events', businessId],
     queryFn: async () => {
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('start_at', { ascending: true });
+      const { data: eventsData, error: eventsError } = await supabase.
+      from('events').
+      select('*').
+      eq('business_id', businessId).
+      order('start_at', { ascending: true });
 
       if (eventsError) throw eventsError;
       if (!eventsData || eventsData.length === 0) return [];
 
-      const eventIds = eventsData.map(e => e.id);
-      
+      const eventIds = eventsData.map((e) => e.id);
+
       // Fetch RSVP counts
       const { data: countsData } = await supabase.rpc('get_event_rsvp_counts_bulk', {
         p_event_ids: eventIds
       });
 
-      const countsMap = new Map<string, { interested_count: number; going_count: number }>();
+      const countsMap = new Map<string, {interested_count: number;going_count: number;}>();
       if (countsData) {
         countsData.forEach((c: any) => {
           countsMap.set(c.event_id, {
@@ -181,56 +181,56 @@ const EventsList = ({ businessId }: EventsListProps) => {
       }
 
       // Fetch ticket tiers to determine sold-out status
-      const { data: ticketTiers } = await supabase
-        .from('ticket_tiers')
-        .select('event_id, quantity_total, quantity_sold')
-        .in('event_id', eventIds);
+      const { data: ticketTiers } = await supabase.
+      from('ticket_tiers').
+      select('event_id, quantity_total, quantity_sold').
+      in('event_id', eventIds);
 
       // Build a map of sold-out status per event (for ticket events)
       const soldOutMap = new Map<string, boolean>();
       if (ticketTiers) {
         // Group by event
         const tiersPerEvent = new Map<string, typeof ticketTiers>();
-        ticketTiers.forEach(tier => {
+        ticketTiers.forEach((tier) => {
           const existing = tiersPerEvent.get(tier.event_id) || [];
           existing.push(tier);
           tiersPerEvent.set(tier.event_id, existing);
         });
-        
+
         // Check if all tiers are sold out for each event
         tiersPerEvent.forEach((tiers, eventId) => {
-          const allSoldOut = tiers.length > 0 && tiers.every(tier => 
-            (tier.quantity_sold || 0) >= tier.quantity_total
+          const allSoldOut = tiers.length > 0 && tiers.every((tier) =>
+          (tier.quantity_sold || 0) >= tier.quantity_total
           );
           soldOutMap.set(eventId, allSoldOut);
         });
       }
 
-      return eventsData.map(event => ({
+      return eventsData.map((event) => ({
         ...event,
         rsvp_counts: countsMap.get(event.id) || { interested_count: 0, going_count: 0 },
         is_sold_out: soldOutMap.get(event.id) || false
       }));
-    },
+    }
   });
 
   // Real-time subscription
   useEffect(() => {
-    const channel = supabase
-      .channel('business-events')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'events',
-          filter: `business_id=eq.${businessId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
-        }
-      )
-      .subscribe();
+    const channel = supabase.
+    channel('business-events').
+    on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'events',
+        filter: `business_id=eq.${businessId}`
+      },
+      () => {
+        queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+      }
+    ).
+    subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -246,24 +246,24 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
   const handleTogglePause = async (eventId: string, currentlyPaused: boolean) => {
     try {
-      const updatePayload = currentlyPaused
-        ? { appearance_start_at: null, appearance_end_at: null }
-        : {
-            appearance_start_at: PAUSED_APPEARANCE_START,
-            appearance_end_at: PAUSED_APPEARANCE_END,
-          };
+      const updatePayload = currentlyPaused ?
+      { appearance_start_at: null, appearance_end_at: null } :
+      {
+        appearance_start_at: PAUSED_APPEARANCE_START,
+        appearance_end_at: PAUSED_APPEARANCE_END
+      };
 
-      const { error } = await supabase
-        .from("events")
-        .update(updatePayload)
-        .eq("id", eventId)
-        .eq("business_id", businessId);
+      const { error } = await supabase.
+      from("events").
+      update(updatePayload).
+      eq("id", eventId).
+      eq("business_id", businessId);
 
       if (error) throw error;
 
       toast({
         title: t.success,
-        description: currentlyPaused ? t.eventActivated : t.eventPaused,
+        description: currentlyPaused ? t.eventActivated : t.eventPaused
       });
 
       queryClient.invalidateQueries({ queryKey: ["business-events", businessId] });
@@ -271,7 +271,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
       toast({
         title: t.error,
         description: error?.message ?? String(error),
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -300,7 +300,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   };
 
   // Filter and separate active vs expired events
-  const typeFilteredEvents = events?.filter(event => {
+  const typeFilteredEvents = events?.filter((event) => {
     if (activeFilter === 'all') return true;
     const type = getEventType(event);
     if (type === 'ticket_and_reservation') {
@@ -309,8 +309,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
     return type === activeFilter;
   }) || [];
 
-  const activeEvents = typeFilteredEvents.filter(event => !isEventExpired(event));
-  const expiredEvents = typeFilteredEvents.filter(event => isEventExpired(event));
+  const activeEvents = typeFilteredEvents.filter((event) => !isEventExpired(event));
+  const expiredEvents = typeFilteredEvents.filter((event) => isEventExpired(event));
 
   // For display: active events first, then expired if showExpired is true
   const filteredEvents = showExpired ? [...activeEvents, ...expiredEvents] : activeEvents;
@@ -326,16 +326,16 @@ const EventsList = ({ businessId }: EventsListProps) => {
         <h1 className="text-2xl font-bold">{t.title}</h1>
 
         {/* Expired toggle (same placement/behavior as Offers) */}
-        {expiredEvents.length > 0 && (
-          <Button
-            variant={showExpired ? 'secondary' : 'outline'}
-            size="sm"
-            onClick={() => setShowExpired(!showExpired)}
-            className="text-[11px] md:text-sm h-7 md:h-8 px-2.5 md:px-3 whitespace-nowrap flex-shrink-0 lg:text-base lg:h-9 lg:px-4"
-          >
+        {expiredEvents.length > 0 &&
+        <Button
+          variant={showExpired ? 'secondary' : 'outline'}
+          size="sm"
+          onClick={() => setShowExpired(!showExpired)}
+          className="text-[11px] md:text-sm h-7 md:h-8 px-2.5 md:px-3 whitespace-nowrap flex-shrink-0 lg:text-base lg:h-9 lg:px-4">
+          
             {t.expired} ({expiredEvents.length})
           </Button>
-        )}
+        }
       </div>
 
       {/* Filter tabs */}
@@ -344,16 +344,16 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'all' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('all')}
-          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'all' ? 'bg-primary text-primary-foreground' : ''}`}
-        >
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'all' ? 'bg-primary text-primary-foreground' : ''}`}>
+          
           {t.filterAll}
         </Button>
         <Button
           variant={activeFilter === 'ticket' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('ticket')}
-          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'ticket' ? 'bg-teal-600 text-white hover:bg-teal-700' : ''}`}
-        >
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'ticket' ? 'bg-teal-600 text-white hover:bg-teal-700' : ''}`}>
+          
           <Ticket className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 mr-0.5 md:mr-1 flex-shrink-0" />
           {t.filterTicket}
         </Button>
@@ -361,8 +361,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'reservation' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('reservation')}
-          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'reservation' ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}
-        >
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'reservation' ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}>
+          
           <Grid3X3 className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 mr-0.5 md:mr-1 flex-shrink-0" />
           {t.filterReservation}
         </Button>
@@ -370,48 +370,48 @@ const EventsList = ({ businessId }: EventsListProps) => {
           variant={activeFilter === 'free_entry' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setActiveFilter('free_entry')}
-          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'free_entry' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90' : ''}`}
-        >
+          className={`text-[10px] md:text-xs lg:text-sm h-7 md:h-8 px-2 md:px-3 whitespace-nowrap flex-shrink-0 ${activeFilter === 'free_entry' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90' : ''}`}>
+          
           <Gift className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 mr-0.5 md:mr-1 flex-shrink-0" />
           {t.filterFreeEntry}
         </Button>
       </div>
 
-      {(!events || events.length === 0) ? (
-        <Card>
+      {!events || events.length === 0 ?
+      <Card>
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
               {t.noEvents}
             </p>
           </CardContent>
-        </Card>
-      ) : filteredEvents.length === 0 && !showExpired && expiredEvents.length > 0 ? (
-        <Card>
+        </Card> :
+      filteredEvents.length === 0 && !showExpired && expiredEvents.length > 0 ?
+      <Card>
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
               {t.noEvents}
             </p>
           </CardContent>
-        </Card>
-      ) : filteredEvents.length === 0 ? (
-        <Card>
+        </Card> :
+      filteredEvents.length === 0 ?
+      <Card>
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
               {t.noEvents}
             </p>
           </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
+        </Card> :
+
+      <div className="space-y-3">
           {filteredEvents.map((event) => {
-            const eventType = getEventType(event);
-            const expired = isEventExpired(event);
-            
-            return (
-              <Card key={event.id} className={`hover:shadow-md transition-shadow relative ${expired ? 'opacity-60' : ''}`}>
+          const eventType = getEventType(event);
+          const expired = isEventExpired(event);
+
+          return (
+            <Card key={event.id} className={`hover:shadow-md transition-shadow relative ${expired ? 'opacity-60' : ''}`}>
                 {/* Boost badge - positioned half in/half out above icons */}
                 <ActiveBoostBadge eventId={event.id} label={t.boosted} />
                 
@@ -444,40 +444,40 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
                       {/* Event type badge only */}
                       <div className="flex items-center pt-1 md:pt-1.5">
-                      {eventType === 'ticket' && (
-                          <Badge
-                            className="bg-teal-600 hover:bg-teal-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
-                            onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}
-                          >
+                      {eventType === 'ticket' &&
+                      <Badge
+                        className="bg-teal-600 hover:bg-teal-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
+                        onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}>
+                        
                             <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
                             {t.badgeTicket}
                           </Badge>
-                        )}
-                        {eventType === 'reservation' && (
-                          <Badge
-                            className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
-                            onClick={() => setReservationEvent({ id: event.id, title: event.title })}
-                          >
+                      }
+                        {eventType === 'reservation' &&
+                      <Badge
+                        className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
+                        onClick={() => setReservationEvent({ id: event.id, title: event.title })}>
+                        
                             <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
                             {t.badgeReservation}
                           </Badge>
-                        )}
-                        {eventType === 'ticket_and_reservation' && (
-                          <Badge
-                            className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
-                            onClick={() => setCombinedEvent({ id: event.id, title: event.title })}
-                          >
+                      }
+                        {eventType === 'ticket_and_reservation' &&
+                      <Badge
+                        className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
+                        onClick={() => setCombinedEvent({ id: event.id, title: event.title })}>
+                        
                             <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
-                            <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                            
                             {t.badgeCombined}
                           </Badge>
-                        )}
-                        {eventType === 'free_entry' && (
-                          <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2">
+                      }
+                        {eventType === 'free_entry' &&
+                      <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2">
                             <Gift className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
                             {t.badgeFreeEntry}
                           </Badge>
-                        )}
+                      }
                       </div>
                     </div>
 
@@ -486,21 +486,21 @@ const EventsList = ({ businessId }: EventsListProps) => {
                       {/* Top: Boost + Edit */}
                       <div className="flex items-center gap-0.5 md:gap-1">
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setBoostingEvent(event)}
-                          title={t.boost}
-                          className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary"
-                        >
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setBoostingEvent(event)}
+                        title={t.boost}
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary">
+                        
                           <Rocket className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingEvent(event)}
-                          title={t.edit}
-                          className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8"
-                        >
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingEvent(event)}
+                        title={t.edit}
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8">
+                        
                           <Pencil className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
                         </Button>
                       </div>
@@ -509,93 +509,93 @@ const EventsList = ({ businessId }: EventsListProps) => {
                       <div className="flex items-center gap-1 md:gap-1.5">
                         {/* Check if sold out (for ticket events only) */}
                         {(() => {
-                          const eventType = getEventType(event);
-                          const isSoldOut = eventType === 'ticket' && event.is_sold_out;
-                          
-                          // If sold out (tickets), show sold out badge (no interaction)
-                          if (isSoldOut) {
-                            return (
-                              <Badge
-                                variant="secondary"
-                                className="text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 flex items-center gap-0.5 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                              >
-                                {t.soldOut}
-                              </Badge>
-                            );
-                          }
-                          
-                          // Otherwise show pause/active toggle
-                          const isPaused =
-                            event.appearance_start_at &&
-                            event.appearance_end_at &&
-                            new Date(event.appearance_start_at).getFullYear() === 1970;
+                        const eventType = getEventType(event);
+                        const isSoldOut = eventType === 'ticket' && event.is_sold_out;
 
+                        // If sold out (tickets), show sold out badge (no interaction)
+                        if (isSoldOut) {
                           return (
                             <Badge
-                              variant={isPaused ? "secondary" : "outline"}
-                              className={`cursor-pointer text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 flex items-center gap-0.5 ${
-                                isPaused
-                                  ? "bg-muted text-muted-foreground hover:bg-muted/80"
-                                  : "border-amber-500 text-amber-600 hover:bg-amber-50"
-                              }`}
-                              onClick={() => handleTogglePause(event.id, !!isPaused)}
-                            >
-                              {isPaused ? (
-                                <>
+                              variant="secondary"
+                              className="text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 flex items-center gap-0.5 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                              
+                                {t.soldOut}
+                              </Badge>);
+
+                        }
+
+                        // Otherwise show pause/active toggle
+                        const isPaused =
+                        event.appearance_start_at &&
+                        event.appearance_end_at &&
+                        new Date(event.appearance_start_at).getFullYear() === 1970;
+
+                        return (
+                          <Badge
+                            variant={isPaused ? "secondary" : "outline"}
+                            className={`cursor-pointer text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 flex items-center gap-0.5 ${
+                            isPaused ?
+                            "bg-muted text-muted-foreground hover:bg-muted/80" :
+                            "border-amber-500 text-amber-600 hover:bg-amber-50"}`
+                            }
+                            onClick={() => handleTogglePause(event.id, !!isPaused)}>
+                            
+                              {isPaused ?
+                            <>
                                   <Play className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
                                   {t.active}
-                                </>
-                              ) : (
-                                <>
+                                </> :
+
+                            <>
                                   <Pause className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
                                   {t.pause}
                                 </>
-                              )}
-                            </Badge>
-                          );
-                        })()}
+                            }
+                            </Badge>);
+
+                      })()}
                         
                       </div>
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            );
-          })}
+              </Card>);
+
+        })}
         </div>
-      )}
+      }
 
       {/* Edit Form */}
-      {editingEvent && (
-        <EventEditForm
-          event={editingEvent}
-          open={!!editingEvent}
-          onOpenChange={(open) => !open && setEditingEvent(null)}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
-          }}
-        />
-      )}
+      {editingEvent &&
+      <EventEditForm
+        event={editingEvent}
+        open={!!editingEvent}
+        onOpenChange={(open) => !open && setEditingEvent(null)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+        }} />
+
+      }
 
       {/* Boost Dialog */}
-      {boostingEvent && (
-        <EventBoostDialog
-          open={!!boostingEvent}
-          onOpenChange={(open) => !open && setBoostingEvent(null)}
-          eventId={boostingEvent.id}
-          eventTitle={boostingEvent.title}
-          hasActiveSubscription={subscriptionData?.subscribed || false}
-          remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
-        />
-      )}
+      {boostingEvent &&
+      <EventBoostDialog
+        open={!!boostingEvent}
+        onOpenChange={(open) => !open && setBoostingEvent(null)}
+        eventId={boostingEvent.id}
+        eventTitle={boostingEvent.title}
+        hasActiveSubscription={subscriptionData?.subscribed || false}
+        remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0} />
+
+      }
 
 
       {/* Boost Performance Dialog */}
       <BoostPerformanceDialog
         boostId={selectedBoostId}
         open={performanceDialogOpen}
-        onOpenChange={setPerformanceDialogOpen}
-      />
+        onOpenChange={setPerformanceDialogOpen} />
+      
 
       {/* Ticket Sales Dialog - Overview only (no scanner tab) */}
       <Dialog open={!!ticketSalesEvent} onOpenChange={(open) => !open && setTicketSalesEvent(null)}>
@@ -607,11 +607,11 @@ const EventsList = ({ businessId }: EventsListProps) => {
             </DialogTitle>
           </DialogHeader>
           
-          {ticketSalesEvent && (
-            <div className="mt-4">
+          {ticketSalesEvent &&
+          <div className="mt-4">
               <TicketSalesOverview eventId={ticketSalesEvent.id} businessId={businessId} />
             </div>
-          )}
+          }
         </DialogContent>
       </Dialog>
 
@@ -625,11 +625,11 @@ const EventsList = ({ businessId }: EventsListProps) => {
             </DialogTitle>
           </DialogHeader>
           
-          {reservationEvent && (
-            <div className="mt-4">
+          {reservationEvent &&
+          <div className="mt-4">
               <EventReservationOverview eventId={reservationEvent.id} businessId={businessId} />
             </div>
-          )}
+          }
         </DialogContent>
       </Dialog>
 
@@ -643,16 +643,16 @@ const EventsList = ({ businessId }: EventsListProps) => {
             </DialogTitle>
           </DialogHeader>
           
-          {combinedEvent && (
-            <div className="mt-4">
+          {combinedEvent &&
+          <div className="mt-4">
               <CombinedTicketReservationOverview eventId={combinedEvent.id} businessId={businessId} />
             </div>
-          )}
+          }
         </DialogContent>
       </Dialog>
 
-    </>
-  );
+    </>);
+
 };
 
 export default EventsList;
