@@ -615,7 +615,8 @@ export default function EventDetail() {
                   {text.makeReservation}
                 </RippleButton>
               )}
-              )}
+
+
 
               {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !(event as any).businesses?.ticket_reservation_linked && (
                 <RippleButton
