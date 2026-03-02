@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
 import { EventReservationOverview } from "./EventReservationOverview";
+import { CombinedTicketReservationOverview } from "./CombinedTicketReservationOverview";
 
 
 interface EventsListProps {
@@ -53,6 +54,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
   const [ticketSalesEvent, setTicketSalesEvent] = useState<{ id: string; title: string } | null>(null);
   const [reservationEvent, setReservationEvent] = useState<{ id: string; title: string } | null>(null);
+  const [combinedEvent, setCombinedEvent] = useState<{ id: string; title: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
 
@@ -96,6 +98,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       filterFreeEntry: "Δωρεάν Είσοδος",
       badgeTicket: "Με Εισιτήριο",
       badgeReservation: "Κράτηση Τραπεζιού",
+      badgeCombined: "Εισιτήριο & Κράτηση",
+      combinedTitle: "Εισιτήριο & Κράτηση",
       badgeFreeEntry: "Δωρεάν Είσοδος",
       expired: "Ληγμένες",
       pause: "Παύση",
@@ -133,6 +137,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       filterFreeEntry: "Free Entry",
       badgeTicket: "With Ticket",
       badgeReservation: "Table Reservation",
+      badgeCombined: "Ticket & Reservation",
+      combinedTitle: "Ticket & Reservation",
       badgeFreeEntry: "Free Entry",
       expired: "Expired",
       pause: "Pause",
@@ -457,22 +463,14 @@ const EventsList = ({ businessId }: EventsListProps) => {
                           </Badge>
                         )}
                         {eventType === 'ticket_and_reservation' && (
-                          <div className="flex items-center gap-1">
-                            <Badge
-                              className="bg-teal-600 hover:bg-teal-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
-                              onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}
-                            >
-                              <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
-                              {t.badgeTicket}
-                            </Badge>
-                            <Badge
-                              className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
-                              onClick={() => setReservationEvent({ id: event.id, title: event.title })}
-                            >
-                              <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
-                              {t.badgeReservation}
-                            </Badge>
-                          </div>
+                          <Badge
+                            className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
+                            onClick={() => setCombinedEvent({ id: event.id, title: event.title })}
+                          >
+                            <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                            <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                            {t.badgeCombined}
+                          </Badge>
                         )}
                         {eventType === 'free_entry' && (
                           <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2">
@@ -630,6 +628,24 @@ const EventsList = ({ businessId }: EventsListProps) => {
           {reservationEvent && (
             <div className="mt-4">
               <EventReservationOverview eventId={reservationEvent.id} businessId={businessId} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Combined Ticket + Reservation Dialog */}
+      <Dialog open={!!combinedEvent} onOpenChange={(open) => !open && setCombinedEvent(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-teal-600" />
+              {t.combinedTitle} - {combinedEvent?.title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {combinedEvent && (
+            <div className="mt-4">
+              <CombinedTicketReservationOverview eventId={combinedEvent.id} businessId={businessId} />
             </div>
           )}
         </DialogContent>
