@@ -3,93 +3,147 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import QRCode from "qrcode";
 import { OceanLoader } from "@/components/ui/ocean-loader";
-import { Calendar, Clock, Ticket, User, Download, Copy } from "lucide-react";
+import { Calendar, Ticket, User, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { el, enUS } from "date-fns/locale";
+import { useLanguage } from "@/hooks/useLanguage";
+import { toast } from "sonner";
+
+const t = {
+  el: {
+    name: "ΟΝΟΜΑ",
+    dateAndTime: "ΗΜ/ΝΙΑ & ΩΡΑ",
+    ticket: "ΕΙΣΙΤΗΡΙΟ",
+    scanAtEntry: "Σαρώστε στην είσοδο",
+    copy: "Αντιγραφή",
+    copied: "Ο σύνδεσμος αντιγράφηκε!",
+    notFound: "Το εισιτήριο δεν βρέθηκε",
+  },
+  en: {
+    name: "NAME",
+    dateAndTime: "DATE & TIME",
+    ticket: "TICKET",
+    scanAtEntry: "Scan at entry",
+    copy: "Copy",
+    copied: "Link copied!",
+    notFound: "Ticket not found",
+  },
+};
 
 const TicketView = () => {
   const { token } = useParams<{ token: string }>();
+  const { language } = useLanguage();
+  const text = t[language];
+  const dateLocale = language === "el" ? el : enUS;
+
   const [ticket, setTicket] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
     if (!token) return;
-    const fetch = async () => {
+
+    const fetchTicket = async () => {
       const { data } = await supabase
         .from("tickets")
         .select("id, qr_code_token, guest_name, guest_age, status, ticket_tiers(name), events(title, start_at, location, businesses(name))")
         .eq("qr_code_token", token)
         .single();
+
       setTicket(data);
       setLoading(false);
+
       if (data?.qr_code_token) {
-        QRCode.toDataURL(data.qr_code_token, { width: 512, margin: 2, color: { dark: "#102b4a", light: "#ffffff" } })
-          .then(setQrDataUrl);
+        QRCode.toDataURL(data.qr_code_token, {
+          width: 512,
+          margin: 2,
+          color: { dark: "#102b4a", light: "#ffffff" },
+        }).then(setQrDataUrl);
       }
     };
-    fetch();
+
+    fetchTicket();
   }, [token]);
 
+  const handleCopyLink = async () => {
+    if (!ticket?.qr_code_token) return;
+    const shareUrl = `${window.location.origin}/ticket-view/${ticket.qr_code_token}`;
+    await navigator.clipboard.writeText(shareUrl);
+    toast.success(text.copied);
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><OceanLoader size="lg" /></div>;
-  if (!ticket) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Ticket not found</div>;
+  if (!ticket) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">{text.notFound}</div>;
 
   const event = ticket.events as any;
   const tier = ticket.ticket_tiers as any;
-  const eventDate = event?.start_at ? new Date(event.start_at) : null;
+  const businessName = event?.businesses?.name;
+  const eventDateObj = event?.start_at ? new Date(event.start_at) : null;
+  const displayName = ticket.guest_name || "-";
+  const displayDate = eventDateObj ? format(eventDateObj, "EEE, d MMM", { locale: dateLocale }) : "-";
+  const displayTime = eventDateObj ? format(eventDateObj, "HH:mm", { locale: dateLocale }) : "";
+  const displayDateTime = eventDateObj ? `${displayDate} • ${displayTime}` : "-";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full max-w-sm mx-auto">
         <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
           <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
-          {event?.businesses?.name && <p className="text-white/70 text-[10px] mt-0.5">by {event.businesses.name}</p>}
+          {businessName && <p className="text-white/70 text-[10px] mt-0.5">by {businessName}</p>}
         </div>
+
         <div className="bg-white dark:bg-white px-4 py-3">
-          <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2">{event?.title}</h2>
-          {ticket.guest_name && (
-            <div className="bg-[#f0f9ff] rounded-lg p-2 mb-3 flex items-center justify-center gap-2">
-              <User className="h-4 w-4 text-[#3ec3b7]" />
-              <span className="text-sm font-semibold text-[#102b4a]">{ticket.guest_name}</span>
-              {ticket.guest_age && <span className="text-[10px] text-[#64748b]">({ticket.guest_age})</span>}
-            </div>
-          )}
+          <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">{event?.title}</h2>
+
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase">DATE</p>
-              <p className="text-xs font-semibold text-[#102b4a]">{eventDate ? format(eventDate, "EEE, d MMM") : "-"}</p>
+              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{displayName}</p>
+              {ticket.guest_age !== undefined && ticket.guest_age !== null && (
+                <p className="text-[9px] text-[#64748b]">{ticket.guest_age}</p>
+              )}
             </div>
+
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase">TIME</p>
-              <p className="text-xs font-semibold text-[#102b4a]">{eventDate ? format(eventDate, "HH:mm") : "-"}</p>
+              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.dateAndTime}</p>
+              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{displayDateTime}</p>
             </div>
+
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase">TICKET</p>
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.ticket}</p>
               <p className="text-xs font-semibold text-[#102b4a] truncate">{tier?.name || "-"}</p>
             </div>
           </div>
+
           {qrDataUrl && (
             <div className="flex flex-col items-center">
               <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
-                <img src={qrDataUrl} alt="QR Code" className="w-44 h-44" />
+                <img src={qrDataUrl} alt="Ticket QR Code" className="w-44 h-44" />
               </div>
-              <p className="text-[10px] text-[#64748b] mt-2">Scan at entry</p>
+              <p className="text-[10px] text-[#64748b] mt-2">{text.scanAtEntry}</p>
             </div>
           )}
-          <div className="flex gap-2 mt-3">
+
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
+              {`${window.location.origin}/ticket-view/${ticket.qr_code_token}`}
+            </div>
             <Button
               variant="outline"
-              onClick={() => { if (qrDataUrl) { const a = document.createElement("a"); a.download = `fomo-ticket-${ticket.id.slice(0,8)}.png`; a.href = qrDataUrl; a.click(); } }}
-              className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs"
+              size="sm"
+              onClick={handleCopyLink}
+              className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
             >
-              <Download className="h-3 w-3 mr-1.5" />
-              Download QR
+              <Copy className="h-3 w-3 mr-1" />
+              {text.copy}
             </Button>
           </div>
         </div>
+
         <div className="relative h-6 bg-white dark:bg-white rounded-b-2xl">
           <svg viewBox="0 0 400 24" className="absolute bottom-0 left-0 w-full h-6" preserveAspectRatio="none">
             <path d="M0,24 C100,0 300,0 400,24 L400,24 L0,24 Z" fill="#3ec3b7" opacity="0.3" />

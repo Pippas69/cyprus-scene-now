@@ -5,7 +5,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Calendar, Clock, Ticket, Link2, Copy, User } from "lucide-react";
+import { Download, FileText, Calendar, Ticket, Copy, User } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { generateTicketPdf } from "@/lib/ticketPdf";
 import { format } from "date-fns";
@@ -37,10 +37,10 @@ const t = {
     scanAtEntry: "Σαρώστε στην είσοδο",
     downloadQR: "QR Εικόνα",
     downloadPdf: "PDF Εισιτήριο",
-    date: "Ημερομηνία",
-    time: "Ώρα",
+    name: "ΟΝΟΜΑ",
+    dateAndTime: "ΗΜ/ΝΙΑ & ΩΡΑ",
     ticket: "Εισιτήριο",
-    copyLink: "Αντιγραφή συνδέσμου",
+    copyLink: "Αντιγραφή",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
     guest: "ΚΑΛΕΣΜΕΝΟΣ",
     age: "ΗΛΙΚΙΑ",
@@ -49,10 +49,10 @@ const t = {
     scanAtEntry: "Scan at entry",
     downloadQR: "QR Image",
     downloadPdf: "PDF Ticket",
-    date: "Date",
-    time: "Time",
+    name: "NAME",
+    dateAndTime: "DATE & TIME",
     ticket: "Ticket",
-    copyLink: "Copy link",
+    copyLink: "Copy",
     copied: "Link copied!",
     guest: "GUEST",
     age: "AGE",
@@ -123,12 +123,14 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
 
   // Parse date and time
   const eventDateObj = ticket?.eventDate ? new Date(ticket.eventDate) : null;
-  const formattedDate = eventDateObj 
+  const formattedDate = eventDateObj
     ? format(eventDateObj, "EEE, d MMM", { locale: dateLocale })
     : "";
-  const formattedTime = eventDateObj 
+  const formattedTime = eventDateObj
     ? format(eventDateObj, "HH:mm", { locale: dateLocale })
     : "";
+  const displayName = ticket?.guestName || ticket?.customerName || "-";
+  const displayDateTime = eventDateObj ? `${formattedDate} • ${formattedTime}` : "-";
 
   return (
     <Dialog open={!!ticket} onOpenChange={() => onClose()}>
@@ -150,37 +152,25 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
               {ticket?.eventTitle}
             </h2>
 
-            {/* Guest Name & Age - if available */}
-            {ticket?.guestName && (
-              <div className="bg-[#f0f9ff] rounded-lg p-2 mb-3 flex items-center justify-center gap-3">
-                <User className="h-4 w-4 text-[#3ec3b7]" />
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-[#102b4a]">{ticket.guestName}</p>
-                  {ticket.guestAge && (
-                    <p className="text-[10px] text-[#64748b]">
-                      {text.age}: {ticket.guestAge}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Info Grid - Compact */}
             <div className="grid grid-cols-3 gap-2 mb-3">
-              {/* Date */}
+              {/* Name */}
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{displayName}</p>
+                {ticket?.guestAge !== undefined && ticket?.guestAge !== null && (
+                  <p className="text-[9px] text-[#64748b]">{text.age}: {ticket.guestAge}</p>
+                )}
+              </div>
+
+              {/* Date & Time */}
               <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
                 <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
-                <p className="text-xs font-semibold text-[#102b4a]">{formattedDate}</p>
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.dateAndTime}</p>
+                <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{displayDateTime}</p>
               </div>
-              
-              {/* Time */}
-              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-                <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-                <p className="text-xs font-semibold text-[#102b4a]">{formattedTime}</p>
-              </div>
-              
+
               {/* Ticket Tier */}
               <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
                 <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
