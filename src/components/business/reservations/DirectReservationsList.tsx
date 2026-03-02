@@ -545,8 +545,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
-                          <span className="flex items-center gap-1 text-sm">
-                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-sm">
                             <EditableCell
                               reservationId={reservation.id}
                               field="party_size"
@@ -555,8 +554,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             />
                           </span>
                           {reservation.phone_number && (
-                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Phone className="h-3.5 w-3.5" />
+                            <span className="text-sm text-muted-foreground">
                               {reservation.phone_number}
                             </span>
                           )}
