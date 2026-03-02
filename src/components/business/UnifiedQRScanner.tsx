@@ -68,6 +68,7 @@ interface ScanResult {
   linkedReservation?: {
     reservationId: string;
     partySize: number;
+    minimumChargeCents?: number | null;
     ticketCreditCents: number;
     reservationName: string;
   };
@@ -115,7 +116,7 @@ const translations = {
     offlineMode: 'Λειτουργία Offline',
     pendingSync: 'Εκκρεμείς σαρώσεις',
     syncNow: 'Συγχρονισμός Τώρα',
-  },
+    minimumCharge: 'Minimum Charge',
   en: {
     scanQR: 'Scan QR',
     scanning: 'Scanning...',
@@ -157,7 +158,7 @@ const translations = {
     offlineMode: 'Offline Mode',
     pendingSync: 'Pending scans',
     syncNow: 'Sync Now',
-  },
+    minimumCharge: 'Minimum Charge',
 };
 
 const getTypeIcon = (type: QRType) => {
@@ -207,6 +208,16 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
     };
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const rafId = window.requestAnimationFrame(() => {
+      startScanning();
+    });
+
+    return () => window.cancelAnimationFrame(rafId);
+  }, [isOpen]);
+
   const stopScanner = () => {
     if (scannerRef.current) {
       scannerRef.current.stop();
@@ -224,7 +235,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
 
     // Wait for video element
     let videoElement: HTMLVideoElement | null = null;
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 12; i++) {
       videoElement = videoRef.current;
       if (videoElement) {
         const rect = videoElement.getBoundingClientRect();
@@ -232,7 +243,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
         const visible = rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
         if (visible) break;
       }
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 25));
     }
 
     if (!videoElement) {
@@ -342,7 +353,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
         });
         if (error) throw error;
         return data;
-      }, { maxRetries: 2 });
+      }, { maxRetries: 1 });
 
       const result = data as ScanResult;
       setScanResult(result);
@@ -450,7 +461,6 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
           size="sm"
           onClick={() => {
             setIsOpen(true);
-            setTimeout(() => startScanning(), 100);
           }}
           className="gap-1 sm:gap-1.5 bg-aegean hover:bg-aegean-deep text-white h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs"
         >
@@ -612,10 +622,10 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                 <span className="text-muted-foreground">{language === 'el' ? 'Άτομα:' : 'Party:'}</span>
                                 <span className="font-medium">{scanResult.linkedReservation.partySize}</span>
                               </div>
-                              {scanResult.linkedReservation.ticketCreditCents > 0 && (
+                              {((scanResult.linkedReservation.minimumChargeCents ?? scanResult.linkedReservation.ticketCreditCents) || 0) > 0 && (
                                 <div className="flex justify-between text-xs">
-                                  <span className="text-muted-foreground">{language === 'el' ? 'Πίστωση εισιτηρίων:' : 'Ticket credit:'}</span>
-                                  <span className="font-medium text-green-600">€{(scanResult.linkedReservation.ticketCreditCents / 100).toFixed(2)}</span>
+                                  <span className="text-muted-foreground">{language === 'el' ? `${t.minimumCharge}:` : `${t.minimumCharge}:`}</span>
+                                  <span className="font-medium text-green-600">€{(((scanResult.linkedReservation.minimumChargeCents ?? scanResult.linkedReservation.ticketCreditCents) || 0) / 100).toFixed(2)}</span>
                                 </div>
                               )}
                             </div>
