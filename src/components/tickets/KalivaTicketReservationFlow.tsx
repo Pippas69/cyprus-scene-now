@@ -328,7 +328,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
-  const canProceedToStep3 = allGuestsFilled && partySize > 0;
+  const isValidPhone = /^\+?\d[\d\s\-]{6,}$/.test(phoneNumber.trim());
+  const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone;
 
   const handleCheckout = async () => {
     if (!allGuestsFilled) {
@@ -518,7 +519,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                   const val = e.target.value.replace(/\D/g, '').slice(0, 3);
                   updateGuest(idx, 'age', val);
                 }}
-                className="h-9 text-sm w-16"
+                className="h-9 text-sm w-20"
               />
             </div>
           ))}
