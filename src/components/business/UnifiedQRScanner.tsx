@@ -65,6 +65,12 @@ interface ScanResult {
     universityName?: string;
     avatarUrl?: string;
   };
+  linkedReservation?: {
+    reservationId: string;
+    partySize: number;
+    ticketCreditCents: number;
+    reservationName: string;
+  };
 }
 
 const translations = {
