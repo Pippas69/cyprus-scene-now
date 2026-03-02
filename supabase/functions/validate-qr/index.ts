@@ -383,9 +383,10 @@ async function handleTicketQR(
   // Create in-app notification for business owner
   if (eventData?.businesses?.user_id) {
     try {
+      const displayName = ticket.guest_name || ticket.ticket_orders?.customer_name || 'Πελάτης';
       const notifMessage = linkedReservationInfo
-        ? `${ticket.ticket_orders?.customer_name || 'Πελάτης'} έκανε check-in για "${ticket.events?.title}" + Κράτηση ${linkedReservationInfo.partySize} ατόμων`
-        : `${ticket.ticket_orders?.customer_name || 'Πελάτης'} έκανε check-in για "${ticket.events?.title}"`;
+        ? `${displayName} έκανε check-in για "${ticket.events?.title}" + Κράτηση ${linkedReservationInfo.partySize} ατόμων`
+        : `${displayName} έκανε check-in για "${ticket.events?.title}"`;
 
       await supabaseAdmin.from('notifications').insert({
         user_id: eventData.businesses.user_id,
