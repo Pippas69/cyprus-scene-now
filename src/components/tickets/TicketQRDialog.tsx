@@ -205,14 +205,14 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
 
 
               
-              <Button
-                onClick={handleDownloadPdf}
-                className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
-                disabled={isGeneratingPdf}>
-                
-                <FileText className="h-3 w-3 mr-1.5 shrink-0" />
-                {text.downloadPdf}
-              </Button>
+              
+
+
+
+
+
+
+              
             </div>
 
             {/* Copyable Link */}
