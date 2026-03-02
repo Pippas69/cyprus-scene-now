@@ -322,7 +322,7 @@ export const SuccessQRCard = ({
         </h2>
 
         {/* Guest Name & Age */}
-        {guestName && (
+        {type !== "ticket" && guestName && (
           <div className="bg-[#f0f9ff] rounded-lg p-2 mb-3 flex items-center justify-center gap-2">
             <User className="h-4 w-4 text-[#3ec3b7]" />
             <span className="text-sm font-semibold text-[#102b4a]">{guestName}</span>
