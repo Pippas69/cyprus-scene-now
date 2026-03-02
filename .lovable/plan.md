@@ -1,19 +1,20 @@
 
-## Αφαίρεση του περιορισμού πλάτους στις Ρυθμίσεις Χρήστη
+## Υλοποίηση - Ολοκληρώθηκε ✅
 
-Το πρόβλημα είναι στο αρχείο `src/components/user/UserSettings.tsx`, γραμμή 353. Ο wrapper container έχει `max-w-2xl` (672px max), που δημιουργεί το κενό στα δεξιά. Οι ρυθμίσεις του business dashboard δεν έχουν αυτόν τον περιορισμό, γι' αυτό φαίνονται σωστά.
+### Μέρος 1: Αφαίρεση Feed & Map ✅
+- Αφαιρέθηκαν Feed/Map από BusinessSidebar και DashboardBusiness routes
+- Τα Analytics είναι πλέον η default σελίδα του dashboard
 
-### Αλλαγή
+### Μέρος 2: Δυναμικό Sidebar ✅
+- useBusinessOwner επιστρέφει πλέον και categories
+- Clubs, Events, Theatre, Music, Dance, Kids → δεν βλέπουν Προσφορές
+- Bars, Pubs, Fine/Casual Dining → βλέπουν τα πάντα
 
-**Αρχείο:** `src/components/user/UserSettings.tsx`
-
-Αλλαγή της γραμμής 353 από:
-```
-<div className="space-y-6 max-w-2xl">
-```
-σε:
-```
-<div className="space-y-6">
-```
-
-Αυτό θα αφήσει τις κάρτες να απλωθούν σε όλο το διαθέσιμο πλάτος, όπως ακριβώς γίνεται στο business dashboard.
+### Μέρος 3: Ticket → Auto Reservation ✅
+- DB: linked_reservation_id σε ticket_orders, ticket_credit_cents + auto_created_from_tickets σε reservations
+- process-ticket-payment: αυτόματη δημιουργία reservation μετά πληρωμή ticket_and_reservation event
+- validate-qr: auto check-in linked reservation κατά scan εισιτηρίου
+- EventCreationForm: hint για ticket_and_reservation
+- EventDetail: αντί ξεχωριστού CTA κράτησης, info message ότι το εισιτήριο δημιουργεί αυτόματα κράτηση
+- QR Scanner: εμφάνιση linked reservation info (party size, credit)
+- DirectReservationsList: badge "Μέσω Εισιτηρίων" με πίστωση
