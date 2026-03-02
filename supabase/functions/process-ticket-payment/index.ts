@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
       .eq("id", orderId);
     logStep("Order completed");
 
-    // ==================== AUTO-CREATE RESERVATION FOR ticket_and_reservation EVENTS ====================
+    // ==================== AUTO-CREATE RESERVATION FOR ticket_and_reservation EVENTS (Kaliva-only) ====================
     try {
       const { data: eventInfo } = await supabaseClient
         .from("events")
@@ -115,44 +115,52 @@ Deno.serve(async (req) => {
         .single();
 
       if (eventInfo?.event_type === "ticket_and_reservation") {
-        logStep("Event is ticket_and_reservation, creating linked reservation");
-
-        const totalTicketCreditCents = order.total_cents || 0;
-        const partySize = ticketsToCreate.length;
-
-        // Generate a confirmation code for the reservation
-        const confirmationCode = `TR-${orderId.substring(0, 8).toUpperCase()}`;
-        // Generate a QR code token for the reservation
-        const reservationQrToken = crypto.randomUUID();
-
-        const { data: newReservation, error: reservationError } = await supabaseClient
-          .from("reservations")
-          .insert({
-            event_id: order.event_id,
-            business_id: eventInfo.business_id,
-            user_id: order.user_id,
-            reservation_name: order.customer_name || "Guest",
-            phone_number: order.customer_phone || null,
-            party_size: partySize,
-            status: "accepted",
-            auto_created_from_tickets: true,
-            ticket_credit_cents: totalTicketCreditCents,
-            confirmation_code: confirmationCode,
-            qr_code_token: reservationQrToken,
-            special_requests: `Auto-created from ticket purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
-          })
-          .select("id")
+        // Check if this business has the ticket_reservation_linked flag
+        const { data: businessInfo } = await supabaseClient
+          .from("businesses")
+          .select("ticket_reservation_linked")
+          .eq("id", eventInfo.business_id)
           .single();
 
-        if (reservationError) {
-          logStep("Failed to create linked reservation", { error: reservationError.message });
-        } else if (newReservation) {
-          // Link the ticket order to the reservation
-          await supabaseClient
-            .from("ticket_orders")
-            .update({ linked_reservation_id: newReservation.id })
-            .eq("id", orderId);
-          logStep("Linked reservation created", { reservationId: newReservation.id, partySize, creditCents: totalTicketCreditCents });
+        if (businessInfo?.ticket_reservation_linked) {
+          logStep("Business has ticket_reservation_linked, creating linked reservation");
+
+          const totalTicketCreditCents = order.total_cents || 0;
+          const partySize = ticketsToCreate.length;
+
+          const confirmationCode = `TR-${orderId.substring(0, 8).toUpperCase()}`;
+          const reservationQrToken = crypto.randomUUID();
+
+          const { data: newReservation, error: reservationError } = await supabaseClient
+            .from("reservations")
+            .insert({
+              event_id: order.event_id,
+              business_id: eventInfo.business_id,
+              user_id: order.user_id,
+              reservation_name: order.customer_name || "Guest",
+              phone_number: order.customer_phone || null,
+              party_size: partySize,
+              status: "accepted",
+              auto_created_from_tickets: true,
+              ticket_credit_cents: totalTicketCreditCents,
+              confirmation_code: confirmationCode,
+              qr_code_token: reservationQrToken,
+              special_requests: `Auto-created from ticket purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
+            })
+            .select("id")
+            .single();
+
+          if (reservationError) {
+            logStep("Failed to create linked reservation", { error: reservationError.message });
+          } else if (newReservation) {
+            await supabaseClient
+              .from("ticket_orders")
+              .update({ linked_reservation_id: newReservation.id })
+              .eq("id", orderId);
+            logStep("Linked reservation created", { reservationId: newReservation.id, partySize, creditCents: totalTicketCreditCents });
+          }
+        } else {
+          logStep("Business does NOT have ticket_reservation_linked, skipping auto-reservation");
         }
       }
     } catch (autoResError) {
