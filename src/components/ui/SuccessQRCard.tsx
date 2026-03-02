@@ -56,7 +56,6 @@ const translations = {
     },
     downloadQR: "QR Εικόνα",
     date: "ΗΜΕΡΟΜΗΝΙΑ",
-    dateAndTime: "ΗΜ/ΝΙΑ & ΩΡΑ",
     time: "ΩΡΑ",
     name: "ΟΝΟΜΑ",
     code: "ΚΩΔΙΚΟΣ",
@@ -83,7 +82,6 @@ const translations = {
     },
     downloadQR: "QR Image",
     date: "DATE",
-    dateAndTime: "DATE & TIME",
     time: "TIME",
     name: "NAME",
     code: "CODE",
@@ -187,7 +185,8 @@ export const SuccessQRCard = ({
     switch (type) {
       case "ticket": {
         const ticketHolderName = guestName || "-";
-        const ticketDateTime = eventDate ? `${formatDate(eventDate)} • ${formatTime(eventDate)}` : "-";
+        const ticketDate = eventDate ? formatDate(eventDate) : "-";
+        const ticketTime = eventDate ? formatTime(eventDate) : "-";
 
         return (
           <div className="grid grid-cols-3 gap-2 mb-3">
@@ -195,19 +194,16 @@ export const SuccessQRCard = ({
               <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
               <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
               <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketHolderName}</p>
-              {guestAge !== undefined && guestAge !== null && (
-                <p className="text-[9px] text-[#64748b]">{guestAge}</p>
-              )}
             </div>
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.dateAndTime}</p>
-              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{ticketDateTime}</p>
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
+              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{ticketDate}</p>
             </div>
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.ticket}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketTier || "-"}</p>
+              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketTime}</p>
             </div>
           </div>
         );
