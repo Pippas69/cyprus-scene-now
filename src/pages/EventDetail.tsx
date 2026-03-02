@@ -602,14 +602,14 @@ export default function EventDetail() {
                 </RippleButton>
               )}
 
-              {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && (
-                <RippleButton
-                  className="w-full gap-2 h-9 text-sm"
-                  onClick={() => setShowReservationCheckout(true)}
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  {text.makeReservation}
-                </RippleButton>
+              {event.event_type === 'ticket_and_reservation' && user && (
+                <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-center">
+                  <p className="text-xs text-muted-foreground">
+                    {language === 'el' 
+                      ? '🎟️ Η αγορά εισιτηρίου δημιουργεί αυτόματα κράτηση. Η τιμή πιστώνεται στο minimum charge.'
+                      : '🎟️ Buying a ticket automatically creates a reservation. The price is credited towards the minimum charge.'}
+                  </p>
+                </div>
               )}
 
               {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' && (
@@ -821,14 +821,14 @@ export default function EventDetail() {
               </RippleButton>
             )}
 
-            {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && (
-              <RippleButton
-                className="w-full gap-2"
-                onClick={() => setShowReservationCheckout(true)}
-              >
-                <Calendar className="h-4 w-4" />
-                {text.makeReservation}
-              </RippleButton>
+            {event.event_type === 'ticket_and_reservation' && user && (
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'el' 
+                    ? '🎟️ Η αγορά εισιτηρίου δημιουργεί αυτόματα κράτηση. Η τιμή πιστώνεται στο minimum charge.'
+                    : '🎟️ Buying a ticket automatically creates a reservation. The price is credited towards the minimum charge.'}
+                </p>
+              </div>
             )}
 
             {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' && (
