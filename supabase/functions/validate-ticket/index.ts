@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       .select(`
         *,
         ticket_tiers(name, price_cents),
-        ticket_orders(customer_name, customer_email),
+        ticket_orders(customer_name, customer_email, user_id),
         events(id, title, start_at, business_id, businesses(id, user_id, name))
       `)
       .eq("qr_code_token", qrToken)
