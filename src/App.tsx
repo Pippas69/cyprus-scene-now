@@ -52,6 +52,7 @@ import BlogPost from "./pages/BlogPost";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import TicketSuccess from "./pages/TicketSuccess";
+import TicketView from "./pages/TicketView";
 import ReservationSuccess from "./pages/ReservationSuccess";
 import OfferPurchaseSuccess from "./pages/OfferPurchaseSuccess";
 import Offers from "./pages/Offers";
@@ -105,6 +106,7 @@ function AppContent() {
           <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
           <Route path="/subscription-plans" element={<SubscriptionPlans />} />
           <Route path="/ticket-success" element={<PageTransition><TicketSuccess /></PageTransition>} />
+          <Route path="/ticket-view/:token" element={<PageTransition><TicketView /></PageTransition>} />
           <Route path="/reservation-success" element={<PageTransition><ReservationSuccess /></PageTransition>} />
           <Route path="/offer-purchase-success" element={<PageTransition><OfferPurchaseSuccess /></PageTransition>} />
           

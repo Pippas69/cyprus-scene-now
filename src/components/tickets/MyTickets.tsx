@@ -65,6 +65,8 @@ export const MyTickets = () => {
     businessName?: string;
     eventCoverImage?: string;
     eventTime?: string;
+    guestName?: string;
+    guestAge?: number;
   } | null>(null);
 
   const { data: tickets, isLoading } = useQuery({
@@ -81,6 +83,8 @@ export const MyTickets = () => {
           status,
           checked_in_at,
           created_at,
+          guest_name,
+          guest_age,
           ticket_tiers(name, price_cents, currency),
           events(id, title, start_at, location, cover_image_url, businesses(name)),
           ticket_orders(customer_name, total_cents)
@@ -238,6 +242,8 @@ export const MyTickets = () => {
                       businessName: businessName,
                       eventCoverImage: eventCoverImage || undefined,
                       eventTime: eventTime || undefined,
+                      guestName: (ticket as any).guest_name || undefined,
+                      guestAge: (ticket as any).guest_age || undefined,
                     })}
                   >
                     <QrCode className="h-4 w-4 mr-1" />

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
-import { Download, CheckCircle, Calendar, Clock, CreditCard, QrCode as QrCodeIcon, Ticket, Tag, Users } from "lucide-react";
+import { Download, CheckCircle, Calendar, Clock, CreditCard, QrCode as QrCodeIcon, Ticket, Tag, Users, User } from "lucide-react";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 
@@ -28,6 +28,9 @@ interface SuccessQRCardProps {
   expiryDate?: string;
   // For event reservations
   prepaidAmountCents?: number;
+  // Guest info (for individual tickets in group bookings)
+  guestName?: string;
+  guestAge?: number;
   // Actions
   onDownloadQR?: () => void;
   onClose?: () => void;
@@ -107,6 +110,8 @@ export const SuccessQRCard = ({
   purchaseDate,
   expiryDate,
   prepaidAmountCents,
+  guestName,
+  guestAge,
   onDownloadQR,
   onClose,
   onViewDashboard,
@@ -308,6 +313,17 @@ export const SuccessQRCard = ({
         <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">
           {title}
         </h2>
+
+        {/* Guest Name & Age */}
+        {guestName && (
+          <div className="bg-[#f0f9ff] rounded-lg p-2 mb-3 flex items-center justify-center gap-2">
+            <User className="h-4 w-4 text-[#3ec3b7]" />
+            <span className="text-sm font-semibold text-[#102b4a]">{guestName}</span>
+            {guestAge && (
+              <span className="text-[10px] text-[#64748b]">({guestAge})</span>
+            )}
+          </div>
+        )}
 
         {/* Info Grid */}
         {renderInfoGrid()}

@@ -70,21 +70,36 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
 
       if (ordersError) throw ordersError;
 
-      // Fetch tickets for check-in count
+      // Fetch tickets for accurate count (source of truth instead of quantity_sold)
       const { data: tickets, error: ticketsError } = await supabase
         .from("tickets")
         .select("status, tier_id")
-        .eq("event_id", eventId);
+        .eq("event_id", eventId)
+        .in("status", ["valid", "used"]);
 
       if (ticketsError) throw ticketsError;
 
       const totalRevenue = orders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
       const storedCommission = orders?.reduce((sum, o) => sum + (o.commission_cents || 0), 0) || 0;
-      const ticketsSold = tiers?.reduce((sum, t) => sum + (t.quantity_sold || 0), 0) || 0;
+      
+      // Count actual tickets (source of truth) instead of quantity_sold counter
+      const ticketsSold = tickets?.length || 0;
       const checkedIn = tickets?.filter((t) => t.status === "used").length || 0;
 
+      // Build per-tier sold count from actual tickets
+      const tierSoldCount = new Map<string, number>();
+      tickets?.forEach(t => {
+        tierSoldCount.set(t.tier_id, (tierSoldCount.get(t.tier_id) || 0) + 1);
+      });
+
+      // Enrich tiers with actual sold count
+      const enrichedTiers = (tiers || []).map(tier => ({
+        ...tier,
+        actual_sold: tierSoldCount.get(tier.id) || 0,
+      }));
+
       return {
-        tiers: tiers || [],
+        tiers: enrichedTiers,
         totalRevenue,
         storedCommission,
         ticketsSold,
@@ -178,10 +193,11 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
         </CardHeader>
         <CardContent className="space-y-4">
           {overview.tiers.map((tier) => {
+            const actualSold = (tier as any).actual_sold || 0;
             const soldPercent = tier.quantity_total > 0 
-              ? (tier.quantity_sold / tier.quantity_total) * 100 
+              ? (actualSold / tier.quantity_total) * 100 
               : 0;
-            const available = tier.quantity_total - tier.quantity_sold;
+            const available = tier.quantity_total - actualSold;
 
             return (
               <div key={tier.id} className="space-y-2">
@@ -196,7 +212,7 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
                   </Badge>
                 </div>
                 <span className="text-[11px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
-                  {tier.quantity_sold} {text.sold} / {available} {text.available}
+                  {actualSold} {text.sold} / {available} {text.available}
                 </span>
               </div>
                 <Progress value={soldPercent} className="h-2" />
