@@ -3362,6 +3362,7 @@ export type Database = {
       }
       reservations: {
         Row: {
+          auto_created_from_tickets: boolean | null
           business_id: string | null
           business_notes: string | null
           checked_in_at: string | null
@@ -3382,10 +3383,12 @@ export type Database = {
           special_requests: string | null
           status: string
           stripe_payment_intent_id: string | null
+          ticket_credit_cents: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          auto_created_from_tickets?: boolean | null
           business_id?: string | null
           business_notes?: string | null
           checked_in_at?: string | null
@@ -3406,10 +3409,12 @@ export type Database = {
           special_requests?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
+          ticket_credit_cents?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          auto_created_from_tickets?: boolean | null
           business_id?: string | null
           business_notes?: string | null
           checked_in_at?: string | null
@@ -3430,6 +3435,7 @@ export type Database = {
           special_requests?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
+          ticket_credit_cents?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -4013,6 +4019,7 @@ export type Database = {
           customer_name: string
           event_id: string
           id: string
+          linked_reservation_id: string | null
           status: Database["public"]["Enums"]["ticket_order_status"]
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
@@ -4030,6 +4037,7 @@ export type Database = {
           customer_name: string
           event_id: string
           id?: string
+          linked_reservation_id?: string | null
           status?: Database["public"]["Enums"]["ticket_order_status"]
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -4047,6 +4055,7 @@ export type Database = {
           customer_name?: string
           event_id?: string
           id?: string
+          linked_reservation_id?: string | null
           status?: Database["public"]["Enums"]["ticket_order_status"]
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -4075,6 +4084,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_orders_linked_reservation_id_fkey"
+            columns: ["linked_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
             referencedColumns: ["id"]
           },
         ]

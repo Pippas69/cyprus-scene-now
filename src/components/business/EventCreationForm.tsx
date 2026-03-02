@@ -877,8 +877,13 @@ const EventCreationForm = ({
                 </div>
 
                 {isTicketSelected && isReservationSelected && (
-                  <div className="mt-2 p-2 rounded-lg bg-primary/5 border border-primary/20 text-center">
-                    <p className="text-xs sm:text-sm font-medium text-primary">{t.ticketAndReservation}</p>
+                  <div className="mt-2 p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-1">
+                    <p className="text-xs sm:text-sm font-medium text-primary text-center">{t.ticketAndReservation}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
+                      {language === 'el' 
+                        ? 'Η αγορά εισιτηρίων δημιουργεί αυτόματα κράτηση. Η τιμή των εισιτηρίων πιστώνεται στο minimum charge.'
+                        : 'Ticket purchases automatically create a reservation. Ticket prices are credited towards the minimum charge.'}
+                    </p>
                   </div>
                 )}
 

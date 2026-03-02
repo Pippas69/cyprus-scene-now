@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export function useBusinessOwner() {
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,13 +19,14 @@ export function useBusinessOwner() {
 
     const { data: business } = await supabase
       .from('businesses')
-      .select('id')
+      .select('id, category')
       .eq('user_id', user.id)
       .maybeSingle();
 
     setBusinessId(business?.id || null);
+    setCategories(business?.category || []);
     setIsLoading(false);
   };
 
-  return { businessId, isBusinessOwner: !!businessId, isLoading };
+  return { businessId, isBusinessOwner: !!businessId, categories, isLoading };
 }

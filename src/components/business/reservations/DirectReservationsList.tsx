@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import {
   Users, Phone, Calendar, Building2,
-  Tag, Clock, Loader2, QrCode } from
+  Tag, Clock, Loader2, QrCode, Ticket } from
 'lucide-react';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
@@ -30,6 +30,9 @@ interface DirectReservation {
   profiles?: {name: string;email: string;};
   // Track if linked to an offer
   offer_purchase?: {id: string;discount: {title: string;};} | null;
+  // Track if auto-created from ticket purchase
+  auto_created_from_tickets?: boolean;
+  ticket_credit_cents?: number;
 }
 
 interface DirectReservationsListProps {
@@ -62,6 +65,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       noReservations: 'Δεν υπάρχουν κρατήσεις ακόμα',
       fromProfile: 'Από Προφίλ',
       fromOffer: 'Από Προσφορά',
+      fromTickets: 'Μέσω Εισιτηρίων',
       confirmationCode: 'Κωδικός',
       addNotes: 'Σημειώσεις',
       businessNotesTitle: 'Σημειώσεις Επιχείρησης',
@@ -92,6 +96,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       noReservations: 'No reservations yet',
       fromProfile: 'From Profile',
       fromOffer: 'From Offer',
+      fromTickets: 'Via Tickets',
       confirmationCode: 'Code',
       addNotes: 'Notes',
       businessNotesTitle: 'Business Notes',
@@ -142,6 +147,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, confirmation_code, qr_code_token, checked_in_at,
+          auto_created_from_tickets, ticket_credit_cents,
           profiles(name, email)
         `).
       eq('business_id', businessId).
@@ -258,20 +264,33 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   };
 
   const getTypeBadge = (reservation: DirectReservation) => {
+    if (reservation.auto_created_from_tickets) {
+      return (
+        <div className="flex flex-col gap-1">
+          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
+            <Ticket className="h-3 w-3 mr-1" />
+            {t.fromTickets}
+          </Badge>
+          {reservation.ticket_credit_cents && reservation.ticket_credit_cents > 0 && (
+            <span className="text-[10px] text-muted-foreground">
+              {language === 'el' ? 'Πίστωση' : 'Credit'}: €{(reservation.ticket_credit_cents / 100).toFixed(2)}
+            </span>
+          )}
+        </div>
+      );
+    }
     if (reservation.offer_purchase) {
       return (
         <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800">
           <Tag className="h-3 w-3 mr-1" />
           {t.fromOffer}
         </Badge>);
-
     }
     return (
       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
         <Building2 className="h-3 w-3 mr-1" />
         {t.fromProfile}
       </Badge>);
-
   };
 
   if (loading) {

@@ -335,6 +335,42 @@ async function handleTicketQR(
 
   logStep("Ticket checked in", { ticketId: ticket.id });
 
+  // ==================== AUTO CHECK-IN LINKED RESERVATION ====================
+  let linkedReservationInfo: any = null;
+  try {
+    // Check if ticket order has a linked reservation
+    const { data: ticketOrder } = await supabaseAdmin
+      .from("ticket_orders")
+      .select("linked_reservation_id")
+      .eq("id", ticket.order_id)
+      .single();
+
+    if (ticketOrder?.linked_reservation_id) {
+      const { data: linkedRes, error: resError } = await supabaseAdmin
+        .from("reservations")
+        .update({ checked_in_at: new Date().toISOString() })
+        .eq("id", ticketOrder.linked_reservation_id)
+        .eq("status", "accepted")
+        .is("checked_in_at", null)
+        .select("id, party_size, ticket_credit_cents, reservation_name")
+        .single();
+
+      if (linkedRes) {
+        linkedReservationInfo = {
+          reservationId: linkedRes.id,
+          partySize: linkedRes.party_size,
+          ticketCreditCents: linkedRes.ticket_credit_cents,
+          reservationName: linkedRes.reservation_name,
+        };
+        logStep("Auto check-in linked reservation", linkedReservationInfo);
+      } else if (resError) {
+        logStep("Linked reservation already checked in or not found", { resError: resError.message });
+      }
+    }
+  } catch (linkedResError) {
+    logStep("Linked reservation check-in error (non-fatal)", { error: linkedResError instanceof Error ? linkedResError.message : String(linkedResError) });
+  }
+
   // Get business owner user_id for in-app notification
   const { data: eventData } = await supabaseAdmin
     .from("events")
@@ -347,10 +383,14 @@ async function handleTicketQR(
   // Create in-app notification for business owner
   if (eventData?.businesses?.user_id) {
     try {
+      const notifMessage = linkedReservationInfo
+        ? `${ticket.ticket_orders?.customer_name || 'Πελάτης'} έκανε check-in για "${ticket.events?.title}" + Κράτηση ${linkedReservationInfo.partySize} ατόμων`
+        : `${ticket.ticket_orders?.customer_name || 'Πελάτης'} έκανε check-in για "${ticket.events?.title}"`;
+
       await supabaseAdmin.from('notifications').insert({
         user_id: eventData.businesses.user_id,
-        title: '✅ Check-in εισιτηρίου!',
-        message: `${ticket.ticket_orders?.customer_name || 'Πελάτης'} έκανε check-in για "${ticket.events?.title}"`,
+        title: linkedReservationInfo ? '✅ Check-in εισιτηρίου + Κράτηση!' : '✅ Check-in εισιτηρίου!',
+        message: notifMessage,
         type: 'business',
         event_type: 'ticket_checked_in',
         entity_type: 'ticket',
@@ -368,10 +408,14 @@ async function handleTicketQR(
   const ticketUserId = ticket.ticket_orders?.user_id;
   if (ticketUserId) {
     try {
+      const userMessage = linkedReservationInfo
+        ? `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}. Κράτηση ενεργοποιήθηκε (${linkedReservationInfo.partySize} άτομα, πίστωση €${((linkedReservationInfo.ticketCreditCents || 0) / 100).toFixed(2)})`
+        : `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}`;
+
       await supabaseAdmin.from('notifications').insert({
         user_id: ticketUserId,
-        title: '✅ Check-in επιτυχές!',
-        message: `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}`,
+        title: linkedReservationInfo ? '✅ Check-in + Κράτηση!' : '✅ Check-in επιτυχές!',
+        message: userMessage,
         type: 'ticket',
         event_type: 'ticket_checked_in',
         entity_type: 'ticket',
@@ -388,11 +432,17 @@ async function handleTicketQR(
   // Send push notification to user when their ticket is checked in
   if (ticketUserId) {
     try {
+      const pushBody = linkedReservationInfo
+        ? (language === "el" 
+            ? `Καλωσήρθατε στο "${ticket.events?.title}" - Κράτηση ενεργοποιήθηκε!` 
+            : `Welcome to "${ticket.events?.title}" - Reservation activated!`)
+        : (language === "el" 
+            ? `Καλωσήρθατε στο "${ticket.events?.title}"` 
+            : `Welcome to "${ticket.events?.title}"`);
+
       await sendPushIfEnabled(ticketUserId, {
-        title: '✅ Check-in επιτυχές!',
-        body: language === "el" 
-          ? `Καλωσήρθατε στο "${ticket.events?.title}"` 
-          : `Welcome to "${ticket.events?.title}"`,
+        title: linkedReservationInfo ? '✅ Check-in + Κράτηση!' : '✅ Check-in επιτυχές!',
+        body: pushBody,
         tag: `ticket-checkin-${ticket.id}`,
         data: {
           url: `/event/${ticket.events?.id}`,
@@ -409,8 +459,11 @@ async function handleTicketQR(
 
   return new Response(JSON.stringify({
     success: true,
-    message: m.checkedIn,
+    message: linkedReservationInfo 
+      ? (language === "el" ? "Check-in + Κράτηση ενεργοποιήθηκε!" : "Check-in + Reservation activated!")
+      : m.checkedIn,
     qrType: "ticket",
+    linkedReservation: linkedReservationInfo,
     details: {
       id: ticket.id,
       tierName: ticket.ticket_tiers?.name,
