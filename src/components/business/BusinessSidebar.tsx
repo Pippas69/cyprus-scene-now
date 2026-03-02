@@ -56,14 +56,14 @@ export function BusinessSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
-  const { categories } = useBusinessOwner();
+  const { categories, isLoading } = useBusinessOwner();
   const t = translations[language];
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Categories that should NOT see Offers
+  // Categories that should NOT see Offers — hide while loading to prevent flash
   const noOffersCategories = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
-  const showOffers = !categories.some(cat => noOffersCategories.includes(cat.toLowerCase()));
+  const showOffers = !isLoading && categories.length > 0 && !categories.some(cat => noOffersCategories.includes(cat.toLowerCase()));
 
   const dashboardItems = [
     { title: t.analytics, url: "/dashboard-business", icon: TrendingUp },
