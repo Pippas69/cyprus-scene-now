@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
     // 1. Try ticket
     const { data: ticket } = await supabaseAdmin
       .from("tickets")
-      .select(`*, ticket_tiers(name, price_cents), ticket_orders(customer_name, customer_email, user_id), events(id, title, start_at, business_id)`)
+      .select(`*, ticket_tiers(name, price_cents), ticket_orders(customer_name, customer_email, user_id, linked_reservation_id), events(id, title, start_at, business_id)`)
       .eq("qr_code_token", token)
       .single();
 
@@ -338,33 +338,49 @@ async function handleTicketQR(
   // ==================== AUTO CHECK-IN LINKED RESERVATION ====================
   let linkedReservationInfo: any = null;
   try {
-    // Check if ticket order has a linked reservation
-    const { data: ticketOrder } = await supabaseAdmin
-      .from("ticket_orders")
-      .select("linked_reservation_id")
-      .eq("id", ticket.order_id)
-      .single();
+    const linkedReservationId = ticket.ticket_orders?.linked_reservation_id;
 
-    if (ticketOrder?.linked_reservation_id) {
-      const { data: linkedRes, error: resError } = await supabaseAdmin
+    if (linkedReservationId) {
+      const { data: linkedResBase, error: linkedResBaseError } = await supabaseAdmin
         .from("reservations")
-        .update({ checked_in_at: new Date().toISOString() })
-        .eq("id", ticketOrder.linked_reservation_id)
-        .eq("status", "accepted")
-        .is("checked_in_at", null)
-        .select("id, party_size, ticket_credit_cents, reservation_name")
-        .single();
+        .select("id, party_size, ticket_credit_cents, prepaid_min_charge_cents, reservation_name, status, checked_in_at")
+        .eq("id", linkedReservationId)
+        .maybeSingle();
 
-      if (linkedRes) {
+      if (linkedResBaseError) {
+        logStep("Linked reservation fetch error", { linkedReservationId, error: linkedResBaseError.message });
+      }
+
+      if (linkedResBase) {
+        let linkedResForUi = linkedResBase;
+
+        if (linkedResBase.status === "accepted" && !linkedResBase.checked_in_at) {
+          const { data: updatedLinkedRes, error: updateLinkedResError } = await supabaseAdmin
+            .from("reservations")
+            .update({ checked_in_at: new Date().toISOString() })
+            .eq("id", linkedReservationId)
+            .eq("status", "accepted")
+            .is("checked_in_at", null)
+            .select("id, party_size, ticket_credit_cents, prepaid_min_charge_cents, reservation_name, status, checked_in_at")
+            .maybeSingle();
+
+          if (updateLinkedResError) {
+            logStep("Linked reservation check-in update error", { linkedReservationId, error: updateLinkedResError.message });
+          }
+
+          if (updatedLinkedRes) {
+            linkedResForUi = updatedLinkedRes;
+          }
+        }
+
         linkedReservationInfo = {
-          reservationId: linkedRes.id,
-          partySize: linkedRes.party_size,
-          ticketCreditCents: linkedRes.ticket_credit_cents,
-          reservationName: linkedRes.reservation_name,
+          reservationId: linkedResForUi.id,
+          partySize: linkedResForUi.party_size,
+          minimumChargeCents: linkedResForUi.prepaid_min_charge_cents ?? linkedResForUi.ticket_credit_cents,
+          ticketCreditCents: linkedResForUi.ticket_credit_cents,
+          reservationName: linkedResForUi.reservation_name,
         };
-        logStep("Auto check-in linked reservation", linkedReservationInfo);
-      } else if (resError) {
-        logStep("Linked reservation already checked in or not found", { resError: resError.message });
+        logStep("Linked reservation info prepared", linkedReservationInfo);
       }
     }
   } catch (linkedResError) {
@@ -409,8 +425,9 @@ async function handleTicketQR(
   const ticketUserId = ticket.ticket_orders?.user_id;
   if (ticketUserId) {
     try {
+      const linkedAmountCents = linkedReservationInfo?.minimumChargeCents ?? linkedReservationInfo?.ticketCreditCents ?? 0;
       const userMessage = linkedReservationInfo
-        ? `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}. Κράτηση ενεργοποιήθηκε (${linkedReservationInfo.partySize} άτομα, πίστωση €${((linkedReservationInfo.ticketCreditCents || 0) / 100).toFixed(2)})`
+        ? `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}. Κράτηση ενεργοποιήθηκε (${linkedReservationInfo.partySize} άτομα, minimum charge €${(linkedAmountCents / 100).toFixed(2)})`
         : `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}`;
 
       await supabaseAdmin.from('notifications').insert({
