@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Users, Phone, Calendar, Building2,
-  Tag, Clock, Loader2, QrCode, Ticket } from
+  Tag, Clock, Loader2, QrCode, Ticket, Edit2, Check, X, CreditCard } from
 'lucide-react';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface DirectReservation {
   id: string;
@@ -28,18 +31,25 @@ interface DirectReservation {
   qr_code_token: string | null;
   checked_in_at: string | null;
   profiles?: {name: string;email: string;};
-  // Track if linked to an offer
   offer_purchase?: {id: string;discount: {title: string;};} | null;
-  // Track if auto-created from ticket purchase
   auto_created_from_tickets?: boolean;
   ticket_credit_cents?: number;
+  seating_type_id?: string | null;
+  prepaid_min_charge_cents?: number | null;
+  event_id?: string | null;
 }
 
 interface DirectReservationsListProps {
   businessId: string;
   language: 'el' | 'en';
-  /** Increments when QR scan succeeds (to re-fetch list) */
   refreshNonce?: number;
+}
+
+// Cache for seating tiers
+interface SeatingTier {
+  min_people: number;
+  max_people: number;
+  prepaid_min_charge_cents: number;
 }
 
 export const DirectReservationsList = ({ businessId, language, refreshNonce }: DirectReservationsListProps) => {
@@ -47,6 +57,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTicketLinked, setIsTicketLinked] = useState(false);
+  // Kaliva: age data per reservation
+  const [agesByReservation, setAgesByReservation] = useState<Record<string, number[]>>({});
+  // Kaliva: seating tiers for min charge calculation
+  const [seatingTiers, setSeatingTiers] = useState<Record<string, SeatingTier[]>>({});
+  // Editing state
+  const [editingField, setEditingField] = useState<{ id: string; field: string } | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
 
   const text = {
     el: {
@@ -69,16 +86,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       fromTickets: 'Μέσω Εισιτηρίων',
       confirmationCode: 'Κωδικός',
       addNotes: 'Σημειώσεις',
-      businessNotesTitle: 'Σημειώσεις Επιχείρησης',
-      businessNotesDescription: 'Προσθέστε σημειώσεις για αυτήν την κράτηση',
-      save: 'Αποθήκευση',
-      cancel: 'Ακύρωση',
       indoor: 'Εσωτερικά',
       outdoor: 'Εξωτερικά',
       stats: 'Στατιστικά',
       total: 'Σύνολο',
       today: 'Σήμερα',
-      checkedInCount: 'Check-ins'
+      checkedInCount: 'Check-ins',
+      ages: 'Ηλικίες',
+      minCharge: 'Min. Charge',
+      saved: 'Αποθηκεύτηκε!',
+      errorSaving: 'Σφάλμα αποθήκευσης',
     },
     en: {
       title: 'Profile & Offer Reservations',
@@ -100,16 +117,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       fromTickets: 'Via Tickets',
       confirmationCode: 'Code',
       addNotes: 'Notes',
-      businessNotesTitle: 'Business Notes',
-      businessNotesDescription: 'Add notes for this reservation',
-      save: 'Save',
-      cancel: 'Cancel',
       indoor: 'Indoor',
       outdoor: 'Outdoor',
       stats: 'Statistics',
       total: 'Total',
       today: 'Today',
-      checkedInCount: 'Check-ins'
+      checkedInCount: 'Check-ins',
+      ages: 'Ages',
+      minCharge: 'Min. Charge',
+      saved: 'Saved!',
+      errorSaving: 'Error saving',
     }
   };
 
@@ -131,11 +148,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
     };
   }, [businessId]);
 
-  // Re-fetch when a QR scan succeeds (parent increments refreshNonce)
   useEffect(() => {
     if (refreshNonce === undefined) return;
     fetchReservations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshNonce]);
 
   const checkBusinessFlags = async () => {
@@ -152,7 +167,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   const fetchReservations = async () => {
     setLoading(true);
     try {
-      // Check current flag state
       const { data: bizData } = await supabase
         .from('businesses')
         .select('ticket_reservation_linked')
@@ -160,27 +174,24 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         .single();
       const linked = !!bizData?.ticket_reservation_linked;
 
-      // Build query
       let query = supabase
         .from('reservations')
         .select(`
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, confirmation_code, qr_code_token, checked_in_at,
-          auto_created_from_tickets, ticket_credit_cents,
+          auto_created_from_tickets, ticket_credit_cents, seating_type_id,
+          prepaid_min_charge_cents, event_id,
           profiles(name, email)
         `)
         .eq('business_id', businessId);
 
       if (linked) {
-        // Kaliva: only event-linked reservations (auto-created from tickets)
         query = query.not('event_id', 'is', null);
       } else {
-        // Normal: only direct reservations (no event)
         query = query.is('event_id', null);
       }
 
-      // Sort: alphabetical for Kaliva, by time for others
       if (linked) {
         query = query.order('reservation_name', { ascending: true });
       } else {
@@ -188,14 +199,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
-      // Check which reservations are linked to offers
       const reservationIds = data?.map((r) => r.id) || [];
 
       let offerLinkedIds = new Set<string>();
-      if (reservationIds.length > 0) {
+      if (!linked && reservationIds.length > 0) {
         const { data: offerPurchases } = await supabase.
         from('offer_purchases').
         select('reservation_id, discounts(title)').
@@ -215,10 +224,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       })) as DirectReservation[];
 
       if (linked) {
-        // Kaliva mode: already sorted alphabetically by DB, just set
         setReservations(enrichedData);
+        // Fetch ages for Kaliva
+        fetchAgesForReservations(reservationIds);
+        // Fetch seating tiers
+        const seatingTypeIds = [...new Set(enrichedData.map(r => r.seating_type_id).filter(Boolean))] as string[];
+        if (seatingTypeIds.length > 0) {
+          fetchSeatingTiers(seatingTypeIds);
+        }
       } else {
-        // Normal mode: pending first, then completed
         const isCompleted = (r: DirectReservation) => {
           if (r.checked_in_at) return true;
           if (r.status === 'cancelled') return true;
@@ -251,12 +265,129 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
     }
   };
 
-  // ... keep existing code (no action buttons)
+  const fetchAgesForReservations = async (reservationIds: string[]) => {
+    if (reservationIds.length === 0) return;
+    // Get ticket orders linked to these reservations
+    const { data: orders } = await supabase
+      .from('ticket_orders')
+      .select('id, linked_reservation_id')
+      .in('linked_reservation_id', reservationIds);
 
-  // Show all reservations (no filters)
+    if (!orders || orders.length === 0) return;
+
+    const orderIds = orders.map(o => o.id);
+    const orderToReservation: Record<string, string> = {};
+    orders.forEach(o => {
+      if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
+    });
+
+    // Get tickets with ages
+    const { data: tickets } = await supabase
+      .from('tickets')
+      .select('order_id, guest_age')
+      .in('order_id', orderIds)
+      .not('guest_age', 'is', null);
+
+    if (!tickets) return;
+
+    const agesMap: Record<string, number[]> = {};
+    tickets.forEach(ticket => {
+      const resId = orderToReservation[ticket.order_id];
+      if (resId && ticket.guest_age) {
+        if (!agesMap[resId]) agesMap[resId] = [];
+        agesMap[resId].push(ticket.guest_age);
+      }
+    });
+
+    setAgesByReservation(agesMap);
+  };
+
+  const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
+    const tiersMap: Record<string, SeatingTier[]> = {};
+    for (const stId of seatingTypeIds) {
+      const { data } = await supabase
+        .from('seating_type_tiers')
+        .select('min_people, max_people, prepaid_min_charge_cents')
+        .eq('seating_type_id', stId)
+        .order('min_people', { ascending: true });
+      if (data) tiersMap[stId] = data;
+    }
+    setSeatingTiers(tiersMap);
+  };
+
+  const getMinChargeForPartySize = (seatingTypeId: string | null | undefined, partySize: number): number | null => {
+    if (!seatingTypeId || !seatingTiers[seatingTypeId]) return null;
+    const tiers = seatingTiers[seatingTypeId];
+    const tier = tiers.find(t => partySize >= t.min_people && partySize <= t.max_people);
+    return tier ? tier.prepaid_min_charge_cents : null;
+  };
+
+  const getMinAge = (reservationId: string): string => {
+    const ages = agesByReservation[reservationId];
+    if (!ages || ages.length === 0) return '-';
+    const min = Math.min(...ages);
+    return `${min}+`;
+  };
+
+  // Inline editing handlers
+  const startEdit = (id: string, field: string, currentValue: string) => {
+    setEditingField({ id, field });
+    setEditValue(currentValue);
+  };
+
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  const saveEdit = async () => {
+    if (!editingField) return;
+    const { id, field } = editingField;
+
+    try {
+      let updateData: Record<string, any> = {};
+
+      if (field === 'reservation_name') {
+        updateData.reservation_name = editValue.trim();
+      } else if (field === 'party_size') {
+        const newSize = parseInt(editValue);
+        if (isNaN(newSize) || newSize < 1) return;
+        updateData.party_size = newSize;
+
+        // Auto-recalculate min charge
+        const reservation = reservations.find(r => r.id === id);
+        if (reservation?.seating_type_id) {
+          const newMinCharge = getMinChargeForPartySize(reservation.seating_type_id, newSize);
+          if (newMinCharge !== null) {
+            updateData.ticket_credit_cents = newMinCharge;
+          }
+        }
+      } else if (field === 'ticket_credit_cents') {
+        const cents = Math.round(parseFloat(editValue) * 100);
+        if (isNaN(cents) || cents < 0) return;
+        updateData.ticket_credit_cents = cents;
+      }
+
+      const { error } = await supabase
+        .from('reservations')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setReservations(prev => prev.map(r => r.id === id ? { ...r, ...updateData } : r));
+      toast.success(t.saved);
+    } catch (err) {
+      console.error('Error saving:', err);
+      toast.error(t.errorSaving);
+    } finally {
+      cancelEdit();
+    }
+  };
+
   const filteredReservations = reservations;
 
-  // Calculate stats
   const now = new Date();
   const todayStr = format(now, 'yyyy-MM-dd');
   const isSameDay = (iso: string | null) => {
@@ -265,26 +396,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   };
 
   const stats = {
-    // "Σύνολο" = όλες οι κρατήσεις που εμφανίζονται στη λίστα (ανεξαρτήτως κατάστασης)
     total: reservations.length,
-    // "Σήμερα" = κρατήσεις που δημιουργήθηκαν σήμερα και ΔΕΝ είναι ακυρωμένες
     today: reservations.filter((r) => isSameDay(r.created_at) && r.status !== 'cancelled').length,
-    // "Check-ins" = όλα τα check-ins από όλες τις κρατήσεις (όχι μόνο σήμερα)
     checkedIn: reservations.filter((r) => Boolean(r.checked_in_at)).length
   };
 
   const getStatusBadge = (reservation: DirectReservation) => {
-    // Check-in: verified via QR scan
     if (reservation.checked_in_at) {
       return <Badge className="bg-green-500 text-white">{t.checkedIn}</Badge>;
     }
-
-    // Cancelled by user
     if (reservation.status === 'cancelled') {
       return <Badge variant="outline" className="text-muted-foreground">{t.cancelled}</Badge>;
     }
-
-    // No-Show: grace period (15 min) expired without check-in
     if (reservation.status === 'accepted' && reservation.preferred_time) {
       const slotTime = new Date(reservation.preferred_time);
       const graceEnd = addMinutes(slotTime, 15);
@@ -292,12 +415,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         return <Badge variant="destructive">{t.noShow}</Badge>;
       }
     }
-
-    // Confirmed (default for accepted reservations)
     if (reservation.status === 'accepted') {
       return <Badge variant="default">{t.confirmed}</Badge>;
     }
-
     return <Badge variant="outline">{reservation.status}</Badge>;
   };
 
@@ -331,18 +451,165 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
       </Badge>);
   };
 
+  // Editable cell component
+  const EditableCell = ({ reservationId, field, displayValue, rawValue }: { reservationId: string; field: string; displayValue: string; rawValue: string }) => {
+    const isEditing = editingField?.id === reservationId && editingField?.field === field;
+
+    if (isEditing) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            className="h-7 text-sm w-20"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveEdit();
+              if (e.key === 'Escape') cancelEdit();
+            }}
+          />
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={saveEdit}>
+            <Check className="h-3 w-3 text-green-600" />
+          </Button>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={cancelEdit}>
+            <X className="h-3 w-3 text-red-500" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <span
+        className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1"
+        onClick={() => startEdit(reservationId, field, rawValue)}
+      >
+        {displayValue}
+        <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      </span>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-6">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>);
-
   }
 
+  // ===================== KALIVA MODE =====================
+  if (isTicketLinked) {
+    return (
+      <div className="space-y-4 w-full max-w-full">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-full">
+          <Card className="min-w-0">
+            <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="text-lg sm:text-2xl font-bold">{stats.total}</div>
+                <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.total}</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="min-w-0">
+            <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="text-lg sm:text-2xl font-bold text-blue-600">{stats.today}</div>
+                <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.today}</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="min-w-0">
+            <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="text-lg sm:text-2xl font-bold text-green-600">{stats.checkedIn}</div>
+                <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.checkedInCount}</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {filteredReservations.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center">
+              <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">{t.noReservations}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {filteredReservations.map((reservation) => {
+              const minAge = getMinAge(reservation.id);
+              const minChargeCents = reservation.ticket_credit_cents || 0;
+              const minChargeDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-';
+
+              return (
+                <Card key={reservation.id} className="min-w-0 group">
+                  <CardHeader className="pb-2 pt-3 px-4">
+                    <div className="flex justify-between items-center gap-3 min-w-0">
+                      <EditableCell
+                        reservationId={reservation.id}
+                        field="reservation_name"
+                        displayValue={reservation.reservation_name}
+                        rawValue={reservation.reservation_name}
+                      />
+                      {getStatusBadge(reservation)}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-3 pt-0">
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      {/* People - editable */}
+                      <div className="flex flex-col items-center bg-muted/30 rounded-lg py-2 px-1 group">
+                        <Users className="h-4 w-4 text-muted-foreground mb-0.5" />
+                        <span className="text-[9px] text-muted-foreground uppercase">{t.details}</span>
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="party_size"
+                          displayValue={`${reservation.party_size} ${t.people}`}
+                          rawValue={String(reservation.party_size)}
+                        />
+                      </div>
+
+                      {/* Ages */}
+                      <div className="flex flex-col items-center bg-muted/30 rounded-lg py-2 px-1">
+                        <Calendar className="h-4 w-4 text-muted-foreground mb-0.5" />
+                        <span className="text-[9px] text-muted-foreground uppercase">{t.ages}</span>
+                        <span className="text-sm font-semibold">{minAge}</span>
+                      </div>
+
+                      {/* Min Charge - editable */}
+                      <div className="flex flex-col items-center bg-muted/30 rounded-lg py-2 px-1 group">
+                        <CreditCard className="h-4 w-4 text-muted-foreground mb-0.5" />
+                        <span className="text-[9px] text-muted-foreground uppercase">{t.minCharge}</span>
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="ticket_credit_cents"
+                          displayValue={minChargeDisplay}
+                          rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Phone if available */}
+                    {reservation.phone_number && (
+                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        <span>{reservation.phone_number}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ===================== NORMAL MODE =====================
   return (
     <div className="space-y-4 w-full max-w-full">
       {/* Stats Cards */}
-      {/* Stats Cards - always 3 in a row */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-full">
         <Card className="min-w-0">
           <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
@@ -370,12 +637,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         </Card>
       </div>
 
-      {/* Section title (single line) */}
-      <div className="min-w-0">
-        
-      </div>
+      <div className="min-w-0"></div>
 
-      {/* Reservations List */}
       {filteredReservations.length === 0 ?
       <Card>
           <CardContent className="py-10 text-center">
@@ -549,8 +812,5 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
           </Table>
           </div>
       }
-      
-
     </div>);
-
 };
