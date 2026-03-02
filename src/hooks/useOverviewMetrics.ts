@@ -97,16 +97,19 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       }
 
       // B. Users from ticket check-ins
+      // Each ticket = a different person, use ticket ID as unique identifier
       let ticketCheckinUsers: { user_id: string }[] = [];
       if (eventIds.length > 0) {
         const { data } = await supabase
           .from("tickets")
-          .select("user_id")
+          .select("id, user_id")
           .in("event_id", eventIds)
           .not("checked_in_at", "is", null)
           .gte("checked_in_at", startDate.toISOString())
           .lte("checked_in_at", endDate.toISOString());
-        ticketCheckinUsers = data || [];
+        // Use ticket ID as unique customer identifier to avoid counting
+        // multiple tickets from same order as same person
+        ticketCheckinUsers = (data || []).map((t: any) => ({ user_id: `ticket_${t.id}` }));
       }
 
       // C. Users from direct reservation check-ins (profile reservations)
