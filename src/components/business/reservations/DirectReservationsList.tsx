@@ -402,6 +402,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     checkedIn: reservations.filter((r) => Boolean(r.checked_in_at)).length
   };
 
+  // Report count to parent for Kaliva header
+  useEffect(() => {
+    if (onReservationCountChange) {
+      onReservationCountChange(stats.total);
+    }
+  }, [stats.total, onReservationCountChange]);
+
   const getStatusBadge = (reservation: DirectReservation) => {
     if (reservation.checked_in_at) {
       return <Badge className="bg-green-500 text-white">{t.checkedIn}</Badge>;
