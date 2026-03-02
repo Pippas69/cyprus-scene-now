@@ -595,6 +595,25 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               <span className="font-medium">{formatPrice(scanResult.details.tierPrice)}</span>
                             </div>
                           )}
+                          {/* Linked Reservation Info */}
+                          {scanResult.linkedReservation && (
+                            <div className="mt-2 p-2 rounded bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-1">
+                              <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-medium text-xs">
+                                <Users className="h-3.5 w-3.5" />
+                                {language === 'el' ? 'Κράτηση ενεργοποιήθηκε' : 'Reservation activated'}
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">{language === 'el' ? 'Άτομα:' : 'Party:'}</span>
+                                <span className="font-medium">{scanResult.linkedReservation.partySize}</span>
+                              </div>
+                              {scanResult.linkedReservation.ticketCreditCents > 0 && (
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground">{language === 'el' ? 'Πίστωση εισιτηρίων:' : 'Ticket credit:'}</span>
+                                  <span className="font-medium text-green-600">€{(scanResult.linkedReservation.ticketCreditCents / 100).toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </>
                       )}
 
