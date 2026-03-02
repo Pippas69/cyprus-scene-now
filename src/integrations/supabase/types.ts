@@ -747,6 +747,7 @@ export type Database = {
           student_discount_enabled: boolean | null
           student_discount_mode: string | null
           student_discount_percent: number | null
+          ticket_reservation_linked: boolean | null
           updated_at: string
           user_id: string
           verification_notes: string | null
@@ -789,6 +790,7 @@ export type Database = {
           student_discount_enabled?: boolean | null
           student_discount_mode?: string | null
           student_discount_percent?: number | null
+          ticket_reservation_linked?: boolean | null
           updated_at?: string
           user_id: string
           verification_notes?: string | null
@@ -831,6 +833,7 @@ export type Database = {
           student_discount_enabled?: boolean | null
           student_discount_mode?: string | null
           student_discount_percent?: number | null
+          ticket_reservation_linked?: boolean | null
           updated_at?: string
           user_id?: string
           verification_notes?: string | null
@@ -4166,6 +4169,8 @@ export type Database = {
           checked_in_by: string | null
           created_at: string
           event_id: string
+          guest_age: number | null
+          guest_name: string | null
           id: string
           order_id: string
           qr_code_token: string
@@ -4178,6 +4183,8 @@ export type Database = {
           checked_in_by?: string | null
           created_at?: string
           event_id: string
+          guest_age?: number | null
+          guest_name?: string | null
           id?: string
           order_id: string
           qr_code_token?: string
@@ -4190,6 +4197,8 @@ export type Database = {
           checked_in_by?: string | null
           created_at?: string
           event_id?: string
+          guest_age?: number | null
+          guest_name?: string | null
           id?: string
           order_id?: string
           qr_code_token?: string

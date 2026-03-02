@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink } from "lucide-react";
+import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,11 +21,18 @@ interface TicketTier {
   max_per_order: number;
 }
 
+interface GuestInfo {
+  name: string;
+  age: string;
+}
+
 interface TicketPurchaseCardProps {
   eventId: string;
   eventTitle: string;
   tiers: TicketTier[];
   onSuccess?: (orderId: string, isFree: boolean) => void;
+  /** When true, shows guest name+age fields per ticket (Kaliva flow) */
+  isLinkedReservation?: boolean;
 }
 
 const t = {
@@ -44,6 +51,12 @@ const t = {
     name: "Όνομα",
     email: "Email",
     yourInfo: "Τα στοιχεία σας",
+    guestDetails: "Στοιχεία Καλεσμένων",
+    guestN: "Καλεσμένος",
+    age: "Ηλικία",
+    ticketAndReservation: "Εισιτήριο & Κράτηση",
+    ticketReservationHint: "Η αγορά εισιτηρίων δημιουργεί αυτόματα κράτηση. Η τιμή πιστώνεται στο minimum charge.",
+    fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
   },
   en: {
     tickets: "Tickets",
@@ -60,6 +73,12 @@ const t = {
     name: "Name",
     email: "Email",
     yourInfo: "Your Information",
+    guestDetails: "Guest Details",
+    guestN: "Guest",
+    age: "Age",
+    ticketAndReservation: "Ticket & Reservation",
+    ticketReservationHint: "Buying tickets automatically creates a reservation. The price is credited towards the minimum charge.",
+    fillAllGuests: "Please fill in name and age for all guests",
   },
 };
 
@@ -68,16 +87,18 @@ export const TicketPurchaseCard = ({
   eventTitle,
   tiers,
   onSuccess,
+  isLinkedReservation = false,
 }: TicketPurchaseCardProps) => {
   const { language } = useLanguage();
   const text = t[language];
   
-const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [guests, setGuests] = useState<GuestInfo[]>([]);
 
   // Reset checkout state when quantities change
   useEffect(() => {
@@ -86,6 +107,19 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
       setRedirectAttempted(false);
     }
   }, [quantities]);
+
+  // Sync guest fields count with total tickets (Kaliva mode)
+  useEffect(() => {
+    if (!isLinkedReservation) return;
+    const total = getTotalTickets();
+    setGuests(prev => {
+      if (prev.length === total) return prev;
+      if (prev.length < total) {
+        return [...prev, ...Array(total - prev.length).fill(null).map(() => ({ name: '', age: '' }))];
+      }
+      return prev.slice(0, total);
+    });
+  }, [quantities, isLinkedReservation]);
 
   const updateQuantity = (tierId: string, delta: number) => {
     const tier = tiers.find(t => t.id === tierId);
@@ -104,6 +138,14 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
     }
 
     setQuantities({ ...quantities, [tierId]: newQty });
+  };
+
+  const updateGuest = (index: number, field: keyof GuestInfo, value: string) => {
+    setGuests(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const formatPrice = (cents: number) => {
@@ -137,6 +179,15 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
       return;
     }
 
+    // Validate guest info for Kaliva mode
+    if (isLinkedReservation) {
+      const allFilled = guests.every(g => g.name.trim() && g.age.trim());
+      if (!allFilled) {
+        toast.error(text.fillAllGuests);
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -150,35 +201,36 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
         .filter(([_, qty]) => qty > 0)
         .map(([tierId, quantity]) => ({ tierId, quantity }));
 
-      const { data, error } = await supabase.functions.invoke('create-ticket-checkout', {
-        body: {
-          eventId,
-          items,
-          customerName: customerName.trim(),
-          customerEmail: customerEmail.trim() || user.email,
-        },
-      });
+      const body: any = {
+        eventId,
+        items,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim() || user.email,
+      };
+
+      // Pass guest info for Kaliva-linked reservations
+      if (isLinkedReservation && guests.length > 0) {
+        body.guests = guests.map(g => ({
+          name: g.name.trim(),
+          age: parseInt(g.age) || 0,
+        }));
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-ticket-checkout', { body });
 
       if (error) throw error;
 
       if (data.isFree) {
-        // Free tickets - order completed directly
         setIsLoading(false);
         toast.success(language === 'el' 
           ? "Εισιτήρια επιβεβαιώθηκαν!" 
           : "Tickets confirmed!"
         );
-        // Redirect to My Tickets for free tickets
         window.location.href = `/dashboard-user/tickets?success=true&order_id=${data.orderId}`;
       } else {
-        // Store URL and attempt redirect - use fallback pattern for iOS/Safari
         setCheckoutUrl(data.url);
         setIsLoading(false);
-        
-        // Attempt automatic redirect
         window.location.assign(data.url);
-        
-        // Show fallback button after delay if user is still on page
         setTimeout(() => {
           setRedirectAttempted(true);
         }, 900);
@@ -202,9 +254,21 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
     <Card>
       <CardHeader className="pb-2 md:pb-3 lg:pb-4">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-          <Ticket className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
-          {text.tickets}
+          {isLinkedReservation ? (
+            <>
+              <Users className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
+              {text.ticketAndReservation}
+            </>
+          ) : (
+            <>
+              <Ticket className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
+              {text.tickets}
+            </>
+          )}
         </CardTitle>
+        {isLinkedReservation && (
+          <p className="text-xs text-muted-foreground mt-1">{text.ticketReservationHint}</p>
+        )}
       </CardHeader>
       
       <CardContent className="space-y-3 md:space-y-4">
@@ -270,6 +334,38 @@ const [quantities, setQuantities] = useState<Record<string, number>>({});
           <>
             <Separator />
             
+            {/* Kaliva mode: guest info per ticket */}
+            {isLinkedReservation && guests.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
+                  {text.guestDetails} ({guests.length} {language === 'el' ? 'άτομα' : 'people'})
+                </Label>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {guests.map((guest, idx) => (
+                    <div key={idx} className="flex gap-2 items-center p-2 rounded-lg border bg-muted/20">
+                      <span className="text-xs text-muted-foreground shrink-0 w-5 text-center">{idx + 1}</span>
+                      <Input
+                        placeholder={`${text.name}`}
+                        value={guest.name}
+                        onChange={(e) => updateGuest(idx, 'name', e.target.value)}
+                        className="h-8 text-sm flex-1"
+                      />
+                      <Input
+                        placeholder={text.age}
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={guest.age}
+                        onChange={(e) => updateGuest(idx, 'age', e.target.value)}
+                        className="h-8 text-sm w-16"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3">
               <Label className="text-sm font-medium">{text.yourInfo}</Label>
               <div className="grid gap-3">

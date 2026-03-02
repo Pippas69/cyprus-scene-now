@@ -178,13 +178,14 @@ export default function EventDetail() {
         .select(
           `
           *,
-          businesses!inner(
+            businesses!inner(
             id,
             name,
             logo_url,
             verified,
             city,
-            category
+            category,
+            ticket_reservation_linked
           )
         `
         )
@@ -581,6 +582,7 @@ export default function EventDetail() {
                   eventId={event.id}
                   eventTitle={event.title}
                   tiers={ticketTiers}
+                  isLinkedReservation={!!(event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation'}
                   onSuccess={(orderId, isFree) => {
                     if (isFree) {
                       toast.success(language === 'el' 
@@ -602,7 +604,7 @@ export default function EventDetail() {
                 </RippleButton>
               )}
 
-              {event.event_type === 'ticket_and_reservation' && user && (
+              {event.event_type === 'ticket_and_reservation' && user && (event as any).businesses?.ticket_reservation_linked && (
                 <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-center">
                   <p className="text-xs text-muted-foreground">
                     {language === 'el' 
@@ -610,6 +612,16 @@ export default function EventDetail() {
                       : '🎟️ Buying a ticket automatically creates a reservation. The price is credited towards the minimum charge.'}
                   </p>
                 </div>
+              )}
+
+              {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !(event as any).businesses?.ticket_reservation_linked && (
+                <RippleButton
+                  className="w-full gap-2 h-9 text-sm"
+                  onClick={() => setShowReservationCheckout(true)}
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  {text.makeReservation}
+                </RippleButton>
               )}
 
               {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' && (
@@ -821,7 +833,7 @@ export default function EventDetail() {
               </RippleButton>
             )}
 
-            {event.event_type === 'ticket_and_reservation' && user && (
+            {event.event_type === 'ticket_and_reservation' && user && (event as any).businesses?.ticket_reservation_linked && (
               <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
                 <p className="text-sm text-muted-foreground">
                   {language === 'el' 
@@ -829,6 +841,16 @@ export default function EventDetail() {
                     : '🎟️ Buying a ticket automatically creates a reservation. The price is credited towards the minimum charge.'}
                 </p>
               </div>
+            )}
+
+            {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !(event as any).businesses?.ticket_reservation_linked && (
+              <RippleButton
+                className="w-full gap-2"
+                onClick={() => setShowReservationCheckout(true)}
+              >
+                <Calendar className="h-4 w-4" />
+                {text.makeReservation}
+              </RippleButton>
             )}
 
             {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' && (
