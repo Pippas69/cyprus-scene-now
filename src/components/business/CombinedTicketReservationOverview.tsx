@@ -25,7 +25,7 @@ const t = {
     free: "Δωρεάν",
     noData: "Δεν υπάρχουν δεδομένα",
     tickets: "Εισιτηρια",
-    tables: "Τραπέζια"
+    tables: "ΤΡΑΠΕΖΙΑ"
   },
   en: {
     totalRevenue: "Total Revenue",
