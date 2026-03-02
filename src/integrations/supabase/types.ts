@@ -5154,6 +5154,22 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_ticket_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          business_name: string
+          checked_in_at: string
+          event_location: string
+          event_start_at: string
+          event_title: string
+          guest_age: number
+          guest_name: string
+          id: string
+          qr_code_token: string
+          status: string
+          tier_name: string
+        }[]
+      }
       get_unread_message_count: { Args: never; Returns: number }
       gettransactionid: { Args: never; Returns: unknown }
       has_role: {
