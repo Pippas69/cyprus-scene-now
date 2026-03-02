@@ -206,6 +206,7 @@ Deno.serve(async (req) => {
           status: "completed",
           customer_email: customerEmail || user.email,
           customer_name: customerName,
+          customer_phone: customerPhone || null,
         })
         .select()
         .single();
