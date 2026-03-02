@@ -60,11 +60,12 @@ const translations = {
     time: "ΩΡΑ",
     name: "ΟΝΟΜΑ",
     code: "ΚΩΔΙΚΟΣ",
+    ticket: "ΕΙΣΙΤΗΡΙΟ",
+    reservation: "ΚΡΑΤΗΣΗ",
     offer: "ΠΡΟΣΦΟΡΑ",
     purchase: "ΑΓΟΡΑ",
     expiry: "ΛΗΞΗ",
     people: "ΑΤΟΜΑ",
-    done: "Κλείσιμο",
   },
   en: {
     success: {
