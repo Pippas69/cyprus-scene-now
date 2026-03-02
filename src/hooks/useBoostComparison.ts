@@ -194,6 +194,7 @@ export const useBoostComparison = (businessId: string, dateRange?: { from: Date;
         .in("event_id", eventIds)
         .not("event_id", "is", null)
         .not("checked_in_at", "is", null)
+        .neq("auto_created_from_tickets", true)
         .gte("checked_in_at", startDate.toISOString())
         .lte("checked_in_at", endDate.toISOString());
 

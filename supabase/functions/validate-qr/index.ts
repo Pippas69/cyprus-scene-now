@@ -277,7 +277,7 @@ async function handleTicketQR(
       alreadyUsed: true,
       details: {
         tierName: ticket.ticket_tiers?.name,
-        customerName: ticket.ticket_orders?.customer_name,
+        customerName: ticket.guest_name || ticket.ticket_orders?.customer_name,
         eventTitle: ticket.events?.title,
         checkedInAt: ticket.checked_in_at,
       }
@@ -324,7 +324,7 @@ async function handleTicketQR(
       alreadyUsed: checkinResult?.error === 'ALREADY_USED',
       details: {
         tierName: ticket.ticket_tiers?.name,
-        customerName: ticket.ticket_orders?.customer_name,
+        customerName: ticket.guest_name || ticket.ticket_orders?.customer_name,
         eventTitle: ticket.events?.title,
       }
     }), {
@@ -383,9 +383,10 @@ async function handleTicketQR(
   // Create in-app notification for business owner
   if (eventData?.businesses?.user_id) {
     try {
+      const displayName = ticket.guest_name || ticket.ticket_orders?.customer_name || 'Πελάτης';
       const notifMessage = linkedReservationInfo
-        ? `${ticket.ticket_orders?.customer_name || 'Πελάτης'} έκανε check-in για "${ticket.events?.title}" + Κράτηση ${linkedReservationInfo.partySize} ατόμων`
-        : `${ticket.ticket_orders?.customer_name || 'Πελάτης'} έκανε check-in για "${ticket.events?.title}"`;
+        ? `${displayName} έκανε check-in για "${ticket.events?.title}" + Κράτηση ${linkedReservationInfo.partySize} ατόμων`
+        : `${displayName} έκανε check-in για "${ticket.events?.title}"`;
 
       await supabaseAdmin.from('notifications').insert({
         user_id: eventData.businesses.user_id,
@@ -468,7 +469,7 @@ async function handleTicketQR(
       id: ticket.id,
       tierName: ticket.ticket_tiers?.name,
       tierPrice: ticket.ticket_tiers?.price_cents,
-      customerName: ticket.ticket_orders?.customer_name,
+      customerName: ticket.guest_name || ticket.ticket_orders?.customer_name,
       customerEmail: maskEmail(ticket.ticket_orders?.customer_email),
       eventTitle: ticket.events?.title,
       eventStartAt: ticket.events?.start_at,

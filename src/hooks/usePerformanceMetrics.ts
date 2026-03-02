@@ -230,6 +230,7 @@ export const usePerformanceMetrics = (
           .select("id", { count: "exact", head: true })
           .in("event_id", eventIds)
           .not("checked_in_at", "is", null)
+          .neq("auto_created_from_tickets", true)
           .gte("checked_in_at", startDate)
           .lte("checked_in_at", endDate);
 

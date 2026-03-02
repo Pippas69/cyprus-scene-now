@@ -574,6 +574,7 @@ export const useBoostValueMetrics = (
                 .select("event_id, created_at, checked_in_at")
                 .in("event_id", paidEventIds)
                 .not("checked_in_at", "is", null)
+                .neq("auto_created_from_tickets", true)
                 .gte("checked_in_at", startDate)
                 .lte("checked_in_at", endDate)
                 .range(from, to);

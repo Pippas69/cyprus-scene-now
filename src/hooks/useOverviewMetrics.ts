@@ -127,6 +127,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           .select("user_id")
           .in("event_id", eventIds)
           .not("checked_in_at", "is", null)
+          .neq("auto_created_from_tickets", true)
           .gte("checked_in_at", startDate.toISOString())
           .lte("checked_in_at", endDate.toISOString());
         eventReservationCheckinUsers = data || [];
@@ -346,6 +347,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           .select("id", { count: "exact", head: true })
           .in("event_id", eventIds)
           .not("checked_in_at", "is", null)
+          .neq("auto_created_from_tickets", true)
           .gte("checked_in_at", startDate.toISOString())
           .lte("checked_in_at", endDate.toISOString());
         eventReservationVisits = count || 0;
