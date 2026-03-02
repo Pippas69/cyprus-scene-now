@@ -53,7 +53,7 @@ export const TicketSales = ({ businessId }: TicketSalesProps) => {
   const dateLocale = language === 'el' ? el : enUS;
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
-  // Fetch events with ticket tiers
+  // Fetch events with ticket tiers and actual ticket counts
   const { data: eventsWithTickets, isLoading } = useQuery({
     queryKey: ["events-with-tickets", businessId],
     queryFn: async () => {
@@ -79,9 +79,44 @@ export const TicketSales = ({ businessId }: TicketSalesProps) => {
       if (error) throw error;
       
       // Filter to only events that have ticket tiers
-      return (data || []).filter(event => 
+      const eventsFiltered = (data || []).filter(event => 
         event.ticket_tiers && event.ticket_tiers.length > 0
       );
+
+      // Fetch actual ticket counts per event (source of truth)
+      const eventIds = eventsFiltered.map(e => e.id);
+      if (eventIds.length > 0) {
+        const { data: tickets } = await supabase
+          .from("tickets")
+          .select("event_id, tier_id, status")
+          .in("event_id", eventIds)
+          .in("status", ["valid", "used"]);
+
+        // Build count per event
+        const eventTicketCounts = new Map<string, number>();
+        const eventRevenue = new Map<string, number>();
+        tickets?.forEach(t => {
+          eventTicketCounts.set(t.event_id, (eventTicketCounts.get(t.event_id) || 0) + 1);
+        });
+
+        // Calculate revenue per event from actual tickets
+        eventsFiltered.forEach(event => {
+          const tierPriceMap = new Map(event.ticket_tiers?.map(t => [t.id, t.price_cents]) || []);
+          let rev = 0;
+          tickets?.filter(t => t.event_id === event.id).forEach(t => {
+            rev += tierPriceMap.get(t.tier_id) || 0;
+          });
+          eventRevenue.set(event.id, rev);
+        });
+
+        return eventsFiltered.map(e => ({
+          ...e,
+          _actualSold: eventTicketCounts.get(e.id) || 0,
+          _actualRevenue: eventRevenue.get(e.id) || 0,
+        }));
+      }
+
+      return eventsFiltered.map(e => ({ ...e, _actualSold: 0, _actualRevenue: 0 }));
     },
     enabled: !!businessId,
   });
@@ -153,11 +188,9 @@ export const TicketSales = ({ businessId }: TicketSalesProps) => {
   }
 
   const EventCard = ({ event }: { event: typeof eventsWithTickets[0] }) => {
-    const totalSold = event.ticket_tiers?.reduce((sum, tier) => sum + (tier.quantity_sold || 0), 0) || 0;
+    const totalSold = (event as any)._actualSold || 0;
     const totalQuantity = event.ticket_tiers?.reduce((sum, tier) => sum + tier.quantity_total, 0) || 0;
-    const totalRevenue = event.ticket_tiers?.reduce((sum, tier) => 
-      sum + ((tier.quantity_sold || 0) * tier.price_cents), 0
-    ) || 0;
+    const totalRevenue = (event as any)._actualRevenue || 0;
 
     return (
       <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedEventId(event.id)}>
