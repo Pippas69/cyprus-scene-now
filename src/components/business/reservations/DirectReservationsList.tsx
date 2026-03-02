@@ -53,7 +53,7 @@ interface SeatingTier {
   prepaid_min_charge_cents: number;
 }
 
-export const DirectReservationsList = ({ businessId, language, refreshNonce }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
