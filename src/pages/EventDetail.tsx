@@ -35,6 +35,7 @@ import { el, enUS } from 'date-fns/locale';
 import { EventAttendees } from '@/components/EventAttendees';
 import { ShareDialog } from '@/components/sharing/ShareDialog';
 import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
+import { KalivaTicketReservationFlow } from '@/components/tickets/KalivaTicketReservationFlow';
 import { useTicketTiers } from '@/hooks/useTicketTiers';
 import { ErrorState } from '@/components/ErrorState';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
@@ -84,6 +85,7 @@ export default function EventDetail() {
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showReservationCheckout, setShowReservationCheckout] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showKalivaFlow, setShowKalivaFlow] = useState(false);
 
   const fromPath = `${location.pathname}${location.search}`;
   
