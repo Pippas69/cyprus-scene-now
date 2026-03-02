@@ -5016,12 +5016,7 @@ export type Database = {
           p_end_date?: string
           p_start_date?: string
         }
-        Returns: {
-          age_group: string
-          city: string
-          gender: string
-          visit_count: number
-        }[]
+        Returns: Json
       }
       get_available_capacity: { Args: { p_event_id: string }; Returns: number }
       get_business_analytics: {
