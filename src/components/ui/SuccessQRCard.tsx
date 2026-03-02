@@ -66,6 +66,7 @@ const translations = {
     purchase: "ΑΓΟΡΑ",
     expiry: "ΛΗΞΗ",
     people: "ΑΤΟΜΑ",
+    done: "Κλείσιμο",
   },
   en: {
     success: {
