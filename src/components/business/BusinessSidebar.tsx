@@ -1,6 +1,7 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Percent, TrendingUp, MapPin, Settings, Users, Home, CreditCard, Zap } from "lucide-react";
+import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap } from "lucide-react";
+import { useBusinessOwner } from "@/hooks/useBusinessOwner";
 import {
   Sidebar,
   SidebarContent,

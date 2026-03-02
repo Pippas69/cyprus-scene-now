@@ -17,8 +17,6 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { OnboardingTour } from "@/components/business/OnboardingTour";
-import Feed from "@/pages/Feed";
-import Xartis from "@/pages/Xartis";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
 import SubscriptionPlans from "@/pages/SubscriptionPlans";
 import BoostManagement from "@/components/business/BoostManagement";
@@ -315,9 +313,7 @@ const DashboardBusiness = () => {
             style={{ WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
           >
             <Routes>
-              <Route index element={<Feed showNavbar={false} />} />
-              <Route path="map" element={<Xartis />} />
-              <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
+              <Route index element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
               {/* Posts feature hidden but kept in code
               <Route path="posts" element={businessId ? <BusinessPostsList businessId={businessId} language={language} /> : null} />
               <Route path="posts/new" element={businessId ? <BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /> : null} />
