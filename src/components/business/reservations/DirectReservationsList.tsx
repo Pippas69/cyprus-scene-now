@@ -411,7 +411,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const getStatusBadge = (reservation: DirectReservation) => {
     if (reservation.checked_in_at) {
-      return <Badge className="bg-green-500 text-white">{t.checkedIn}</Badge>;
+      return <Badge className="bg-green-500 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
     }
     if (reservation.status === 'cancelled') {
       return <Badge variant="outline" className="text-muted-foreground">{t.cancelled}</Badge>;
@@ -545,7 +545,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm">
+                          <span className="text-sm whitespace-nowrap">
                             <EditableCell
                               reservationId={reservation.id}
                               field="party_size"
