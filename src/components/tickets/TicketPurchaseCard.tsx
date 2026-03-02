@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users } from "lucide-react";
+import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -55,7 +55,9 @@ const t = {
     guestN: "Καλεσμένος",
     age: "Ηλικία",
     ticketAndReservation: "Εισιτήριο & Κράτηση",
-    ticketReservationHint: "Η αγορά εισιτηρίων δημιουργεί αυτόματα κράτηση. Η τιμή πιστώνεται στο minimum charge.",
+    ticketReservationHint: "Η αγορά εισιτηρίων δημιουργεί αυτόματα κράτηση.",
+    minimumChargeNote: "Ελάχιστη κατανάλωση τραπεζιού",
+    paidAtVenue: "Πληρώνεται στο κατάστημα",
     fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
   },
   en: {
@@ -77,7 +79,9 @@ const t = {
     guestN: "Guest",
     age: "Age",
     ticketAndReservation: "Ticket & Reservation",
-    ticketReservationHint: "Buying tickets automatically creates a reservation. The price is credited towards the minimum charge.",
+    ticketReservationHint: "Buying tickets automatically creates a reservation.",
+    minimumChargeNote: "Table minimum charge",
+    paidAtVenue: "Paid at the venue",
     fillAllGuests: "Please fill in name and age for all guests",
   },
 };
@@ -99,6 +103,31 @@ export const TicketPurchaseCard = ({
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [guests, setGuests] = useState<GuestInfo[]>([]);
+  const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
+
+  // Fetch minimum charge for linked reservation events (Kaliva)
+  useEffect(() => {
+    if (!isLinkedReservation) return;
+    const fetchMinCharge = async () => {
+      const { data: seatingTypes } = await supabase
+        .from("reservation_seating_types")
+        .select("id")
+        .eq("event_id", eventId)
+        .limit(1);
+      if (seatingTypes && seatingTypes.length > 0) {
+        const { data: tiers } = await supabase
+          .from("seating_type_tiers")
+          .select("prepaid_min_charge_cents")
+          .eq("seating_type_id", seatingTypes[0].id)
+          .order("min_people", { ascending: true })
+          .limit(1);
+        if (tiers && tiers.length > 0) {
+          setMinChargeCents(tiers[0].prepaid_min_charge_cents);
+        }
+      }
+    };
+    fetchMinCharge();
+  }, [eventId, isLinkedReservation]);
 
   // Reset checkout state when quantities change
   useEffect(() => {
@@ -268,6 +297,14 @@ export const TicketPurchaseCard = ({
         </CardTitle>
         {isLinkedReservation && (
           <p className="text-xs text-muted-foreground mt-1">{text.ticketReservationHint}</p>
+        )}
+        {isLinkedReservation && minChargeCents != null && minChargeCents > 0 && (
+          <div className="flex items-center gap-1.5 mt-2 p-2 rounded-md bg-muted border border-border">
+            <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-xs text-muted-foreground">
+              {text.minimumChargeNote}: <strong className="text-foreground">€{(minChargeCents / 100).toFixed(2)}</strong> — {text.paidAtVenue}
+            </span>
+          </div>
         )}
       </CardHeader>
       
