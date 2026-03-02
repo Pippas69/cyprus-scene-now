@@ -64,21 +64,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parse ticket breakdown from metadata
+    // Parse ticket breakdown and guests from metadata
     const ticketBreakdown = JSON.parse(session.metadata?.ticket_breakdown || "[]");
+    const guestsData = JSON.parse(session.metadata?.guests || "[]");
     logStep("Ticket breakdown", ticketBreakdown);
+    logStep("Guests data", { count: guestsData.length });
 
-    // Create individual tickets
+    // Create individual tickets with guest info
     const ticketsToCreate = [];
+    let guestIdx = 0;
     for (const item of ticketBreakdown) {
       for (let i = 0; i < item.quantity; i++) {
+        const guestInfo = guestsData[guestIdx];
         ticketsToCreate.push({
           order_id: orderId,
           tier_id: item.tierId,
           event_id: order.event_id,
           user_id: order.user_id,
           status: "valid",
+          guest_name: guestInfo?.name || null,
+          guest_age: guestInfo?.age || null,
         });
+        guestIdx++;
       }
     }
 
