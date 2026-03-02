@@ -5,7 +5,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Calendar, Clock, Ticket, Link2, Copy, User } from "lucide-react";
+import { Download, FileText, Calendar, Ticket, Copy, User } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { generateTicketPdf } from "@/lib/ticketPdf";
 import { format } from "date-fns";
