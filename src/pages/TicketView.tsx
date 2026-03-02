@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import QRCode from "qrcode";
 import { OceanLoader } from "@/components/ui/ocean-loader";
-import { Calendar, Clock, Ticket, User, Download } from "lucide-react";
+import { Calendar, Clock, Ticket, User, Download, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
@@ -79,14 +79,16 @@ const TicketView = () => {
               <p className="text-[10px] text-[#64748b] mt-2">Scan at entry</p>
             </div>
           )}
-          <Button
-            variant="outline"
-            onClick={() => { if (qrDataUrl) { const a = document.createElement("a"); a.download = `fomo-ticket-${ticket.id.slice(0,8)}.png`; a.href = qrDataUrl; a.click(); } }}
-            className="w-full mt-3 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs"
-          >
-            <Download className="h-3 w-3 mr-1.5" />
-            Download QR
-          </Button>
+          <div className="flex gap-2 mt-3">
+            <Button
+              variant="outline"
+              onClick={() => { if (qrDataUrl) { const a = document.createElement("a"); a.download = `fomo-ticket-${ticket.id.slice(0,8)}.png`; a.href = qrDataUrl; a.click(); } }}
+              className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs"
+            >
+              <Download className="h-3 w-3 mr-1.5" />
+              Download QR
+            </Button>
+          </div>
         </div>
         <div className="relative h-6 bg-white dark:bg-white rounded-b-2xl">
           <svg viewBox="0 0 400 24" className="absolute bottom-0 left-0 w-full h-6" preserveAspectRatio="none">

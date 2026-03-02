@@ -5,7 +5,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Calendar, Clock, Ticket, Share2, User } from "lucide-react";
+import { Download, FileText, Calendar, Clock, Ticket, Link2, Copy, User } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { generateTicketPdf } from "@/lib/ticketPdf";
 import { format } from "date-fns";
@@ -40,9 +40,7 @@ const t = {
     date: "Ημερομηνία",
     time: "Ώρα",
     ticket: "Εισιτήριο",
-    share: "Κοινοποίηση",
-    shareTitle: "Εισιτήριο ΦΟΜΟ",
-    shareText: "Ορίστε το εισιτήριό σου για",
+    copyLink: "Αντιγραφή συνδέσμου",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
     guest: "ΚΑΛΕΣΜΕΝΟΣ",
     age: "ΗΛΙΚΙΑ",
@@ -54,9 +52,7 @@ const t = {
     date: "Date",
     time: "Time",
     ticket: "Ticket",
-    share: "Share",
-    shareTitle: "FOMO Ticket",
-    shareText: "Here's your ticket for",
+    copyLink: "Copy link",
     copied: "Link copied!",
     guest: "GUEST",
     age: "AGE",
@@ -95,27 +91,11 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
     link.click();
   };
 
-  const handleShare = async () => {
+  const handleCopyLink = async () => {
     if (!ticket) return;
-    
     const shareUrl = `${window.location.origin}/ticket-view/${ticket.qrToken}`;
-    const shareTitle = `${text.shareTitle} - ${ticket.eventTitle}`;
-    const shareMessage = `${text.shareText} ${ticket.eventTitle}${ticket.guestName ? ` (${ticket.guestName})` : ''}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: shareTitle,
-          text: shareMessage,
-          url: shareUrl,
-        });
-      } catch (err) {
-        // User cancelled share
-      }
-    } else {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success(text.copied);
-    }
+    await navigator.clipboard.writeText(shareUrl);
+    toast.success(text.copied);
   };
 
   const handleDownloadPdf = async () => {
@@ -245,15 +225,21 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
               </Button>
             </div>
 
-            {/* Share Button */}
-            <Button
-              variant="outline"
-              onClick={handleShare}
-              className="w-full mt-2 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs"
-            >
-              <Share2 className="h-3 w-3 mr-1.5" />
-              {text.share}
-            </Button>
+            {/* Copyable Link */}
+            <div className="mt-2 flex items-center gap-2">
+              <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
+                {`${window.location.origin}/ticket-view/${ticket?.qrToken}`}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyLink}
+                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                {text.copyLink}
+              </Button>
+            </div>
           </div>
 
         {/* Wave Decoration */}

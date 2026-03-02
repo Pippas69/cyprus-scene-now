@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OceanLoader } from "@/components/ui/ocean-loader";
 import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
-import { AlertCircle, ArrowRight, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { AlertCircle, ArrowRight, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 const t = {
@@ -18,9 +18,8 @@ const t = {
     tryAgain: "Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε μαζί μας",
     ticketOf: "Εισιτήριο",
     of: "από",
-    shareAll: "Κοινοποίηση Εισιτηρίων",
-    shareText: "Ορίστε το εισιτήριό σου για",
-    copied: "Ο σύνδεσμος αντιγράφηκε!",
+    copyLink: "Αντιγραφή συνδέσμου",
+    copied: "Αντιγράφηκε!",
   },
   en: {
     processing: "Processing your payment...",
@@ -30,9 +29,8 @@ const t = {
     tryAgain: "Please try again or contact support",
     ticketOf: "Ticket",
     of: "of",
-    shareAll: "Share Tickets",
-    shareText: "Here's your ticket for",
-    copied: "Link copied!",
+    copyLink: "Copy link",
+    copied: "Copied!",
   },
 };
 
@@ -181,24 +179,10 @@ export const TicketSuccess = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
 
-  const handleShareTicket = async (ticket: TicketData) => {
+  const handleCopyLink = async (ticket: TicketData) => {
     const shareUrl = `${window.location.origin}/ticket-view/${ticket.qr_code_token}`;
-    const shareMessage = `${text.shareText} ${ticket.event_title}${ticket.guest_name ? ` (${ticket.guest_name})` : ''}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `ΦΟΜΟ - ${ticket.event_title}`,
-          text: shareMessage,
-          url: shareUrl,
-        });
-      } catch {
-        // User cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success(text.copied);
-    }
+    await navigator.clipboard.writeText(shareUrl);
+    toast.success(text.copied);
   };
 
   if (status === "loading") {
@@ -287,16 +271,21 @@ export const TicketSuccess = () => {
             viewDashboardLabel={text.viewTickets}
           />
 
-          {/* Share button for this ticket */}
-          <Button
-            variant="outline"
-            onClick={() => handleShareTicket(currentTicket)}
-            className="w-full border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-9 text-sm"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            {text.shareAll}
-            {currentTicket.guest_name && ` — ${currentTicket.guest_name}`}
-          </Button>
+          {/* Copyable link for this ticket */}
+          <div className="flex items-center gap-2 px-1">
+            <div className="flex-1 bg-muted rounded-lg px-3 py-2 text-[10px] text-muted-foreground font-mono truncate">
+              {`${window.location.origin}/ticket-view/${currentTicket.qr_code_token}`}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleCopyLink(currentTicket)}
+              className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              {text.copyLink}
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="text-center space-y-4">
