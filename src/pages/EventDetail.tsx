@@ -811,12 +811,11 @@ export default function EventDetail() {
             </Card>
 
             {/* Tickets/Reservations - DIRECTLY after RSVP buttons */}
-            {hasNativeTickets && (
+            {hasNativeTickets && !((event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation') && (
               <TicketPurchaseCard
                 eventId={event.id}
                 eventTitle={event.title}
                 tiers={ticketTiers}
-                isLinkedReservation={!!(event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation'}
                 onSuccess={(orderId, isFree) => {
                   if (isFree) {
                     toast.success(language === 'el' 
@@ -828,6 +827,17 @@ export default function EventDetail() {
               />
             )}
 
+            {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
+            {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
+              <RippleButton
+                className="w-full gap-2"
+                onClick={() => setShowKalivaFlow(true)}
+              >
+                <Ticket className="h-4 w-4" />
+                {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
+              </RippleButton>
+            )}
+
             {eventHasReservation && event.event_type === 'reservation' && user && (
               <RippleButton
                 className="w-full gap-2"
@@ -836,16 +846,6 @@ export default function EventDetail() {
                 <Calendar className="h-4 w-4" />
                 {text.makeReservation}
               </RippleButton>
-            )}
-
-            {event.event_type === 'ticket_and_reservation' && user && (event as any).businesses?.ticket_reservation_linked && (
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
-                <p className="text-sm text-muted-foreground">
-                  {language === 'el' 
-                    ? '🎟️ Η αγορά εισιτηρίου δημιουργεί αυτόματα κράτηση. Η τιμή πιστώνεται στο minimum charge.'
-                    : '🎟️ Buying a ticket automatically creates a reservation. The price is credited towards the minimum charge.'}
-                </p>
-              </div>
             )}
 
             {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !(event as any).businesses?.ticket_reservation_linked && (
