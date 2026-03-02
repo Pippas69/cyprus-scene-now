@@ -499,24 +499,26 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           <Users className="h-3.5 w-3.5" />
           {t.guestDetails} ({partySize} {t.people})
         </Label>
-        <div className="space-y-2 max-h-52 overflow-y-auto">
+        <div className="space-y-1.5 max-h-52 overflow-y-auto">
           {guests.map((guest, idx) => (
-            <div key={idx} className="flex gap-2 items-center p-2 rounded-lg border bg-muted/20">
-              <span className="text-xs text-muted-foreground shrink-0 w-5 text-center">{idx + 1}</span>
+            <div key={idx} className="flex gap-2 items-center">
+              <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
               <Input
                 placeholder={t.name}
                 value={guest.name}
                 onChange={(e) => updateGuest(idx, 'name', e.target.value)}
-                className="h-8 text-sm flex-1"
+                className="h-9 text-sm flex-1"
               />
               <Input
                 placeholder={t.age}
-                type="number"
-                min="1"
-                max="120"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={guest.age}
-                onChange={(e) => updateGuest(idx, 'age', e.target.value)}
-                className="h-8 text-sm w-16"
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 3);
+                  updateGuest(idx, 'age', val);
+                }}
+                className="h-9 text-sm w-16"
               />
             </div>
           ))}
