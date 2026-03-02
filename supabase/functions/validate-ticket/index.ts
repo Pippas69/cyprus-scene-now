@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       .select(`
         *,
         ticket_tiers(name, price_cents),
-        ticket_orders(customer_name, customer_email, user_id),
+        ticket_orders(customer_name, customer_email, user_id, linked_reservation_id),
         events(id, title, start_at, business_id, businesses(id, user_id, name))
       `)
       .eq("qr_code_token", qrToken)
@@ -153,22 +153,51 @@ Deno.serve(async (req) => {
 
       // Check for linked reservation (hybrid ticket+reservation flow)
       let linkedReservation = null;
-      const orderUserId = ticket.ticket_orders?.user_id || ticket.user_id;
-      if (orderUserId && ticket.events?.id) {
-        const { data: resData } = await supabaseClient
+      const linkedReservationId = ticket.ticket_orders?.linked_reservation_id;
+
+      if (linkedReservationId) {
+        const { data: resData, error: resError } = await supabaseClient
           .from("reservations")
           .select("party_size, prepaid_min_charge_cents, ticket_credit_cents")
-          .eq("event_id", ticket.events.id)
-          .eq("user_id", orderUserId)
-          .eq("auto_created_from_tickets", true)
+          .eq("id", linkedReservationId)
           .maybeSingle();
+
+        if (resError) {
+          logStep("Linked reservation lookup error", { linkedReservationId, error: resError.message });
+        }
 
         if (resData) {
           linkedReservation = {
             partySize: resData.party_size,
-            minimumChargeCents: resData.prepaid_min_charge_cents,
+            minimumChargeCents: resData.prepaid_min_charge_cents ?? resData.ticket_credit_cents,
             ticketCreditCents: resData.ticket_credit_cents,
           };
+        }
+      } else {
+        // Fallback for older orders without linked_reservation_id
+        const orderUserId = ticket.ticket_orders?.user_id || ticket.user_id;
+        if (orderUserId && ticket.events?.id) {
+          const { data: fallbackResData, error: fallbackResError } = await supabaseClient
+            .from("reservations")
+            .select("party_size, prepaid_min_charge_cents, ticket_credit_cents")
+            .eq("event_id", ticket.events.id)
+            .eq("user_id", orderUserId)
+            .eq("auto_created_from_tickets", true)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (fallbackResError) {
+            logStep("Fallback linked reservation lookup error", { orderUserId, error: fallbackResError.message });
+          }
+
+          if (fallbackResData) {
+            linkedReservation = {
+              partySize: fallbackResData.party_size,
+              minimumChargeCents: fallbackResData.prepaid_min_charge_cents ?? fallbackResData.ticket_credit_cents,
+              ticketCreditCents: fallbackResData.ticket_credit_cents,
+            };
+          }
         }
       }
 
