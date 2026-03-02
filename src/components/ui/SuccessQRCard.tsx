@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
-import { Download, CheckCircle, Calendar, Clock, CreditCard, QrCode as QrCodeIcon, Ticket, Tag, Users } from "lucide-react";
+import { Download, CheckCircle, Calendar, Clock, CreditCard, QrCode as QrCodeIcon, Ticket, Tag, Users, User } from "lucide-react";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 
@@ -28,6 +28,9 @@ interface SuccessQRCardProps {
   expiryDate?: string;
   // For event reservations
   prepaidAmountCents?: number;
+  // Guest info (for individual tickets in group bookings)
+  guestName?: string;
+  guestAge?: number;
   // Actions
   onDownloadQR?: () => void;
   onClose?: () => void;
@@ -107,6 +110,8 @@ export const SuccessQRCard = ({
   purchaseDate,
   expiryDate,
   prepaidAmountCents,
+  guestName,
+  guestAge,
   onDownloadQR,
   onClose,
   onViewDashboard,
