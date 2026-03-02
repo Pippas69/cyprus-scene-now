@@ -65,6 +65,8 @@ export const MyTickets = () => {
     businessName?: string;
     eventCoverImage?: string;
     eventTime?: string;
+    guestName?: string;
+    guestAge?: number;
   } | null>(null);
 
   const { data: tickets, isLoading } = useQuery({
@@ -240,6 +242,8 @@ export const MyTickets = () => {
                       businessName: businessName,
                       eventCoverImage: eventCoverImage || undefined,
                       eventTime: eventTime || undefined,
+                      guestName: (ticket as any).guest_name || undefined,
+                      guestAge: (ticket as any).guest_age || undefined,
                     })}
                   >
                     <QrCode className="h-4 w-4 mr-1" />
