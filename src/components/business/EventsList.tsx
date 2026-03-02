@@ -467,7 +467,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                         className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
                         onClick={() => setCombinedEvent({ id: event.id, title: event.title })}>
                         
-                            <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+                            
                             
                             {t.badgeCombined}
                           </Badge>
