@@ -117,8 +117,8 @@ const translations = {
     pendingSync: 'Εκκρεμείς σαρώσεις',
     syncNow: 'Συγχρονισμός Τώρα',
     minimumCharge: 'Minimum Charge',
+  },
   en: {
-    scanQR: 'Scan QR',
     scanning: 'Scanning...',
     verifying: 'Verifying...',
     startScan: 'Start Scanning',
