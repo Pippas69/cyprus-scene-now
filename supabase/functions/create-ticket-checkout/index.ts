@@ -57,8 +57,8 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail, guests }: CheckoutRequest = await req.json();
-    logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length });
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests }: CheckoutRequest = await req.json();
+    logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length, seatingTypeId });
 
     if (!eventId || !items || items.length === 0) {
       throw new Error("Missing required fields");
