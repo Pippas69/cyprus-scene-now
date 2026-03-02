@@ -1003,6 +1003,23 @@ export default function EventDetail() {
         />
       )}
 
+      {/* Kaliva Ticket + Reservation Flow */}
+      {user && hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
+        <KalivaTicketReservationFlow
+          open={showKalivaFlow}
+          onOpenChange={setShowKalivaFlow}
+          eventId={event.id}
+          eventTitle={event.title}
+          ticketTiers={ticketTiers}
+          onSuccess={(orderId, isFree) => {
+            setShowKalivaFlow(false);
+            if (isFree) {
+              toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
+            }
+          }}
+        />
+      )}
+
       {/* Share Dialog */}
       <ShareDialog
         open={showShareDialog}
