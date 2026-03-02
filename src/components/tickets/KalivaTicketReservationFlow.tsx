@@ -16,7 +16,7 @@ import {
   GlassWater, TableIcon, Crown, Sofa, Users, Shirt,
   Phone, User, MessageSquare, CreditCard,
   ArrowRight, ArrowLeft, Loader2, Info,
-  AlertCircle, Ticket, ExternalLink
+  AlertCircle, Ticket, ExternalLink, Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -96,6 +96,7 @@ const translations = {
     minimumCharge: "Ελάχιστη κατανάλωση τραπεζιού",
     paidAtVenue: "Πληρώνεται στο κατάστημα (η τιμή των εισιτηρίων συμπεριλαμβάνεται στο τελικό ποσό)",
     ticketCost: "Κόστος εισιτηρίων",
+    arrivalHours: "Ώρες άφιξης",
     perPerson: "/ άτομο",
     total: "Σύνολο πληρωμής",
     pay: "Πληρωμή",
@@ -152,6 +153,7 @@ const translations = {
     minimumCharge: "Table minimum charge",
     paidAtVenue: "Paid at venue (ticket price is included in the final amount)",
     ticketCost: "Ticket cost",
+    arrivalHours: "Arrival hours",
     perPerson: "/ person",
     total: "Total payment",
     pay: "Pay",
@@ -214,6 +216,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [guests, setGuests] = useState<GuestInfo[]>([{ name: '', age: '' }]);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+  const [reservationHoursFrom, setReservationHoursFrom] = useState<string | null>(null);
+  const [reservationHoursTo, setReservationHoursTo] = useState<string | null>(null);
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -222,17 +226,23 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   // Min charge
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
 
-  // Fetch seating options
+  // Fetch seating options (only once per eventId, not on every open)
+  const [hasFetched, setHasFetched] = useState<string | null>(null);
   useEffect(() => {
-    if (open && eventId) {
+    if (open && eventId && hasFetched !== eventId) {
       fetchSeatingOptions();
-      setStep(1);
-      setSelectedSeating(null);
-      setGuests([{ name: '', age: '' }]);
+      fetchEventHours();
+      setHasFetched(eventId);
+    }
+  }, [open, eventId]);
+
+  // Only reset checkout state on reopen, not form data
+  useEffect(() => {
+    if (open) {
       setCheckoutUrl(null);
       setRedirectAttempted(false);
     }
-  }, [open, eventId]);
+  }, [open]);
 
   // Scroll to top on step change
   useEffect(() => {
