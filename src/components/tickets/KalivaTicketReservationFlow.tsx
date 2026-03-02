@@ -93,7 +93,7 @@ const translations = {
     specialRequests: "Ειδικά αιτήματα",
     optional: "προαιρετικό",
     minimumCharge: "Ελάχιστη κατανάλωση τραπεζιού",
-    paidAtVenue: "Πληρώνεται στο κατάστημα (η αξία εισιτηρίων πιστώνεται)",
+    paidAtVenue: "Πληρώνεται στο κατάστημα\n(η τιμή των εισιτηρίων συμπεριλαμβάνεται στο τελικό ποσό)",
     ticketCost: "Κόστος εισιτηρίων",
     perPerson: "/ άτομο",
     total: "Σύνολο πληρωμής",
@@ -149,7 +149,7 @@ const translations = {
     specialRequests: "Special requests",
     optional: "optional",
     minimumCharge: "Table minimum charge",
-    paidAtVenue: "Paid at venue (ticket value is credited)",
+    paidAtVenue: "Paid at venue\n(ticket price is included in the final amount)",
     ticketCost: "Ticket cost",
     perPerson: "/ person",
     total: "Total payment",
@@ -485,7 +485,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       {minChargeCents != null && minChargeCents > 0 && (
         <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted border border-border">
           <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground whitespace-pre-line">
             <span className="font-medium text-foreground">{t.minimumCharge}: {formatPrice(minChargeCents)}</span>
             <br />
             {t.paidAtVenue}
@@ -615,7 +615,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         {minChargeCents != null && minChargeCents > 0 && (
           <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/50 border border-border">
             <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground whitespace-pre-line">
               {t.minimumCharge}: <strong className="text-foreground">{formatPrice(minChargeCents)}</strong>
               <br />{t.paidAtVenue}
             </div>
