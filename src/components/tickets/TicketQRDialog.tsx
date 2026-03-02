@@ -5,11 +5,12 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Calendar, Clock, Ticket } from "lucide-react";
+import { Download, FileText, Calendar, Clock, Ticket, Share2, User } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { generateTicketPdf } from "@/lib/ticketPdf";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface TicketQRDialogProps {
   ticket: {
@@ -25,6 +26,8 @@ interface TicketQRDialogProps {
     businessName?: string;
     eventCoverImage?: string;
     eventTime?: string;
+    guestName?: string;
+    guestAge?: number;
   } | null;
   onClose: () => void;
 }
@@ -37,6 +40,12 @@ const t = {
     date: "Ημερομηνία",
     time: "Ώρα",
     ticket: "Εισιτήριο",
+    share: "Κοινοποίηση",
+    shareTitle: "Εισιτήριο ΦΟΜΟ",
+    shareText: "Ορίστε το εισιτήριό σου για",
+    copied: "Ο σύνδεσμος αντιγράφηκε!",
+    guest: "ΚΑΛΕΣΜΕΝΟΣ",
+    age: "ΗΛΙΚΙΑ",
   },
   en: {
     scanAtEntry: "Scan at entry",
@@ -45,6 +54,12 @@ const t = {
     date: "Date",
     time: "Time",
     ticket: "Ticket",
+    share: "Share",
+    shareTitle: "FOMO Ticket",
+    shareText: "Here's your ticket for",
+    copied: "Link copied!",
+    guest: "GUEST",
+    age: "AGE",
   },
 };
 
@@ -74,9 +89,33 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
     if (!qrDataUrl || !ticket) return;
     
     const link = document.createElement("a");
-    link.download = `fomo-qr-${ticket.eventTitle.slice(0, 20)}-${ticket.id.slice(0, 8)}.png`;
+    const guestSuffix = ticket.guestName ? `-${ticket.guestName.replace(/[^a-zA-Z0-9]/g, '')}` : '';
+    link.download = `fomo-qr-${ticket.eventTitle.slice(0, 20)}${guestSuffix}-${ticket.id.slice(0, 8)}.png`;
     link.href = qrDataUrl;
     link.click();
+  };
+
+  const handleShare = async () => {
+    if (!ticket) return;
+    
+    const shareUrl = `${window.location.origin}/ticket-view/${ticket.qrToken}`;
+    const shareTitle = `${text.shareTitle} - ${ticket.eventTitle}`;
+    const shareMessage = `${text.shareText} ${ticket.eventTitle}${ticket.guestName ? ` (${ticket.guestName})` : ''}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareMessage,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled share
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success(text.copied);
+    }
   };
 
   const handleDownloadPdf = async () => {
@@ -90,7 +129,7 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
         tierName: ticket.tierName,
         ticketId: ticket.id,
         qrToken: ticket.qrToken,
-        customerName: ticket.customerName,
+        customerName: ticket.guestName || ticket.customerName,
         purchaseDate: ticket.purchaseDate,
         pricePaid: ticket.pricePaid,
         businessName: ticket.businessName,
@@ -130,6 +169,21 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
             <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">
               {ticket?.eventTitle}
             </h2>
+
+            {/* Guest Name & Age - if available */}
+            {ticket?.guestName && (
+              <div className="bg-[#f0f9ff] rounded-lg p-2 mb-3 flex items-center justify-center gap-3">
+                <User className="h-4 w-4 text-[#3ec3b7]" />
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-[#102b4a]">{ticket.guestName}</p>
+                  {ticket.guestAge && (
+                    <p className="text-[10px] text-[#64748b]">
+                      {text.age}: {ticket.guestAge}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Info Grid - Compact */}
             <div className="grid grid-cols-3 gap-2 mb-3">
@@ -171,7 +225,7 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
               </div>
             )}
 
-            {/* Download Buttons - Compact */}
+            {/* Action Buttons */}
             <div className="flex gap-2 mt-3">
               <Button 
                 variant="outline" 
@@ -190,6 +244,16 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
                 {text.downloadPdf}
               </Button>
             </div>
+
+            {/* Share Button */}
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              className="w-full mt-2 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs"
+            >
+              <Share2 className="h-3 w-3 mr-1.5" />
+              {text.share}
+            </Button>
           </div>
 
         {/* Wave Decoration */}
