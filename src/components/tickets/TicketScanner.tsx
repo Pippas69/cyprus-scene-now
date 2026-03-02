@@ -282,7 +282,7 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
             )}
             <AlertTitle>
               {scanResult.checkedIn 
-                ? text.checkedInSuccess 
+                ? (scanResult.linkedReservation ? text.checkedInWithReservation : text.checkedInSuccess)
                 : scanResult.valid 
                   ? text.validTicket 
                   : text.invalidTicket
@@ -299,6 +299,16 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
                     <p><strong>Price:</strong> €{(scanResult.ticket.tierPrice / 100).toFixed(2)}</p>
                   )}
                   <Badge className="mt-2">{scanResult.ticket.status}</Badge>
+                </div>
+              )}
+
+              {scanResult.linkedReservation && (
+                <div className="mt-3 p-3 border border-primary/30 rounded-lg space-y-1">
+                  <p className="text-sm font-semibold text-primary">{text.reservationActivated}</p>
+                  <p><strong>{text.people}:</strong> {scanResult.linkedReservation.partySize}</p>
+                  {scanResult.linkedReservation.ticketCreditCents != null && scanResult.linkedReservation.ticketCreditCents > 0 && (
+                    <p><strong>{text.minimumCharge}:</strong> <span className="text-primary">€{(scanResult.linkedReservation.ticketCreditCents / 100).toFixed(2)}</span></p>
+                  )}
                 </div>
               )}
             </AlertDescription>
