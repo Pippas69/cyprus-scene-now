@@ -137,9 +137,23 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       const totalReservations = seatingStats.reduce((sum, st) => sum + st.booked, 0);
       const reservationCheckedIn = (reservations || []).filter(r => r.checked_in_at).length;
 
+      // For linked ticket+reservation flows (Kaliva), check-ins are sourced strictly from tickets
+      let isLinkedTicketReservationFlow = false;
+      if (businessId) {
+        const { data: businessSettings } = await supabase
+          .from("businesses")
+          .select("ticket_reservation_linked")
+          .eq("id", businessId)
+          .maybeSingle();
+
+        isLinkedTicketReservationFlow = !!businessSettings?.ticket_reservation_linked;
+      }
+
       // --- Combined ---
       const totalRevenue = ticketRevenue + reservationRevenue;
-      const totalCheckedIn = ticketCheckedIn + reservationCheckedIn;
+      const totalCheckedIn = isLinkedTicketReservationFlow
+        ? ticketCheckedIn
+        : ticketCheckedIn + reservationCheckedIn;
 
       return {
         totalRevenue,
