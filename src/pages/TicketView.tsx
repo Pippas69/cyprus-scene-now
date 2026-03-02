@@ -19,6 +19,7 @@ const t = {
     copy: "Αντιγραφή",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
     notFound: "Το εισιτήριο δεν βρέθηκε",
+    used: "Χρησιμοποιημένο",
   },
   en: {
     name: "NAME",
@@ -28,6 +29,7 @@ const t = {
     copy: "Copy",
     copied: "Link copied!",
     notFound: "Ticket not found",
+    used: "Used",
   },
 };
 
@@ -45,17 +47,17 @@ const TicketView = () => {
     if (!token) return;
 
     const fetchTicket = async () => {
-      const { data } = await supabase
-        .from("tickets")
-        .select("id, qr_code_token, guest_name, guest_age, status, ticket_tiers(name), events(title, start_at, location, businesses(name))")
-        .eq("qr_code_token", token)
-        .single();
+      // Use the security definer RPC function — works without authentication
+      const { data, error } = await supabase.rpc("get_ticket_by_token", {
+        p_token: token,
+      });
 
-      setTicket(data);
+      const ticketData = data && data.length > 0 ? data[0] : null;
+      setTicket(ticketData);
       setLoading(false);
 
-      if (data?.qr_code_token) {
-        QRCode.toDataURL(data.qr_code_token, {
+      if (ticketData?.qr_code_token) {
+        QRCode.toDataURL(ticketData.qr_code_token, {
           width: 512,
           margin: 2,
           color: { dark: "#102b4a", light: "#ffffff" },
@@ -76,24 +78,29 @@ const TicketView = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><OceanLoader size="lg" /></div>;
   if (!ticket) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">{text.notFound}</div>;
 
-  const event = ticket.events as any;
-  const tier = ticket.ticket_tiers as any;
-  const businessName = event?.businesses?.name;
-  const eventDateObj = event?.start_at ? new Date(event.start_at) : null;
+  const eventDateObj = ticket.event_start_at ? new Date(ticket.event_start_at) : null;
   const displayName = ticket.guest_name || "-";
   const displayDate = eventDateObj ? format(eventDateObj, "EEE, d MMM", { locale: dateLocale }) : "-";
   const displayTime = eventDateObj ? format(eventDateObj, "HH:mm", { locale: dateLocale }) : "-";
+  const isUsed = ticket.status === "used";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full max-w-sm mx-auto">
         <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
           <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
-          {businessName && <p className="text-white/70 text-[10px] mt-0.5">by {businessName}</p>}
+          {ticket.business_name && <p className="text-white/70 text-[10px] mt-0.5">by {ticket.business_name}</p>}
         </div>
 
         <div className="bg-white dark:bg-white px-4 py-3">
-          <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">{event?.title}</h2>
+          <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">{ticket.event_title}</h2>
+
+          {isUsed && (
+            <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-orange-50 rounded-lg">
+              <Ticket className="h-4 w-4 text-orange-500" />
+              <p className="text-sm font-semibold text-orange-700">{text.used}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
@@ -117,7 +124,7 @@ const TicketView = () => {
 
           {qrDataUrl && (
             <div className="flex flex-col items-center">
-              <div className="p-2 bg-white rounded-xl shadow-lg border-2 border-[#3ec3b7]">
+              <div className={`p-2 bg-white rounded-xl shadow-lg border-2 ${isUsed ? 'border-orange-300 opacity-50' : 'border-[#3ec3b7]'}`}>
                 <img src={qrDataUrl} alt="Ticket QR Code" className="w-44 h-44" />
               </div>
               <p className="text-[10px] text-[#64748b] mt-2">{text.scanAtEntry}</p>
