@@ -130,7 +130,7 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
   format(eventDateObj, "HH:mm", { locale: dateLocale }) :
   "";
   const displayName = ticket?.guestName || ticket?.customerName || "-";
-  const displayDateTime = eventDateObj ? `${formattedDate} • ${formattedTime}` : "-";
+  const displayDateTime = eventDateObj ? `${formattedDate}  ${formattedTime}` : "-";
 
   return (
     <Dialog open={!!ticket} onOpenChange={() => onClose()}>
