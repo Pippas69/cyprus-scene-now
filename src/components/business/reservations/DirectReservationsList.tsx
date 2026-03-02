@@ -46,6 +46,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isTicketLinked, setIsTicketLinked] = useState(false);
 
   const text = {
     el: {
@@ -115,7 +116,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
   const t = text[language];
 
   useEffect(() => {
-    fetchReservations();
+    checkBusinessFlags().then(() => fetchReservations());
     const channel = supabase.
     channel('direct_reservations_changes').
     on(
@@ -137,22 +138,56 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshNonce]);
 
+  const checkBusinessFlags = async () => {
+    const { data } = await supabase
+      .from('businesses')
+      .select('ticket_reservation_linked')
+      .eq('id', businessId)
+      .single();
+    const linked = !!data?.ticket_reservation_linked;
+    setIsTicketLinked(linked);
+    return linked;
+  };
+
   const fetchReservations = async () => {
     setLoading(true);
     try {
-      // Fetch direct reservations (event_id is null)
-      const { data, error } = await supabase.
-      from('reservations').
-      select(`
+      // Check current flag state
+      const { data: bizData } = await supabase
+        .from('businesses')
+        .select('ticket_reservation_linked')
+        .eq('id', businessId)
+        .single();
+      const linked = !!bizData?.ticket_reservation_linked;
+
+      // Build query
+      let query = supabase
+        .from('reservations')
+        .select(`
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents,
           profiles(name, email)
-        `).
-      eq('business_id', businessId).
-      is('event_id', null).
-      order('preferred_time', { ascending: false }); // Most recent first
+        `)
+        .eq('business_id', businessId);
+
+      if (linked) {
+        // Kaliva: only event-linked reservations (auto-created from tickets)
+        query = query.not('event_id', 'is', null);
+      } else {
+        // Normal: only direct reservations (no event)
+        query = query.is('event_id', null);
+      }
+
+      // Sort: alphabetical for Kaliva, by time for others
+      if (linked) {
+        query = query.order('reservation_name', { ascending: true });
+      } else {
+        query = query.order('preferred_time', { ascending: false });
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -179,33 +214,36 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce }: D
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
 
-      // Sort: pending/confirmed first (by most recent), then completed/cancelled/no-show at the bottom
-      const isCompleted = (r: DirectReservation) => {
-        if (r.checked_in_at) return true; // Checked in
-        if (r.status === 'cancelled') return true; // Cancelled
-        // No-show check
-        if (r.status === 'accepted' && r.preferred_time) {
-          const slotTime = new Date(r.preferred_time);
-          const graceEnd = addMinutes(slotTime, 15);
-          if (isAfter(new Date(), graceEnd)) return true;
-        }
-        return false;
-      };
+      if (linked) {
+        // Kaliva mode: already sorted alphabetically by DB, just set
+        setReservations(enrichedData);
+      } else {
+        // Normal mode: pending first, then completed
+        const isCompleted = (r: DirectReservation) => {
+          if (r.checked_in_at) return true;
+          if (r.status === 'cancelled') return true;
+          if (r.status === 'accepted' && r.preferred_time) {
+            const slotTime = new Date(r.preferred_time);
+            const graceEnd = addMinutes(slotTime, 15);
+            if (isAfter(new Date(), graceEnd)) return true;
+          }
+          return false;
+        };
 
-      const pendingReservations = enrichedData.filter((r) => !isCompleted(r));
-      const completedReservations = enrichedData.filter((r) => isCompleted(r));
+        const pendingReservations = enrichedData.filter((r) => !isCompleted(r));
+        const completedReservations = enrichedData.filter((r) => isCompleted(r));
 
-      // Sort each group by preferred_time descending (most recent first)
-      const sortByTime = (a: DirectReservation, b: DirectReservation) => {
-        const timeA = a.preferred_time ? new Date(a.preferred_time).getTime() : 0;
-        const timeB = b.preferred_time ? new Date(b.preferred_time).getTime() : 0;
-        return timeB - timeA; // Descending
-      };
+        const sortByTime = (a: DirectReservation, b: DirectReservation) => {
+          const timeA = a.preferred_time ? new Date(a.preferred_time).getTime() : 0;
+          const timeB = b.preferred_time ? new Date(b.preferred_time).getTime() : 0;
+          return timeB - timeA;
+        };
 
-      pendingReservations.sort(sortByTime);
-      completedReservations.sort(sortByTime);
+        pendingReservations.sort(sortByTime);
+        completedReservations.sort(sortByTime);
 
-      setReservations([...pendingReservations, ...completedReservations]);
+        setReservations([...pendingReservations, ...completedReservations]);
+      }
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {
