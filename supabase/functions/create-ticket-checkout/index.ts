@@ -12,11 +12,17 @@ interface TicketItem {
   quantity: number;
 }
 
+interface GuestData {
+  name: string;
+  age: number;
+}
+
 interface CheckoutRequest {
   eventId: string;
   items: TicketItem[];
   customerName: string;
   customerEmail: string;
+  guests?: GuestData[];
 }
 
 const logStep = (step: string, details?: unknown) => {
@@ -48,8 +54,8 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail }: CheckoutRequest = await req.json();
-    logStep("Request data", { eventId, items, customerName, customerEmail });
+    const { eventId, items, customerName, customerEmail, guests }: CheckoutRequest = await req.json();
+    logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length });
 
     if (!eventId || !items || items.length === 0) {
       throw new Error("Missing required fields");
@@ -205,17 +211,22 @@ Deno.serve(async (req) => {
         throw new Error("Failed to create order: " + orderError?.message);
       }
 
-      // Create individual tickets
+      // Create individual tickets with guest info if available
       const ticketsToCreate = [];
+      let guestIdx = 0;
       for (const item of items) {
         for (let i = 0; i < item.quantity; i++) {
+          const guestInfo = guests?.[guestIdx];
           ticketsToCreate.push({
             order_id: order.id,
             tier_id: item.tierId,
             event_id: eventId,
             user_id: user.id,
             status: "valid",
+            guest_name: guestInfo?.name || null,
+            guest_age: guestInfo?.age || null,
           });
+          guestIdx++;
         }
       }
 
@@ -419,6 +430,7 @@ Deno.serve(async (req) => {
         event_id: eventId,
         user_id: user.id,
         ticket_breakdown: JSON.stringify(ticketBreakdown),
+        guests: guests ? JSON.stringify(guests) : undefined,
       },
     };
     

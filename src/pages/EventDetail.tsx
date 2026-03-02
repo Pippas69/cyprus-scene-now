@@ -812,6 +812,7 @@ export default function EventDetail() {
                 eventId={event.id}
                 eventTitle={event.title}
                 tiers={ticketTiers}
+                isLinkedReservation={!!(event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation'}
                 onSuccess={(orderId, isFree) => {
                   if (isFree) {
                     toast.success(language === 'el' 
