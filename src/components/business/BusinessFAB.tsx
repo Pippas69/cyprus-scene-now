@@ -24,13 +24,13 @@ export function BusinessFAB() {
   const navigate = useNavigate();
   const location = useLocation();
   const { language } = useLanguage();
-  const { categories } = useBusinessOwner();
+  const { categories, isLoading } = useBusinessOwner();
   const t = translations[language];
 
   if (location.pathname === "/dashboard-business/settings") return null;
 
-  const showOffers = categories.length === 0 || categories.some(
-    cat => !noOfferCategories.includes(cat.toLowerCase())
+  const showOffers = !isLoading && categories.length > 0 && !categories.some(
+    cat => noOfferCategories.includes(cat.toLowerCase())
   );
 
   return (
