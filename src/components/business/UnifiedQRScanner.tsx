@@ -159,6 +159,7 @@ const translations = {
     pendingSync: 'Pending scans',
     syncNow: 'Sync Now',
     minimumCharge: 'Minimum Charge',
+  },
 };
 
 const getTypeIcon = (type: QRType) => {
