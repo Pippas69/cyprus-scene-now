@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
 import { EventReservationOverview } from "./EventReservationOverview";
+import { CombinedTicketReservationOverview } from "./CombinedTicketReservationOverview";
 
 
 interface EventsListProps {
@@ -53,6 +54,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null);
   const [ticketSalesEvent, setTicketSalesEvent] = useState<{ id: string; title: string } | null>(null);
   const [reservationEvent, setReservationEvent] = useState<{ id: string; title: string } | null>(null);
+  const [combinedEvent, setCombinedEvent] = useState<{ id: string; title: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
 
@@ -96,6 +98,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       filterFreeEntry: "Δωρεάν Είσοδος",
       badgeTicket: "Με Εισιτήριο",
       badgeReservation: "Κράτηση Τραπεζιού",
+      badgeCombined: "Εισιτήριο & Κράτηση",
+      combinedTitle: "Εισιτήριο & Κράτηση",
       badgeFreeEntry: "Δωρεάν Είσοδος",
       expired: "Ληγμένες",
       pause: "Παύση",
@@ -133,6 +137,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
       filterFreeEntry: "Free Entry",
       badgeTicket: "With Ticket",
       badgeReservation: "Table Reservation",
+      badgeCombined: "Ticket & Reservation",
+      combinedTitle: "Ticket & Reservation",
       badgeFreeEntry: "Free Entry",
       expired: "Expired",
       pause: "Pause",
