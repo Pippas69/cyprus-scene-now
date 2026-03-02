@@ -81,27 +81,28 @@ export function useTicketAnalytics(businessId: string, dateRange?: DateRange) {
 
       if (ticketsError) throw ticketsError;
 
-      // Calculate totals
+      // Calculate totals - use actual ticket count (source of truth) instead of quantity_sold
       const totalRevenue = orders?.reduce((sum, o) => sum + o.subtotal_cents, 0) || 0;
       const totalCommission = orders?.reduce((sum, o) => sum + o.commission_cents, 0) || 0;
       const netRevenue = totalRevenue - totalCommission;
-      const ticketsSold = tiers?.reduce((sum, t) => sum + t.quantity_sold, 0) || 0;
+      const validTickets = tickets?.filter((t) => ["valid", "used"].includes(t.status)) || [];
+      const ticketsSold = validTickets.length;
       const totalTickets = tiers?.reduce((sum, t) => sum + t.quantity_total, 0) || 0;
       const checkedIn = tickets?.filter((t) => t.status === "used").length || 0;
       const checkInRate = ticketsSold > 0 ? (checkedIn / ticketsSold) * 100 : 0;
       const avgTicketPrice = ticketsSold > 0 ? totalRevenue / ticketsSold : 0;
 
-      // Event breakdown
+      // Event breakdown - use actual ticket count
       const eventBreakdown = events.map((event) => {
         const eventOrders = orders?.filter((o) => o.event_id === event.id) || [];
         const eventTickets = tickets?.filter((t) => t.event_id === event.id) || [];
-        const eventTiers = tiers?.filter((t) => t.event_id === event.id) || [];
+        const eventValidTickets = eventTickets.filter((t) => ["valid", "used"].includes(t.status));
 
         return {
           eventId: event.id,
           eventTitle: event.title,
           revenue: eventOrders.reduce((sum, o) => sum + o.subtotal_cents, 0),
-          ticketsSold: eventTiers.reduce((sum, t) => sum + t.quantity_sold, 0),
+          ticketsSold: eventValidTickets.length,
           checkedIn: eventTickets.filter((t) => t.status === "used").length,
         };
       }).filter((e) => e.ticketsSold > 0 || e.revenue > 0);
