@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isValidPhone } from "@/lib/phoneValidation";
 import { 
   GlassWater, TableIcon, Crown, Sofa, Users, Shirt, 
   Clock, Phone, User, MessageSquare, CreditCard, 
@@ -336,7 +337,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const canProceedToStep3 = reservationName.trim().length >= 2 && price !== null;
+  const isPhoneValid = phoneNumber.trim() === '' || isValidPhone(phoneNumber);
+  const canProceedToStep3 = reservationName.trim().length >= 2 && price !== null && isPhoneValid;
 
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;

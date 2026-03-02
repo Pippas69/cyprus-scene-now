@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isValidPhone } from "@/lib/phoneValidation";
 import {
   GlassWater, TableIcon, Crown, Sofa, Users, Shirt,
   Phone, User, MessageSquare, CreditCard,
@@ -328,8 +329,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
-  const isValidPhone = /^\+?\d[\d\s\-]{6,}$/.test(phoneNumber.trim());
-  const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone;
+  const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone(phoneNumber);
 
   const handleCheckout = async () => {
     if (!allGuestsFilled) {
