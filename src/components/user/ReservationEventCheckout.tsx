@@ -346,7 +346,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
   const isPhoneValid = phoneNumber.trim() === '' || isValidPhone(phoneNumber);
-  const canProceedToStep3 = reservationName.trim().length >= 2 && price !== null && isPhoneValid;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
+  const canProceedToStep3 = reservationName.trim().length >= 2 && price !== null && isPhoneValid && isEmailValid;
 
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
