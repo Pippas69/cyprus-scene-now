@@ -36,7 +36,7 @@ const text = {
     title: 'Διαχείριση Διαθεσιμότητας',
     description: 'Διαχειριστείτε τη διαθεσιμότητα σε πραγματικό χρόνο',
     refresh: 'Ανανέωση',
-    tables: 'ΤΡΑΠΕΖΙΑ',
+    tables: 'Τραπέζια',
     tickets: 'Εισιτήρια',
     open: 'Ανοιχτό',
     closed: 'Κλειστό',
@@ -256,6 +256,7 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
                 {event.seatingTypes.length > 0 &&
             <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <Armchair className="h-3.5 w-3.5" />
                       {t.tables}
                     </div>
                     <div className="space-y-2">
@@ -300,10 +301,10 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
                 {/* Ticket tiers toggles */}
                 {event.ticketTiers.length > 0 &&
             <div className="space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      <Ticket className="h-3.5 w-3.5" />
-                      {t.tickets}
-                    </div>
+                    
+
+
+              
                     <div className="space-y-2">
                       {event.ticketTiers.map((tt) => {
                   const remaining = Math.max(tt.quantity_total - tt.actualSold, 0);
