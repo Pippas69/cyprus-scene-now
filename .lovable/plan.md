@@ -1,20 +1,36 @@
 
-## Υλοποίηση - Ολοκληρώθηκε ✅
 
-### Μέρος 1: Αφαίρεση Feed & Map ✅
-- Αφαιρέθηκαν Feed/Map από BusinessSidebar και DashboardBusiness routes
-- Τα Analytics είναι πλέον η default σελίδα του dashboard
+## Σχέδιο: Ticket-only events → Badge + Dialog flow (όπως το Kaliva, αλλά απλοποιημένο)
 
-### Μέρος 2: Δυναμικό Sidebar ✅
-- useBusinessOwner επιστρέφει πλέον και categories
-- Clubs, Events, Theatre, Music, Dance, Kids → δεν βλέπουν Προσφορές
-- Bars, Pubs, Fine/Casual Dining → βλέπουν τα πάντα
+### Τι αλλάζει
 
-### Μέρος 3: Ticket → Auto Reservation ✅
-- DB: linked_reservation_id σε ticket_orders, ticket_credit_cents + auto_created_from_tickets σε reservations
-- process-ticket-payment: αυτόματη δημιουργία reservation μετά πληρωμή ticket_and_reservation event
-- validate-qr: auto check-in linked reservation κατά scan εισιτηρίου
-- EventCreationForm: hint για ticket_and_reservation
-- EventDetail: αντί ξεχωριστού CTA κράτησης, info message ότι το εισιτήριο δημιουργεί αυτόματα κράτηση
-- QR Scanner: εμφάνιση linked reservation info (party size, credit)
-- DirectReservationsList: badge "Μέσω Εισιτηρίων" με πίστωση
+Σήμερα, τα ticket-only events εμφανίζουν ένα ολόκληρο `TicketPurchaseCard` inline στη σελίδα. Ο χρήστης θέλει αντ' αυτού ένα **badge/button** που ανοίγει **dialog** με τη διαδικασία αγοράς — ίδια λογική με το Kaliva αλλά χωρίς:
+- Επιλογή θέσης (seating)
+- Ηλικίες
+- Τηλέφωνο / ειδικά αιτήματα
+- Minimum charge
+
+### Βήματα υλοποίησης
+
+**1. Νέο component: `TicketPurchaseFlow`**
+- Dialog/Drawer (mobile-aware, όπως το Kaliva)
+- Περιεχόμενο σε 2 βήματα:
+  - **Βήμα 1**: Επιλογή εισιτηρίων (tier selector με +/- κουμπιά), εισαγωγή ονόματος ανά εισιτήριο
+  - **Βήμα 2**: Email αγοραστή, σύνοψη, κουμπί "Λήψη Εισιτηρίων" / πληρωμής
+- Κάθε εισιτήριο → ξεχωριστό QR code με το αντίστοιχο όνομα (ήδη υποστηρίζεται στο `create-ticket-checkout`)
+- Στέλνει `guests` array με `name` μόνο (age = 0 ή null) στο edge function
+
+**2. Αλλαγή στο `EventDetail.tsx`**
+- Αντί για `<TicketPurchaseCard>` inline, εμφανίζεται ένα **`RippleButton`** (badge-style) με icon εισιτηρίου
+- Πατώντας το, ανοίγει το νέο `TicketPurchaseFlow` dialog
+- Ισχύει για **κάθε** ticket-only event (και ticket_and_reservation χωρίς `ticket_reservation_linked`)
+
+**3. Edge function**: Καμία αλλαγή — ήδη δέχεται `guests` array
+
+### Τεχνικές λεπτομέρειες
+
+- Το νέο component θα χρησιμοποιεί `Dialog`/`Drawer` based on `useIsMobile()` (ίδιο pattern με Kaliva)
+- Guest fields: μόνο **Όνομα** (Input) — χωρίς ηλικία
+- Ο αριθμός guest fields συγχρονίζεται αυτόματα με το σύνολο εισιτηρίων
+- Η υπάρχουσα `TicketPurchaseCard` παραμένει ως component αλλά δεν χρησιμοποιείται πλέον inline στο EventDetail (μπορεί να χρειαστεί για embedded χρήσεις)
+
