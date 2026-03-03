@@ -630,7 +630,7 @@ export default function EventDetail() {
               )}
 
               {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
-              {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
+              {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
                 <div className="w-full space-y-1">
                   {kalivaFullySoldOut ? (
                     <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
@@ -891,7 +891,7 @@ export default function EventDetail() {
             )}
 
             {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
-            {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
+            {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
               <div className="w-full space-y-1">
                 {kalivaFullySoldOut ? (
                   <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
