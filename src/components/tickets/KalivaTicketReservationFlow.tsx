@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
 import {
   GlassWater, TableIcon, Crown, Sofa, Users, Shirt,
-  Phone, User, MessageSquare, CreditCard,
+  Phone, User, MessageSquare, CreditCard, Mail,
   ArrowRight, ArrowLeft, Loader2, Info,
   AlertCircle, Ticket, ExternalLink, Clock
 } from "lucide-react";
