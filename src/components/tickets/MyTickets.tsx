@@ -67,6 +67,10 @@ export const MyTickets = () => {
     eventTime?: string;
     guestName?: string;
     guestAge?: number;
+    seatZone?: string;
+    seatRow?: string;
+    seatNumber?: number;
+    ticketCode?: string;
   } | null>(null);
 
   const { data: tickets, isLoading } = useQuery({
