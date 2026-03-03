@@ -316,13 +316,17 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
 
         const endAt = si.end_at || new Date(si.start_at.getTime() + durationMinutes * 60 * 1000);
 
+        // Fetch venue info for location
+        const { data: venueInfo } = await supabase.from('venues').select('name, address, city').eq('id', si.venue_id).single();
+        const venueLocation = venueInfo ? `${venueInfo.name}, ${venueInfo.address || ''}, ${venueInfo.city || ''}`.replace(/, ,/g, ',').replace(/,\s*$/, '') : 'Venue TBD';
+
         // Create a linked event
         const { data: linkedEvent, error: eventErr } = await supabase.from('events').insert({
           business_id: businessId,
           title: title.trim(),
           description: description.trim(),
-          location: '', // will be filled from venue
-          venue_name: null,
+          location: venueLocation,
+          venue_name: venueInfo?.name || null,
           start_at: si.start_at.toISOString(),
           end_at: endAt.toISOString(),
           cover_image_url: coverImageUrl,
