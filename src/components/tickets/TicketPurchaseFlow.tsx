@@ -36,6 +36,10 @@ interface TicketPurchaseFlowProps {
   eventTitle: string;
   ticketTiers: TicketTier[];
   onSuccess?: (orderId: string, isFree: boolean) => void;
+  // Theatre/Performance seat selection props
+  venueId?: string;
+  showInstanceId?: string;
+  eventDate?: string;
 }
 
 const translations = {
