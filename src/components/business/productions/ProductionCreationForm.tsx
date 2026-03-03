@@ -237,9 +237,10 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
 
   // Validation
   const validate = (): string | null => {
-    if (!title.trim() || !description.trim()) return t.allRequired;
+    if (!title.trim()) return language === 'el' ? 'Συμπληρώστε τον τίτλο' : 'Please fill in the title';
+    if (!description.trim()) return language === 'el' ? 'Συμπληρώστε την περιγραφή' : 'Please fill in the description';
     if (wordsRemaining < 0) return language === 'el' ? 'Η περιγραφή υπερβαίνει τις 100 λέξεις' : 'Description exceeds 100 words';
-    if (!coverImage) return t.allRequired;
+    if (!coverImage) return language === 'el' ? 'Προσθέστε εικόνα κάλυψης' : 'Please add a cover image';
     if (showInstances.length === 0) return t.addShowFirst;
     for (const si of showInstances) {
       if (!si.venue_id) return t.selectVenue;
