@@ -543,7 +543,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={scrollRef} className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent ref={scrollRef} className={cn("max-h-[90vh] overflow-y-auto", hasSeating && step === STEP_SEATS ? "max-w-2xl" : "max-w-md")}>
         <DialogHeader>
           <DialogTitle>{t.title}</DialogTitle>
           <DialogDescription>{eventTitle}</DialogDescription>
