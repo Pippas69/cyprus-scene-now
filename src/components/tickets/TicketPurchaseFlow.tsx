@@ -127,10 +127,18 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   // Whether this is a seated performance event
   const hasSeating = !!(venueId && showInstanceId);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+  // For seated events: step 1=seats, 2=tickets+names, 3=checkout
+  // For non-seated: step 1=tickets+names, 2=checkout
+  const STEP_SEATS = hasSeating ? 1 : -1;
+  const STEP_TICKETS = hasSeating ? 2 : 1;
+  const STEP_CHECKOUT = hasSeating ? 3 : 2;
+  const TOTAL_STEPS = hasSeating ? 3 : 2;
+
+  // Seat selection state
+  const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
 
   // State
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(hasSeating ? STEP_SEATS : 1);
   const [submitting, setSubmitting] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
