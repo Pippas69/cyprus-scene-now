@@ -142,6 +142,7 @@ const translations = {
     phone: "Phone number",
     email: "Email",
     emailPlaceholder: "example@email.com",
+    arrivalHours: "Arrival hours",
     specialRequests: "Special requests",
     optional: "optional",
     summary: "Reservation Summary",
