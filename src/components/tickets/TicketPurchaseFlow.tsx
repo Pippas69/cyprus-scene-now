@@ -411,16 +411,30 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     </div>
   );
 
+  const renderSeatStep = () => {
+    if (!hasSeating || !venueId || !showInstanceId) return null;
+    return (
+      <SeatSelectionStep
+        venueId={venueId}
+        showInstanceId={showInstanceId}
+        maxSeats={Math.max(totalTickets, 10)}
+        selectedSeats={selectedSeats}
+        onSeatToggle={handleSeatToggle}
+        eventTitle={eventTitle}
+        eventDate={eventDate || ''}
+      />
+    );
+  };
+
   const renderStepContent = () => {
-    switch (step) {
-      case 1: return renderStep1();
-      case 2: return renderStep2();
-      default: return null;
-    }
+    if (step === STEP_SEATS && hasSeating) return renderSeatStep();
+    if (step === STEP_TICKETS) return renderStep1();
+    if (step === STEP_CHECKOUT) return renderStep2();
+    return null;
   };
 
   const renderNavigation = () => {
-    if (step === 2 && checkoutUrl) {
+    if (step === STEP_CHECKOUT && checkoutUrl) {
       return (
         <div className="w-full space-y-3 pt-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
@@ -443,19 +457,25 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       );
     }
 
+    const isFirstStep = step === (hasSeating ? STEP_SEATS : STEP_TICKETS);
+    const isLastStep = step === STEP_CHECKOUT;
+    const canProceed = step === STEP_SEATS ? canProceedFromSeats
+      : step === STEP_TICKETS ? canProceedToCheckout
+      : true;
+
     return (
       <div className="flex justify-between pt-4">
-        {step > 1 ? (
+        {!isFirstStep ? (
           <Button variant="outline" onClick={() => setStep(step - 1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t.back}
           </Button>
         ) : <div />}
 
-        {step < 2 ? (
+        {!isLastStep ? (
           <Button
-            onClick={() => setStep(2)}
-            disabled={!canProceedToStep2}
+            onClick={() => setStep(step + 1)}
+            disabled={!canProceed}
           >
             {t.next}
             <ArrowRight className="h-4 w-4 ml-2" />
@@ -475,14 +495,22 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
+  const stepLabels = hasSeating
+    ? [t.steps.seats, t.steps.tickets, t.steps.checkout]
+    : [t.steps.tickets, t.steps.checkout];
+  const firstStep = hasSeating ? STEP_SEATS : STEP_TICKETS;
+
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
-      {[1, 2].map(s => (
-        <div key={s} className={cn(
-          "w-2 h-2 rounded-full transition-colors",
-          s === step ? "bg-primary w-4" : s < step ? "bg-primary/50" : "bg-muted"
-        )} />
-      ))}
+      {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
+        const s = firstStep + i;
+        return (
+          <div key={s} className={cn(
+            "w-2 h-2 rounded-full transition-colors",
+            s === step ? "bg-primary w-4" : s < step ? "bg-primary/50" : "bg-muted"
+          )} />
+        );
+      })}
     </div>
   );
 
