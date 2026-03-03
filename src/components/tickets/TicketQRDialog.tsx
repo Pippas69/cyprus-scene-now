@@ -126,7 +126,11 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
         customerName: ticket.guestName || ticket.customerName,
         purchaseDate: ticket.purchaseDate,
         pricePaid: ticket.pricePaid,
-        businessName: ticket.businessName
+        businessName: ticket.businessName,
+        seatZone: ticket.seatZone,
+        seatRow: ticket.seatRow,
+        seatNumber: ticket.seatNumber,
+        ticketCode: ticket.ticketCode,
       });
     } catch (err) {
       console.error("PDF generation error:", err);
