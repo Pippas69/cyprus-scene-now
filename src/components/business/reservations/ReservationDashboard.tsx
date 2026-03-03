@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReservationSlotManager } from './ReservationSlotManager';
 import { ReservationStaffControls } from './ReservationStaffControls';
+import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -87,7 +88,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         </TabsContent>
 
         <TabsContent value="staff" className="mt-4">
-          <ReservationStaffControls businessId={businessId} language={language} />
+          {isTicketLinked ? (
+            <KalivaStaffControls businessId={businessId} language={language} />
+          ) : (
+            <ReservationStaffControls businessId={businessId} language={language} />
+          )}
         </TabsContent>
 
         {!isTicketLinked && (

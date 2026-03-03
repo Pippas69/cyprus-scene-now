@@ -3280,6 +3280,7 @@ export type Database = {
           event_id: string
           id: string
           no_show_policy: string | null
+          paused: boolean
           seating_type: string
           slots_booked: number
           updated_at: string | null
@@ -3292,6 +3293,7 @@ export type Database = {
           event_id: string
           id?: string
           no_show_policy?: string | null
+          paused?: boolean
           seating_type: string
           slots_booked?: number
           updated_at?: string | null
@@ -3304,6 +3306,7 @@ export type Database = {
           event_id?: string
           id?: string
           no_show_policy?: string | null
+          paused?: boolean
           seating_type?: string
           slots_booked?: number
           updated_at?: string | null
