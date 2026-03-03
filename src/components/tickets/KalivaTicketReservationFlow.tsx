@@ -217,6 +217,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [partySize, setPartySize] = useState(1);
   const [guests, setGuests] = useState<GuestInfo[]>([{ name: '', age: '' }]);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
   const [reservationHoursFrom, setReservationHoursFrom] = useState<string | null>(null);
   const [reservationHoursTo, setReservationHoursTo] = useState<string | null>(null);

@@ -226,6 +226,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [partySize, setPartySize] = useState(minPartySize);
   const [reservationName, setReservationName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
   // Fetch seating options (once per event)
