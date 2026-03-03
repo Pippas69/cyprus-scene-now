@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
 import { 
   GlassWater, TableIcon, Crown, Sofa, Users, Shirt, 
-  Clock, Phone, User, MessageSquare, CreditCard, 
+  Clock, Phone, User, MessageSquare, CreditCard, Mail,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, Euro,
   AlertCircle, Calendar
 } from "lucide-react";
@@ -83,6 +83,8 @@ const translations = {
     prepaidAmount: "Ελάχιστη Προπληρωμή",
     name: "Όνομα κράτησης",
     phone: "Τηλέφωνο",
+    email: "Email",
+    emailPlaceholder: "example@email.com",
     arrivalHours: "Ώρες άφιξης",
     specialRequests: "Ειδικά αιτήματα",
     optional: "προαιρετικό",
@@ -138,6 +140,8 @@ const translations = {
     prepaidAmount: "Prepaid Minimum Charge",
     name: "Reservation name",
     phone: "Phone number",
+    email: "Email",
+    emailPlaceholder: "example@email.com",
     arrivalHours: "Arrival hours",
     specialRequests: "Special requests",
     optional: "optional",
@@ -222,6 +226,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [partySize, setPartySize] = useState(minPartySize);
   const [reservationName, setReservationName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
   // Fetch seating options (once per event)
@@ -315,6 +320,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           party_size: partySize,
           reservation_name: reservationName,
           phone_number: phoneNumber,
+          customer_email: customerEmail.trim() || null,
           special_requests: specialRequests || null,
         },
       });
@@ -467,6 +473,22 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="+357 99 123456"
+                className="h-9 text-sm"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1">
+              <Label htmlFor="email" className="flex items-center gap-2 text-sm">
+                <Mail className="h-3.5 w-3.5" />
+                {t.email}
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder={t.emailPlaceholder}
                 className="h-9 text-sm"
               />
             </div>

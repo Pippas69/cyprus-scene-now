@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
 import {
   GlassWater, TableIcon, Crown, Sofa, Users, Shirt,
-  Phone, User, MessageSquare, CreditCard,
+  Phone, User, MessageSquare, CreditCard, Mail,
   ArrowRight, ArrowLeft, Loader2, Info,
   AlertCircle, Ticket, ExternalLink, Clock
 } from "lucide-react";
@@ -91,7 +91,8 @@ const translations = {
     name: "Όνομα",
     age: "Ηλικία",
     phone: "Τηλέφωνο",
-    specialRequests: "Ειδικά αιτήματα",
+    email: "Email",
+    emailPlaceholder: "example@email.com",
     optional: "προαιρετικό",
     minimumCharge: "Ελάχιστη κατανάλωση τραπεζιού",
     paidAtVenue: "Πληρώνεται στο κατάστημα (η τιμή των εισιτηρίων συμπεριλαμβάνεται στο τελικό ποσό)",
@@ -148,7 +149,8 @@ const translations = {
     name: "Name",
     age: "Age",
     phone: "Phone number",
-    specialRequests: "Special requests",
+    email: "Email",
+    emailPlaceholder: "example@email.com",
     optional: "optional",
     minimumCharge: "Table minimum charge",
     paidAtVenue: "Paid at venue (ticket price is included in the final amount)",
@@ -215,6 +217,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [partySize, setPartySize] = useState(1);
   const [guests, setGuests] = useState<GuestInfo[]>([{ name: '', age: '' }]);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
   const [reservationHoursFrom, setReservationHoursFrom] = useState<string | null>(null);
   const [reservationHoursTo, setReservationHoursTo] = useState<string | null>(null);
@@ -390,7 +393,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         eventId,
         items: [{ tierId: ticketTier.id, quantity: partySize }],
         customerName: guests[0].name.trim(),
-        customerEmail: user.email,
+        customerEmail: customerEmail.trim() || user.email,
         customerPhone: phoneNumber.trim() || null,
         specialRequests: specialRequests.trim() || null,
         seatingTypeId: selectedSeating?.id || null,
@@ -565,6 +568,21 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           placeholder="+357 99 123456"
+          className="h-9 text-sm"
+        />
+      </div>
+
+      {/* Email */}
+      <div className="space-y-1">
+        <Label className="flex items-center gap-2 text-sm">
+          <Mail className="h-3.5 w-3.5" />
+          {t.email}
+        </Label>
+        <Input
+          type="email"
+          value={customerEmail}
+          onChange={(e) => setCustomerEmail(e.target.value)}
+          placeholder={t.emailPlaceholder}
           className="h-9 text-sm"
         />
       </div>
