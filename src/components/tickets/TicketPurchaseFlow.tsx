@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
+import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
+import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
 
 interface TicketTier {
   id: string;
@@ -34,12 +36,17 @@ interface TicketPurchaseFlowProps {
   eventTitle: string;
   ticketTiers: TicketTier[];
   onSuccess?: (orderId: string, isFree: boolean) => void;
+  // Theatre/Performance seat selection props
+  venueId?: string;
+  showInstanceId?: string;
+  eventDate?: string;
 }
 
 const translations = {
   el: {
     title: "Εισιτήρια",
     steps: {
+      seats: "Επιλογή Θέσεων",
       tickets: "Επιλογή Εισιτηρίων",
       checkout: "Ολοκλήρωση",
     },
@@ -71,6 +78,7 @@ const translations = {
   en: {
     title: "Tickets",
     steps: {
+      seats: "Select Seats",
       tickets: "Select Tickets",
       checkout: "Checkout",
     },
@@ -108,14 +116,29 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   eventTitle,
   ticketTiers,
   onSuccess,
+  venueId,
+  showInstanceId,
+  eventDate,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const t = translations[language];
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
+  // Whether this is a seated performance event
+  const hasSeating = !!(venueId && showInstanceId);
+  // For seated events: step 1=seats, 2=tickets+names, 3=checkout
+  // For non-seated: step 1=tickets+names, 2=checkout
+  const STEP_SEATS = hasSeating ? 1 : -1;
+  const STEP_TICKETS = hasSeating ? 2 : 1;
+  const STEP_CHECKOUT = hasSeating ? 3 : 2;
+  const TOTAL_STEPS = hasSeating ? 3 : 2;
+
+  // Seat selection state
+  const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
+
   // State
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(hasSeating ? STEP_SEATS : 1);
   const [submitting, setSubmitting] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
@@ -176,7 +199,17 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const total = calculateTotal();
   const isFreeOrder = total === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.every(n => n.trim().length > 0);
-  const canProceedToStep2 = totalTickets > 0 && allNamesFilled;
+  const canProceedFromSeats = !hasSeating || selectedSeats.length > 0;
+  const canProceedToCheckout = totalTickets > 0 && allNamesFilled;
+
+  // Seat toggle handler
+  const handleSeatToggle = (seat: SelectedSeat) => {
+    setSelectedSeats(prev => {
+      const exists = prev.find(s => s.seatId === seat.seatId);
+      if (exists) return prev.filter(s => s.seatId !== seat.seatId);
+      return [...prev, seat];
+    });
+  };
 
   const handleCheckout = async () => {
     if (totalTickets === 0) {
@@ -378,16 +411,30 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     </div>
   );
 
+  const renderSeatStep = () => {
+    if (!hasSeating || !venueId || !showInstanceId) return null;
+    return (
+      <SeatSelectionStep
+        venueId={venueId}
+        showInstanceId={showInstanceId}
+        maxSeats={Math.max(totalTickets, 10)}
+        selectedSeats={selectedSeats}
+        onSeatToggle={handleSeatToggle}
+        eventTitle={eventTitle}
+        eventDate={eventDate || ''}
+      />
+    );
+  };
+
   const renderStepContent = () => {
-    switch (step) {
-      case 1: return renderStep1();
-      case 2: return renderStep2();
-      default: return null;
-    }
+    if (step === STEP_SEATS && hasSeating) return renderSeatStep();
+    if (step === STEP_TICKETS) return renderStep1();
+    if (step === STEP_CHECKOUT) return renderStep2();
+    return null;
   };
 
   const renderNavigation = () => {
-    if (step === 2 && checkoutUrl) {
+    if (step === STEP_CHECKOUT && checkoutUrl) {
       return (
         <div className="w-full space-y-3 pt-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
@@ -410,19 +457,25 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       );
     }
 
+    const isFirstStep = step === (hasSeating ? STEP_SEATS : STEP_TICKETS);
+    const isLastStep = step === STEP_CHECKOUT;
+    const canProceed = step === STEP_SEATS ? canProceedFromSeats
+      : step === STEP_TICKETS ? canProceedToCheckout
+      : true;
+
     return (
       <div className="flex justify-between pt-4">
-        {step > 1 ? (
+        {!isFirstStep ? (
           <Button variant="outline" onClick={() => setStep(step - 1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t.back}
           </Button>
         ) : <div />}
 
-        {step < 2 ? (
+        {!isLastStep ? (
           <Button
-            onClick={() => setStep(2)}
-            disabled={!canProceedToStep2}
+            onClick={() => setStep(step + 1)}
+            disabled={!canProceed}
           >
             {t.next}
             <ArrowRight className="h-4 w-4 ml-2" />
@@ -442,14 +495,22 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
+  const stepLabels = hasSeating
+    ? [t.steps.seats, t.steps.tickets, t.steps.checkout]
+    : [t.steps.tickets, t.steps.checkout];
+  const firstStep = hasSeating ? STEP_SEATS : STEP_TICKETS;
+
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
-      {[1, 2].map(s => (
-        <div key={s} className={cn(
-          "w-2 h-2 rounded-full transition-colors",
-          s === step ? "bg-primary w-4" : s < step ? "bg-primary/50" : "bg-muted"
-        )} />
-      ))}
+      {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
+        const s = firstStep + i;
+        return (
+          <div key={s} className={cn(
+            "w-2 h-2 rounded-full transition-colors",
+            s === step ? "bg-primary w-4" : s < step ? "bg-primary/50" : "bg-muted"
+          )} />
+        );
+      })}
     </div>
   );
 
@@ -457,7 +518,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     <div className="space-y-4">
       {renderStepIndicator()}
       <div className="text-center mb-4">
-        <Badge variant="outline">{Object.values(t.steps)[step - 1]}</Badge>
+        <Badge variant="outline">{stepLabels[step - firstStep]}</Badge>
       </div>
       {renderStepContent()}
       {renderNavigation()}
@@ -482,7 +543,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={scrollRef} className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent ref={scrollRef} className={cn("max-h-[90vh] overflow-y-auto", hasSeating && step === STEP_SEATS ? "max-w-2xl" : "max-w-md")}>
         <DialogHeader>
           <DialogTitle>{t.title}</DialogTitle>
           <DialogDescription>{eventTitle}</DialogDescription>
