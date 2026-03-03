@@ -4495,9 +4495,14 @@ export type Database = {
           id: string
           order_id: string
           qr_code_token: string
+          seat_number: number | null
+          seat_row: string | null
+          seat_zone: string | null
           status: Database["public"]["Enums"]["ticket_status"]
+          ticket_code: string | null
           tier_id: string
           user_id: string
+          venue_seat_id: string | null
         }
         Insert: {
           checked_in_at?: string | null
@@ -4509,9 +4514,14 @@ export type Database = {
           id?: string
           order_id: string
           qr_code_token?: string
+          seat_number?: number | null
+          seat_row?: string | null
+          seat_zone?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_code?: string | null
           tier_id: string
           user_id: string
+          venue_seat_id?: string | null
         }
         Update: {
           checked_in_at?: string | null
@@ -4523,9 +4533,14 @@ export type Database = {
           id?: string
           order_id?: string
           qr_code_token?: string
+          seat_number?: number | null
+          seat_row?: string | null
+          seat_zone?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_code?: string | null
           tier_id?: string
           user_id?: string
+          venue_seat_id?: string | null
         }
         Relationships: [
           {
@@ -4547,6 +4562,13 @@ export type Database = {
             columns: ["tier_id"]
             isOneToOne: false
             referencedRelation: "ticket_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_venue_seat_id_fkey"
+            columns: ["venue_seat_id"]
+            isOneToOne: false
+            referencedRelation: "venue_seats"
             referencedColumns: ["id"]
           },
         ]

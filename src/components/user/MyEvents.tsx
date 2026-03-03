@@ -280,6 +280,10 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                       eventTime: ticket.events?.start_at,
                       guestName: ticket.guest_name || undefined,
                       guestAge: ticket.guest_age || undefined,
+                      seatZone: (ticket as any).seat_zone || undefined,
+                      seatRow: (ticket as any).seat_row || undefined,
+                      seatNumber: (ticket as any).seat_number || undefined,
+                      ticketCode: (ticket as any).ticket_code || undefined,
                     })}
                   >
                     <QrCode className="h-3 w-3 mr-1" />

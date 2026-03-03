@@ -14,6 +14,10 @@ interface TicketPdfData {
   purchaseDate?: string;
   pricePaid?: string;
   businessName?: string;
+  seatZone?: string;
+  seatRow?: string;
+  seatNumber?: number;
+  ticketCode?: string;
 }
 
 export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> => {
@@ -120,11 +124,37 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
     : `Ticket Type: ${ticket.tierName}`;
   pdf.text(tierText, 25, 165);
 
+  // Seat info
+  let yPos = 175;
+  if (ticket.seatZone || ticket.seatRow) {
+    const seatText = [
+      ticket.seatZone ? `Zone: ${ticket.seatZone}` : '',
+      ticket.seatRow ? `Row: ${ticket.seatRow}` : '',
+      ticket.seatNumber ? `Seat: ${ticket.seatNumber}` : '',
+    ].filter(Boolean).join('  |  ');
+    pdf.setTextColor(darkColor.r, darkColor.g, darkColor.b);
+    pdf.setFontSize(11);
+    pdf.text(seatText, 25, yPos);
+    yPos += 10;
+  }
+
+  // Ticket code
+  if (ticket.ticketCode) {
+    pdf.setTextColor(tealColor.r, tealColor.g, tealColor.b);
+    pdf.setFontSize(12);
+    pdf.setFont("NotoSans", "normal");
+    pdf.text(`Code: ${ticket.ticketCode}`, 25, yPos);
+    yPos += 10;
+  }
+
   // Purchase date
   if (ticket.purchaseDate) {
     try {
       const formattedPurchaseDate = format(new Date(ticket.purchaseDate), "dd MMMM yyyy");
-      pdf.text(`Purchase Date: ${formattedPurchaseDate}`, 25, 175);
+      pdf.setTextColor(darkColor.r, darkColor.g, darkColor.b);
+      pdf.setFontSize(11);
+      pdf.text(`Purchase Date: ${formattedPurchaseDate}`, 25, yPos);
+      yPos += 10;
     } catch {
       // Skip if date parsing fails
     }
@@ -133,7 +163,7 @@ export const generateTicketPdf = async (ticket: TicketPdfData): Promise<void> =>
   // Ticket ID
   pdf.setTextColor(mutedColor.r, mutedColor.g, mutedColor.b);
   pdf.setFontSize(9);
-  pdf.text(`Ticket ID: ${ticket.ticketId}`, 25, 185);
+  pdf.text(`Ticket ID: ${ticket.ticketId}`, 25, yPos + 5);
 
   // === QR CODE SECTION ===
   pdf.setDrawColor(229, 231, 235);

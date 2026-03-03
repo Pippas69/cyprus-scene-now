@@ -5,7 +5,7 @@ import {
   DialogContent } from
 "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Calendar, Ticket, Copy, User } from "lucide-react";
+import { Download, FileText, Calendar, Ticket, Copy, User, MapPin, Hash } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { generateTicketPdf } from "@/lib/ticketPdf";
 import { format } from "date-fns";
@@ -28,6 +28,10 @@ interface TicketQRDialogProps {
     eventTime?: string;
     guestName?: string;
     guestAge?: number;
+    seatZone?: string;
+    seatRow?: string;
+    seatNumber?: number;
+    ticketCode?: string;
   } | null;
   onClose: () => void;
 }
@@ -44,7 +48,11 @@ const t = {
     copyLink: "Αντιγραφή",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
     guest: "ΚΑΛΕΣΜΕΝΟΣ",
-    age: "ΗΛΙΚΙΑ"
+    age: "ΗΛΙΚΙΑ",
+    zone: "ΖΩΝΗ",
+    row: "ΣΕΙΡΑ",
+    seat: "ΘΕΣΗ",
+    ticketCode: "ΚΩΔΙΚΟΣ",
   },
   en: {
     scanAtEntry: "Scan at entry",
@@ -57,7 +65,11 @@ const t = {
     copyLink: "Copy",
     copied: "Link copied!",
     guest: "GUEST",
-    age: "AGE"
+    age: "AGE",
+    zone: "ZONE",
+    row: "ROW",
+    seat: "SEAT",
+    ticketCode: "CODE",
   }
 };
 
@@ -114,7 +126,11 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
         customerName: ticket.guestName || ticket.customerName,
         purchaseDate: ticket.purchaseDate,
         pricePaid: ticket.pricePaid,
-        businessName: ticket.businessName
+        businessName: ticket.businessName,
+        seatZone: ticket.seatZone,
+        seatRow: ticket.seatRow,
+        seatNumber: ticket.seatNumber,
+        ticketCode: ticket.ticketCode,
       });
     } catch (err) {
       console.error("PDF generation error:", err);
@@ -132,6 +148,8 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
   format(eventDateObj, "HH:mm", { locale: dateLocale }) :
   "";
   const displayName = ticket?.guestName || ticket?.customerName || "-";
+  const hasSeatInfo = !!(ticket?.seatZone || ticket?.seatRow);
+  const ticketCode = ticket?.ticketCode || ticket?.id?.slice(0, 8).toUpperCase();
 
   return (
     <Dialog open={!!ticket} onOpenChange={() => onClose()}>
@@ -175,6 +193,33 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
                 <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
                 <p className="text-xs font-semibold text-[#102b4a] truncate">{formattedTime || "-"}</p>
               </div>
+            </div>
+
+            {/* Seat Info - Only for seated events */}
+            {hasSeatInfo && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <MapPin className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.zone}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">{ticket?.seatZone || "-"}</p>
+                </div>
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <Hash className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.row}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">{ticket?.seatRow || "-"}</p>
+                </div>
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.seat}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">{ticket?.seatNumber || "-"}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Ticket Code */}
+            <div className="bg-[#102b4a] rounded-lg py-1.5 px-3 mb-3 text-center">
+              <p className="text-[8px] text-white/60 uppercase tracking-widest">{text.ticketCode}</p>
+              <p className="text-sm font-bold text-white tracking-[0.2em] font-mono">{ticketCode}</p>
             </div>
 
             {/* QR Code - Slightly smaller */}
