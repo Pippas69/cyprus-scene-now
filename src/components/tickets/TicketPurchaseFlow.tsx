@@ -46,6 +46,7 @@ const translations = {
   el: {
     title: "Εισιτήρια",
     steps: {
+      seats: "Επιλογή Θέσεων",
       tickets: "Επιλογή Εισιτηρίων",
       checkout: "Ολοκλήρωση",
     },
