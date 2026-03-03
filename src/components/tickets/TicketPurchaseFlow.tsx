@@ -78,6 +78,7 @@ const translations = {
   en: {
     title: "Tickets",
     steps: {
+      seats: "Select Seats",
       tickets: "Select Tickets",
       checkout: "Checkout",
     },
