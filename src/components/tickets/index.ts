@@ -1,5 +1,6 @@
 export { TicketTierEditor } from './TicketTierEditor';
 export { TicketPurchaseCard } from './TicketPurchaseCard';
+export { TicketPurchaseFlow } from './TicketPurchaseFlow';
 export { MyTickets } from './MyTickets';
 export { TicketQRDialog } from './TicketQRDialog';
 export { TicketScanner } from './TicketScanner';

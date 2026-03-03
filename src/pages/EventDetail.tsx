@@ -34,7 +34,7 @@ import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { EventAttendees } from '@/components/EventAttendees';
 import { ShareDialog } from '@/components/sharing/ShareDialog';
-import { TicketPurchaseCard } from '@/components/tickets/TicketPurchaseCard';
+import { TicketPurchaseFlow } from '@/components/tickets/TicketPurchaseFlow';
 import { KalivaTicketReservationFlow } from '@/components/tickets/KalivaTicketReservationFlow';
 import { useTicketTiers } from '@/hooks/useTicketTiers';
 import { ErrorState } from '@/components/ErrorState';
@@ -86,6 +86,7 @@ export default function EventDetail() {
   const [showReservationCheckout, setShowReservationCheckout] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showKalivaFlow, setShowKalivaFlow] = useState(false);
+  const [showTicketFlow, setShowTicketFlow] = useState(false);
 
   const fromPath = `${location.pathname}${location.search}`;
   
@@ -580,19 +581,13 @@ export default function EventDetail() {
 
               {/* Tickets/Reservations - DIRECTLY after RSVP buttons (before date) */}
               {hasNativeTickets && !((event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation') && (
-                <TicketPurchaseCard
-                  eventId={event.id}
-                  eventTitle={event.title}
-                  tiers={ticketTiers}
-                  onSuccess={(orderId, isFree) => {
-                    if (isFree) {
-                      toast.success(language === 'el' 
-                        ? 'Τα εισιτήριά σας είναι έτοιμα!' 
-                        : 'Your tickets are ready!'
-                      );
-                    }
-                  }}
-                />
+                <RippleButton
+                  className="w-full gap-2 h-9 text-sm"
+                  onClick={() => setShowTicketFlow(true)}
+                >
+                  <Ticket className="h-3.5 w-3.5" />
+                  {text.buyTickets}
+                </RippleButton>
               )}
 
               {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
@@ -812,19 +807,13 @@ export default function EventDetail() {
 
             {/* Tickets/Reservations - DIRECTLY after RSVP buttons */}
             {hasNativeTickets && !((event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation') && (
-              <TicketPurchaseCard
-                eventId={event.id}
-                eventTitle={event.title}
-                tiers={ticketTiers}
-                onSuccess={(orderId, isFree) => {
-                  if (isFree) {
-                    toast.success(language === 'el' 
-                      ? 'Τα εισιτήριά σας είναι έτοιμα!' 
-                      : 'Your tickets are ready!'
-                    );
-                  }
-                }}
-              />
+              <RippleButton
+                className="w-full gap-2"
+                onClick={() => setShowTicketFlow(true)}
+              >
+                <Ticket className="h-4 w-4" />
+                {text.buyTickets}
+              </RippleButton>
             )}
 
             {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
@@ -1013,6 +1002,23 @@ export default function EventDetail() {
           ticketTiers={ticketTiers}
           onSuccess={(orderId, isFree) => {
             setShowKalivaFlow(false);
+            if (isFree) {
+              toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
+            }
+          }}
+        />
+      )}
+
+      {/* Ticket Purchase Flow (non-Kaliva ticket events) */}
+      {user && hasNativeTickets && (
+        <TicketPurchaseFlow
+          open={showTicketFlow}
+          onOpenChange={setShowTicketFlow}
+          eventId={event.id}
+          eventTitle={event.title}
+          ticketTiers={ticketTiers}
+          onSuccess={(orderId, isFree) => {
+            setShowTicketFlow(false);
             if (isFree) {
               toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
             }
