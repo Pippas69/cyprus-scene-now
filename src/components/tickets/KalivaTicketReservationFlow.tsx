@@ -291,6 +291,24 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         .eq('event_id', eventId);
       if (error) throw error;
 
+      // Count actual reservations per seating type for accurate availability
+      const seatingIds = (seatingTypes || []).map(st => st.id);
+      const { data: reservationCounts } = seatingIds.length > 0
+        ? await supabase
+            .from('reservations')
+            .select('seating_type_id')
+            .eq('event_id', eventId)
+            .in('seating_type_id', seatingIds)
+            .in('status', ['pending', 'accepted'])
+        : { data: [] };
+
+      const bookedMap: Record<string, number> = {};
+      for (const r of reservationCounts || []) {
+        if (r.seating_type_id) {
+          bookedMap[r.seating_type_id] = (bookedMap[r.seating_type_id] || 0) + 1;
+        }
+      }
+
       const optionsWithTiers: SeatingTypeOption[] = [];
       for (const st of seatingTypes || []) {
         const { data: tiers } = await supabase
@@ -298,7 +316,11 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           .select('*')
           .eq('seating_type_id', st.id)
           .order('min_people', { ascending: true });
-        optionsWithTiers.push({ ...st, tiers: tiers || [] });
+        optionsWithTiers.push({
+          ...st,
+          slots_booked: bookedMap[st.id] ?? 0,
+          tiers: tiers || [],
+        });
       }
       setSeatingOptions(optionsWithTiers);
     } catch (error) {
