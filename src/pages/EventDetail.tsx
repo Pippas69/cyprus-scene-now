@@ -592,13 +592,22 @@ export default function EventDetail() {
 
               {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
               {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
-                <RippleButton
-                  className="w-full gap-2 h-9 text-sm"
-                  onClick={() => setShowKalivaFlow(true)}
-                >
-                  <Ticket className="h-3.5 w-3.5" />
-                  {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
-                </RippleButton>
+                <div className="w-full space-y-1">
+                  <RippleButton
+                    className="w-full gap-2 h-9 text-sm"
+                    onClick={() => setShowKalivaFlow(true)}
+                  >
+                    <Ticket className="h-3.5 w-3.5" />
+                    {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
+                  </RippleButton>
+                  <button
+                    type="button"
+                    className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                    onClick={() => setShowTicketFlow(true)}
+                  >
+                    {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                  </button>
+                </div>
               )}
 
               {eventHasReservation && event.event_type === 'reservation' && user && (
@@ -818,13 +827,22 @@ export default function EventDetail() {
 
             {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
             {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
-              <RippleButton
-                className="w-full gap-2"
-                onClick={() => setShowKalivaFlow(true)}
-              >
-                <Ticket className="h-4 w-4" />
-                {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
-              </RippleButton>
+              <div className="w-full space-y-1">
+                <RippleButton
+                  className="w-full gap-2"
+                  onClick={() => setShowKalivaFlow(true)}
+                >
+                  <Ticket className="h-4 w-4" />
+                  {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
+                </RippleButton>
+                <button
+                  type="button"
+                  className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                  onClick={() => setShowTicketFlow(true)}
+                >
+                  {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                </button>
+              </div>
             )}
 
             {eventHasReservation && event.event_type === 'reservation' && user && (
