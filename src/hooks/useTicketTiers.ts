@@ -7,7 +7,7 @@ export const useTicketTiers = (eventId: string | undefined) => {
     queryFn: async () => {
       if (!eventId) return [];
 
-      const { data, error } = await supabase
+      const { data: tiers, error } = await supabase
         .from("ticket_tiers")
         .select("*")
         .eq("event_id", eventId)
@@ -15,7 +15,28 @@ export const useTicketTiers = (eventId: string | undefined) => {
         .order("sort_order");
 
       if (error) throw error;
-      return data || [];
+      if (!tiers || tiers.length === 0) return [];
+
+      // Count actual tickets per tier for accurate availability
+      const tierIds = tiers.map(t => t.id);
+      const { data: tickets } = await supabase
+        .from("tickets")
+        .select("tier_id")
+        .in("tier_id", tierIds)
+        .in("status", ["valid", "used"]);
+
+      if (tickets) {
+        const countMap: Record<string, number> = {};
+        for (const ticket of tickets) {
+          countMap[ticket.tier_id] = (countMap[ticket.tier_id] || 0) + 1;
+        }
+        return tiers.map(tier => ({
+          ...tier,
+          quantity_sold: countMap[tier.id] ?? 0,
+        }));
+      }
+
+      return tiers;
     },
     enabled: !!eventId,
   });
