@@ -518,7 +518,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     <div className="space-y-4">
       {renderStepIndicator()}
       <div className="text-center mb-4">
-        <Badge variant="outline">{Object.values(t.steps)[step - 1]}</Badge>
+        <Badge variant="outline">{stepLabels[step - firstStep]}</Badge>
       </div>
       {renderStepContent()}
       {renderNavigation()}
