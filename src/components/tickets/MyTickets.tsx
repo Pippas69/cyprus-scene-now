@@ -244,6 +244,10 @@ export const MyTickets = () => {
                       eventTime: eventTime || undefined,
                       guestName: (ticket as any).guest_name || undefined,
                       guestAge: (ticket as any).guest_age || undefined,
+                      seatZone: (ticket as any).seat_zone || undefined,
+                      seatRow: (ticket as any).seat_row || undefined,
+                      seatNumber: (ticket as any).seat_number || undefined,
+                      ticketCode: (ticket as any).ticket_code || undefined,
                     })}
                   >
                     <QrCode className="h-4 w-4 mr-1" />
