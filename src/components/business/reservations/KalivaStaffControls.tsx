@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Armchair, Ticket } from 'lucide-react';
+import { Loader2, RefreshCw, Armchair } from 'lucide-react';
 
 interface KalivaStaffControlsProps {
   businessId: string;
@@ -301,7 +301,7 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
                 {event.ticketTiers.length > 0 &&
             <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      <Ticket className="h-3.5 w-3.5" />
+                      
                       {t.tickets}
                     </div>
                     <div className="space-y-2">
