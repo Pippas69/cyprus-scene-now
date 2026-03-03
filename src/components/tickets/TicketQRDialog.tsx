@@ -28,6 +28,10 @@ interface TicketQRDialogProps {
     eventTime?: string;
     guestName?: string;
     guestAge?: number;
+    seatZone?: string;
+    seatRow?: string;
+    seatNumber?: number;
+    ticketCode?: string;
   } | null;
   onClose: () => void;
 }
@@ -44,7 +48,11 @@ const t = {
     copyLink: "Αντιγραφή",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
     guest: "ΚΑΛΕΣΜΕΝΟΣ",
-    age: "ΗΛΙΚΙΑ"
+    age: "ΗΛΙΚΙΑ",
+    zone: "ΖΩΝΗ",
+    row: "ΣΕΙΡΑ",
+    seat: "ΘΕΣΗ",
+    ticketCode: "ΚΩΔΙΚΟΣ",
   },
   en: {
     scanAtEntry: "Scan at entry",
@@ -57,7 +65,11 @@ const t = {
     copyLink: "Copy",
     copied: "Link copied!",
     guest: "GUEST",
-    age: "AGE"
+    age: "AGE",
+    zone: "ZONE",
+    row: "ROW",
+    seat: "SEAT",
+    ticketCode: "CODE",
   }
 };
 
