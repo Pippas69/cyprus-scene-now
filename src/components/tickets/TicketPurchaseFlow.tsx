@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
+import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
+import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
 
 interface TicketTier {
   id: string;
