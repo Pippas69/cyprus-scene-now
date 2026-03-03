@@ -637,7 +637,7 @@ export default function EventDetail() {
                       <Ticket className="h-3.5 w-3.5" />
                       <span>{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
                     </div>
-                  ) : reservationsSoldOut ? (
+                  ) : !user ? null : reservationsSoldOut ? (
                     <>
                       <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                         <Ticket className="h-3.5 w-3.5" />
@@ -898,7 +898,7 @@ export default function EventDetail() {
                     <Ticket className="h-4 w-4" />
                     <span>{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
                   </div>
-                ) : reservationsSoldOut ? (
+                ) : !user ? null : reservationsSoldOut ? (
                   <>
                     <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                       <Ticket className="h-4 w-4" />
