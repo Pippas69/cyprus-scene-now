@@ -5,7 +5,7 @@ import {
   DialogContent } from
 "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Calendar, Ticket, Copy, User } from "lucide-react";
+import { Download, FileText, Calendar, Ticket, Copy, User, MapPin, Hash } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { generateTicketPdf } from "@/lib/ticketPdf";
 import { format } from "date-fns";
@@ -144,6 +144,8 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
   format(eventDateObj, "HH:mm", { locale: dateLocale }) :
   "";
   const displayName = ticket?.guestName || ticket?.customerName || "-";
+  const hasSeatInfo = !!(ticket?.seatZone || ticket?.seatRow);
+  const ticketCode = ticket?.ticketCode || ticket?.id?.slice(0, 8).toUpperCase();
 
   return (
     <Dialog open={!!ticket} onOpenChange={() => onClose()}>
