@@ -88,7 +88,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         </TabsContent>
 
         <TabsContent value="staff" className="mt-4">
-          <ReservationStaffControls businessId={businessId} language={language} />
+          {isTicketLinked ? (
+            <KalivaStaffControls businessId={businessId} language={language} />
+          ) : (
+            <ReservationStaffControls businessId={businessId} language={language} />
+          )}
         </TabsContent>
 
         {!isTicketLinked && (
