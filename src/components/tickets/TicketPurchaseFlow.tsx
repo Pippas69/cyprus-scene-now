@@ -116,10 +116,17 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   eventTitle,
   ticketTiers,
   onSuccess,
+  venueId,
+  showInstanceId,
+  eventDate,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const t = translations[language];
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Whether this is a seated performance event
+  const hasSeating = !!(venueId && showInstanceId);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // State
