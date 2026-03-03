@@ -87,6 +87,7 @@ export default function EventDetail() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showKalivaFlow, setShowKalivaFlow] = useState(false);
   const [showTicketFlow, setShowTicketFlow] = useState(false);
+  const [reservationsSoldOut, setReservationsSoldOut] = useState(false);
 
   const fromPath = `${location.pathname}${location.search}`;
   
