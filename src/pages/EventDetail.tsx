@@ -1009,6 +1009,23 @@ export default function EventDetail() {
         />
       )}
 
+      {/* Ticket Purchase Flow (non-Kaliva ticket events) */}
+      {user && hasNativeTickets && (
+        <TicketPurchaseFlow
+          open={showTicketFlow}
+          onOpenChange={setShowTicketFlow}
+          eventId={event.id}
+          eventTitle={event.title}
+          ticketTiers={ticketTiers}
+          onSuccess={(orderId, isFree) => {
+            setShowTicketFlow(false);
+            if (isFree) {
+              toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
+            }
+          }}
+        />
+      )}
+
       {/* Share Dialog */}
       <ShareDialog
         open={showShareDialog}
