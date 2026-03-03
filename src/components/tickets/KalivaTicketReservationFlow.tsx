@@ -358,7 +358,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
-  const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone(phoneNumber);
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
+  const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone(phoneNumber) && isEmailValid;
 
   const handleCheckout = async () => {
     if (!allGuestsFilled) {
