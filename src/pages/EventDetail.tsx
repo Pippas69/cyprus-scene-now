@@ -87,6 +87,7 @@ export default function EventDetail() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showKalivaFlow, setShowKalivaFlow] = useState(false);
   const [showTicketFlow, setShowTicketFlow] = useState(false);
+  const [reservationsSoldOut, setReservationsSoldOut] = useState(false);
 
   const fromPath = `${location.pathname}${location.search}`;
   
@@ -245,6 +246,38 @@ export default function EventDetail() {
       }
 
       setEvent(eventData);
+
+      // Check if all reservation seating types are sold out for Kaliva flow
+      if ((eventData as any).businesses?.ticket_reservation_linked && eventData.event_type === 'ticket_and_reservation') {
+        const { data: seatingTypes } = await supabase
+          .from('reservation_seating_types')
+          .select('id, available_slots, paused')
+          .eq('event_id', eventId);
+
+        if (seatingTypes && seatingTypes.length > 0) {
+          // Count real reservations for non-paused types
+          const activeTypes = seatingTypes.filter(st => !st.paused);
+          if (activeTypes.length === 0) {
+            // All paused by business
+            setReservationsSoldOut(true);
+          } else {
+            const activeIds = activeTypes.map(st => st.id);
+            const { data: reservations } = await supabase
+              .from('reservations')
+              .select('seating_type_id')
+              .in('seating_type_id', activeIds)
+              .in('status', ['pending', 'accepted']);
+
+            const counts: Record<string, number> = {};
+            (reservations || []).forEach(r => {
+              if (r.seating_type_id) counts[r.seating_type_id] = (counts[r.seating_type_id] || 0) + 1;
+            });
+
+            const allFull = activeTypes.every(st => (counts[st.id] || 0) >= st.available_slots);
+            setReservationsSoldOut(allFull);
+          }
+        }
+      }
 
       // Fetch RSVP counts (global)
       await refreshCounts(eventId);
@@ -593,20 +626,41 @@ export default function EventDetail() {
               {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
               {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
                 <div className="w-full space-y-1">
-                  <RippleButton
-                    className="w-full gap-2 h-9 text-sm"
-                    onClick={() => setShowKalivaFlow(true)}
-                  >
-                    <Ticket className="h-3.5 w-3.5" />
-                    {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
-                  </RippleButton>
-                  <button
-                    type="button"
-                    className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-                    onClick={() => setShowTicketFlow(true)}
-                  >
-                    {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
-                  </button>
+                  {reservationsSoldOut ? (
+                    <>
+                      <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
+                        <Ticket className="h-3.5 w-3.5" />
+                        <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                        <span className="text-[10px] font-medium text-destructive/80 ml-1">
+                          {language === 'el' ? '— Εξαντλήθηκαν οι θέσεις' : '— Sold out'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
+                        onClick={() => setShowTicketFlow(true)}
+                      >
+                        {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <RippleButton
+                        className="w-full gap-2 h-9 text-sm"
+                        onClick={() => setShowKalivaFlow(true)}
+                      >
+                        <Ticket className="h-3.5 w-3.5" />
+                        {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
+                      </RippleButton>
+                      <button
+                        type="button"
+                        className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                        onClick={() => setShowTicketFlow(true)}
+                      >
+                        {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -828,20 +882,41 @@ export default function EventDetail() {
             {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
             {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
               <div className="w-full space-y-1">
-                <RippleButton
-                  className="w-full gap-2"
-                  onClick={() => setShowKalivaFlow(true)}
-                >
-                  <Ticket className="h-4 w-4" />
-                  {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
-                </RippleButton>
-                <button
-                  type="button"
-                  className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-                  onClick={() => setShowTicketFlow(true)}
-                >
-                  {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
-                </button>
+                {reservationsSoldOut ? (
+                  <>
+                    <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
+                      <Ticket className="h-4 w-4" />
+                      <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                      <span className="text-[10px] font-medium text-destructive/80 ml-1">
+                        {language === 'el' ? '— Εξαντλήθηκαν οι θέσεις' : '— Sold out'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
+                      onClick={() => setShowTicketFlow(true)}
+                    >
+                      {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <RippleButton
+                      className="w-full gap-2"
+                      onClick={() => setShowKalivaFlow(true)}
+                    >
+                      <Ticket className="h-4 w-4" />
+                      {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
+                    </RippleButton>
+                    <button
+                      type="button"
+                      className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                      onClick={() => setShowTicketFlow(true)}
+                    >
+                      {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
