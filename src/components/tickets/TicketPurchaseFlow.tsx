@@ -199,7 +199,17 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const total = calculateTotal();
   const isFreeOrder = total === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.every(n => n.trim().length > 0);
-  const canProceedToStep2 = totalTickets > 0 && allNamesFilled;
+  const canProceedFromSeats = !hasSeating || selectedSeats.length > 0;
+  const canProceedToCheckout = totalTickets > 0 && allNamesFilled;
+
+  // Seat toggle handler
+  const handleSeatToggle = (seat: SelectedSeat) => {
+    setSelectedSeats(prev => {
+      const exists = prev.find(s => s.seatId === seat.seatId);
+      if (exists) return prev.filter(s => s.seatId !== seat.seatId);
+      return [...prev, seat];
+    });
+  };
 
   const handleCheckout = async () => {
     if (totalTickets === 0) {
