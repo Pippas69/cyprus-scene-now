@@ -632,7 +632,7 @@ export default function EventDetail() {
                         <Ticket className="h-3.5 w-3.5" />
                         <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
                         <span className="text-[10px] font-medium text-destructive/80 ml-1">
-                          {language === 'el' ? '— Εξαντλήθηκαν οι θέσεις' : '— Sold out'}
+                          {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                         </span>
                       </div>
                       <button
@@ -888,7 +888,7 @@ export default function EventDetail() {
                       <Ticket className="h-4 w-4" />
                       <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
                       <span className="text-[10px] font-medium text-destructive/80 ml-1">
-                        {language === 'el' ? '— Εξαντλήθηκαν οι θέσεις' : '— Sold out'}
+                        {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                       </span>
                     </div>
                     <button
