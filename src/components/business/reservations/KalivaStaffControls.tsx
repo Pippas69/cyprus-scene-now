@@ -256,7 +256,6 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
                 {event.seatingTypes.length > 0 &&
             <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      <Armchair className="h-3.5 w-3.5" />
                       {t.tables}
                     </div>
                     <div className="space-y-2">
