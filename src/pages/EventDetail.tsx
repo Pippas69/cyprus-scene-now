@@ -247,6 +247,38 @@ export default function EventDetail() {
 
       setEvent(eventData);
 
+      // Check if all reservation seating types are sold out for Kaliva flow
+      if ((eventData as any).businesses?.ticket_reservation_linked && eventData.event_type === 'ticket_and_reservation') {
+        const { data: seatingTypes } = await supabase
+          .from('reservation_seating_types')
+          .select('id, available_slots, paused')
+          .eq('event_id', eventId);
+
+        if (seatingTypes && seatingTypes.length > 0) {
+          // Count real reservations for non-paused types
+          const activeTypes = seatingTypes.filter(st => !st.paused);
+          if (activeTypes.length === 0) {
+            // All paused by business
+            setReservationsSoldOut(true);
+          } else {
+            const activeIds = activeTypes.map(st => st.id);
+            const { data: reservations } = await supabase
+              .from('reservations')
+              .select('seating_type_id')
+              .in('seating_type_id', activeIds)
+              .in('status', ['pending', 'accepted']);
+
+            const counts: Record<string, number> = {};
+            (reservations || []).forEach(r => {
+              if (r.seating_type_id) counts[r.seating_type_id] = (counts[r.seating_type_id] || 0) + 1;
+            });
+
+            const allFull = activeTypes.every(st => (counts[st.id] || 0) >= st.available_slots);
+            setReservationsSoldOut(allFull);
+          }
+        }
+      }
+
       // Fetch RSVP counts (global)
       await refreshCounts(eventId);
 
