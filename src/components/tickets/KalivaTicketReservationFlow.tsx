@@ -572,6 +572,21 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         />
       </div>
 
+      {/* Email */}
+      <div className="space-y-1">
+        <Label className="flex items-center gap-2 text-sm">
+          <Mail className="h-3.5 w-3.5" />
+          {t.email}
+        </Label>
+        <Input
+          type="email"
+          value={customerEmail}
+          onChange={(e) => setCustomerEmail(e.target.value)}
+          placeholder={t.emailPlaceholder}
+          className="h-9 text-sm"
+        />
+      </div>
+
       {/* Arrival Hours */}
       {(reservationHoursFrom || reservationHoursTo) && (
         <div className="space-y-1">

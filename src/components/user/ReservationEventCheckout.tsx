@@ -476,6 +476,22 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               />
             </div>
 
+            {/* Email */}
+            <div className="space-y-1">
+              <Label htmlFor="email" className="flex items-center gap-2 text-sm">
+                <Mail className="h-3.5 w-3.5" />
+                {t.email}
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder={t.emailPlaceholder}
+                className="h-9 text-sm"
+              />
+            </div>
+
             {/* Party Size */}
             <div className="space-y-1">
               <Label className="flex items-center gap-2 text-sm">
