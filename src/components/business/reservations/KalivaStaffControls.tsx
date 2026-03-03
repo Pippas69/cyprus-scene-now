@@ -42,7 +42,7 @@ const text = {
     closed: 'Κλειστό',
     noEvents: 'Δεν υπάρχουν ενεργές εκδηλώσεις',
     updated: 'Ενημερώθηκε',
-    error: 'Σφάλμα',
+    error: 'Σφάλμα'
   },
   en: {
     title: 'Availability Management',
@@ -54,8 +54,8 @@ const text = {
     closed: 'Closed',
     noEvents: 'No active events',
     updated: 'Updated',
-    error: 'Error',
-  },
+    error: 'Error'
+  }
 };
 
 export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControlsProps) => {
@@ -69,40 +69,40 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
   const fetchData = useCallback(async () => {
     try {
       // Get upcoming events for this business
-      const { data: eventsData } = await supabase
-        .from('events')
-        .select('id, title, start_at')
-        .eq('business_id', businessId)
-        .gte('end_at', new Date().toISOString())
-        .order('start_at', { ascending: true });
+      const { data: eventsData } = await supabase.
+      from('events').
+      select('id, title, start_at').
+      eq('business_id', businessId).
+      gte('end_at', new Date().toISOString()).
+      order('start_at', { ascending: true });
 
       if (!eventsData || eventsData.length === 0) {
         setEvents([]);
         return;
       }
 
-      const eventIds = eventsData.map(e => e.id);
+      const eventIds = eventsData.map((e) => e.id);
 
       // Fetch seating types, ticket tiers, real reservation counts, real ticket counts in parallel
       const [seatingRes, tiersRes, reservationsRes, ticketsRes] = await Promise.all([
-        supabase
-          .from('reservation_seating_types')
-          .select('id, event_id, seating_type, available_slots, paused')
-          .in('event_id', eventIds),
-        supabase
-          .from('ticket_tiers')
-          .select('id, event_id, name, quantity_total, active')
-          .in('event_id', eventIds),
-        supabase
-          .from('reservations')
-          .select('event_id, seating_type_id')
-          .in('event_id', eventIds)
-          .in('status', ['pending', 'accepted']),
-        supabase
-          .from('tickets')
-          .select('tier_id')
-          .in('status', ['valid', 'used']),
-      ]);
+      supabase.
+      from('reservation_seating_types').
+      select('id, event_id, seating_type, available_slots, paused').
+      in('event_id', eventIds),
+      supabase.
+      from('ticket_tiers').
+      select('id, event_id, name, quantity_total, active').
+      in('event_id', eventIds),
+      supabase.
+      from('reservations').
+      select('event_id, seating_type_id').
+      in('event_id', eventIds).
+      in('status', ['pending', 'accepted']),
+      supabase.
+      from('tickets').
+      select('tier_id').
+      in('status', ['valid', 'used'])]
+      );
 
       const seatingTypes = seatingRes.data || [];
       const ticketTiers = tiersRes.data || [];
@@ -111,42 +111,42 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
 
       // Count reservations per seating type
       const reservationCounts: Record<string, number> = {};
-      reservations.forEach(r => {
+      reservations.forEach((r) => {
         const key = r.seating_type_id;
         if (key) reservationCounts[key] = (reservationCounts[key] || 0) + 1;
       });
 
       // Count tickets per tier
-      const tierIds = ticketTiers.map(t => t.id);
+      const tierIds = ticketTiers.map((t) => t.id);
       const ticketCounts: Record<string, number> = {};
-      tickets.forEach(t => {
+      tickets.forEach((t) => {
         if (tierIds.includes(t.tier_id)) {
           ticketCounts[t.tier_id] = (ticketCounts[t.tier_id] || 0) + 1;
         }
       });
 
-      const enrichedEvents: EventWithControls[] = eventsData.map(event => ({
+      const enrichedEvents: EventWithControls[] = eventsData.map((event) => ({
         id: event.id,
         title: event.title,
         start_at: event.start_at,
-        seatingTypes: seatingTypes
-          .filter(st => st.event_id === event.id)
-          .map(st => ({
-            id: st.id,
-            seating_type: st.seating_type,
-            available_slots: st.available_slots,
-            paused: st.paused ?? false,
-            actualBooked: reservationCounts[st.id] || 0,
-          })),
-        ticketTiers: ticketTiers
-          .filter(tt => tt.event_id === event.id)
-          .map(tt => ({
-            id: tt.id,
-            name: tt.name,
-            quantity_total: tt.quantity_total,
-            active: tt.active,
-            actualSold: ticketCounts[tt.id] || 0,
-          })),
+        seatingTypes: seatingTypes.
+        filter((st) => st.event_id === event.id).
+        map((st) => ({
+          id: st.id,
+          seating_type: st.seating_type,
+          available_slots: st.available_slots,
+          paused: st.paused ?? false,
+          actualBooked: reservationCounts[st.id] || 0
+        })),
+        ticketTiers: ticketTiers.
+        filter((tt) => tt.event_id === event.id).
+        map((tt) => ({
+          id: tt.id,
+          name: tt.name,
+          quantity_total: tt.quantity_total,
+          active: tt.active,
+          actualSold: ticketCounts[tt.id] || 0
+        }))
       }));
 
       setEvents(enrichedEvents);
@@ -172,10 +172,10 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
   const toggleSeatingType = async (id: string, currentPaused: boolean) => {
     setUpdatingId(id);
     try {
-      const { error } = await supabase
-        .from('reservation_seating_types')
-        .update({ paused: !currentPaused })
-        .eq('id', id);
+      const { error } = await supabase.
+      from('reservation_seating_types').
+      update({ paused: !currentPaused }).
+      eq('id', id);
       if (error) throw error;
       toast.success(t.updated);
       await fetchData();
@@ -189,10 +189,10 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
   const toggleTicketTier = async (id: string, currentActive: boolean) => {
     setUpdatingId(id);
     try {
-      const { error } = await supabase
-        .from('ticket_tiers')
-        .update({ active: !currentActive })
-        .eq('id', id);
+      const { error } = await supabase.
+      from('ticket_tiers').
+      update({ active: !currentActive }).
+      eq('id', id);
       if (error) throw error;
       toast.success(t.updated);
       await fetchData();
@@ -207,8 +207,8 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -218,60 +218,60 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-sm sm:text-base">{t.title}</CardTitle>
-              <CardDescription className="text-[10px] sm:text-xs mt-0.5">
-                {t.description}
-              </CardDescription>
+              
+
+              
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
-            >
+              className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs">
+              
               <RefreshCw className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline ml-1.5">{t.refresh}</span>
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {events.length === 0 ? (
-            <div className="text-center py-8 bg-muted/50 rounded-lg">
+          {events.length === 0 ?
+          <div className="text-center py-8 bg-muted/50 rounded-lg">
               <p className="text-xs sm:text-sm text-muted-foreground">{t.noEvents}</p>
-            </div>
-          ) : (
-            events.map(event => (
-              <div key={event.id} className="space-y-3">
+            </div> :
+
+          events.map((event) =>
+          <div key={event.id} className="space-y-3">
                 {/* Event title */}
                 <div className="border-b border-border pb-2">
                   <h3 className="font-semibold text-sm sm:text-base">{event.title}</h3>
                   <p className="text-[10px] sm:text-xs text-muted-foreground">
                     {new Date(event.start_at).toLocaleDateString(language === 'el' ? 'el-GR' : 'en-US', {
-                      day: 'numeric', month: 'long', year: 'numeric'
-                    })}
+                  day: 'numeric', month: 'long', year: 'numeric'
+                })}
                   </p>
                 </div>
 
                 {/* Seating types toggles */}
-                {event.seatingTypes.length > 0 && (
-                  <div className="space-y-2">
+                {event.seatingTypes.length > 0 &&
+            <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       <Armchair className="h-3.5 w-3.5" />
                       {t.tables}
                     </div>
                     <div className="space-y-2">
-                      {event.seatingTypes.map(st => {
-                        const remaining = Math.max(st.available_slots - st.actualBooked, 0);
-                        const isOpen = !st.paused;
-                        return (
-                          <div
-                            key={st.id}
-                            className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                              isOpen
-                                ? 'border-green-500/30 bg-green-500/5'
-                                : 'border-red-500/30 bg-red-500/5'
-                            }`}
-                          >
+                      {event.seatingTypes.map((st) => {
+                  const remaining = Math.max(st.available_slots - st.actualBooked, 0);
+                  const isOpen = !st.paused;
+                  return (
+                    <div
+                      key={st.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                      isOpen ?
+                      'border-green-500/30 bg-green-500/5' :
+                      'border-red-500/30 bg-red-500/5'}`
+                      }>
+                      
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm capitalize truncate">{st.seating_type}</p>
                               <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -282,41 +282,41 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
                               <span className={`text-[10px] sm:text-xs font-medium ${isOpen ? 'text-green-500' : 'text-red-500'}`}>
                                 {isOpen ? t.open : t.closed}
                               </span>
-                              {updatingId === st.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Switch
-                                  checked={isOpen}
-                                  onCheckedChange={() => toggleSeatingType(st.id, st.paused)}
-                                />
-                              )}
+                              {updatingId === st.id ?
+                        <Loader2 className="h-4 w-4 animate-spin" /> :
+
+                        <Switch
+                          checked={isOpen}
+                          onCheckedChange={() => toggleSeatingType(st.id, st.paused)} />
+
+                        }
                             </div>
-                          </div>
-                        );
-                      })}
+                          </div>);
+
+                })}
                     </div>
                   </div>
-                )}
+            }
 
                 {/* Ticket tiers toggles */}
-                {event.ticketTiers.length > 0 && (
-                  <div className="space-y-2">
+                {event.ticketTiers.length > 0 &&
+            <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       <Ticket className="h-3.5 w-3.5" />
                       {t.tickets}
                     </div>
                     <div className="space-y-2">
-                      {event.ticketTiers.map(tt => {
-                        const remaining = Math.max(tt.quantity_total - tt.actualSold, 0);
-                        return (
-                          <div
-                            key={tt.id}
-                            className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                              tt.active
-                                ? 'border-green-500/30 bg-green-500/5'
-                                : 'border-red-500/30 bg-red-500/5'
-                            }`}
-                          >
+                      {event.ticketTiers.map((tt) => {
+                  const remaining = Math.max(tt.quantity_total - tt.actualSold, 0);
+                  return (
+                    <div
+                      key={tt.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                      tt.active ?
+                      'border-green-500/30 bg-green-500/5' :
+                      'border-red-500/30 bg-red-500/5'}`
+                      }>
+                      
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">{tt.name}</p>
                               <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -327,26 +327,26 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
                               <span className={`text-[10px] sm:text-xs font-medium ${tt.active ? 'text-green-500' : 'text-red-500'}`}>
                                 {tt.active ? t.open : t.closed}
                               </span>
-                              {updatingId === tt.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Switch
-                                  checked={tt.active}
-                                  onCheckedChange={() => toggleTicketTier(tt.id, tt.active)}
-                                />
-                              )}
+                              {updatingId === tt.id ?
+                        <Loader2 className="h-4 w-4 animate-spin" /> :
+
+                        <Switch
+                          checked={tt.active}
+                          onCheckedChange={() => toggleTicketTier(tt.id, tt.active)} />
+
+                        }
                             </div>
-                          </div>
-                        );
-                      })}
+                          </div>);
+
+                })}
                     </div>
                   </div>
-                )}
+            }
               </div>
-            ))
-          )}
+          )
+          }
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>);
+
 };
