@@ -440,6 +440,12 @@ export default function EventDetail() {
 
   // Check if event has native tickets
   const hasNativeTickets = ticketTiers.length > 0;
+  
+  // Check if ALL ticket tiers are sold out (for Kaliva fully sold out badge)
+  const allTicketsSoldOut = hasNativeTickets && ticketTiers.every(
+    (t: any) => (t.quantity_sold ?? 0) >= t.quantity_total
+  );
+  const kalivaFullySoldOut = reservationsSoldOut && allTicketsSoldOut;
 
   // Determine event type
   const eventType = event?.event_type || (hasNativeTickets ? 'ticket' : (event?.accepts_reservations ? 'reservation' : 'free_entry'));
