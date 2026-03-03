@@ -5644,6 +5644,10 @@ export type Database = {
         Returns: boolean
       }
       is_business_owner: { Args: { p_business_id: string }; Returns: boolean }
+      is_performance_business: {
+        Args: { p_business_id: string }
+        Returns: boolean
+      }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mask_phone: { Args: { phone_number: string }; Returns: string }
       populate_geometry_columns:
