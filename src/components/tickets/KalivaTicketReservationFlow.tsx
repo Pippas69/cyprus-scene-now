@@ -288,7 +288,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       const { data: seatingTypes, error } = await supabase
         .from('reservation_seating_types')
         .select('*')
-        .eq('event_id', eventId);
+        .eq('event_id', eventId)
+        .eq('paused', false);
       if (error) throw error;
 
       // Count actual reservations per seating type for accurate availability

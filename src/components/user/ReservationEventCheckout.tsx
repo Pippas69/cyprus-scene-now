@@ -249,7 +249,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       const { data: seatingTypes, error: seatingError } = await supabase
         .from('reservation_seating_types')
         .select('*')
-        .eq('event_id', eventId);
+        .eq('event_id', eventId)
+        .eq('paused', false);
 
       if (seatingError) throw seatingError;
 
