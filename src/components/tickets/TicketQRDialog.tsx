@@ -191,6 +191,33 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
               </div>
             </div>
 
+            {/* Seat Info - Only for seated events */}
+            {hasSeatInfo && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <MapPin className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.zone}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">{ticket?.seatZone || "-"}</p>
+                </div>
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <Hash className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.row}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">{ticket?.seatRow || "-"}</p>
+                </div>
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.seat}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">{ticket?.seatNumber || "-"}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Ticket Code */}
+            <div className="bg-[#102b4a] rounded-lg py-1.5 px-3 mb-3 text-center">
+              <p className="text-[8px] text-white/60 uppercase tracking-widest">{text.ticketCode}</p>
+              <p className="text-sm font-bold text-white tracking-[0.2em] font-mono">{ticketCode}</p>
+            </div>
+
             {/* QR Code - Slightly smaller */}
             {qrDataUrl &&
             <div className="flex flex-col items-center">
