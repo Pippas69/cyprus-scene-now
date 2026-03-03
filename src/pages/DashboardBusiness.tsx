@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import EventCreationForm from "@/components/business/EventCreationForm";
+import ProductionCreationForm from "@/components/business/productions/ProductionCreationForm";
 import OfferCreationForm from "@/components/business/OfferCreationForm";
 import EventsList from "@/components/business/EventsList";
 import OffersList from "@/components/business/OffersList";
@@ -47,6 +48,7 @@ const DashboardBusiness = () => {
   const [businessName, setBusinessName] = useState<string>("");
   const [businessLogoUrl, setBusinessLogoUrl] = useState<string | null>(null);
   const [businessCoverUrl, setBusinessCoverUrl] = useState<string | null>(null);
+  const [businessCategories, setBusinessCategories] = useState<string[]>([]);
   const [userName, setUserName] = useState<string>("");
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
 
@@ -148,7 +150,7 @@ const DashboardBusiness = () => {
       const [businessResult, profileResult] = await Promise.all([
         supabase
           .from("businesses")
-          .select("id, verified, name, logo_url, cover_url")
+          .select("id, verified, name, logo_url, cover_url, category")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -170,6 +172,7 @@ const DashboardBusiness = () => {
       setBusinessName(businessResult.data.name ?? "");
       setBusinessLogoUrl(businessResult.data.logo_url ?? null);
       setBusinessCoverUrl(businessResult.data.cover_url ?? null);
+      setBusinessCategories(businessResult.data.category || []);
 
       // Set user profile data with defensive defaults
       setUserName(profileResult.data?.name || user.email?.split('@')[0] || 'User');
@@ -319,7 +322,11 @@ const DashboardBusiness = () => {
               <Route path="posts/new" element={businessId ? <BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /> : null} />
               */}
               <Route path="events" element={businessId ? <EventsList businessId={businessId} /> : null} />
-              <Route path="events/new" element={businessId ? <EventCreationForm businessId={businessId} /> : null} />
+              <Route path="events/new" element={businessId ? (
+                ['theatre', 'music', 'dance', 'kids'].some(c => businessCategories.map(bc => bc.toLowerCase()).includes(c))
+                  ? <ProductionCreationForm businessId={businessId} />
+                  : <EventCreationForm businessId={businessId} />
+              ) : null} />
               <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
               <Route path="offers/new" element={businessId ? <OfferCreationForm businessId={businessId} /> : null} />
               <Route path="reservations" element={businessId ? <ReservationDashboard businessId={businessId} language={language} /> : null} />
