@@ -393,7 +393,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         eventId,
         items: [{ tierId: ticketTier.id, quantity: partySize }],
         customerName: guests[0].name.trim(),
-        customerEmail: user.email,
+        customerEmail: customerEmail.trim() || user.email,
         customerPhone: phoneNumber.trim() || null,
         specialRequests: specialRequests.trim() || null,
         seatingTypeId: selectedSeating?.id || null,

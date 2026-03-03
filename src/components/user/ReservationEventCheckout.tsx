@@ -320,7 +320,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           party_size: partySize,
           reservation_name: reservationName,
           phone_number: phoneNumber,
-          special_requests: specialRequests || null,
+          customer_email: customerEmail.trim() || null,
         },
       });
 
