@@ -440,6 +440,12 @@ export default function EventDetail() {
 
   // Check if event has native tickets
   const hasNativeTickets = ticketTiers.length > 0;
+  
+  // Check if ALL ticket tiers are sold out (for Kaliva fully sold out badge)
+  const allTicketsSoldOut = hasNativeTickets && ticketTiers.every(
+    (t: any) => (t.quantity_sold ?? 0) >= t.quantity_total
+  );
+  const kalivaFullySoldOut = reservationsSoldOut && allTicketsSoldOut;
 
   // Determine event type
   const eventType = event?.event_type || (hasNativeTickets ? 'ticket' : (event?.accepts_reservations ? 'reservation' : 'free_entry'));
@@ -626,7 +632,12 @@ export default function EventDetail() {
               {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
               {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
                 <div className="w-full space-y-1">
-                  {reservationsSoldOut ? (
+                  {kalivaFullySoldOut ? (
+                    <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
+                      <Ticket className="h-3.5 w-3.5" />
+                      <span>{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
+                    </div>
+                  ) : reservationsSoldOut ? (
                     <>
                       <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                         <Ticket className="h-3.5 w-3.5" />
@@ -882,7 +893,12 @@ export default function EventDetail() {
             {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
             {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && user && (
               <div className="w-full space-y-1">
-                {reservationsSoldOut ? (
+                {kalivaFullySoldOut ? (
+                  <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
+                    <Ticket className="h-4 w-4" />
+                    <span>{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
+                  </div>
+                ) : reservationsSoldOut ? (
                   <>
                     <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                       <Ticket className="h-4 w-4" />
