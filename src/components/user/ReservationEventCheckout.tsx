@@ -85,6 +85,7 @@ const translations = {
     phone: "Τηλέφωνο",
     email: "Email",
     emailPlaceholder: "example@email.com",
+    arrivalHours: "Ώρες άφιξης",
     specialRequests: "Ειδικά αιτήματα",
     optional: "προαιρετικό",
     summary: "Σύνοψη Κράτησης",
