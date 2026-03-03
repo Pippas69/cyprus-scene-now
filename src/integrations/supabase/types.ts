@@ -2811,6 +2811,137 @@ export type Database = {
           },
         ]
       }
+      production_cast: {
+        Row: {
+          bio: string | null
+          created_at: string
+          id: string
+          person_name: string
+          photo_url: string | null
+          production_id: string
+          role_name: string | null
+          role_type: string
+          sort_order: number
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          person_name: string
+          photo_url?: string | null
+          production_id: string
+          role_name?: string | null
+          role_type?: string
+          sort_order?: number
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          person_name?: string
+          photo_url?: string | null
+          production_id?: string
+          role_name?: string | null
+          role_type?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_cast_production_id_fkey"
+            columns: ["production_id"]
+            isOneToOne: false
+            referencedRelation: "productions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      productions: {
+        Row: {
+          business_id: string
+          category: string[]
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          group_booking_enabled: boolean | null
+          group_contact_email: string | null
+          group_contact_phone: string | null
+          group_discount_percent: number | null
+          group_min_size: number | null
+          id: string
+          intermission_count: number | null
+          intermission_duration_minutes: number | null
+          intermission_refreshments: boolean | null
+          media_urls: string[] | null
+          min_age_hint: number | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          category?: string[]
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          group_booking_enabled?: boolean | null
+          group_contact_email?: string | null
+          group_contact_phone?: string | null
+          group_discount_percent?: number | null
+          group_min_size?: number | null
+          id?: string
+          intermission_count?: number | null
+          intermission_duration_minutes?: number | null
+          intermission_refreshments?: boolean | null
+          media_urls?: string[] | null
+          min_age_hint?: number | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          category?: string[]
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          group_booking_enabled?: boolean | null
+          group_contact_email?: string | null
+          group_contact_phone?: string | null
+          group_discount_percent?: number | null
+          group_min_size?: number | null
+          id?: string
+          intermission_count?: number | null
+          intermission_duration_minutes?: number | null
+          intermission_refreshments?: boolean | null
+          media_urls?: string[] | null
+          min_age_hint?: number | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_boosts: {
         Row: {
           boost_tier: Database["public"]["Enums"]["boost_tier"]
@@ -3573,6 +3704,190 @@ export type Database = {
             columns: ["seating_type_id"]
             isOneToOne: false
             referencedRelation: "reservation_seating_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      show_instance_seats: {
+        Row: {
+          created_at: string
+          held_by: string | null
+          held_until: string | null
+          id: string
+          price_cents: number
+          show_instance_id: string
+          status: string
+          ticket_id: string | null
+          ticket_tier_id: string | null
+          updated_at: string
+          venue_seat_id: string
+        }
+        Insert: {
+          created_at?: string
+          held_by?: string | null
+          held_until?: string | null
+          id?: string
+          price_cents?: number
+          show_instance_id: string
+          status?: string
+          ticket_id?: string | null
+          ticket_tier_id?: string | null
+          updated_at?: string
+          venue_seat_id: string
+        }
+        Update: {
+          created_at?: string
+          held_by?: string | null
+          held_until?: string | null
+          id?: string
+          price_cents?: number
+          show_instance_id?: string
+          status?: string
+          ticket_id?: string | null
+          ticket_tier_id?: string | null
+          updated_at?: string
+          venue_seat_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "show_instance_seats_show_instance_id_fkey"
+            columns: ["show_instance_id"]
+            isOneToOne: false
+            referencedRelation: "show_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_instance_seats_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_instance_seats_ticket_tier_id_fkey"
+            columns: ["ticket_tier_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_instance_seats_venue_seat_id_fkey"
+            columns: ["venue_seat_id"]
+            isOneToOne: false
+            referencedRelation: "venue_seats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      show_instances: {
+        Row: {
+          created_at: string
+          doors_open_at: string | null
+          end_at: string
+          event_id: string | null
+          id: string
+          notes: string | null
+          production_id: string
+          start_at: string
+          status: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          doors_open_at?: string | null
+          end_at: string
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+          production_id: string
+          start_at: string
+          status?: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          doors_open_at?: string | null
+          end_at?: string
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+          production_id?: string
+          start_at?: string
+          status?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "show_instances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_instances_production_id_fkey"
+            columns: ["production_id"]
+            isOneToOne: false
+            referencedRelation: "productions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_instances_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      show_zone_pricing: {
+        Row: {
+          created_at: string
+          id: string
+          price_cents: number
+          show_instance_id: string
+          ticket_tier_id: string | null
+          venue_zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price_cents?: number
+          show_instance_id: string
+          ticket_tier_id?: string | null
+          venue_zone_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price_cents?: number
+          show_instance_id?: string
+          ticket_tier_id?: string | null
+          venue_zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "show_zone_pricing_show_instance_id_fkey"
+            columns: ["show_instance_id"]
+            isOneToOne: false
+            referencedRelation: "show_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_zone_pricing_ticket_tier_id_fkey"
+            columns: ["ticket_tier_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_zone_pricing_venue_zone_id_fkey"
+            columns: ["venue_zone_id"]
+            isOneToOne: false
+            referencedRelation: "venue_zones"
             referencedColumns: ["id"]
           },
         ]
@@ -4430,6 +4745,152 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      venue_seats: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          row_label: string
+          seat_label: string | null
+          seat_number: number
+          seat_type: string
+          venue_id: string
+          x: number
+          y: number
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          row_label: string
+          seat_label?: string | null
+          seat_number: number
+          seat_type?: string
+          venue_id: string
+          x?: number
+          y?: number
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          row_label?: string
+          seat_label?: string | null
+          seat_number?: number
+          seat_type?: string
+          venue_id?: string
+          x?: number
+          y?: number
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_seats_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_seats_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "venue_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_zones: {
+        Row: {
+          capacity: number
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+          venue_id: string
+        }
+        Insert: {
+          capacity?: number
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          venue_id: string
+        }
+        Update: {
+          capacity?: number
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_zones_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venues: {
+        Row: {
+          address: string | null
+          capacity: number
+          city: string
+          created_at: string
+          description: string | null
+          floor_plan_url: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          photo_url: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          capacity?: number
+          city: string
+          created_at?: string
+          description?: string | null
+          floor_plan_url?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          capacity?: number
+          city?: string
+          created_at?: string
+          description?: string | null
+          floor_plan_url?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
