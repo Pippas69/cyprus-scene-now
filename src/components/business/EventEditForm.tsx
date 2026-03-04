@@ -401,7 +401,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             quantity_total: tier.quantity_total,
             max_per_order: tier.max_per_order,
             sort_order: tier.sort_order ?? index,
-            dress_code: tier.dress_code || null,
+            dress_code: null,
           }));
         }
         // For hybrid events, tiers with quantity_total=999999 are reservation-linked
@@ -421,7 +421,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                 quantity_total: tier.quantity_total,
                 max_per_order: tier.max_per_order,
                 sort_order: tier.sort_order ?? 0,
-                dress_code: tier.dress_code || null,
+                dress_code: null,
               });
             }
           }
@@ -710,6 +710,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           accepts_reservations: hasReservation,
           reservation_hours_from: hasReservation ? formData.reservationFromTime : null,
           reservation_hours_to: hasReservation ? formData.reservationToTime : null,
+          dress_code: null,
           terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
         })
         .eq('id', event.id);
@@ -753,7 +754,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             quantity_total: tier.quantity_total,
             max_per_order: tier.max_per_order,
             sort_order: index,
-            dress_code: tier.dress_code || null,
+            dress_code: null,
             active: true,
           }));
         } else {
@@ -786,7 +787,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                 quantity_total: tier.quantity_total,
                 max_per_order: tier.max_per_order,
                 sort_order: reservationLinked.length + index,
-                dress_code: tier.dress_code || null,
+                dress_code: null,
                 active: true,
               }))
             : [];
@@ -823,7 +824,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             quantity_total: tier.quantity_total,
             max_per_order: tier.max_per_order,
             sort_order: tier.sort_order,
-            dress_code: tier.dress_code,
+            dress_code: null,
             active: true,
           };
 
