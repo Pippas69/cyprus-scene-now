@@ -588,9 +588,9 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-3">
-                            <span className={`text-[10px] sm:text-xs font-medium ${tt.active ? 'text-green-500' : 'text-red-500'}`}>
-                              {tt.active ? t.open : t.closed}
-                            </span>
+                            
+
+                        
                             {updatingId === tt.id ?
                         <Loader2 className="h-4 w-4 animate-spin" /> :
 
