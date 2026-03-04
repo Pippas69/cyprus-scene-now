@@ -286,7 +286,8 @@ export default function EventDetail() {
       }
 
       // Check if all reservation seating types are sold out for Kaliva flow
-      if ((eventData as any).businesses?.ticket_reservation_linked && eventData.event_type === 'ticket_and_reservation') {
+      const eventDataLinked = !!(eventData as any).businesses?.ticket_reservation_linked || isClubOrEventBusiness((eventData as any).businesses?.category || []);
+      if (eventDataLinked && eventData.event_type === 'ticket_and_reservation') {
         const { data: seatingTypes } = await supabase
           .from('reservation_seating_types')
           .select('id, available_slots, paused')
@@ -692,7 +693,7 @@ export default function EventDetail() {
               </div>
 
               {/* Tickets/Reservations - DIRECTLY after RSVP buttons (before date) */}
-              {hasNativeTickets && !((event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation') && (
+              {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') && (
                 <RippleButton
                   className="w-full gap-2 h-9 text-sm"
                   onClick={() => setShowTicketFlow(true)}
@@ -703,7 +704,7 @@ export default function EventDetail() {
               )}
 
               {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
-              {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
+              {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' && (
                 <div className="w-full space-y-1">
                   {kalivaFullySoldOut ? (
                     <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
@@ -764,7 +765,7 @@ export default function EventDetail() {
 
 
 
-              {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !(event as any).businesses?.ticket_reservation_linked && (
+              {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked && (
                 <RippleButton
                   className="w-full gap-2 h-9 text-sm"
                   onClick={() => setShowReservationCheckout(true)}
@@ -974,7 +975,7 @@ export default function EventDetail() {
             </Card>
 
             {/* Tickets/Reservations - DIRECTLY after RSVP buttons */}
-            {hasNativeTickets && !((event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation') && (
+            {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') && (
               <RippleButton
                 className="w-full gap-2"
                 onClick={() => setShowTicketFlow(true)}
@@ -985,7 +986,7 @@ export default function EventDetail() {
             )}
 
             {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
-            {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
+            {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' && (
               <div className="w-full space-y-1">
                 {kalivaFullySoldOut ? (
                   <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
@@ -1044,7 +1045,7 @@ export default function EventDetail() {
               </RippleButton>
             )}
 
-            {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !(event as any).businesses?.ticket_reservation_linked && (
+            {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked && (
               <RippleButton
                 className="w-full gap-2"
                 onClick={() => setShowReservationCheckout(true)}
@@ -1200,7 +1201,7 @@ export default function EventDetail() {
       )}
 
       {/* Kaliva Ticket + Reservation Flow */}
-      {user && hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
+      {user && hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' && (
         <KalivaTicketReservationFlow
           open={showKalivaFlow}
           onOpenChange={setShowKalivaFlow}
