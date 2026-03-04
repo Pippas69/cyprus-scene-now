@@ -1062,7 +1062,7 @@ const EventCreationForm = ({
         </SectionCard>
 
         {/* Walk-in toggle for hybrid events - placed above Terms */}
-        {isTicketSelected && isReservationSelected && (
+        {formData.eventType === 'ticket_and_reservation' && (
           <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
             <div className="space-y-0.5">
               <p className="font-medium text-xs sm:text-sm">
