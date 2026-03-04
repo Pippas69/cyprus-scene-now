@@ -204,6 +204,47 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     [selectedSeats]
   );
 
+  // Pre-compute row labels
+  const rowLabels = React.useMemo(() => {
+    const rowMap = new Map<string, { minX: number; maxX: number; y: number }>();
+    for (const seat of seats) {
+      const cx = seat.x - bounds.minX;
+      const cy = bounds.maxY - seat.y;
+      const key = `${seat.zone_id}-${seat.row_label}`;
+      const existing = rowMap.get(key);
+      if (!existing) {
+        rowMap.set(key, { minX: cx, maxX: cx, y: cy });
+      } else {
+        if (cx < existing.minX) existing.minX = cx;
+        if (cx > existing.maxX) existing.maxX = cx;
+      }
+    }
+    const labels: React.ReactNode[] = [];
+    const rowLabelsSeen = new Set<string>();
+    rowMap.forEach((pos, key) => {
+      const rowLabel = key.split('-').pop()!;
+      const labelKey = `${rowLabel}-${Math.round(pos.y)}`;
+      if (rowLabelsSeen.has(labelKey)) return;
+      rowLabelsSeen.add(labelKey);
+      labels.push(
+        <text
+          key={`row-left-${key}`}
+          x={pos.minX - 18}
+          y={pos.y + 1}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={9}
+          fontWeight={600}
+          fill="hsl(var(--muted-foreground))"
+          className="select-none"
+        >
+          {rowLabel}
+        </text>
+      );
+    });
+    return labels;
+  }, [seats, bounds]);
+
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
       if (soldSeats.has(seat.id)) return;
@@ -453,45 +494,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           </g>
 
           {/* Row labels */}
-          {React.useMemo(() => {
-            const rowMap = new Map<string, { minX: number; maxX: number; y: number }>();
-            for (const seat of seats) {
-              const cx = seat.x - bounds.minX;
-              const cy = bounds.maxY - seat.y;
-              const key = `${seat.zone_id}-${seat.row_label}`;
-              const existing = rowMap.get(key);
-              if (!existing) {
-                rowMap.set(key, { minX: cx, maxX: cx, y: cy });
-              } else {
-                if (cx < existing.minX) existing.minX = cx;
-                if (cx > existing.maxX) existing.maxX = cx;
-              }
-            }
-            const labels: React.ReactNode[] = [];
-            const rowLabelsSeen = new Set<string>();
-            rowMap.forEach((pos, key) => {
-              const rowLabel = key.split('-').pop()!;
-              const labelKey = `${rowLabel}-${Math.round(pos.y)}`;
-              if (rowLabelsSeen.has(labelKey)) return;
-              rowLabelsSeen.add(labelKey);
-              labels.push(
-                <text
-                  key={`row-left-${key}`}
-                  x={pos.minX - 18}
-                  y={pos.y + 1}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={9}
-                  fontWeight={600}
-                  fill="hsl(var(--muted-foreground))"
-                  className="select-none"
-                >
-                  {rowLabel}
-                </text>
-              );
-            });
-            return labels;
-          }, [seats, bounds])}
+          {rowLabels}
 
           {/* All seats */}
           {seats.map(renderSeat)}
