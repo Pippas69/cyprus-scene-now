@@ -6,7 +6,7 @@ import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CalendarDays } from 'lucide-react';
 
 interface ReservationDashboardProps {
   businessId: string;
@@ -144,21 +144,22 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           {/* Event selector for ticket-linked businesses */}
           {isTicketLinked && events.length > 0 && (
             <Select value={selectedEventId || ''} onValueChange={setSelectedEventId}>
-              <SelectTrigger className="h-10 text-sm w-auto min-w-[200px] max-w-xs rounded-xl border-border/50 bg-card/50 backdrop-blur-sm shadow-sm hover:bg-card/80 transition-colors">
+              <SelectTrigger className="h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg border-border/30 bg-card/30 backdrop-blur-sm shadow-sm hover:bg-card/50 transition-colors gap-2 px-3">
                 <SelectValue placeholder={t.selectEvent} />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent className="rounded-lg">
                 {events.map((event) => {
                   const dateStr = new Date(event.start_at).toLocaleDateString(
                     language === 'el' ? 'el-GR' : 'en-US',
                     { day: 'numeric', month: 'short' }
                   );
                   return (
-                    <SelectItem key={event.id} value={event.id} className="text-sm rounded-lg">
-                      <span className="flex items-center gap-2.5">
-                        <span className="font-medium">{event.title}</span>
-                        <span className="text-xs text-muted-foreground/70">{dateStr}</span>
-                        <span className="inline-flex items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 min-w-[22px]">
+                    <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
+                      <span className="flex items-center gap-2">
+                        <span className="font-medium text-foreground">{event.title}</span>
+                        <CalendarDays className="h-3.5 w-3.5 text-foreground/70 shrink-0" />
+                        <span className="text-sm text-foreground/70">{dateStr}</span>
+                        <span className="inline-flex items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-semibold px-1.5 py-0.5 min-w-[20px]">
                           {event.reservationCount}
                         </span>
                       </span>
