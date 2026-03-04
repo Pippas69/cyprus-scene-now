@@ -367,6 +367,18 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
         }
 
         // Create ticket tiers from zone pricing, with seat counts from venue
+        const houseSeatsPerZone = new Map<string, number>();
+        if (si.house_seats && si.house_seats.length > 0) {
+          // Count house seats per zone by looking up each seat's zone
+          for (const hs of si.house_seats) {
+            // Find which zone this seat belongs to by matching zone name
+            const zp = si.zone_prices.find(z => z.zone_name === hs.zoneName);
+            if (zp) {
+              houseSeatsPerZone.set(zp.zone_id, (houseSeatsPerZone.get(zp.zone_id) || 0) + 1);
+            }
+          }
+        }
+
         for (const zp of si.zone_prices) {
           // Count active seats in this zone to set proper quantity_total
           const { count: seatCount } = await supabase
@@ -375,16 +387,31 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
             .eq('zone_id', zp.zone_id)
             .eq('is_active', true);
 
+          const houseCount = houseSeatsPerZone.get(zp.zone_id) || 0;
+          const availableSeats = Math.max(0, (seatCount || 0) - houseCount);
+
           const { data: tierData, error: tierErr } = await supabase.from('ticket_tiers').insert({
             event_id: linkedEvent.id,
             name: zp.zone_name,
             price_cents: zp.price_cents,
             currency: 'EUR',
-            quantity_total: seatCount || 0,
+            quantity_total: availableSeats,
             max_per_order: 10,
             sort_order: 0,
           }).select().single();
           if (tierErr) console.warn('Tier creation warning:', tierErr);
+        }
+
+        // Insert house seats into show_instance_seats as 'sold' (reserved by house)
+        if (si.house_seats && si.house_seats.length > 0) {
+          const houseSeatRows = si.house_seats.map(hs => ({
+            show_instance_id: showInst.id,
+            venue_seat_id: hs.seatId,
+            status: 'sold',
+            price_cents: 0,
+          }));
+          const { error: hsErr } = await supabase.from('show_instance_seats').insert(houseSeatRows);
+          if (hsErr) console.warn('House seats insertion warning:', hsErr);
         }
       }
 
