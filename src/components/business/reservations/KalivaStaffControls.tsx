@@ -3,15 +3,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Edit2, Check, X } from 'lucide-react';
+import { Loader2, RefreshCw, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
 
 interface KalivaStaffControlsProps {
   businessId: string;
   language: 'el' | 'en';
   selectedEventId?: string | null;
+}
+
+interface SeatingTypeTier {
+  id: string;
+  seating_type_id: string;
+  min_people: number;
+  max_people: number;
+  prepaid_min_charge_cents: number;
 }
 
 interface EventWithControls {
@@ -24,6 +34,7 @@ interface EventWithControls {
     available_slots: number;
     paused: boolean;
     actualBooked: number;
+    tiers: SeatingTypeTier[];
   }[];
   ticketTiers: {
     id: string;
@@ -34,13 +45,19 @@ interface EventWithControls {
   }[];
 }
 
+interface RangeDraft {
+  min_people: string;
+  max_people: string;
+  prepaid_min_charge_eur: string;
+}
+
 const text = {
   el: {
     title: 'Διαχείριση Διαθεσιμότητας',
     description: 'Διαχειριστείτε τη διαθεσιμότητα σε πραγματικό χρόνο',
     refresh: 'Ανανέωση',
     tables: 'ΤΡΑΠΕΖΙΑ',
-    tickets: 'Εισιτηρια',
+    tickets: 'ΕΙΣΙΤΗΡΙΑ (Walk-ins)',
     open: 'Ανοιχτό',
     closed: 'Κλειστό',
     noEvents: 'Δεν υπάρχουν ενεργές εκδηλώσεις',
@@ -48,13 +65,20 @@ const text = {
     error: 'Σφάλμα',
     selectEvent: 'Επιλέξτε εκδήλωση',
     saved: 'Αποθηκεύτηκε!',
+    editRanges: 'Εύρος & Τιμή',
+    editRangesTitle: 'Επεξεργασία Εύρους Ατόμων & Τιμής',
+    rangeHint: 'Έως 3 εύρη ανά τύπο. Το ποσό αφορά όλη την παρέα.',
+    addRange: 'Προσθήκη εύρους',
+    invalidRange: 'Συμπληρώστε σωστά min/max και τιμή.',
+    save: 'Αποθήκευση',
+    cancel: 'Ακύρωση',
   },
   en: {
     title: 'Availability Management',
     description: 'Manage availability in real-time',
     refresh: 'Refresh',
     tables: 'Tables',
-    tickets: 'Tickets',
+    tickets: 'Tickets (Walk-ins)',
     open: 'Open',
     closed: 'Closed',
     noEvents: 'No active events',
@@ -62,6 +86,13 @@ const text = {
     error: 'Error',
     selectEvent: 'Select event',
     saved: 'Saved!',
+    editRanges: 'Range & Price',
+    editRangesTitle: 'Edit Party Range & Price',
+    rangeHint: 'Up to 3 ranges per type. Price is for the whole group.',
+    addRange: 'Add range',
+    invalidRange: 'Please enter valid min/max and price values.',
+    save: 'Save',
+    cancel: 'Cancel',
   }
 };
 
@@ -69,12 +100,14 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [events, setEvents] = useState<EventWithControls[]>([]);
-  // Use external selectedEventId from parent if provided
   const [internalSelectedEventId, setInternalSelectedEventId] = useState<string | null>(null);
   const selectedEventId = externalSelectedEventId ?? internalSelectedEventId;
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editDrafts, setEditDrafts] = useState<Record<string, string>>({});
+  const [rangeEditorSeating, setRangeEditorSeating] = useState<{ eventId: string; seatingId: string; seatingName: string } | null>(null);
+  const [rangeDrafts, setRangeDrafts] = useState<RangeDraft[]>([]);
+  const [savingRanges, setSavingRanges] = useState(false);
 
   const t = text[language];
   const getEditKey = (type: 'seating' | 'tier', id: string) => `${type}:${id}`;
@@ -95,17 +128,28 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
 
       const eventIds = eventsData.map((e) => e.id);
 
-      const [seatingRes, tiersRes, reservationsRes, ticketsRes] = await Promise.all([
+      const [seatingRes, tiersRes, reservationsRes, ticketsRes, ordersRes] = await Promise.all([
         supabase.from('reservation_seating_types').select('id, event_id, seating_type, available_slots, paused').in('event_id', eventIds),
-        supabase.from('ticket_tiers').select('id, event_id, name, quantity_total, active').in('event_id', eventIds),
+        supabase.from('ticket_tiers').select('id, event_id, name, quantity_total, active').in('event_id', eventIds).neq('quantity_total', 999999),
         supabase.from('reservations').select('event_id, seating_type_id').in('event_id', eventIds).in('status', ['pending', 'accepted']),
-        supabase.from('tickets').select('tier_id').in('status', ['valid', 'used']),
+        supabase.from('tickets').select('tier_id, order_id, event_id').in('event_id', eventIds).in('status', ['valid', 'used']),
+        supabase.from('ticket_orders').select('id, event_id, linked_reservation_id').in('event_id', eventIds),
       ]);
 
       const seatingTypes = seatingRes.data || [];
-      const ticketTiers = tiersRes.data || [];
+      const walkInTicketTiers = tiersRes.data || [];
       const reservations = reservationsRes.data || [];
       const tickets = ticketsRes.data || [];
+      const orders = ordersRes.data || [];
+
+      const seatingIds = seatingTypes.map((st) => st.id);
+      const { data: seatingTypeTiers } = seatingIds.length > 0
+        ? await supabase
+            .from('seating_type_tiers')
+            .select('id, seating_type_id, min_people, max_people, prepaid_min_charge_cents')
+            .in('seating_type_id', seatingIds)
+            .order('min_people', { ascending: true })
+        : { data: [] };
 
       const reservationCounts: Record<string, number> = {};
       reservations.forEach((r) => {
@@ -113,63 +157,17 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
         if (key) reservationCounts[key] = (reservationCounts[key] || 0) + 1;
       });
 
-      const tierIds = ticketTiers.map((t) => t.id);
+      const walkInOrderIds = new Set((orders || []).filter((o) => !o.linked_reservation_id).map((o) => o.id));
+      const tierIds = new Set(walkInTicketTiers.map((t) => t.id));
       const ticketCounts: Record<string, number> = {};
       tickets.forEach((t) => {
-        if (tierIds.includes(t.tier_id)) {
+        if (tierIds.has(t.tier_id) && (!t.order_id || walkInOrderIds.has(t.order_id))) {
           ticketCounts[t.tier_id] = (ticketCounts[t.tier_id] || 0) + 1;
         }
       });
 
       const seatingTypeOrder = ['table', 'vip', 'bar', 'sofa'];
 
-      const enrichedEvents: EventWithControls[] = eventsData.map((event) => ({
-        id: event.id,
-        title: event.title,
-        start_at: event.start_at,
-        seatingTypes: seatingTypes
-          .filter((st) => st.event_id === event.id)
-          .sort((a, b) => {
-            const aType = (a.seating_type || '').toLowerCase();
-            const bType = (b.seating_type || '').toLowerCase();
-            const aIndex = seatingTypeOrder.indexOf(aType);
-            const bIndex = seatingTypeOrder.indexOf(bType);
-
-            if (aIndex === -1 && bIndex === -1) return aType.localeCompare(bType);
-            if (aIndex === -1) return 1;
-            if (bIndex === -1) return -1;
-            return aIndex - bIndex;
-          })
-          .map((st) => ({
-            id: st.id,
-            seating_type: st.seating_type,
-            available_slots: st.available_slots,
-            paused: st.paused ?? false,
-            actualBooked: reservationCounts[st.id] || 0,
-          })),
-        ticketTiers: ticketTiers
-          .filter((tt) => tt.event_id === event.id)
-          .map((tt) => ({
-            id: tt.id,
-            name: tt.name,
-            quantity_total: tt.quantity_total,
-            active: tt.active,
-            actualSold: ticketCounts[tt.id] || 0,
-          })),
-      }));
-
-      setEvents(enrichedEvents);
-
-      // Auto-select first event if none selected or selected event no longer exists (only for internal mode)
-      if (!externalSelectedEventId && (!internalSelectedEventId || !enrichedEvents.find(e => e.id === internalSelectedEventId))) {
-        setInternalSelectedEventId(enrichedEvents[0]?.id || null);
-      }
-    } catch (error) {
-      console.error('Error fetching Kaliva staff data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [businessId, selectedEventId]);
 
   useEffect(() => {
     if (!editingKey) {
