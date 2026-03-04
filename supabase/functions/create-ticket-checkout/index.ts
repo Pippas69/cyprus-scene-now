@@ -26,6 +26,8 @@ interface CheckoutRequest {
   specialRequests?: string | null;
   seatingTypeId?: string | null;
   guests?: GuestData[];
+  seatIds?: string[];
+  showInstanceId?: string;
 }
 
 const logStep = (step: string, details?: unknown) => {
@@ -57,8 +59,8 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests }: CheckoutRequest = await req.json();
-    logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length, seatingTypeId });
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests, seatIds, showInstanceId }: CheckoutRequest = await req.json();
+    logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
 
     if (!eventId || !items || items.length === 0) {
       throw new Error("Missing required fields");
@@ -82,6 +84,26 @@ Deno.serve(async (req) => {
       hasStripeConnect: !!business?.stripe_account_id,
       payoutsEnabled: business?.stripe_payouts_enabled
     });
+
+    // If seatIds provided, look up seat details for embedding in tickets later
+    let seatDetailsMap: Map<string, { zone: string; row: string; number: number }> = new Map();
+    if (seatIds && seatIds.length > 0) {
+      const { data: seatRows } = await supabaseClient
+        .from("venue_seats")
+        .select("id, row_label, seat_number, venue_zones(name)")
+        .in("id", seatIds);
+      
+      if (seatRows) {
+        for (const s of seatRows) {
+          seatDetailsMap.set(s.id, {
+            zone: (s.venue_zones as any)?.name || '',
+            row: s.row_label,
+            number: s.seat_number,
+          });
+        }
+      }
+      logStep("Seat details loaded", { count: seatDetailsMap.size });
+    }
 
     // Get business subscription to determine commission rate
     const { data: subscription } = await supabaseClient
@@ -188,6 +210,75 @@ Deno.serve(async (req) => {
     const totalCents = subtotalCents; // User pays subtotal, commission is taken from business
     logStep("Price calculated", { subtotalCents, commissionCents, totalCents });
 
+    // Helper to mark seats as sold in show_instance_seats
+    const markSeatsAsSold = async (orderId: string) => {
+      if (!seatIds || seatIds.length === 0 || !showInstanceId) return;
+      
+      const seatInserts = seatIds.map(seatId => ({
+        show_instance_id: showInstanceId,
+        venue_seat_id: seatId,
+        status: 'sold',
+        ticket_order_id: orderId,
+      }));
+
+      const { error: seatError } = await supabaseClient
+        .from('show_instance_seats')
+        .upsert(seatInserts, { onConflict: 'show_instance_id,venue_seat_id' });
+
+      if (seatError) {
+        logStep("Error marking seats as sold", { error: seatError.message });
+      } else {
+        logStep("Seats marked as sold", { count: seatIds.length });
+      }
+    };
+
+    // Helper to build ticket objects with seat info
+    const buildTicketsToCreate = (orderId: string) => {
+      const ticketsToCreate = [];
+      let guestIdx = 0;
+      
+      if (seatIds && seatIds.length > 0) {
+        // Seated event: one ticket per seat
+        for (const seatId of seatIds) {
+          const seatDetail = seatDetailsMap.get(seatId);
+          const guestInfo = guests?.[guestIdx];
+          // Find matching tier for this seat's zone
+          const matchingItem = items[0]; // fallback
+          ticketsToCreate.push({
+            order_id: orderId,
+            tier_id: matchingItem.tierId,
+            event_id: eventId,
+            user_id: user.id,
+            status: "valid",
+            guest_name: guestInfo?.name || null,
+            guest_age: guestInfo?.age || null,
+            seat_zone: seatDetail?.zone || null,
+            seat_row: seatDetail?.row || null,
+            seat_number: seatDetail?.number || null,
+          });
+          guestIdx++;
+        }
+      } else {
+        // Non-seated event
+        for (const item of items) {
+          for (let i = 0; i < item.quantity; i++) {
+            const guestInfo = guests?.[guestIdx];
+            ticketsToCreate.push({
+              order_id: orderId,
+              tier_id: item.tierId,
+              event_id: eventId,
+              user_id: user.id,
+              status: "valid",
+              guest_name: guestInfo?.name || null,
+              guest_age: guestInfo?.age || null,
+            });
+            guestIdx++;
+          }
+        }
+      }
+      return ticketsToCreate;
+    };
+
     // For free tickets, skip Stripe and create order directly
     if (subtotalCents === 0) {
       logStep("Free tickets - creating order directly");
@@ -215,24 +306,8 @@ Deno.serve(async (req) => {
         throw new Error("Failed to create order: " + orderError?.message);
       }
 
-      // Create individual tickets with guest info if available
-      const ticketsToCreate = [];
-      let guestIdx = 0;
-      for (const item of items) {
-        for (let i = 0; i < item.quantity; i++) {
-          const guestInfo = guests?.[guestIdx];
-          ticketsToCreate.push({
-            order_id: order.id,
-            tier_id: item.tierId,
-            event_id: eventId,
-            user_id: user.id,
-            status: "valid",
-            guest_name: guestInfo?.name || null,
-            guest_age: guestInfo?.age || null,
-          });
-          guestIdx++;
-        }
-      }
+      // Create individual tickets with guest & seat info
+      const ticketsToCreate = buildTicketsToCreate(order.id);
 
       const { error: ticketsError } = await supabaseClient
         .from("tickets")
@@ -242,7 +317,8 @@ Deno.serve(async (req) => {
         throw new Error("Failed to create tickets: " + ticketsError.message);
       }
 
-      // quantity_sold already updated atomically by reserve_tickets_atomically()
+      // Mark seats as sold
+      await markSeatsAsSold(order.id);
 
       logStep("Free order completed", { orderId: order.id });
 
@@ -416,11 +492,40 @@ Deno.serve(async (req) => {
     }
     logStep("Pending order created", { orderId: order.id });
 
+    // Hold seats immediately (will be confirmed on payment, released on expiry)
+    if (seatIds && seatIds.length > 0 && showInstanceId) {
+      const holdInserts = seatIds.map(seatId => ({
+        show_instance_id: showInstanceId,
+        venue_seat_id: seatId,
+        status: 'held',
+        ticket_order_id: order.id,
+        held_until: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min hold
+      }));
+
+      const { error: holdError } = await supabaseClient
+        .from('show_instance_seats')
+        .upsert(holdInserts, { onConflict: 'show_instance_id,venue_seat_id' });
+
+      if (holdError) {
+        logStep("Error holding seats", { error: holdError.message });
+      } else {
+        logStep("Seats held for checkout", { count: seatIds.length });
+      }
+    }
+
     const origin = req.headers.get("origin") || "https://lovable.dev";
     
     // Check if business has Stripe Connect set up for payment splitting
     const hasStripeConnect = business?.stripe_account_id && business?.stripe_payouts_enabled;
     
+    // Serialize seat details for metadata (Stripe metadata values max 500 chars)
+    const seatDetailsForMeta = seatIds ? JSON.stringify(
+      seatIds.map(id => {
+        const d = seatDetailsMap.get(id);
+        return d ? { id, z: d.zone, r: d.row, n: d.number } : { id };
+      })
+    ) : undefined;
+
     // Build session config
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
@@ -438,6 +543,9 @@ Deno.serve(async (req) => {
         guests: guests ? JSON.stringify(guests) : undefined,
         seating_type_id: seatingTypeId || undefined,
         special_requests: specialRequests || undefined,
+        seat_ids: seatIds ? JSON.stringify(seatIds) : undefined,
+        seat_details: seatDetailsForMeta,
+        show_instance_id: showInstanceId || undefined,
       },
     };
     

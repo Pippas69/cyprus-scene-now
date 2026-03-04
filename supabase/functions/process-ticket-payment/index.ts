@@ -64,28 +64,63 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parse ticket breakdown and guests from metadata
+    // Parse ticket breakdown, guests, and seat info from metadata
     const ticketBreakdown = JSON.parse(session.metadata?.ticket_breakdown || "[]");
     const guestsData = JSON.parse(session.metadata?.guests || "[]");
+    const seatIds: string[] = session.metadata?.seat_ids ? JSON.parse(session.metadata.seat_ids) : [];
+    const seatDetails: { id: string; z: string; r: string; n: number }[] = session.metadata?.seat_details ? JSON.parse(session.metadata.seat_details) : [];
+    const showInstanceId = session.metadata?.show_instance_id || null;
+    
     logStep("Ticket breakdown", ticketBreakdown);
     logStep("Guests data", { count: guestsData.length });
+    logStep("Seat data", { seatCount: seatIds.length, showInstanceId });
 
-    // Create individual tickets with guest info
+    // Build seat details map
+    const seatDetailsMap = new Map<string, { zone: string; row: string; number: number }>();
+    for (const sd of seatDetails) {
+      seatDetailsMap.set(sd.id, { zone: sd.z, row: sd.r, number: sd.n });
+    }
+
+    // Create individual tickets with guest info AND seat info
     const ticketsToCreate = [];
     let guestIdx = 0;
-    for (const item of ticketBreakdown) {
-      for (let i = 0; i < item.quantity; i++) {
+
+    if (seatIds.length > 0) {
+      // Seated event: one ticket per seat
+      for (const seatId of seatIds) {
+        const seatDetail = seatDetailsMap.get(seatId);
         const guestInfo = guestsData[guestIdx];
+        const matchingItem = ticketBreakdown[0]; // primary tier
         ticketsToCreate.push({
           order_id: orderId,
-          tier_id: item.tierId,
+          tier_id: matchingItem.tierId,
           event_id: order.event_id,
           user_id: order.user_id,
           status: "valid",
           guest_name: guestInfo?.name || null,
           guest_age: guestInfo?.age || null,
+          seat_zone: seatDetail?.zone || null,
+          seat_row: seatDetail?.row || null,
+          seat_number: seatDetail?.number || null,
         });
         guestIdx++;
+      }
+    } else {
+      // Non-seated event
+      for (const item of ticketBreakdown) {
+        for (let i = 0; i < item.quantity; i++) {
+          const guestInfo = guestsData[guestIdx];
+          ticketsToCreate.push({
+            order_id: orderId,
+            tier_id: item.tierId,
+            event_id: order.event_id,
+            user_id: order.user_id,
+            status: "valid",
+            guest_name: guestInfo?.name || null,
+            guest_age: guestInfo?.age || null,
+          });
+          guestIdx++;
+        }
       }
     }
 
@@ -98,8 +133,28 @@ Deno.serve(async (req) => {
     }
     logStep("Tickets created", { count: ticketsToCreate.length });
 
+    // Mark seats as sold (upgrade from 'held' to 'sold')
+    if (seatIds.length > 0 && showInstanceId) {
+      const seatUpdates = seatIds.map(seatId => ({
+        show_instance_id: showInstanceId,
+        venue_seat_id: seatId,
+        status: 'sold',
+        ticket_order_id: orderId,
+        held_until: null,
+      }));
+
+      const { error: seatError } = await supabaseClient
+        .from('show_instance_seats')
+        .upsert(seatUpdates, { onConflict: 'show_instance_id,venue_seat_id' });
+
+      if (seatError) {
+        logStep("Error marking seats as sold", { error: seatError.message });
+      } else {
+        logStep("Seats marked as sold", { count: seatIds.length });
+      }
+    }
+
     // quantity_sold already reserved atomically at checkout creation time
-    // No need to update again here - prevents double counting
     logStep("Tier quantities already reserved at checkout");
     logStep("Tier quantities updated");
 
@@ -122,7 +177,6 @@ Deno.serve(async (req) => {
         .single();
 
       if (eventInfo?.event_type === "ticket_and_reservation") {
-        // Check if this business has the ticket_reservation_linked flag
         const { data: businessInfo } = await supabaseClient
           .from("businesses")
           .select("ticket_reservation_linked")
@@ -135,7 +189,6 @@ Deno.serve(async (req) => {
           const totalTicketCreditCents = order.total_cents || 0;
           const partySize = ticketsToCreate.length;
 
-          // Read extra reservation data from Stripe metadata
           const seatingTypeId = session.metadata?.seating_type_id || null;
           const specialRequestsFromMeta = session.metadata?.special_requests || null;
 
@@ -426,7 +479,6 @@ Deno.serve(async (req) => {
     // Record commission in commission_ledger if applicable
     if (order.commission_cents > 0) {
       try {
-        // Get business_id from event
         const { data: eventData } = await supabaseClient
           .from("events")
           .select("business_id")
@@ -458,10 +510,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      ticketCount: ticketsToCreate.length 
-    }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
