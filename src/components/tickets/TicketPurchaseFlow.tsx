@@ -453,7 +453,54 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
+  const renderShowSelectStep = () => {
+    if (!hasMultipleShows || !showInstances) return null;
+    const locale = language === 'el' ? elLocale : enUS;
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground text-center">
+          {language === 'el' ? 'Επιλέξτε ημερομηνία παράστασης' : 'Select a show date'}
+        </p>
+        {showInstances.map((show) => {
+          const isSelected = selectedShowId === show.id;
+          const showDate = new Date(show.start_at);
+          return (
+            <button
+              key={show.id}
+              type="button"
+              onClick={() => {
+                setSelectedShowId(show.id);
+                setSelectedSeats([]); // Reset seats when changing show
+              }}
+              className={cn(
+                "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all",
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-border hover:border-primary/50 hover:bg-muted/30"
+              )}
+            >
+              <Calendar className={cn("h-5 w-5 shrink-0", isSelected ? "text-primary" : "text-muted-foreground")} />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm">
+                  {format(showDate, 'EEEE, d MMMM yyyy', { locale })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {format(showDate, 'HH:mm')}
+                  {show.doors_open_at && ` · ${language === 'el' ? 'Πόρτες' : 'Doors'}: ${format(new Date(show.doors_open_at), 'HH:mm')}`}
+                </p>
+              </div>
+              {isSelected && (
+                <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderStepContent = () => {
+    if (step === STEP_SHOW_SELECT && hasMultipleShows) return renderShowSelectStep();
     if (step === STEP_SEATS && hasSeating) return renderSeatStep();
     if (step === STEP_TICKETS) return renderStep1();
     if (step === STEP_CHECKOUT) return renderStep2();
