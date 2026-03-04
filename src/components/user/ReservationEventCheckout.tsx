@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
 import { 
-  GlassWater, TableIcon, Crown, Sofa, Users, Shirt, 
+  GlassWater, TableIcon, Crown, Sofa, Users, 
   Clock, Phone, User, MessageSquare, CreditCard, Mail,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, Euro,
   AlertCircle, Calendar
@@ -432,12 +432,6 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       )}
                     </div>
 
-                    {option.dress_code && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Shirt className="h-3 w-3" />
-                        {t.dressCode}: {t.dressCodeLabels[option.dress_code as keyof typeof t.dressCodeLabels]}
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               );

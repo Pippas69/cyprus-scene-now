@@ -503,6 +503,14 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-3">
+                            <Badge
+                              variant="outline"
+                              className="cursor-pointer hover:bg-primary/10 text-[9px] sm:text-[10px] px-1.5 py-0.5 h-auto"
+                              onClick={() => openRangeEditor(selectedEvent.id, st)}
+                            >
+                              <Edit2 className="h-2.5 w-2.5 mr-0.5" />
+                              {t.editRanges}
+                            </Badge>
                             <span className={`text-[10px] sm:text-xs font-medium ${isOpen ? 'text-green-500' : 'text-red-500'}`}>
                               {isOpen ? t.open : t.closed}
                             </span>
@@ -599,6 +607,77 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
           ) : null}
         </CardContent>
       </Card>
+      {/* Range editor dialog */}
+      <Dialog open={!!rangeEditorSeating} onOpenChange={(open) => { if (!open) { setRangeEditorSeating(null); setRangeDrafts([]); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm sm:text-base">
+              {t.editRangesTitle} — <span className="capitalize">{rangeEditorSeating?.seatingName}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">{t.rangeHint}</p>
+          <div className="space-y-3">
+            {rangeDrafts.map((draft, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={draft.min_people}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^0-9]/g, '');
+                    setRangeDrafts((prev) => prev.map((d, j) => j === i ? { ...d, min_people: v } : d));
+                  }}
+                  placeholder="Min"
+                  inputMode="numeric"
+                  className="h-8 w-16 text-xs text-center"
+                />
+                <span className="text-xs text-muted-foreground">—</span>
+                <Input
+                  value={draft.max_people}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^0-9]/g, '');
+                    setRangeDrafts((prev) => prev.map((d, j) => j === i ? { ...d, max_people: v } : d));
+                  }}
+                  placeholder="Max"
+                  inputMode="numeric"
+                  className="h-8 w-16 text-xs text-center"
+                />
+                <Input
+                  value={draft.prepaid_min_charge_eur}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^0-9.]/g, '');
+                    setRangeDrafts((prev) => prev.map((d, j) => j === i ? { ...d, prepaid_min_charge_eur: v } : d));
+                  }}
+                  placeholder="€"
+                  inputMode="decimal"
+                  className="h-8 w-20 text-xs text-center"
+                />
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setRangeDrafts((prev) => prev.filter((_, j) => j !== i))}>
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </div>
+            ))}
+            {rangeDrafts.length < 3 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-7 text-xs"
+                onClick={() => setRangeDrafts((prev) => [...prev, { min_people: '', max_people: '', prepaid_min_charge_eur: '' }])}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                {t.addRange}
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setRangeEditorSeating(null); setRangeDrafts([]); }}>
+              {t.cancel}
+            </Button>
+            <Button size="sm" className="flex-1 h-8 text-xs" disabled={savingRanges} onClick={saveRanges}>
+              {savingRanges ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+              {t.save}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
