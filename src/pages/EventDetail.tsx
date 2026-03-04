@@ -91,6 +91,8 @@ export default function EventDetail() {
 
   // Show instances for performance/theatre events
   const [showInstances, setShowInstances] = useState<any[]>([]);
+  // Cast/crew members for performance events
+  const [castMembers, setCastMembers] = useState<any[]>([]);
 
   const fromPath = `${location.pathname}${location.search}`;
   
@@ -258,11 +260,22 @@ export default function EventDetail() {
       if (isPerformance) {
         const { data: shows } = await supabase
           .from('show_instances')
-          .select('id, start_at, end_at, venue_id, doors_open_at, notes, status')
+          .select('id, start_at, end_at, venue_id, doors_open_at, notes, status, production_id')
           .eq('event_id', eventId)
           .eq('status', 'scheduled')
           .order('start_at', { ascending: true });
         setShowInstances(shows || []);
+
+        // Fetch cast/crew via production_id from show instances
+        const productionId = shows?.[0]?.production_id;
+        if (productionId) {
+          const { data: cast } = await supabase
+            .from('production_cast')
+            .select('id, person_name, role_type, role_name, bio, photo_url, sort_order')
+            .eq('production_id', productionId)
+            .order('sort_order', { ascending: true });
+          setCastMembers(cast || []);
+        }
       }
 
       // Check if all reservation seating types are sold out for Kaliva flow
@@ -593,6 +606,38 @@ export default function EventDetail() {
                 </p>
               )}
             </div>
+
+            {/* Cast & Crew for performance events */}
+            {castMembers.length > 0 && (
+              <div className="mt-3">
+                <h2 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  {language === 'el' ? 'Συντελεστές' : 'Cast & Crew'}
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {castMembers.map((member: any) => (
+                    <div key={member.id} className="flex items-center gap-2 p-2 rounded-lg border bg-muted/30">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                        {member.photo_url ? (
+                          <img src={member.photo_url} alt={member.person_name} className="h-full w-full object-cover" />
+                        ) : (
+                          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate">{member.person_name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {member.role_name || (language === 'el'
+                            ? (member.role_type === 'actor' ? 'Ηθοποιός' : member.role_type === 'director' ? 'Σκηνοθέτης' : member.role_type === 'musician' ? 'Μουσικός' : member.role_type)
+                            : member.role_type.charAt(0).toUpperCase() + member.role_type.slice(1)
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Mobile/Tablet info section - shown below lg breakpoint */}
             <div className="lg:hidden space-y-3 mt-3">

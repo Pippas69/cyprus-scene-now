@@ -37,6 +37,7 @@ export interface SelectedSeat {
   seatId: string;
   label: string;
   zoneName: string;
+  zoneId: string;
   zoneColor: string;
   rowLabel: string;
   seatNumber: number;
@@ -255,6 +256,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
         seatId: seat.id,
         label: seat.seat_label,
         zoneName: zone.name,
+        zoneId: zone.id,
         zoneColor: zone.color,
         rowLabel: seat.row_label,
         seatNumber: seat.seat_number,

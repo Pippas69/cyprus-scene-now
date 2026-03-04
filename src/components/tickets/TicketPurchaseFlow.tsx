@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { el as elLocale, enUS } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -41,6 +41,13 @@ interface ShowInstanceOption {
   status: string;
 }
 
+interface ZonePricing {
+  venue_zone_id: string;
+  zone_name: string;
+  price_cents: number;
+  ticket_tier_id: string | null;
+}
+
 interface TicketPurchaseFlowProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,11 +55,9 @@ interface TicketPurchaseFlowProps {
   eventTitle: string;
   ticketTiers: TicketTier[];
   onSuccess?: (orderId: string, isFree: boolean) => void;
-  // Theatre/Performance seat selection props
   venueId?: string;
   showInstanceId?: string;
   eventDate?: string;
-  // Multiple show instances (performance events)
   showInstances?: ShowInstanceOption[];
 }
 
@@ -63,6 +68,7 @@ const translations = {
       showSelect: "Επιλογή Παράστασης",
       seats: "Επιλογή Θέσεων",
       tickets: "Επιλογή Εισιτηρίων",
+      guests: "Στοιχεία Καλεσμένων",
       checkout: "Ολοκλήρωση",
     },
     available: "διαθέσιμα",
@@ -89,6 +95,10 @@ const translations = {
     cancel: "Ακύρωση",
     summary: "Σύνοψη",
     ticketCost: "Κόστος εισιτηρίων",
+    selectedSeats: "Επιλεγμένες θέσεις",
+    row: "Σειρά",
+    seat: "Θέση",
+    zone: "Ζώνη",
   },
   en: {
     title: "Tickets",
@@ -96,6 +106,7 @@ const translations = {
       showSelect: "Select Show",
       seats: "Select Seats",
       tickets: "Select Tickets",
+      guests: "Guest Details",
       checkout: "Checkout",
     },
     available: "available",
@@ -122,6 +133,10 @@ const translations = {
     cancel: "Cancel",
     summary: "Summary",
     ticketCost: "Ticket cost",
+    selectedSeats: "Selected seats",
+    row: "Row",
+    seat: "Seat",
+    zone: "Zone",
   },
 };
 
@@ -153,19 +168,15 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   // Whether this is a seated performance event
   const hasSeating = !!(venueId && showInstanceId);
-  
-  // Steps: showSelect (if multi-show) -> seats (if seated) -> tickets -> checkout
-  const STEP_SHOW_SELECT = hasMultipleShows ? 1 : -1;
-  const STEP_SEATS = hasMultipleShows ? 2 : (hasSeating ? 1 : -1);
-  const STEP_TICKETS = hasMultipleShows ? 3 : (hasSeating ? 2 : 1);
-  const STEP_CHECKOUT = hasMultipleShows ? 4 : (hasSeating ? 3 : 2);
-  const TOTAL_STEPS = hasMultipleShows ? 4 : (hasSeating ? 3 : 2);
+
+  // Zone pricing for seated events
+  const [zonePricing, setZonePricing] = useState<ZonePricing[]>([]);
+  const [zonePricingLoaded, setZonePricingLoaded] = useState(false);
 
   // Seat selection state
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
 
   // State
-  const [step, setStep] = useState(hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? 1 : 1));
   const [submitting, setSubmitting] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
@@ -175,9 +186,68 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // Reset checkout state on reopen, preserve form data
+  // Fetch zone pricing when show instance is selected
+  useEffect(() => {
+    if (!showInstanceId || !hasSeating) {
+      setZonePricing([]);
+      setZonePricingLoaded(false);
+      return;
+    }
+    const fetchPricing = async () => {
+      const { data } = await supabase
+        .from('show_zone_pricing')
+        .select('venue_zone_id, price_cents, ticket_tier_id')
+        .eq('show_instance_id', showInstanceId);
+
+      if (data && data.length > 0) {
+        // Also fetch zone names
+        const zoneIds = [...new Set(data.map(d => d.venue_zone_id))];
+        const { data: zones } = await supabase
+          .from('venue_zones')
+          .select('id, name')
+          .in('id', zoneIds);
+
+        const zoneNameMap = new Map((zones || []).map(z => [z.id, z.name]));
+        setZonePricing(data.map(d => ({
+          venue_zone_id: d.venue_zone_id,
+          zone_name: zoneNameMap.get(d.venue_zone_id) || '',
+          price_cents: d.price_cents,
+          ticket_tier_id: d.ticket_tier_id,
+        })));
+      } else {
+        setZonePricing([]);
+      }
+      setZonePricingLoaded(true);
+    };
+    fetchPricing();
+  }, [showInstanceId, hasSeating]);
+
+  // For seated events with zone pricing, we skip the ticket tier step
+  const isSeatedWithPricing = hasSeating && zonePricingLoaded && zonePricing.length > 0;
+
+  // Steps differ based on event type
+  // Seated with pricing: showSelect? → seats → guests → checkout
+  // Seated without pricing: showSelect? → seats → tickets → checkout
+  // Non-seated: tickets → checkout
+
+  const getSteps = useCallback(() => {
+    const steps: string[] = [];
+    if (hasMultipleShows) steps.push('showSelect');
+    if (hasSeating) steps.push('seats');
+    if (!isSeatedWithPricing) steps.push('tickets');
+    steps.push('guests');
+    steps.push('checkout');
+    return steps;
+  }, [hasMultipleShows, hasSeating, isSeatedWithPricing]);
+
+  const steps = getSteps();
+  const [currentStepIdx, setCurrentStepIdx] = useState(0);
+  const currentStep = steps[currentStepIdx] || steps[0];
+
+  // Reset step when opening
   useEffect(() => {
     if (open) {
+      setCurrentStepIdx(0);
       setCheckoutUrl(null);
       setRedirectAttempted(false);
     }
@@ -186,11 +256,14 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   // Scroll to top on step change
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [step]);
+  }, [currentStepIdx]);
 
-  // Sync guest name fields with total ticket count
-  const totalTickets = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+  // Compute total tickets for seated vs non-seated
+  const seatCount = selectedSeats.length;
+  const tierTotalTickets = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+  const totalTickets = isSeatedWithPricing ? seatCount : tierTotalTickets;
 
+  // Sync guest name fields
   useEffect(() => {
     setGuestNames(prev => {
       if (prev.length === totalTickets) return prev;
@@ -216,7 +289,14 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   const formatPrice = (cents: number) => cents === 0 ? t.free : `€${(cents / 100).toFixed(2)}`;
 
+  // Calculate total based on seat zone pricing or tier pricing
   const calculateTotal = () => {
+    if (isSeatedWithPricing) {
+      return selectedSeats.reduce((sum, seat) => {
+        const zp = zonePricing.find(z => z.venue_zone_id === seat.zoneId);
+        return sum + (zp?.price_cents || 0);
+      }, 0);
+    }
     return ticketTiers.reduce((sum, tier) => {
       const qty = quantities[tier.id] || 0;
       return sum + (tier.price_cents * qty);
@@ -225,9 +305,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   const total = calculateTotal();
   const isFreeOrder = total === 0 && totalTickets > 0;
-  const allNamesFilled = guestNames.every(n => n.trim().length > 0);
-  const canProceedFromSeats = !hasSeating || selectedSeats.length > 0;
-  const canProceedToCheckout = totalTickets > 0 && allNamesFilled;
+  const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
 
   // Seat toggle handler
   const handleSeatToggle = (seat: SelectedSeat) => {
@@ -257,9 +335,35 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         return;
       }
 
-      const items = Object.entries(quantities)
-        .filter(([_, qty]) => qty > 0)
-        .map(([tierId, quantity]) => ({ tierId, quantity }));
+      // For seated events with zone pricing, build items from the first matching tier
+      let items: { tierId: string; quantity: number }[];
+      if (isSeatedWithPricing) {
+        // Group seats by zone, use corresponding ticket_tier_id
+        const zoneGroups = new Map<string, { tierId: string; count: number; priceCents: number }>();
+        for (const seat of selectedSeats) {
+          const zp = zonePricing.find(z => z.venue_zone_id === seat.zoneId);
+          if (!zp) continue;
+          const key = seat.zoneId;
+          const existing = zoneGroups.get(key);
+          if (existing) {
+            existing.count++;
+          } else {
+            zoneGroups.set(key, {
+              tierId: zp.ticket_tier_id || ticketTiers[0]?.id || '',
+              count: 1,
+              priceCents: zp.price_cents,
+            });
+          }
+        }
+        items = Array.from(zoneGroups.values()).map(g => ({
+          tierId: g.tierId,
+          quantity: g.count,
+        }));
+      } else {
+        items = Object.entries(quantities)
+          .filter(([_, qty]) => qty > 0)
+          .map(([tierId, quantity]) => ({ tierId, quantity }));
+      }
 
       const body: Record<string, unknown> = {
         eventId,
@@ -271,6 +375,12 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           age: 0,
         })),
       };
+
+      // Include selected seat IDs for seated events so backend can mark them sold
+      if (hasSeating && selectedSeats.length > 0) {
+        body.seatIds = selectedSeats.map(s => s.seatId);
+        body.showInstanceId = showInstanceId;
+      }
 
       const { data, error } = await supabase.functions.invoke('create-ticket-checkout', { body });
       if (error) throw error;
@@ -296,9 +406,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   // ========= RENDER STEPS =========
 
-  const renderStep1 = () => (
+  const renderTicketsStep = () => (
     <div className="space-y-4">
-      {/* Tier selection */}
       {ticketTiers.map((tier) => {
         const available = tier.quantity_total - tier.quantity_sold;
         const isSoldOut = available <= 0;
@@ -342,16 +451,42 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           </div>
         );
       })}
+    </div>
+  );
 
-      {/* Guest names */}
-      {totalTickets > 0 && (
-        <>
-          <Separator />
+  const renderGuestsStep = () => {
+    // For seated events, also show selected seats summary
+    return (
+      <div className="space-y-4">
+        {/* Seat summary for seated events */}
+        {isSeatedWithPricing && selectedSeats.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">{t.selectedSeats}</Label>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {selectedSeats.map((seat) => {
+                const zp = zonePricing.find(z => z.venue_zone_id === seat.zoneId);
+                return (
+                  <div key={seat.seatId} className="flex justify-between text-sm p-2 rounded bg-muted/30 border">
+                    <span className="text-muted-foreground">
+                      {seat.zoneName} · {t.row} {seat.rowLabel} · {t.seat} {seat.seatNumber}
+                    </span>
+                    <span className="font-medium">{formatPrice(zp?.price_cents || 0)}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <Separator />
+          </div>
+        )}
+
+        {/* Guest names */}
+        {totalTickets > 0 && (
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />
               {t.guestDetails} ({totalTickets} {t.people})
             </Label>
+            <p className="text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
             <div className="space-y-1.5 max-h-52 overflow-y-auto">
               {guestNames.map((name, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
@@ -372,27 +507,50 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               ))}
             </div>
           </div>
-        </>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  };
 
-  const renderStep2 = () => (
+  const renderCheckoutStep = () => (
     <div className="space-y-4">
       <h3 className="font-semibold">{t.summary}</h3>
 
-      {/* Ticket summary */}
+      {/* Ticket/seat summary */}
       <div className="space-y-2 text-sm">
-        {ticketTiers.map(tier => {
-          const qty = quantities[tier.id] || 0;
-          if (qty === 0) return null;
-          return (
-            <div key={tier.id} className="flex justify-between">
-              <span className="text-muted-foreground">{tier.name} × {qty}</span>
-              <span className="font-medium">{formatPrice(tier.price_cents * qty)}</span>
-            </div>
-          );
-        })}
+        {isSeatedWithPricing ? (
+          // Grouped by zone
+          (() => {
+            const groups = new Map<string, { zoneName: string; count: number; priceCents: number }>();
+            selectedSeats.forEach(seat => {
+              const zp = zonePricing.find(z => z.venue_zone_id === seat.zoneId);
+              const key = seat.zoneId;
+              const existing = groups.get(key);
+              if (existing) {
+                existing.count++;
+              } else {
+                groups.set(key, { zoneName: seat.zoneName, count: 1, priceCents: zp?.price_cents || 0 });
+              }
+            });
+            return Array.from(groups.values()).map((g, i) => (
+              <div key={i} className="flex justify-between">
+                <span className="text-muted-foreground">{g.zoneName} × {g.count}</span>
+                <span className="font-medium">{formatPrice(g.priceCents * g.count)}</span>
+              </div>
+            ));
+          })()
+        ) : (
+          ticketTiers.map(tier => {
+            const qty = quantities[tier.id] || 0;
+            if (qty === 0) return null;
+            return (
+              <div key={tier.id} className="flex justify-between">
+                <span className="text-muted-foreground">{tier.name} × {qty}</span>
+                <span className="font-medium">{formatPrice(tier.price_cents * qty)}</span>
+              </div>
+            );
+          })
+        )}
       </div>
 
       <Separator />
@@ -444,7 +602,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       <SeatSelectionStep
         venueId={venueId}
         showInstanceId={showInstanceId}
-        maxSeats={Math.max(totalTickets, 10)}
+        maxSeats={10}
         selectedSeats={selectedSeats}
         onSeatToggle={handleSeatToggle}
         eventTitle={eventTitle}
@@ -470,7 +628,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               type="button"
               onClick={() => {
                 setSelectedShowId(show.id);
-                setSelectedSeats([]); // Reset seats when changing show
+                setSelectedSeats([]);
               }}
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all",
@@ -500,15 +658,29 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   };
 
   const renderStepContent = () => {
-    if (step === STEP_SHOW_SELECT && hasMultipleShows) return renderShowSelectStep();
-    if (step === STEP_SEATS && hasSeating) return renderSeatStep();
-    if (step === STEP_TICKETS) return renderStep1();
-    if (step === STEP_CHECKOUT) return renderStep2();
-    return null;
+    switch (currentStep) {
+      case 'showSelect': return renderShowSelectStep();
+      case 'seats': return renderSeatStep();
+      case 'tickets': return renderTicketsStep();
+      case 'guests': return renderGuestsStep();
+      case 'checkout': return renderCheckoutStep();
+      default: return null;
+    }
+  };
+
+  const canProceedFromCurrentStep = () => {
+    switch (currentStep) {
+      case 'showSelect': return !!selectedShowId;
+      case 'seats': return selectedSeats.length > 0;
+      case 'tickets': return tierTotalTickets > 0;
+      case 'guests': return allNamesFilled && totalTickets > 0;
+      case 'checkout': return true;
+      default: return true;
+    }
   };
 
   const renderNavigation = () => {
-    if (step === STEP_CHECKOUT && checkoutUrl) {
+    if (currentStep === 'checkout' && checkoutUrl) {
       return (
         <div className="w-full space-y-3 pt-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
@@ -531,18 +703,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       );
     }
 
-    const firstStep = hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? STEP_SEATS : STEP_TICKETS);
-    const isFirstStep = step === firstStep;
-    const isLastStep = step === STEP_CHECKOUT;
-    const canProceed = step === STEP_SHOW_SELECT ? !!selectedShowId
-      : step === STEP_SEATS ? canProceedFromSeats
-      : step === STEP_TICKETS ? canProceedToCheckout
-      : true;
+    const isFirstStep = currentStepIdx === 0;
+    const isLastStep = currentStep === 'checkout';
 
     return (
       <div className="flex justify-between pt-4">
         {!isFirstStep ? (
-          <Button variant="outline" onClick={() => setStep(step - 1)}>
+          <Button variant="outline" onClick={() => setCurrentStepIdx(currentStepIdx - 1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t.back}
           </Button>
@@ -550,8 +717,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
         {!isLastStep ? (
           <Button
-            onClick={() => setStep(step + 1)}
-            disabled={!canProceed}
+            onClick={() => setCurrentStepIdx(currentStepIdx + 1)}
+            disabled={!canProceedFromCurrentStep()}
           >
             {t.next}
             <ArrowRight className="h-4 w-4 ml-2" />
@@ -571,24 +738,22 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
-  const stepLabels = hasMultipleShows
-    ? [t.steps.showSelect, t.steps.seats, t.steps.tickets, t.steps.checkout]
-    : hasSeating
-    ? [t.steps.seats, t.steps.tickets, t.steps.checkout]
-    : [t.steps.tickets, t.steps.checkout];
-  const firstStep = hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? STEP_SEATS : STEP_TICKETS);
+  const stepLabelMap: Record<string, string> = {
+    showSelect: t.steps.showSelect,
+    seats: t.steps.seats,
+    tickets: t.steps.tickets,
+    guests: t.steps.guests,
+    checkout: t.steps.checkout,
+  };
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
-      {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
-        const s = firstStep + i;
-        return (
-          <div key={s} className={cn(
-            "w-2 h-2 rounded-full transition-colors",
-            s === step ? "bg-primary w-4" : s < step ? "bg-primary/50" : "bg-muted"
-          )} />
-        );
-      })}
+      {steps.map((s, i) => (
+        <div key={s} className={cn(
+          "w-2 h-2 rounded-full transition-colors",
+          i === currentStepIdx ? "bg-primary w-4" : i < currentStepIdx ? "bg-primary/50" : "bg-muted"
+        )} />
+      ))}
     </div>
   );
 
@@ -596,7 +761,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     <div className="space-y-4">
       {renderStepIndicator()}
       <div className="text-center mb-4">
-        <Badge variant="outline">{stepLabels[step - firstStep]}</Badge>
+        <Badge variant="outline">{stepLabelMap[currentStep]}</Badge>
       </div>
       {renderStepContent()}
       {renderNavigation()}
@@ -621,7 +786,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={scrollRef} className={cn("max-h-[90vh] overflow-y-auto", hasSeating && step === STEP_SEATS ? "max-w-2xl" : "max-w-md")}>
+      <DialogContent ref={scrollRef} className={cn("max-h-[90vh] overflow-y-auto", hasSeating && currentStep === 'seats' ? "max-w-2xl" : "max-w-md")}>
         <DialogHeader>
           <DialogTitle>{t.title}</DialogTitle>
           <DialogDescription>{eventTitle}</DialogDescription>
