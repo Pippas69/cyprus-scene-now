@@ -73,10 +73,11 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
   const [internalSelectedEventId, setInternalSelectedEventId] = useState<string | null>(null);
   const selectedEventId = externalSelectedEventId ?? internalSelectedEventId;
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [editingField, setEditingField] = useState<{ id: string; type: 'seating' | 'tier'; eventId: string } | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editDrafts, setEditDrafts] = useState<Record<string, string>>({});
 
   const t = text[language];
+  const getEditKey = (type: 'seating' | 'tier', id: string) => `${type}:${id}`;
 
   const fetchData = useCallback(async () => {
     try {
@@ -120,12 +121,25 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
         }
       });
 
+      const seatingTypeOrder = ['table', 'vip', 'bar', 'sofa'];
+
       const enrichedEvents: EventWithControls[] = eventsData.map((event) => ({
         id: event.id,
         title: event.title,
         start_at: event.start_at,
         seatingTypes: seatingTypes
           .filter((st) => st.event_id === event.id)
+          .sort((a, b) => {
+            const aType = (a.seating_type || '').toLowerCase();
+            const bType = (b.seating_type || '').toLowerCase();
+            const aIndex = seatingTypeOrder.indexOf(aType);
+            const bIndex = seatingTypeOrder.indexOf(bType);
+
+            if (aIndex === -1 && bIndex === -1) return aType.localeCompare(bType);
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+            return aIndex - bIndex;
+          })
           .map((st) => ({
             id: st.id,
             seating_type: st.seating_type,
@@ -158,14 +172,14 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
   }, [businessId, selectedEventId]);
 
   useEffect(() => {
-    if (!editingField) {
+    if (!editingKey) {
       fetchData();
     }
     // Pause auto-refresh while editing to prevent re-render shifting
-    if (editingField) return;
+    if (editingKey) return;
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, [fetchData, editingField]);
+  }, [fetchData, editingKey]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -201,46 +215,44 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
     }
   };
 
-  const startEdit = (id: string, type: 'seating' | 'tier', currentValue: number, eventId: string) => {
-    setEditingField({ id, type, eventId });
-    setEditValue(String(currentValue));
+  const startEdit = (id: string, type: 'seating' | 'tier', currentValue: number) => {
+    const key = getEditKey(type, id);
+    setEditingKey(key);
+    setEditDrafts((prev) => ({ ...prev, [key]: String(currentValue) }));
   };
 
   const cancelEdit = () => {
-    setEditingField(null);
-    setEditValue('');
+    setEditingKey(null);
   };
 
-  const saveEdit = async (expected?: { id: string; type: 'seating' | 'tier' }) => {
-    if (!editingField) return;
+  const saveEdit = async ({ id, type, eventId }: { id: string; type: 'seating' | 'tier'; eventId: string }) => {
+    const key = getEditKey(type, id);
+    if (editingKey !== key) return;
 
-    // Guard against stale/wrong-row saves
-    if (expected && (expected.id !== editingField.id || expected.type !== editingField.type)) {
-      return;
-    }
-
-    const newVal = parseInt(editValue, 10);
+    const rawValue = editDrafts[key] ?? '';
+    const newVal = parseInt(rawValue, 10);
     if (isNaN(newVal) || newVal < 0) {
       cancelEdit();
       return;
     }
 
     try {
-      if (editingField.type === 'seating') {
+      if (type === 'seating') {
         const { error } = await supabase
           .from('reservation_seating_types')
           .update({ available_slots: newVal })
-          .eq('id', editingField.id)
-          .eq('event_id', editingField.eventId);
+          .eq('id', id)
+          .eq('event_id', eventId);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('ticket_tiers')
           .update({ quantity_total: newVal })
-          .eq('id', editingField.id)
-          .eq('event_id', editingField.eventId);
+          .eq('id', id)
+          .eq('event_id', eventId);
         if (error) throw error;
       }
+
       toast.success(t.saved);
       await fetchData();
     } catch {
@@ -329,7 +341,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                     {selectedEvent.seatingTypes.map((st) => {
                       const remaining = Math.max(st.available_slots - st.actualBooked, 0);
                       const isOpen = !st.paused;
-                      const isEditing = editingField?.id === st.id && editingField?.type === 'seating';
+                      const isEditing = editingKey === getEditKey('seating', st.id);
 
                       return (
                         <div
@@ -345,20 +357,23 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                               {isEditing ? (
                                 <div className="inline-flex items-center gap-1">
                                   <input
-                                    value={editValue}
+                                    value={editDrafts[getEditKey('seating', st.id)] ?? String(st.available_slots)}
                                     onChange={(e) => {
                                       const v = e.target.value;
-                                      if (v === '' || /^\d+$/.test(v)) setEditValue(v);
+                                      if (v === '' || /^\d+$/.test(v)) {
+                                        const key = getEditKey('seating', st.id);
+                                        setEditDrafts((prev) => ({ ...prev, [key]: v }));
+                                      }
                                     }}
                                     className="h-5 w-14 text-xs px-1 rounded border border-input bg-background text-center focus:outline-none focus:ring-1 focus:ring-ring"
                                     inputMode="numeric"
                                     autoFocus
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') saveEdit({ id: st.id, type: 'seating' });
+                                      if (e.key === 'Enter') saveEdit({ id: st.id, type: 'seating', eventId: selectedEvent.id });
                                       if (e.key === 'Escape') cancelEdit();
                                     }}
                                   />
-                                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => saveEdit({ id: st.id, type: 'seating' })}>
+                                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => saveEdit({ id: st.id, type: 'seating', eventId: selectedEvent.id })}>
                                     <Check className="h-3 w-3 text-green-600" />
                                   </Button>
                                   <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={cancelEdit}>
@@ -368,7 +383,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                               ) : (
                                 <span
                                   className="cursor-pointer hover:underline inline-flex items-center gap-0.5"
-                                  onClick={() => startEdit(st.id, 'seating', st.available_slots, selectedEvent.id)}
+                                  onClick={() => startEdit(st.id, 'seating', st.available_slots)}
                                 >
                                   {st.available_slots}
                                   <Edit2 className="h-2.5 w-2.5 opacity-50" />
@@ -403,7 +418,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                   <div className="space-y-2">
                     {selectedEvent.ticketTiers.map((tt) => {
                       const remaining = Math.max(tt.quantity_total - tt.actualSold, 0);
-                      const isEditing = editingField?.id === tt.id && editingField?.type === 'tier';
+                      const isEditing = editingKey === getEditKey('tier', tt.id);
 
                       return (
                         <div
@@ -419,20 +434,23 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                               {isEditing ? (
                                 <div className="inline-flex items-center gap-1">
                                   <input
-                                    value={editValue}
+                                    value={editDrafts[getEditKey('tier', tt.id)] ?? String(tt.quantity_total)}
                                     onChange={(e) => {
                                       const v = e.target.value;
-                                      if (v === '' || /^\d+$/.test(v)) setEditValue(v);
+                                      if (v === '' || /^\d+$/.test(v)) {
+                                        const key = getEditKey('tier', tt.id);
+                                        setEditDrafts((prev) => ({ ...prev, [key]: v }));
+                                      }
                                     }}
                                     className="h-5 w-14 text-xs px-1 rounded border border-input bg-background text-center focus:outline-none focus:ring-1 focus:ring-ring"
                                     inputMode="numeric"
                                     autoFocus
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') saveEdit({ id: tt.id, type: 'tier' });
+                                      if (e.key === 'Enter') saveEdit({ id: tt.id, type: 'tier', eventId: selectedEvent.id });
                                       if (e.key === 'Escape') cancelEdit();
                                     }}
                                   />
-                                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => saveEdit({ id: tt.id, type: 'tier' })}>
+                                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => saveEdit({ id: tt.id, type: 'tier', eventId: selectedEvent.id })}>
                                     <Check className="h-3 w-3 text-green-600" />
                                   </Button>
                                   <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={cancelEdit}>
@@ -442,7 +460,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                               ) : (
                                 <span
                                   className="cursor-pointer hover:underline inline-flex items-center gap-0.5"
-                                  onClick={() => startEdit(tt.id, 'tier', tt.quantity_total, selectedEvent.id)}
+                                  onClick={() => startEdit(tt.id, 'tier', tt.quantity_total)}
                                 >
                                   {tt.quantity_total}
                                   <Edit2 className="h-2.5 w-2.5 opacity-50" />
