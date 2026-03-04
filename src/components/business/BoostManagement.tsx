@@ -76,6 +76,9 @@ interface OfferBoostWithMetrics {
   duration_hours?: number | null;
 }
 
+// Categories that should NOT see Offers in boost management
+const noOffersCategories = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
+
 const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
@@ -85,11 +88,27 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const [showExpiredEvents, setShowExpiredEvents] = useState(false);
   const [showExpiredOffers, setShowExpiredOffers] = useState(false);
   const [isFreeUser, setIsFreeUser] = useState(true);
+  const [showOffers, setShowOffers] = useState(true);
 
   useEffect(() => {
     fetchBoosts();
     fetchSubscriptionStatus();
+    fetchBusinessCategories();
   }, [businessId]);
+
+  const fetchBusinessCategories = async () => {
+    const { data } = await supabase
+      .from("businesses")
+      .select("category")
+      .eq("id", businessId)
+      .single();
+    if (data?.category) {
+      const hasNoOffers = data.category.some((cat: string) => 
+        noOffersCategories.includes(cat.toLowerCase())
+      );
+      setShowOffers(!hasNoOffers);
+    }
+  };
 
   const fetchSubscriptionStatus = async () => {
     const { data } = await supabase
@@ -542,8 +561,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const t = {
     title: language === "el" ? "Διαχείριση Προωθήσεων" : "Boost Management",
     subtitle: language === "el" 
-      ? "Παρακολουθήστε την απόδοση των προωθημένων εκδηλώσεων και προσφορών σας"
-      : "Track the performance of your boosted events and offers",
+      ? (showOffers 
+          ? "Παρακολουθήστε την απόδοση των προωθημένων εκδηλώσεων και προσφορών σας"
+          : "Παρακολουθήστε την απόδοση των προωθημένων εκδηλώσεών σας")
+      : (showOffers
+          ? "Track the performance of your boosted events and offers"
+          : "Track the performance of your boosted events"),
     events: language === "el" ? "Εκδηλώσεις" : "Events",
     offers: language === "el" ? "Προσφορές" : "Offers",
     noEventBoosts: language === "el" 
@@ -896,15 +919,17 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
       </div>
 
       <Tabs defaultValue="events">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${showOffers ? 'grid-cols-2' : 'grid-cols-1'}`}>
           <TabsTrigger value="events" className="text-xs sm:text-sm">
             <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             {t.events} ({activeEventBoosts.length})
           </TabsTrigger>
-          <TabsTrigger value="offers" className="text-xs sm:text-sm">
-            <Ticket className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            {t.offers} ({activeOfferBoosts.length})
-          </TabsTrigger>
+          {showOffers && (
+            <TabsTrigger value="offers" className="text-xs sm:text-sm">
+              <Ticket className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              {t.offers} ({activeOfferBoosts.length})
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* EVENT BOOSTS TAB */}
@@ -937,6 +962,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         </TabsContent>
 
         {/* OFFER BOOSTS TAB */}
+        {showOffers && (
         <TabsContent value="offers" className="space-y-4 mt-4">
           {activeOfferBoosts.length === 0 && expiredOfferBoosts.length === 0 && (
             <Card>
@@ -964,6 +990,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             </>
           )}
         </TabsContent>
+        )}
       </Tabs>
     </div>
   );
