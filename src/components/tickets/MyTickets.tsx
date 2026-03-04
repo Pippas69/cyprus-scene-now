@@ -195,6 +195,21 @@ export const MyTickets = () => {
                     {pricePaid}
                   </span>
                 </div>
+
+                {/* Seat info for performance/seated events */}
+                {ticket.seat_zone && (
+                  <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                    <span className="font-medium">{ticket.seat_zone}</span>
+                    {ticket.seat_row && <span>• {language === 'el' ? 'Σειρά' : 'Row'} {ticket.seat_row}</span>}
+                    {ticket.seat_number && <span>• {language === 'el' ? 'Θέση' : 'Seat'} {ticket.seat_number}</span>}
+                  </div>
+                )}
+
+                {ticket.ticket_code && (
+                  <div className="mt-1">
+                    <Badge variant="outline" className="text-[10px] font-mono">{ticket.ticket_code}</Badge>
+                  </div>
+                )}
                 
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                   {ticket.events?.start_at && (
@@ -250,12 +265,12 @@ export const MyTickets = () => {
                       businessName: businessName,
                       eventCoverImage: eventCoverImage || undefined,
                       eventTime: eventTime || undefined,
-                      guestName: (ticket as any).guest_name || undefined,
-                      guestAge: (ticket as any).guest_age || undefined,
-                      seatZone: (ticket as any).seat_zone || undefined,
-                      seatRow: (ticket as any).seat_row || undefined,
-                      seatNumber: (ticket as any).seat_number || undefined,
-                      ticketCode: (ticket as any).ticket_code || undefined,
+                      guestName: ticket.guest_name || undefined,
+                      guestAge: ticket.guest_age || undefined,
+                      seatZone: ticket.seat_zone || undefined,
+                      seatRow: ticket.seat_row || undefined,
+                      seatNumber: ticket.seat_number || undefined,
+                      ticketCode: ticket.ticket_code || undefined,
                     })}
                   >
                     <QrCode className="h-4 w-4 mr-1" />
