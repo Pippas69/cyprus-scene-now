@@ -163,7 +163,7 @@ export const OverviewTab = ({
   return <div className="space-y-6">
       <div className="space-y-2">
         <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-        <p className="text-sm text-muted-foreground whitespace-pre-line md:whitespace-normal">{t.subtitle}</p>
+        
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
