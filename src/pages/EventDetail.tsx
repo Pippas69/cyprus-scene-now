@@ -40,6 +40,7 @@ import { useTicketTiers } from '@/hooks/useTicketTiers';
 import { ErrorState } from '@/components/ErrorState';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 import { translateCity } from '@/lib/cityTranslations';
+import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
 
 // Staggered animation variants for similar events
 const containerVariants = {
