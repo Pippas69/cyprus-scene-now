@@ -91,6 +91,8 @@ export default function EventDetail() {
 
   // Show instances for performance/theatre events
   const [showInstances, setShowInstances] = useState<any[]>([]);
+  // Cast/crew members for performance events
+  const [castMembers, setCastMembers] = useState<any[]>([]);
 
   const fromPath = `${location.pathname}${location.search}`;
   
