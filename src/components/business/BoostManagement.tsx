@@ -561,8 +561,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const t = {
     title: language === "el" ? "Διαχείριση Προωθήσεων" : "Boost Management",
     subtitle: language === "el" 
-      ? "Παρακολουθήστε την απόδοση των προωθημένων εκδηλώσεων και προσφορών σας"
-      : "Track the performance of your boosted events and offers",
+      ? (showOffers 
+          ? "Παρακολουθήστε την απόδοση των προωθημένων εκδηλώσεων και προσφορών σας"
+          : "Παρακολουθήστε την απόδοση των προωθημένων εκδηλώσεών σας")
+      : (showOffers
+          ? "Track the performance of your boosted events and offers"
+          : "Track the performance of your boosted events"),
     events: language === "el" ? "Εκδηλώσεις" : "Events",
     offers: language === "el" ? "Προσφορές" : "Offers",
     noEventBoosts: language === "el" 
