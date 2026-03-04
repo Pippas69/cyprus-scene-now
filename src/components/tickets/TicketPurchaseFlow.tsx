@@ -29,6 +29,16 @@ interface TicketTier {
   max_per_order: number;
 }
 
+interface ShowInstanceOption {
+  id: string;
+  start_at: string;
+  end_at: string;
+  venue_id: string;
+  doors_open_at?: string | null;
+  notes?: string | null;
+  status: string;
+}
+
 interface TicketPurchaseFlowProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,6 +50,8 @@ interface TicketPurchaseFlowProps {
   venueId?: string;
   showInstanceId?: string;
   eventDate?: string;
+  // Multiple show instances (performance events)
+  showInstances?: ShowInstanceOption[];
 }
 
 const translations = {
