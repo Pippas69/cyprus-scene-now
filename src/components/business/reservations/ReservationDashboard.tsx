@@ -135,45 +135,40 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="min-w-0 space-y-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl md:text-3xl font-bold">
+      <div className="min-w-0">
+        <div className="flex items-center gap-4 flex-wrap">
+          <h1 className="text-2xl md:text-3xl font-bold shrink-0">
             {t.reservations}
-            {isTicketLinked && selectedEvent && (
-              <span className="text-muted-foreground font-normal text-lg md:text-xl ml-2">
-                ({selectedEvent.reservationCount})
-              </span>
-            )}
           </h1>
-        </div>
 
-        {/* Event selector for ticket-linked businesses */}
-        {isTicketLinked && events.length > 0 && (
-          <Select value={selectedEventId || ''} onValueChange={setSelectedEventId}>
-            <SelectTrigger className="h-9 text-sm max-w-md">
-              <SelectValue placeholder={t.selectEvent} />
-            </SelectTrigger>
-            <SelectContent>
-              {events.map((event) => (
-                <SelectItem key={event.id} value={event.id} className="text-sm">
-                  <span className="flex items-center gap-2">
-                    <span>{event.title}</span>
-                    <span className="text-muted-foreground">—</span>
-                    <span className="text-muted-foreground">
-                      {new Date(event.start_at).toLocaleDateString(
-                        language === 'el' ? 'el-GR' : 'en-US',
-                        { day: 'numeric', month: 'short' }
-                      )}
-                    </span>
-                    <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-medium px-1.5 py-0.5 min-w-[20px]">
-                      {event.reservationCount}
-                    </span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+          {/* Event selector for ticket-linked businesses */}
+          {isTicketLinked && events.length > 0 && (
+            <Select value={selectedEventId || ''} onValueChange={setSelectedEventId}>
+              <SelectTrigger className="h-10 text-sm w-auto min-w-[200px] max-w-xs rounded-xl border-border/50 bg-card/50 backdrop-blur-sm shadow-sm hover:bg-card/80 transition-colors">
+                <SelectValue placeholder={t.selectEvent} />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {events.map((event) => {
+                  const dateStr = new Date(event.start_at).toLocaleDateString(
+                    language === 'el' ? 'el-GR' : 'en-US',
+                    { day: 'numeric', month: 'short' }
+                  );
+                  return (
+                    <SelectItem key={event.id} value={event.id} className="text-sm rounded-lg">
+                      <span className="flex items-center gap-2.5">
+                        <span className="font-medium">{event.title}</span>
+                        <span className="text-xs text-muted-foreground/70">{dateStr}</span>
+                        <span className="inline-flex items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 min-w-[22px]">
+                          {event.reservationCount}
+                        </span>
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full">
