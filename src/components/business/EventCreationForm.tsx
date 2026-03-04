@@ -108,6 +108,8 @@ interface PersonTier {
 interface SeatingConfig {
   type: SeatingType;
   availableSlots: number;
+  ticketCategoryName: string;
+  ticketPriceCents: number;
   tiers: PersonTier[];
 }
 interface FormData {
@@ -331,6 +333,8 @@ const countWords = (text: string): number => {
 const getDefaultSeatingConfig = (type: SeatingType): SeatingConfig => ({
   type,
   availableSlots: 10,
+  ticketCategoryName: type === 'bar' ? 'Bar' : type === 'table' ? 'Table' : type === 'vip' ? 'VIP' : 'Sofa',
+  ticketPriceCents: 0,
   tiers: [{
     minPeople: 2,
     maxPeople: 6,
@@ -420,6 +424,8 @@ const EventCreationForm = ({
 
   // Ticket tier validation errors
   const [ticketValidationErrors, setTicketValidationErrors] = useState<string[]>([]);
+  const [walkInTicketTiers, setWalkInTicketTiers] = useState<TicketTier[]>([]);
+  const [walkInTicketValidationErrors, setWalkInTicketValidationErrors] = useState<string[]>([]);
 
   // Image state
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -558,10 +564,11 @@ const EventCreationForm = ({
     if (!formData.eventType) return t.allFieldsRequired;
 
     // Type-specific validation
-    const hasTickets = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
-    const hasReservation = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+    const isTicketOnly = formData.eventType === 'ticket';
+    const isHybrid = formData.eventType === 'ticket_and_reservation';
+    const hasReservation = formData.eventType === 'reservation' || isHybrid;
 
-    if (hasTickets) {
+    if (isTicketOnly) {
       const tierErrors = validateTicketTiers(formData.ticketTiers, language);
       if (tierErrors.length > 0) {
         setTicketValidationErrors(tierErrors);
@@ -571,13 +578,35 @@ const EventCreationForm = ({
         return language === 'el' ? 'Προσθέστε τουλάχιστον μία κατηγορία εισιτηρίου' : 'Add at least one ticket tier';
       }
       setTicketValidationErrors([]);
+    } else {
+      setTicketValidationErrors([]);
     }
+
     if (hasReservation) {
       if (formData.selectedSeatingTypes.length === 0) return t.addAtLeastOneSeating;
       for (const type of formData.selectedSeatingTypes) {
         const config = formData.seatingConfigs[type];
         if (config.tiers.length === 0) return t.addAtLeastOneRange;
+        if (isHybrid && !config.ticketCategoryName.trim()) {
+          return language === 'el'
+            ? 'Συμπληρώστε όνομα κατηγορίας εισιτηρίου για κάθε τύπο θέσης'
+            : 'Add a ticket category name for each seating type';
+        }
       }
+
+      if (isHybrid && walkInEnabled) {
+        const walkInErrors = validateTicketTiers(walkInTicketTiers, language);
+        if (walkInErrors.length > 0) {
+          setWalkInTicketValidationErrors(walkInErrors);
+          return walkInErrors[0];
+        }
+        if (walkInTicketTiers.length === 0) {
+          return language === 'el'
+            ? 'Προσθέστε τουλάχιστον μία κατηγορία Walk-in εισιτηρίου'
+            : 'Add at least one walk-in ticket tier';
+        }
+      }
+      setWalkInTicketValidationErrors([]);
     }
     if (formData.eventType === 'free_entry') {
       const {
