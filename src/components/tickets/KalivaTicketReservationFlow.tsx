@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
 import {
-  GlassWater, TableIcon, Crown, Sofa, Users, Shirt,
+  GlassWater, TableIcon, Crown, Sofa, Users,
   Phone, User, MessageSquare, CreditCard, Mail,
   ArrowRight, ArrowLeft, Loader2, Info,
   AlertCircle, Ticket, ExternalLink, Clock
@@ -27,7 +27,7 @@ interface SeatingTypeOption {
   available_slots: number;
   slots_booked: number;
   paused: boolean;
-  dress_code: string | null;
+  
   tiers: {
     id: string;
     min_people: number;
@@ -78,13 +78,6 @@ const translations = {
     available: "διαθέσιμες",
     soldOut: "Εξαντλήθηκαν",
     from: "από",
-    dressCode: "Ενδυματολογικός κώδικας",
-    dressCodeLabels: {
-      casual: "Καθημερινό",
-      smart_casual: "Έξυπνο Καθημερινό",
-      elegant: "Κομψό",
-      no_sportswear: "Όχι Αθλητικά",
-    },
     partySize: "Αριθμός ατόμων",
     people: "άτομα",
     guestDetails: "Στοιχεία Καλεσμένων",
@@ -136,13 +129,6 @@ const translations = {
     available: "available",
     soldOut: "Sold Out",
     from: "from",
-    dressCode: "Dress code",
-    dressCodeLabels: {
-      casual: "Casual",
-      smart_casual: "Smart Casual",
-      elegant: "Elegant",
-      no_sportswear: "No Sportswear",
-    },
     partySize: "Number of people",
     people: "people",
     guestDetails: "Guest Details",
@@ -498,12 +484,6 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                   <p className="text-sm text-muted-foreground">{t.from} {formatPrice(minPrice)}</p>
                 )}
               </div>
-              {option.dress_code && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Shirt className="h-3 w-3" />
-                  {t.dressCode}: {t.dressCodeLabels[option.dress_code as keyof typeof t.dressCodeLabels] || option.dress_code}
-                </div>
-              )}
             </CardContent>
           </Card>
         );
