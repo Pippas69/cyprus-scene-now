@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { el as elLocale, enUS } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Ticket, Minus, Plus, Loader2, CreditCard,
-  ArrowRight, ArrowLeft, ExternalLink, Users
+  ArrowRight, ArrowLeft, ExternalLink, Users, Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -29,6 +31,16 @@ interface TicketTier {
   max_per_order: number;
 }
 
+interface ShowInstanceOption {
+  id: string;
+  start_at: string;
+  end_at: string;
+  venue_id: string;
+  doors_open_at?: string | null;
+  notes?: string | null;
+  status: string;
+}
+
 interface TicketPurchaseFlowProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,12 +52,15 @@ interface TicketPurchaseFlowProps {
   venueId?: string;
   showInstanceId?: string;
   eventDate?: string;
+  // Multiple show instances (performance events)
+  showInstances?: ShowInstanceOption[];
 }
 
 const translations = {
   el: {
     title: "Εισιτήρια",
     steps: {
+      showSelect: "Επιλογή Παράστασης",
       seats: "Επιλογή Θέσεων",
       tickets: "Επιλογή Εισιτηρίων",
       checkout: "Ολοκλήρωση",
@@ -78,6 +93,7 @@ const translations = {
   en: {
     title: "Tickets",
     steps: {
+      showSelect: "Select Show",
       seats: "Select Seats",
       tickets: "Select Tickets",
       checkout: "Checkout",
@@ -116,29 +132,40 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   eventTitle,
   ticketTiers,
   onSuccess,
-  venueId,
-  showInstanceId,
+  venueId: propVenueId,
+  showInstanceId: propShowInstanceId,
   eventDate,
+  showInstances,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const t = translations[language];
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
+  // Show selection state (for multi-show performance events)
+  const hasMultipleShows = !!(showInstances && showInstances.length > 0);
+  const [selectedShowId, setSelectedShowId] = useState<string | null>(null);
+
+  // Derive venueId/showInstanceId from selected show or props
+  const selectedShow = hasMultipleShows ? showInstances?.find(s => s.id === selectedShowId) : null;
+  const venueId = selectedShow?.venue_id || propVenueId;
+  const showInstanceId = selectedShow?.id || propShowInstanceId;
+
   // Whether this is a seated performance event
   const hasSeating = !!(venueId && showInstanceId);
-  // For seated events: step 1=seats, 2=tickets+names, 3=checkout
-  // For non-seated: step 1=tickets+names, 2=checkout
-  const STEP_SEATS = hasSeating ? 1 : -1;
-  const STEP_TICKETS = hasSeating ? 2 : 1;
-  const STEP_CHECKOUT = hasSeating ? 3 : 2;
-  const TOTAL_STEPS = hasSeating ? 3 : 2;
+  
+  // Steps: showSelect (if multi-show) -> seats (if seated) -> tickets -> checkout
+  const STEP_SHOW_SELECT = hasMultipleShows ? 1 : -1;
+  const STEP_SEATS = hasMultipleShows ? 2 : (hasSeating ? 1 : -1);
+  const STEP_TICKETS = hasMultipleShows ? 3 : (hasSeating ? 2 : 1);
+  const STEP_CHECKOUT = hasMultipleShows ? 4 : (hasSeating ? 3 : 2);
+  const TOTAL_STEPS = hasMultipleShows ? 4 : (hasSeating ? 3 : 2);
 
   // Seat selection state
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
 
   // State
-  const [step, setStep] = useState(hasSeating ? STEP_SEATS : 1);
+  const [step, setStep] = useState(hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? 1 : 1));
   const [submitting, setSubmitting] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
@@ -426,7 +453,54 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
+  const renderShowSelectStep = () => {
+    if (!hasMultipleShows || !showInstances) return null;
+    const locale = language === 'el' ? elLocale : enUS;
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground text-center">
+          {language === 'el' ? 'Επιλέξτε ημερομηνία παράστασης' : 'Select a show date'}
+        </p>
+        {showInstances.map((show) => {
+          const isSelected = selectedShowId === show.id;
+          const showDate = new Date(show.start_at);
+          return (
+            <button
+              key={show.id}
+              type="button"
+              onClick={() => {
+                setSelectedShowId(show.id);
+                setSelectedSeats([]); // Reset seats when changing show
+              }}
+              className={cn(
+                "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all",
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-border hover:border-primary/50 hover:bg-muted/30"
+              )}
+            >
+              <Calendar className={cn("h-5 w-5 shrink-0", isSelected ? "text-primary" : "text-muted-foreground")} />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm">
+                  {format(showDate, 'EEEE, d MMMM yyyy', { locale })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {format(showDate, 'HH:mm')}
+                  {show.doors_open_at && ` · ${language === 'el' ? 'Πόρτες' : 'Doors'}: ${format(new Date(show.doors_open_at), 'HH:mm')}`}
+                </p>
+              </div>
+              {isSelected && (
+                <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderStepContent = () => {
+    if (step === STEP_SHOW_SELECT && hasMultipleShows) return renderShowSelectStep();
     if (step === STEP_SEATS && hasSeating) return renderSeatStep();
     if (step === STEP_TICKETS) return renderStep1();
     if (step === STEP_CHECKOUT) return renderStep2();
@@ -457,9 +531,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       );
     }
 
-    const isFirstStep = step === (hasSeating ? STEP_SEATS : STEP_TICKETS);
+    const firstStep = hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? STEP_SEATS : STEP_TICKETS);
+    const isFirstStep = step === firstStep;
     const isLastStep = step === STEP_CHECKOUT;
-    const canProceed = step === STEP_SEATS ? canProceedFromSeats
+    const canProceed = step === STEP_SHOW_SELECT ? !!selectedShowId
+      : step === STEP_SEATS ? canProceedFromSeats
       : step === STEP_TICKETS ? canProceedToCheckout
       : true;
 
@@ -495,10 +571,12 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
-  const stepLabels = hasSeating
+  const stepLabels = hasMultipleShows
+    ? [t.steps.showSelect, t.steps.seats, t.steps.tickets, t.steps.checkout]
+    : hasSeating
     ? [t.steps.seats, t.steps.tickets, t.steps.checkout]
     : [t.steps.tickets, t.steps.checkout];
-  const firstStep = hasSeating ? STEP_SEATS : STEP_TICKETS;
+  const firstStep = hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? STEP_SEATS : STEP_TICKETS);
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">

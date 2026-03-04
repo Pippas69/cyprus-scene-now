@@ -89,6 +89,9 @@ export default function EventDetail() {
   const [showTicketFlow, setShowTicketFlow] = useState(false);
   const [reservationsSoldOut, setReservationsSoldOut] = useState(false);
 
+  // Show instances for performance/theatre events
+  const [showInstances, setShowInstances] = useState<any[]>([]);
+
   const fromPath = `${location.pathname}${location.search}`;
   
   // Fetch ticket tiers for this event
@@ -246,6 +249,21 @@ export default function EventDetail() {
       }
 
       setEvent(eventData);
+
+      // Fetch show instances for performance events (theatre, music, dance, kids)
+      const performanceCategories = ['theatre', 'music', 'dance', 'kids', 'θέατρο', 'μουσική', 'χορός', 'παιδικά'];
+      const bizCategories = (eventData.businesses?.category || []).map((c: string) => c.toLowerCase());
+      const isPerformance = bizCategories.some((c: string) => performanceCategories.includes(c));
+      
+      if (isPerformance) {
+        const { data: shows } = await supabase
+          .from('show_instances')
+          .select('id, start_at, end_at, venue_id, doors_open_at, notes, status')
+          .eq('event_id', eventId)
+          .eq('status', 'scheduled')
+          .order('start_at', { ascending: true });
+        setShowInstances(shows || []);
+      }
 
       // Check if all reservation seating types are sold out for Kaliva flow
       if ((eventData as any).businesses?.ticket_reservation_linked && eventData.event_type === 'ticket_and_reservation') {
@@ -720,13 +738,30 @@ export default function EventDetail() {
                   <div className="flex items-start gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">
-                        {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(event.start_at), 'HH:mm')} -{' '}
-                        {format(new Date(event.end_at), 'HH:mm')}
-                      </p>
+                      {showInstances.length > 1 ? (
+                        <>
+                          <p className="font-medium text-sm">
+                            {language === 'el' ? 'Πολλαπλές Ημερομηνίες' : 'Multiple Dates'}
+                          </p>
+                          <div className="space-y-0.5">
+                            {showInstances.map((si: any) => (
+                              <p key={si.id} className="text-xs text-muted-foreground">
+                                {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                              </p>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-medium text-sm">
+                            {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(event.start_at), 'HH:mm')} -{' '}
+                            {format(new Date(event.end_at), 'HH:mm')}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -1137,6 +1172,7 @@ export default function EventDetail() {
           eventId={event.id}
           eventTitle={event.title}
           ticketTiers={activeTicketTiers}
+          showInstances={showInstances.length > 0 ? showInstances : undefined}
           onSuccess={(orderId, isFree) => {
             setShowTicketFlow(false);
             if (isFree) {

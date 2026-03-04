@@ -308,45 +308,54 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
         }
       }
 
-      // For each show instance: create event + show_instance + zone pricing
-      let firstEventId: string | null = null;
+      // Create ONE event for the entire production, then link all show instances to it
+      const validShows = showInstances.filter(si => si.start_at && si.venue_id);
+      if (validShows.length === 0) throw new Error('No valid show instances');
 
-      for (const si of showInstances) {
-        if (!si.start_at || !si.venue_id) continue;
+      // Use earliest start and latest end for the event dates
+      const sortedByStart = [...validShows].sort((a, b) => a.start_at!.getTime() - b.start_at!.getTime());
+      const earliestStart = sortedByStart[0].start_at!;
+      const latestEnd = sortedByStart.reduce((latest, si) => {
+        const endAt = si.end_at || new Date(si.start_at!.getTime() + durationMinutes * 60 * 1000);
+        return endAt > latest ? endAt : latest;
+      }, new Date(0));
 
-        const endAt = si.end_at || new Date(si.start_at.getTime() + durationMinutes * 60 * 1000);
+      // Use the first show's venue for the event location
+      const firstVenueId = sortedByStart[0].venue_id;
+      const { data: venueInfo } = await supabase.from('venues').select('name, address, city').eq('id', firstVenueId).single();
+      const venueLocation = venueInfo ? `${venueInfo.name}, ${venueInfo.address || ''}, ${venueInfo.city || ''}`.replace(/, ,/g, ',').replace(/,\s*$/, '') : 'Venue TBD';
 
-        // Fetch venue info for location
-        const { data: venueInfo } = await supabase.from('venues').select('name, address, city').eq('id', si.venue_id).single();
-        const venueLocation = venueInfo ? `${venueInfo.name}, ${venueInfo.address || ''}, ${venueInfo.city || ''}`.replace(/, ,/g, ',').replace(/,\s*$/, '') : 'Venue TBD';
+      // Create a SINGLE linked event
+      const { data: linkedEvent, error: eventErr } = await supabase.from('events').insert({
+        business_id: businessId,
+        title: title.trim(),
+        description: description.trim(),
+        location: venueLocation,
+        venue_name: venueInfo?.name || null,
+        start_at: earliestStart.toISOString(),
+        end_at: latestEnd.toISOString(),
+        cover_image_url: coverImageUrl,
+        category: biz?.category || ['theatre'],
+        price_tier: 'medium' as const,
+        event_type: 'ticket',
+        appearance_mode: 'date_range',
+        appearance_start_at: appearanceStart?.toISOString() || new Date().toISOString(),
+        appearance_end_at: appearanceEnd?.toISOString() || earliestStart.toISOString(),
+      }).select().single();
 
-        // Create a linked event
-        const { data: linkedEvent, error: eventErr } = await supabase.from('events').insert({
-          business_id: businessId,
-          title: title.trim(),
-          description: description.trim(),
-          location: venueLocation,
-          venue_name: venueInfo?.name || null,
-          start_at: si.start_at.toISOString(),
-          end_at: endAt.toISOString(),
-          cover_image_url: coverImageUrl,
-          category: biz?.category || ['theatre'],
-          price_tier: 'medium' as const,
-          event_type: 'ticket',
-          appearance_mode: 'date_range',
-          appearance_start_at: appearanceStart?.toISOString() || new Date().toISOString(),
-          appearance_end_at: appearanceEnd?.toISOString() || si.start_at.toISOString(),
-        }).select().single();
+      if (eventErr || !linkedEvent) throw eventErr || new Error('Failed to create event');
+      const firstEventId = linkedEvent.id;
 
-        if (eventErr || !linkedEvent) throw eventErr || new Error('Failed to create event');
-        if (!firstEventId) firstEventId = linkedEvent.id;
+      // For each show instance: create show_instance + zone pricing + ticket tiers
+      for (const si of validShows) {
+        const endAt = si.end_at || new Date(si.start_at!.getTime() + durationMinutes * 60 * 1000);
 
-        // Create show instance
+        // Create show instance linked to the SINGLE event
         const { data: showInst, error: showErr } = await supabase.from('show_instances').insert({
           production_id: production.id,
           venue_id: si.venue_id,
           event_id: linkedEvent.id,
-          start_at: si.start_at.toISOString(),
+          start_at: si.start_at!.toISOString(),
           end_at: endAt.toISOString(),
           doors_open_at: si.doors_open_at?.toISOString() || null,
           notes: si.notes || null,
@@ -369,9 +378,7 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
         // Create ticket tiers from zone pricing, with seat counts from venue
         const houseSeatsPerZone = new Map<string, number>();
         if (si.house_seats && si.house_seats.length > 0) {
-          // Count house seats per zone by looking up each seat's zone
           for (const hs of si.house_seats) {
-            // Find which zone this seat belongs to by matching zone name
             const zp = si.zone_prices.find(z => z.zone_name === hs.zoneName);
             if (zp) {
               houseSeatsPerZone.set(zp.zone_id, (houseSeatsPerZone.get(zp.zone_id) || 0) + 1);
@@ -380,7 +387,6 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
         }
 
         for (const zp of si.zone_prices) {
-          // Count active seats in this zone to set proper quantity_total
           const { count: seatCount } = await supabase
             .from('venue_seats')
             .select('id', { count: 'exact', head: true })
@@ -390,7 +396,7 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
           const houseCount = houseSeatsPerZone.get(zp.zone_id) || 0;
           const availableSeats = Math.max(0, (seatCount || 0) - houseCount);
 
-          const { data: tierData, error: tierErr } = await supabase.from('ticket_tiers').insert({
+          const { error: tierErr } = await supabase.from('ticket_tiers').insert({
             event_id: linkedEvent.id,
             name: zp.zone_name,
             price_cents: zp.price_cents,
