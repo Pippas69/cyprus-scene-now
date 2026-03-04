@@ -58,21 +58,42 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       order("sort_order");
       if (tiersError) throw tiersError;
 
-      // Fetch ticket orders (revenue)
+      // Fetch walk-in ticket orders only (no linked reservation = walk-in)
       const { data: orders, error: ordersError } = await supabase.
       from("ticket_orders").
-      select("subtotal_cents, commission_cents").
+      select("subtotal_cents, commission_cents, linked_reservation_id").
       eq("event_id", eventId).
-      eq("status", "completed");
+      eq("status", "completed").
+      is("linked_reservation_id", null);
       if (ordersError) throw ordersError;
 
-      // Fetch actual tickets
-      const { data: tickets, error: ticketsError } = await supabase.
+      // Fetch walk-in tickets only (from orders without linked reservation)
+      const walkInOrderIds = new Set((orders || []).map(o => o));
+      
+      // Fetch ALL tickets for check-in counting
+      const { data: allTickets, error: allTicketsError } = await supabase.
       from("tickets").
-      select("status, tier_id").
+      select("status, tier_id, order_id").
       eq("event_id", eventId).
       in("status", ["valid", "used"]);
-      if (ticketsError) throw ticketsError;
+      if (allTicketsError) throw allTicketsError;
+
+      // Fetch walk-in only ticket orders IDs
+      const walkInOrderIdsSet = new Set((orders || []).map((o: any) => o.id || '').filter(Boolean));
+      
+      // For ticket orders, we need IDs - refetch with id
+      const { data: walkInOrdersWithId } = await supabase.
+      from("ticket_orders").
+      select("id").
+      eq("event_id", eventId).
+      eq("status", "completed").
+      is("linked_reservation_id", null);
+      
+      const walkInIds = new Set((walkInOrdersWithId || []).map(o => o.id));
+      
+      // Walk-in tickets = tickets whose order has no linked reservation
+      const walkInTickets = (allTickets || []).filter(t => walkInIds.has(t.order_id));
+      const allTicketsArr = allTickets || [];
 
       // Fetch seating types
       const { data: seatingTypesRaw, error: seatingError } = await supabase.
