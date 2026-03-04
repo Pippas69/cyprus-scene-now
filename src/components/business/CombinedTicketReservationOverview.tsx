@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Ticket } from "lucide-react";
+
 import { useLanguage } from "@/hooks/useLanguage";
 
 interface CombinedTicketReservationOverviewProps {
@@ -236,7 +236,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs whitespace-nowrap">
-              <Ticket className="h-4 w-4" />
+              
               {text.ticketsSold}
             </div>
             <p className="text-xl font-bold mt-1 whitespace-nowrap">{overview.ticketsSold}</p>
