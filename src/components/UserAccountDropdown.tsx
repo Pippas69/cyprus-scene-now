@@ -130,9 +130,10 @@ export const UserAccountDropdown = ({
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           {variant === 'button' ? (
-            <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border-none relative">
+            <Button className="gap-2 bg-gradient-ocean text-white hover:opacity-90 border-none relative">
               <Avatar className="h-6 w-6">
                 <AvatarFallback className="text-xs bg-gradient-ocean text-white">
+                  {userName?.substring(0, 2)?.toUpperCase() || 'U'}
                 </AvatarFallback>
                 {avatarUrl && <AvatarImage src={avatarUrl} alt={userName || 'User'} />}
               </Avatar>

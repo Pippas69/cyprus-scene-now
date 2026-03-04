@@ -61,7 +61,7 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
   const { language } = useLanguage();
   const t = translations[language];
 
-  const isActive = (path: string) => location.pathname === path;
+  
 
   // Categories that should NOT see Offers
   const normalizedCategories = businessCategories.map((cat) => cat.toLowerCase());
