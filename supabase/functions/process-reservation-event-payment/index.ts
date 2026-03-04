@@ -270,7 +270,10 @@ serve(async (req) => {
       }
 
       // 3. User email - PREMIUM DESIGN
-      if (profile?.email) {
+      // Use customer_email from checkout metadata first, then profile email
+      const customerEmailFromMeta = metadata?.customer_email;
+      const userEmail = customerEmailFromMeta || profile?.email;
+      if (userEmail) {
         try {
           const qrCodeUrl = reservation.qr_code_token 
             ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(reservation.qr_code_token)}&bgcolor=ffffff&color=000000`
@@ -311,11 +314,11 @@ serve(async (req) => {
 
           await resend.emails.send({
             from: "ΦΟΜΟ <support@fomo.com.cy>",
-            to: [profile.email],
+            to: [userEmail],
             subject: `✓ Κράτηση επιβεβαιώθηκε - ${eventTitle}`,
             html: userEmailHtml,
           });
-          logStep("User email sent", { email: profile.email });
+          logStep("User email sent", { email: userEmail });
         } catch (emailError) {
           logStep("ERROR: User email", { error: String(emailError) });
         }

@@ -303,6 +303,7 @@ serve(async (req) => {
         prepaid_amount_cents: prepaidAmountCents.toString(),
         business_id: business?.id ?? "",
         used_platform_checkout: hasConnectSetup ? "false" : "true",
+        customer_email: customer_email || customerEmail || "",
       },
     };
 
