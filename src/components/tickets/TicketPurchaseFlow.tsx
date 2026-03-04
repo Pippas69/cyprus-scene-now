@@ -531,9 +531,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       );
     }
 
-    const isFirstStep = step === (hasSeating ? STEP_SEATS : STEP_TICKETS);
+    const firstStep = hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? STEP_SEATS : STEP_TICKETS);
+    const isFirstStep = step === firstStep;
     const isLastStep = step === STEP_CHECKOUT;
-    const canProceed = step === STEP_SEATS ? canProceedFromSeats
+    const canProceed = step === STEP_SHOW_SELECT ? !!selectedShowId
+      : step === STEP_SEATS ? canProceedFromSeats
       : step === STEP_TICKETS ? canProceedToCheckout
       : true;
 
@@ -569,10 +571,12 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
-  const stepLabels = hasSeating
+  const stepLabels = hasMultipleShows
+    ? [t.steps.showSelect, t.steps.seats, t.steps.tickets, t.steps.checkout]
+    : hasSeating
     ? [t.steps.seats, t.steps.tickets, t.steps.checkout]
     : [t.steps.tickets, t.steps.checkout];
-  const firstStep = hasSeating ? STEP_SEATS : STEP_TICKETS;
+  const firstStep = hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? STEP_SEATS : STEP_TICKETS);
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
