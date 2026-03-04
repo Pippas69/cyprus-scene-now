@@ -158,10 +158,14 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
   }, [businessId, selectedEventId]);
 
   useEffect(() => {
-    fetchData();
+    if (!editingField) {
+      fetchData();
+    }
+    // Pause auto-refresh while editing to prevent re-render shifting
+    if (editingField) return;
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchData, editingField]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
