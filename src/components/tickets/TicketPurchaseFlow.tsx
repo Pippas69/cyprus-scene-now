@@ -130,29 +130,40 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   eventTitle,
   ticketTiers,
   onSuccess,
-  venueId,
-  showInstanceId,
+  venueId: propVenueId,
+  showInstanceId: propShowInstanceId,
   eventDate,
+  showInstances,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const t = translations[language];
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
+  // Show selection state (for multi-show performance events)
+  const hasMultipleShows = !!(showInstances && showInstances.length > 0);
+  const [selectedShowId, setSelectedShowId] = useState<string | null>(null);
+
+  // Derive venueId/showInstanceId from selected show or props
+  const selectedShow = hasMultipleShows ? showInstances?.find(s => s.id === selectedShowId) : null;
+  const venueId = selectedShow?.venue_id || propVenueId;
+  const showInstanceId = selectedShow?.id || propShowInstanceId;
+
   // Whether this is a seated performance event
   const hasSeating = !!(venueId && showInstanceId);
-  // For seated events: step 1=seats, 2=tickets+names, 3=checkout
-  // For non-seated: step 1=tickets+names, 2=checkout
-  const STEP_SEATS = hasSeating ? 1 : -1;
-  const STEP_TICKETS = hasSeating ? 2 : 1;
-  const STEP_CHECKOUT = hasSeating ? 3 : 2;
-  const TOTAL_STEPS = hasSeating ? 3 : 2;
+  
+  // Steps: showSelect (if multi-show) -> seats (if seated) -> tickets -> checkout
+  const STEP_SHOW_SELECT = hasMultipleShows ? 1 : -1;
+  const STEP_SEATS = hasMultipleShows ? 2 : (hasSeating ? 1 : -1);
+  const STEP_TICKETS = hasMultipleShows ? 3 : (hasSeating ? 2 : 1);
+  const STEP_CHECKOUT = hasMultipleShows ? 4 : (hasSeating ? 3 : 2);
+  const TOTAL_STEPS = hasMultipleShows ? 4 : (hasSeating ? 3 : 2);
 
   // Seat selection state
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
 
   // State
-  const [step, setStep] = useState(hasSeating ? STEP_SEATS : 1);
+  const [step, setStep] = useState(hasMultipleShows ? STEP_SHOW_SELECT : (hasSeating ? 1 : 1));
   const [submitting, setSubmitting] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
