@@ -149,6 +149,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 2,
   });
 
   // Fetch CLAIM counts for all offers (both 'claimed' and 'redeemed' statuses)
