@@ -513,43 +513,39 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   const renderStep2 = () => (
     <div className="space-y-4">
-      {/* Party Size + Ticket Price */}
+      {/* Party Size + Ticket Price - Same Row */}
       <div className="space-y-2">
-        <Label className="flex items-center gap-2 text-sm">
-          <Users className="h-3.5 w-3.5" />
-          {t.partySize}
-        </Label>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0"
-            onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
-            disabled={partySize <= partySizeLimits.min}
-          >-</Button>
-          <span className="text-lg font-bold min-w-[2ch] text-center">{partySize}</span>
-          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0"
-            onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
-            disabled={partySize >= partySizeLimits.max}
-          >+</Button>
-          <span className="text-sm text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-2 text-sm">
+            <Users className="h-3.5 w-3.5" />
+            {t.partySize}
+          </Label>
+          {ticketTier && ticketPricePerPerson > 0 && (
+            <Label className="text-sm text-primary font-medium">
+              {t.ticketPrice || (language === 'el' ? 'Τιμή εισιτηρίων' : 'Ticket price')}
+            </Label>
+          )}
         </div>
-
-        {/* Dynamic ticket price based on party size */}
-        {ticketTier && ticketPricePerPerson > 0 && (
-          <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary/20 mt-1">
-            <div className="flex items-center gap-2">
-              <Ticket className="h-4 w-4 text-primary" />
-              <span className="text-sm text-muted-foreground">
-                {partySize} × {formatPrice(ticketPricePerPerson)} {t.perPerson}
-              </span>
-            </div>
-            <span className="text-base font-bold text-primary">{formatPrice(ticketTotal)}</span>
+        <div className="flex items-center justify-between rounded-lg bg-primary/5 border border-primary/20 p-2.5">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0"
+              onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
+              disabled={partySize <= partySizeLimits.min}
+            >-</Button>
+            <span className="text-lg font-bold min-w-[2ch] text-center">{partySize}</span>
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0"
+              onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
+              disabled={partySize >= partySizeLimits.max}
+            >+</Button>
+            <span className="text-sm text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
           </div>
-        )}
-        {ticketTier && ticketPricePerPerson === 0 && (
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20 mt-1">
-            <Ticket className="h-4 w-4 text-primary" />
+          {ticketTier && ticketPricePerPerson > 0 && (
+            <span className="text-lg font-bold text-primary">{formatPrice(ticketTotal)}</span>
+          )}
+          {ticketTier && ticketPricePerPerson === 0 && (
             <span className="text-sm font-medium text-primary">{t.free}</span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Min Charge Info */}
