@@ -26,6 +26,7 @@ interface SeatingTypeOption {
   seating_type: string;
   available_slots: number;
   slots_booked: number;
+  paused: boolean;
   dress_code: string | null;
   tiers: {
     id: string;
@@ -288,8 +289,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       const { data: seatingTypes, error } = await supabase
         .from('reservation_seating_types')
         .select('*')
-        .eq('event_id', eventId)
-        .eq('paused', false);
+        .eq('event_id', eventId);
       if (error) throw error;
 
       // Count actual reservations per seating type for accurate availability
@@ -456,6 +456,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       {seatingOptions.map(option => {
         const remaining = option.available_slots - option.slots_booked;
         const isSoldOut = remaining <= 0;
+        const isPaused = !!option.paused;
+        const isUnavailable = isSoldOut || isPaused;
         const isSelected = selectedSeating?.id === option.id;
         const colors = seatingTypeColors[option.seating_type] || seatingTypeColors.table;
         const minPrice = option.tiers.length > 0
@@ -467,12 +469,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             key={option.id}
             className={cn(
               "cursor-pointer transition-all",
-              isSoldOut && "opacity-50 cursor-not-allowed",
-              isSelected && `${colors.border} border-2 ring-2 ring-offset-2 ring-primary/20`,
-              !isSelected && !isSoldOut && "hover:border-primary/50"
+              isUnavailable && "opacity-50 cursor-not-allowed grayscale",
+              isSelected && !isUnavailable && `${colors.border} border-2 ring-2 ring-offset-2 ring-primary/20`,
+              !isSelected && !isUnavailable && "hover:border-primary/50"
             )}
             onClick={() => {
-              if (!isSoldOut) {
+              if (!isUnavailable) {
                 setSelectedSeating(option);
                 if (option.tiers.length > 0) {
                   const minPeople = Math.min(...option.tiers.map(t => t.min_people));
@@ -486,17 +488,17 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                 <div className={cn("p-2 rounded-lg", colors.bg, colors.text)}>
                   {seatingTypeIcons[option.seating_type] || seatingTypeIcons.table}
                 </div>
-                {isSoldOut ? (
+                {isUnavailable ? (
                   <Badge variant="destructive">{t.soldOut}</Badge>
                 ) : (
                   <Badge variant="secondary">{remaining} {t.available}</Badge>
                 )}
               </div>
               <div>
-                <h4 className={cn("font-semibold", isSelected && colors.text)}>
+                <h4 className={cn("font-semibold", isSelected && !isUnavailable && colors.text)}>
                   {t.seatingTypes[option.seating_type as keyof typeof t.seatingTypes] || option.seating_type}
                 </h4>
-                {minPrice != null && (
+                {minPrice != null && !isUnavailable && (
                   <p className="text-sm text-muted-foreground">{t.from} {formatPrice(minPrice)}</p>
                 )}
               </div>
