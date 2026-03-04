@@ -248,7 +248,7 @@ const DashboardBusiness = () => {
       />
       <SidebarProvider>
       <div className="h-screen w-full flex overflow-hidden">
-        <BusinessSidebar />
+        <BusinessSidebar businessCategories={businessCategories} />
         
         <div className="flex-1 flex flex-col min-h-0 min-w-0 max-w-full">
           {/* Header - Mobile optimized */}
@@ -337,7 +337,7 @@ const DashboardBusiness = () => {
           </main>
 
           {/* Floating Action Button */}
-          <BusinessFAB />
+          <BusinessFAB businessCategories={businessCategories} />
         </div>
       </div>
       </SidebarProvider>

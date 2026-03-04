@@ -3,8 +3,6 @@ import { Plus, Calendar, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useBusinessOwner } from "@/hooks/useBusinessOwner";
-
 const translations = {
   el: {
     createEvent: "Δημιουργία Εκδήλωσης",
@@ -19,19 +17,21 @@ const translations = {
 // Categories that do NOT see offers
 const noOfferCategories = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
 
-export function BusinessFAB() {
+interface BusinessFABProps {
+  businessCategories: string[];
+}
+
+export function BusinessFAB({ businessCategories }: BusinessFABProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { language } = useLanguage();
-  const { categories, isLoading } = useBusinessOwner();
   const t = translations[language];
 
   if (location.pathname === "/dashboard-business/settings") return null;
 
-  const showOffers = !isLoading && categories.length > 0 && !categories.some(
-    cat => noOfferCategories.includes(cat.toLowerCase())
-  );
+  const normalizedCategories = businessCategories.map((cat) => cat.toLowerCase());
+  const showOffers = !normalizedCategories.some((cat) => noOfferCategories.includes(cat));
 
   return (
     <div className="fixed bottom-20 md:bottom-6 right-6 z-50 flex flex-col-reverse gap-3 items-end">

@@ -132,8 +132,7 @@ export const UserAccountDropdown = ({
           {variant === 'button' ? (
             <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border-none relative">
               <Avatar className="h-6 w-6">
-                <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                  {userName?.substring(0, 2)?.toUpperCase() || 'U'}
+                <AvatarFallback className="text-xs bg-gradient-ocean text-white">
                 </AvatarFallback>
                 {avatarUrl && <AvatarImage src={avatarUrl} alt={userName || 'User'} />}
               </Avatar>
@@ -142,7 +141,7 @@ export const UserAccountDropdown = ({
           ) : (
             <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full p-0">
               <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                <AvatarFallback className="bg-gradient-ocean text-white text-sm">
                   {userName?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>
                 {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}

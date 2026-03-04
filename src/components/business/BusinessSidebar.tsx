@@ -1,7 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap } from "lucide-react";
-import { useBusinessOwner } from "@/hooks/useBusinessOwner";
 import {
   Sidebar,
   SidebarContent,
@@ -52,18 +51,22 @@ const translations = {
   },
 };
 
-export function BusinessSidebar() {
+interface BusinessSidebarProps {
+  businessCategories: string[];
+}
+
+export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
   const { state } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
-  const { categories, isLoading } = useBusinessOwner();
   const t = translations[language];
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Categories that should NOT see Offers — hide while loading to prevent flash
+  // Categories that should NOT see Offers
+  const normalizedCategories = businessCategories.map((cat) => cat.toLowerCase());
   const noOffersCategories = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
-  const showOffers = !isLoading && categories.length > 0 && !categories.some(cat => noOffersCategories.includes(cat.toLowerCase()));
+  const showOffers = !normalizedCategories.some((cat) => noOffersCategories.includes(cat));
 
   const dashboardItems = [
     { title: t.analytics, url: "/dashboard-business", icon: TrendingUp },

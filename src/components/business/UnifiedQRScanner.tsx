@@ -464,7 +464,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
           onClick={() => {
             setIsOpen(true);
           }}
-          className="gap-1 sm:gap-1.5 bg-aegean hover:bg-aegean-deep text-white h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs"
+          className="gap-1 sm:gap-1.5 bg-gradient-ocean hover:opacity-90 text-white h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs border-0"
         >
           {isOffline ? <WifiOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <Camera className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
           <span className="sm:hidden">QR</span>
