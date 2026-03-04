@@ -319,7 +319,8 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   }, []);
 
   // ── Render seat ──
-  const SEAT_SIZE = 22;
+  const SEAT_W = 20;
+  const SEAT_H = 18;
   const renderSeat = (seat: VenueSeat) => {
     const isSold = soldSeats.has(seat.id);
     const isSelected = selectedIds.has(seat.id);
@@ -335,6 +336,17 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     const cx = seat.x - bounds.minX;
     // Flip Y so row A (high y value = front) appears at bottom near stage
     const cy = bounds.maxY - seat.y;
+
+    // Cinema-style chair shape
+    const seatPath = `
+      M ${cx - SEAT_W/2 + 2} ${cy + SEAT_H/2}
+      L ${cx - SEAT_W/2 + 2} ${cy - SEAT_H/2 + 4}
+      Q ${cx - SEAT_W/2 + 2} ${cy - SEAT_H/2}, ${cx - SEAT_W/2 + 6} ${cy - SEAT_H/2}
+      L ${cx + SEAT_W/2 - 6} ${cy - SEAT_H/2}
+      Q ${cx + SEAT_W/2 - 2} ${cy - SEAT_H/2}, ${cx + SEAT_W/2 - 2} ${cy - SEAT_H/2 + 4}
+      L ${cx + SEAT_W/2 - 2} ${cy + SEAT_H/2}
+      Z
+    `;
 
     return (
       <g
@@ -353,31 +365,38 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
         onPointerLeave={() => setTooltip(null)}
         data-seat="true"
       >
-        {/* Seat shape — rounded rectangle like a chair */}
+        {/* Chair backrest (rounded top) */}
+        <path
+          data-seat="true"
+          d={seatPath}
+          fill={fill}
+          stroke={isSelected ? 'white' : 'rgba(0,0,0,0.15)'}
+          strokeWidth={isSelected ? 2 : 0.5}
+          className={cn(!isSold && !isSelected && 'hover:opacity-80')}
+        />
+        {/* Small seat cushion */}
         <rect
           data-seat="true"
-          x={cx - SEAT_SIZE / 2}
-          y={cy - SEAT_SIZE / 2}
-          width={SEAT_SIZE}
-          height={SEAT_SIZE}
-          rx={4}
-          fill={fill}
-          stroke={isSelected ? 'hsl(var(--primary-foreground))' : 'transparent'}
-          strokeWidth={isSelected ? 2 : 0}
-          className={cn(!isSold && !isSelected && 'hover:opacity-80')}
+          x={cx - SEAT_W/2 + 3}
+          y={cy + 2}
+          width={SEAT_W - 6}
+          height={SEAT_H/3}
+          rx={2}
+          fill={isSelected ? 'hsl(var(--primary-foreground) / 0.3)' : 'rgba(0,0,0,0.1)'}
+          className="pointer-events-none"
         />
         {/* Seat label (only visible at higher zoom) */}
         {zoom >= 1.2 && (
           <text
             data-seat="true"
             x={cx}
-            y={cy + 1}
+            y={cy - 1}
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize={7}
-            fill={isSelected ? 'white' : isSold ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))'}
+            fill={isSelected ? 'white' : isSold ? 'hsl(var(--muted-foreground))' : 'white'}
             className="pointer-events-none select-none"
-            fontWeight={isSelected ? 700 : 400}
+            fontWeight={isSelected ? 700 : 500}
           >
             {seat.seat_number}
           </text>
