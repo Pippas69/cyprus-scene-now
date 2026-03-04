@@ -124,7 +124,8 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         tierSoldCount.set(t.tier_id, (tierSoldCount.get(t.tier_id) || 0) + 1);
       });
 
-      const enrichedTiers = (tiers || []).map((tier) => ({
+      const walkInDisplayTiers = (tiers || []).filter((tier) => tier.quantity_total > 0 && tier.quantity_total !== 999999);
+      const enrichedTiers = walkInDisplayTiers.map((tier) => ({
         ...tier,
         actual_sold: tierSoldCount.get(tier.id) || 0
       }));
