@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Euro, Users, Ticket, CheckCircle2 } from "lucide-react";
+import { Users, Ticket, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 interface CombinedTicketReservationOverviewProps {
@@ -68,8 +68,8 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       if (ordersError) throw ordersError;
 
       // Fetch walk-in tickets only (from orders without linked reservation)
-      const walkInOrderIds = new Set((orders || []).map(o => o));
-      
+      const walkInOrderIds = new Set((orders || []).map((o) => o));
+
       // Fetch ALL tickets for check-in counting
       const { data: allTickets, error: allTicketsError } = await supabase.
       from("tickets").
@@ -80,7 +80,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
 
       // Fetch walk-in only ticket orders IDs
       const walkInOrderIdsSet = new Set((orders || []).map((o: any) => o.id || '').filter(Boolean));
-      
+
       // For ticket orders, we need IDs - refetch with id
       const { data: walkInOrdersWithId } = await supabase.
       from("ticket_orders").
@@ -88,11 +88,11 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       eq("event_id", eventId).
       eq("status", "completed").
       is("linked_reservation_id", null);
-      
-      const walkInIds = new Set((walkInOrdersWithId || []).map(o => o.id));
-      
+
+      const walkInIds = new Set((walkInOrdersWithId || []).map((o) => o.id));
+
       // Walk-in tickets = tickets whose order has no linked reservation
-      const walkInTickets = (allTickets || []).filter(t => walkInIds.has(t.order_id));
+      const walkInTickets = (allTickets || []).filter((t) => walkInIds.has(t.order_id));
       const allTicketsArr = allTickets || [];
 
       // Fetch seating types
@@ -216,7 +216,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs whitespace-nowrap">
-              <Euro className="h-4 w-4" />
+              
               {text.totalRevenue}
             </div>
             <p className="text-xl font-bold mt-1 whitespace-nowrap">{formatPrice(overview.totalRevenue)}</p>
