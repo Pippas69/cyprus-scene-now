@@ -307,13 +307,15 @@ export const TicketTierEditor = ({
                         {text.price}
                       </Label>
                       <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         value={tier.price_cents / 100}
-                        onChange={(e) => updateTier(index, { 
-                          price_cents: Math.round(parseFloat(e.target.value || "0") * 100) 
-                        })}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                          updateTier(index, { 
+                            price_cents: Math.round(parseFloat(val || "0") * 100) 
+                          });
+                        }}
                         className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                       {tier.price_cents > 0 && commissionPercent > 0 && (
@@ -394,6 +396,7 @@ export const TicketTierEditor = ({
             ))}
           </div>
 
+          {!hideQuantity && (
           <Button
             type="button"
             variant="outline"
@@ -403,6 +406,7 @@ export const TicketTierEditor = ({
             <Plus className="h-4 w-4 mr-2" />
             {text.addTier}
           </Button>
+          )}
         </>
       )}
     </div>

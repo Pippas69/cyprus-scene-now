@@ -58,19 +58,18 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       order("sort_order");
       if (tiersError) throw tiersError;
 
-      // Fetch walk-in ticket orders only (no linked reservation = walk-in)
-      const { data: orders, error: ordersError } = await supabase.
+      // Fetch ALL completed ticket orders (both walk-in and reservation-linked)
+      const { data: allOrders, error: allOrdersError } = await supabase.
       from("ticket_orders").
-      select("subtotal_cents, commission_cents, linked_reservation_id").
+      select("id, subtotal_cents, commission_cents, linked_reservation_id").
       eq("event_id", eventId).
-      eq("status", "completed").
-      is("linked_reservation_id", null);
-      if (ordersError) throw ordersError;
+      eq("status", "completed");
+      if (allOrdersError) throw allOrdersError;
 
-      // Fetch walk-in tickets only (from orders without linked reservation)
-      const walkInOrderIds = new Set((orders || []).map((o) => o));
+      // Separate walk-in orders (no linked reservation)
+      const walkInOrders = (allOrders || []).filter((o) => !o.linked_reservation_id);
 
-      // Fetch ALL tickets for check-in counting
+      // Fetch ALL tickets for counting
       const { data: allTickets, error: allTicketsError } = await supabase.
       from("tickets").
       select("status, tier_id, order_id").
@@ -78,18 +77,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       in("status", ["valid", "used"]);
       if (allTicketsError) throw allTicketsError;
 
-      // Fetch walk-in only ticket orders IDs
-      const walkInOrderIdsSet = new Set((orders || []).map((o: any) => o.id || '').filter(Boolean));
-
-      // For ticket orders, we need IDs - refetch with id
-      const { data: walkInOrdersWithId } = await supabase.
-      from("ticket_orders").
-      select("id").
-      eq("event_id", eventId).
-      eq("status", "completed").
-      is("linked_reservation_id", null);
-
-      const walkInIds = new Set((walkInOrdersWithId || []).map((o) => o.id));
+      const walkInIds = new Set(walkInOrders.map((o) => o.id));
 
       // Walk-in tickets = tickets whose order has no linked reservation
       const walkInTickets = (allTickets || []).filter((t) => walkInIds.has(t.order_id));
@@ -124,9 +112,9 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       eq("status", "accepted");
       if (resError) throw resError;
 
-      // --- Ticket stats (walk-in only) ---
-      const ticketRevenue = orders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
-      const ticketsSold = walkInTickets.length;
+      // --- Ticket stats (ALL tickets including reservation-linked) ---
+      const ticketRevenue = allOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
+      const ticketsSold = allTicketsArr.length;
       const ticketCheckedIn = allTicketsArr.filter((t) => t.status === "used").length;
 
       // Per-tier sold count (walk-in only for display)

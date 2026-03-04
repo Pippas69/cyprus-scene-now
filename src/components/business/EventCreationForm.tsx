@@ -901,22 +901,7 @@ const EventCreationForm = ({
                     
                     
                     
-                    {/* Walk-in toggle for hybrid events */}
-                    {isReservationSelected &&
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-background">
-                        <div className="space-y-0.5">
-                          <p className="font-medium text-xs sm:text-sm">
-                            {language === 'el' ? 'Ενεργοποίηση Walk-in Εισιτηρίων' : 'Enable Walk-in Tickets'}
-                          </p>
-                          <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            {language === 'el' ?
-                      'Επιτρέψτε αγορά εισιτηρίων χωρίς κράτηση (ξεχωριστό απόθεμα)' :
-                      'Allow ticket purchases without reservation (separate inventory)'}
-                          </p>
-                        </div>
-                        <Switch checked={walkInEnabled} onCheckedChange={setWalkInEnabled} />
-                      </div>
-                }
+                    
 
                     <TicketTierEditor
                   tiers={formData.ticketTiers}
@@ -1075,6 +1060,23 @@ const EventCreationForm = ({
 
         })()}
         </SectionCard>
+
+        {/* Walk-in toggle for hybrid events - placed above Terms */}
+        {isTicketSelected && isReservationSelected && (
+          <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+            <div className="space-y-0.5">
+              <p className="font-medium text-xs sm:text-sm">
+                {language === 'el' ? 'Ενεργοποίηση Walk-in Εισιτηρίων' : 'Enable Walk-in Tickets'}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                {language === 'el'
+                  ? 'Επιτρέψτε αγορά εισιτηρίων χωρίς κράτηση (ξεχωριστό απόθεμα)'
+                  : 'Allow ticket purchases without reservation (separate inventory)'}
+              </p>
+            </div>
+            <Switch checked={walkInEnabled} onCheckedChange={setWalkInEnabled} />
+          </div>
+        )}
 
         {/* Terms & Conditions (Optional) */}
         <div className="space-y-1 sm:space-y-2">
