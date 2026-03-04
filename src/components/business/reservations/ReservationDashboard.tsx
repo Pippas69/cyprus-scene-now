@@ -81,12 +81,13 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
     const eventIds = eventsData.map(e => e.id);
 
-    // Get reservation counts per event
+    // Get reservation counts per event (exclude walk-in auto-created)
     const { data: reservations } = await supabase
       .from('reservations')
       .select('event_id')
       .in('event_id', eventIds)
-      .in('status', ['pending', 'accepted']);
+      .in('status', ['pending', 'accepted'])
+      .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
 
     const counts: Record<string, number> = {};
     (reservations || []).forEach(r => {
@@ -158,7 +159,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                   return (
                     <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
                       <span className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">{event.title}</span>
                         <CalendarDays className="h-3.5 w-3.5 text-foreground/70 shrink-0" />
                         <span className="text-sm text-foreground/70">{dateStr}</span>
                         <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
