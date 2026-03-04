@@ -307,6 +307,71 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
     }
   };
 
+  const openRangeEditor = (eventId: string, seating: EventWithControls['seatingTypes'][number]) => {
+    setRangeEditorSeating({ eventId, seatingId: seating.id, seatingName: seating.seating_type });
+    const initialDrafts = (seating.tiers.length > 0
+      ? seating.tiers
+      : [{ min_people: 2, max_people: 6, prepaid_min_charge_cents: 10000 }]
+    ).slice(0, 3).map((tier) => ({
+      min_people: String(tier.min_people),
+      max_people: String(tier.max_people),
+      prepaid_min_charge_eur: String((tier.prepaid_min_charge_cents / 100).toFixed(2)),
+    }));
+    setRangeDrafts(initialDrafts);
+  };
+
+  const saveRanges = async () => {
+    if (!rangeEditorSeating) return;
+
+    const parsedRanges = rangeDrafts.map((draft) => {
+      const min = parseInt(draft.min_people, 10);
+      const max = parseInt(draft.max_people, 10);
+      const eur = parseFloat((draft.prepaid_min_charge_eur || '0').replace(',', '.'));
+      return {
+        min_people: min,
+        max_people: max,
+        prepaid_min_charge_cents: Math.round((Number.isNaN(eur) ? 0 : eur) * 100),
+      };
+    });
+
+    const hasInvalid = parsedRanges.some((range) =>
+      Number.isNaN(range.min_people) || Number.isNaN(range.max_people) || range.min_people < 1 || range.max_people < range.min_people || range.prepaid_min_charge_cents < 0
+    );
+
+    if (hasInvalid || parsedRanges.length === 0 || parsedRanges.length > 3) {
+      toast.error(t.invalidRange);
+      return;
+    }
+
+    setSavingRanges(true);
+    try {
+      const { error: deleteError } = await supabase
+        .from('seating_type_tiers')
+        .delete()
+        .eq('seating_type_id', rangeEditorSeating.seatingId);
+      if (deleteError) throw deleteError;
+
+      const { error: insertError } = await supabase
+        .from('seating_type_tiers')
+        .insert(parsedRanges.map((range) => ({
+          seating_type_id: rangeEditorSeating.seatingId,
+          min_people: range.min_people,
+          max_people: range.max_people,
+          prepaid_min_charge_cents: range.prepaid_min_charge_cents,
+        })));
+      if (insertError) throw insertError;
+
+      toast.success(t.saved);
+      setRangeEditorSeating(null);
+      setRangeDrafts([]);
+      await fetchData();
+    } catch {
+      toast.error(t.error);
+    } finally {
+      setSavingRanges(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
