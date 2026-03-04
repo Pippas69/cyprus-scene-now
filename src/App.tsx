@@ -74,12 +74,16 @@ function AppContent() {
                         userLayoutRoutes.some(route => location.pathname.startsWith(route)) || 
                         adminRoutes.some(route => location.pathname.startsWith(route));
 
+  const routesKey = location.pathname.startsWith('/dashboard-business')
+    ? '/dashboard-business'
+    : location.pathname;
+
   return (
     <>
       <ScrollToTop />
       <div className="min-h-screen pb-16 md:pb-0">
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
+          <Routes location={location} key={routesKey}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
           <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
           <Route path="/pricing" element={<PageTransition><PricingPublic /></PageTransition>} />
