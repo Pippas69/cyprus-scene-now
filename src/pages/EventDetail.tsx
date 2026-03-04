@@ -480,12 +480,22 @@ export default function EventDetail() {
   // Check if event has native tickets (including inactive ones)
   const hasNativeTickets = ticketTiers.length > 0;
   const activeTicketTiers = ticketTiers.filter((t: any) => t.active !== false);
-  
-  // All tickets sold out = all tiers inactive OR all active tiers have no remaining capacity
-  // For seated/performance events (quantity_total=0), availability is determined by seats, not tier quantities
+  const isLinkedHybridEvent = isBusinessTicketLinked && event?.event_type === 'ticket_and_reservation';
+  const walkInTicketTiers = isLinkedHybridEvent
+    ? activeTicketTiers.filter((t: any) => t.quantity_total !== 999999)
+    : activeTicketTiers;
+  const reservationFlowTicketTiers = isLinkedHybridEvent
+    ? (() => {
+        const reservationTiers = activeTicketTiers.filter((t: any) => t.quantity_total === 999999);
+        return reservationTiers.length > 0 ? reservationTiers : activeTicketTiers;
+      })()
+    : activeTicketTiers;
+
+  // Sold-out for walk-ins must use walk-in tiers only (never reservation-linked tickets)
+  const tiersForSoldOutCheck = isLinkedHybridEvent ? walkInTicketTiers : activeTicketTiers;
   const allTicketsSoldOut = hasNativeTickets && (
-    activeTicketTiers.length === 0 || 
-    activeTicketTiers.every((t: any) => t.quantity_total > 0 && (t.quantity_sold ?? 0) >= t.quantity_total)
+    tiersForSoldOutCheck.length === 0 ||
+    tiersForSoldOutCheck.every((t: any) => t.quantity_total > 0 && (t.quantity_sold ?? 0) >= t.quantity_total)
   );
   const kalivaFullySoldOut = reservationsSoldOut && allTicketsSoldOut;
 
@@ -1207,7 +1217,7 @@ export default function EventDetail() {
           onOpenChange={setShowKalivaFlow}
           eventId={event.id}
           eventTitle={event.title}
-          ticketTiers={activeTicketTiers}
+          ticketTiers={reservationFlowTicketTiers}
           onSuccess={(orderId, isFree) => {
             setShowKalivaFlow(false);
             if (isFree) {
@@ -1224,7 +1234,7 @@ export default function EventDetail() {
           onOpenChange={setShowTicketFlow}
           eventId={event.id}
           eventTitle={event.title}
-          ticketTiers={activeTicketTiers}
+          ticketTiers={walkInTicketTiers}
           showInstances={showInstances.length > 0 ? showInstances : undefined}
           onSuccess={(orderId, isFree) => {
             setShowTicketFlow(false);
