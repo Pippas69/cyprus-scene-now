@@ -5,8 +5,7 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, X, Ticket, Euro, Users, Shirt } from "lucide-react";
+import { Plus, X, Ticket, Euro, Users } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export interface TicketTier {
@@ -49,12 +48,6 @@ const t = {
     noTickets: "Χωρίς εισιτήρια (μόνο RSVP/Κράτηση)",
     enableTickets: "Ενεργοποίηση Πώλησης Εισιτηρίων",
     tierNameRequired: "Το όνομα κατηγορίας είναι υποχρεωτικό",
-    dressCode: "Dress Code",
-    selectDressCode: "Επιλέξτε dress code",
-    casual: "Casual",
-    smartCasual: "Smart Casual",
-    elegant: "Elegant",
-    noSportswear: "Όχι αθλητικά",
   },
   en: {
     addTier: "Add Ticket Tier",
@@ -74,27 +67,9 @@ const t = {
     noTickets: "No tickets (RSVP/Reservation only)",
     enableTickets: "Enable Ticket Sales",
     tierNameRequired: "Tier name is required",
-    dressCode: "Dress Code",
-    selectDressCode: "Select dress code",
-    casual: "Casual",
-    smartCasual: "Smart Casual",
-    elegant: "Elegant",
-    noSportswear: "No sportswear",
   },
 };
 
-const ALLOWED_DRESS_CODES = new Set(["casual", "smart_casual", "elegant", "no_sportswear"]);
-
-const normalizeDressCode = (value?: string) => {
-  if (!value) return undefined;
-  const v = value.toLowerCase();
-
-  // Backward compatibility for old UI values
-  if (v === "formal" || v === "semi_formal") return "elegant";
-  if (v === "themed" || v === "costume") return "no_sportswear";
-
-  return ALLOWED_DRESS_CODES.has(v) ? v : undefined;
-};
 
 // Validation helper
 export const validateTicketTiers = (tiers: TicketTier[], language: 'el' | 'en'): string[] => {
@@ -363,34 +338,6 @@ export const TicketTierEditor = ({
                   </div>
                   )}
 
-                  {/* Dress Code Selector */}
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-1 text-xs sm:text-sm">
-                      <Shirt className="h-3 w-3" />
-                      {text.dressCode}
-                    </Label>
-                    <Select
-                      value={normalizeDressCode(tier.dress_code) || "none"}
-                      onValueChange={(value) => {
-                        const normalized = value === "none" ? undefined : normalizeDressCode(value);
-                        // Only update if actually changed
-                        if (normalizeDressCode(tier.dress_code) !== normalized) {
-                          updateTier(index, { dress_code: normalized });
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
-                        <SelectValue placeholder={text.selectDressCode} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">{language === 'el' ? 'Χωρίς' : 'None'}</SelectItem>
-                        <SelectItem value="casual">{text.casual}</SelectItem>
-                        <SelectItem value="smart_casual">{text.smartCasual}</SelectItem>
-                        <SelectItem value="elegant">{text.elegant}</SelectItem>
-                        <SelectItem value="no_sportswear">{text.noSportswear}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </CardContent>
               </Card>
             ))}
