@@ -986,6 +986,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             </>
           )}
         </TabsContent>
+        )}
       </Tabs>
     </div>
   );
