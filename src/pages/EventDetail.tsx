@@ -96,6 +96,12 @@ export default function EventDetail() {
   const [castMembers, setCastMembers] = useState<any[]>([]);
 
   const fromPath = `${location.pathname}${location.search}`;
+
+  // Determine if this business uses the linked ticket+reservation (Kaliva) flow
+  const isBusinessTicketLinked = !!(
+    (event as any)?.businesses?.ticket_reservation_linked ||
+    isClubOrEventBusiness((event as any)?.businesses?.category || [])
+  );
   
   // Fetch ticket tiers for this event
   const { data: ticketTiers = [], isLoading: ticketsLoading } = useTicketTiers(eventId || '');
