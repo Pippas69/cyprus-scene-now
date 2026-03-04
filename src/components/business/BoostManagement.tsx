@@ -915,15 +915,17 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
       </div>
 
       <Tabs defaultValue="events">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${showOffers ? 'grid-cols-2' : 'grid-cols-1'}`}>
           <TabsTrigger value="events" className="text-xs sm:text-sm">
             <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             {t.events} ({activeEventBoosts.length})
           </TabsTrigger>
-          <TabsTrigger value="offers" className="text-xs sm:text-sm">
-            <Ticket className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            {t.offers} ({activeOfferBoosts.length})
-          </TabsTrigger>
+          {showOffers && (
+            <TabsTrigger value="offers" className="text-xs sm:text-sm">
+              <Ticket className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              {t.offers} ({activeOfferBoosts.length})
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* EVENT BOOSTS TAB */}
