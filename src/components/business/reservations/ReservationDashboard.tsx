@@ -159,7 +159,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                         <span className="font-medium text-foreground">{event.title}</span>
                         <CalendarDays className="h-3.5 w-3.5 text-foreground/70 shrink-0" />
                         <span className="text-sm text-foreground/70">{dateStr}</span>
-                        <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-sm font-bold px-1.5 py-0.5 min-w-[20px]">
+                        <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
                           {event.reservationCount}
                         </span>
                       </span>
