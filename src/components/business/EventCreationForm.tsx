@@ -930,10 +930,10 @@ const EventCreationForm = ({
 
                 {/* RESERVATION CONFIG */}
                 {isReservationSelected && <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6 p-3 sm:p-4 bg-muted/30 rounded-lg">
-                    <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
-                      <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                      {t.reservationConfig}
-                    </h4>
+                    
+
+
+                
                     
                     
                     
