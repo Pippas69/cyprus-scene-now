@@ -108,6 +108,8 @@ interface PersonTier {
 interface SeatingConfig {
   type: SeatingType;
   availableSlots: number;
+  ticketCategoryName: string;
+  ticketPriceCents: number;
   tiers: PersonTier[];
 }
 interface FormData {
@@ -331,6 +333,8 @@ const countWords = (text: string): number => {
 const getDefaultSeatingConfig = (type: SeatingType): SeatingConfig => ({
   type,
   availableSlots: 10,
+  ticketCategoryName: type === 'bar' ? 'Bar' : type === 'table' ? 'Table' : type === 'vip' ? 'VIP' : 'Sofa',
+  ticketPriceCents: 0,
   tiers: [{
     minPeople: 2,
     maxPeople: 6,
@@ -420,6 +424,8 @@ const EventCreationForm = ({
 
   // Ticket tier validation errors
   const [ticketValidationErrors, setTicketValidationErrors] = useState<string[]>([]);
+  const [walkInTicketTiers, setWalkInTicketTiers] = useState<TicketTier[]>([]);
+  const [walkInTicketValidationErrors, setWalkInTicketValidationErrors] = useState<string[]>([]);
 
   // Image state
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -558,10 +564,11 @@ const EventCreationForm = ({
     if (!formData.eventType) return t.allFieldsRequired;
 
     // Type-specific validation
-    const hasTickets = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
-    const hasReservation = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+    const isTicketOnly = formData.eventType === 'ticket';
+    const isHybrid = formData.eventType === 'ticket_and_reservation';
+    const hasReservation = formData.eventType === 'reservation' || isHybrid;
 
-    if (hasTickets) {
+    if (isTicketOnly) {
       const tierErrors = validateTicketTiers(formData.ticketTiers, language);
       if (tierErrors.length > 0) {
         setTicketValidationErrors(tierErrors);
@@ -571,13 +578,35 @@ const EventCreationForm = ({
         return language === 'el' ? 'Προσθέστε τουλάχιστον μία κατηγορία εισιτηρίου' : 'Add at least one ticket tier';
       }
       setTicketValidationErrors([]);
+    } else {
+      setTicketValidationErrors([]);
     }
+
     if (hasReservation) {
       if (formData.selectedSeatingTypes.length === 0) return t.addAtLeastOneSeating;
       for (const type of formData.selectedSeatingTypes) {
         const config = formData.seatingConfigs[type];
         if (config.tiers.length === 0) return t.addAtLeastOneRange;
+        if (isHybrid && !config.ticketCategoryName.trim()) {
+          return language === 'el'
+            ? 'Συμπληρώστε όνομα κατηγορίας εισιτηρίου για κάθε τύπο θέσης'
+            : 'Add a ticket category name for each seating type';
+        }
       }
+
+      if (isHybrid && walkInEnabled) {
+        const walkInErrors = validateTicketTiers(walkInTicketTiers, language);
+        if (walkInErrors.length > 0) {
+          setWalkInTicketValidationErrors(walkInErrors);
+          return walkInErrors[0];
+        }
+        if (walkInTicketTiers.length === 0) {
+          return language === 'el'
+            ? 'Προσθέστε τουλάχιστον μία κατηγορία Walk-in εισιτηρίου'
+            : 'Add at least one walk-in ticket tier';
+        }
+      }
+      setWalkInTicketValidationErrors([]);
     }
     if (formData.eventType === 'free_entry') {
       const {
@@ -643,7 +672,11 @@ const EventCreationForm = ({
         free_entry_declaration: formData.eventType === 'free_entry',
         accepts_reservations: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
         requires_approval: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
-        dress_code: (formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation') && formData.ticketTiers.length > 0 ? formData.ticketTiers[0].dress_code : null,
+        dress_code: formData.eventType === 'ticket' && formData.ticketTiers.length > 0
+          ? formData.ticketTiers[0].dress_code
+          : formData.eventType === 'ticket_and_reservation' && walkInEnabled && walkInTicketTiers.length > 0
+            ? walkInTicketTiers[0].dress_code
+            : null,
         reservation_hours_from: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationFromTime : null,
         reservation_hours_to: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationToTime : null,
         terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null
@@ -654,25 +687,66 @@ const EventCreationForm = ({
       } = await supabase.from('events').insert(eventData).select().single();
       if (insertError) throw insertError;
 
-      // Save ticket tiers for ticket events
-      const submitHasTickets = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
-      const submitHasReservation = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+      // Save ticket tiers
+      const submitIsTicketOnly = formData.eventType === 'ticket';
+      const submitIsHybrid = formData.eventType === 'ticket_and_reservation';
+      const submitHasReservation = formData.eventType === 'reservation' || submitIsHybrid;
 
-      if (submitHasTickets && formData.ticketTiers.length > 0) {
-        const tiersToInsert = formData.ticketTiers.map((tier, index) => ({
-          event_id: createdEvent.id,
-          name: tier.name,
-          description: tier.description || null,
-          price_cents: tier.price_cents,
-          currency: tier.currency || 'EUR',
-          quantity_total: tier.quantity_total,
-          max_per_order: tier.max_per_order,
-          sort_order: index,
-          dress_code: tier.dress_code || null
-        }));
+      if (submitIsTicketOnly || submitIsHybrid) {
+        const ticketOnlyTiers = submitIsTicketOnly
+          ? formData.ticketTiers.map((tier, index) => ({
+              event_id: createdEvent.id,
+              name: tier.name,
+              description: tier.description || null,
+              price_cents: tier.price_cents,
+              currency: tier.currency || 'EUR',
+              quantity_total: tier.quantity_total,
+              max_per_order: tier.max_per_order,
+              sort_order: index,
+              dress_code: tier.dress_code || null
+            }))
+          : [];
 
-        const { error: tiersError } = await supabase.from('ticket_tiers').insert(tiersToInsert);
-        if (tiersError) throw tiersError;
+        const reservationLinkedTiers = submitIsHybrid
+          ? formData.selectedSeatingTypes.map((seatingType, index) => {
+              const config = formData.seatingConfigs[seatingType];
+              const maxPartySize = Math.max(...config.tiers.map((tier) => tier.maxPeople), 1);
+              return {
+                event_id: createdEvent.id,
+                name: config.ticketCategoryName.trim(),
+                description: null,
+                price_cents: config.ticketPriceCents,
+                currency: 'EUR',
+                quantity_total: 999999,
+                max_per_order: maxPartySize,
+                sort_order: index,
+                dress_code: null
+              };
+            })
+          : [];
+
+        const walkInTiersToInsert = submitIsHybrid && walkInEnabled
+          ? walkInTicketTiers.map((tier, index) => ({
+              event_id: createdEvent.id,
+              name: tier.name,
+              description: tier.description || null,
+              price_cents: tier.price_cents,
+              currency: tier.currency || 'EUR',
+              quantity_total: tier.quantity_total,
+              max_per_order: tier.max_per_order,
+              sort_order: reservationLinkedTiers.length + index,
+              dress_code: tier.dress_code || null
+            }))
+          : [];
+
+        const tiersToInsert = submitIsTicketOnly
+          ? ticketOnlyTiers
+          : [...reservationLinkedTiers, ...walkInTiersToInsert];
+
+        if (tiersToInsert.length > 0) {
+          const { error: tiersError } = await supabase.from('ticket_tiers').insert(tiersToInsert);
+          if (tiersError) throw tiersError;
+        }
       }
 
       // Save seating types and tiers for reservation events
@@ -892,26 +966,15 @@ const EventCreationForm = ({
               }
 
           {/* TICKET CONFIG */}
-                {/* TICKET CONFIG */}
-                {isTicketSelected && <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
-                    
-
-
-                
-                    
-                    
-                    
-                    
-
+                {isTicketSelected && !isReservationSelected && <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
                     <TicketTierEditor
                   tiers={formData.ticketTiers}
                   onTiersChange={(tiers) => updateField('ticketTiers', tiers)}
                   commissionPercent={commissionPercent}
                   validationErrors={ticketValidationErrors}
                   autoEnabled={true}
-                  hideQuantity={isReservationSelected && !walkInEnabled} />
-                
-                  </div>}
+                  hideQuantity={false} />
+                </div>}
 
                 {/* RESERVATION CONFIG */}
                 {isReservationSelected && <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6 p-3 sm:p-4 bg-muted/30 rounded-lg">
@@ -957,6 +1020,36 @@ const EventCreationForm = ({
                             <h5 className="font-medium capitalize text-xs sm:text-base">{t[type]}</h5>
                           </div>
                           
+                          {isTicketSelected && isReservationSelected && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                              <div className="space-y-1.5 sm:space-y-2">
+                                <Label className="text-xs sm:text-sm">{t.ticketNameLabel} *</Label>
+                                <Input
+                                  value={config.ticketCategoryName}
+                                  onChange={(e) => updateSeatingConfig(type, { ticketCategoryName: e.target.value })}
+                                  placeholder={t[type]}
+                                  className="h-8 sm:h-10 text-xs sm:text-sm"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5 sm:space-y-2">
+                                <Label className="text-xs sm:text-sm">{t.priceLabel}</Label>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={config.ticketPriceCents / 100}
+                                  onChange={(e) => {
+                                    const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                                    const [euros, decimals = ''] = cleaned.split('.');
+                                    const normalized = decimals ? `${euros}.${decimals.slice(0, 2)}` : euros;
+                                    updateSeatingConfig(type, {
+                                      ticketPriceCents: Math.round(parseFloat(normalized || '0') * 100)
+                                    });
+                                  }}
+                                  className="h-8 sm:h-10 text-xs sm:text-sm"
+                                />
+                              </div>
+                            </div>}
+
                           {/* Available Slots */}
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
@@ -1063,19 +1156,46 @@ const EventCreationForm = ({
 
         {/* Walk-in toggle for hybrid events - placed above Terms */}
         {formData.eventType === 'ticket_and_reservation' && (
-          <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-            <div className="space-y-0.5">
-              <p className="font-medium text-xs sm:text-sm">
-                {language === 'el' ? 'Ενεργοποίηση Walk-in Εισιτηρίων' : 'Enable Walk-in Tickets'}
-              </p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">
-                {language === 'el'
-                  ? 'Επιτρέψτε αγορά εισιτηρίων χωρίς κράτηση (ξεχωριστό απόθεμα)'
-                  : 'Allow ticket purchases without reservation (separate inventory)'}
-              </p>
+          <>
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+              <div className="space-y-0.5">
+                <p className="font-medium text-xs sm:text-sm">
+                  {language === 'el' ? 'Ενεργοποίηση Walk-in Εισιτηρίων' : 'Enable Walk-in Tickets'}
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                  {language === 'el'
+                    ? 'Επιτρέψτε αγορά εισιτηρίων χωρίς κράτηση (ξεχωριστό απόθεμα)'
+                    : 'Allow ticket purchases without reservation (separate inventory)'}
+                </p>
+              </div>
+              <Switch
+                checked={walkInEnabled}
+                onCheckedChange={(enabled) => {
+                  setWalkInEnabled(enabled);
+                  if (!enabled) {
+                    setWalkInTicketTiers([]);
+                    setWalkInTicketValidationErrors([]);
+                  }
+                }}
+              />
             </div>
-            <Switch checked={walkInEnabled} onCheckedChange={setWalkInEnabled} />
-          </div>
+
+            {walkInEnabled && <div className="mt-4 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
+                <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
+                  <Ticket className="h-3 w-3 sm:h-4 sm:w-4" />
+                  {language === 'el' ? 'Walk-in Εισιτήρια' : 'Walk-in Tickets'}
+                </h4>
+
+                <TicketTierEditor
+                  tiers={walkInTicketTiers}
+                  onTiersChange={setWalkInTicketTiers}
+                  commissionPercent={commissionPercent}
+                  validationErrors={walkInTicketValidationErrors}
+                  autoEnabled={true}
+                  hideQuantity={false}
+                />
+              </div>}
+          </>
         )}
 
         {/* Terms & Conditions (Optional) */}
