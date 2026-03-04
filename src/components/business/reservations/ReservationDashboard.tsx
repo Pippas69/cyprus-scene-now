@@ -1,22 +1,30 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReservationSlotManager } from './ReservationSlotManager';
 import { ReservationStaffControls } from './ReservationStaffControls';
 import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-
 
 interface ReservationDashboardProps {
   businessId: string;
   language: 'el' | 'en';
 }
 
+interface EventOption {
+  id: string;
+  title: string;
+  start_at: string;
+  reservationCount: number;
+}
+
 export const ReservationDashboard = ({ businessId, language }: ReservationDashboardProps) => {
   const [activeTab, setActiveTab] = useState('list');
-  const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null); // null = loading
-  const [reservationCount, setReservationCount] = useState(0);
+  const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null);
+  const [events, setEvents] = useState<EventOption[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const text = useMemo(
     () => ({
@@ -25,14 +33,14 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         staffControl: 'Έλεγχος',
         settings: 'Ρυθμίσεις',
         list: 'Διαχείριση',
-        description: 'Διαχειριστείτε τις κρατήσεις από το προφίλ και τις προσφορές σας'
+        selectEvent: 'Επιλέξτε εκδήλωση',
       },
       en: {
         reservations: 'Reservations',
         staffControl: 'Staff Control',
         settings: 'Settings',
         list: 'Reservation List',
-        description: 'Manage reservations from your profile and offers'
+        selectEvent: 'Select event',
       }
     }),
     []
@@ -52,7 +60,70 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     checkLinked();
   }, [businessId]);
 
-  // Show loader until we know the business type
+  // Fetch events for ticket-linked businesses
+  const fetchEvents = useCallback(async () => {
+    if (!isTicketLinked) return;
+
+    const { data: eventsData } = await supabase
+      .from('events')
+      .select('id, title, start_at')
+      .eq('business_id', businessId)
+      .gte('end_at', new Date().toISOString())
+      .order('start_at', { ascending: true });
+
+    if (!eventsData || eventsData.length === 0) {
+      setEvents([]);
+      setSelectedEventId(null);
+      return;
+    }
+
+    const eventIds = eventsData.map(e => e.id);
+
+    // Get reservation counts per event
+    const { data: reservations } = await supabase
+      .from('reservations')
+      .select('event_id')
+      .in('event_id', eventIds)
+      .in('status', ['pending', 'accepted']);
+
+    const counts: Record<string, number> = {};
+    (reservations || []).forEach(r => {
+      if (r.event_id) counts[r.event_id] = (counts[r.event_id] || 0) + 1;
+    });
+
+    const options: EventOption[] = eventsData.map(e => ({
+      id: e.id,
+      title: e.title,
+      start_at: e.start_at,
+      reservationCount: counts[e.id] || 0,
+    }));
+
+    setEvents(options);
+
+    if (!selectedEventId || !options.find(e => e.id === selectedEventId)) {
+      setSelectedEventId(options[0]?.id || null);
+    }
+  }, [isTicketLinked, businessId, selectedEventId]);
+
+  useEffect(() => {
+    fetchEvents();
+    if (!isTicketLinked) return;
+    const interval = setInterval(fetchEvents, 30000);
+    return () => clearInterval(interval);
+  }, [fetchEvents, isTicketLinked]);
+
+  // Realtime subscription to refresh counts
+  useEffect(() => {
+    if (!isTicketLinked) return;
+    const channel = supabase
+      .channel('dashboard_reservation_counts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => fetchEvents())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isTicketLinked, fetchEvents]);
+
+  const selectedEvent = events.find(e => e.id === selectedEventId);
+
   if (isTicketLinked === null) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -64,17 +135,48 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="min-w-0">
-        <h1 className="text-2xl md:text-3xl font-bold truncate">
-          {t.reservations}
-          {isTicketLinked && (
-            <span className="text-muted-foreground font-normal text-lg md:text-xl ml-2">({reservationCount})</span>
-          )}
-        </h1>
+      <div className="min-w-0 space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl md:text-3xl font-bold">
+            {t.reservations}
+            {isTicketLinked && selectedEvent && (
+              <span className="text-muted-foreground font-normal text-lg md:text-xl ml-2">
+                ({selectedEvent.reservationCount})
+              </span>
+            )}
+          </h1>
+        </div>
+
+        {/* Event selector for ticket-linked businesses */}
+        {isTicketLinked && events.length > 0 && (
+          <Select value={selectedEventId || ''} onValueChange={setSelectedEventId}>
+            <SelectTrigger className="h-9 text-sm max-w-md">
+              <SelectValue placeholder={t.selectEvent} />
+            </SelectTrigger>
+            <SelectContent>
+              {events.map((event) => (
+                <SelectItem key={event.id} value={event.id} className="text-sm">
+                  <span className="flex items-center gap-2">
+                    <span>{event.title}</span>
+                    <span className="text-muted-foreground">—</span>
+                    <span className="text-muted-foreground">
+                      {new Date(event.start_at).toLocaleDateString(
+                        language === 'el' ? 'el-GR' : 'en-US',
+                        { day: 'numeric', month: 'short' }
+                      )}
+                    </span>
+                    <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-medium px-1.5 py-0.5 min-w-[20px]">
+                      {event.reservationCount}
+                    </span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full">
-        {/* Tabs: compact + never overflow the page */}
         <TabsList className="w-full flex gap-2 p-1 overflow-x-hidden">
           <TabsTrigger value="list" className="gap-2 flex-1 min-w-0">
             <span className="truncate">{t.list}</span>
@@ -93,13 +195,17 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           <DirectReservationsList
             businessId={businessId}
             language={language}
-            onReservationCountChange={isTicketLinked ? setReservationCount : undefined}
+            selectedEventId={isTicketLinked ? selectedEventId : undefined}
           />
         </TabsContent>
 
         <TabsContent value="staff" className="mt-4">
           {isTicketLinked ? (
-            <KalivaStaffControls businessId={businessId} language={language} />
+            <KalivaStaffControls
+              businessId={businessId}
+              language={language}
+              selectedEventId={selectedEventId}
+            />
           ) : (
             <ReservationStaffControls businessId={businessId} language={language} />
           )}

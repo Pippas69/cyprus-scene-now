@@ -44,6 +44,7 @@ interface DirectReservationsListProps {
   language: 'el' | 'en';
   refreshNonce?: number;
   onReservationCountChange?: (count: number) => void;
+  selectedEventId?: string | null;
 }
 
 // Cache for seating tiers
@@ -53,7 +54,7 @@ interface SeatingTier {
   prepaid_min_charge_cents: number;
 }
 
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +148,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [businessId]);
+  }, [businessId, selectedEventId]);
 
   useEffect(() => {
     if (refreshNonce === undefined) return;
@@ -189,6 +190,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       if (linked) {
         query = query.not('event_id', 'is', null);
+        // Filter by specific event if selectedEventId is provided
+        if (selectedEventId) {
+          query = query.eq('event_id', selectedEventId);
+        }
       } else {
         query = query.is('event_id', null);
       }
