@@ -81,12 +81,13 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
     const eventIds = eventsData.map(e => e.id);
 
-    // Get reservation counts per event
+    // Get reservation counts per event (exclude walk-in auto-created)
     const { data: reservations } = await supabase
       .from('reservations')
       .select('event_id')
       .in('event_id', eventIds)
-      .in('status', ['pending', 'accepted']);
+      .in('status', ['pending', 'accepted'])
+      .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
 
     const counts: Record<string, number> = {};
     (reservations || []).forEach(r => {
