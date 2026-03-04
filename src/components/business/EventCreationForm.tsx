@@ -672,11 +672,7 @@ const EventCreationForm = ({
         free_entry_declaration: formData.eventType === 'free_entry',
         accepts_reservations: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
         requires_approval: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
-        dress_code: formData.eventType === 'ticket' && formData.ticketTiers.length > 0
-          ? formData.ticketTiers[0].dress_code
-          : formData.eventType === 'ticket_and_reservation' && walkInEnabled && walkInTicketTiers.length > 0
-            ? walkInTicketTiers[0].dress_code
-            : null,
+        dress_code: null,
         reservation_hours_from: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationFromTime : null,
         reservation_hours_to: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationToTime : null,
         terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null
@@ -703,7 +699,7 @@ const EventCreationForm = ({
               quantity_total: tier.quantity_total,
               max_per_order: tier.max_per_order,
               sort_order: index,
-              dress_code: tier.dress_code || null
+              dress_code: null
             }))
           : [];
 
@@ -735,7 +731,7 @@ const EventCreationForm = ({
               quantity_total: tier.quantity_total,
               max_per_order: tier.max_per_order,
               sort_order: reservationLinkedTiers.length + index,
-              dress_code: tier.dress_code || null
+              dress_code: null
             }))
           : [];
 
