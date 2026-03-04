@@ -63,6 +63,7 @@ serve(async (req) => {
       special_requests,
       success_url,
       cancel_url,
+      customer_email,
     } = await req.json();
 
     // Validate required fields

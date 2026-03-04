@@ -5,6 +5,7 @@ import { ReservationStaffControls } from './ReservationStaffControls';
 import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 
 interface ReservationDashboardProps {
@@ -14,7 +15,7 @@ interface ReservationDashboardProps {
 
 export const ReservationDashboard = ({ businessId, language }: ReservationDashboardProps) => {
   const [activeTab, setActiveTab] = useState('list');
-  const [isTicketLinked, setIsTicketLinked] = useState(false);
+  const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null); // null = loading
   const [reservationCount, setReservationCount] = useState(0);
 
   const text = useMemo(
@@ -50,6 +51,15 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     };
     checkLinked();
   }, [businessId]);
+
+  // Show loader until we know the business type
+  if (isTicketLinked === null) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
