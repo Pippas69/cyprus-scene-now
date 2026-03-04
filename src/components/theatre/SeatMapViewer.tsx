@@ -330,7 +330,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     if (isSelected) fill = SEAT_COLORS.selected;
     else if (isSold) fill = SEAT_COLORS.unavailable;
     else if (isWheelchair) fill = SEAT_COLORS.wheelchair;
-    else fill = SEAT_COLORS.available;
+    else fill = zone?.color || '#94a3b8'; // Use zone color for available seats
 
     const cx = seat.x - bounds.minX;
     // Flip Y so row A (high y value = front) appears at bottom near stage
@@ -396,21 +396,25 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
 
   return (
     <div className="w-full space-y-3">
-      {/* Legend */}
+      {/* Legend - show zones with their colors */}
       <div className="flex flex-wrap items-center justify-center gap-3 md:gap-5 px-2">
-        {[
-          { color: SEAT_COLORS.available, label: t.available },
-          { color: SEAT_COLORS.unavailable, label: t.unavailable },
-          { color: SEAT_COLORS.selected, label: t.selected },
-        ].map(item => (
-          <div key={item.label} className="flex items-center gap-1.5">
+        {zones.map(zone => (
+          <div key={zone.id} className="flex items-center gap-1.5">
             <div
               className="w-5 h-5 rounded"
-              style={{ backgroundColor: item.color }}
+              style={{ backgroundColor: zone.color }}
             />
-            <span className="text-xs text-muted-foreground">{item.label}</span>
+            <span className="text-xs text-muted-foreground">{zone.name}</span>
           </div>
         ))}
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded" style={{ backgroundColor: SEAT_COLORS.unavailable }} />
+          <span className="text-xs text-muted-foreground">{t.unavailable}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded" style={{ backgroundColor: SEAT_COLORS.selected }} />
+          <span className="text-xs text-muted-foreground">{t.selected}</span>
+        </div>
       </div>
 
       {/* Zoom controls + drag hint */}
