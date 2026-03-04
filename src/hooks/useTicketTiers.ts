@@ -11,7 +11,6 @@ export const useTicketTiers = (eventId: string | undefined) => {
         .from("ticket_tiers")
         .select("*")
         .eq("event_id", eventId)
-        .eq("active", true)
         .order("sort_order");
 
       if (error) throw error;

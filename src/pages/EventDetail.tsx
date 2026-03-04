@@ -438,12 +438,14 @@ export default function EventDetail() {
 
   const text = t[language];
 
-  // Check if event has native tickets
+  // Check if event has native tickets (including inactive ones)
   const hasNativeTickets = ticketTiers.length > 0;
+  const activeTicketTiers = ticketTiers.filter((t: any) => t.active !== false);
   
-  // Check if ALL ticket tiers are sold out (for Kaliva fully sold out badge)
-  const allTicketsSoldOut = hasNativeTickets && ticketTiers.every(
-    (t: any) => (t.quantity_sold ?? 0) >= t.quantity_total
+  // All tickets sold out = all tiers inactive OR all active tiers have no remaining capacity
+  const allTicketsSoldOut = hasNativeTickets && (
+    activeTicketTiers.length === 0 || 
+    activeTicketTiers.every((t: any) => (t.quantity_sold ?? 0) >= t.quantity_total)
   );
   const kalivaFullySoldOut = reservationsSoldOut && allTicketsSoldOut;
 
@@ -1116,7 +1118,7 @@ export default function EventDetail() {
           onOpenChange={setShowKalivaFlow}
           eventId={event.id}
           eventTitle={event.title}
-          ticketTiers={ticketTiers}
+          ticketTiers={activeTicketTiers}
           onSuccess={(orderId, isFree) => {
             setShowKalivaFlow(false);
             if (isFree) {
@@ -1133,7 +1135,7 @@ export default function EventDetail() {
           onOpenChange={setShowTicketFlow}
           eventId={event.id}
           eventTitle={event.title}
-          ticketTiers={ticketTiers}
+          ticketTiers={activeTicketTiers}
           onSuccess={(orderId, isFree) => {
             setShowTicketFlow(false);
             if (isFree) {
