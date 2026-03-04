@@ -61,37 +61,37 @@ const CommissionBanner: React.FC<CommissionBannerProps> = ({
   commissionPercent,
   upgradeHint,
   isElitePlan = false
-}) => (
-  <div className={cn(
-    "rounded-lg p-2 sm:p-4 border",
-    isElitePlan 
-      ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800"
-      : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
-  )}>
+}) =>
+<div className={cn(
+  "rounded-lg p-2 sm:p-4 border",
+  isElitePlan ?
+  "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800" :
+  "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+)}>
     <div className="flex items-start gap-2 sm:gap-3">
-      {isElitePlan ? (
-        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-      ) : (
-        <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-      )}
+      {isElitePlan ?
+    <Check className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 mt-0.5 flex-shrink-0" /> :
+
+    <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+    }
       <div>
         <p className={cn(
-          "font-medium text-[11px] sm:text-base",
-          isElitePlan 
-            ? "text-emerald-900 dark:text-emerald-100"
-            : "text-amber-900 dark:text-amber-100"
-        )}>
+        "font-medium text-[11px] sm:text-base",
+        isElitePlan ?
+        "text-emerald-900 dark:text-emerald-100" :
+        "text-amber-900 dark:text-amber-100"
+      )}>
           {platformFeeLabel} {commissionPercent}%
         </p>
-        {!isElitePlan && (
-          <p className="text-[10px] sm:text-sm text-amber-700 dark:text-amber-300">
+        {!isElitePlan &&
+      <p className="text-[10px] sm:text-sm text-amber-700 dark:text-amber-300">
             {upgradeHint}
           </p>
-        )}
+      }
       </div>
     </div>
-  </div>
-);
+  </div>;
+
 
 // ============================================
 // TYPES
@@ -326,7 +326,7 @@ const translations = {
 // ============================================
 
 const countWords = (text: string): number => {
-  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  return text.trim().split(/\s+/).filter((word) => word.length > 0).length;
 };
 const getDefaultSeatingConfig = (type: SeatingType): SeatingConfig => ({
   type,
@@ -367,18 +367,18 @@ const EventCreationForm = ({
     queryFn: async () => {
       if (!businessId) return null;
 
-      const { data, error } = await supabase
-        .from("business_subscriptions")
-        .select("monthly_budget_remaining_cents, status")
-        .eq("business_id", businessId)
-        .eq("status", "active")
-        .maybeSingle();
+      const { data, error } = await supabase.
+      from("business_subscriptions").
+      select("monthly_budget_remaining_cents, status").
+      eq("business_id", businessId).
+      eq("status", "active").
+      maybeSingle();
 
       if (error) throw error;
       return data;
     },
     enabled: !!businessId,
-    staleTime: 30 * 1000,
+    staleTime: 30 * 1000
   });
 
   const hasActiveSubscription = !!activeSubscription;
@@ -435,7 +435,7 @@ const EventCreationForm = ({
 
   // Simple field updater
   const updateField = <K extends keyof FormData,>(field: K, value: FormData[K]) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value
     }));
@@ -471,7 +471,7 @@ const EventCreationForm = ({
   const toggleSeatingType = (type: SeatingType) => {
     const current = formData.selectedSeatingTypes;
     if (current.includes(type)) {
-      updateField('selectedSeatingTypes', current.filter(t => t !== type));
+      updateField('selectedSeatingTypes', current.filter((t) => t !== type));
     } else if (current.length < 4) {
       updateField('selectedSeatingTypes', [...current, type]);
     }
@@ -479,7 +479,7 @@ const EventCreationForm = ({
 
   // Update seating config
   const updateSeatingConfig = (type: SeatingType, updates: Partial<SeatingConfig>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       seatingConfigs: {
         ...prev.seatingConfigs,
@@ -644,9 +644,9 @@ const EventCreationForm = ({
         accepts_reservations: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
         requires_approval: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation',
         dress_code: (formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation') && formData.ticketTiers.length > 0 ? formData.ticketTiers[0].dress_code : null,
-        reservation_hours_from: (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') ? formData.reservationFromTime : null,
-        reservation_hours_to: (formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation') ? formData.reservationToTime : null,
-        terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
+        reservation_hours_from: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationFromTime : null,
+        reservation_hours_to: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationToTime : null,
+        terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null
       };
       const {
         data: createdEvent,
@@ -699,7 +699,7 @@ const EventCreationForm = ({
           }
 
           // Insert price tiers
-          const tiersToInsert = config.tiers.map(tier => ({
+          const tiersToInsert = config.tiers.map((tier) => ({
             seating_type_id: seatingData.id,
             min_people: tier.minPeople,
             max_people: tier.maxPeople,
@@ -740,12 +740,12 @@ const EventCreationForm = ({
       <CardContent className="p-6 space-y-8">
         {/* Step 1: Title */}
         <SectionCard title={t.step1} required requiredLabel={t.required}>
-          <Input value={formData.title} onChange={e => updateField('title', e.target.value)} placeholder={t.titlePlaceholder} maxLength={100} className="text-xs sm:text-sm h-9 sm:h-10" />
+          <Input value={formData.title} onChange={(e) => updateField('title', e.target.value)} placeholder={t.titlePlaceholder} maxLength={100} className="text-xs sm:text-sm h-9 sm:h-10" />
         </SectionCard>
 
         {/* Step 2: Description */}
         <SectionCard title={t.step2} required requiredLabel={t.required}>
-          <Textarea value={formData.description} onChange={e => updateField('description', e.target.value)} placeholder={t.descriptionPlaceholder} rows={4} className="text-xs sm:text-sm" />
+          <Textarea value={formData.description} onChange={(e) => updateField('description', e.target.value)} placeholder={t.descriptionPlaceholder} rows={4} className="text-xs sm:text-sm" />
           <p className={cn("text-xs sm:text-sm", wordsRemaining >= 0 ? "text-muted-foreground" : "text-destructive font-medium")}>
             {wordsRemaining >= 0 ? `${wordsRemaining} ${t.wordsRemaining}` : `${Math.abs(wordsRemaining)} ${t.wordsOver}`}
           </p>
@@ -753,12 +753,12 @@ const EventCreationForm = ({
 
         {/* Step 3: Start Date & Time */}
         <SectionCard title={t.step3} required requiredLabel={t.required}>
-          <DateTimePicker value={formData.startAt || undefined} onChange={date => updateField('startAt', date || null)} placeholder={t.selectDateTime} />
+          <DateTimePicker value={formData.startAt || undefined} onChange={(date) => updateField('startAt', date || null)} placeholder={t.selectDateTime} />
         </SectionCard>
 
         {/* Step 4: Appearance Duration */}
         <SectionCard title={t.step4} required requiredLabel={t.required}>
-          <RadioGroup value={formData.appearanceMode} onValueChange={v => updateField('appearanceMode', v as AppearanceMode)} className="flex gap-3 sm:gap-4">
+          <RadioGroup value={formData.appearanceMode} onValueChange={(v) => updateField('appearanceMode', v as AppearanceMode)} className="flex gap-3 sm:gap-4">
             <div className="flex items-center space-x-1.5 sm:space-x-2">
               <RadioGroupItem value="hours" id="hours" />
               <Label htmlFor="hours" className="flex items-center gap-1 sm:gap-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap">
@@ -776,7 +776,7 @@ const EventCreationForm = ({
           </RadioGroup>
 
           {formData.appearanceMode === 'hours' && <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {[1, 2, 3, 6, 12, 24].map(h => <Button key={h} type="button" variant={formData.appearanceHours === h ? "default" : "outline"} size="sm" onClick={() => updateField('appearanceHours', h)} className="text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-9">
+              {[1, 2, 3, 6, 12, 24].map((h) => <Button key={h} type="button" variant={formData.appearanceHours === h ? "default" : "outline"} size="sm" onClick={() => updateField('appearanceHours', h)} className="text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-9">
                   {h}h
                 </Button>)}
               <Button type="button" variant={formData.appearanceHours === -1 ? "default" : "outline"} size="sm" onClick={() => updateField('appearanceHours', -1)} className="text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-9 whitespace-nowrap">
@@ -785,18 +785,18 @@ const EventCreationForm = ({
             </div>}
 
           {formData.appearanceMode === 'hours' && formData.appearanceHours === -1 && <div className="flex items-center gap-2">
-              <Input type="number" value={formData.appearanceCustomHours} onChange={e => updateField('appearanceCustomHours', parseInt(e.target.value) || 1)} min={1} max={168} className="w-24" />
+              <Input type="number" value={formData.appearanceCustomHours} onChange={(e) => updateField('appearanceCustomHours', parseInt(e.target.value) || 1)} min={1} max={168} className="w-24" />
               <span className="text-muted-foreground">{t.hours}</span>
             </div>}
 
           {formData.appearanceMode === 'days' && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t.fromDate}</Label>
-                <DateTimePicker value={formData.appearanceStartDate || undefined} onChange={date => updateField('appearanceStartDate', date || null)} />
+                <DateTimePicker value={formData.appearanceStartDate || undefined} onChange={(date) => updateField('appearanceStartDate', date || null)} />
               </div>
               <div className="space-y-2">
                 <Label>{t.toDate}</Label>
-                <DateTimePicker value={formData.appearanceEndDate || undefined} onChange={date => updateField('appearanceEndDate', date || null)} minDate={formData.appearanceStartDate || undefined} />
+                <DateTimePicker value={formData.appearanceEndDate || undefined} onChange={(date) => updateField('appearanceEndDate', date || null)} minDate={formData.appearanceStartDate || undefined} />
               </div>
             </div>}
         </SectionCard>
@@ -806,14 +806,14 @@ const EventCreationForm = ({
           <div className="space-y-3 sm:space-y-4">
             <div className="space-y-1.5 sm:space-y-2">
               <Label className="text-xs sm:text-sm">{t.venueName}</Label>
-              <Input value={formData.venueName} onChange={e => updateField('venueName', e.target.value)} placeholder={t.venueNamePlaceholder} className="text-xs sm:text-sm h-9 sm:h-10" />
+              <Input value={formData.venueName} onChange={(e) => updateField('venueName', e.target.value)} placeholder={t.venueNamePlaceholder} className="text-xs sm:text-sm h-9 sm:h-10" />
             </div>
             <div className="space-y-1.5 sm:space-y-2">
               <Label className="flex items-center gap-2 text-xs sm:text-sm">
                 <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
                 {t.location}
               </Label>
-              <Input value={formData.address} onChange={e => updateField('address', e.target.value)} placeholder={t.locationPlaceholder} className="text-xs sm:text-sm h-9 sm:h-10" />
+              <Input value={formData.address} onChange={(e) => updateField('address', e.target.value)} placeholder={t.locationPlaceholder} className="text-xs sm:text-sm h-9 sm:h-10" />
             </div>
           </div>
         </SectionCard>
@@ -826,40 +826,40 @@ const EventCreationForm = ({
         {/* Step 7: Event Type */}
         <SectionCard title={t.step7} required requiredLabel={t.required}>
           {(() => {
-            const isTicketSelected = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
-            const isReservationSelected = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
-            const isFreeEntrySelected = formData.eventType === 'free_entry';
+          const isTicketSelected = formData.eventType === 'ticket' || formData.eventType === 'ticket_and_reservation';
+          const isReservationSelected = formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation';
+          const isFreeEntrySelected = formData.eventType === 'free_entry';
 
-            const toggleTicket = () => {
-              if (isTicketSelected && isReservationSelected) {
-                updateField('eventType', 'reservation');
-              } else if (isTicketSelected) {
-                updateField('eventType', null);
-              } else if (isReservationSelected) {
-                updateField('eventType', 'ticket_and_reservation');
-              } else {
-                updateField('eventType', 'ticket');
-              }
-            };
+          const toggleTicket = () => {
+            if (isTicketSelected && isReservationSelected) {
+              updateField('eventType', 'reservation');
+            } else if (isTicketSelected) {
+              updateField('eventType', null);
+            } else if (isReservationSelected) {
+              updateField('eventType', 'ticket_and_reservation');
+            } else {
+              updateField('eventType', 'ticket');
+            }
+          };
 
-            const toggleReservation = () => {
-              if (isReservationSelected && isTicketSelected) {
-                updateField('eventType', 'ticket');
-              } else if (isReservationSelected) {
-                updateField('eventType', null);
-              } else if (isTicketSelected) {
-                updateField('eventType', 'ticket_and_reservation');
-              } else {
-                updateField('eventType', 'reservation');
-              }
-            };
+          const toggleReservation = () => {
+            if (isReservationSelected && isTicketSelected) {
+              updateField('eventType', 'ticket');
+            } else if (isReservationSelected) {
+              updateField('eventType', null);
+            } else if (isTicketSelected) {
+              updateField('eventType', 'ticket_and_reservation');
+            } else {
+              updateField('eventType', 'reservation');
+            }
+          };
 
-            const selectFreeEntry = () => {
-              updateField('eventType', isFreeEntrySelected ? null : 'free_entry');
-            };
+          const selectFreeEntry = () => {
+            updateField('eventType', isFreeEntrySelected ? null : 'free_entry');
+          };
 
-            return (
-              <>
+          return (
+            <>
                 <div className="grid grid-cols-3 gap-2 sm:gap-4">
                   {/* Ticket */}
                   <button type="button" onClick={toggleTicket} className={cn("p-3 sm:p-6 rounded-xl border-2 transition-all text-center space-y-1 sm:space-y-3", isTicketSelected ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50")}>
@@ -880,52 +880,52 @@ const EventCreationForm = ({
                   </button>
                 </div>
 
-                {isTicketSelected && isReservationSelected && (
-                  <div className="mt-2 p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-1">
+                {isTicketSelected && isReservationSelected &&
+              <div className="mt-2 p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-1">
                     <p className="text-xs sm:text-sm font-medium text-primary text-center">{t.ticketAndReservation}</p>
                     <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
-                      {language === 'el' 
-                        ? 'Η αγορά εισιτηρίων δημιουργεί αυτόματα κράτηση. Η τιμή των εισιτηρίων πιστώνεται στο minimum charge.'
-                        : 'Ticket purchases automatically create a reservation. Ticket prices are credited towards the minimum charge.'}
+                      {language === 'el' ?
+                  'Η αγορά εισιτηρίων δημιουργεί αυτόματα κράτηση. Η τιμή των εισιτηρίων πιστώνεται στο minimum charge.' :
+                  'Ticket purchases automatically create a reservation. Ticket prices are credited towards the minimum charge.'}
                     </p>
                   </div>
-                )}
+              }
 
           {/* TICKET CONFIG */}
                 {/* TICKET CONFIG */}
                 {isTicketSelected && <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
-                    <h4 className="font-semibold text-xs sm:text-base flex items-center gap-2">
-                      <Ticket className="h-3 w-3 sm:h-4 sm:w-4" />
-                      {t.ticketConfig}
-                    </h4>
+                    
+
+
+                
                     
                     
                     
                     {/* Walk-in toggle for hybrid events */}
-                    {isReservationSelected && (
-                      <div className="flex items-center justify-between p-3 rounded-lg border bg-background">
+                    {isReservationSelected &&
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-background">
                         <div className="space-y-0.5">
                           <p className="font-medium text-xs sm:text-sm">
                             {language === 'el' ? 'Ενεργοποίηση Walk-in Εισιτηρίων' : 'Enable Walk-in Tickets'}
                           </p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            {language === 'el' 
-                              ? 'Επιτρέψτε αγορά εισιτηρίων χωρίς κράτηση (ξεχωριστό απόθεμα)' 
-                              : 'Allow ticket purchases without reservation (separate inventory)'}
+                            {language === 'el' ?
+                      'Επιτρέψτε αγορά εισιτηρίων χωρίς κράτηση (ξεχωριστό απόθεμα)' :
+                      'Allow ticket purchases without reservation (separate inventory)'}
                           </p>
                         </div>
                         <Switch checked={walkInEnabled} onCheckedChange={setWalkInEnabled} />
                       </div>
-                    )}
+                }
 
-                    <TicketTierEditor 
-                      tiers={formData.ticketTiers} 
-                      onTiersChange={tiers => updateField('ticketTiers', tiers)} 
-                      commissionPercent={commissionPercent} 
-                      validationErrors={ticketValidationErrors} 
-                      autoEnabled={true}
-                      hideQuantity={isReservationSelected && !walkInEnabled}
-                    />
+                    <TicketTierEditor
+                  tiers={formData.ticketTiers}
+                  onTiersChange={(tiers) => updateField('ticketTiers', tiers)}
+                  commissionPercent={commissionPercent}
+                  validationErrors={ticketValidationErrors}
+                  autoEnabled={true}
+                  hideQuantity={isReservationSelected && !walkInEnabled} />
+                
                   </div>}
 
                 {/* RESERVATION CONFIG */}
@@ -943,11 +943,11 @@ const EventCreationForm = ({
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                         <div className="flex items-center gap-2">
                           <span className="text-xs sm:text-sm text-muted-foreground">{t.from}</span>
-                          <Input type="time" value={formData.reservationFromTime} onChange={e => updateField('reservationFromTime', e.target.value)} className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
+                          <Input type="time" value={formData.reservationFromTime} onChange={(e) => updateField('reservationFromTime', e.target.value)} className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs sm:text-sm text-muted-foreground">{t.to}</span>
-                          <Input type="time" value={formData.reservationToTime} onChange={e => updateField('reservationToTime', e.target.value)} className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
+                          <Input type="time" value={formData.reservationToTime} onChange={(e) => updateField('reservationToTime', e.target.value)} className="w-28 sm:w-32 h-8 sm:h-10 text-xs sm:text-sm" />
                         </div>
                       </div>
                     </div>
@@ -957,7 +957,7 @@ const EventCreationForm = ({
                       <Label className="text-xs sm:text-sm">{t.seatingTypes}</Label>
                       <p className="text-[10px] sm:text-sm text-muted-foreground">{t.selectSeatingTypes}</p>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {(['bar', 'table', 'vip', 'sofa'] as SeatingType[]).map(type => <Button key={type} type="button" variant={formData.selectedSeatingTypes.includes(type) ? "default" : "outline"} size="sm" onClick={() => toggleSeatingType(type)} className="text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3">
+                        {(['bar', 'table', 'vip', 'sofa'] as SeatingType[]).map((type) => <Button key={type} type="button" variant={formData.selectedSeatingTypes.includes(type) ? "default" : "outline"} size="sm" onClick={() => toggleSeatingType(type)} className="text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3">
                             {formData.selectedSeatingTypes.includes(type) && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />}
                             {t[type]}
                           </Button>)}
@@ -965,7 +965,7 @@ const EventCreationForm = ({
                     </div>
 
                     {/* Config for each selected type */}
-                    {formData.selectedSeatingTypes.map(type => {
+                    {formData.selectedSeatingTypes.map((type) => {
                   const config = formData.seatingConfigs[type];
                   return <div key={type} className="border rounded-lg p-2 sm:p-4 space-y-3 sm:space-y-4">
                           <div className="flex items-center justify-between">
@@ -975,13 +975,13 @@ const EventCreationForm = ({
                           {/* Available Slots */}
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
-                            <NumberInput 
-                              value={config.availableSlots} 
-                              onChange={value => updateSeatingConfig(type, { availableSlots: value })} 
-                              min={1}
-                              max={999}
-                              className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm" 
-                            />
+                            <NumberInput
+                        value={config.availableSlots}
+                        onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
+                        min={1}
+                        max={999}
+                        className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm" />
+                      
                           </div>
                           
                           {/* Person Tiers */}
@@ -997,21 +997,21 @@ const EventCreationForm = ({
                             
                             {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1 sm:gap-3 bg-background p-1.5 sm:p-3 rounded-lg flex-nowrap">
                                 <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap shrink-0">
-                                  <NumberInput 
-                                    value={tier.minPeople} 
-                                    onChange={value => updateTier(type, index, { minPeople: value })} 
-                                    min={1} 
-                                    max={99}
-                                    className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
-                                  />
+                                  <NumberInput
+                            value={tier.minPeople}
+                            onChange={(value) => updateTier(type, index, { minPeople: value })}
+                            min={1}
+                            max={99}
+                            className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" />
+                          
                                   <span className="text-muted-foreground text-[10px] sm:text-xs">-</span>
-                                  <NumberInput 
-                                    value={tier.maxPeople} 
-                                    onChange={value => updateTier(type, index, { maxPeople: value })} 
-                                    min={tier.minPeople} 
-                                    max={99}
-                                    className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" 
-                                  />
+                                  <NumberInput
+                            value={tier.maxPeople}
+                            onChange={(value) => updateTier(type, index, { maxPeople: value })}
+                            min={tier.minPeople}
+                            max={99}
+                            className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" />
+                          
                                   <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap shrink-0 ml-0.5">
                                     {language === 'el' ? 'άτ.' : 'ppl'}
                                   </span>
@@ -1019,13 +1019,13 @@ const EventCreationForm = ({
                                 <span className="text-muted-foreground text-[10px] sm:text-xs">→</span>
                                 <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
                                   <span className="text-muted-foreground text-[10px] sm:text-xs">€</span>
-                                  <NumberInput 
-                                    value={Math.round(tier.prepaidChargeCents / 100)} 
-                                    onChange={value => updateTier(type, index, { prepaidChargeCents: value * 100 })} 
-                                    min={0}
-                                    max={9999}
-                                    className="w-12 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" 
-                                  />
+                                  <NumberInput
+                            value={Math.round(tier.prepaidChargeCents / 100)}
+                            onChange={(value) => updateTier(type, index, { prepaidChargeCents: value * 100 })}
+                            min={0}
+                            max={9999}
+                            className="w-12 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" />
+                          
                                 </div>
                                 {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-5 w-5 sm:h-8 sm:w-8 text-destructive flex-shrink-0 p-0">
                                     <Trash2 className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
@@ -1048,21 +1048,21 @@ const EventCreationForm = ({
                     
                     <div className="space-y-2 sm:space-y-3">
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <Checkbox id="noTicket" checked={formData.freeEntryAccepted.noTicket} onCheckedChange={checked => updateField('freeEntryAccepted', {
+                        <Checkbox id="noTicket" checked={formData.freeEntryAccepted.noTicket} onCheckedChange={(checked) => updateField('freeEntryAccepted', {
                       ...formData.freeEntryAccepted,
                       noTicket: !!checked
                     })} />
                         <Label htmlFor="noTicket" className="cursor-pointer text-xs sm:text-sm">{t.noTicketRequired}</Label>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <Checkbox id="noMinSpend" checked={formData.freeEntryAccepted.noMinSpend} onCheckedChange={checked => updateField('freeEntryAccepted', {
+                        <Checkbox id="noMinSpend" checked={formData.freeEntryAccepted.noMinSpend} onCheckedChange={(checked) => updateField('freeEntryAccepted', {
                       ...formData.freeEntryAccepted,
                       noMinSpend: !!checked
                     })} />
                         <Label htmlFor="noMinSpend" className="cursor-pointer text-xs sm:text-sm">{t.noMinSpend}</Label>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <Checkbox id="noReservation" checked={formData.freeEntryAccepted.noReservation} onCheckedChange={checked => updateField('freeEntryAccepted', {
+                        <Checkbox id="noReservation" checked={formData.freeEntryAccepted.noReservation} onCheckedChange={(checked) => updateField('freeEntryAccepted', {
                       ...formData.freeEntryAccepted,
                       noReservation: !!checked
                     })} />
@@ -1071,15 +1071,15 @@ const EventCreationForm = ({
                     </div>
                     
                   </div>}
-              </>
-            );
-          })()}
+              </>);
+
+        })()}
         </SectionCard>
 
         {/* Terms & Conditions (Optional) */}
         <div className="space-y-1 sm:space-y-2">
           <Label className="text-xs sm:text-sm">{t.termsConditions}</Label>
-          <Textarea value={formData.termsAndConditions} onChange={e => updateField('termsAndConditions', e.target.value)} placeholder={t.termsPlaceholder} className="min-h-[50px] sm:min-h-[80px] text-xs sm:text-sm resize-none py-1.5 sm:py-2" maxLength={500} />
+          <Textarea value={formData.termsAndConditions} onChange={(e) => updateField('termsAndConditions', e.target.value)} placeholder={t.termsPlaceholder} className="min-h-[50px] sm:min-h-[80px] text-xs sm:text-sm resize-none py-1.5 sm:py-2" maxLength={500} />
           <p className="text-[9px] sm:text-xs text-muted-foreground">
             {500 - formData.termsAndConditions.length} {language === 'el' ? 'χαρακτήρες απομένουν' : 'characters remaining'}
           </p>
@@ -1098,7 +1098,7 @@ const EventCreationForm = ({
       <ImageCropDialog open={cropDialogOpen} onClose={() => setCropDialogOpen(false)} imageSrc={tempImageSrc} onCropComplete={handleCropComplete} />
 
       {/* Boost Dialog */}
-      {createdEventId && <EventBoostDialog eventId={createdEventId} eventTitle={formData.title} hasActiveSubscription={hasActiveSubscription} remainingBudgetCents={remainingBudgetCents} open={boostDialogOpen} onOpenChange={open => {
+      {createdEventId && <EventBoostDialog eventId={createdEventId} eventTitle={formData.title} hasActiveSubscription={hasActiveSubscription} remainingBudgetCents={remainingBudgetCents} open={boostDialogOpen} onOpenChange={(open) => {
       setBoostDialogOpen(open);
       if (!open) {
         navigate('/dashboard-business/events');
