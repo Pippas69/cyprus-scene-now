@@ -154,7 +154,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                 {events.map((event) => {
                   const dateStr = new Date(event.start_at).toLocaleDateString(
                     language === 'el' ? 'el-GR' : 'en-US',
-                    { day: 'numeric', month: 'short' }
+                    { day: 'numeric', month: 'long' }
                   );
                   return (
                     <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">

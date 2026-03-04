@@ -217,10 +217,9 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
             )}
 
             {/* Ticket Code */}
-            <div className="bg-[#102b4a] rounded-lg py-1.5 px-3 mb-3 text-center">
-              <p className="text-[8px] text-white/60 uppercase tracking-widest">{text.ticketCode}</p>
-              <p className="text-sm font-bold text-white tracking-[0.2em] font-mono">{ticketCode}</p>
-            </div>
+            <p className="text-[9px] text-[#94a3b8] text-center mb-3 font-mono tracking-wide">
+              {text.ticketCode}: {ticketCode}
+            </p>
 
             {/* QR Code - Slightly smaller */}
             {qrDataUrl &&
