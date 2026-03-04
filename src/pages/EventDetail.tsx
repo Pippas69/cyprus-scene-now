@@ -633,9 +633,9 @@ export default function EventDetail() {
               {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
                 <div className="w-full space-y-1">
                   {kalivaFullySoldOut ? (
-                    <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
+                    <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
                       <Ticket className="h-3.5 w-3.5" />
-                      <span>{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
+                      <span className="font-medium">{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
                     </div>
                   ) : !user ? null : reservationsSoldOut ? (
                     <>
@@ -646,13 +646,15 @@ export default function EventDetail() {
                           {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
-                        onClick={() => setShowTicketFlow(true)}
-                      >
-                        {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
-                      </button>
+                      {!allTicketsSoldOut && (
+                        <button
+                          type="button"
+                          className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
+                          onClick={() => setShowTicketFlow(true)}
+                        >
+                          {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                        </button>
+                      )}
                     </>
                   ) : (
                     <>
@@ -663,13 +665,15 @@ export default function EventDetail() {
                         <Ticket className="h-3.5 w-3.5" />
                         {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
                       </RippleButton>
-                      <button
-                        type="button"
-                        className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-                        onClick={() => setShowTicketFlow(true)}
-                      >
-                        {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
-                      </button>
+                      {!allTicketsSoldOut && (
+                        <button
+                          type="button"
+                          className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                          onClick={() => setShowTicketFlow(true)}
+                        >
+                          {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
@@ -894,9 +898,9 @@ export default function EventDetail() {
             {hasNativeTickets && (event as any).businesses?.ticket_reservation_linked && event.event_type === 'ticket_and_reservation' && (
               <div className="w-full space-y-1">
                 {kalivaFullySoldOut ? (
-                  <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
+                  <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
                     <Ticket className="h-4 w-4" />
-                    <span>{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
+                    <span className="font-medium">{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
                   </div>
                 ) : !user ? null : reservationsSoldOut ? (
                   <>
@@ -907,13 +911,15 @@ export default function EventDetail() {
                         {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
-                      onClick={() => setShowTicketFlow(true)}
-                    >
-                      {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
-                    </button>
+                    {!allTicketsSoldOut && (
+                      <button
+                        type="button"
+                        className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
+                        onClick={() => setShowTicketFlow(true)}
+                      >
+                        {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                      </button>
+                    )}
                   </>
                 ) : (
                   <>
@@ -924,13 +930,15 @@ export default function EventDetail() {
                       <Ticket className="h-4 w-4" />
                       {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
                     </RippleButton>
-                    <button
-                      type="button"
-                      className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-                      onClick={() => setShowTicketFlow(true)}
-                    >
-                      {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
-                    </button>
+                    {!allTicketsSoldOut && (
+                      <button
+                        type="button"
+                        className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                        onClick={() => setShowTicketFlow(true)}
+                      >
+                        {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+                      </button>
+                    )}
                   </>
                 )}
               </div>
