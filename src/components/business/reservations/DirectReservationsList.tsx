@@ -190,6 +190,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       if (linked) {
         query = query.not('event_id', 'is', null);
+        // Filter by specific event if selectedEventId is provided
+        if (selectedEventId) {
+          query = query.eq('event_id', selectedEventId);
+        }
       } else {
         query = query.is('event_id', null);
       }
