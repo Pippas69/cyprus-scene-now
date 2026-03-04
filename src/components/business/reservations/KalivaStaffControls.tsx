@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, Edit2, Check, X } from 'lucide-react';
@@ -332,12 +332,14 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                               <span>{st.actualBooked}/</span>
                               {isEditing ? (
                                 <div className="inline-flex items-center gap-1">
-                                  <Input
+                                  <input
                                     value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    className="h-5 w-14 text-xs px-1"
-                                    type="number"
-                                    min={0}
+                                    onChange={(e) => {
+                                      const v = e.target.value;
+                                      if (v === '' || /^\d+$/.test(v)) setEditValue(v);
+                                    }}
+                                    className="h-5 w-14 text-xs px-1 rounded border border-input bg-background text-center focus:outline-none focus:ring-1 focus:ring-ring"
+                                    inputMode="numeric"
                                     autoFocus
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') saveEdit();
@@ -404,12 +406,14 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                               <span>{tt.actualSold}/</span>
                               {isEditing ? (
                                 <div className="inline-flex items-center gap-1">
-                                  <Input
+                                  <input
                                     value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    className="h-5 w-14 text-xs px-1"
-                                    type="number"
-                                    min={0}
+                                    onChange={(e) => {
+                                      const v = e.target.value;
+                                      if (v === '' || /^\d+$/.test(v)) setEditValue(v);
+                                    }}
+                                    className="h-5 w-14 text-xs px-1 rounded border border-input bg-background text-center focus:outline-none focus:ring-1 focus:ring-ring"
+                                    inputMode="numeric"
                                     autoFocus
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') saveEdit();
