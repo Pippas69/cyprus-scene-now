@@ -127,7 +127,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const [zonesRes, seatsRes, soldRes] = await Promise.all([
+      const promises: Promise<any>[] = [
         supabase
           .from('venue_zones')
           .select('*')
@@ -138,22 +138,32 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           .select('*')
           .eq('venue_id', venueId)
           .eq('is_active', true),
-        supabase
-          .from('show_instance_seats')
-          .select('venue_seat_id, status, held_until')
-          .eq('show_instance_id', showInstanceId)
-          .in('status', ['sold', 'held']),
-      ]);
+      ];
+
+      // Only fetch sold seats for existing show instances
+      const isNewInstance = showInstanceId === '__new__';
+      if (!isNewInstance) {
+        promises.push(
+          supabase
+            .from('show_instance_seats')
+            .select('venue_seat_id, status, held_until')
+            .eq('show_instance_id', showInstanceId)
+            .in('status', ['sold', 'held'])
+        );
+      }
+
+      const results = await Promise.all(promises);
+      const [zonesRes, seatsRes] = results;
+      const soldRes = isNewInstance ? null : results[2];
 
       if (zonesRes.data) setZones(zonesRes.data as VenueZone[]);
       if (seatsRes.data) setSeats(seatsRes.data as VenueSeat[]);
-      if (soldRes.data) {
+      if (soldRes?.data) {
         const now = new Date();
         const soldIds = new Set(
           (soldRes.data as SoldSeat[])
             .filter(s => {
               if (s.status === 'sold') return true;
-              // Held seats: only count if hold hasn't expired
               if (s.status === 'held' && s.held_until) {
                 return new Date(s.held_until) > now;
               }
@@ -162,6 +172,8 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
             .map(s => s.venue_seat_id)
         );
         setSoldSeats(soldIds);
+      } else {
+        setSoldSeats(new Set());
       }
       setLoading(false);
     };
