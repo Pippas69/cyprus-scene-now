@@ -117,6 +117,7 @@ export const TicketTierEditor = ({
   commissionPercent,
   validationErrors = [],
   autoEnabled = false,
+  hideQuantity = false,
 }: TicketTierEditorProps) => {
   const { language } = useLanguage();
   const text = t[language];
@@ -322,6 +323,7 @@ export const TicketTierEditor = ({
                       )}
                     </div>
 
+                    {!hideQuantity && (
                     <div className="space-y-2">
                       <Label className="flex items-center gap-1 text-xs sm:text-sm">
                         <Users className="h-3 w-3" />
@@ -337,6 +339,7 @@ export const TicketTierEditor = ({
                         className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                     </div>
+                    )}
 
                   </div>
                   
