@@ -185,7 +185,33 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               .select('id, linked_reservation_id')
               .in('id', orderIds);
 
-            walkInOrderIds = new Set((orders || []).filter((order) => !order.linked_reservation_id).map((order) => order.id));
+            const linkedReservationIds = (orders || [])
+              .map((order) => order.linked_reservation_id)
+              .filter((id): id is string => !!id);
+
+            let legacyWalkInReservationIds = new Set<string>();
+            if (linkedReservationIds.length > 0) {
+              const { data: linkedReservations } = await supabase
+                .from('reservations')
+                .select('id, auto_created_from_tickets, seating_type_id')
+                .in('id', linkedReservationIds);
+
+              legacyWalkInReservationIds = new Set(
+                (linkedReservations || [])
+                  .filter((reservation) => reservation.auto_created_from_tickets === true && !reservation.seating_type_id)
+                  .map((reservation) => reservation.id)
+              );
+            }
+
+            walkInOrderIds = new Set(
+              (orders || [])
+                .filter(
+                  (order) =>
+                    !order.linked_reservation_id ||
+                    legacyWalkInReservationIds.has(order.linked_reservation_id)
+                )
+                .map((order) => order.id)
+            );
           }
 
           (tickets || []).forEach((ticket) => {

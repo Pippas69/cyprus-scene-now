@@ -241,6 +241,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
             .select("*", { count: "exact", head: true })
             .in("event_id", eventIdsWithReservations)
             .eq("status", "accepted")
+            .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null")
             .gte("created_at", startDate.toISOString())
             .lte("created_at", endDate.toISOString());
           eventBookings = count || 0;

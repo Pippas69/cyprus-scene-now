@@ -183,13 +183,14 @@ Deno.serve(async (req) => {
           .eq("id", eventInfo.business_id)
           .single();
 
-        if (businessInfo?.ticket_reservation_linked) {
-          logStep("Business has ticket_reservation_linked, creating linked reservation");
+        const seatingTypeIdRaw = session.metadata?.seating_type_id || "";
+        const seatingTypeId = seatingTypeIdRaw.trim().length > 0 ? seatingTypeIdRaw.trim() : null;
+
+        if (businessInfo?.ticket_reservation_linked && seatingTypeId) {
+          logStep("Creating linked reservation for ticket+reservation purchase", { seatingTypeId });
 
           const totalTicketCreditCents = order.total_cents || 0;
           const partySize = ticketsToCreate.length;
-
-          const seatingTypeId = session.metadata?.seating_type_id || null;
           const specialRequestsFromMeta = session.metadata?.special_requests || null;
 
           const confirmationCode = `TR-${orderId.substring(0, 8).toUpperCase()}`;
@@ -203,16 +204,15 @@ Deno.serve(async (req) => {
             phone_number: order.customer_phone || null,
             party_size: partySize,
             status: "accepted",
-            auto_created_from_tickets: true,
+            auto_created_from_tickets: false,
             ticket_credit_cents: totalTicketCreditCents,
             confirmation_code: confirmationCode,
             qr_code_token: reservationQrToken,
-            special_requests: specialRequestsFromMeta || `Auto-created from ticket purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
+            special_requests:
+              specialRequestsFromMeta ||
+              `Created from ticket+reservation purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
+            seating_type_id: seatingTypeId,
           };
-
-          if (seatingTypeId) {
-            reservationInsert.seating_type_id = seatingTypeId;
-          }
 
           const { data: newReservation, error: reservationError } = await supabaseClient
             .from("reservations")
@@ -227,8 +227,15 @@ Deno.serve(async (req) => {
               .from("ticket_orders")
               .update({ linked_reservation_id: newReservation.id })
               .eq("id", orderId);
-            logStep("Linked reservation created", { reservationId: newReservation.id, partySize, creditCents: totalTicketCreditCents });
+            logStep("Linked reservation created", {
+              reservationId: newReservation.id,
+              partySize,
+              creditCents: totalTicketCreditCents,
+              seatingTypeId,
+            });
           }
+        } else if (businessInfo?.ticket_reservation_linked) {
+          logStep("Walk-in ticket purchase detected, skipping linked reservation auto-create");
         } else {
           logStep("Business does NOT have ticket_reservation_linked, skipping auto-reservation");
         }

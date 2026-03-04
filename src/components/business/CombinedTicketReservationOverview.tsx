@@ -67,10 +67,30 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       eq("status", "completed");
       if (allOrdersError) throw allOrdersError;
 
-      // Separate walk-in orders (no linked reservation)
-      const walkInOrders = (allOrders || []).filter((o) => !o.linked_reservation_id);
+      const linkedReservationIds = (allOrders || [])
+        .map((order) => order.linked_reservation_id)
+        .filter((id): id is string => !!id);
 
-      // Fetch ALL tickets for counting
+      let legacyWalkInReservationIds = new Set<string>();
+      if (linkedReservationIds.length > 0) {
+        const { data: linkedReservations } = await supabase
+          .from("reservations")
+          .select("id, auto_created_from_tickets, seating_type_id")
+          .in("id", linkedReservationIds);
+
+        legacyWalkInReservationIds = new Set(
+          (linkedReservations || [])
+            .filter((reservation) => reservation.auto_created_from_tickets === true && !reservation.seating_type_id)
+            .map((reservation) => reservation.id)
+        );
+      }
+
+      // Separate walk-in orders (unlinked OR legacy mislinked walk-ins)
+      const walkInOrders = (allOrders || []).filter(
+        (order) =>
+          !order.linked_reservation_id ||
+          legacyWalkInReservationIds.has(order.linked_reservation_id)
+      );
       const { data: allTickets, error: allTicketsError } = await supabase.
       from("tickets").
       select("status, tier_id, order_id").
@@ -106,11 +126,12 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       }
 
       // Fetch accepted reservations
-      const { data: reservations, error: resError } = await supabase.
-      from("reservations").
-      select("id, party_size, checked_in_at, seating_type_id, seating_preference, prepaid_min_charge_cents").
-      eq("event_id", eventId).
-      eq("status", "accepted");
+      const { data: reservations, error: resError } = await supabase
+        .from("reservations")
+        .select("id, party_size, checked_in_at, seating_type_id, seating_preference, prepaid_min_charge_cents")
+        .eq("event_id", eventId)
+        .eq("status", "accepted")
+        .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null");
       if (resError) throw resError;
 
       // --- Ticket stats (ALL tickets including reservation-linked) ---
