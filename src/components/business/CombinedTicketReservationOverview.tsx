@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { isClubOrEventBusiness } from "@/lib/isClubOrEventBusiness";
 
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -151,11 +152,11 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       if (businessId) {
         const { data: businessSettings } = await supabase.
         from("businesses").
-        select("ticket_reservation_linked").
+        select("ticket_reservation_linked, category").
         eq("id", businessId).
         maybeSingle();
 
-        isLinkedTicketReservationFlow = !!businessSettings?.ticket_reservation_linked;
+        isLinkedTicketReservationFlow = !!businessSettings?.ticket_reservation_linked || isClubOrEventBusiness(businessSettings?.category || []);
       }
 
       // --- Combined ---

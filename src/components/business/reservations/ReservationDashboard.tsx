@@ -7,6 +7,7 @@ import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, CalendarDays } from 'lucide-react';
+import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
 
 interface ReservationDashboardProps {
   businessId: string;
@@ -52,10 +53,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     const checkLinked = async () => {
       const { data } = await supabase
         .from('businesses')
-        .select('ticket_reservation_linked')
+        .select('ticket_reservation_linked, category')
         .eq('id', businessId)
         .single();
-      setIsTicketLinked(!!data?.ticket_reservation_linked);
+      const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
+      setIsTicketLinked(linked);
     };
     checkLinked();
   }, [businessId]);

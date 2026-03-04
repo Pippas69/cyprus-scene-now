@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -158,10 +159,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const checkBusinessFlags = async () => {
     const { data } = await supabase
       .from('businesses')
-      .select('ticket_reservation_linked')
+      .select('ticket_reservation_linked, category')
       .eq('id', businessId)
       .single();
-    const linked = !!data?.ticket_reservation_linked;
+    const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
     setIsTicketLinked(linked);
     return linked;
   };
@@ -171,10 +172,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     try {
       const { data: bizData } = await supabase
         .from('businesses')
-        .select('ticket_reservation_linked')
+        .select('ticket_reservation_linked, category')
         .eq('id', businessId)
         .single();
-      const linked = !!bizData?.ticket_reservation_linked;
+      const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []);
 
       let query = supabase
         .from('reservations')
