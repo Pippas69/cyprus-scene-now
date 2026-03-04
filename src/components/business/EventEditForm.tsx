@@ -1101,7 +1101,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                   {t.ticketConfig}
                 </h4>
                 
-                <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
+                
 
                 {/* Walk-in toggle for hybrid events */}
                 {formData.eventType === 'ticket_and_reservation' && (
@@ -1139,7 +1139,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                   {t.reservationConfig}
                 </h4>
                 
-                <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
+                
                 
                 {/* Reservation Hours */}
                 <div className="space-y-2">

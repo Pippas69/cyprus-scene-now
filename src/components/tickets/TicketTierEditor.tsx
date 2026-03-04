@@ -343,7 +343,8 @@ export const TicketTierEditor = ({
 
                   </div>
                   
-                  {/* Max per order - on its own row on tablet for better fit */}
+                  {/* Max per order - hidden for hybrid events without walk-in */}
+                  {!hideQuantity && (
                   <div className="space-y-2 sm:col-span-1 md:max-w-[200px]">
                     <Label className="text-xs sm:text-sm whitespace-nowrap">
                       {text.maxPerOrderFull}
@@ -358,6 +359,7 @@ export const TicketTierEditor = ({
                       className="h-8 sm:h-10 text-xs sm:text-sm"
                     />
                   </div>
+                  )}
 
                   {/* Dress Code Selector */}
                   <div className="space-y-2">

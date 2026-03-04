@@ -899,7 +899,7 @@ const EventCreationForm = ({
                       {t.ticketConfig}
                     </h4>
                     
-                    <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
+                    
                     
                     {/* Walk-in toggle for hybrid events */}
                     {isReservationSelected && (
@@ -935,7 +935,7 @@ const EventCreationForm = ({
                       {t.reservationConfig}
                     </h4>
                     
-                    {!isTicketSelected && <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />}
+                    
                     
                     {/* Reservation Hours */}
                     <div className="space-y-2">

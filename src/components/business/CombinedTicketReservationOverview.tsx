@@ -16,7 +16,7 @@ const t = {
   el: {
     totalRevenue: "Συνολικά Έσοδα",
     reservations: "Κρατήσεις",
-    ticketsSold: "Εισιτήρια Πωλημένα",
+    ticketsSold: "Εισιτήρια Πωλημένα (Walk-ins)",
     checkedIn: "Check-ins",
     byCategory: "Ανά Κατηγορία",
     sold: "πωλημένα",
@@ -24,13 +24,13 @@ const t = {
     booked: "κρατημένα",
     free: "Δωρεάν",
     noData: "Δεν υπάρχουν δεδομένα",
-    tickets: "Εισιτηρια",
+    tickets: "ΕΙΣΙΤΗΡΙΑ (Walk-ins)",
     tables: "ΤΡΑΠΕΖΙΑ"
   },
   en: {
     totalRevenue: "Total Revenue",
     reservations: "Reservations",
-    ticketsSold: "Tickets Sold",
+    ticketsSold: "Tickets Sold (Walk-ins)",
     checkedIn: "Check-ins",
     byCategory: "By Category",
     sold: "sold",
@@ -38,7 +38,7 @@ const t = {
     booked: "booked",
     free: "Free",
     noData: "No data available",
-    tickets: "Tickets",
+    tickets: "TICKETS (Walk-ins)",
     tables: "Tables"
   }
 };
@@ -239,10 +239,43 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
           
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Ticket tiers section */}
+          {/* Seating types section - TABLES FIRST */}
+          {overview.seatingStats.length > 0 &&
+          <>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{text.tables}</p>
+              {overview.seatingStats.map((seating) => {
+              const total = seating.available_slots || 1;
+              const bookedPercent = total > 0 ? seating.booked / total * 100 : 0;
+
+              return (
+                <div key={seating.id} className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
+                        {seating.minPrice > 0 &&
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0">
+                        
+                            {formatPrice(seating.minPrice)}
+                          </Badge>
+                      }
+                      </div>
+                      <span className="text-[11px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
+                        {seating.booked} {text.booked} / {seating.available} {text.available}
+                      </span>
+                    </div>
+                    <Progress value={bookedPercent} className="h-2" />
+                  </div>);
+
+            })}
+            </>
+          }
+
+          {/* Ticket tiers section - TICKETS (Walk-ins) SECOND */}
           {overview.ticketTiers.length > 0 &&
           <>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{text.tickets}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-2">{text.tickets}</p>
               {overview.ticketTiers.map((tier) => {
               const actualSold = tier.actual_sold || 0;
               const soldPercent = tier.quantity_total > 0 ?
@@ -267,39 +300,6 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
                       </span>
                     </div>
                     <Progress value={soldPercent} className="h-2" />
-                  </div>);
-
-            })}
-            </>
-          }
-
-          {/* Seating types section */}
-          {overview.seatingStats.length > 0 &&
-          <>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-2">{text.tables}</p>
-              {overview.seatingStats.map((seating) => {
-              const total = seating.available_slots || 1;
-              const bookedPercent = total > 0 ? seating.booked / total * 100 : 0;
-
-              return (
-                <div key={seating.id} className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
-                        {seating.minPrice > 0 &&
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0">
-                        
-                            {formatPrice(seating.minPrice)}
-                          </Badge>
-                      }
-                      </div>
-                      <span className="text-[11px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
-                        {seating.booked} {text.booked} / {seating.available} {text.available}
-                      </span>
-                    </div>
-                    <Progress value={bookedPercent} className="h-2" />
                   </div>);
 
             })}
