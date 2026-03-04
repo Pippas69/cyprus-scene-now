@@ -27,6 +27,7 @@ interface TicketTierEditorProps {
   commissionPercent: number;
   validationErrors?: string[];
   autoEnabled?: boolean; // When true, skip toggle and auto-add tier if empty
+  hideQuantity?: boolean; // When true, hide the quantity field (used for hybrid events where tickets are unlimited)
 }
 
 const t = {

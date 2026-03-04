@@ -366,11 +366,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   const formatPrice = (cents: number) => cents === 0 ? t.free : `€${(cents / 100).toFixed(2)}`;
 
-  // Calculate ticket total: use the first available ticket tier, one ticket per person
+  // Calculate ticket total: use the first ticket tier
+  // For hybrid (ticket+reservation) events, ticket availability is UNLIMITED
+  // (depends on reservation availability, not ticket stock)
   const getTicketTier = (): TicketTier | null => {
     if (ticketTiers.length === 0) return null;
-    // Use the first tier that has availability
-    return ticketTiers.find(tier => (tier.quantity_total - tier.quantity_sold) > 0) || null;
+    return ticketTiers[0] || null;
   };
 
   const ticketTier = getTicketTier();
@@ -405,13 +406,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         return;
       }
 
-      // Check availability
-      const available = ticketTier.quantity_total - ticketTier.quantity_sold;
-      if (partySize > available) {
-        toast.error(language === 'el' ? `Μόνο ${available} εισιτήρια διαθέσιμα` : `Only ${available} tickets available`);
-        setSubmitting(false);
-        return;
-      }
+      // For hybrid events: NO ticket availability check
+      // Ticket availability is determined by reservation availability only
 
       const body: Record<string, unknown> = {
         eventId,
@@ -517,8 +513,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   const renderStep2 = () => (
     <div className="space-y-4">
-      {/* Party Size */}
-      <div className="space-y-1">
+      {/* Party Size + Ticket Price */}
+      <div className="space-y-2">
         <Label className="flex items-center gap-2 text-sm">
           <Users className="h-3.5 w-3.5" />
           {t.partySize}
@@ -535,6 +531,25 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           >+</Button>
           <span className="text-sm text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
         </div>
+
+        {/* Dynamic ticket price based on party size */}
+        {ticketTier && ticketPricePerPerson > 0 && (
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary/20 mt-1">
+            <div className="flex items-center gap-2">
+              <Ticket className="h-4 w-4 text-primary" />
+              <span className="text-sm text-muted-foreground">
+                {partySize} × {formatPrice(ticketPricePerPerson)} {t.perPerson}
+              </span>
+            </div>
+            <span className="text-base font-bold text-primary">{formatPrice(ticketTotal)}</span>
+          </div>
+        )}
+        {ticketTier && ticketPricePerPerson === 0 && (
+          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20 mt-1">
+            <Ticket className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">{t.free}</span>
+          </div>
+        )}
       </div>
 
       {/* Min Charge Info */}
