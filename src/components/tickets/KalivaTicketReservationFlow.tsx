@@ -352,11 +352,29 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   const formatPrice = (cents: number) => cents === 0 ? t.free : `€${(cents / 100).toFixed(2)}`;
 
-  // Calculate ticket total: use the first ticket tier
-  // For hybrid (ticket+reservation) events, ticket availability is UNLIMITED
-  // (depends on reservation availability, not ticket stock)
+  // Match ticket tier to selected seating type
+  // Each seating type (bar, table, vip, sofa) has its own reservation-linked ticket tier
+  // with a matching name (e.g., "Bar", "Table", "VIP", "Sofa") or sort_order
   const getTicketTier = (): TicketTier | null => {
     if (ticketTiers.length === 0) return null;
+    if (!selectedSeating) return ticketTiers[0] || null;
+
+    const seatingType = selectedSeating.seating_type.toLowerCase();
+
+    // Try matching by tier name (case-insensitive) to seating type
+    const matched = ticketTiers.find(t => {
+      const tierName = t.name.toLowerCase().trim();
+      return tierName === seatingType || 
+             tierName === selectedSeating.seating_type;
+    });
+    if (matched) return matched;
+
+    // Fallback: match by index position (sort_order alignment)
+    const seatingIndex = seatingOptions.findIndex(s => s.id === selectedSeating.id);
+    if (seatingIndex >= 0 && seatingIndex < ticketTiers.length) {
+      return ticketTiers[seatingIndex];
+    }
+
     return ticketTiers[0] || null;
   };
 
