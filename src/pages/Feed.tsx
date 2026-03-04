@@ -160,23 +160,50 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       // Fetch ticket tiers for ticket events
       const { data: ticketTiers } = await supabase
         .from('ticket_tiers')
-        .select('event_id, quantity_total, quantity_sold')
+        .select('id, event_id, quantity_total')
         .in('event_id', ticketEventIds);
-      
-      // Build sold-out map
+
+      // Build sold-out map using real walk-in counts only
       const soldOutSet = new Set<string>();
-      if (ticketTiers) {
-        const tiersPerEvent = new Map<string, typeof ticketTiers>();
-        ticketTiers.forEach(tier => {
+      if (ticketTiers && ticketTiers.length > 0) {
+        const finiteWalkInTiers = ticketTiers.filter((tier) => tier.quantity_total > 0 && tier.quantity_total !== 999999);
+
+        const soldMap: Record<string, number> = {};
+        if (finiteWalkInTiers.length > 0) {
+          const tierIds = finiteWalkInTiers.map((tier) => tier.id);
+          const { data: tickets } = await supabase
+            .from('tickets')
+            .select('tier_id, order_id')
+            .in('tier_id', tierIds)
+            .in('status', ['valid', 'used']);
+
+          const orderIds = [...new Set((tickets || []).map((ticket) => ticket.order_id).filter(Boolean))] as string[];
+          let walkInOrderIds = new Set<string>();
+          if (orderIds.length > 0) {
+            const { data: orders } = await supabase
+              .from('ticket_orders')
+              .select('id, linked_reservation_id')
+              .in('id', orderIds);
+
+            walkInOrderIds = new Set((orders || []).filter((order) => !order.linked_reservation_id).map((order) => order.id));
+          }
+
+          (tickets || []).forEach((ticket) => {
+            if (!ticket.order_id || walkInOrderIds.has(ticket.order_id)) {
+              soldMap[ticket.tier_id] = (soldMap[ticket.tier_id] || 0) + 1;
+            }
+          });
+        }
+
+        const tiersPerEvent = new Map<string, typeof finiteWalkInTiers>();
+        finiteWalkInTiers.forEach((tier) => {
           const existing = tiersPerEvent.get(tier.event_id) || [];
           existing.push(tier);
           tiersPerEvent.set(tier.event_id, existing);
         });
-        
+
         tiersPerEvent.forEach((tiers, eventId) => {
-          const allSoldOut = tiers.length > 0 && tiers.every(tier => 
-            tier.quantity_total > 0 && (tier.quantity_sold || 0) >= tier.quantity_total
-          );
+          const allSoldOut = tiers.length > 0 && tiers.every((tier) => (soldMap[tier.id] || 0) >= tier.quantity_total);
           if (allSoldOut) soldOutSet.add(eventId);
         });
       }

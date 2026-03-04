@@ -17,18 +17,44 @@ export const useTicketTiers = (eventId: string | undefined) => {
       if (!tiers || tiers.length === 0) return [];
 
       // Count actual tickets per tier for accurate availability
+      // IMPORTANT: finite tiers (walk-ins) should count ONLY non-reservation-linked orders
       const tierIds = tiers.map(t => t.id);
       const { data: tickets } = await supabase
         .from("tickets")
-        .select("tier_id")
+        .select("tier_id, order_id")
         .in("tier_id", tierIds)
         .in("status", ["valid", "used"]);
 
       if (tickets) {
+        const tierMap = new Map(tiers.map((tier) => [tier.id, tier]));
+        const orderIds = [...new Set(tickets.map((ticket) => ticket.order_id).filter(Boolean))] as string[];
+
+        let walkInOrderIds = new Set<string>();
+        if (orderIds.length > 0) {
+          const { data: orders } = await supabase
+            .from("ticket_orders")
+            .select("id, linked_reservation_id")
+            .in("id", orderIds);
+
+          walkInOrderIds = new Set((orders || []).filter((order) => !order.linked_reservation_id).map((order) => order.id));
+        }
+
         const countMap: Record<string, number> = {};
         for (const ticket of tickets) {
-          countMap[ticket.tier_id] = (countMap[ticket.tier_id] || 0) + 1;
+          const tier = tierMap.get(ticket.tier_id);
+          if (!tier) continue;
+
+          const isFiniteTier = tier.quantity_total > 0 && tier.quantity_total !== 999999;
+          if (!isFiniteTier) {
+            countMap[ticket.tier_id] = (countMap[ticket.tier_id] || 0) + 1;
+            continue;
+          }
+
+          if (!ticket.order_id || walkInOrderIds.has(ticket.order_id)) {
+            countMap[ticket.tier_id] = (countMap[ticket.tier_id] || 0) + 1;
+          }
         }
+
         return tiers.map(tier => ({
           ...tier,
           quantity_sold: countMap[tier.id] ?? 0,
