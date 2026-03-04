@@ -609,7 +609,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
       </Card>
       {/* Range editor dialog */}
       <Dialog open={!!rangeEditorSeating} onOpenChange={(open) => {if (!open) {setRangeEditorSeating(null);setRangeDrafts([]);}}}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="text-sm sm:text-base">
               {t.editRangesTitle} — <span className="capitalize">{rangeEditorSeating?.seatingName}</span>

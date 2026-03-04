@@ -124,7 +124,8 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         tierSoldCount.set(t.tier_id, (tierSoldCount.get(t.tier_id) || 0) + 1);
       });
 
-      const enrichedTiers = (tiers || []).map((tier) => ({
+      const walkInDisplayTiers = (tiers || []).filter((tier) => tier.quantity_total > 0 && tier.quantity_total !== 999999);
+      const enrichedTiers = walkInDisplayTiers.map((tier) => ({
         ...tier,
         actual_sold: tierSoldCount.get(tier.id) || 0
       }));
@@ -288,10 +289,10 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-2">{text.tickets}</p>
               {overview.ticketTiers.map((tier) => {
               const actualSold = tier.actual_sold || 0;
+              const available = Math.max(tier.quantity_total - actualSold, 0);
               const soldPercent = tier.quantity_total > 0 ?
-              actualSold / tier.quantity_total * 100 :
+              Math.min(actualSold / tier.quantity_total * 100, 100) :
               0;
-              const available = tier.quantity_total - actualSold;
 
               return (
                 <div key={tier.id} className="space-y-2">
