@@ -260,11 +260,22 @@ export default function EventDetail() {
       if (isPerformance) {
         const { data: shows } = await supabase
           .from('show_instances')
-          .select('id, start_at, end_at, venue_id, doors_open_at, notes, status')
+          .select('id, start_at, end_at, venue_id, doors_open_at, notes, status, production_id')
           .eq('event_id', eventId)
           .eq('status', 'scheduled')
           .order('start_at', { ascending: true });
         setShowInstances(shows || []);
+
+        // Fetch cast/crew via production_id from show instances
+        const productionId = shows?.[0]?.production_id;
+        if (productionId) {
+          const { data: cast } = await supabase
+            .from('production_cast')
+            .select('id, person_name, role_type, role_name, bio, photo_url, sort_order')
+            .eq('production_id', productionId)
+            .order('sort_order', { ascending: true });
+          setCastMembers(cast || []);
+        }
       }
 
       // Check if all reservation seating types are sold out for Kaliva flow
