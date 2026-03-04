@@ -1118,7 +1118,7 @@ export default function EventDetail() {
           onOpenChange={setShowKalivaFlow}
           eventId={event.id}
           eventTitle={event.title}
-          ticketTiers={ticketTiers}
+          ticketTiers={activeTicketTiers}
           onSuccess={(orderId, isFree) => {
             setShowKalivaFlow(false);
             if (isFree) {
@@ -1135,7 +1135,7 @@ export default function EventDetail() {
           onOpenChange={setShowTicketFlow}
           eventId={event.id}
           eventTitle={event.title}
-          ticketTiers={ticketTiers}
+          ticketTiers={activeTicketTiers}
           onSuccess={(orderId, isFree) => {
             setShowTicketFlow(false);
             if (isFree) {
