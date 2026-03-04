@@ -89,6 +89,9 @@ export default function EventDetail() {
   const [showTicketFlow, setShowTicketFlow] = useState(false);
   const [reservationsSoldOut, setReservationsSoldOut] = useState(false);
 
+  // Show instances for performance/theatre events
+  const [showInstances, setShowInstances] = useState<any[]>([]);
+
   const fromPath = `${location.pathname}${location.search}`;
   
   // Fetch ticket tiers for this event
@@ -246,6 +249,21 @@ export default function EventDetail() {
       }
 
       setEvent(eventData);
+
+      // Fetch show instances for performance events (theatre, music, dance, kids)
+      const performanceCategories = ['theatre', 'music', 'dance', 'kids', 'θέατρο', 'μουσική', 'χορός', 'παιδικά'];
+      const bizCategories = (eventData.businesses?.category || []).map((c: string) => c.toLowerCase());
+      const isPerformance = bizCategories.some((c: string) => performanceCategories.includes(c));
+      
+      if (isPerformance) {
+        const { data: shows } = await supabase
+          .from('show_instances')
+          .select('id, start_at, end_at, venue_id, doors_open_at, notes, status')
+          .eq('event_id', eventId)
+          .eq('status', 'scheduled')
+          .order('start_at', { ascending: true });
+        setShowInstances(shows || []);
+      }
 
       // Check if all reservation seating types are sold out for Kaliva flow
       if ((eventData as any).businesses?.ticket_reservation_linked && eventData.event_type === 'ticket_and_reservation') {
@@ -1137,6 +1155,7 @@ export default function EventDetail() {
           eventId={event.id}
           eventTitle={event.title}
           ticketTiers={activeTicketTiers}
+          showInstances={showInstances.length > 0 ? showInstances : undefined}
           onSuccess={(orderId, isFree) => {
             setShowTicketFlow(false);
             if (isFree) {
