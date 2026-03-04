@@ -178,9 +178,9 @@ export const TicketPurchaseCard = ({
 
     const current = quantities[tierId] || 0;
     const newQty = Math.max(0, Math.min(tier.max_per_order, current + delta));
-    const available = tier.quantity_total - tier.quantity_sold;
+    const available = tier.quantity_total > 0 ? tier.quantity_total - tier.quantity_sold : Infinity;
     
-    if (newQty > available) {
+    if (available !== Infinity && newQty > available) {
       toast.error(language === 'el' 
         ? `Μόνο ${available} διαθέσιμα` 
         : `Only ${available} available`
@@ -332,8 +332,8 @@ export const TicketPurchaseCard = ({
       
       <CardContent className="space-y-3 md:space-y-4">
         {tiers.map((tier) => {
-          const available = tier.quantity_total - tier.quantity_sold;
-          const isSoldOut = available <= 0;
+          const available = tier.quantity_total > 0 ? tier.quantity_total - tier.quantity_sold : Infinity;
+          const isSoldOut = tier.quantity_total > 0 && available <= 0;
           const qty = quantities[tier.id] || 0;
 
           return (
