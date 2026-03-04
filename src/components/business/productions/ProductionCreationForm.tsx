@@ -366,14 +366,21 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
           if (zpErr) throw zpErr;
         }
 
-        // Create ticket tiers from zone pricing
+        // Create ticket tiers from zone pricing, with seat counts from venue
         for (const zp of si.zone_prices) {
+          // Count active seats in this zone to set proper quantity_total
+          const { count: seatCount } = await supabase
+            .from('venue_seats')
+            .select('id', { count: 'exact', head: true })
+            .eq('zone_id', zp.zone_id)
+            .eq('is_active', true);
+
           const { data: tierData, error: tierErr } = await supabase.from('ticket_tiers').insert({
             event_id: linkedEvent.id,
             name: zp.zone_name,
             price_cents: zp.price_cents,
             currency: 'EUR',
-            quantity_total: 0, // will be determined by seat count
+            quantity_total: seatCount || 0,
             max_per_order: 10,
             sort_order: 0,
           }).select().single();

@@ -443,9 +443,10 @@ export default function EventDetail() {
   const activeTicketTiers = ticketTiers.filter((t: any) => t.active !== false);
   
   // All tickets sold out = all tiers inactive OR all active tiers have no remaining capacity
+  // For seated/performance events (quantity_total=0), availability is determined by seats, not tier quantities
   const allTicketsSoldOut = hasNativeTickets && (
     activeTicketTiers.length === 0 || 
-    activeTicketTiers.every((t: any) => (t.quantity_sold ?? 0) >= t.quantity_total)
+    activeTicketTiers.every((t: any) => t.quantity_total > 0 && (t.quantity_sold ?? 0) >= t.quantity_total)
   );
   const kalivaFullySoldOut = reservationsSoldOut && allTicketsSoldOut;
 
