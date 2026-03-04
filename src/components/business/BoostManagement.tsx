@@ -76,6 +76,9 @@ interface OfferBoostWithMetrics {
   duration_hours?: number | null;
 }
 
+// Categories that should NOT see Offers in boost management
+const noOffersCategories = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
+
 const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
@@ -85,11 +88,27 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
   const [showExpiredEvents, setShowExpiredEvents] = useState(false);
   const [showExpiredOffers, setShowExpiredOffers] = useState(false);
   const [isFreeUser, setIsFreeUser] = useState(true);
+  const [showOffers, setShowOffers] = useState(true);
 
   useEffect(() => {
     fetchBoosts();
     fetchSubscriptionStatus();
+    fetchBusinessCategories();
   }, [businessId]);
+
+  const fetchBusinessCategories = async () => {
+    const { data } = await supabase
+      .from("businesses")
+      .select("category")
+      .eq("id", businessId)
+      .single();
+    if (data?.category) {
+      const hasNoOffers = data.category.some((cat: string) => 
+        noOffersCategories.includes(cat.toLowerCase())
+      );
+      setShowOffers(!hasNoOffers);
+    }
+  };
 
   const fetchSubscriptionStatus = async () => {
     const { data } = await supabase
