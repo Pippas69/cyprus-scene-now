@@ -216,14 +216,18 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   // Min charge
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
 
-  // Fetch seating options (only once per eventId, not on every open)
-  const [hasFetched, setHasFetched] = useState<string | null>(null);
+  // Fetch seating options on open and keep availability fresh while dialog is open
   useEffect(() => {
-    if (open && eventId && hasFetched !== eventId) {
-      fetchSeatingOptions();
-      fetchEventHours();
-      setHasFetched(eventId);
-    }
+    if (!open || !eventId) return;
+
+    fetchSeatingOptions();
+    fetchEventHours();
+
+    const refreshTimer = window.setInterval(() => {
+      fetchSeatingOptions(true);
+    }, 15000);
+
+    return () => window.clearInterval(refreshTimer);
   }, [open, eventId]);
 
   // Only reset checkout state on reopen, not form data
@@ -269,8 +273,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     }
   }, [partySize, selectedSeating]);
 
-  const fetchSeatingOptions = async () => {
-    setLoading(true);
+  const fetchSeatingOptions = async (silent = false) => {
+    if (!silent) setLoading(true);
+
     try {
       const { data: seatingTypes, error } = await supabase
         .from('reservation_seating_types')
@@ -290,9 +295,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         : { data: [] };
 
       const bookedMap: Record<string, number> = {};
-      for (const r of reservationCounts || []) {
-        if (r.seating_type_id) {
-          bookedMap[r.seating_type_id] = (bookedMap[r.seating_type_id] || 0) + 1;
+      for (const reservation of reservationCounts || []) {
+        if (reservation.seating_type_id) {
+          bookedMap[reservation.seating_type_id] = (bookedMap[reservation.seating_type_id] || 0) + 1;
         }
       }
 
@@ -309,11 +314,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           tiers: tiers || [],
         });
       }
+
       setSeatingOptions(optionsWithTiers);
+      setSelectedSeating(prev => prev ? optionsWithTiers.find(option => option.id === prev.id) ?? null : prev);
     } catch (error) {
       console.error('Error fetching seating options:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -454,7 +461,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const renderStep1 = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {seatingOptions.map(option => {
-        const remaining = option.available_slots - option.slots_booked;
+        const remaining = Math.max(option.available_slots - option.slots_booked, 0);
         const isSoldOut = remaining <= 0;
         const isPaused = !!option.paused;
         const isUnavailable = isSoldOut || isPaused;

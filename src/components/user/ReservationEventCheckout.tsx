@@ -229,13 +229,16 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
-  // Fetch seating options (once per event)
-  const [hasFetchedSeating, setHasFetchedSeating] = useState<string | null>(null);
+  // Fetch seating options on open and keep availability fresh while dialog is open
   useEffect(() => {
-    if (open && eventId && hasFetchedSeating !== eventId) {
-      fetchSeatingOptions();
-      setHasFetchedSeating(eventId);
-    }
+    if (!open || !eventId) return;
+
+    fetchSeatingOptions();
+    const refreshTimer = window.setInterval(() => {
+      fetchSeatingOptions(true);
+    }, 15000);
+
+    return () => window.clearInterval(refreshTimer);
   }, [open, eventId]);
 
   // Scroll to top when step changes
@@ -243,8 +246,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
-  const fetchSeatingOptions = async () => {
-    setLoading(true);
+  const fetchSeatingOptions = async (silent = false) => {
+    if (!silent) setLoading(true);
+
     try {
       const { data: seatingTypes, error: seatingError } = await supabase
         .from('reservation_seating_types')
@@ -254,8 +258,24 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
       if (seatingError) throw seatingError;
 
-      const optionsWithTiers: SeatingTypeOption[] = [];
+      const seatingIds = (seatingTypes || []).map(st => st.id);
+      const { data: reservationCounts } = seatingIds.length > 0
+        ? await supabase
+            .from('reservations')
+            .select('seating_type_id')
+            .eq('event_id', eventId)
+            .in('seating_type_id', seatingIds)
+            .in('status', ['pending', 'accepted'])
+        : { data: [] };
 
+      const bookedMap: Record<string, number> = {};
+      for (const reservation of reservationCounts || []) {
+        if (reservation.seating_type_id) {
+          bookedMap[reservation.seating_type_id] = (bookedMap[reservation.seating_type_id] || 0) + 1;
+        }
+      }
+
+      const optionsWithTiers: SeatingTypeOption[] = [];
       for (const st of seatingTypes || []) {
         const { data: tiers } = await supabase
           .from('seating_type_tiers')
@@ -265,18 +285,20 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
         optionsWithTiers.push({
           ...st,
+          slots_booked: bookedMap[st.id] ?? 0,
           tiers: tiers || [],
         });
       }
 
       setSeatingOptions(optionsWithTiers);
+      setSelectedSeating(prev => prev ? optionsWithTiers.find(option => option.id === prev.id) ?? null : prev);
       // Don't pre-block the flow; backend handles preview fallback.
       setPaymentsReady(null);
     } catch (error) {
       console.error('Error fetching seating options:', error);
       toast.error(t.errorLoading);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -379,7 +401,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         return (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {seatingOptions.map(option => {
-              const remaining = option.available_slots - option.slots_booked;
+              const remaining = Math.max(option.available_slots - option.slots_booked, 0);
               const isSoldOut = remaining <= 0;
               const isSelected = selectedSeating?.id === option.id;
               const colors = seatingTypeColors[option.seating_type];
