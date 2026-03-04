@@ -50,13 +50,15 @@ export const useBusinessStats = (businessId: string | null) => {
       const { count: totalReservations } = await supabase
         .from('reservations')
         .select('*', { count: 'exact', head: true })
-        .in('event_id', eventIds);
+        .in('event_id', eventIds)
+        .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
 
       const { count: pendingReservations } = await supabase
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .in('event_id', eventIds)
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
 
       // Get total RSVPs
       const { count: totalRSVPs } = await supabase
