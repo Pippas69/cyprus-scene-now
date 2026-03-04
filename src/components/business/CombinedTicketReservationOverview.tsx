@@ -124,14 +124,14 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       eq("status", "accepted");
       if (resError) throw resError;
 
-      // --- Ticket stats ---
+      // --- Ticket stats (walk-in only) ---
       const ticketRevenue = orders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
-      const ticketsSold = tickets?.length || 0;
-      const ticketCheckedIn = tickets?.filter((t) => t.status === "used").length || 0;
+      const ticketsSold = walkInTickets.length;
+      const ticketCheckedIn = allTicketsArr.filter((t) => t.status === "used").length;
 
-      // Per-tier sold count
+      // Per-tier sold count (walk-in only for display)
       const tierSoldCount = new Map<string, number>();
-      tickets?.forEach((t) => {
+      walkInTickets.forEach((t) => {
         tierSoldCount.set(t.tier_id, (tierSoldCount.get(t.tier_id) || 0) + 1);
       });
 
