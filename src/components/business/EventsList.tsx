@@ -200,7 +200,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
         // Check if all tiers are sold out for each event
         tiersPerEvent.forEach((tiers, eventId) => {
           const allSoldOut = tiers.length > 0 && tiers.every((tier) =>
-          (tier.quantity_sold || 0) >= tier.quantity_total
+          tier.quantity_total > 0 && (tier.quantity_sold || 0) >= tier.quantity_total
           );
           soldOutMap.set(eventId, allSoldOut);
         });
