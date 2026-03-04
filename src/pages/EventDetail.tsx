@@ -738,13 +738,30 @@ export default function EventDetail() {
                   <div className="flex items-start gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">
-                        {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(event.start_at), 'HH:mm')} -{' '}
-                        {format(new Date(event.end_at), 'HH:mm')}
-                      </p>
+                      {showInstances.length > 1 ? (
+                        <>
+                          <p className="font-medium text-sm">
+                            {language === 'el' ? 'Πολλαπλές Ημερομηνίες' : 'Multiple Dates'}
+                          </p>
+                          <div className="space-y-0.5">
+                            {showInstances.map((si: any) => (
+                              <p key={si.id} className="text-xs text-muted-foreground">
+                                {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                              </p>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-medium text-sm">
+                            {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(event.start_at), 'HH:mm')} -{' '}
+                            {format(new Date(event.end_at), 'HH:mm')}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
 
