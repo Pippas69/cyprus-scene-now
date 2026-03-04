@@ -16,7 +16,7 @@ const t = {
   el: {
     totalRevenue: "Συνολικά Έσοδα",
     reservations: "Κρατήσεις",
-    ticketsSold: "Εισιτήρια Πωλημένα (Walk-ins)",
+    ticketsSold: "Πωλήσεις Εισιτηρίων",
     checkedIn: "Check-ins",
     byCategory: "Ανά Κατηγορία",
     sold: "πωλημένα",
@@ -30,7 +30,7 @@ const t = {
   en: {
     totalRevenue: "Total Revenue",
     reservations: "Reservations",
-    ticketsSold: "Tickets Sold (Walk-ins)",
+    ticketsSold: "Ticket Sales",
     checkedIn: "Check-ins",
     byCategory: "By Category",
     sold: "sold",
