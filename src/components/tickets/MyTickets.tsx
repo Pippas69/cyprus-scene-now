@@ -89,6 +89,10 @@ export const MyTickets = () => {
           created_at,
           guest_name,
           guest_age,
+          seat_zone,
+          seat_row,
+          seat_number,
+          ticket_code,
           ticket_tiers(name, price_cents, currency),
           events(id, title, start_at, location, cover_image_url, businesses(name)),
           ticket_orders(customer_name, total_cents)
