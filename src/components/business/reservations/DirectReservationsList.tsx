@@ -44,6 +44,7 @@ interface DirectReservationsListProps {
   language: 'el' | 'en';
   refreshNonce?: number;
   onReservationCountChange?: (count: number) => void;
+  selectedEventId?: string | null;
 }
 
 // Cache for seating tiers
@@ -53,7 +54,7 @@ interface SeatingTier {
   prepaid_min_charge_cents: number;
 }
 
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);

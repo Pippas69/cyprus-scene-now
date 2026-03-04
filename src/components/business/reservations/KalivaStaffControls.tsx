@@ -11,6 +11,7 @@ import { Loader2, RefreshCw, Edit2, Check, X } from 'lucide-react';
 interface KalivaStaffControlsProps {
   businessId: string;
   language: 'el' | 'en';
+  selectedEventId?: string | null;
 }
 
 interface EventWithControls {
@@ -64,11 +65,13 @@ const text = {
   }
 };
 
-export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControlsProps) => {
+export const KalivaStaffControls = ({ businessId, language, selectedEventId: externalSelectedEventId }: KalivaStaffControlsProps) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [events, setEvents] = useState<EventWithControls[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  // Use external selectedEventId from parent if provided
+  const [internalSelectedEventId, setInternalSelectedEventId] = useState<string | null>(null);
+  const selectedEventId = externalSelectedEventId ?? internalSelectedEventId;
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<{ id: string; type: 'seating' | 'tier' } | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -143,9 +146,9 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
 
       setEvents(enrichedEvents);
 
-      // Auto-select first event if none selected or selected event no longer exists
-      if (!selectedEventId || !enrichedEvents.find(e => e.id === selectedEventId)) {
-        setSelectedEventId(enrichedEvents[0]?.id || null);
+      // Auto-select first event if none selected or selected event no longer exists (only for internal mode)
+      if (!externalSelectedEventId && (!internalSelectedEventId || !enrichedEvents.find(e => e.id === internalSelectedEventId))) {
+        setInternalSelectedEventId(enrichedEvents[0]?.id || null);
       }
     } catch (error) {
       console.error('Error fetching Kaliva staff data:', error);
@@ -265,10 +268,10 @@ export const KalivaStaffControls = ({ businessId, language }: KalivaStaffControl
             </Button>
           </div>
 
-          {/* Event selector - only show when multiple events */}
-          {events.length > 1 && (
+          {/* Event selector - only show when multiple events and no external selector */}
+          {!externalSelectedEventId && events.length > 1 && (
             <div className="mt-3">
-              <Select value={selectedEventId || ''} onValueChange={setSelectedEventId}>
+              <Select value={selectedEventId || ''} onValueChange={setInternalSelectedEventId}>
                 <SelectTrigger className="h-8 text-xs sm:text-sm">
                   <SelectValue placeholder={t.selectEvent} />
                 </SelectTrigger>
