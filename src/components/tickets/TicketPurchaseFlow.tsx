@@ -58,6 +58,7 @@ const translations = {
   el: {
     title: "Εισιτήρια",
     steps: {
+      showSelect: "Επιλογή Παράστασης",
       seats: "Επιλογή Θέσεων",
       tickets: "Επιλογή Εισιτηρίων",
       checkout: "Ολοκλήρωση",
@@ -90,6 +91,7 @@ const translations = {
   en: {
     title: "Tickets",
     steps: {
+      showSelect: "Select Show",
       seats: "Select Seats",
       tickets: "Select Tickets",
       checkout: "Checkout",
