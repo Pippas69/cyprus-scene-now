@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Calendar, Clock, MapPin, Ticket, Users, Gift, Plus, Trash2, AlertTriangle, Check, Pencil } from "lucide-react";
 import { ImageUploadField } from "./ImageUploadField";
@@ -360,6 +361,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
   });
   
   const [ticketValidationErrors, setTicketValidationErrors] = useState<string[]>([]);
+  const [walkInEnabled, setWalkInEnabled] = useState(false);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [existingCoverUrl, setExistingCoverUrl] = useState<string | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
@@ -1100,6 +1102,23 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                 </h4>
                 
                 <CommissionBanner platformFeeLabel={t.platformFee} commissionPercent={commissionPercent} upgradeHint={t.upgradeHint} isElitePlan={isElitePlan} />
+
+                {/* Walk-in toggle for hybrid events */}
+                {formData.eventType === 'ticket_and_reservation' && (
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-background">
+                    <div className="space-y-0.5">
+                      <p className="font-medium text-xs sm:text-sm">
+                        {language === 'el' ? 'Ενεργοποίηση Walk-in Εισιτηρίων' : 'Enable Walk-in Tickets'}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                        {language === 'el' 
+                          ? 'Επιτρέψτε αγορά εισιτηρίων χωρίς κράτηση (ξεχωριστό απόθεμα)' 
+                          : 'Allow ticket purchases without reservation (separate inventory)'}
+                      </p>
+                    </div>
+                    <Switch checked={walkInEnabled} onCheckedChange={setWalkInEnabled} />
+                  </div>
+                )}
                 
                 <TicketTierEditor
                   tiers={formData.ticketTiers}
@@ -1107,6 +1126,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                   commissionPercent={commissionPercent}
                   validationErrors={ticketValidationErrors}
                   autoEnabled={true}
+                  hideQuantity={formData.eventType === 'ticket_and_reservation' && !walkInEnabled}
                 />
               </div>
             )}
