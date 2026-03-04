@@ -432,12 +432,6 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       )}
                     </div>
 
-                    {option.dress_code && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Shirt className="h-3 w-3" />
-                        {t.dressCode}: {t.dressCodeLabels[option.dress_code as keyof typeof t.dressCodeLabels]}
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               );
