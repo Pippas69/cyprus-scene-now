@@ -84,8 +84,6 @@ const translations = {
 
 // ── Seat colors ──
 const SEAT_COLORS = {
-  available: 'hsl(var(--muted-foreground) / 0.3)',
-  availableHover: 'hsl(var(--muted-foreground) / 0.5)',
   unavailable: 'hsl(var(--muted-foreground) / 0.15)',
   selected: 'hsl(var(--primary))',
   wheelchair: '#3b82f6',
