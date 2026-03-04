@@ -130,6 +130,17 @@ export default function EventDetail() {
     }
   }, [event, user]);
 
+  useEffect(() => {
+    if (!eventId || !event || !isBusinessTicketLinked || event.event_type !== 'ticket_and_reservation') return;
+
+    refreshReservationSoldOut(eventId, true, event.event_type);
+    const refreshTimer = window.setInterval(() => {
+      refreshReservationSoldOut(eventId, true, event.event_type);
+    }, 15000);
+
+    return () => window.clearInterval(refreshTimer);
+  }, [eventId, event?.id, event?.event_type, isBusinessTicketLinked]);
+
   const refreshCounts = async (targetEventId: string) => {
     const { data, error } = await supabase.rpc("get_event_rsvp_counts", {
       p_event_id: targetEventId,
@@ -179,6 +190,49 @@ export default function EventDetail() {
 
       setUserProfile(profile);
     }
+  };
+
+  const refreshReservationSoldOut = async (
+    targetEventId: string,
+    isLinkedHybrid: boolean,
+    eventType?: string | null
+  ) => {
+    if (!isLinkedHybrid || eventType !== 'ticket_and_reservation') {
+      setReservationsSoldOut(false);
+      return;
+    }
+
+    const { data: seatingTypes } = await supabase
+      .from('reservation_seating_types')
+      .select('id, available_slots, paused')
+      .eq('event_id', targetEventId);
+
+    if (!seatingTypes || seatingTypes.length === 0) {
+      setReservationsSoldOut(false);
+      return;
+    }
+
+    const activeTypes = seatingTypes.filter(st => !st.paused);
+    if (activeTypes.length === 0) {
+      setReservationsSoldOut(true);
+      return;
+    }
+
+    const activeIds = activeTypes.map(st => st.id);
+    const { data: reservations } = await supabase
+      .from('reservations')
+      .select('seating_type_id')
+      .eq('event_id', targetEventId)
+      .in('seating_type_id', activeIds)
+      .in('status', ['pending', 'accepted']);
+
+    const counts: Record<string, number> = {};
+    (reservations || []).forEach(r => {
+      if (r.seating_type_id) counts[r.seating_type_id] = (counts[r.seating_type_id] || 0) + 1;
+    });
+
+    const allFull = activeTypes.every(st => (counts[st.id] || 0) >= st.available_slots);
+    setReservationsSoldOut(allFull);
   };
 
   const fetchEventDetails = async () => {
@@ -287,36 +341,7 @@ export default function EventDetail() {
 
       // Check if all reservation seating types are sold out for Kaliva flow
       const eventDataLinked = !!(eventData as any).businesses?.ticket_reservation_linked || isClubOrEventBusiness((eventData as any).businesses?.category || []);
-      if (eventDataLinked && eventData.event_type === 'ticket_and_reservation') {
-        const { data: seatingTypes } = await supabase
-          .from('reservation_seating_types')
-          .select('id, available_slots, paused')
-          .eq('event_id', eventId);
-
-        if (seatingTypes && seatingTypes.length > 0) {
-          // Count real reservations for non-paused types
-          const activeTypes = seatingTypes.filter(st => !st.paused);
-          if (activeTypes.length === 0) {
-            // All paused by business
-            setReservationsSoldOut(true);
-          } else {
-            const activeIds = activeTypes.map(st => st.id);
-            const { data: reservations } = await supabase
-              .from('reservations')
-              .select('seating_type_id')
-              .in('seating_type_id', activeIds)
-              .in('status', ['pending', 'accepted']);
-
-            const counts: Record<string, number> = {};
-            (reservations || []).forEach(r => {
-              if (r.seating_type_id) counts[r.seating_type_id] = (counts[r.seating_type_id] || 0) + 1;
-            });
-
-            const allFull = activeTypes.every(st => (counts[st.id] || 0) >= st.available_slots);
-            setReservationsSoldOut(allFull);
-          }
-        }
-      }
+      await refreshReservationSoldOut(eventId, eventDataLinked, eventData.event_type);
 
       // Fetch RSVP counts (global)
       await refreshCounts(eventId);
