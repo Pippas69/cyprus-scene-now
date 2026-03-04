@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
 import { 
-  GlassWater, TableIcon, Crown, Sofa, Users, Shirt, 
+  GlassWater, TableIcon, Crown, Sofa, Users, 
   Clock, Phone, User, MessageSquare, CreditCard, Mail,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, Euro,
   AlertCircle, Calendar
