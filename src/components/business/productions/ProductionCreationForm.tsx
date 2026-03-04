@@ -408,7 +408,7 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
             show_instance_id: showInst.id,
             venue_seat_id: hs.seatId,
             status: 'sold',
-            buyer_name: 'House Reserved',
+            price_cents: 0,
           }));
           const { error: hsErr } = await supabase.from('show_instance_seats').insert(houseSeatRows);
           if (hsErr) console.warn('House seats insertion warning:', hsErr);
