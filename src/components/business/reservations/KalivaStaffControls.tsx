@@ -73,7 +73,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
   const [internalSelectedEventId, setInternalSelectedEventId] = useState<string | null>(null);
   const selectedEventId = externalSelectedEventId ?? internalSelectedEventId;
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [editingField, setEditingField] = useState<{ id: string; type: 'seating' | 'tier' } | null>(null);
+  const [editingField, setEditingField] = useState<{ id: string; type: 'seating' | 'tier'; eventId: string } | null>(null);
   const [editValue, setEditValue] = useState('');
 
   const t = text[language];
@@ -201,8 +201,8 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
     }
   };
 
-  const startEdit = (id: string, type: 'seating' | 'tier', currentValue: number) => {
-    setEditingField({ id, type });
+  const startEdit = (id: string, type: 'seating' | 'tier', currentValue: number, eventId: string) => {
+    setEditingField({ id, type, eventId });
     setEditValue(String(currentValue));
   };
 
@@ -211,9 +211,15 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
     setEditValue('');
   };
 
-  const saveEdit = async () => {
+  const saveEdit = async (expected?: { id: string; type: 'seating' | 'tier' }) => {
     if (!editingField) return;
-    const newVal = parseInt(editValue);
+
+    // Guard against stale/wrong-row saves
+    if (expected && (expected.id !== editingField.id || expected.type !== editingField.type)) {
+      return;
+    }
+
+    const newVal = parseInt(editValue, 10);
     if (isNaN(newVal) || newVal < 0) {
       cancelEdit();
       return;
@@ -224,13 +230,15 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
         const { error } = await supabase
           .from('reservation_seating_types')
           .update({ available_slots: newVal })
-          .eq('id', editingField.id);
+          .eq('id', editingField.id)
+          .eq('event_id', editingField.eventId);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('ticket_tiers')
           .update({ quantity_total: newVal })
-          .eq('id', editingField.id);
+          .eq('id', editingField.id)
+          .eq('event_id', editingField.eventId);
         if (error) throw error;
       }
       toast.success(t.saved);
@@ -346,11 +354,11 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                                     inputMode="numeric"
                                     autoFocus
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') saveEdit();
+                                      if (e.key === 'Enter') saveEdit({ id: st.id, type: 'seating' });
                                       if (e.key === 'Escape') cancelEdit();
                                     }}
                                   />
-                                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={saveEdit}>
+                                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => saveEdit({ id: st.id, type: 'seating' })}>
                                     <Check className="h-3 w-3 text-green-600" />
                                   </Button>
                                   <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={cancelEdit}>
@@ -360,7 +368,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                               ) : (
                                 <span
                                   className="cursor-pointer hover:underline inline-flex items-center gap-0.5"
-                                  onClick={() => startEdit(st.id, 'seating', st.available_slots)}
+                                  onClick={() => startEdit(st.id, 'seating', st.available_slots, selectedEvent.id)}
                                 >
                                   {st.available_slots}
                                   <Edit2 className="h-2.5 w-2.5 opacity-50" />
@@ -420,11 +428,11 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                                     inputMode="numeric"
                                     autoFocus
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') saveEdit();
+                                      if (e.key === 'Enter') saveEdit({ id: tt.id, type: 'tier' });
                                       if (e.key === 'Escape') cancelEdit();
                                     }}
                                   />
-                                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={saveEdit}>
+                                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => saveEdit({ id: tt.id, type: 'tier' })}>
                                     <Check className="h-3 w-3 text-green-600" />
                                   </Button>
                                   <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={cancelEdit}>
@@ -434,7 +442,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                               ) : (
                                 <span
                                   className="cursor-pointer hover:underline inline-flex items-center gap-0.5"
-                                  onClick={() => startEdit(tt.id, 'tier', tt.quantity_total)}
+                                  onClick={() => startEdit(tt.id, 'tier', tt.quantity_total, selectedEvent.id)}
                                 >
                                   {tt.quantity_total}
                                   <Edit2 className="h-2.5 w-2.5 opacity-50" />
