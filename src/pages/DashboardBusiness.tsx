@@ -312,27 +312,29 @@ const DashboardBusiness = () => {
             ref={(node) => {
               scrollRef.current = node as unknown as HTMLElement | null;
             }}
-            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 sm:px-2"
+className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
             style={{ WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
           >
             <Routes>
               <Route index element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
               {/* Posts feature hidden but kept in code
-              <Route path="posts" element={businessId ? <BusinessPostsList businessId={businessId} language={language} /> : null} />
-              <Route path="posts/new" element={businessId ? <BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /> : null} />
+              <Route path="posts" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostsList businessId={businessId} language={language} /></div> : null} />
+              <Route path="posts/new" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /></div> : null} />
               */}
-              <Route path="events" element={businessId ? <EventsList businessId={businessId} /> : null} />
+              <Route path="events" element={businessId ? <div className="px-3 sm:px-0"><EventsList businessId={businessId} /></div> : null} />
               <Route path="events/new" element={businessId ? (
-                ['theatre', 'music', 'dance', 'kids'].some(c => businessCategories.map(bc => bc.toLowerCase()).includes(c))
+                <div className="px-3 sm:px-0">
+                {['theatre', 'music', 'dance', 'kids'].some(c => businessCategories.map(bc => bc.toLowerCase()).includes(c))
                   ? <ProductionCreationForm businessId={businessId} />
-                  : <EventCreationForm businessId={businessId} />
+                  : <EventCreationForm businessId={businessId} />}
+                </div>
               ) : null} />
-              <Route path="offers" element={businessId ? <OffersList businessId={businessId} /> : null} />
-              <Route path="offers/new" element={businessId ? <OfferCreationForm businessId={businessId} /> : null} />
-              <Route path="reservations" element={businessId ? <ReservationDashboard businessId={businessId} language={language} /> : null} />
-              <Route path="subscription" element={<SubscriptionPlans embedded />} />
-              <Route path="boosts" element={businessId ? <BoostManagement businessId={businessId} /> : null} />
-              <Route path="settings" element={userId && businessId ? <BusinessAccountSettings userId={userId} businessId={businessId} language={language} /> : null} />
+              <Route path="offers" element={businessId ? <div className="px-3 sm:px-0"><OffersList businessId={businessId} /></div> : null} />
+              <Route path="offers/new" element={businessId ? <div className="px-3 sm:px-0"><OfferCreationForm businessId={businessId} /></div> : null} />
+              <Route path="reservations" element={businessId ? <div className="px-3 sm:px-0"><ReservationDashboard businessId={businessId} language={language} /></div> : null} />
+              <Route path="subscription" element={<div className="px-3 sm:px-0"><SubscriptionPlans embedded /></div>} />
+              <Route path="boosts" element={businessId ? <div className="px-3 sm:px-0"><BoostManagement businessId={businessId} /></div> : null} />
+              <Route path="settings" element={userId && businessId ? <div className="px-3 sm:px-0"><BusinessAccountSettings userId={userId} businessId={businessId} language={language} /></div> : null} />
             </Routes>
           </main>
 
