@@ -86,14 +86,34 @@ Deno.serve(async (req) => {
     let guestIdx = 0;
 
     if (seatIds.length > 0) {
-      // Seated event: one ticket per seat
+      // Seated event: one ticket per seat — match tier to seat's zone
+      const tiersByZone = new Map<string, string>();
+      for (const item of ticketBreakdown) {
+        if (item.zoneName) {
+          tiersByZone.set(item.zoneName, item.tierId);
+        }
+      }
+      // Fetch all tiers for this event to match by name if zoneName not in breakdown
+      const { data: allTiers } = await supabaseClient
+        .from("ticket_tiers")
+        .select("id, name")
+        .eq("event_id", order.event_id);
+      const tiersByName = new Map<string, string>();
+      if (allTiers) {
+        for (const tier of allTiers) {
+          tiersByName.set(tier.name, tier.id);
+        }
+      }
+      const fallbackTierId = ticketBreakdown[0]?.tierId;
+
       for (const seatId of seatIds) {
         const seatDetail = seatDetailsMap.get(seatId);
         const guestInfo = guestsData[guestIdx];
-        const matchingItem = ticketBreakdown[0]; // primary tier
+        const zoneName = seatDetail?.zone || "";
+        const matchedTierId = tiersByZone.get(zoneName) || tiersByName.get(zoneName) || fallbackTierId;
         ticketsToCreate.push({
           order_id: orderId,
-          tier_id: matchingItem.tierId,
+          tier_id: matchedTierId,
           event_id: order.event_id,
           user_id: order.user_id,
           status: "valid",
