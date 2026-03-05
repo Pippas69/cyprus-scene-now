@@ -240,6 +240,15 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   </span>
                 </div>
                 
+                {/* Seat info for seated events */}
+                {(ticket as any).seat_zone && (
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                    <span className="font-medium">{(ticket as any).seat_zone}</span>
+                    {(ticket as any).seat_row && <span>• {language === 'el' ? 'Σειρά' : 'Row'} {(ticket as any).seat_row}</span>}
+                    {(ticket as any).seat_number && <span>• {language === 'el' ? 'Θέση' : 'Seat'} {(ticket as any).seat_number}</span>}
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   {ticket.events?.start_at && (
                     <span className="flex items-center gap-1">
