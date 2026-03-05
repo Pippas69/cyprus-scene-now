@@ -70,9 +70,11 @@ function AppContent() {
   const location = useLocation();
   const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/offers', '/dashboard-user', '/messages'];
   const adminRoutes = ['/admin'];
+  const businessRoutes = ['/dashboard-business'];
   const hideBottomNav = location.pathname === '/' ||
                         userLayoutRoutes.some(route => location.pathname.startsWith(route)) || 
-                        adminRoutes.some(route => location.pathname.startsWith(route));
+                        adminRoutes.some(route => location.pathname.startsWith(route)) ||
+                        businessRoutes.some(route => location.pathname.startsWith(route));
 
   const routesKey = location.pathname.startsWith('/dashboard-business')
     ? '/dashboard-business'
@@ -81,7 +83,7 @@ function AppContent() {
   return (
     <>
       <ScrollToTop />
-      <div className="min-h-screen pb-16 md:pb-0">
+      <div className={`min-h-screen ${hideBottomNav ? '' : 'pb-16'} md:pb-0`}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={routesKey}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
