@@ -966,7 +966,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         <TabsContent value="offers" className="space-y-4 mt-4">
           {activeOfferBoosts.length === 0 && expiredOfferBoosts.length === 0 &&
           <Card>
-              <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
+              <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm">
                 {t.noOfferBoosts}
               </CardContent>
             </Card>
