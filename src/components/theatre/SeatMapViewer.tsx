@@ -184,7 +184,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
       if (s.y < minY) minY = s.y;
       if (s.y > maxY) maxY = s.y;
     }
-    return { minX: minX - 30, maxX: maxX + 30, minY: minY - 80, maxY: maxY + 30 };
+    return { minX: minX - 30, maxX: maxX + 30, minY: minY - 30, maxY: maxY + 80 };
   }, [seats]);
 
   const viewWidth = bounds.maxX - bounds.minX;
@@ -208,7 +208,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     const rowMap = new Map<string, { minX: number; maxX: number; y: number }>();
     for (const seat of seats) {
       const cx = seat.x - bounds.minX;
-      const cy = bounds.maxY - seat.y;
+      const cy = seat.y - bounds.minY;
       const key = `${seat.zone_id}-${seat.row_label}`;
       const existing = rowMap.get(key);
       if (!existing) {
@@ -334,8 +334,8 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     else fill = zone?.color || '#94a3b8'; // Use zone color for available seats
 
     const cx = seat.x - bounds.minX;
-    // Flip Y so row A (high y value = front) appears at bottom near stage
-    const cy = bounds.maxY - seat.y;
+    // Row A (high y value = front) appears at bottom, stage at top
+    const cy = seat.y - bounds.minY;
 
     // Cinema-style chair shape
     const seatPath = `
@@ -483,11 +483,11 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           }}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Stage indicator */}
-          <g>
+          {/* Stage indicator at top */}
+          <g transform={`translate(0, -50)`}>
             {/* Stage curved line */}
             <path
-              d={`M ${viewWidth * 0.15} ${viewHeight + 20} Q ${viewWidth * 0.5} ${viewHeight + 50} ${viewWidth * 0.85} ${viewHeight + 20}`}
+              d={`M ${viewWidth * 0.15} 40 Q ${viewWidth * 0.5} 10 ${viewWidth * 0.85} 40`}
               fill="none"
               stroke="hsl(var(--primary))"
               strokeWidth={3}
@@ -495,7 +495,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
             />
             <text
               x={viewWidth / 2}
-              y={viewHeight + 35}
+              y={22}
               textAnchor="middle"
               fontSize={14}
               fontWeight={700}
@@ -506,7 +506,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
             </text>
             <text
               x={viewWidth / 2}
-              y={viewHeight + 50}
+              y={8}
               textAnchor="middle"
               fontSize={9}
               fill="hsl(var(--muted-foreground))"
