@@ -139,7 +139,6 @@ Deno.serve(async (req) => {
         show_instance_id: showInstanceId,
         venue_seat_id: seatId,
         status: 'sold',
-        ticket_order_id: orderId,
         held_until: null,
       }));
 
