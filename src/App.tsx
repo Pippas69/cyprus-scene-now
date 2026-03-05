@@ -70,9 +70,11 @@ function AppContent() {
   const location = useLocation();
   const userLayoutRoutes = ['/feed', '/ekdiloseis', '/xartis', '/offers', '/dashboard-user', '/messages'];
   const adminRoutes = ['/admin'];
+  const businessRoutes = ['/dashboard-business'];
   const hideBottomNav = location.pathname === '/' ||
                         userLayoutRoutes.some(route => location.pathname.startsWith(route)) || 
-                        adminRoutes.some(route => location.pathname.startsWith(route));
+                        adminRoutes.some(route => location.pathname.startsWith(route)) ||
+                        businessRoutes.some(route => location.pathname.startsWith(route));
 
   const routesKey = location.pathname.startsWith('/dashboard-business')
     ? '/dashboard-business'
