@@ -56,10 +56,16 @@ interface BusinessSidebarProps {
 }
 
 export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
   const t = translations[language];
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   
 
@@ -100,6 +106,7 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
                       end={item.url === "/dashboard-business"}
                       className="flex items-center gap-3"
                       activeClassName="bg-accent text-accent-foreground font-medium"
+                      onClick={handleLinkClick}
                     >
                       <item.icon className="h-4 w-4" />
                       {state !== "collapsed" && <span>{item.title}</span>}
@@ -123,6 +130,7 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
                       to={item.url} 
                       className="flex items-center gap-3"
                       activeClassName="bg-accent text-accent-foreground font-medium"
+                      onClick={handleLinkClick}
                     >
                       <item.icon className="h-4 w-4" />
                       {state !== "collapsed" && <span>{item.title}</span>}
@@ -146,6 +154,7 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
                       to={item.url} 
                       className="flex items-center gap-3"
                       activeClassName="bg-accent text-accent-foreground font-medium"
+                      onClick={handleLinkClick}
                     >
                       <item.icon className="h-4 w-4" />
                       {state !== "collapsed" && <span>{item.title}</span>}
