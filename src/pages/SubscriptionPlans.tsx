@@ -610,7 +610,7 @@ export default function SubscriptionPlans({
       </AnimatePresence>
 
       {/* Compact Current Plan Banner - Only visible for paid plans (Basic, Pro, Elite) */}
-      {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && <div className={`${embedded ? 'px-1' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-3' : 'pt-4 pb-3'}`}>
+      {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && <div className={`${embedded ? 'px-1 pt-2' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pb-3' : 'pt-4 pb-3'}`}>
           <motion.div initial={{
         opacity: 0,
         y: -10
