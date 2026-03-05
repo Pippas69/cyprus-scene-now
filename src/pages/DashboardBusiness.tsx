@@ -312,7 +312,7 @@ const DashboardBusiness = () => {
             ref={(node) => {
               scrollRef.current = node as unknown as HTMLElement | null;
             }}
-            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 sm:px-2"
             style={{ WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
           >
             <Routes>

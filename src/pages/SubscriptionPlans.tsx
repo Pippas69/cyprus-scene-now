@@ -610,7 +610,7 @@ export default function SubscriptionPlans({
       </AnimatePresence>
 
       {/* Compact Current Plan Banner - Only visible for paid plans (Basic, Pro, Elite) */}
-      {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-3' : 'pt-4 pb-3'}`}>
+      {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && <div className={`${embedded ? 'px-1' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pt-0 pb-3' : 'pt-4 pb-3'}`}>
           <motion.div initial={{
         opacity: 0,
         y: -10
@@ -652,7 +652,7 @@ export default function SubscriptionPlans({
         </div>}
 
       {/* Header Section with Free Plan */}
-      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-4`}>
+      <div className={`${embedded ? 'px-1' : 'max-w-7xl mx-auto px-4'} pb-4`}>
         {/* Free Plan - Compact Horizontal Section */}
         <motion.div initial={{
         opacity: 0,
@@ -781,7 +781,7 @@ export default function SubscriptionPlans({
       </div>
 
       {/* Plans Grid - Single column on mobile/tablet, 3 columns on desktop */}
-      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-8`}>
+      <div className={`${embedded ? 'px-1' : 'max-w-7xl mx-auto px-4'} pb-8`}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
           {plans.map((planSlug, index) => {
           const config = PLAN_CONFIG[planSlug];
@@ -896,7 +896,7 @@ export default function SubscriptionPlans({
       </div>
 
       {/* Enterprise Section - Horizontal */}
-      <div className={`${embedded ? 'px-0' : 'max-w-7xl mx-auto px-4'} pb-12`}>
+      <div className={`${embedded ? 'px-1' : 'max-w-7xl mx-auto px-4'} pb-12`}>
         <motion.div initial={{
         opacity: 0,
         y: 20
