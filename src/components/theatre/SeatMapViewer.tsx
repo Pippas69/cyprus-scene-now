@@ -483,11 +483,11 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           }}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Stage indicator at top */}
-          <g transform={`translate(0, -50)`}>
+          {/* Stage indicator at bottom */}
+          <g>
             {/* Stage curved line */}
             <path
-              d={`M ${viewWidth * 0.15} 40 Q ${viewWidth * 0.5} 10 ${viewWidth * 0.85} 40`}
+              d={`M ${viewWidth * 0.15} ${viewHeight + 20} Q ${viewWidth * 0.5} ${viewHeight + 50} ${viewWidth * 0.85} ${viewHeight + 20}`}
               fill="none"
               stroke="hsl(var(--primary))"
               strokeWidth={3}
@@ -495,7 +495,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
             />
             <text
               x={viewWidth / 2}
-              y={22}
+              y={viewHeight + 35}
               textAnchor="middle"
               fontSize={14}
               fontWeight={700}
@@ -506,7 +506,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
             </text>
             <text
               x={viewWidth / 2}
-              y={8}
+              y={viewHeight + 50}
               textAnchor="middle"
               fontSize={9}
               fill="hsl(var(--muted-foreground))"
