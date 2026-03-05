@@ -31,7 +31,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
 
   // Fetch user's tickets
   const { data: tickets, isLoading: ticketsLoading } = useQuery({
-    queryKey: ["my-tickets-events", userId, "seat-fields-v2"],
+    queryKey: ["my-tickets-events", userId, "seat-tier-fix-v3"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tickets")
