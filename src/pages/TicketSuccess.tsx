@@ -44,6 +44,9 @@ interface TicketData {
   business_logo?: string | null;
   guest_name?: string | null;
   guest_age?: number | null;
+  seat_zone?: string | null;
+  seat_row?: string | null;
+  seat_number?: number | null;
 }
 
 export const TicketSuccess = () => {
@@ -120,6 +123,9 @@ export const TicketSuccess = () => {
               qr_code_token,
               guest_name,
               guest_age,
+              seat_zone,
+              seat_row,
+              seat_number,
               ticket_tiers(name),
               events(title, start_at, businesses(name, logo_url))
             `)
@@ -156,6 +162,9 @@ export const TicketSuccess = () => {
             business_logo: business?.logo_url || null,
             guest_name: ticket.guest_name || null,
             guest_age: ticket.guest_age || null,
+            seat_zone: ticket.seat_zone || null,
+            seat_row: ticket.seat_row || null,
+            seat_number: ticket.seat_number || null,
           };
         });
 
@@ -266,6 +275,9 @@ export const TicketSuccess = () => {
             ticketTier={currentTicket.tier_name}
             guestName={currentTicket.guest_name || undefined}
             guestAge={currentTicket.guest_age || undefined}
+            seatZone={currentTicket.seat_zone || undefined}
+            seatRow={currentTicket.seat_row || undefined}
+            seatNumber={currentTicket.seat_number || undefined}
             showSuccessMessage={currentIdx === 0}
             onViewDashboard={() => navigate("/dashboard-user?tab=events&subtab=tickets")}
             viewDashboardLabel={text.viewTickets}

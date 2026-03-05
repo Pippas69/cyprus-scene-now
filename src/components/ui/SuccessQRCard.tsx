@@ -31,6 +31,10 @@ interface SuccessQRCardProps {
   // Guest info (for individual tickets in group bookings)
   guestName?: string;
   guestAge?: number;
+  // Seat info (for seated/performance events)
+  seatZone?: string;
+  seatRow?: string;
+  seatNumber?: number;
   // Actions
   onDownloadQR?: () => void;
   onClose?: () => void;
@@ -59,6 +63,7 @@ const translations = {
     time: "ΩΡΑ",
     name: "ΟΝΟΜΑ",
     code: "ΚΩΔΙΚΟΣ",
+    seat: "ΘΕΣΗ",
     ticket: "ΕΙΣΙΤΗΡΙΟ",
     reservation: "ΚΡΑΤΗΣΗ",
     offer: "ΠΡΟΣΦΟΡΑ",
@@ -85,6 +90,7 @@ const translations = {
     time: "TIME",
     name: "NAME",
     code: "CODE",
+    seat: "SEAT",
     ticket: "TICKET",
     reservation: "RESERVATION",
     offer: "OFFER",
@@ -114,6 +120,9 @@ export const SuccessQRCard = ({
   prepaidAmountCents,
   guestName,
   guestAge,
+  seatZone,
+  seatRow,
+  seatNumber,
   onDownloadQR,
   onClose,
   onViewDashboard,
@@ -187,25 +196,50 @@ export const SuccessQRCard = ({
         const ticketHolderName = guestName || "-";
         const ticketDate = eventDate ? formatDate(eventDate) : "-";
         const ticketTime = eventDate ? formatTime(eventDate) : "-";
+        const hasSeat = seatZone || seatRow || seatNumber;
+        const seatLabel = hasSeat
+          ? [seatRow && `${seatRow}`, seatNumber && `${seatNumber}`].filter(Boolean).join("")
+          : null;
 
         return (
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketHolderName}</p>
+          <>
+            <div className={`grid ${hasSeat ? "grid-cols-2" : "grid-cols-3"} gap-2 mb-2`}>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketHolderName}</p>
+              </div>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
+                <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{ticketDate}</p>
+              </div>
+              {!hasSeat && (
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketTime}</p>
+                </div>
+              )}
             </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
-              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{ticketDate}</p>
-            </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketTime}</p>
-            </div>
-          </div>
+            {hasSeat && (
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">{ticketTime}</p>
+                </div>
+                <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                  <Ticket className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                  <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.seat}</p>
+                  <p className="text-xs font-semibold text-[#102b4a] truncate">
+                    {seatZone && <span className="text-[10px] text-[#64748b]">{seatZone} </span>}
+                    {seatLabel}
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
         );
       }
 
