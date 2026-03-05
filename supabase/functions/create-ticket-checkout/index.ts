@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
         show_instance_id: showInstanceId,
         venue_seat_id: seatId,
         status: 'sold',
-        ticket_order_id: orderId,
+        held_until: null,
       }));
 
       const { error: seatError } = await supabaseClient
@@ -498,7 +498,7 @@ Deno.serve(async (req) => {
         show_instance_id: showInstanceId,
         venue_seat_id: seatId,
         status: 'held',
-        ticket_order_id: order.id,
+        held_by: user.id,
         held_until: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min hold
       }));
 
