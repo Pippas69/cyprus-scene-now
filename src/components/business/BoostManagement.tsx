@@ -936,7 +936,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
         <TabsContent value="events" className="space-y-4 mt-4">
           {activeEventBoosts.length === 0 && expiredEventBoosts.length === 0 &&
           <Card>
-              <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm whitespace-nowrap">
+              <CardContent className="p-3 sm:p-6 text-center text-muted-foreground text-[10px] sm:text-sm">
                 {t.noEventBoosts}
               </CardContent>
             </Card>
