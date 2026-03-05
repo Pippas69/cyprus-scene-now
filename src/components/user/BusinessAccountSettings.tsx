@@ -865,8 +865,10 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
         </CardContent>
       </Card>
 
-      {/* Student Discount Settings */}
-      <StudentDiscountSettings businessId={businessId} />
+      {/* Student Discount Settings - hidden for clubs, events, and performance categories */}
+      {!selectedCategories.some(c => ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'].includes(c.toLowerCase())) && (
+        <StudentDiscountSettings businessId={businessId} />
+      )}
 
       {/* Password Management */}
       <Card>
