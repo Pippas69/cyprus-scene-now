@@ -124,25 +124,28 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
 
   // ── Load data ──
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const isNewInstance = showInstanceId === '__new__';
+    const isNewInstance = showInstanceId === '__new__';
 
-      const [zonesRes, seatsRes] = await Promise.all([
-        supabase
-          .from('venue_zones')
-          .select('*')
-          .eq('venue_id', venueId)
-          .order('sort_order'),
-        supabase
-          .from('venue_seats')
-          .select('*')
-          .eq('venue_id', venueId)
-          .eq('is_active', true),
-      ]);
+    const loadData = async (isInitial = false) => {
+      if (isInitial) setLoading(true);
 
-      if (zonesRes.data) setZones(zonesRes.data as VenueZone[]);
-      if (seatsRes.data) setSeats(seatsRes.data as VenueSeat[]);
+      if (isInitial) {
+        const [zonesRes, seatsRes] = await Promise.all([
+          supabase
+            .from('venue_zones')
+            .select('*')
+            .eq('venue_id', venueId)
+            .order('sort_order'),
+          supabase
+            .from('venue_seats')
+            .select('*')
+            .eq('venue_id', venueId)
+            .eq('is_active', true),
+        ]);
+
+        if (zonesRes.data) setZones(zonesRes.data as VenueZone[]);
+        if (seatsRes.data) setSeats(seatsRes.data as VenueSeat[]);
+      }
 
       if (!isNewInstance) {
         const soldRes = await supabase
@@ -169,9 +172,16 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
       } else {
         setSoldSeats(new Set());
       }
-      setLoading(false);
+      if (isInitial) setLoading(false);
     };
-    loadData();
+
+    loadData(true);
+
+    // Poll every 15s to pick up newly sold/held seats
+    if (!isNewInstance) {
+      const interval = setInterval(() => loadData(false), 15_000);
+      return () => clearInterval(interval);
+    }
   }, [venueId, showInstanceId]);
 
   // ── Compute bounds ──
