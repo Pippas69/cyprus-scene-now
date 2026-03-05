@@ -56,10 +56,16 @@ interface BusinessSidebarProps {
 }
 
 export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
   const t = translations[language];
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   
 
