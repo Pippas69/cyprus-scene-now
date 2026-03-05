@@ -106,6 +106,7 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
                       end={item.url === "/dashboard-business"}
                       className="flex items-center gap-3"
                       activeClassName="bg-accent text-accent-foreground font-medium"
+                      onClick={handleLinkClick}
                     >
                       <item.icon className="h-4 w-4" />
                       {state !== "collapsed" && <span>{item.title}</span>}
