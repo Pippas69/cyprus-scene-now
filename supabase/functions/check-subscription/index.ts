@@ -59,12 +59,6 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
-  // Anon-key client for JWT verification (getClaims requires anon key)
-  const authClient = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    { auth: { persistSession: false } }
-  );
 
   try {
     logStep('Function started');
@@ -79,13 +73,12 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
     
-    // Use getClaims for signing-keys compatibility
-    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) throw new Error(`Authentication error: ${claimsError?.message || 'invalid claims'}`);
-    
-    const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
-    if (!userId || !userEmail) throw new Error('User not authenticated or email not available');
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    const user = userData.user;
+    if (!user?.id || !user?.email) throw new Error('User not authenticated or email not available');
+    const userId = user.id;
+    const userEmail = user.email;
     logStep('User authenticated', { userId, email: userEmail });
 
     // Get business ID for this user
