@@ -1244,8 +1244,8 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
 
                             {/* Price & Available Slots - compact for hybrid events */}
                             {isTicketSelected && isReservationSelected && (
-                              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                                <div className="space-y-1.5 sm:space-y-2">
+                              <div className="flex items-end gap-3 sm:gap-4">
+                                <div className="space-y-1.5 sm:space-y-2 shrink-0">
                                   <Label className="text-xs sm:text-sm">{t.priceLabel}</Label>
                                   <Input
                                     type="text"
@@ -1259,11 +1259,11 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                                         ticketPriceCents: Math.round(parseFloat(normalized || '0') * 100)
                                       });
                                     }}
-                                    className="h-8 sm:h-10 text-xs sm:text-sm"
+                                    className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
                                   />
                                 </div>
                                 <div className="space-y-1.5 sm:space-y-2">
-                                  <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
+                                  <Label className="text-xs sm:text-sm whitespace-nowrap">{t.availableBookings}</Label>
                                   <NumberInput
                                     value={config.availableSlots}
                                     onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
