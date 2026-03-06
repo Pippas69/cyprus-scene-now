@@ -445,7 +445,8 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
         const { data: seatingTypes } = await supabase
           .from('reservation_seating_types')
           .select('*')
-          .eq('event_id', event.id);
+          .eq('event_id', event.id)
+          .eq('paused', false);
 
         const reservationLinkedTiers = (window as any).__tempReservationLinkedTiers || [];
         delete (window as any).__tempReservationLinkedTiers;
@@ -856,6 +857,8 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           if (!count || count === 0) {
             await supabase.from('seating_type_tiers').delete().eq('seating_type_id', s.id);
             await supabase.from('reservation_seating_types').delete().eq('id', s.id);
+          } else {
+            await supabase.from('reservation_seating_types').update({ paused: true }).eq('id', s.id);
           }
         }
 
@@ -868,7 +871,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
 
           if (existingId) {
             await supabase.from('reservation_seating_types')
-              .update({ available_slots: config.availableSlots })
+              .update({ available_slots: config.availableSlots, paused: false })
               .eq('id', existingId);
             seatingId = existingId;
             await supabase.from('seating_type_tiers').delete().eq('seating_type_id', existingId);
