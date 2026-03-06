@@ -1332,7 +1332,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                                       onChange={(value) => updateTier(type, index, { prepaidChargeCents: value * 100 })}
                                       min={0}
                                       max={9999}
-                                      className="w-12 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm"
+                                      className="w-14 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm"
                                     />
                                   </div>
                                   {config.tiers.length > 1 && (
