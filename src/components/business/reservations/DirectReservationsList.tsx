@@ -608,7 +608,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   // then fall back to ticket_credit_cents
                   const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                   const minChargeCents = reservation.prepaid_min_charge_cents ?? tierMinCharge ?? reservation.ticket_credit_cents ?? 0;
-                  const minChargeDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-';
+                  const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
+                  const minChargeDisplay = minChargeCents > 0 
+                    ? ticketPaidCents > 0 
+                      ? `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})`
+                      : `€${(minChargeCents / 100).toFixed(2)}`
+                    : '-';
 
                   return (
                     <TableRow key={reservation.id} className="group">
