@@ -1098,7 +1098,7 @@ const EventCreationForm = ({
                             onChange={(value) => updateTier(type, index, { prepaidChargeCents: value * 100 })}
                             min={0}
                             max={9999}
-                            className="w-12 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" />
+                            className="w-14 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" />
                           
                                 </div>
                                 {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-5 w-5 sm:h-8 sm:w-8 text-destructive flex-shrink-0 p-0">
