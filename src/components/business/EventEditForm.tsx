@@ -853,7 +853,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             .from('reservations')
             .select('id', { count: 'exact', head: true })
             .eq('seating_type_id', s.id);
-          if (count === 0) {
+          if (!count || count === 0) {
             await supabase.from('seating_type_tiers').delete().eq('seating_type_id', s.id);
             await supabase.from('reservation_seating_types').delete().eq('id', s.id);
           }
