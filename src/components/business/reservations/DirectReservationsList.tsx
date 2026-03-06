@@ -137,9 +137,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const t = text[language];
 
-  const initialLoadDone = useState(false)[0];
-  const initialLoadRef = { current: false };
-
   useEffect(() => {
     checkBusinessFlags().then(() => fetchReservations());
     const channel = supabase.
