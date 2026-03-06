@@ -328,6 +328,45 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     setSeatingTiers(tiersMap);
   };
 
+  const fetchCheckInCounts = async (reservationIds: string[]) => {
+    if (reservationIds.length === 0) return;
+    // Get ticket orders linked to these reservations
+    const { data: orders } = await supabase
+      .from('ticket_orders')
+      .select('id, linked_reservation_id')
+      .in('linked_reservation_id', reservationIds);
+
+    if (!orders || orders.length === 0) return;
+
+    const orderIds = orders.map(o => o.id);
+    const orderToReservation: Record<string, string> = {};
+    orders.forEach(o => {
+      if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
+    });
+
+    // Get all tickets for these orders
+    const { data: tickets } = await supabase
+      .from('tickets')
+      .select('order_id, status')
+      .in('order_id', orderIds);
+
+    if (!tickets) return;
+
+    const countsMap: Record<string, { used: number; total: number }> = {};
+    tickets.forEach(ticket => {
+      const resId = orderToReservation[ticket.order_id];
+      if (resId) {
+        if (!countsMap[resId]) countsMap[resId] = { used: 0, total: 0 };
+        countsMap[resId].total++;
+        if (ticket.status === 'used') {
+          countsMap[resId].used++;
+        }
+      }
+    });
+
+    setCheckInCounts(countsMap);
+  };
+
   const getMinChargeForPartySize = (seatingTypeId: string | null | undefined, partySize: number): number | null => {
     if (!seatingTypeId || !seatingTiers[seatingTypeId]) return null;
     const tiers = seatingTiers[seatingTypeId];
