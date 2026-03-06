@@ -266,7 +266,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                       className="flex items-center gap-1 hover:text-primary transition-colors"
                     >
                       <MapPin className="h-3 w-3 text-primary" />
-                      <span>{ticket.events.location}</span>
+                      <span className="truncate">{ticket.events.location}</span>
                     </button>
                   )}
                 </div>
