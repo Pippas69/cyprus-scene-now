@@ -639,7 +639,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           displayValue={reservation.reservation_name}
                           rawValue={reservation.reservation_name} />
                           {reservation.phone_number &&
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-muted-foreground -ml-2.5">
                               {reservation.phone_number}
                             </span>
                           }
