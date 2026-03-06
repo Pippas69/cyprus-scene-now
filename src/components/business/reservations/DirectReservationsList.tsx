@@ -70,9 +70,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Seating type names by seating_type_id
   const [seatingTypeNames, setSeatingTypeNames] = useState<Record<string, string>>({});
   // Kaliva: check-in counts per reservation (used tickets count)
-  const [checkInCounts, setCheckInCounts] = useState<Record<string, { used: number; total: number }>>({});
+  const [checkInCounts, setCheckInCounts] = useState<Record<string, {used: number;total: number;}>>({});
   // Editing state
-  const [editingField, setEditingField] = useState<{ id: string; field: string } | null>(null);
+  const [editingField, setEditingField] = useState<{id: string;field: string;} | null>(null);
   const [editValue, setEditValue] = useState<string>('');
 
   const text = {
@@ -105,7 +105,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ages: 'Ηλικίες',
       minCharge: 'Min. Charge',
       saved: 'Αποθηκεύτηκε!',
-      errorSaving: 'Σφάλμα αποθήκευσης',
+      errorSaving: 'Σφάλμα αποθήκευσης'
     },
     en: {
       title: 'Profile & Offer Reservations',
@@ -136,7 +136,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ages: 'Ages',
       minCharge: 'Min. Charge',
       saved: 'Saved!',
-      errorSaving: 'Error saving',
+      errorSaving: 'Error saving'
     }
   };
 
@@ -164,11 +164,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   }, [refreshNonce]);
 
   const checkBusinessFlags = async () => {
-    const { data } = await supabase
-      .from('businesses')
-      .select('ticket_reservation_linked, category')
-      .eq('id', businessId)
-      .single();
+    const { data } = await supabase.
+    from('businesses').
+    select('ticket_reservation_linked, category').
+    eq('id', businessId).
+    single();
     const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
     setIsTicketLinked(linked);
     return linked;
@@ -177,29 +177,29 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const fetchReservations = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const { data: bizData } = await supabase
-        .from('businesses')
-        .select('ticket_reservation_linked, category')
-        .eq('id', businessId)
-        .single();
+      const { data: bizData } = await supabase.
+      from('businesses').
+      select('ticket_reservation_linked, category').
+      eq('id', businessId).
+      single();
       const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []);
 
-      let query = supabase
-        .from('reservations')
-        .select(`
+      let query = supabase.
+      from('reservations').
+      select(`
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, seating_type_id,
           prepaid_min_charge_cents, event_id,
           profiles(name, email)
-        `)
-        .eq('business_id', businessId);
+        `).
+      eq('business_id', businessId);
 
       if (linked) {
-        query = query
-          .not('event_id', 'is', null)
-          .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
+        query = query.
+        not('event_id', 'is', null).
+        or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
         // Filter by specific event if selectedEventId is provided
         if (selectedEventId) {
           query = query.eq('event_id', selectedEventId);
@@ -246,7 +246,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         // Fetch check-in counts (used tickets per reservation)
         fetchCheckInCounts(reservationIds);
         // Fetch seating tiers
-        const seatingTypeIds = [...new Set(enrichedData.map(r => r.seating_type_id).filter(Boolean))] as string[];
+        const seatingTypeIds = [...new Set(enrichedData.map((r) => r.seating_type_id).filter(Boolean))] as string[];
         if (seatingTypeIds.length > 0) {
           fetchSeatingTiers(seatingTypeIds);
           fetchSeatingTypeNames(seatingTypeIds);
@@ -287,30 +287,30 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const fetchAgesForReservations = async (reservationIds: string[]) => {
     if (reservationIds.length === 0) return;
     // Get ticket orders linked to these reservations
-    const { data: orders } = await supabase
-      .from('ticket_orders')
-      .select('id, linked_reservation_id')
-      .in('linked_reservation_id', reservationIds);
+    const { data: orders } = await supabase.
+    from('ticket_orders').
+    select('id, linked_reservation_id').
+    in('linked_reservation_id', reservationIds);
 
     if (!orders || orders.length === 0) return;
 
-    const orderIds = orders.map(o => o.id);
+    const orderIds = orders.map((o) => o.id);
     const orderToReservation: Record<string, string> = {};
-    orders.forEach(o => {
+    orders.forEach((o) => {
       if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
     });
 
     // Get tickets with ages
-    const { data: tickets } = await supabase
-      .from('tickets')
-      .select('order_id, guest_age')
-      .in('order_id', orderIds)
-      .not('guest_age', 'is', null);
+    const { data: tickets } = await supabase.
+    from('tickets').
+    select('order_id, guest_age').
+    in('order_id', orderIds).
+    not('guest_age', 'is', null);
 
     if (!tickets) return;
 
     const agesMap: Record<string, number[]> = {};
-    tickets.forEach(ticket => {
+    tickets.forEach((ticket) => {
       const resId = orderToReservation[ticket.order_id];
       if (resId && ticket.guest_age) {
         if (!agesMap[resId]) agesMap[resId] = [];
@@ -324,24 +324,24 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
     const tiersMap: Record<string, SeatingTier[]> = {};
     for (const stId of seatingTypeIds) {
-      const { data } = await supabase
-        .from('seating_type_tiers')
-        .select('min_people, max_people, prepaid_min_charge_cents')
-        .eq('seating_type_id', stId)
-        .order('min_people', { ascending: true });
+      const { data } = await supabase.
+      from('seating_type_tiers').
+      select('min_people, max_people, prepaid_min_charge_cents').
+      eq('seating_type_id', stId).
+      order('min_people', { ascending: true });
       if (data) tiersMap[stId] = data;
     }
     setSeatingTiers(tiersMap);
   };
 
   const fetchSeatingTypeNames = async (seatingTypeIds: string[]) => {
-    const { data } = await supabase
-      .from('reservation_seating_types')
-      .select('id, seating_type')
-      .in('id', seatingTypeIds);
+    const { data } = await supabase.
+    from('reservation_seating_types').
+    select('id, seating_type').
+    in('id', seatingTypeIds);
     if (data) {
       const namesMap: Record<string, string> = {};
-      data.forEach(st => { namesMap[st.id] = st.seating_type; });
+      data.forEach((st) => {namesMap[st.id] = st.seating_type;});
       setSeatingTypeNames(namesMap);
     }
   };
@@ -349,29 +349,29 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const fetchCheckInCounts = async (reservationIds: string[]) => {
     if (reservationIds.length === 0) return;
     // Get ticket orders linked to these reservations
-    const { data: orders } = await supabase
-      .from('ticket_orders')
-      .select('id, linked_reservation_id')
-      .in('linked_reservation_id', reservationIds);
+    const { data: orders } = await supabase.
+    from('ticket_orders').
+    select('id, linked_reservation_id').
+    in('linked_reservation_id', reservationIds);
 
     if (!orders || orders.length === 0) return;
 
-    const orderIds = orders.map(o => o.id);
+    const orderIds = orders.map((o) => o.id);
     const orderToReservation: Record<string, string> = {};
-    orders.forEach(o => {
+    orders.forEach((o) => {
       if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
     });
 
     // Get all tickets for these orders
-    const { data: tickets } = await supabase
-      .from('tickets')
-      .select('order_id, status')
-      .in('order_id', orderIds);
+    const { data: tickets } = await supabase.
+    from('tickets').
+    select('order_id, status').
+    in('order_id', orderIds);
 
     if (!tickets) return;
 
-    const countsMap: Record<string, { used: number; total: number }> = {};
-    tickets.forEach(ticket => {
+    const countsMap: Record<string, {used: number;total: number;}> = {};
+    tickets.forEach((ticket) => {
       const resId = orderToReservation[ticket.order_id];
       if (resId) {
         if (!countsMap[resId]) countsMap[resId] = { used: 0, total: 0 };
@@ -388,11 +388,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const getMinChargeForPartySize = (seatingTypeId: string | null | undefined, partySize: number): number | null => {
     if (!seatingTypeId || !seatingTiers[seatingTypeId] || seatingTiers[seatingTypeId].length === 0) return null;
     const tiers = seatingTiers[seatingTypeId];
-    const exactTier = tiers.find(t => partySize >= t.min_people && partySize <= t.max_people);
+    const exactTier = tiers.find((t) => partySize >= t.min_people && partySize <= t.max_people);
     if (exactTier) return exactTier.prepaid_min_charge_cents;
 
     // Fallback to closest lower tier, otherwise the first configured tier
-    const fallbackTier = [...tiers].reverse().find(t => partySize >= t.min_people) ?? tiers[0];
+    const fallbackTier = [...tiers].reverse().find((t) => partySize >= t.min_people) ?? tiers[0];
     return fallbackTier?.prepaid_min_charge_cents ?? null;
   };
 
@@ -435,15 +435,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         updateData.ticket_credit_cents = cents;
       }
 
-      const { error } = await supabase
-        .from('reservations')
-        .update(updateData)
-        .eq('id', id);
+      const { error } = await supabase.
+      from('reservations').
+      update(updateData).
+      eq('id', id);
 
       if (error) throw error;
 
       // Update local state
-      setReservations(prev => prev.map(r => r.id === id ? { ...r, ...updateData } : r));
+      setReservations((prev) => prev.map((r) => r.id === id ? { ...r, ...updateData } : r));
       toast.success(t.saved);
     } catch (err) {
       console.error('Error saving:', err);
@@ -484,8 +484,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           return (
             <Badge className="bg-green-600 text-white whitespace-nowrap">
               {counts.used} check-in{counts.used !== 1 ? 's' : ''}
-            </Badge>
-          );
+            </Badge>);
+
         }
       }
       return <Badge className="bg-green-600 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
@@ -497,8 +497,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         return (
           <Badge className="bg-green-600 text-white whitespace-nowrap">
             {counts.used} check-in{counts.used !== 1 ? 's' : ''}
-          </Badge>
-        );
+          </Badge>);
+
       }
     }
     if (reservation.status === 'cancelled') {
@@ -525,13 +525,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             <Ticket className="h-3 w-3 mr-1" />
             {t.fromTickets}
           </Badge>
-          {reservation.ticket_credit_cents && reservation.ticket_credit_cents > 0 && (
-            <span className="text-[10px] text-muted-foreground">
+          {reservation.ticket_credit_cents && reservation.ticket_credit_cents > 0 &&
+          <span className="text-[10px] text-muted-foreground">
               {language === 'el' ? 'Πίστωση' : 'Credit'}: €{(reservation.ticket_credit_cents / 100).toFixed(2)}
             </span>
-          )}
-        </div>
-      );
+          }
+        </div>);
+
     }
     if (reservation.offer_purchase) {
       return (
@@ -548,7 +548,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   // Editable cell component
-  const EditableCell = ({ reservationId, field, displayValue, rawValue }: { reservationId: string; field: string; displayValue: string; rawValue: string }) => {
+  const EditableCell = ({ reservationId, field, displayValue, rawValue }: {reservationId: string;field: string;displayValue: string;rawValue: string;}) => {
     const isEditing = editingField?.id === reservationId && editingField?.field === field;
 
     if (isEditing) {
@@ -562,27 +562,27 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             onKeyDown={(e) => {
               if (e.key === 'Enter') saveEdit();
               if (e.key === 'Escape') cancelEdit();
-            }}
-          />
+            }} />
+          
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={saveEdit}>
             <Check className="h-3 w-3 text-green-600" />
           </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={cancelEdit}>
             <X className="h-3 w-3 text-red-500" />
           </Button>
-        </div>
-      );
+        </div>);
+
     }
 
     return (
       <span
         className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1"
-        onClick={() => startEdit(reservationId, field, rawValue)}
-      >
+        onClick={() => startEdit(reservationId, field, rawValue)}>
+        
         {displayValue}
         <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-      </span>
-    );
+      </span>);
+
   };
 
   if (loading) {
@@ -596,15 +596,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   if (isTicketLinked) {
     return (
       <div className="space-y-4 w-full max-w-full">
-        {filteredReservations.length === 0 ? (
-          <Card>
+        {filteredReservations.length === 0 ?
+        <Card>
             <CardContent className="py-10 text-center">
               <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">{t.noReservations}</p>
             </CardContent>
-          </Card>
-        ) : (
-          <Card>
+          </Card> :
+
+        <Card>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -617,44 +617,44 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableHeader>
               <TableBody>
                 {filteredReservations.map((reservation) => {
-                  const minAge = getMinAge(reservation.id);
-                  // Primary value = reservation minimum charge from seating tiers (party-size based).
-                  // Secondary fallback = stored prepaid minimum charge.
-                  // Parentheses value uses ticket_credit_cents (actual prepaid ticket amount).
-                  const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
-                  const minChargeCents = tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0;
-                  const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
-                  const minChargeDisplay = minChargeCents > 0 
-                    ? ticketPaidCents > 0 
-                      ? `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})`
-                      : `€${(minChargeCents / 100).toFixed(2)}`
-                    : '-';
+                const minAge = getMinAge(reservation.id);
+                // Primary value = reservation minimum charge from seating tiers (party-size based).
+                // Secondary fallback = stored prepaid minimum charge.
+                // Parentheses value uses ticket_credit_cents (actual prepaid ticket amount).
+                const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
+                const minChargeCents = tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0;
+                const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
+                const minChargeDisplay = minChargeCents > 0 ?
+                ticketPaidCents > 0 ?
+                `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})` :
+                `€${(minChargeCents / 100).toFixed(2)}` :
+                '-';
 
-                  return (
-                    <TableRow key={reservation.id} className="group">
+                return (
+                  <TableRow key={reservation.id} className="group">
                       <TableCell className="font-medium">
                         <EditableCell
-                          reservationId={reservation.id}
-                          field="reservation_name"
-                          displayValue={reservation.reservation_name}
-                          rawValue={reservation.reservation_name}
-                        />
+                        reservationId={reservation.id}
+                        field="reservation_name"
+                        displayValue={reservation.reservation_name}
+                        rawValue={reservation.reservation_name} />
+                      
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm whitespace-nowrap">
                             <EditableCell
-                              reservationId={reservation.id}
-                              field="party_size"
-                              displayValue={`${reservation.party_size} ${t.people}`} 
-                              rawValue={String(reservation.party_size)}
-                            />
+                            reservationId={reservation.id}
+                            field="party_size"
+                            displayValue={`${reservation.party_size} ${t.people}`}
+                            rawValue={String(reservation.party_size)} />
+                          
                           </span>
-                          {reservation.phone_number && (
-                            <span className="text-sm text-muted-foreground">
+                          {reservation.phone_number &&
+                        <span className="text-sm text-muted-foreground">
                               {reservation.phone_number}
                             </span>
-                          )}
+                        }
                         </div>
                       </TableCell>
                       <TableCell>
@@ -663,30 +663,30 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell>
                         <div className="flex flex-col">
                           <EditableCell
-                            reservationId={reservation.id}
-                            field="ticket_credit_cents"
-                            displayValue={minChargeDisplay}
-                            rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'}
-                          />
-                          {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] && (
-                            <span className="text-[10px] text-muted-foreground capitalize">
+                          reservationId={reservation.id}
+                          field="ticket_credit_cents"
+                          displayValue={minChargeDisplay}
+                          rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'} />
+                        
+                          {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] &&
+                        <span className="capitalize font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
                               {seatingTypeNames[reservation.seating_type_id]}
                             </span>
-                          )}
+                        }
                         </div>
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(reservation)}
                       </TableCell>
-                    </TableRow>
-                  );
-                })}
+                    </TableRow>);
+
+              })}
               </TableBody>
             </Table>
           </Card>
-        )}
-      </div>
-    );
+        }
+      </div>);
+
   }
 
   // ===================== NORMAL MODE =====================
