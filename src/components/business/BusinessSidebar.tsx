@@ -74,14 +74,11 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
   const noOffersCategories = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
   const showOffers = !normalizedCategories.some((cat) => noOffersCategories.includes(cat));
 
-  const dashboardItems = [
-    { title: t.analytics, url: "/dashboard-business", icon: TrendingUp },
-  ];
-
   const contentItems = [
     { title: t.events, url: "/dashboard-business/events", icon: Calendar },
     ...(showOffers ? [{ title: t.offers, url: "/dashboard-business/offers", icon: Percent }] : []),
     { title: t.reservations, url: "/dashboard-business/reservations", icon: Users },
+    { title: t.analytics, url: "/dashboard-business", icon: TrendingUp },
   ];
 
   const businessItems = [
@@ -93,31 +90,6 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
   return (
     <Sidebar className={state === "collapsed" ? "w-14" : "w-60"} collapsible="icon">
       <SidebarContent>
-        {/* Dashboard Overview */}
-        <SidebarGroup>
-          <SidebarGroupLabel>{t.overview}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {dashboardItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.url === "/dashboard-business"}
-                      className="flex items-center gap-3"
-                      activeClassName="bg-accent text-accent-foreground font-medium"
-                      onClick={handleLinkClick}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {state !== "collapsed" && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Content Management */}
         <SidebarGroup>
           <SidebarGroupLabel>{t.content}</SidebarGroupLabel>
@@ -128,6 +100,7 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
+                      end={item.url === "/dashboard-business"}
                       className="flex items-center gap-3"
                       activeClassName="bg-accent text-accent-foreground font-medium"
                       onClick={handleLinkClick}
