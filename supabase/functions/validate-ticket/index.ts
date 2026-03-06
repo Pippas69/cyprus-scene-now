@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       if (linkedReservationId) {
         const { data: resData, error: resError } = await supabaseClient
           .from("reservations")
-          .select("party_size, prepaid_min_charge_cents, ticket_credit_cents")
+          .select("party_size, prepaid_min_charge_cents, ticket_credit_cents, seating_type_id")
           .eq("id", linkedReservationId)
           .maybeSingle();
 
@@ -166,7 +166,8 @@ Deno.serve(async (req) => {
           logStep("Linked reservation lookup error", { linkedReservationId, error: resError.message });
         }
 
-        if (resData) {
+        // Only show reservation info for real table reservations (with seating_type_id)
+        if (resData && resData.seating_type_id) {
           linkedReservation = {
             partySize: resData.party_size,
             minimumChargeCents: resData.prepaid_min_charge_cents ?? resData.ticket_credit_cents,
@@ -179,7 +180,7 @@ Deno.serve(async (req) => {
         if (orderUserId && ticket.events?.id) {
           const { data: fallbackResData, error: fallbackResError } = await supabaseClient
             .from("reservations")
-            .select("party_size, prepaid_min_charge_cents, ticket_credit_cents")
+            .select("party_size, prepaid_min_charge_cents, ticket_credit_cents, seating_type_id")
             .eq("event_id", ticket.events.id)
             .eq("user_id", orderUserId)
             .eq("auto_created_from_tickets", true)
@@ -191,7 +192,8 @@ Deno.serve(async (req) => {
             logStep("Fallback linked reservation lookup error", { orderUserId, error: fallbackResError.message });
           }
 
-          if (fallbackResData) {
+          // Only show reservation info for real table reservations (with seating_type_id)
+          if (fallbackResData && fallbackResData.seating_type_id) {
             linkedReservation = {
               partySize: fallbackResData.party_size,
               minimumChargeCents: fallbackResData.prepaid_min_charge_cents ?? fallbackResData.ticket_credit_cents,

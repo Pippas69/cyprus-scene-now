@@ -343,7 +343,7 @@ async function handleTicketQR(
     if (linkedReservationId) {
       const { data: linkedResBase, error: linkedResBaseError } = await supabaseAdmin
         .from("reservations")
-        .select("id, party_size, ticket_credit_cents, prepaid_min_charge_cents, reservation_name, status, checked_in_at")
+        .select("id, party_size, ticket_credit_cents, prepaid_min_charge_cents, reservation_name, status, checked_in_at, seating_type_id")
         .eq("id", linkedReservationId)
         .maybeSingle();
 
@@ -361,7 +361,7 @@ async function handleTicketQR(
             .eq("id", linkedReservationId)
             .eq("status", "accepted")
             .is("checked_in_at", null)
-            .select("id, party_size, ticket_credit_cents, prepaid_min_charge_cents, reservation_name, status, checked_in_at")
+            .select("id, party_size, ticket_credit_cents, prepaid_min_charge_cents, reservation_name, status, checked_in_at, seating_type_id")
             .maybeSingle();
 
           if (updateLinkedResError) {
@@ -373,14 +373,20 @@ async function handleTicketQR(
           }
         }
 
-        linkedReservationInfo = {
-          reservationId: linkedResForUi.id,
-          partySize: linkedResForUi.party_size,
-          minimumChargeCents: linkedResForUi.prepaid_min_charge_cents ?? linkedResForUi.ticket_credit_cents,
-          ticketCreditCents: linkedResForUi.ticket_credit_cents,
-          reservationName: linkedResForUi.reservation_name,
-        };
-        logStep("Linked reservation info prepared", linkedReservationInfo);
+        // Only show reservation info if it's a real table reservation (has seating_type_id)
+        // Walk-in tickets don't have table reservations, so skip the reservation UI
+        if (linkedResForUi.seating_type_id) {
+          linkedReservationInfo = {
+            reservationId: linkedResForUi.id,
+            partySize: linkedResForUi.party_size,
+            minimumChargeCents: linkedResForUi.prepaid_min_charge_cents ?? linkedResForUi.ticket_credit_cents,
+            ticketCreditCents: linkedResForUi.ticket_credit_cents,
+            reservationName: linkedResForUi.reservation_name,
+          };
+          logStep("Linked reservation info prepared", linkedReservationInfo);
+        } else {
+          logStep("Walk-in ticket detected (no seating_type_id), skipping reservation UI info");
+        }
       }
     }
   } catch (linkedResError) {

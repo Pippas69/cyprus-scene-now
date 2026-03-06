@@ -466,22 +466,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (isTicketLinked) {
         const counts = checkInCounts[reservation.id];
         if (counts && counts.total > 0) {
-          const allCheckedIn = counts.used >= counts.total;
           return (
-            <Badge className={`${allCheckedIn ? 'bg-green-500' : 'bg-emerald-600'} text-white whitespace-nowrap`}>
+            <Badge className="bg-green-600 text-white whitespace-nowrap">
               {counts.used} check-in{counts.used !== 1 ? 's' : ''}
             </Badge>
           );
         }
       }
-      return <Badge className="bg-green-500 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
+      return <Badge className="bg-green-600 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
     }
     // For clubs/events: show partial check-in count even before checked_in_at is set
     if (isTicketLinked) {
       const counts = checkInCounts[reservation.id];
       if (counts && counts.used > 0) {
         return (
-          <Badge className="bg-emerald-600 text-white whitespace-nowrap">
+          <Badge className="bg-green-600 text-white whitespace-nowrap">
             {counts.used} check-in{counts.used !== 1 ? 's' : ''}
           </Badge>
         );
