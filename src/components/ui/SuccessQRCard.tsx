@@ -381,33 +381,17 @@ export const SuccessQRCard = ({
           </div>
         )}
 
-        {/* Buttons */}
-        <div className="flex gap-2 mt-3">
-          <Button 
-            variant="outline" 
-            onClick={handleDownload}
-            className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
-          >
-            <Download className="h-3 w-3 mr-1.5 shrink-0" />
-            {text.downloadQR}
-          </Button>
-          {onViewDashboard && (
-            <Button 
-              onClick={onViewDashboard}
-              className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
-            >
-              {viewDashboardLabel || text.done}
-            </Button>
-          )}
-          {!onViewDashboard && onClose && (
+        {/* Close button only if no dashboard action */}
+        {!onViewDashboard && onClose && (
+          <div className="flex gap-2 mt-3">
             <Button 
               onClick={onClose}
               className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
             >
               {text.done}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Wave Decoration */}
