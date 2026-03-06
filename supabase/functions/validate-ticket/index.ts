@@ -177,12 +177,13 @@ Deno.serve(async (req) => {
             .order("min_people", { ascending: true });
           if (tiers) {
             const matchedTier = tiers.find((t: any) => resData.party_size >= t.min_people && resData.party_size <= t.max_people);
-            if (matchedTier) tierMinChargeCents = matchedTier.prepaid_min_charge_cents;
+            const fallbackTier = matchedTier ?? [...tiers].reverse().find((t: any) => resData.party_size >= t.min_people) ?? tiers[0];
+            if (fallbackTier) tierMinChargeCents = fallbackTier.prepaid_min_charge_cents;
           }
 
           linkedReservation = {
             partySize: resData.party_size,
-            minimumChargeCents: resData.prepaid_min_charge_cents ?? tierMinChargeCents ?? 0,
+            minimumChargeCents: tierMinChargeCents ?? resData.prepaid_min_charge_cents ?? resData.ticket_credit_cents ?? 0,
             ticketCreditCents: resData.ticket_credit_cents,
           };
         }
@@ -214,12 +215,13 @@ Deno.serve(async (req) => {
               .order("min_people", { ascending: true });
             if (fallbackTiers) {
               const matchedTier = fallbackTiers.find((t: any) => fallbackResData.party_size >= t.min_people && fallbackResData.party_size <= t.max_people);
-              if (matchedTier) fallbackTierMinCharge = matchedTier.prepaid_min_charge_cents;
+              const fallbackTier = matchedTier ?? [...fallbackTiers].reverse().find((t: any) => fallbackResData.party_size >= t.min_people) ?? fallbackTiers[0];
+              if (fallbackTier) fallbackTierMinCharge = fallbackTier.prepaid_min_charge_cents;
             }
 
             linkedReservation = {
               partySize: fallbackResData.party_size,
-              minimumChargeCents: fallbackResData.prepaid_min_charge_cents ?? fallbackTierMinCharge ?? 0,
+              minimumChargeCents: fallbackTierMinCharge ?? fallbackResData.prepaid_min_charge_cents ?? fallbackResData.ticket_credit_cents ?? 0,
               ticketCreditCents: fallbackResData.ticket_credit_cents,
             };
           }
