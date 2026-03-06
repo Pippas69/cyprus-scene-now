@@ -647,7 +647,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm whitespace-nowrap ml-2">
+                          <span className="text-sm whitespace-nowrap -ml-3">
                             <EditableCell
                             reservationId={reservation.id}
                             field="party_size"
