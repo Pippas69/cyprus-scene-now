@@ -172,8 +172,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return linked;
   };
 
-  const fetchReservations = async () => {
-    setLoading(true);
+  const fetchReservations = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const { data: bizData } = await supabase
         .from('businesses')
