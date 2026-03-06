@@ -248,24 +248,22 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   </div>
                 )}
 
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground overflow-hidden">
                   {ticket.events?.start_at && (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-primary" />
+                    <span className="flex items-center gap-1 whitespace-nowrap shrink-0">
+                      <Calendar className="h-3 w-3 text-primary shrink-0" />
                       {format(new Date(ticket.events.start_at), "dd MMM, HH:mm", { locale: dateLocale })}
                     </span>
                   )}
                   {ticket.events?.location && (
                     <button
                       onClick={() => {
-                        // Open Google Maps with the EVENT's location (not business address)
-                        // NO analytics tracking for this action
                         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ticket.events?.location || '')}`;
                         window.open(mapsUrl, '_blank');
                       }}
-                      className="flex items-center gap-1 hover:text-primary transition-colors"
+                      className="flex items-center gap-1 hover:text-primary transition-colors min-w-0"
                     >
-                      <MapPin className="h-3 w-3 text-primary" />
+                      <MapPin className="h-3 w-3 text-primary shrink-0" />
                       <span className="truncate">{ticket.events.location}</span>
                     </button>
                   )}
