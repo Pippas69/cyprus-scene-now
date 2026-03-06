@@ -639,10 +639,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           displayValue={reservation.reservation_name}
                           rawValue={reservation.reservation_name} />
                           {reservation.phone_number &&
-                            <span className="text-sm text-muted-foreground -ml-1.5">
+                        <span className="text-sm text-muted-foreground -ml-1.5">
                               {reservation.phone_number}
                             </span>
-                          }
+                        }
                         </div>
                       </TableCell>
                       <TableCell>
@@ -654,7 +654,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             displayValue={`${reservation.party_size} ${t.people}`}
                             rawValue={String(reservation.party_size)} />
                           </span>
-                          <span className="text-sm font-semibold ml-2">{minAge}</span>
+                          <span className="text-sm ml-2 mx-[18px] font-thin text-muted-foreground">{minAge}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -668,14 +668,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] &&
                         <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
                               {(() => {
-                                const raw = seatingTypeNames[reservation.seating_type_id!];
-                                const lower = raw.toLowerCase();
-                                if (lower === 'table') return 'Τραπέζι';
-                                if (lower === 'sofa') return 'Καναπές';
-                                if (lower === 'vip') return 'VIP';
-                                if (lower === 'bar') return 'Bar';
-                                return raw;
-                              })()}
+                            const raw = seatingTypeNames[reservation.seating_type_id!];
+                            const lower = raw.toLowerCase();
+                            if (lower === 'table') return 'Τραπέζι';
+                            if (lower === 'sofa') return 'Καναπές';
+                            if (lower === 'vip') return 'VIP';
+                            if (lower === 'bar') return 'Bar';
+                            return raw;
+                          })()}
                             </span>
                         }
                         </div>
