@@ -368,10 +368,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const getMinChargeForPartySize = (seatingTypeId: string | null | undefined, partySize: number): number | null => {
-    if (!seatingTypeId || !seatingTiers[seatingTypeId]) return null;
+    if (!seatingTypeId || !seatingTiers[seatingTypeId] || seatingTiers[seatingTypeId].length === 0) return null;
     const tiers = seatingTiers[seatingTypeId];
-    const tier = tiers.find(t => partySize >= t.min_people && partySize <= t.max_people);
-    return tier ? tier.prepaid_min_charge_cents : null;
+    const exactTier = tiers.find(t => partySize >= t.min_people && partySize <= t.max_people);
+    if (exactTier) return exactTier.prepaid_min_charge_cents;
+
+    // Fallback to closest lower tier, otherwise the first configured tier
+    const fallbackTier = [...tiers].reverse().find(t => partySize >= t.min_people) ?? tiers[0];
+    return fallbackTier?.prepaid_min_charge_cents ?? null;
   };
 
   const getMinAge = (reservationId: string): string => {

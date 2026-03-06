@@ -386,7 +386,8 @@ async function handleTicketQR(
               .order("min_people", { ascending: true });
             if (tiers) {
               const matchedTier = tiers.find((t: any) => linkedResForUi.party_size >= t.min_people && linkedResForUi.party_size <= t.max_people);
-              if (matchedTier) tierMinChargeCents = matchedTier.prepaid_min_charge_cents;
+              const fallbackTier = matchedTier ?? [...tiers].reverse().find((t: any) => linkedResForUi.party_size >= t.min_people) ?? tiers[0];
+              if (fallbackTier) tierMinChargeCents = fallbackTier.prepaid_min_charge_cents;
             }
           } catch (tierErr) {
             logStep("Tier lookup error (non-fatal)", { error: tierErr instanceof Error ? tierErr.message : String(tierErr) });
@@ -395,7 +396,7 @@ async function handleTicketQR(
           linkedReservationInfo = {
             reservationId: linkedResForUi.id,
             partySize: linkedResForUi.party_size,
-            minimumChargeCents: linkedResForUi.prepaid_min_charge_cents ?? tierMinChargeCents ?? 0,
+            minimumChargeCents: tierMinChargeCents ?? linkedResForUi.prepaid_min_charge_cents ?? linkedResForUi.ticket_credit_cents ?? 0,
             ticketCreditCents: linkedResForUi.ticket_credit_cents,
             reservationName: linkedResForUi.reservation_name,
           };
